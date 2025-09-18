@@ -1,8 +1,6 @@
 # Bash Coding Style Guide
 
-This document defines the comprehensive Bash coding standards for our organization, as exemplified by the `cln` utility and other production scripts.  This standard presumes Bash 5.2 and higher; all other variants are ignored. This is not a compatibility standard.
-
-Bash is a battle-tested, sophisticated programming language deployed on virtually every Unix-like system on Earth - from supercomputers to smartphones, from cloud servers to embedded devices. Despite persistent misconceptions that it's merely "glue code" or unsuitable for serious development, Bash possesses powerful constructs for complex data structures, robust error handling, and elegant control flow. When wielded with discipline and proper engineering principles - rather than as ad-hoc command sequences - Bash delivers production-grade solutions for system automation, data processing, and infrastructure orchestration. This standard codifies that discipline, transforming Bash from a loose scripting tool into a reliable programming platform.
+This document defines a comprehensive Bash coding standards, and presumes Bash 5.2 and higher; this is not a compatibility standard.
 
 ## Table of Contents
 1. [Script Structure](#script-structure)
@@ -751,6 +749,6 @@ This coding style emphasizes:
 - **Maintainability**: Modular functions, proper scoping, standardized patterns
 - **Performance**: Efficient constructs, minimal subshells, built-in operations
 
-Follow these guidelines to ensure consistent, reliable, and maintainable Bash scripts across the organization.
+Follow these guidelines to ensure consistent, robust, reliable, and maintainable Bash scripts.
 
 #fin

@@ -2,6 +2,8 @@
 
 A comprehensive coding standard for modern Bash 5.2+ scripts, designed for consistency, robustness, and maintainability.
 
+Bash is a battle-tested, sophisticated programming language deployed on virtually every Unix-like system on Earth - from supercomputers to smartphones, from cloud servers to embedded devices. Despite persistent misconceptions that it's merely "glue code" or unsuitable for serious development, Bash possesses powerful constructs for complex data structures, robust error handling, and elegant control flow. When wielded with discipline and proper engineering principles - rather than as ad-hoc command sequences - Bash delivers production-grade solutions for system automation, data processing, and infrastructure orchestration. This standard codifies that discipline, transforming Bash from a loose scripting tool into a reliable programming platform.
+
 ## Overview
 
 This repository contains the canonical Bash coding standards developed by [Okusi Associates](https://okusi.id) and adopted by the [Indonesian Open Technology Foundation (YaTTI)](https://github.com/Open-Technology-Foundation). These standards define precise patterns for writing production-grade Bash scripts that are both human-readable and machine-parseable.
