@@ -2,6 +2,8 @@
 
 This document defines the comprehensive Bash coding standards for our organization, as exemplified by the `cln` utility and other production scripts.  This standard presumes Bash 5.2 and higher; all other variants are ignored. This is not a compatibility standard.
 
+Bash is a battle-tested, sophisticated programming language deployed on virtually every Unix-like system on Earth - from supercomputers to smartphones, from cloud servers to embedded devices. Despite persistent misconceptions that it's merely "glue code" or unsuitable for serious development, Bash possesses powerful constructs for complex data structures, robust error handling, and elegant control flow. When wielded with discipline and proper engineering principles - rather than as ad-hoc command sequences - Bash delivers production-grade solutions for system automation, data processing, and infrastructure orchestration. This standard codifies that discipline, transforming Bash from a loose scripting tool into a reliable programming platform.
+
 ## Table of Contents
 1. [Script Structure](#script-structure)
 2. [Variable Declarations](#variable-declarations)
@@ -189,6 +191,8 @@ s() { ... }              # Pluralization helper
 yn() { ... }             # yes/no prompt
 ```
 
+Once the application script is mature, unnecessary variables and functions should be removed.
+
 ## Error Handling
 
 ### Exit on Error
@@ -328,6 +332,7 @@ ${var,,}                     # Lowercase conversion
 # !! Always prefer single quotes for string literals
 var='A script message'       # Correct
 var="A script message"       # Incorrect; unnecessary use of double quotes
+var="A 'script' message"     # Correct
 ```
 
 ### String Trimming
@@ -393,7 +398,7 @@ done
 
 # Arrays for command arguments - avoids quoting issues
 declare -a cmd_args
-cmd_args=( -o "${output}" --verbose )
+cmd_args=( -o "$output" --verbose )
 mycmd "${cmd_args[@]}"
 ```
 
