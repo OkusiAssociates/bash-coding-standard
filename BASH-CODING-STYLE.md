@@ -1,8 +1,8 @@
-# Bash Coding Style Guide
+# Bash Coding Standard
 
-This document defines a comprehensive Bash coding standards, and presumes Bash 5.2 and higher; this is not a compatibility standard.
+This document defines a comprehensive Bash coding standard and presumes Bash 5.2 and higher; this is not a compatibility standard.
 
-## Table of Contents
+## Contents
 1. [Script Structure](#script-structure)
 2. [Variable Declarations](#variable-declarations)
 3. [Functions](#functions)
@@ -16,50 +16,74 @@ This document defines a comprehensive Bash coding standards, and presumes Bash 5
 11. [Calling Commands](#calling-commands)
 12. [Security Considerations](#security-considerations)
 13. [Best Practices](#best-practices)
+14. [Summary](#summary)
+15. [Advanced Topics](#advanced-topics)
 
 ## Script Structure
 
-### 1. Shebang and Initial Setup
-```bash
-#!/usr/bin/env bash                 # #!/usr/bin/bash is also acceptable
-#shellcheck disable=SC1090,SC1091   # Document shellcheck global exceptions
-# Brief description of script purpose
-set -euo pipefail                   # !! Strict error handling
-```
+### Standard Script Layout
+1. Shebang
+2. Global shellcheck directives (where required)
+3. Script description comment
+4. `set -euo pipefail`
+5. Script metadata (VERSION, SCRIPT_NAME, etc.)
+6. Global variable declarations
+7. Color definitions (if terminal output)
+8. Utility functions
+9. Business logic functions
+10. `main()` function
+11. Script invocation: `main "$@"`
+12. End marker: `#fin`
 
-### 2. File Header
-- Start each file with a description of its contents straight after the global shellcheck line
-- Keep description concise and informative
+### Shebang and Initial Setup
+First lines of all scripts must include a `#!shebang`, global `#shellcheck` definitions (optional), a brief description of the script, and first command `set -euo pipefail`.
 
 ```bash
-#!/usr/bin/bash
-#shellcheck disable=SC8080
+#!/usr/bin/env bash
+#shellcheck disable=SC1090,SC1091
 # Get directory sizes and report usage statistics
+set -euo pipefail
 ```
 
-### 3. Script Metadata
+### Script Metadata
 ```bash
 VERSION='1.0.0'
-PRG0=$(readlink -en -- "$0")       # Full path to script
-PRG=${PRG0##*/}                    # Script basename
-PRGDIR=${PRG0%/*}                  # Script directory
-readonly -- VERSION PRG0 PRG PRGDIR
+SCRIPT_PATH=$(readlink -en -- "$0") # Full path to script
+SCRIPT_DIR=${SCRIPT_PATH%/*}        # Script directory
+SCRIPT_NAME=${SCRIPT_PATH##*/}      # Script basename
+readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
 ```
 
-### 4. Standard Script Layout
-1. Shebang and shellcheck directives
-2. Script description comment
-3. `set -euo pipefail`
-4. Script metadata (VERSION, PRG, etc.)
-5. Global variable declarations
-6. Colour definitions (if terminal output)
-7. Utility functions
-8. Business logic functions
-9. `main()` function
-10. Script invocation: `main "$@"`
-11. End marker: `#fin`
+For legacy definitions (PRG0, PRGDIR, PRG) add this if necessary:
+```bash
+# Legacy definitions
+declare -n PRG0=SCRIPT_PATH PRG=SCRIPT_NAME PRGDIR=SCRIPT_DIR
+```
+#### shopt
 
-### 5. File Extensions
+**Recommended settings for most scripts:**
+
+```bash
+# STRONGLY RECOMMENDED - apply to all scripts
+shopt -s inherit_errexit  # Critical: makes set -e work in subshells, command substitutions
+shopt -s shift_verbose    # Catches shift errors when no arguments remain
+shopt -s extglob          # Enables extended glob patterns like !(*.txt)
+
+# CHOOSE ONE based on use case:
+shopt -s nullglob   # For arrays/loops: unmatched globs → empty (no error)
+# OR
+shopt -s failglob   # For strict scripts: unmatched globs → error
+
+# OPTIONAL based on needs:
+shopt -s globstar   # Enable ** for recursive matching (can be slow on deep trees)
+```
+
+Example for typical script:
+```bash
+shopt -s inherit_errexit shift_verbose extglob nullglob
+```
+
+### File Extensions
 - Executables should have `.sh` extension or no extension
 - Libraries must have `.sh` extension and should not be executable
 - If the executable will be available globally via PATH, always use no extension
@@ -70,7 +94,7 @@ readonly -- VERSION PRG0 PRG PRGDIR
 ```bash
 declare -i VERBOSE=1         # Integer variables
 declare -- STRING_VAR=''     # String variables
-declare -a ARRAY_VAR=()      # Indexed arrays
+declare -a MY_ARRAY=()      # Indexed arrays
 declare -A HASH_VAR=()       # Associative arrays
 readonly -- CONSTANT='val'   # Read-only constants
 ```
@@ -100,11 +124,12 @@ my_func() {
 ```
 
 ### Naming Conventions
-- Constants: `UPPER_CASE`
-- Global variables: `UPPER_CASE` or `CamelCase`
-- Local variables: `lower_case` with underscores
-- Internal/private functions: prefix with `_`
-- Environment variables: `UPPER_CASE` with underscores
+
+| Constants | UPPER_CASE |
+| Global variables | UPPER_CASE or CamelCase |
+| Local variables | lower_case with underscores; CamelCase acceptable for important local variables |
+| Internal/private functions | prefix with _ |
+| Environment variables | UPPER_CASE with underscores |
 
 ### Constants and Environment Variables
 ```bash
@@ -186,7 +211,7 @@ noarg() { ... }          # Validate argument presence
 decp() { ... }           # Debug print variable declaration
 trim() { ... }           # Trim whitespace
 s() { ... }              # Pluralization helper
-yn() { ... }             # yes/no prompt
+yn() { ... }             # Yes/no prompt
 ```
 
 Once the application script is mature, unnecessary variables and functions should be removed.
@@ -234,7 +259,7 @@ command 2>/dev/null || true
 # Prefer [[ ]] over [ ]
 [[ -d "$path" ]] && echo 'Directory exists'
 
-# Arithmetic conditionals use (( ))
+# Arithmetic conditionals use (())
 ((VERBOSE==0)) || echo 'Verbose mode'
 ((var > 5)) || return 1
 
@@ -269,7 +294,7 @@ done
 # While loops for argument parsing
 while (($#)); do
   case "$1" in
-    # ...
+    # ... ;;
   esac
   shift
 done
@@ -300,13 +325,13 @@ done
 
 ### Parameter Expansion
 ```bash
-PRG=${PRG0##*/}              # Remove longest prefix pattern
-PRGDIR=${PRG0%/*}            # Remove shortest suffix pattern
-${var:-default}              # Default value
-${var:0:1}                   # Substring
-${#array[@]}                 # Array length
-${var,,}                     # Lowercase conversion
-"${@:2}"                     # All args starting from 2nd
+SCRIPT_NAME=${SCRIPT_PATH##*/} # Remove longest prefix pattern
+SCRIPT_DIR=${SCRIPT_PATH%/*}   # Remove shortest suffix pattern
+${var:-default}                # Default value
+${var:0:1}                     # Substring
+${#array[@]}                   # Array length
+${var,,}                       # Lowercase conversion
+"${@:2}"                       # All args starting from 2nd
 ```
 
 ### Variable Expansion Guidelines
@@ -320,17 +345,17 @@ ${var,,}                     # Lowercase conversion
 ### Quoting Rules
 ```bash
 # Always quote variables in conditionals
-[[ -d "$path" ]]             # Correct
-[[ -d $path ]]               # Wrong
+[[ -d "$path" ]]               # Correct
+[[ -d $path ]]                 # Wrong
 
 # Quote array expansions
-"${array[@]}"                # All elements as separate words
-"${array[*]}"                # All elements as single word
+"${array[@]}"                  # All elements as separate words
+"${array[*]}"                  # All elements as single word
 
-# !! Always prefer single quotes for string literals
-var='A script message'       # Correct
-var="A script message"       # Incorrect; unnecessary use of double quotes
-var="A 'script' message"     # Correct
+# Always prefer single quotes for string literals
+var='A script message'         # Correct
+var="A script message"         # Incorrect; unnecessary use of double quotes
+var="A 'script' message"       # Correct
 ```
 
 ### String Trimming
@@ -414,7 +439,7 @@ while (($#)); do case "$1" in
   -p|--prompt)    PROMPT=1; VERBOSE=1 ;;
   -v|--verbose)   VERBOSE+=1 ;;
   -q|--quiet)     VERBOSE=0 ;;
-  -V|--version)   echo "$PRG $VERSION"; exit 0 ;;
+  -V|--version)   echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
   -h|--help)      usage 0 ;;
   -[amLpvqVh]*) #shellcheck disable=SC2046 #split up single options
                   set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;
@@ -435,17 +460,17 @@ noarg() {
 
 ## Output and Messaging
 
-### Standardized Messaging and Colour Support
+### Standardized Messaging and Color Support
 ```bash
 declare -i VERBOSE=1 PROMPT=1 DEBUG=0
-# Standard colours
-[[ -t 2 ]] && declare -- RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' NC=$'\033[0m' || declare -- RED='' GREEN='' YELLOW='' CYAN='' NC=''
+# Standard colors
+[[ -t 1 && -t 2 ]] && declare -- RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' NC=$'\033[0m' || declare -- RED='' GREEN='' YELLOW='' CYAN='' NC=''
 readonly -- RED GREEN YELLOW CYAN NC
 ```
 
 ### STDOUT vs STDERR
 - All error messages should go to `STDERR`
-- Place `>&2` at the beginning of the command for clarity
+- Place `>&2` at the *beginning* commands for clarity
 
 ```bash
 # Preferred format
@@ -454,7 +479,7 @@ somefunc() {
 }
 
 # Also acceptable
-err() {
+somefunc() {
   echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $*" >&2
 }
 ```
@@ -463,13 +488,13 @@ err() {
 ```bash
 # Core message function using FUNCNAME for context
 _msg() {
-  local -- status="${FUNCNAME[1]}" prefix="$PRG:" msg
-  case "$status" in
+  local -- prefix="$SCRIPT_NAME:" msg
+  case "${FUNCNAME[1]}" in
     success) prefix+=" ${GREEN}✓${NC}" ;;
     warn)    prefix+=" ${YELLOW}⚡${NC}" ;;
     info)    prefix+=" ${CYAN}◉${NC}" ;;
     error)   prefix+=" ${RED}✗${NC}" ;;
-    debug)   prefix+=" ${WARN}DEBUG${NC}:" ;;
+    debug)   prefix+=" ${YELLOW}DEBUG${NC}:" ;;
     *)       ;;
   esac
   for msg in "$@"; do printf '%s %s\n' "$prefix" "$msg"; done
@@ -487,7 +512,7 @@ die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
 yn() {
   ((PROMPT)) || return 0
   local -- reply
-  read -r -n1 -p "$PRG: ${YELLOW}$1${NC} y/n " reply
+  read -r -n1 -p "$SCRIPT_NAME: ${YELLOW}$1${NC} y/n " reply
   echo
   [[ ${reply,,} == y ]]
 }
@@ -497,20 +522,19 @@ yn() {
 ```bash
 usage() {
   cat <<EOT
-$PRG $VERSION - Brief description
+$SCRIPT_NAME $VERSION - Brief description
 
 Detailed description.
 
-Usage: $PRG [Options] [arguments]
+Usage: $SCRIPT_NAME [Options] [arguments]
 
 Options:
   -h|--help         This help message
   -v|--verbose      Enable verbose output
-                    $(decp VERBOSE)
 
 Examples:
   # Example 1
-  $PRG -v file.txt
+  $SCRIPT_NAME -v file.txt
 EOT
   exit "${1:-0}"
 }
@@ -613,8 +637,8 @@ if [ -f "$file" ]; then
 Use `readonly` for constants to prevent accidental modification.
 
 ```bash
-readonly -- SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly -a REQUIRED_TOOLS=(git docker kubectl)
+readonly -- SCRIPT_PATH="$(readlink -en -- "$0")"
+readonly -a REQUIRED=(pandoc git md2ansi)
 ```
 
 ## Security Considerations
@@ -623,6 +647,39 @@ readonly -a REQUIRED_TOOLS=(git docker kubectl)
 - **Never** use SUID/SGID in Bash scripts
 - Too many security vulnerabilities possible
 - Use `sudo` to provide elevated access when needed
+
+### PATH Security
+Lock down PATH to prevent command injection and trojan attacks.
+
+```bash
+# Lock down PATH at script start
+readonly PATH="/usr/local/bin:/usr/bin:/bin"
+export PATH
+
+# Or validate existing PATH
+[[ "$PATH" =~ \. ]] && die 1 "PATH contains current directory"
+[[ "$PATH" =~ ^: ]] && die 1 "PATH starts with empty element"
+[[ "$PATH" =~ :: ]] && die 1 "PATH contains empty element"
+[[ "$PATH" =~ :$ ]] && die 1 "PATH ends with empty element"
+```
+
+### IFS Manipulation Safety
+When changing IFS, always save and restore it.
+
+```bash
+# Save and restore IFS
+OLD_IFS="$IFS"
+IFS=$'\n'
+# ... operations requiring newline separator ...
+IFS="$OLD_IFS"
+
+# Or use subshell to isolate IFS changes
+(
+  IFS=','
+  read -ra array <<< "$csv_data"
+  # IFS change limited to subshell
+)
+```
 
 ### Eval Command
 `eval` should be avoided wherever possible due to security risks.
@@ -665,12 +722,15 @@ declare -a cmd=(ls -la "$dir")
 ### 4. Arithmetic Operations
 ```bash
 # Always declare integer variables explicitly
-declare -i i j count
+declare -i i j result
 
 # Increment operations - avoid ++ due to return value issues
-i+=1              # Preferred for declared integers
-((i+=1))          # Always returns 0
-((i++))           # Avoid: returns original value, can cause issues with set -e
+i+=1              # **Preferred** for declared integers
+((i+=1))          # Always returns 0 (success)
+((++i))           # Returns value AFTER increment (safe)
+((i++))           # DANGEROUS: Returns value BEFORE increment
+                  # If i=0, returns 0 (falsey), triggers set -e
+                  # Example: i=0; ((i++)) && echo "never prints"
 
 # Arithmetic expressions
 ((result = x * y + z))
@@ -681,7 +741,7 @@ if ((i < j)); then
   echo "i is less than j"
 fi
 
-# Short form
+# Short-form evaluation
 ((x > y)) && echo 'x is greater'
 ```
 
@@ -750,5 +810,403 @@ This coding style emphasizes:
 - **Performance**: Efficient constructs, minimal subshells, built-in operations
 
 Follow these guidelines to ensure consistent, robust, reliable, and maintainable Bash scripts.
+
+## Advanced Topics
+
+### Debugging and Development
+
+Enable debugging features for development and troubleshooting.
+
+```bash
+# Debug mode implementation
+declare -i DEBUG="${DEBUG:-0}"
+
+# Enable trace mode when DEBUG is set
+((DEBUG)) && set -x
+
+# Enhanced PS4 for better trace output
+export PS4='+ ${BASH_SOURCE##*/}:${LINENO}:${FUNCNAME[0]:+${FUNCNAME[0]}():} '
+
+# Conditional debug output function
+debug() {
+  ((DEBUG)) || return 0
+  >&2 _msg "$@"
+}
+
+# Usage
+DEBUG=1 ./script.sh  # Run with debug output
+```
+
+### Temporary File Handling
+
+Safe creation and cleanup of temporary files and directories.
+
+```bash
+# Safe temporary file creation
+TMPFILE=$(mktemp) || die 1 "Failed to create temp file"
+trap 'rm -f "$TMPFILE"' EXIT
+
+# Temporary file with custom template
+TMPFILE=$(mktemp /tmp/script.XXXXXX) || die 1 "Failed to create temp file"
+
+# Temporary directory
+TMPDIR=$(mktemp -d) || die 1 "Failed to create temp directory"
+trap 'rm -rf "$TMPDIR"' EXIT
+
+# Multiple temp files with cleanup function
+declare -a TEMP_FILES=()
+cleanup_temps() {
+  local -- file
+  for file in "${TEMP_FILES[@]}"; do
+    [[ -f "$file" ]] && rm -f "$file"
+  done
+}
+trap cleanup_temps EXIT
+
+# Add temp files to cleanup list
+TEMP_FILES+=("$(mktemp)")
+```
+
+### Input Sanitization
+
+Validate and sanitize user input to prevent security issues.
+
+```bash
+# Validate filename - no directory traversal
+sanitize_filename() {
+  local -- name="$1"
+  # Remove directory traversal attempts
+  name="${name//\.\./}"
+  name="${name//\//}"
+  # Allow only safe characters
+  if [[ ! "$name" =~ ^[a-zA-Z0-9._-]+$ ]]; then
+    die 1 "Invalid filename: contains unsafe characters"
+  fi
+  echo "$name"
+}
+
+# Validate numeric input
+validate_number() {
+  local -- input="$1"
+  if [[ ! "$input" =~ ^-?[0-9]+$ ]]; then
+    die 1 "Invalid number: '$input'"
+  fi
+  echo "$input"
+}
+
+# Validate email format
+validate_email() {
+  local -- email="$1"
+  local -- regex='^[[:alnum:]._%+-]+@[[:alnum:].-]+\.[[:alpha:]]{2,}$'
+  [[ "$email" =~ $regex ]] || die 1 "Invalid email format"
+  echo "$email"
+}
+
+# Escape special characters for safe display
+escape_html() {
+  local -- text="$1"
+  text="${text//&/&amp;}"
+  text="${text//</&lt;}"
+  text="${text//>/&gt;}"
+  text="${text//\"/&quot;}"
+  text="${text//\'/&#39;}"
+  echo "$text"
+}
+```
+
+### Environment Variable Best Practices
+
+Proper handling of environment variables.
+
+```bash
+# Required environment validation (script exits if not set)
+: "${REQUIRED_VAR:?Environment variable REQUIRED_VAR not set}"
+: "${DATABASE_URL:?DATABASE_URL must be set}"
+
+# Optional with defaults
+: "${OPTIONAL_VAR:=default_value}"
+: "${LOG_LEVEL:=INFO}"
+
+# Export with validation
+export DATABASE_URL="${DATABASE_URL:-localhost:5432}"
+export API_KEY="${API_KEY:?API_KEY environment variable required}"
+
+# Check multiple required variables
+check_required_env() {
+  local -a required=(DATABASE_URL API_KEY SECRET_TOKEN)
+  local -- var
+  for var in "${required[@]}"; do
+    if [[ -z "${!var:-}" ]]; then
+      die 1 "Required environment variable '$var' not set"
+    fi
+  done
+}
+```
+
+### Regular Expression Guidelines
+
+Best practices for using regular expressions in Bash.
+
+```bash
+# Use POSIX character classes for portability
+[[ "$var" =~ ^[[:alnum:]]+$ ]]      # Alphanumeric only
+[[ "$var" =~ [[:space:]] ]]         # Contains whitespace
+[[ "$var" =~ ^[[:digit:]]+$ ]]      # Digits only
+[[ "$var" =~ ^[[:xdigit:]]+$ ]]     # Hexadecimal
+
+# Store complex patterns in readonly variables
+readonly EMAIL_REGEX='^[[:alnum:]._%+-]+@[[:alnum:].-]+\.[[:alpha:]]{2,}$'
+readonly IPV4_REGEX='^([0-9]{1,3}\.){3}[0-9]{1,3}$'
+readonly UUID_REGEX='^[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}$'
+
+# Usage
+[[ "$email" =~ $EMAIL_REGEX ]] || die 1 "Invalid email format"
+
+# Capture groups
+if [[ "$version" =~ ^v?([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+  major="${BASH_REMATCH[1]}"
+  minor="${BASH_REMATCH[2]}"
+  patch="${BASH_REMATCH[3]}"
+fi
+```
+
+### Background Job Management
+
+Managing background processes and jobs.
+
+```bash
+# Start background job and track PID
+long_running_command &
+PID=$!
+
+# Check if process is still running
+if kill -0 "$PID" 2>/dev/null; then
+  info "Process $PID is still running"
+fi
+
+# Wait with timeout
+if timeout 10 wait "$PID"; then
+  success "Process completed successfully"
+else
+  warn "Process timed out or failed"
+  kill "$PID" 2>/dev/null || true
+fi
+
+# Multiple background jobs
+declare -a PIDS=()
+for file in *.txt; do
+  process_file "$file" &
+  PIDS+=($!)
+done
+
+# Wait for all background jobs
+for pid in "${PIDS[@]}"; do
+  wait "$pid"
+done
+
+# Job control with error handling
+run_with_timeout() {
+  local -i timeout="$1"; shift
+  local -- command="$*"
+
+  timeout "$timeout" bash -c "$command" &
+  local -i pid=$!
+
+  if wait "$pid"; then
+    return 0
+  else
+    local -i exit_code=$?
+    if ((exit_code == 124)); then
+      error "Command timed out after ${timeout}s"
+    fi
+    return "$exit_code"
+  fi
+}
+```
+
+### Logging Best Practices
+
+Structured logging for production scripts.
+
+```bash
+# Simple file logging
+readonly LOG_FILE="${LOG_FILE:-/var/log/${SCRIPT_NAME}.log}"
+readonly LOG_LEVEL="${LOG_LEVEL:-INFO}"
+
+# Ensure log directory exists
+[[ -d "${LOG_FILE%/*}" ]] || mkdir -p "${LOG_FILE%/*}"
+
+# Log levels as integers for comparison
+declare -A LOG_LEVELS=(
+  [DEBUG]=0
+  [INFO]=1
+  [WARN]=2
+  [ERROR]=3
+  [FATAL]=4
+)
+
+# Structured logging function
+log() {
+  local -- level="$1"
+  local -- message="${*:2}"
+  local -i level_int="${LOG_LEVELS[$level]:-1}"
+  local -i current_level="${LOG_LEVELS[$LOG_LEVEL]:-1}"
+
+  # Skip if below current log level
+  ((level_int >= current_level)) || return 0
+
+  # Format: ISO8601 timestamp, script name, level, message
+  printf '[%s] [%s] [%-5s] %s\n' \
+    "$(date -Ins)" \
+    "$SCRIPT_NAME" \
+    "$level" \
+    "$message" >> "$LOG_FILE"
+}
+
+# Convenience functions
+log_debug() { log DEBUG "$@"; }
+log_info()  { log INFO "$@"; }
+log_warn()  { log WARN "$@"; }
+log_error() { log ERROR "$@"; }
+log_fatal() { log FATAL "$@"; die 1; }
+
+# Log rotation check
+check_log_rotation() {
+  local -i max_size=$((10 * 1024 * 1024))  # 10MB
+  if [[ -f "$LOG_FILE" ]] && (( $(stat -f%z "$LOG_FILE" 2>/dev/null || stat -c%s "$LOG_FILE" 2>/dev/null || echo 0) > max_size )); then
+    mv "$LOG_FILE" "${LOG_FILE}.old"
+    log_info "Log rotated"
+  fi
+}
+```
+
+### Performance Profiling
+
+Simple performance measurement patterns.
+
+```bash
+# Using SECONDS builtin
+profile_operation() {
+  local -- operation="$1"
+  SECONDS=0
+
+  # Run operation
+  eval "$operation"
+
+  info "Operation completed in ${SECONDS}s"
+}
+
+# High-precision timing with date
+time_command() {
+  local -- start end runtime
+  start=$(date +%s.%N)
+
+  "$@"
+
+  end=$(date +%s.%N)
+  runtime=$(awk "BEGIN {print $end - $start}")
+  info "Execution time: ${runtime}s"
+}
+
+# Memory usage tracking
+check_memory() {
+  local -i pid="${1:-$$}"
+  local -i mem_kb
+
+  if [[ -f "/proc/$pid/status" ]]; then
+    mem_kb=$(grep VmRSS "/proc/$pid/status" | awk '{print $2}')
+    info "Memory usage: $((mem_kb / 1024))MB"
+  fi
+}
+
+# Benchmark comparisons
+benchmark() {
+  local -- name="$1"
+  local -i iterations="${2:-100}"
+  shift 2
+
+  local -- start end
+  start=$(date +%s.%N)
+
+  for ((i=0; i<iterations; i+=1)); do
+    "$@" >/dev/null 2>&1
+  done
+
+  end=$(date +%s.%N)
+  local -- total_time=$(awk "BEGIN {print $end - $start}")
+  local -- avg_time=$(awk "BEGIN {print $total_time / $iterations}")
+
+  printf '%s: %d iterations, %.3fs total, %.6fs average\n' \
+    "$name" "$iterations" "$total_time" "$avg_time"
+}
+```
+
+### Testing Support Patterns
+
+Patterns for making scripts testable.
+
+```bash
+# Dependency injection for testing
+declare -f FIND_CMD >/dev/null || FIND_CMD() { find "$@"; }
+declare -f DATE_CMD >/dev/null || DATE_CMD() { date "$@"; }
+declare -f CURL_CMD >/dev/null || CURL_CMD() { curl "$@"; }
+
+# In production
+find_files() {
+  FIND_CMD "$@"
+}
+
+# In tests, override:
+FIND_CMD() { echo "mocked_file1.txt mocked_file2.txt"; }
+
+# Test mode flag
+declare -i TEST_MODE="${TEST_MODE:-0}"
+
+# Conditional behavior for testing
+if ((TEST_MODE)); then
+  # Use test data directory
+  DATA_DIR="./test_data"
+  # Disable destructive operations
+  RM_CMD() { echo "TEST: Would remove $*"; }
+else
+  DATA_DIR="/var/lib/app"
+  RM_CMD() { rm "$@"; }
+fi
+
+# Assert function for tests
+assert() {
+  local -- expected="$1"
+  local -- actual="$2"
+  local -- message="${3:-Assertion failed}"
+
+  if [[ "$expected" != "$actual" ]]; then
+    >&2 echo "ASSERT FAIL: $message"
+    >&2 echo "  Expected: '$expected'"
+    >&2 echo "  Actual:   '$actual'"
+    return 1
+  fi
+  return 0
+}
+
+# Test runner pattern
+run_tests() {
+  local -i passed=0 failed=0
+  local -- test_func
+
+  # Find all functions starting with test_
+  for test_func in $(declare -F | awk '$3 ~ /^test_/ {print $3}'); do
+    if "$test_func"; then
+      passed+=1
+      echo "✓ $test_func"
+    else
+      failed+=1
+      echo "✗ $test_func"
+    fi
+  done
+
+  echo "Tests: $passed passed, $failed failed"
+  ((failed == 0))
+}
+```
 
 #fin

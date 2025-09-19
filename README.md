@@ -2,11 +2,13 @@
 
 A comprehensive coding standard for modern Bash 5.2+ scripts, designed for consistency, robustness, and maintainability.
 
-Bash is a battle-tested, sophisticated programming language deployed on virtually every Unix-like system on Earth - from supercomputers to smartphones, from cloud servers to embedded devices. Despite persistent misconceptions that it's merely "glue code" or unsuitable for serious development, Bash possesses powerful constructs for complex data structures, robust error handling, and elegant control flow. When wielded with discipline and proper engineering principles - rather than as ad-hoc command sequences - Bash delivers production-grade solutions for system automation, data processing, and infrastructure orchestration. This standard codifies that discipline, transforming Bash from a loose scripting tool into a reliable programming platform.
+Bash is a battle-tested, sophisticated programming language deployed on virtually every Unix-like system on Earth -- from supercomputers to smartphones, from cloud servers to embedded devices.
+
+Despite persistent misconceptions that it's merely "glue code" or unsuitable for serious development, Bash possesses powerful constructs for complex data structures, robust error handling, and elegant control flow. When wielded with discipline and proper engineering principles -- rather than as ad-hoc command sequences -- Bash delivers production-grade solutions for system automation, data processing, and infrastructure orchestration. This standard codifies that discipline, transforming Bash from a loose scripting tool into a reliable programming platform.
 
 ## Overview
 
-This repository contains the canonical Bash coding standards developed by [Okusi Associates](https://okusi.id) and adopted by the [Indonesian Open Technology Foundation (YaTTI)](https://github.com/Open-Technology-Foundation). These standards define precise patterns for writing production-grade Bash scripts that are both human-readable and machine-parseable.
+This repository contains the canonical Bash coding standards developed by [Okusi Associates](https://okusiassociates.com) and adopted by the [Indonesian Open Technology Foundation (YaTTI)](https://yatti.id). These standards define precise patterns for writing production-grade Bash scripts that are both human-readable and machine-parseable.
 
 ## Purpose
 
@@ -28,7 +30,7 @@ Modern software development increasingly relies on automated refactoring, AI-ass
 
 ## Usage
 
-All Bash scripts in Okusi and YaTTI projects must comply with these standards. The structured approach enables:
+The structured and standardized approach to Bash coding enables:
 
 - Automated code review and validation
 - Consistent refactoring across large codebases
@@ -60,30 +62,32 @@ shellcheck -x script.sh
 # Process and validate configuration files
 set -euo pipefail
 
+shopt -s inherit_errexit shift_verbose extglob nullglob
+
 VERSION='1.0.0'
-PRG0=$(readlink -en -- "$0")
-PRG=${PRG0##*/}
-PRGDIR=${PRG0%/*}
-readonly -- VERSION PRG0 PRG PRGDIR
+SCRIPT_PATH=$(readlink -en -- "$0") # Full path to script
+SCRIPT_DIR=${SCRIPT_PATH%/*}        # Script directory
+SCRIPT_NAME=${SCRIPT_PATH##*/}      # Script basename
+readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
 
 # Global variables
 declare -i VERBOSE=1 DEBUG=0
 declare -a Paths=()
 
-# Colours
-[[ -t 2 ]] && declare -- RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' NC=$'\033[0m' || declare -- RED='' GREEN='' YELLOW='' NC=''
-readonly -- RED GREEN YELLOW NC
+# Colors
+[[ -t 1 && -t 2 ]] && declare -- RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' NC=$'\033[0m' || declare -- RED='' GREEN='' YELLOW='' CYAN='' NC=''
+readonly -- RED GREEN YELLOW CYAN NC
 
 # Standard utility functions
 # Core message function using FUNCNAME for context
 _msg() {
-  local -- status="${FUNCNAME[1]}" prefix="$PRG:" msg
-  case "$status" in
+  local -- prefix="$SCRIPT_NAME:" msg
+  case "${FUNCNAME[1]}" in
     success) prefix+=" ${GREEN}✓${NC}" ;;
     warn)    prefix+=" ${YELLOW}⚡${NC}" ;;
     info)    prefix+=" ${CYAN}◉${NC}" ;;
     error)   prefix+=" ${RED}✗${NC}" ;;
-    debug)   prefix+=" ${WARN}DEBUG${NC}:" ;;
+    debug)   prefix+=" ${YELLOW}DEBUG${NC}:" ;;
     *)       ;;
   esac
   for msg in "$@"; do printf '%s %s\n' "$prefix" "$msg"; done
@@ -109,9 +113,9 @@ noarg() {
 
 usage() {
   cat <<EOT
-$PRG $VERSION - Process configuration files
+$SCRIPT_NAME $VERSION - Process configuration files
 
-Usage: $PRG [OPTIONS] [FILES...]
+Usage: $SCRIPT_NAME [OPTIONS] [FILES...]
 
 Options:
   -v|--verbose     Enable verbose output
@@ -119,8 +123,8 @@ Options:
   -h|--help        Show this help message
 
 Examples:
-  $PRG config.txt
-  $PRG -v *.conf
+  $SCRIPT_NAME config.txt
+  $SCRIPT_NAME -v *.conf
 EOT
   exit "${1:-0}"
 }
@@ -143,7 +147,7 @@ main() {
     -v|--verbose)   VERBOSE+=1 ;;
     -q|--quiet)     VERBOSE=0 ;;
     -h|--help)      usage 0 ;;
-    -V|--version)   echo "$PRG $VERSION"; exit 0 ;;
+    -V|--version)   echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
     -[ovqhV]*) #shellcheck disable=SC2046 #split up single options
                     set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;
     -*)             die 22 "Invalid option '$1'" ;;
@@ -177,7 +181,7 @@ This work is licensed under [Creative Commons Attribution-ShareAlike 4.0 Interna
 
 You are free to:
 - Share and redistribute the material
-- Adapt and build upon the material
+- Fork, Adapt and build upon the material
 
 Under the following terms:
 - Attribution to Okusi Associates and YaTTI
@@ -186,10 +190,6 @@ Under the following terms:
 ## Acknowledgments
 
 Developed by Okusi Associates for enterprise Bash scripting. Incorporates compatible elements from Google's Shell Style Guide and industry best practices.
-
-## Authors
-
-Gary Dean, Okusi Associates
 
 ---
 *For production systems requiring consistent, maintainable, and secure Bash scripting.*
