@@ -39,7 +39,7 @@ The structured and standardized approach to Bash coding enables:
 
 ## Documentation
 
-- **[BASH-CODING-STYLE.md](BASH-CODING-STYLE.md)** - The complete coding standard
+- **[BASH-CODING-STANDARD.md](BASH-CODING-STANDARD.md)** - The complete coding standard
 
 ## Related Resources
 
