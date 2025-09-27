@@ -2,6 +2,8 @@
 
 This document defines a comprehensive Bash coding standard and presumes Bash 5.2 and higher; this is not a compatibility standard.
 
+NOTE: Do not over-engineer scripts; functions and varaibles not required for the operation of the script should not be included and/or removed.
+
 ## Contents
 1. [Script Structure](#script-structure)
 2. [Variable Declarations](#variable-declarations)
@@ -54,11 +56,6 @@ SCRIPT_NAME=${SCRIPT_PATH##*/}      # Script basename
 readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
 ```
 
-For legacy definitions (PRG0, PRGDIR, PRG) add this if necessary:
-```bash
-# Legacy definitions
-declare -n PRG0=SCRIPT_PATH PRG=SCRIPT_NAME PRGDIR=SCRIPT_DIR
-```
 #### shopt
 
 **Recommended settings for most scripts:**
@@ -520,8 +517,8 @@ die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
 yn() {
   ((PROMPT)) || return 0
   local -- reply
-  read -r -n1 -p "$SCRIPT_NAME: ${YELLOW}$1${NC} y/n " reply
-  echo
+  >&2 read -r -n 1 -p "$SCRIPT_NAME: ${YELLOW}$1${NC} y/n " reply
+  >&2 echo
   [[ ${reply,,} == y ]]
 }
 ```
