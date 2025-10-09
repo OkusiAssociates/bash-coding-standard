@@ -41,11 +41,13 @@ NOTE: Do not over-engineer scripts; functions and varaibles not required for the
 First lines of all scripts must include a `#!shebang`, global `#shellcheck` definitions (optional), a brief description of the script, and first command `set -euo pipefail`.
 
 ```bash
-#!/usr/bin/env bash
+#!/bin/bash
 #shellcheck disable=SC1090,SC1091
 # Get directory sizes and report usage statistics
 set -euo pipefail
 ```
+
+Allowable shebangs are `#!/bin/bash`, `#!/usr/bin/bash` and `#!/usr/bin/env bash`.
 
 ### Script Metadata
 ```bash
@@ -62,17 +64,18 @@ readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
 
 ```bash
 # STRONGLY RECOMMENDED - apply to all scripts
-shopt -s inherit_errexit  # Critical: makes set -e work in subshells, command substitutions
+shopt -s inherit_errexit  # Critical: makes set -e work in subshells,
+                          # command substitutions
 shopt -s shift_verbose    # Catches shift errors when no arguments remain
 shopt -s extglob          # Enables extended glob patterns like !(*.txt)
 
 # CHOOSE ONE based on use case:
 shopt -s nullglob   # For arrays/loops: unmatched globs → empty (no error)
-# OR
+                # OR
 shopt -s failglob   # For strict scripts: unmatched globs → error
 
 # OPTIONAL based on needs:
-shopt -s globstar   # Enable ** for recursive matching (can be slow on deep trees)
+shopt -s globstar   # Enable ** for recursive matching (slow on deep trees)
 ```
 
 Example for typical script:
@@ -83,20 +86,22 @@ shopt -s inherit_errexit shift_verbose extglob nullglob
 ### File Extensions
 - Executables should have `.sh` extension or no extension
 - Libraries must have `.sh` extension and should not be executable
+- Libraries that can also be executed as scripts can have either `.sh` or no extension
 - If the executable will be available globally via PATH, always use no extension
 
 ## Variable Declarations
 
 ### Type-Specific Declarations
 ```bash
-declare -i VERBOSE=1         # Integer variables
-declare -- STRING_VAR=''     # String variables
+declare -i VERBOSE=1        # Integer variables
+declare -- STRING_VAR=''    # String variables
 declare -a MY_ARRAY=()      # Indexed arrays
-declare -A HASH_VAR=()       # Associative arrays
-readonly -- CONSTANT='val'   # Read-only constants
+declare -A HASH_VAR=()      # Associative arrays
+readonly -- CONSTANT='val'  # Read-only constants
 ```
 
 ### Variable Scoping
+- Always declare function-specific variables as `local`
 ```bash
 # Global variables - declare at top
 declare -i VERBOSE=1 PROMPT=1
@@ -106,14 +111,6 @@ main() {
   local -a add_specs=()      # Local array
   local -i max_depth=3       # Local integer
   local -- path              # Local string
-}
-```
-
-### Local Variables
-- Always declare function-specific variables as `local`
-```bash
-my_func() {
-  local -- name="$1"
   local -- dir
   dir=$(dirname "$name")
   # ...
@@ -124,7 +121,8 @@ my_func() {
 
 | Constants | UPPER_CASE |
 | Global variables | UPPER_CASE or CamelCase |
-| Local variables | lower_case with underscores; CamelCase acceptable for important local variables |
+| Local variables | lower_case with underscores; CamelCase acceptable |
+| | for important local variables |
 | Internal/private functions | prefix with _ |
 | Environment variables | UPPER_CASE with underscores |
 
@@ -161,7 +159,7 @@ my_function() {
   …
 }
 
-# Private functions can use leading underscore
+# Private functions use leading underscore
 _my_private_function() {
   …
 }
@@ -234,7 +232,8 @@ set -euo pipefail
 ### Exit Codes
 ```bash
 die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
-die 0                    # Success
+die 0                    # Success (or use `exit 0`)
+die 1                    # Exit 1 with no error message
 die 1 'General error'    # General error
 die 2 'Missing argument' # Missing argument
 die 22 'Invalid option'  # Invalid argument
@@ -261,7 +260,7 @@ command 2>/dev/null || true
 
 ### Conditionals
 ```bash
-# Prefer [[ ]] over [ ]
+# Always use [[ ]] over [ ]
 [[ -d "$path" ]] && echo 'Directory exists'
 
 # Arithmetic conditionals use (())
@@ -280,13 +279,18 @@ fi
 
 ### Case Statements
 ```bash
-case "$1" in
-  -h|--help)      usage 0 ;;
-  -v|--verbose)   VERBOSE+=1 ;;
-  -q|--quiet)     VERBOSE=0 ;;
-  -*)             die 22 "Invalid option '$1'" ;;
-  *)              Paths+=("$1") ;;
-esac
+while (($?))
+  case "$1" in
+    -v|--verbose) VERBOSE+=1 ;;
+    -q|--quiet)   VERBOSE=0 ;;
+    -h|--help)    show_help 0 ;;
+    -[vqh]*) #shellcheck disable=SC2046 #split up single options
+                  set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+    -*)           die 22 "Invalid option '$1'" ;;
+    *)            Paths+=("$1") ;;
+  esac
+  shift
+done
 ```
 
 ### Loops
@@ -351,7 +355,7 @@ ${var,,}                       # Lowercase conversion
 ```bash
 # Always quote variables in conditionals
 [[ -d "$path" ]]               # Correct
-[[ -d $path ]]                 # Wrong
+[[ -d $path ]]                 # ✗ Wrong
 
 # Quote array expansions
 "${array[@]}"                  # All elements as separate words
@@ -359,7 +363,7 @@ ${var,,}                       # Lowercase conversion
 
 # Always prefer single quotes for string literals
 var='A script message'         # Correct
-var="A script message"         # Incorrect; unnecessary use of double quotes
+var="A script message"         # ✗ Incorrect; unnecessary use of double quotes
 var="A 'script' message"       # Correct
 ```
 
@@ -445,7 +449,7 @@ while (($#)); do case "$1" in
   -v|--verbose)   VERBOSE+=1 ;;
   -q|--quiet)     VERBOSE=0 ;;
   -V|--version)   echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
-  -h|--help)      usage 0 ;;
+  -h|--help)      show_help 0 ;;
   -[amLpvqVh]*) #shellcheck disable=SC2046 #split up single options
                   set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;
   -*)             die 22 "Invalid option '$1'" ;;
@@ -525,7 +529,7 @@ yn() {
 
 ### Usage Documentation
 ```bash
-usage() {
+show_help() {
   cat <<EOT
 $SCRIPT_NAME $VERSION - Brief description
 
@@ -564,7 +568,7 @@ for file in ./*.txt; do
   process "$file"
 done
 
-# Incorrect - filenames starting with - become flags
+# ✗ Incorrect - filenames starting with - become flags
 rm -v *
 ```
 
@@ -754,7 +758,7 @@ fi
 ```bash
 # Always use $() instead of backticks
 var=$(command)       # Correct
-var=`command`        # Wrong!
+var=`command`        # ✗ Wrong!
 ```
 
 ### 6. ShellCheck Compliance
