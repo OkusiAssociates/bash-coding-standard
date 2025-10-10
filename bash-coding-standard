@@ -1,21 +1,120 @@
 #!/usr/bin/env bash
 # Display the Bash Coding Standard document with optional markdown rendering
-set -euo pipefail
-shopt -s inherit_errexit shift_verbose
+# This script can be executed directly or sourced to provide display_BCS function
 
-# Script metadata
-SCRIPT_PATH=$(readlink -en -- "$0")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-readonly -- SCRIPT_PATH SCRIPT_DIR
+# Global variables - use -gx to force global scope even when declared in functions
+declare -gx BCS_PATH BCS_FILE
+declare -gx BCS_MD
 
-# Build command to display the coding standard
-declare -a cmds=(cat "$@" "$SCRIPT_DIR"/BASH-CODING-STANDARD.md)
+# Find BASH-CODING-STANDARD.md in standard locations
+find_bcs_file() {
+  local -- script_dir="$1"
+  local -a search_paths=(
+    "$script_dir/BASH-CODING-STANDARD.md"                                      # Same directory (development)
+    '/usr/local/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md'     # YaTTI local install
+    '/usr/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md'           # YaTTI system install
+  )
 
-# Use md2ansi for formatted output if available and outputting to terminal
-if [[ -t 1 ]] && command -v md2ansi &>/dev/null; then
-  cmds[0]=md
+  local -- path
+  for path in "${search_paths[@]}"; do
+    [[ -f "$path" ]] && { echo "$path"; return 0; }
+  done
+
+  return 1
+}
+
+display_BCS() {
+  if [[ -z "$BCS_FILE" ]]; then
+    declare -gx BCS_FILE
+    BCS_FILE="${BASH_SOURCE[0]}"
+  fi
+
+  if (($#)); then
+    # Show help
+    if [[ $1 == '-h' || $1 == '--help' ]]; then
+      cat <<'EOF'
+bash-coding-standard - Display the Bash Coding Standard
+
+Usage: bash-coding-standard [OPTIONS]
+
+Options:
+  -h, --help           Show this help message
+  -c, --cat, -        Force cat output (bypass md2ansi rendering)
+  -b, --bash-declare  Export BCS_MD as bash variable declaration
+
+Without options, displays the standard with md2ansi rendering if available
+and terminal output is detected, otherwise uses cat.
+
+Examples:
+  bash-coding-standard              # Display with auto-detection
+  bash-coding-standard -c           # Force plain text output
+  bash-coding-standard --cat        # Same as -c
+  source bash-coding-standard       # Load display_BCS function
+EOF
+      return 0
+    fi
+
+    # Initialize BCS_MD variable and print declaration
+    if [[ $1 == '-b' || $1 == '--bash-declare' ]]; then
+      shift
+      declare -gx BCS_MD
+      BCS_MD="$(cat -s "$@" "$BCS_FILE")"
+      declare -p BCS_MD
+      return 0
+    fi
+
+    # Force cat output (bypass md2ansi)
+    if [[ $1 == '-' || $1 == '-c' || $1 == '--cat' ]]; then
+      shift
+      cat -s "$@" "$BCS_FILE"
+      return 0
+    fi
+  fi
+  
+  # Use md2ansi for formatted output if available and outputting to terminal
+  if [[ -t 1 ]] && command -v md2ansi &>/dev/null; then
+    md2ansi "$@" "$BCS_FILE" | less -FXRS
+    return 0
+  fi
+
+  cat -s  "$@" "$BCS_FILE"
+  return 0
+}
+declare -fx display_BCS
+
+# Dual-purpose script: execute directly or source for function access
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  # Executed mode - run as standalone script
+  set -euo pipefail
+  shopt -s inherit_errexit shift_verbose
+
+  # Script metadata and find BASH-CODING-STANDARD.md
+  BCS_PATH=$(readlink -en -- "$0")
+  BCS_FILE=$(find_bcs_file "${BCS_PATH%/*}") || {
+    >&2 echo "Error: BASH-CODING-STANDARD.md not found"
+    >&2 echo "Searched locations:"
+    >&2 echo "  - ${BCS_PATH%/*}/BASH-CODING-STANDARD.md"
+    >&2 echo "  - /usr/local/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md"
+    >&2 echo "  - /usr/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md"
+    exit 1
+  }
+
+  display_BCS "$@"
+
+else
+  # Sourced mode - provide function and pre-load content
+  BCS_PATH="$(readlink -en -- "${BASH_SOURCE[0]}")"
+  BCS_FILE=$(find_bcs_file "${BCS_PATH%/*}") || {
+    >&2 echo "Warning: BASH-CODING-STANDARD.md not found when sourcing"
+    BCS_FILE=''
+  }
+
+  # Auto-initialize BCS_MD if file was found
+  if [[ -n "$BCS_FILE" ]]; then
+    BCS_MD="$(cat -s "$BCS_FILE")"
+  fi
+
+  declare -gx BCS_MD BCS_FILE BCS_PATH
 fi
-
-"${cmds[@]}" 
 
 #fin

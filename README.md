@@ -33,16 +33,34 @@ Modern software development increasingly relies on automated refactoring, AI-ass
 
 ### Installation
 
-Clone this repository or install the viewer script globally:
+Clone this repository and optionally install system-wide:
 
 ```bash
 # Clone the repository
 git clone https://github.com/OkusiAssociates/bash-coding-standard.git
 cd bash-coding-standard
 
-# Optional: Install bash-coding-standard viewer globally
+# Run from cloned directory (development mode)
+./bash-coding-standard
+
+# Or install system-wide (recommended for system use)
+sudo make install
+
+# Or install manually
+sudo mkdir -p /usr/local/bin
+sudo mkdir -p /usr/local/share/yatti/bash-coding-standard
 sudo cp bash-coding-standard /usr/local/bin/
 sudo chmod +x /usr/local/bin/bash-coding-standard
+sudo cp BASH-CODING-STANDARD.md /usr/local/share/yatti/bash-coding-standard/
+```
+
+**Uninstall:**
+```bash
+sudo make uninstall
+
+# Or manually
+sudo rm /usr/local/bin/bash-coding-standard
+sudo rm -rf /usr/local/share/yatti/bash-coding-standard
 ```
 
 ### View the Standard
@@ -75,12 +93,10 @@ shellcheck -x your-script.sh
 bash-coding-standard/
 ├── BASH-CODING-STANDARD.md          # The complete coding standard (2,145 lines)
 ├── bash-coding-standard             # Viewer script for the standard
-├── CLAUDE.md                        # Guidance for Claude Code AI assistant
+├── Makefile                         # Installation/uninstallation helper
 ├── RESTRUCTURE-VALIDATION.md        # Validation checklist for 2025-10-10 restructuring
 ├── README.md                        # This file
-├── LICENSE                          # CC BY-SA 4.0 license
-├── .gitcommit                       # Helper script for git operations
-└── .github/                         # GitHub workflows and configuration
+└── LICENSE                          # CC BY-SA 4.0 license
 ```
 
 ## Documentation
@@ -88,7 +104,6 @@ bash-coding-standard/
 ### Primary Documents
 
 - **[BASH-CODING-STANDARD.md](BASH-CODING-STANDARD.md)** - The complete coding standard (2,145 lines, 14 sections)
-- **[CLAUDE.md](CLAUDE.md)** - Instructions for Claude Code when working with this repository
 - **[RESTRUCTURE-VALIDATION.md](RESTRUCTURE-VALIDATION.md)** - Validation of the 2025-10-10 restructuring
 
 ### Standard Structure (14 Sections)
@@ -233,11 +248,10 @@ main "$@"
 
 ### For AI Assistants
 
-1. Consult [CLAUDE.md](CLAUDE.md) for repository-specific guidance
-2. All generated scripts must comply with BASH-CODING-STANDARD.md
-3. Use the standard messaging functions consistently
-4. Include proper error handling in all functions
-5. Remove unused utility functions in production scripts (see Section 6: Production Script Optimization)
+1. All generated scripts must comply with BASH-CODING-STANDARD.md
+2. Use the standard messaging functions consistently
+3. Include proper error handling in all functions
+4. Remove unused utility functions in production scripts (see Section 6: Production Script Optimization)
 
 ### Integration with Editors
 
@@ -326,7 +340,6 @@ Common issues:
 
 - Open an issue on GitHub for standard clarifications
 - Refer to specific sections in BASH-CODING-STANDARD.md
-- Check CLAUDE.md for AI-specific guidance
 
 ## License
 
