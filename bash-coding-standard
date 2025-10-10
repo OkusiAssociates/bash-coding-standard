@@ -12,7 +12,7 @@ readonly -- SCRIPT_PATH SCRIPT_DIR
 declare -a cmds=(cat "$@" "$SCRIPT_DIR"/BASH-CODING-STANDARD.md)
 
 # Use md2ansi for formatted output if available and outputting to terminal
-if [[ -t 1 ]] && command -v XXXmd2ansi &>/dev/null; then
+if [[ -t 1 ]] && command -v md2ansi &>/dev/null; then
   cmds[0]=md
 fi
 
