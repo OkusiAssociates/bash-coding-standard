@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Display the Bash Coding Standard document with optional markdown rendering
+set -euo pipefail
+shopt -s inherit_errexit shift_verbose
+
+# Script metadata
+SCRIPT_PATH=$(readlink -en -- "$0")
+SCRIPT_DIR=${SCRIPT_PATH%/*}
+readonly -- SCRIPT_PATH SCRIPT_DIR
+
+# Build command to display the coding standard
+declare -a cmds=(cat "$@" "$SCRIPT_DIR"/BASH-CODING-STANDARD.md)
+
+# Use md2ansi for formatted output if available and outputting to terminal
+if [[ -t 1 ]] && command -v XXXmd2ansi &>/dev/null; then
+  cmds[0]=md
+fi
+
+"${cmds[@]}" 
+
+#fin

@@ -5,23 +5,22 @@ This document defines a comprehensive Bash coding standard and presumes Bash 5.2
 NOTE: Do not over-engineer scripts; functions and varaibles not required for the operation of the script should not be included and/or removed.
 
 ## Contents
-1. [Script Structure](#script-structure)
-2. [Variable Declarations](#variable-declarations)
-3. [Functions](#functions)
-4. [Error Handling](#error-handling)
-5. [Control Flow](#control-flow)
-6. [String Operations](#string-operations)
-7. [Arrays](#arrays)
-8. [Command-Line Arguments](#command-line-arguments)
-9. [Output and Messaging](#output-and-messaging)
-10. [File Operations](#file-operations)
-11. [Calling Commands](#calling-commands)
+1. [Script Structure & Layout](#script-structure--layout)
+2. [Variable Declarations & Constants](#variable-declarations--constants)
+3. [Variable Expansion & Parameter Substitution](#variable-expansion--parameter-substitution)
+4. [Quoting & String Literals](#quoting--string-literals)
+5. [Arrays](#arrays)
+6. [Functions](#functions)
+7. [Control Flow](#control-flow)
+8. [Error Handling](#error-handling)
+9. [Input/Output & Messaging](#inputoutput--messaging)
+10. [Command-Line Arguments](#command-line-arguments)
+11. [File Operations](#file-operations)
 12. [Security Considerations](#security-considerations)
-13. [Best Practices](#best-practices)
-14. [Summary](#summary)
-15. [Advanced Topics](#advanced-topics)
+13. [Code Style & Best Practices](#code-style--best-practices)
+14. [Advanced Patterns](#advanced-patterns)
 
-## Script Structure
+## Script Structure & Layout
 
 ### Standard Script Layout
 1. Shebang
@@ -58,7 +57,7 @@ SCRIPT_NAME=${SCRIPT_PATH##*/}      # Script basename
 readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
 ```
 
-#### shopt
+### shopt
 
 **Recommended settings for most scripts:**
 
@@ -89,7 +88,80 @@ shopt -s inherit_errexit shift_verbose extglob nullglob
 - Libraries that can also be executed as scripts can have either `.sh` or no extension
 - If the executable will be available globally via PATH, always use no extension
 
-## Variable Declarations
+### Function Organization
+
+Organize functions in a logical order from lowest-level (messaging, utilities) to highest-level (main logic):
+
+```bash
+#!/bin/bash
+set -euo pipefail
+
+# 1. Messaging functions (lowest level - used by everything)
+_msg() { ... }
+success() { >&2 _msg "$@"; }
+warn() { >&2 _msg "$@"; }
+info() { >&2 _msg "$@"; }
+error() { >&2 _msg "$@"; }
+die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
+
+# 2. Documentation functions (no dependencies)
+show_help() { ... }
+
+# 3. Helper/utility functions (used by validation and business logic)
+yn() { ... }
+noarg() { ... }
+
+# 4. Validation functions (check prerequisites, dependencies)
+check_root() { ... }
+check_prerequisites() { ... }
+check_builtin_support() { ... }
+
+# 5. Business logic functions (domain-specific operations)
+build_standalone() { ... }
+build_builtin() { ... }
+install_standalone() { ... }
+install_builtin() { ... }
+install_completions() { ... }
+update_man_database() { ... }
+
+# 6. Orchestration/flow functions
+show_completion_message() { ... }
+uninstall_files() { ... }
+
+# 7. Main function (highest level - orchestrates everything)
+main() {
+  check_root
+  check_prerequisites
+
+  if ((UNINSTALL)); then
+    uninstall_files
+    return 0
+  fi
+
+  build_standalone
+  ((INSTALL_BUILTIN)) && build_builtin
+
+  install_standalone
+  install_completions
+  ((INSTALL_BUILTIN)) && install_builtin
+
+  update_man_database
+  show_completion_message
+}
+
+main "$@"
+#fin
+```
+
+**Rationale:** This bottom-up organization means each function can safely call functions defined above it. Readers can understand low-level primitives first, then see how they're composed into higher-level operations.
+
+**Guidelines:**
+- Group related functions with section comments (e.g., `# Validation functions`)
+- Within each group, order alphabetically or by logical dependency
+- Keep `main()` last (before the invocation line)
+- Dependencies flow downward: higher functions call lower functions, never upward
+
+## Variable Declarations & Constants
 
 ### Type-Specific Declarations
 ```bash
@@ -133,6 +205,46 @@ readonly -- PATH_TO_FILES='/some/path'
 
 # Environment variables
 declare -x ORACLE_SID='PROD'
+```
+
+### Readonly After Group
+
+When declaring multiple readonly variables, declare them first, then make them all readonly in a single statement:
+
+```bash
+# Script metadata
+VERSION='1.0.0'
+SCRIPT_PATH=$(readlink -en -- "$0")
+SCRIPT_DIR=${SCRIPT_PATH%/*}
+SCRIPT_NAME=${SCRIPT_PATH##*/}
+readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
+
+# Color definitions
+if [[ -t 1 && -t 2 ]]; then
+  declare -- RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' NC=$'\033[0m'
+else
+  declare -- RED='' GREEN='' YELLOW='' NC=''
+fi
+readonly -- RED GREEN YELLOW NC
+```
+
+**Rationale:** This pattern improves readability by clearly separating the initialization phase from the protection phase. It makes the group of related constants visually distinct and easier to maintain.
+
+**Anti-pattern:**
+```bash
+# ✗ Don't make each variable readonly individually
+readonly VERSION='1.0.0'
+readonly SCRIPT_PATH=$(readlink -en -- "$0")
+readonly SCRIPT_DIR=${SCRIPT_PATH%/*}
+readonly SCRIPT_NAME=${SCRIPT_PATH##*/}
+```
+
+### Readonly Declaration
+Use `readonly` for constants to prevent accidental modification.
+
+```bash
+readonly -- SCRIPT_PATH="$(readlink -en -- "$0")"
+readonly -a REQUIRED=(pandoc git md2ansi)
 ```
 
 ### Boolean Flags Pattern
@@ -221,355 +333,7 @@ main() {
 - Update derived variables when base variables change (especially in argument parsing)
 - Declare derived variables immediately after their dependencies when practical
 
-### Readonly After Group
-
-When declaring multiple readonly variables, declare them first, then make them all readonly in a single statement:
-
-```bash
-# Script metadata
-VERSION='1.0.0'
-SCRIPT_PATH=$(readlink -en -- "$0")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
-
-# Color definitions
-if [[ -t 1 && -t 2 ]]; then
-  declare -- RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' NC=$'\033[0m'
-else
-  declare -- RED='' GREEN='' YELLOW='' NC=''
-fi
-readonly -- RED GREEN YELLOW NC
-```
-
-**Rationale:** This pattern improves readability by clearly separating the initialization phase from the protection phase. It makes the group of related constants visually distinct and easier to maintain.
-
-**Anti-pattern:**
-```bash
-# ✗ Don't make each variable readonly individually
-readonly VERSION='1.0.0'
-readonly SCRIPT_PATH=$(readlink -en -- "$0")
-readonly SCRIPT_DIR=${SCRIPT_PATH%/*}
-readonly SCRIPT_NAME=${SCRIPT_PATH##*/}
-```
-
-## Functions
-
-### Function Definition Pattern
-```bash
-# Single-line functions for simple operations
-vecho() { ((VERBOSE)) || return 0; _msg "$@"; }
-
-# Multi-line functions with local variables
-main() {
-  local -i exitcode=0
-  local -- variable
-  # Function body
-  return "$exitcode"
-}
-```
-
-### Function Names
-- Use lowercase with underscores
-```bash
-# Good
-my_function() {
-  …
-}
-
-# Private functions use leading underscore
-_my_private_function() {
-  …
-}
-```
-
-### Main Function
-- Always include a `main()` function for scripts longer than ~40 lines
-- Helps with organization and testing
-
-```bash
-main() {
-  # Main logic here
-  local -i rc=0
-  # Process arguments, call functions
-  return "$rc"
-}
-
-# Call main with all arguments
-main "$@"
-#fin
-```
-
-### Function Export
-```bash
-# Export functions when needed by subshells
-grep() { /usr/bin/grep "$@"; }
-find() { /usr/bin/find "$@"; }
-declare -fx grep find
-```
-
-### Standard Utility Functions
-```bash
-# Messaging functions
-_msg() { ... }           # Core message function
-vecho() { ... }          # Verbose echo
-success() { ... }        # Success messages
-warn() { ... }           # Warning messages
-info() { ... }           # Information messages
-error() { ... }          # Error messages (to stderr)
-die() { ... }            # Exit with error
-
-# Helper functions
-noarg() { ... }          # Validate argument presence
-decp() { ... }           # Debug print variable declaration
-trim() { ... }           # Trim whitespace
-s() { ... }              # Pluralization helper
-yn() { ... }             # Yes/no prompt
-```
-
-### Production Script Optimization
-Once a script is mature and ready for production:
-- Remove unused utility functions (e.g., if `yn()`, `decp()`, `trim()`, `s()` are not used)
-- Remove unused global variables (e.g., `PROMPT`, `DEBUG` if not referenced)
-- Remove unused messaging functions that your script doesn't call
-- Keep only the functions and variables your script actually needs
-- This reduces script size, improves clarity, and eliminates maintenance burden
-
-Example: A simple script may only need `error()` and `die()`, not the full messaging suite.
-
-### Function Organization
-
-Organize functions in a logical order from lowest-level (messaging, utilities) to highest-level (main logic):
-
-```bash
-#!/bin/bash
-set -euo pipefail
-
-# 1. Messaging functions (lowest level - used by everything)
-_msg() { ... }
-success() { >&2 _msg "$@"; }
-warn() { >&2 _msg "$@"; }
-info() { >&2 _msg "$@"; }
-error() { >&2 _msg "$@"; }
-die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
-
-# 2. Documentation functions (no dependencies)
-show_help() { ... }
-
-# 3. Helper/utility functions (used by validation and business logic)
-yn() { ... }
-noarg() { ... }
-
-# 4. Validation functions (check prerequisites, dependencies)
-check_root() { ... }
-check_prerequisites() { ... }
-check_builtin_support() { ... }
-
-# 5. Business logic functions (domain-specific operations)
-build_standalone() { ... }
-build_builtin() { ... }
-install_standalone() { ... }
-install_builtin() { ... }
-install_completions() { ... }
-update_man_database() { ... }
-
-# 6. Orchestration/flow functions
-show_completion_message() { ... }
-uninstall_files() { ... }
-
-# 7. Main function (highest level - orchestrates everything)
-main() {
-  check_root
-  check_prerequisites
-
-  if ((UNINSTALL)); then
-    uninstall_files
-    return 0
-  fi
-
-  build_standalone
-  ((INSTALL_BUILTIN)) && build_builtin
-
-  install_standalone
-  install_completions
-  ((INSTALL_BUILTIN)) && install_builtin
-
-  update_man_database
-  show_completion_message
-}
-
-main "$@"
-#fin
-```
-
-**Rationale:** This bottom-up organization means each function can safely call functions defined above it. Readers can understand low-level primitives first, then see how they're composed into higher-level operations.
-
-**Guidelines:**
-- Group related functions with section comments (e.g., `# Validation functions`)
-- Within each group, order alphabetically or by logical dependency
-- Keep `main()` last (before the invocation line)
-- Dependencies flow downward: higher functions call lower functions, never upward
-
-## Error Handling
-
-### Exit on Error
-```bash
-set -euo pipefail
-# -e: Exit on command failure
-# -u: Exit on undefined variable
-# -o pipefail: Exit on pipe failure
-```
-
-### Exit Codes
-```bash
-die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
-die 0                    # Success (or use `exit 0`)
-die 1                    # Exit 1 with no error message
-die 1 'General error'    # General error
-die 2 'Missing argument' # Missing argument
-die 22 'Invalid option'  # Invalid argument
-```
-
-### Trap Handling
-```bash
-cleanup() {
-  local -i exitcode=${1:-0}
-  # Cleanup operations
-  #...
-  exit "$exitcode"
-}
-trap 'cleanup $?' SIGINT SIGTERM EXIT
-```
-
-### Error Suppression
-```bash
-# Suppress errors when appropriate
-command 2>/dev/null || true
-```
-
-## Control Flow
-
-### Conditionals
-```bash
-# Always use [[ ]] over [ ]
-[[ -d "$path" ]] && echo 'Directory exists'
-
-# Arithmetic conditionals use (())
-((VERBOSE==0)) || echo 'Verbose mode'
-((var > 5)) || return 1
-
-# Complex conditionals
-if [[ -n "$var" ]] && ((count > 0)); then
-  process_data
-fi
-
-# Short-circuit evaluation
-[[ -f "$file" ]] && source "$file"
-((VERBOSE)) || return 0
-```
-
-### Case Statements
-
-#### Compact Format
-For simple, single-action cases:
-
-```bash
-while (($#)); do
-  case "$1" in
-    -v|--verbose) VERBOSE+=1 ;;
-    -q|--quiet)   VERBOSE=0 ;;
-    -h|--help)    show_help; exit 0 ;;
-    -[vqh]*) #shellcheck disable=SC2046 #split up single options
-                  set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;
-    -*)           die 22 "Invalid option '$1'" ;;
-    *)            Paths+=("$1") ;;
-  esac
-  shift
-done
-```
-
-#### Expanded Format
-For multi-line actions or complex logic, use expanded format with column alignment:
-
-```bash
-while (($#)); do
-  case $1 in
-    --builtin)    INSTALL_BUILTIN=1
-                  BUILTIN_EXPLICITLY_REQUESTED=1
-                  ;;
-    --no-builtin) SKIP_BUILTIN=1
-                  ;;
-    --prefix)     shift
-                  PREFIX="$1"
-                  BIN_DIR="$PREFIX"/bin
-                  LOADABLE_DIR="$PREFIX"/lib/bash/loadables
-                  # Comments within case branches allowed
-                  ;;
-    -V|--version) echo "$SCRIPT_NAME $VERSION"
-                  exit 0
-                  ;;
-    -h|--help)    show_help
-                  exit 0
-                  ;;
-    -[Vh]*) #shellcheck disable=SC2046
-                  set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"
-                  ;;
-    -*)           die 22 "Invalid option '$1'"
-                  ;;
-    *)            >&2 show_help
-                  die 2 "Unknown option '$1'"
-                  ;;
-  esac
-  shift
-done
-```
-
-**Formatting guidelines:**
-- Align actions at column 14-18 for readability
-- Use blank lines between `;;` and next pattern for multi-line actions
-- Comments within branches are acceptable
-- Omit quotes on `$1` in `case $1 in` (one-word literal exception)
-- Choose compact or expanded consistently within a script
-```
-
-### Loops
-```bash
-# For loops with arrays
-for spec in "${Specs[@]}"; do
-  find_expr+=(-name "$spec" -o)
-done
-
-# While loops for argument parsing
-while (($#)); do
-  case "$1" in
-    # ... ;;
-  esac
-  shift
-done
-
-# Reading command output
-readarray -t found_files < <(find ... 2>/dev/null || true)
-```
-
-### Pipes to While
-Prefer process substitution or `readarray` instead of piping to while.
-
-```bash
-# Good - process substitution
-while IFS= read -r line; do
-  echo "$line"
-done < <(my_command)
-
-# Good - readarray
-readarray -t my_array < <(my_command)
-
-# Bad - creates subshell where variables don't persist
-my_command | while read -r line; do
-  echo "$line"
-done
-```
-
-## String Operations
+## Variable Expansion & Parameter Substitution
 
 ### Parameter Expansion
 ```bash
@@ -714,13 +478,13 @@ echo "Version ${VERSION} installed to ${PREFIX}"  # ✗ Unnecessary
 
 **Key Principle:** Use `"$var"` by default. Only add braces when the shell requires them for correct parsing.
 
-### Quoting Rules
+## Quoting & String Literals
 
 **General Principle:** Use single quotes (`'...'`) for static string literals. Use double quotes (`"..."`) only when variable expansion, command substitution, or escape sequences are needed.
 
 **Rationale:** Single quotes prevent any interpretation by the shell, making them safer and clearer for literal strings. Double quotes should signal "this string needs shell processing" to both programmers and AI assistants.
 
-#### Static Strings and Constants
+### Static Strings and Constants
 
 Always use single quotes for string literals that contain no variables:
 
@@ -741,9 +505,9 @@ MESSAGE='Operation completed successfully'
 [[ "$status" == "success" ]]     # ✗ Unnecessary double quotes
 ```
 
-#### Exception: One-Word Literals
+### Exception: One-Word Literals
 
-Literal one-word values (containing only alphanumeric characters, underscores, hyphens, dots, or slashes—no spaces or special shell characters) may be left unquoted in variable assignments and simple conditionals:
+Literal one-word values (containing only alphanumeric characters, underscores, hyphens, dots, or slashes—no spaces or special shell characters) may be left unquoted in variable assignments and simple conditionals. Note: This subsection provides guidance for a common practice, but using quotes is more defensive and consistent.
 
 ```bash
 # Variable assignments - one-word literals can be unquoted
@@ -778,7 +542,7 @@ ERROR_MSG='File not found'         # ✓ Correct - contains spaces
 
 **Recommendation:** While unquoted one-word literals are permitted and common, using quotes is more defensive and consistent. Choose based on your team's preference, but be consistent within a script.
 
-#### Strings with Variables
+### Strings with Variables
 
 Use double quotes when the string contains variables that need expansion:
 
@@ -801,7 +565,7 @@ info '[DRY-RUN] Would install:' \
      "  $LIB_DIR/mailheader.so"
 ```
 
-#### Mixed Quoting
+### Mixed Quoting
 
 When a string contains both static text and variables, use double quotes with single quotes nested for literal protection:
 
@@ -816,7 +580,7 @@ info "Would remove: '$old_file' → '$new_file'"
 error "Permission denied for directory '$dir_path'"
 ```
 
-#### Command Substitution in Strings
+### Command Substitution in Strings
 
 Use double quotes when including command substitution:
 
@@ -831,7 +595,7 @@ VERSION="$(git describe --tags 2>/dev/null || echo 'unknown')"
 TIMESTAMP="$(date -Ins)"
 ```
 
-#### Variables in Conditionals
+### Variables in Conditionals
 
 Always quote variables in test expressions (regardless of single/double quote choice for static strings):
 
@@ -846,7 +610,7 @@ Always quote variables in test expressions (regardless of single/double quote ch
 [[ "$var" == "value" ]]                  # ✗ Unnecessary - static value doesn't need double quotes
 ```
 
-#### Array Expansions
+### Array Expansions
 
 Always quote array expansions with double quotes:
 
@@ -864,7 +628,7 @@ done
 my_function "${args[@]}"
 ```
 
-#### Here Documents
+### Here Documents
 
 Use appropriate quoting for here documents based on whether expansion is needed:
 
@@ -889,7 +653,7 @@ Script: $SCRIPT_NAME
 EOF
 ```
 
-#### Echo and Printf Statements
+### Echo and Printf Statements
 
 ```bash
 # Static strings - single quotes
@@ -906,7 +670,7 @@ echo "  • Binary: $BIN_DIR/mailheader"
 echo "  • Version: $VERSION (released $(date))"
 ```
 
-#### Summary Reference
+### Summary Reference
 
 | Content Type | Quote Style | Example |
 |--------------|-------------|---------|
@@ -923,7 +687,7 @@ echo "  • Version: $VERSION (released $(date))"
 | Here doc (no expansion) | Single on delimiter | `cat <<'EOF'` |
 | Here doc (with expansion) | No quotes on delimiter | `cat <<EOF` |
 
-#### Anti-Patterns (What NOT to Do)
+### Anti-Patterns (What NOT to Do)
 
 ```bash
 # ✗ Don't use double quotes for static strings
@@ -1020,106 +784,278 @@ cmd_args=( -o "$output" --verbose )
 mycmd "${cmd_args[@]}"
 ```
 
-## Command-Line Arguments
+## Functions
 
-### Standard Argument Parsing Pattern
+### Function Definition Pattern
 ```bash
-while (($#)); do case "$1" in
-  -a|--add)       noarg "$@"; shift
-                  process_argument "$1" ;;
-  -m|--depth)     noarg "$@"; shift
-                  max_depth="$1" ;;
-  -L|--follow-symbolic)
-                  symbolic='-L' ;;
-  -p|--prompt)    PROMPT=1; VERBOSE=1 ;;
-  -v|--verbose)   VERBOSE+=1 ;;
-  -q|--quiet)     VERBOSE=0 ;;
-  -V|--version)   echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
-  -h|--help)      show_help; exit 0 ;;
-  -[amLpvqVh]*) #shellcheck disable=SC2046 #split up single options
-                  set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;
-  -*)             die 22 "Invalid option '$1'" ;;
-  *)              Paths+=("$1") ;;
-esac; shift; done
-```
+# Single-line functions for simple operations
+vecho() { ((VERBOSE)) || return 0; _msg "$@"; }
 
-### Argument Validation
-```bash
-noarg() {
-  if (($# < 2)) || [[ ${2:0:1} == '-' ]]; then
-    die 2 "Missing argument for option '$1'"
-  fi
-  return 0
-}
-```
-
-### Argument Parsing Location
-
-**Recommendation:** Place argument parsing inside the `main()` function rather than at the top level.
-
-**Benefits:**
-- Better testability (can test `main()` with different arguments)
-- Cleaner variable scoping (parsing vars are local to `main()`)
-- Encapsulation (argument handling is part of main execution flow)
-- Easier to mock/test in unit tests
-
-```bash
-# Recommended: Parsing inside main()
+# Multi-line functions with local variables
 main() {
-  # Parse command-line arguments
-  while (($#)); do
-    case $1 in
-      --builtin)    INSTALL_BUILTIN=1
-                    BUILTIN_EXPLICITLY_REQUESTED=1
-                    ;;
-      --no-builtin) SKIP_BUILTIN=1
-                    ;;
-      --prefix)     shift
-                    PREFIX="$1"
-                    # Update derived paths
-                    BIN_DIR="$PREFIX"/bin
-                    LOADABLE_DIR="$PREFIX"/lib/bash/loadables
-                    ;;
-      -h|--help)    show_help
-                    exit 0
-                    ;;
-      -*)           die 22 "Invalid option '$1'"
-                    ;;
-      *)            >&2 show_help
-                    die 2 "Unknown option '$1'"
-                    ;;
-    esac
-    shift
-  done
+  local -i exitcode=0
+  local -- variable
+  # Function body
+  return "$exitcode"
+}
+```
 
-  # Proceed with main logic
-  check_prerequisites
-  build_components
-  install_components
+### Function Names
+- Use lowercase with underscores
+```bash
+# Good
+my_function() {
+  …
 }
 
+# Private functions use leading underscore
+_my_private_function() {
+  …
+}
+```
+
+### Main Function
+- Always include a `main()` function for scripts longer than ~40 lines
+- Helps with organization and testing
+
+```bash
+main() {
+  # Main logic here
+  local -i rc=0
+  # Process arguments, call functions
+  return "$rc"
+}
+
+# Call main with all arguments
 main "$@"
 #fin
 ```
 
-**Alternative:** For very simple scripts (< 40 lines) without a `main()` function, top-level parsing is acceptable:
-
+### Function Export
 ```bash
-#!/bin/bash
-set -euo pipefail
-
-# Simple scripts can parse at top level
-while (($#)); do case "$1" in
-  -v|--verbose) VERBOSE=1 ;;
-  -h|--help)    show_help; exit 0 ;;
-  -*)           die 22 "Invalid option '$1'" ;;
-  *)            FILES+=("$1") ;;
-esac; shift; done
-
-# Rest of simple script logic
+# Export functions when needed by subshells
+grep() { /usr/bin/grep "$@"; }
+find() { /usr/bin/find "$@"; }
+declare -fx grep find
 ```
 
-## Output and Messaging
+### Production Script Optimization
+Once a script is mature and ready for production:
+- Remove unused utility functions (e.g., if `yn()`, `decp()`, `trim()`, `s()` are not used)
+- Remove unused global variables (e.g., `PROMPT`, `DEBUG` if not referenced)
+- Remove unused messaging functions that your script doesn't call
+- Keep only the functions and variables your script actually needs
+- This reduces script size, improves clarity, and eliminates maintenance burden
+
+Example: A simple script may only need `error()` and `die()`, not the full messaging suite.
+
+## Control Flow
+
+### Conditionals
+```bash
+# Always use [[ ]] over [ ]
+[[ -d "$path" ]] && echo 'Directory exists'
+
+# Arithmetic conditionals use (())
+((VERBOSE==0)) || echo 'Verbose mode'
+((var > 5)) || return 1
+
+# Complex conditionals
+if [[ -n "$var" ]] && ((count > 0)); then
+  process_data
+fi
+
+# Short-circuit evaluation
+[[ -f "$file" ]] && source "$file"
+((VERBOSE)) || return 0
+```
+
+### Case Statements
+
+#### Compact Format
+For simple, single-action cases:
+
+```bash
+while (($#)); do
+  case "$1" in
+    -v|--verbose) VERBOSE+=1 ;;
+    -q|--quiet)   VERBOSE=0 ;;
+    -h|--help)    show_help; exit 0 ;;
+    -[vqh]*) #shellcheck disable=SC2046 #split up single options
+                  set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+    -*)           die 22 "Invalid option '$1'" ;;
+    *)            Paths+=("$1") ;;
+  esac
+  shift
+done
+```
+
+#### Expanded Format
+For multi-line actions or complex logic, use expanded format with column alignment:
+
+```bash
+while (($#)); do
+  case $1 in
+    --builtin)    INSTALL_BUILTIN=1
+                  BUILTIN_EXPLICITLY_REQUESTED=1
+                  ;;
+    --no-builtin) SKIP_BUILTIN=1
+                  ;;
+    --prefix)     shift
+                  PREFIX="$1"
+                  BIN_DIR="$PREFIX"/bin
+                  LOADABLE_DIR="$PREFIX"/lib/bash/loadables
+                  # Comments within case branches allowed
+                  ;;
+    -V|--version) echo "$SCRIPT_NAME $VERSION"
+                  exit 0
+                  ;;
+    -h|--help)    show_help
+                  exit 0
+                  ;;
+    -[Vh]*) #shellcheck disable=SC2046
+                  set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"
+                  ;;
+    -*)           die 22 "Invalid option '$1'"
+                  ;;
+    *)            >&2 show_help
+                  die 2 "Unknown option '$1'"
+                  ;;
+  esac
+  shift
+done
+```
+
+**Formatting guidelines:**
+- Align actions at column 14-18 for readability
+- Use blank lines between `;;` and next pattern for multi-line actions
+- Comments within branches are acceptable
+- Omit quotes on `$1` in `case $1 in` (one-word literal exception)
+- Choose compact or expanded consistently within a script
+```
+
+### Loops
+```bash
+# For loops with arrays
+for spec in "${Specs[@]}"; do
+  find_expr+=(-name "$spec" -o)
+done
+
+# While loops for argument parsing
+while (($#)); do
+  case "$1" in
+    # ... ;;
+  esac
+  shift
+done
+
+# Reading command output
+readarray -t found_files < <(find ... 2>/dev/null || true)
+```
+
+### Pipes to While
+Prefer process substitution or `readarray` instead of piping to while.
+
+```bash
+# Good - process substitution
+while IFS= read -r line; do
+  echo "$line"
+done < <(my_command)
+
+# Good - readarray
+readarray -t my_array < <(my_command)
+
+# Bad - creates subshell where variables don't persist
+my_command | while read -r line; do
+  echo "$line"
+done
+```
+
+### Arithmetic Operations
+```bash
+# Always declare integer variables explicitly
+declare -i i j result
+
+# Increment operations - avoid ++ due to return value issues
+i+=1              # **Preferred** for declared integers
+((i+=1))          # Always returns 0 (success)
+((++i))           # Returns value AFTER increment (safe)
+((i++))           # DANGEROUS: Returns value BEFORE increment
+                  # If i=0, returns 0 (falsey), triggers set -e
+                  # Example: i=0; ((i++)) && echo "never prints"
+
+# Arithmetic expressions
+((result = x * y + z))
+j=$((i * 2 + 5))
+
+# Arithmetic conditionals
+if ((i < j)); then
+  echo 'i is less than j'
+fi
+
+# Short-form evaluation
+((x > y)) && echo 'x is greater'
+```
+
+## Error Handling
+
+### Exit on Error
+```bash
+set -euo pipefail
+# -e: Exit on command failure
+# -u: Exit on undefined variable
+# -o pipefail: Exit on pipe failure
+```
+
+### Exit Codes
+```bash
+die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
+die 0                    # Success (or use `exit 0`)
+die 1                    # Exit 1 with no error message
+die 1 'General error'    # General error
+die 2 'Missing argument' # Missing argument
+die 22 'Invalid option'  # Invalid argument
+```
+
+### Trap Handling
+```bash
+cleanup() {
+  local -i exitcode=${1:-0}
+  # Cleanup operations
+  #...
+  exit "$exitcode"
+}
+trap 'cleanup $?' SIGINT SIGTERM EXIT
+```
+
+### Checking Return Values
+Always check return values and give informative error messages.
+
+```bash
+# Explicit check with informative error
+if ! mv "$file_list" "$dest_dir/"; then
+  >&2 echo "Unable to move $file_list to $dest_dir"
+  exit 1
+fi
+
+# Simple cases with ||
+mv "$file_list" "$dest_dir/" || die 1 'Failed to move files'
+
+# Group commands for error handling
+mv "$file_list" "$dest_dir/" || {
+  >&2 echo "Move failed: $file_list -> $dest_dir"
+  cleanup
+  exit 1
+}
+```
+
+### Error Suppression
+```bash
+# Suppress errors when appropriate
+command 2>/dev/null || true
+```
+
+## Input/Output & Messaging
 
 ### Standardized Messaging and Color Support
 ```bash
@@ -1251,6 +1187,105 @@ show_completion_message() {
 
 **Rationale:** Messaging functions provide consistent formatting, verbosity control, and visual indicators (colors, icons). Plain `echo` is better for structured multi-line output where you need precise control over formatting and spacing.
 
+## Command-Line Arguments
+
+### Standard Argument Parsing Pattern
+```bash
+while (($#)); do case "$1" in
+  -a|--add)       noarg "$@"; shift
+                  process_argument "$1" ;;
+  -m|--depth)     noarg "$@"; shift
+                  max_depth="$1" ;;
+  -L|--follow-symbolic)
+                  symbolic='-L' ;;
+  -p|--prompt)    PROMPT=1; VERBOSE=1 ;;
+  -v|--verbose)   VERBOSE+=1 ;;
+  -q|--quiet)     VERBOSE=0 ;;
+  -V|--version)   echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
+  -h|--help)      show_help; exit 0 ;;
+  -[amLpvqVh]*) #shellcheck disable=SC2046 #split up single options
+                  set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+  -*)             die 22 "Invalid option '$1'" ;;
+  *)              Paths+=("$1") ;;
+esac; shift; done
+```
+
+### Argument Validation
+```bash
+noarg() {
+  if (($# < 2)) || [[ ${2:0:1} == '-' ]]; then
+    die 2 "Missing argument for option '$1'"
+  fi
+  return 0
+}
+```
+
+### Argument Parsing Location
+
+**Recommendation:** Place argument parsing inside the `main()` function rather than at the top level.
+
+**Benefits:**
+- Better testability (can test `main()` with different arguments)
+- Cleaner variable scoping (parsing vars are local to `main()`)
+- Encapsulation (argument handling is part of main execution flow)
+- Easier to mock/test in unit tests
+
+```bash
+# Recommended: Parsing inside main()
+main() {
+  # Parse command-line arguments
+  while (($#)); do
+    case $1 in
+      --builtin)    INSTALL_BUILTIN=1
+                    BUILTIN_EXPLICITLY_REQUESTED=1
+                    ;;
+      --no-builtin) SKIP_BUILTIN=1
+                    ;;
+      --prefix)     shift
+                    PREFIX="$1"
+                    # Update derived paths
+                    BIN_DIR="$PREFIX"/bin
+                    LOADABLE_DIR="$PREFIX"/lib/bash/loadables
+                    ;;
+      -h|--help)    show_help
+                    exit 0
+                    ;;
+      -*)           die 22 "Invalid option '$1'"
+                    ;;
+      *)            >&2 show_help
+                    die 2 "Unknown option '$1'"
+                    ;;
+    esac
+    shift
+  done
+
+  # Proceed with main logic
+  check_prerequisites
+  build_components
+  install_components
+}
+
+main "$@"
+#fin
+```
+
+**Alternative:** For very simple scripts (< 40 lines) without a `main()` function, top-level parsing is acceptable:
+
+```bash
+#!/bin/bash
+set -euo pipefail
+
+# Simple scripts can parse at top level
+while (($#)); do case "$1" in
+  -v|--verbose) VERBOSE=1 ;;
+  -h|--help)    show_help; exit 0 ;;
+  -*)           die 22 "Invalid option '$1'" ;;
+  *)            FILES+=("$1") ;;
+esac; shift; done
+
+# Rest of simple script logic
+```
+
 ## File Operations
 
 ### Safe File Testing
@@ -1304,52 +1339,6 @@ cat <<EOF
 User: $USER
 Home: $HOME
 EOF
-```
-
-## Calling Commands
-
-### Checking Return Values
-Always check return values and give informative error messages.
-
-```bash
-# Explicit check with informative error
-if ! mv "$file_list" "$dest_dir/"; then
-  >&2 echo "Unable to move $file_list to $dest_dir"
-  exit 1
-fi
-
-# Simple cases with ||
-mv "$file_list" "$dest_dir/" || die 1 'Failed to move files'
-
-# Group commands for error handling
-mv "$file_list" "$dest_dir/" || {
-  >&2 echo "Move failed: $file_list -> $dest_dir"
-  cleanup
-  exit 1
-}
-```
-
-### Builtin Commands vs External Commands
-Always prefer shell builtins over external commands for performance.
-
-```bash
-# Good - bash builtins
-addition=$((x + y))
-string=${var^^}  # uppercase
-if [[ -f "$file" ]]; then
-
-# Avoid - external commands
-addition=$(expr "$x" + "$y")
-string=$(echo "$var" | tr '[:lower:]' '[:upper:]')
-if [ -f "$file" ]; then
-```
-
-### Readonly Declaration
-Use `readonly` for constants to prevent accidental modification.
-
-```bash
-readonly -- SCRIPT_PATH="$(readlink -en -- "$0")"
-readonly -a REQUIRED=(pandoc git md2ansi)
 ```
 
 ## Security Considerations
@@ -1409,18 +1398,48 @@ declare -a cmd=(ls -la "$dir")
 "${cmd[@]}"
 ```
 
-## Best Practices
+### Input Sanitization
 
-### 1. Indentation
+Validate and sanitize user input to prevent security issues.
+
+```bash
+# Validate filename - no directory traversal
+sanitize_filename() {
+  local -- name="$1"
+  # Remove directory traversal attempts
+  name="${name//\.\./}"
+  name="${name//\//}"
+  # Allow only safe characters
+  if [[ ! "$name" =~ ^[a-zA-Z0-9._-]+$ ]]; then
+    die 1 'Invalid filename: contains unsafe characters'
+  fi
+  echo "$name"
+}
+
+# Validate numeric input
+validate_number() {
+  local -- input="$1"
+  if [[ ! "$input" =~ ^-?[0-9]+$ ]]; then
+    die 1 "Invalid number: '$input'"
+  fi
+  echo "$input"
+}
+```
+
+## Code Style & Best Practices
+
+### Code Formatting
+
+#### Indentation
 - !! Use 2 spaces for indentation (NOT tabs)
 - Maintain consistent indentation throughout
 
-### 2. Line Length
+#### Line Length
 - Keep lines under 100 characters when practical
 - Long file paths and URLs can exceed 100 chars when necessary
 - Use line continuation with `\` for long commands
 
-### 3. Comments
+#### Comments
 
 Focus comments on explaining **WHY** (rationale, business logic, non-obvious decisions) rather than **WHAT** (which the code already shows):
 
@@ -1469,7 +1488,7 @@ fi
 - Code that is self-explanatory through good naming
 ```
 
-### 3a. Blank Line Usage
+#### Blank Line Usage
 
 Use blank lines strategically to improve readability by creating visual separation between logical blocks:
 
@@ -1522,7 +1541,7 @@ main "$@"
 - Avoid multiple consecutive blank lines (one is sufficient)
 - No blank line needed between short, related statements
 
-### 3b. Section Comments
+#### Section Comments
 
 Use lightweight section comments to organize code into logical groups. These are simpler than full 80-dash separators and provide just enough context:
 
@@ -1570,40 +1589,33 @@ die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
 - `# Business logic` / `# Main logic`
 - `# Validation functions` / `# Installation functions`
 
-### 4. Arithmetic Operations
-```bash
-# Always declare integer variables explicitly
-declare -i i j result
+### Language Best Practices
 
-# Increment operations - avoid ++ due to return value issues
-i+=1              # **Preferred** for declared integers
-((i+=1))          # Always returns 0 (success)
-((++i))           # Returns value AFTER increment (safe)
-((i++))           # DANGEROUS: Returns value BEFORE increment
-                  # If i=0, returns 0 (falsey), triggers set -e
-                  # Example: i=0; ((i++)) && echo "never prints"
-
-# Arithmetic expressions
-((result = x * y + z))
-j=$((i * 2 + 5))
-
-# Arithmetic conditionals
-if ((i < j)); then
-  echo 'i is less than j'
-fi
-
-# Short-form evaluation
-((x > y)) && echo 'x is greater'
-```
-
-### 5. Command Substitution
+#### Command Substitution
 ```bash
 # Always use $() instead of backticks
 var=$(command)       # Correct
 var=`command`        # ✗ Wrong!
 ```
 
-### 6. ShellCheck Compliance
+#### Builtin Commands vs External Commands
+Always prefer shell builtins over external commands for performance.
+
+```bash
+# Good - bash builtins
+addition=$((x + y))
+string=${var^^}  # uppercase
+if [[ -f "$file" ]]; then
+
+# Avoid - external commands
+addition=$(expr "$x" + "$y")
+string=$(echo "$var" | tr '[:lower:]' '[:upper:]')
+if [ -f "$file" ]; then
+```
+
+### Development Practices
+
+#### ShellCheck Compliance
 ShellCheck is **compulsory** for all scripts. Use `#shellcheck disable=...` only for documented exceptions.
 
 ```bash
@@ -1615,7 +1627,7 @@ set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}"
 shellcheck -x myscript.sh
 ```
 
-### 7. Script Termination
+#### Script Termination
 ```bash
 # Always end scripts with #fin marker
 main "$@"
@@ -1623,7 +1635,7 @@ main "$@"
 
 ```
 
-### 8. Defensive Programming
+#### Defensive Programming
 ```bash
 # Default values for critical variables
 : "${VERBOSE:=0}"
@@ -1636,7 +1648,7 @@ main "$@"
 set -u
 ```
 
-### 9. Performance Considerations
+#### Performance Considerations
 ```bash
 # Minimize subshells
 # Use built-in string operations over external commands
@@ -1644,7 +1656,7 @@ set -u
 # Use process substitution over temp files
 ```
 
-### 10. Testing Support
+#### Testing Support
 ```bash
 # Make functions testable
 # Use dependency injection for external commands
@@ -1652,17 +1664,7 @@ set -u
 # Return meaningful exit codes
 ```
 
-## Summary
-
-This coding style emphasizes:
-- **Robustness**: Strict error handling, proper quoting, defensive programming
-- **Readability**: Clear structure, consistent naming, good documentation
-- **Maintainability**: Modular functions, proper scoping, standardized patterns
-- **Performance**: Efficient constructs, minimal subshells, built-in operations
-
-Follow these guidelines to ensure consistent, robust, reliable, and maintainable Bash scripts.
-
-## Advanced Topics
+## Advanced Patterns
 
 ### Debugging and Development
 
@@ -1780,53 +1782,6 @@ trap cleanup_temps EXIT
 TEMP_FILES+=("$(mktemp)")
 ```
 
-### Input Sanitization
-
-Validate and sanitize user input to prevent security issues.
-
-```bash
-# Validate filename - no directory traversal
-sanitize_filename() {
-  local -- name="$1"
-  # Remove directory traversal attempts
-  name="${name//\.\./}"
-  name="${name//\//}"
-  # Allow only safe characters
-  if [[ ! "$name" =~ ^[a-zA-Z0-9._-]+$ ]]; then
-    die 1 'Invalid filename: contains unsafe characters'
-  fi
-  echo "$name"
-}
-
-# Validate numeric input
-validate_number() {
-  local -- input="$1"
-  if [[ ! "$input" =~ ^-?[0-9]+$ ]]; then
-    die 1 "Invalid number: '$input'"
-  fi
-  echo "$input"
-}
-
-# Validate email format
-validate_email() {
-  local -- email="$1"
-  local -- regex='^[[:alnum:]._%+-]+@[[:alnum:].-]+\.[[:alpha:]]{2,}$'
-  [[ "$email" =~ $regex ]] || die 1 'Invalid email format'
-  echo "$email"
-}
-
-# Escape special characters for safe display
-escape_html() {
-  local -- text="$1"
-  text="${text//&/&amp;}"
-  text="${text//</&lt;}"
-  text="${text//>/&gt;}"
-  text="${text//\"/&quot;}"
-  text="${text//\'/&#39;}"
-  echo "$text"
-}
-```
-
 ### Environment Variable Best Practices
 
 Proper handling of environment variables.
@@ -1939,7 +1894,7 @@ run_with_timeout() {
 
 ### Logging Best Practices
 
-Structured logging for production scripts.
+Structured logging for production scripts (simplified pattern).
 
 ```bash
 # Simple file logging
@@ -1949,24 +1904,10 @@ readonly LOG_LEVEL="${LOG_LEVEL:-INFO}"
 # Ensure log directory exists
 [[ -d "${LOG_FILE%/*}" ]] || mkdir -p "${LOG_FILE%/*}"
 
-# Log levels as integers for comparison
-declare -A LOG_LEVELS=(
-  [DEBUG]=0
-  [INFO]=1
-  [WARN]=2
-  [ERROR]=3
-  [FATAL]=4
-)
-
 # Structured logging function
 log() {
   local -- level="$1"
   local -- message="${*:2}"
-  local -i level_int="${LOG_LEVELS[$level]:-1}"
-  local -i current_level="${LOG_LEVELS[$LOG_LEVEL]:-1}"
-
-  # Skip if below current log level
-  ((level_int >= current_level)) || return 0
 
   # Format: ISO8601 timestamp, script name, level, message
   printf '[%s] [%s] [%-5s] %s\n' \
@@ -1981,16 +1922,6 @@ log_debug() { log DEBUG "$@"; }
 log_info()  { log INFO "$@"; }
 log_warn()  { log WARN "$@"; }
 log_error() { log ERROR "$@"; }
-log_fatal() { log FATAL "$@"; die 1; }
-
-# Log rotation check
-check_log_rotation() {
-  local -i max_size=$((10 * 1024 * 1024))  # 10MB
-  if [[ -f "$LOG_FILE" ]] && (( $(stat -f%z "$LOG_FILE" 2>/dev/null || stat -c%s "$LOG_FILE" 2>/dev/null || echo 0) > max_size )); then
-    mv "$LOG_FILE" "${LOG_FILE}.old"
-    log_info 'Log rotated'
-  fi
-}
 ```
 
 ### Performance Profiling
@@ -2019,38 +1950,6 @@ timer() {
   end=$EPOCHREALTIME
   runtime=$(awk "BEGIN {print $end - $start}")
   info "Execution time: ${runtime}s"
-}
-
-# Memory usage tracking
-check_memory() {
-  local -i pid="${1:-$$}"
-  local -i mem_kb
-
-  if [[ -f "/proc/$pid/status" ]]; then
-    mem_kb=$(grep VmRSS "/proc/$pid/status" | awk '{print $2}')
-    info "Memory usage: $((mem_kb / 1024))MB"
-  fi
-}
-
-# Benchmark comparisons
-benchmark() {
-  local -- name="$1"
-  local -i iterations="${2:-100}"
-  shift 2
-
-  local -- start end
-  start=$EPOCHREALTIME
-
-  for ((i=0; i<iterations; i+=1)); do
-    "$@" >/dev/null 2>&1
-  done
-
-  end=$EPOCHREALTIME
-  local -- total_time=$(awk "BEGIN {print $end - $start}")
-  local -- avg_time=$(awk "BEGIN {print $total_time / $iterations}")
-
-  printf '%s: %d iterations, %.3fs total, %.6fs average\n' \
-    "$name" "$iterations" "$total_time" "$avg_time"
 }
 ```
 
