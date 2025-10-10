@@ -34,7 +34,7 @@ NOTE: Do not over-engineer scripts; functions and varaibles not required for the
 9. Business logic functions
 10. `main()` function
 11. Script invocation: `main "$@"`
-12. End marker: `#fin`
+12. End marker: `#fin` or `#end`
 
 ### Shebang and Initial Setup
 First lines of all scripts must include a `#!shebang`, global `#shellcheck` definitions (optional), a brief description of the script, and first command `set -euo pipefail`.
@@ -321,8 +321,10 @@ fi
 ((VERBOSE)) && VERBOSE=0 || VERBOSE=1
 
 # Set flags from command-line parsing
---dry-run)    DRY_RUN=1 ;;
---skip-build) SKIP_BUILD=1 ;;
+case $1 in
+  --dry-run)    DRY_RUN=1 ;;
+  --skip-build) SKIP_BUILD=1 ;;
+esac
 ```
 
 **Guidelines:**
@@ -362,13 +364,13 @@ main() {
   # Parse arguments
   while (($#)); do
     case $1 in
-      --prefix)     shift
-                    PREFIX="$1"
-                    # Update all derived paths when PREFIX changes
-                    BIN_DIR="$PREFIX"/bin
-                    LIB_DIR="$PREFIX"/lib
-                    DOC_DIR="$PREFIX"/share/doc
-                    ;;
+      --prefix) shift
+                PREFIX="$1"
+                # Update all derived paths when PREFIX changes
+                BIN_DIR="$PREFIX"/bin
+                LIB_DIR="$PREFIX"/lib
+                DOC_DIR="$PREFIX"/share/doc
+                ;;
     esac
     shift
   done
@@ -1689,7 +1691,7 @@ shellcheck -x myscript.sh
 
 #### Script Termination
 ```bash
-# Always end scripts with #fin marker
+# Always end scripts with #fin (or #end) marker
 main "$@"
 #fin
 

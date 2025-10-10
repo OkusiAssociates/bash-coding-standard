@@ -3,7 +3,7 @@
 # This script can be executed directly or sourced to provide display_BCS function
 
 # Version
-declare -x VERSION='1.0.0'
+declare -x BCS_VERSION='1.0.0'
 
 # Global variables
 declare -x BCS_PATH BCS_FILE BCS_MD
@@ -71,7 +71,7 @@ Examples:
 EOF
                     return 0
                     ;;
-      -V|--version) echo "bash-coding-standard $VERSION"
+      -V|--version) echo "bash-coding-standard $BCS_VERSION"
                     return 0
                     ;;
       -c|--cat|-)   force_cat=1
@@ -159,6 +159,7 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   shopt -s inherit_errexit shift_verbose
 
   # Script metadata and find BASH-CODING-STANDARD.md
+  declare -- BCS_PATH BCS_FILE
   BCS_PATH=$(readlink -en -- "$0")
   BCS_FILE=$(find_bcs_file "${BCS_PATH%/*}") || {
     >&2 echo "bash-coding-standard: error: BASH-CODING-STANDARD.md not found"
@@ -168,17 +169,16 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
     >&2 echo '  - /usr/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md'
     exit 1
   }
-  readonly -- VERSION BCS_PATH BCS_FILE
 
   display_BCS "$@"
 
 else
   # Sourced mode - provide function and pre-load content
+  declare -- BCS_PATH BCS_FILE BCS_MD
   BCS_PATH="$(readlink -en -- "${BASH_SOURCE[0]}")"
   BCS_FILE=$(find_bcs_file "${BCS_PATH%/*}") && {
     # Auto-initialize BCS_MD if file was found
     BCS_MD="$(cat -- "$BCS_FILE")"
-    readonly -- VERSION BCS_PATH BCS_FILE BCS_MD
     true
   } || {
     >&2 echo "bash-coding-standard: error: BASH-CODING-STANDARD.md not found when sourcing"
