@@ -2,22 +2,24 @@
 # Display the Bash Coding Standard document with optional markdown rendering
 # This script can be executed directly or sourced to provide display_BCS function
 
-# Global variables - use -gx to force global scope even when declared in functions
-declare -gx BCS_PATH BCS_FILE
-declare -gx BCS_MD
+# Version
+declare -x VERSION='1.0.0'
+
+# Global variables
+declare -x BCS_PATH BCS_FILE BCS_MD
 
 # Find BASH-CODING-STANDARD.md in standard locations
 find_bcs_file() {
   local -- script_dir="$1"
   local -a search_paths=(
-    "$script_dir/BASH-CODING-STANDARD.md"                                      # Same directory (development)
-    '/usr/local/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md'     # YaTTI local install
-    '/usr/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md'           # YaTTI system install
+    "$script_dir"                                     # Same directory (development)
+    '/usr/local/share/yatti/bash-coding-standard'     # YaTTI local install
+    '/usr/share/yatti/bash-coding-standard'           # YaTTI system install
   )
 
   local -- path
   for path in "${search_paths[@]}"; do
-    [[ -f "$path" ]] && { echo "$path"; return 0; }
+    [[ -f "$path"/BASH-CODING-STANDARD.md ]] && { echo "$path"/BASH-CODING-STANDARD.md; return 0; }
   done
 
   return 1
@@ -25,59 +27,120 @@ find_bcs_file() {
 
 display_BCS() {
   if [[ -z "$BCS_FILE" ]]; then
-    declare -gx BCS_FILE
-    BCS_FILE="${BASH_SOURCE[0]}"
+    BCS_PATH="$(readlink -en -- "${BASH_SOURCE[0]}")"
+    BCS_FILE=$(find_bcs_file "${BCS_PATH%/*}") || {
+      >&2 echo "bash-coding-standard: error: BASH-CODING-STANDARD.md not found when sourcing"
+      return 1
+    }
+    BCS_MD=''
   fi
 
-  if (($#)); then
-    # Show help
-    if [[ $1 == '-h' || $1 == '--help' ]]; then
-      cat <<'EOF'
+  # Local variables for argument parsing
+  local -i force_cat=0 force_bash=0 force_md2ansi=0 force_json=0 squeeze_blanks=0
+  local -a viewer_args=()
+
+  # Parse command-line arguments
+  while (($#)); do
+    case $1 in
+      -h|--help)    cat <<'EOF'
 bash-coding-standard - Display the Bash Coding Standard
 
-Usage: bash-coding-standard [OPTIONS]
+Usage: bash-coding-standard [OPTIONS] [VIEWER_OPTIONS]
 
 Options:
   -h, --help           Show this help message
-  -c, --cat, -        Force cat output (bypass md2ansi rendering)
-  -b, --bash-declare  Export BCS_MD as bash variable declaration
+  -V, --version        Show version information
+  -c, --cat            Force cat output (bypass md2ansi rendering)
+  -s, --squeeze        Squeeze consecutive blank lines (uses cat -s)
+  -b, --bash           Export BCS_MD as bash variable declaration
+  -a, --md2ansi        Force md2ansi output
+  -j, --json           Output as JSON format
 
-Without options, displays the standard with md2ansi rendering if available
-and terminal output is detected, otherwise uses cat.
+Any additional arguments are passed to the viewer command (cat or md2ansi).
 
 Examples:
   bash-coding-standard              # Display with auto-detection
   bash-coding-standard -c           # Force plain text output
   bash-coding-standard --cat        # Same as -c
+  bash-coding-standard --json       # Output as JSON
+  bash-coding-standard -s           # Squeeze consecutive blank lines
+  bash-coding-standard -n           # Pass -n to viewer (line numbers)
   source bash-coding-standard       # Load display_BCS function
 EOF
-      return 0
-    fi
+                    return 0
+                    ;;
+      -V|--version) echo "bash-coding-standard $VERSION"
+                    return 0
+                    ;;
+      -c|--cat|-)   force_cat=1
+                    ;;
+      -s|--squeeze) squeeze_blanks=1
+                    ;;
+      -b|--bash)
+                    force_bash=1
+                    ;;
+      -a|--md2ansi)
+                    force_md2ansi=1
+                    ;;
+      -j|--json)
+                    force_json=1
+                    ;;
+      -[hVcsbaaj]*) #shellcheck disable=SC2046 #split up combined short options
+                    set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"
+                    ;;
+      -*)           viewer_args+=("$1")
+                    ;;
+      *)            >&2 echo "bash-coding-standard: error: Too many arguments '$1'"
+                    return 2
+                    ;;
+    esac
+    shift
+  done
 
-    # Initialize BCS_MD variable and print declaration
-    if [[ $1 == '-b' || $1 == '--bash-declare' ]]; then
-      shift
-      declare -gx BCS_MD
-      BCS_MD="$(cat -s "$@" "$BCS_FILE")"
-      declare -p BCS_MD
-      return 0
+  # Execute based on parsed flags
+  if ((force_json)); then
+    # Use jq if available for proper JSON encoding, otherwise manual escape
+    if command -v jq &>/dev/null; then
+      jq -Rs '{("bash-coding-standard"): .}' -- "$BCS_FILE"
+    else
+      # Manual JSON string escaping
+      local -- content
+      content=$(cat -- "$BCS_FILE")
+      # Escape backslashes, quotes, and control characters
+      content="${content//\\/\\\\}"     # Escape backslashes first
+      content="${content//\"/\\\"}"     # Escape double quotes
+      content="${content//$'\n'/\\n}"   # Escape newlines
+      content="${content//$'\r'/\\r}"   # Escape carriage returns
+      content="${content//$'\t'/\\t}"   # Escape tabs
+      content="${content//$'\f'/\\f}"   # Escape form feeds
+      content="${content//$'\b'/\\b}"   # Escape backspaces
+      printf '{\"bash-coding-standard\":\"%s\"}\n' "$content"
     fi
-
-    # Force cat output (bypass md2ansi)
-    if [[ $1 == '-' || $1 == '-c' || $1 == '--cat' ]]; then
-      shift
-      cat -s "$@" "$BCS_FILE"
-      return 0
-    fi
-  fi
-  
-  # Use md2ansi for formatted output if available and outputting to terminal
-  if [[ -t 1 ]] && command -v md2ansi &>/dev/null; then
-    md2ansi "$@" "$BCS_FILE" | less -FXRS
     return 0
   fi
 
-  cat -s  "$@" "$BCS_FILE"
+  if ((force_bash)); then
+    declare -gx BCS_MD
+    ((squeeze_blanks)) && BCS_MD="$(cat -s -- "${viewer_args[@]}" "$BCS_FILE")" \
+                       || BCS_MD="$(cat -- "${viewer_args[@]}" "$BCS_FILE")"
+    declare -p BCS_MD
+    return 0
+  fi
+
+  if ((force_cat)); then
+    ((squeeze_blanks)) && cat -s -- "${viewer_args[@]}" "$BCS_FILE" \
+                       || cat -- "${viewer_args[@]}" "$BCS_FILE"
+    return 0
+  fi
+
+  # Use md2ansi for formatted output if available and outputting to terminal
+  if ((force_md2ansi)) || [[ -t 1 ]] && command -v md2ansi &>/dev/null; then
+    md2ansi "${viewer_args[@]}" -- "$BCS_FILE" | less -FXRS
+    return 0
+  fi
+
+  ((squeeze_blanks)) && cat -s -- "${viewer_args[@]}" "$BCS_FILE" \
+                     || cat -- "${viewer_args[@]}" "$BCS_FILE"
   return 0
 }
 declare -fx display_BCS
@@ -91,30 +154,29 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   # Script metadata and find BASH-CODING-STANDARD.md
   BCS_PATH=$(readlink -en -- "$0")
   BCS_FILE=$(find_bcs_file "${BCS_PATH%/*}") || {
-    >&2 echo "Error: BASH-CODING-STANDARD.md not found"
-    >&2 echo "Searched locations:"
+    >&2 echo "bash-coding-standard: error: BASH-CODING-STANDARD.md not found"
+    >&2 echo 'Searched locations:'
     >&2 echo "  - ${BCS_PATH%/*}/BASH-CODING-STANDARD.md"
-    >&2 echo "  - /usr/local/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md"
-    >&2 echo "  - /usr/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md"
+    >&2 echo '  - /usr/local/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md'
+    >&2 echo '  - /usr/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md'
     exit 1
   }
+  readonly -- VERSION BCS_PATH BCS_FILE
 
   display_BCS "$@"
 
 else
   # Sourced mode - provide function and pre-load content
   BCS_PATH="$(readlink -en -- "${BASH_SOURCE[0]}")"
-  BCS_FILE=$(find_bcs_file "${BCS_PATH%/*}") || {
-    >&2 echo "Warning: BASH-CODING-STANDARD.md not found when sourcing"
-    BCS_FILE=''
+  BCS_FILE=$(find_bcs_file "${BCS_PATH%/*}") && {
+    # Auto-initialize BCS_MD if file was found
+    BCS_MD="$(cat -- "$BCS_FILE")"
+    readonly -- VERSION BCS_PATH BCS_FILE BCS_MD
+    true
+  } || {
+    >&2 echo "bash-coding-standard: error: BASH-CODING-STANDARD.md not found when sourcing"
+    false
   }
-
-  # Auto-initialize BCS_MD if file was found
-  if [[ -n "$BCS_FILE" ]]; then
-    BCS_MD="$(cat -s "$BCS_FILE")"
-  fi
-
-  declare -gx BCS_MD BCS_FILE BCS_PATH
 fi
 
 #fin

@@ -463,6 +463,16 @@ ${var,,}                       # Lowercase conversion
 "${SCRIPT_DIR}"/build/lib   # ✗ Unnecessary
 ```
 
+**Note:** The pattern `"$var"/literal/"$var"` (mixing quoted variables with unquoted literals/separators) is acceptable and preferred in assignments, conditionals, and command arguments. The quotes protect the variables while separators (/, -, ., etc.) naturally delimit without requiring quotes:
+
+```bash
+# All acceptable forms
+result="$path"/file.txt
+config="$HOME"/.config/"$APP"/settings
+[[ -f "$dir"/subdir/file ]]
+echo "$path"/build/output
+```
+
 **Variable usage in strings:**
 ```bash
 # Correct
