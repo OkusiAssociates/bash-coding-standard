@@ -12,9 +12,9 @@ declare -x BCS_PATH BCS_FILE BCS_MD
 find_bcs_file() {
   local -- script_dir="$1"
   local -a search_paths=(
-    "$script_dir"                                     # Same directory (development)
-    '/usr/local/share/yatti/bash-coding-standard'     # YaTTI local install
-    '/usr/share/yatti/bash-coding-standard'           # YaTTI system install
+    "$script_dir"                                 # Same directory (development)
+    '/usr/local/share/yatti/bash-coding-standard' # YaTTI local install
+    '/usr/share/yatti/bash-coding-standard'       # YaTTI system install
   )
 
   local -- path
@@ -45,13 +45,15 @@ display_BCS() {
       -h|--help)    cat <<'EOF'
 bash-coding-standard - Display the Bash Coding Standard
 
-Usage: bash-coding-standard [OPTIONS] [VIEWER_OPTIONS]
+Usage: bash-coding-standard [OPTIONS] [SUB-COMMAND] [VIEWER_OPTIONS]
 
 Options:
   -h, --help           Show this help message
   -V, --version        Show version information
-  -c, --cat            Force cat output (bypass md2ansi rendering)
   -s, --squeeze        Squeeze consecutive blank lines (uses cat -s)
+
+Sub-commands (mutually exclusive - only one allowed):
+  -c, --cat            Force cat output (bypass md2ansi rendering)
   -b, --bash           Export BCS_MD as bash variable declaration
   -a, --md2ansi        Force md2ansi output
   -j, --json           Output as JSON format
@@ -64,7 +66,7 @@ Examples:
   bash-coding-standard --cat        # Same as -c
   bash-coding-standard --json       # Output as JSON
   bash-coding-standard -s           # Squeeze consecutive blank lines
-  bash-coding-standard -n           # Pass -n to viewer (line numbers)
+  bash-coding-standard --cat -n     # Pass -n to cat (line numbers)
   source bash-coding-standard       # Load display_BCS function
 EOF
                     return 0
@@ -85,7 +87,7 @@ EOF
       -j|--json)
                     force_json=1
                     ;;
-      -[hVcsbaaj]*) #shellcheck disable=SC2046 #split up combined short options
+      -[hVcsbaj]*) #shellcheck disable=SC2046 #split up combined short options
                     set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"
                     ;;
       -*)           viewer_args+=("$1")
@@ -96,6 +98,14 @@ EOF
     esac
     shift
   done
+
+  # Validate that at most one sub-command was specified
+  local -i subcommand_count=$((force_cat + force_bash + force_json + force_md2ansi))
+  if ((subcommand_count > 1)); then
+    >&2 echo "bash-coding-standard: error: Multiple sub-commands specified"
+    >&2 echo "Only one of -c, -b, -j, -a may be used at a time"
+    return 2
+  fi
 
   # Execute based on parsed flags
   if ((force_json)); then
@@ -117,30 +127,27 @@ EOF
       printf '{\"bash-coding-standard\":\"%s\"}\n' "$content"
     fi
     return 0
-  fi
-
-  if ((force_bash)); then
+  
+  elif ((force_bash)); then
     declare -gx BCS_MD
-    ((squeeze_blanks)) && BCS_MD="$(cat -s -- "${viewer_args[@]}" "$BCS_FILE")" \
-                       || BCS_MD="$(cat -- "${viewer_args[@]}" "$BCS_FILE")"
+    ((squeeze_blanks)) && BCS_MD="$(cat -s "${viewer_args[@]}" -- "$BCS_FILE")" \
+                       || BCS_MD="$(cat "${viewer_args[@]}" -- "$BCS_FILE")"
     declare -p BCS_MD
     return 0
-  fi
-
-  if ((force_cat)); then
-    ((squeeze_blanks)) && cat -s -- "${viewer_args[@]}" "$BCS_FILE" \
-                       || cat -- "${viewer_args[@]}" "$BCS_FILE"
+  
+  elif ((force_cat)); then
+    ((squeeze_blanks)) && cat -s "${viewer_args[@]}" -- "$BCS_FILE" \
+                       || cat "${viewer_args[@]}" -- "$BCS_FILE"
     return 0
-  fi
-
   # Use md2ansi for formatted output if available and outputting to terminal
-  if ((force_md2ansi)) || [[ -t 1 ]] && command -v md2ansi &>/dev/null; then
+  elif ((force_md2ansi)) || [[ -t 1 ]] && command -v md2ansi &>/dev/null; then
     md2ansi "${viewer_args[@]}" -- "$BCS_FILE" | less -FXRS
     return 0
   fi
 
-  ((squeeze_blanks)) && cat -s -- "${viewer_args[@]}" "$BCS_FILE" \
-                     || cat -- "${viewer_args[@]}" "$BCS_FILE"
+  # final fall back to cat
+  ((squeeze_blanks)) && cat -s "${viewer_args[@]}" -- "$BCS_FILE" \
+                     || cat "${viewer_args[@]}" -- "$BCS_FILE"
   return 0
 }
 declare -fx display_BCS
