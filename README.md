@@ -65,16 +65,43 @@ sudo rm -rf /usr/local/share/yatti/bash-coding-standard
 
 ### View the Standard
 
+The `bash-coding-standard` script provides multiple ways to view the standard document:
+
 ```bash
-# View in terminal with markdown rendering (if md2ansi is installed)
+# View with auto-detection (uses md2ansi if available and terminal supports it)
 ./bash-coding-standard
 
-# Or view directly
+# View version
+./bash-coding-standard --version
+# Output: bash-coding-standard 1.0.0
+
+# Force plain text output (bypass md2ansi)
+./bash-coding-standard --cat
+
+# Output as JSON
+./bash-coding-standard --json
+
+# Export as bash variable
+./bash-coding-standard --bash
+
+# Squeeze consecutive blank lines
+./bash-coding-standard --squeeze
+
+# Pass additional options to viewer (e.g., line numbers)
+./bash-coding-standard --cat -n
+
+# View directly without the script
 cat BASH-CODING-STANDARD.md
 
-# Or if installed globally
+# If installed globally
 bash-coding-standard
 ```
+
+**Script Features:**
+- **Options**: `-h/--help`, `-V/--version`, `-s/--squeeze`
+- **Sub-commands** (mutually exclusive): `-c/--cat`, `-b/--bash`, `-a/--md2ansi`, `-j/--json`
+- **Dual-purpose**: Can be executed directly or sourced for `display_BCS()` function
+- **FHS-compliant**: Searches standard locations for BASH-CODING-STANDARD.md
 
 ### Validate Your Scripts
 
@@ -92,11 +119,16 @@ shellcheck -x your-script.sh
 ```
 bash-coding-standard/
 ├── BASH-CODING-STANDARD.md          # The complete coding standard (2,145 lines)
-├── bash-coding-standard             # Viewer script for the standard
-├── Makefile                         # Installation/uninstallation helper
-├── RESTRUCTURE-VALIDATION.md        # Validation checklist for 2025-10-10 restructuring
+├── bash-coding-standard             # Viewer script (v1.0.0)
 ├── README.md                        # This file
-└── LICENSE                          # CC BY-SA 4.0 license
+├── LICENSE                          # CC BY-SA 4.0 license
+├── Makefile                         # Installation/uninstallation helper
+└── tests/                           # Test suite
+    ├── test-bash-coding-standard.sh # Comprehensive script tests
+    ├── test-argument-parsing.sh     # Argument parsing tests
+    ├── test-environment.sh          # Environment validation
+    ├── test-execution-modes.sh      # Dual-purpose mode tests
+    └── test-find-bcs-file.sh        # File location tests
 ```
 
 ## Documentation
