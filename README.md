@@ -136,7 +136,7 @@ bash-coding-standard/
 ### Primary Documents
 
 - **[BASH-CODING-STANDARD.md](BASH-CODING-STANDARD.md)** - The complete coding standard (2,145 lines, 14 sections)
-- **[RESTRUCTURE-VALIDATION.md](RESTRUCTURE-VALIDATION.md)** - Validation of the 2025-10-10 restructuring
+- **[REBUTTALS-FAQ.md](REBUTTALS-FAQ.md)** - Responses to common criticisms and frequently asked questions about comprehensive Bash standards
 
 ### Standard Structure (14 Sections)
 
@@ -322,8 +322,6 @@ The standard was restructured from 15 sections to 14 sections with significant i
 - **Eliminated**: Incoherent "Calling Commands" section (content redistributed)
 - **Organized**: Best Practices into themed subsections
 - **Preserved**: ALL rules, ALL examples, ALL security guidelines
-
-See [RESTRUCTURE-VALIDATION.md](RESTRUCTURE-VALIDATION.md) for complete validation details.
 
 ## Conclusions
 

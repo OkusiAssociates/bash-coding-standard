@@ -24,6 +24,7 @@ find_bcs_file() {
 
   return 1
 }
+declare -fx find_bcs_file
 
 display_BCS() {
   if [[ -z "$BCS_FILE" ]]; then
