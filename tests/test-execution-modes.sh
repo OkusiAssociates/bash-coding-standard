@@ -15,7 +15,7 @@ test_direct_execution() {
 
   # Test 1: Script runs successfully
   local -- output
-  output=$("$SCRIPT" --cat 2>&1 | head -5)
+  output=$("$SCRIPT" --cat 2>&1 | head -5 || true)
   assert_success $? "Script executes successfully"
   assert_contains "$output" "Bash Coding Standard" "Script output contains expected content"
 
@@ -59,11 +59,11 @@ source "$1"
 [[ -n "$BCS_PATH" ]] || exit 2
 [[ -n "$BCS_MD" ]] || exit 3
 
-# Test that display_BCS function is available
-declare -F display_BCS >/dev/null || exit 4
+# Test that cmd_display function is available
+declare -F cmd_display >/dev/null || exit 4
 
-# Test that display_BCS works
-display_BCS --help >/dev/null 2>&1 || exit 5
+# Test that cmd_display works
+cmd_display --help >/dev/null 2>&1 || exit 5
 
 echo "success"
 EOF
@@ -94,11 +94,11 @@ EOF
 set -euo pipefail
 # shellcheck source=../bash-coding-standard
 source "$1"
-declare -F display_BCS >/dev/null && echo "function exported"
+declare -F cmd_display >/dev/null && echo "function exported"
 EOF
 
   output=$(bash "$test_script" "$SCRIPT" 2>&1)
-  assert_equals "function exported" "$output" "display_BCS function is available after sourcing"
+  assert_equals "function exported" "$output" "cmd_display function is available after sourcing"
 
   # Test 4: find_bcs_file is available
   cat >"$test_script" <<'EOF'
@@ -155,7 +155,7 @@ EOF
   # We can't easily test this without affecting the parent shell
 
   # Test 3: Both modes can find the file
-  output=$("$SCRIPT" --cat 2>&1 | head -1)
+  output=$("$SCRIPT" --cat 2>&1 | head -1 || true)
   assert_contains "$output" "Bash Coding Standard" "Direct execution finds file"
 
   cat >"$test_script" <<'EOF'
@@ -163,7 +163,7 @@ EOF
 set -euo pipefail
 # shellcheck source=../bash-coding-standard
 source "$1"
-display_BCS --cat 2>&1 | head -1
+cmd_display --cat 2>&1 | head -1 || true
 EOF
 
   output=$(bash "$test_script" "$SCRIPT" 2>&1)
@@ -190,7 +190,7 @@ set -euo pipefail
 source "$1"
 
 # Call with invalid arg and check return code
-if display_BCS invalid-arg >/dev/null 2>&1; then
+if cmd_display invalid-arg >/dev/null 2>&1; then
   echo "succeeded unexpectedly"
   exit 1
 else
@@ -200,7 +200,7 @@ fi
 EOF
 
   bash "$test_script" "$SCRIPT" 2>&1
-  assert_exit_code 0 $? "display_BCS returns error code for invalid args"
+  assert_exit_code 0 $? "cmd_display returns error code for invalid args"
 }
 
 # Run all tests

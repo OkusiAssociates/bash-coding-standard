@@ -150,7 +150,7 @@ Usage: bcs generate [OPTIONS]
 
 Options:
   -h, --help              Show this help message
-  -t, --type TYPE         File type: complete, abstract, or summary (default: abstract)
+  -t, --type TYPE         File type: complete, abstract, summary, abstract-complete (default: abstract)
   -o, --output FILE       Output to specific file
   --canonical             Write to BASH-CODING-STANDARD.md (requires explicit flag)
 
@@ -161,12 +161,14 @@ Examples:
   bcs generate --canonical               # Regenerate canonical BASH-CODING-STANDARD.md
   bcs generate -t complete               # Generate complete version to stdout
   bcs generate -t summary                # Generate summary version to stdout
+  bcs generate -t abstract-complete      # Generate combined abstract+complete version
   bcs generate -t summary -o /tmp/BCS-summary.md
 
 File types:
-  complete  - Complete standard (*.complete.md files)
-  abstract  - Abstract version (*.abstract.md files)
-  summary   - Summary version (*.summary.md files)
+  complete          - Complete standard (*.complete.md files)
+  abstract          - Abstract version (*.abstract.md files)
+  summary           - Summary version (*.summary.md files)
+  abstract-complete - Combined: abstract then complete for each rule with formfeed separator
 
 EOF
         return 0
@@ -194,10 +196,10 @@ EOF
 
   # Validate file type
   case "$file_type" in
-    complete|abstract|summary) ;;
+    complete|abstract|summary|abstract-complete) ;;
     *)
       error "Invalid file type: $file_type"
-      error "Must be one of: complete, abstract, summary"
+      error "Must be one of: complete, abstract, summary, abstract-complete"
       return 2
       ;;
   esac
@@ -218,6 +220,7 @@ EOF
     complete) suffix='.complete.md' ;;
     abstract) suffix='.abstract.md' ;;
     summary) suffix='.summary.md' ;;
+    abstract-complete) suffix='.abstract.md' ;;  # Find abstract files, pair with complete
   esac
 
   # Find data directory
@@ -236,21 +239,85 @@ EOF
     return 1
   fi
 
+  # For abstract-complete type, verify that each abstract file has a corresponding complete file
+  if [[ "$file_type" == 'abstract-complete' ]]; then
+    local -a verified_files=()
+    local -- abstract_file complete_file
+    for abstract_file in "${md_files[@]}"; do
+      # Construct complete file path by replacing .abstract.md with .complete.md
+      complete_file="${abstract_file%.abstract.md}.complete.md"
+      if [[ -f "$complete_file" ]]; then
+        verified_files+=("$abstract_file")
+      else
+        >&2 echo "bcs: warning: Skipping $abstract_file (no corresponding .complete.md)"
+      fi
+    done
+    md_files=("${verified_files[@]}")
+
+    if ((${#md_files[@]} == 0)); then
+      error "No complete file pairs found in $data_dir"
+      return 1
+    fi
+  fi
+
   # Progress message to stderr (unless stdout mode)
   if [[ "$output_file" != '/dev/stdout' ]]; then
     >&2 echo "bcs: Generating $file_type standard from ${#md_files[@]} files..."
   fi
 
   # Generate output
-  {
-    for file in "${md_files[@]}"; do
-      cat "$file"
-      echo
-      echo '---'
-      echo
-    done
-    echo '#fin'
-  } > "$output_file"
+  if [[ "$file_type" == 'abstract-complete' ]]; then
+    # Special handling for abstract-complete: output abstract, then complete with formfeed separator
+    {
+      local -- abstract_file complete_file bcs_code
+      local -i first_iteration=1
+      for abstract_file in "${md_files[@]}"; do
+        # Output formfeed separator before each rule (except first)
+        if ((first_iteration)); then
+          first_iteration=0
+        else
+          echo -en "\n\n---\n\n\f\n"
+        fi
+
+        # Extract and output BCS code reference at top of page
+        bcs_code=$(get_bcs_code "$abstract_file") || bcs_code='BCS????'
+        echo "**Rule: $bcs_code**"
+        echo
+
+        # Output abstract version
+        cat "$abstract_file"
+        echo
+
+        # Output complete version
+        complete_file="${abstract_file%.abstract.md}.complete.md"
+        cat "$complete_file"
+      done
+      echo '#fin'
+    } > "$output_file"
+  else
+    # Standard handling for complete/abstract/summary types with rule separation
+    {
+      local -- file bcs_code
+      local -i first_iteration=1
+      for file in "${md_files[@]}"; do
+        # Output formfeed separator before each rule (except first)
+        if ((first_iteration)); then
+          first_iteration=0
+        else
+          echo -en "\n\n---\n\n\f\n"
+        fi
+
+        # Extract and output BCS code reference at top of page
+        bcs_code=$(get_bcs_code "$file") || bcs_code='BCS????'
+        echo "**Rule: $bcs_code**"
+        echo
+
+        # Output file content
+        cat "$file"
+      done
+      echo '#fin'
+    } > "$output_file"
+  fi
 
   # Success message
   if [[ "$output_file" != '/dev/stdout' ]]; then
@@ -1361,8 +1428,6 @@ fi
 # Executed mode - run as standalone script ------------------------------------
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose
-
-source bcs-meta.inc.sh
 
 # Script metadata and find BASH-CODING-STANDARD.md
 declare -- BCS_FILE

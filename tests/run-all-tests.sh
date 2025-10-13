@@ -6,7 +6,7 @@ set -euo pipefail
 shopt -s inherit_errexit shift_verbose
 
 # Script metadata
-SCRIPT_PATH=$(readlink -en -- "$0")
+SCRIPT_PATH=$(realpath -- "$0")
 SCRIPT_DIR=${SCRIPT_PATH%/*}
 SCRIPT_NAME=${SCRIPT_PATH##*/}
 readonly -- SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME

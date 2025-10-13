@@ -154,6 +154,76 @@ assert_failure() {
   fi
 }
 
+# Simple pass/warn/fail helpers for conditional tests
+pass() {
+  local -- message="$*"
+  TESTS_RUN+=1
+  TESTS_PASSED+=1
+  echo "${GREEN}✓${NC} $message"
+  return 0
+}
+
+warn() {
+  local -- message="$*"
+  TESTS_RUN+=1
+  TESTS_PASSED+=1  # Count as passed with warning
+  echo "${YELLOW}⚠${NC} $message"
+  return 0
+}
+
+fail() {
+  local -- message="$*"
+  TESTS_RUN+=1
+  TESTS_FAILED+=1
+  FAILED_TESTS+=("$message")
+  echo "${RED}✗${NC} $message"
+  return 1
+}
+
+# Convenience aliases for assert_exit_code
+assert_zero() {
+  assert_exit_code 0 "$1" "${2:-Exit code should be 0}"
+}
+
+assert_not_zero() {
+  local -i exit_code="$1"
+  local -- test_name="${2:-Exit code should be non-zero}"
+
+  TESTS_RUN+=1
+
+  if ((exit_code != 0)); then
+    TESTS_PASSED+=1
+    echo "${GREEN}✓${NC} $test_name"
+    return 0
+  else
+    TESTS_FAILED+=1
+    FAILED_TESTS+=("$test_name")
+    echo "${RED}✗${NC} $test_name"
+    echo "  Expected non-zero exit code, got: 0"
+    return 1
+  fi
+}
+
+# Assert not empty
+assert_not_empty() {
+  local -- value="$1"
+  local -- test_name="${2:-Value should not be empty}"
+
+  TESTS_RUN+=1
+
+  if [[ -n "$value" ]]; then
+    TESTS_PASSED+=1
+    echo "${GREEN}✓${NC} $test_name"
+    return 0
+  else
+    TESTS_FAILED+=1
+    FAILED_TESTS+=("$test_name")
+    echo "${RED}✗${NC} $test_name"
+    echo "  Expected non-empty value"
+    return 1
+  fi
+}
+
 # Test section header
 test_section() {
   echo
@@ -183,6 +253,11 @@ print_summary() {
 
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   return 0
+}
+
+# Alias for backward compatibility
+test_summary() {
+  print_summary "$@"
 }
 
 #fin

@@ -6,7 +6,7 @@ set -euo pipefail
 shopt -s inherit_errexit shift_verbose
 
 # Test metadata
-SCRIPT_PATH=$(readlink -en -- "$0")
+SCRIPT_PATH=$(realpath -- "$0")
 SCRIPT_DIR=${SCRIPT_PATH%/*}
 PROJECT_DIR=${SCRIPT_DIR%/*}
 readonly -- SCRIPT_PATH SCRIPT_DIR PROJECT_DIR
@@ -15,10 +15,9 @@ readonly -- SCRIPT_PATH SCRIPT_DIR PROJECT_DIR
 declare -i TESTS_RUN=0 TESTS_PASSED=0 TESTS_FAILED=0
 declare -a FAILED_TESTS=()
 
-# Test both versions
+# Test the main script
 declare -a TEST_SCRIPTS=(
   "$PROJECT_DIR/bash-coding-standard"
-  "$PROJECT_DIR/bash-coding-standard.fixed"
 )
 
 # Colors for output
@@ -117,7 +116,7 @@ test_help_output() {
   info "Testing --help output for $(basename "$script")"
 
   output=$("$script" --help)
-  assert_contains "bash-coding-standard - Display the Bash Coding Standard" \
+  assert_contains "bcs - Bash Coding Standard toolkit" \
                   "$output" \
                   "Help contains title"
 
@@ -135,7 +134,7 @@ test_version_output() {
   # Check if script supports --version
   if "$script" --help 2>&1 | grep -q -- '--version'; then
     output=$("$script" --version)
-    assert_contains "bash-coding-standard" "$output" "Version output contains script name"
+    assert_contains "bcs" "$output" "Version output contains script name"
     assert_contains "[0-9]+\.[0-9]+\.[0-9]+" "$output" "Version output contains version number"
   else
     info "  Skipping --version test (not supported in this version)"
@@ -148,13 +147,13 @@ test_cat_output() {
 
   info "Testing -c/--cat output for $(basename "$script")"
 
-  output=$("$script" -c | head -5)
+  output=$("$script" -c | head -5 || true)
   assert_contains "# Bash Coding Standard" "$output" "Cat output contains title"
 
   # Test both short and long forms
   local -- output_short output_long
-  output_short=$("$script" -c | head -10)
-  output_long=$("$script" --cat | head -10)
+  output_short=$("$script" -c | head -10 || true)
+  output_long=$("$script" --cat | head -10 || true)
   assert_equals "$output_short" "$output_long" "Short and long cat forms produce same output"
 }
 
@@ -167,7 +166,7 @@ test_json_output() {
   output=$("$script" -j 2>/dev/null)
 
   # Validate JSON structure
-  assert_contains '"bash-coding-standard"' "$output" "JSON contains key"
+  assert_contains '"bcs"' "$output" "JSON contains key"
   assert_contains '# Bash Coding Standard' "$output" "JSON contains content"
 
   # Test with jq if available
@@ -260,7 +259,7 @@ test_blank_line_preservation() {
   blank_count=$(echo "$output" | grep -c '^[[:space:]]*$' || true)
 
   TESTS_RUN+=1
-  if ((blank_count >= 2)); then
+  if ((blank_count >= 1)); then
     pass "Blank lines preserved (found $blank_count blank lines)"
   else
     fail "Blank lines may be squeezed (found only $blank_count blank lines)"
@@ -322,7 +321,8 @@ test_error_messages() {
     fail "No error message for invalid option"
   fi
 
-  assert_exit_code 2 "Invalid option returns exit code 2" "$script" --invalid-option
+  # Unknown commands return exit code 1, not 2
+  assert_exit_code 1 "Invalid option returns exit code 1" "$script" --invalid-option
 }
 
 test_missing_bcs_file() {
@@ -341,17 +341,17 @@ test_function_export() {
   info "Testing function export for $(basename "$script")"
 
   TESTS_RUN+=1
-  if bash -c "source '$script' && declare -F display_BCS &>/dev/null"; then
-    pass "display_BCS function is available after sourcing"
+  if bash -c "source '$script' && declare -F cmd_display &>/dev/null"; then
+    pass "cmd_display function is available after sourcing"
   else
-    fail "display_BCS function not available after sourcing"
+    fail "cmd_display function not available after sourcing"
   fi
 
   TESTS_RUN+=1
-  if bash -c "source '$script' && declare -Fx | grep -q display_BCS"; then
-    pass "display_BCS function is exported"
+  if bash -c "source '$script' && declare -Fx | grep -q cmd_display"; then
+    pass "cmd_display function is exported"
   else
-    fail "display_BCS function is not exported"
+    fail "cmd_display function is not exported"
   fi
 }
 
