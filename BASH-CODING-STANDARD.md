@@ -1,3 +1,5 @@
+**Rule: BCS00**
+
 # Bash Coding Standard
 
 **Comprehensive Bash coding standard for Bash 5.2+. Not a compatibility standard.**
@@ -13,13 +15,21 @@
 
 **Ref:** See 00-header.md for complete table of contents
 
+
 ---
+
+
+**Rule: BCS0100**
 
 ## Script Structure & Layout
 
 Mandatory 13-step structural layout from shebang to #fin marker, including metadata, shopt settings, FHS compliance, and bottom-up function organization.
 
+
 ---
+
+
+**Rule: BCS0101**
 
 ### Standard Script General Layout
 
@@ -50,7 +60,11 @@ main "$@"
 
 **Ref:** See 01-layout.md for complete examples, edge cases, and all 13 steps explained
 
+
 ---
+
+
+**Rule: BCS010201**
 
 ### Dual-Purpose Scripts (Executable and Sourceable)
 
@@ -84,7 +98,11 @@ my_function "$@"
 
 **Examples:** `bash-coding-standard`, `getbcscode.sh`
 
+
 ---
+
+
+**Rule: BCS0102**
 
 ### Shebang and Initial Setup
 
@@ -115,7 +133,11 @@ set -euo pipefail
 
 **Ref:** See 02-shebang.md for shebang selection criteria, env considerations, special cases
 
+
 ---
+
+
+**Rule: BCS0103**
 
 ### Script Metadata
 
@@ -152,7 +174,11 @@ SCRIPT_PATH=$(realpath -- "$0")
 
 **Ref:** See 03-metadata.md
 
+
 ---
+
+
+**Rule: BCS0104**
 
 ### FHS Compliance
 
@@ -171,7 +197,11 @@ MAN_DIR="$PREFIX/share/man"     # Man pages
 
 **Ref:** See 04-fhs.md
 
+
 ---
+
+
+**Rule: BCS0105**
 
 ### Shopt Settings
 
@@ -193,7 +223,11 @@ shopt -s inherit_errexit shift_verbose extglob nullglob
 
 **Ref:** See 05-shopt.md
 
+
 ---
+
+
+**Rule: BCS0106**
 
 ### File Extensions
 
@@ -205,7 +239,11 @@ shopt -s inherit_errexit shift_verbose extglob nullglob
 
 **Ref:** See 06-extensions.md for detailed guidelines
 
+
 ---
+
+
+**Rule: BCS0107**
 
 ### Function Organization
 
@@ -235,13 +273,21 @@ main "$@"
 
 **Ref:** See 07-function-organization.md
 
+
 ---
+
+
+**Rule: BCS0200**
 
 ## Variable Declarations & Constants
 
 Explicit variable declarations with type hints (`declare -i`, `declare -a`, `declare -A`), proper scoping, naming conventions (UPPER_CASE for constants), readonly patterns, boolean flags, and derived variables.
 
+
 ---
+
+
+**Rule: BCS0201**
 
 ### Type-Specific Declarations
 
@@ -270,7 +316,11 @@ declare -a files=()
 
 **Ref:** See 01-type-specific.md
 
+
 ---
+
+
+**Rule: BCS0202**
 
 ### Variable Scoping
 
@@ -328,7 +378,11 @@ count_files() {
 
 **Ref:** See 02-scoping.md for global variable patterns, scope inheritance, advanced examples
 
+
 ---
+
+
+**Rule: BCS0203**
 
 ### Naming Conventions
 
@@ -376,7 +430,11 @@ _internal_helper() {
 **Key principle:** UPPER_CASE for globals/constants/env, lower_case for locals, underscore prefix for private functions.
 
 **Ref:** See 03-naming.md for complete conventions, special cases, conflicts
+
 ---
+
+
+**Rule: BCS0204**
 
 ### Constants and Environment Variables
 
@@ -401,7 +459,11 @@ export PREFIX
 
 **Ref:** See 04-constants-env.md
 
+
 ---
+
+
+**Rule: BCS0205**
 
 ### Readonly After Group
 
@@ -434,7 +496,11 @@ readonly -- VERSION SCRIPT_PATH
 
 **Ref:** See 05-readonly-after-group.md
 
+
 ---
+
+
+**Rule: BCS0206**
 
 ### Readonly Declaration
 
@@ -450,7 +516,11 @@ readonly -- SCRIPT_PATH="$(realpath -- "$0")"
 
 **Ref:** See 06-readonly-declaration.md, also 05-readonly-after-group.md for group pattern
 
+
 ---
+
+
+**Rule: BCS0207**
 
 ### Boolean Flags Pattern
 
@@ -490,7 +560,11 @@ esac
 
 **Ref:** See 07-boolean-flags.md for toggle patterns, complex flag logic, state management
 
+
 ---
+
+
+**Rule: BCS0208**
 
 ### Derived Variables
 
@@ -523,13 +597,21 @@ readonly -- PREFIX APP_NAME BIN_DIR LIB_DIR CONFIG_DIR CONFIG_FILE  # After pars
 
 **Ref:** See 08-derived-variables.md for XDG patterns, platform-specific, environment fallbacks
 
+
 ---
+
+
+**Rule: BCS0300**
 
 ## Variable Expansion & Parameter Substitution
 
 Default to `"$var"` without braces. Use braces only when required: parameter expansion operations, concatenation, array expansions, or disambiguation.
 
+
 ---
+
+
+**Rule: BCS0301**
 
 ### Parameter Expansion
 
@@ -549,7 +631,11 @@ ${var,,}                       # Lowercase conversion
 
 **Ref:** See 01-parameter-expansion.md for complete operator reference, 02-guidelines.md for brace usage rules
 
+
 ---
+
+
+**Rule: BCS0302**
 
 ### Variable Expansion Guidelines
 
@@ -582,7 +668,11 @@ echo "Count: $count items"  # Space separates
 
 **Ref:** See 02-guidelines.md
 
+
 ---
+
+
+**Rule: BCS0400**
 
 ## Quoting & String Literals
 
@@ -590,7 +680,11 @@ echo "Count: $count items"  # Space separates
 
 **Rationale:** Single quotes prevent shell interpretation (safer, clearer for literal strings). Double quotes signal "this string needs shell processing".
 
+
 ---
+
+
+**Rule: BCS0401**
 
 ### Static Strings and Constants
 
@@ -634,7 +728,11 @@ info 'Checking...'
 
 **Ref:** See 01-static-strings.md
 
+
 ---
+
+
+**Rule: BCS0402**
 
 ### One-Word Literals
 
@@ -671,7 +769,11 @@ empty=''
 
 **Ref:** See 02-one-word-literals.md for complete quoting rules, edge cases
 
+
 ---
+
+
+**Rule: BCS0403**
 
 ### Strings with Variables
 
@@ -699,7 +801,11 @@ info '[DRY-RUN] Would install:' \
 
 **Ref:** See 03-strings-with-vars.md for interpolation patterns, mixed quoting
 
+
 ---
+
+
+**Rule: BCS0404**
 
 ### Mixed Quoting
 
@@ -720,7 +826,11 @@ error "Permission denied for directory '$dir_path'"
 
 **Ref:** See 04-mixed-quoting.md for complete patterns
 
+
 ---
+
+
+**Rule: BCS0405**
 
 ### Command Substitution in Strings
 
@@ -741,7 +851,11 @@ TIMESTAMP="$(date -Ins)"
 
 **Ref:** See 05-command-substitution.md for complete patterns
 
+
 ---
+
+
+**Rule: BCS0406**
 
 ### Variables in Conditionals
 
@@ -767,7 +881,11 @@ TIMESTAMP="$(date -Ins)"
 
 **Ref:** See 06-vars-in-conditionals.md
 
+
 ---
+
+
+**Rule: BCS0407**
 
 ### Array Expansions
 
@@ -802,7 +920,11 @@ for f in "${files[@]}"; do
 
 **Ref:** See 07-array-expansions.md
 
+
 ---
+
+
+**Rule: BCS0408**
 
 ### Here Documents
 
@@ -833,7 +955,11 @@ EOF
 
 **Ref:** See 08-here-documents.md for indented here-docs, piping, advanced patterns
 
+
 ---
+
+
+**Rule: BCS0409**
 
 ### Echo and Printf Statements
 
@@ -856,7 +982,11 @@ echo "  • Version: $VERSION (released $(date))"
 
 **Ref:** See 09-echo-printf.md for complete patterns
 
+
 ---
+
+
+**Rule: BCS0410**
 
 ### Summary Reference
 
@@ -875,7 +1005,11 @@ echo "  • Version: $VERSION (released $(date))"
 
 **Ref:** See 10-summary.md for complete quoting reference
 
+
 ---
+
+
+**Rule: BCS0411**
 
 ### Anti-Patterns
 
@@ -905,7 +1039,11 @@ for i in "${arr[@]}"; do # ✓ Correct
 
 **Ref:** See 11-anti-patterns.md for complete examples
 
+
 ---
+
+
+**Rule: BCS0412**
 
 ### String Trimming
 
@@ -921,7 +1059,11 @@ trim() {
 
 **Ref:** See 12-string-trimming.md for explanation and alternatives
 
+
 ---
+
+
+**Rule: BCS0413**
 
 ### Display Declared Variables
 
@@ -935,7 +1077,11 @@ decp() { declare -p "$@" | sed 's/^declare -[a-zA-Z-]* //'; }
 
 **Ref:** See 13-display-vars.md for usage examples
 
+
 ---
+
+
+**Rule: BCS0414**
 
 ### Pluralisation Helper
 
@@ -949,13 +1095,21 @@ s() { (( ${1:-1} == 1 )) || echo -n 's'; }
 
 **Ref:** See 14-pluralisation.md for usage examples
 
+
 ---
+
+
+**Rule: BCS0500**
 
 ## Arrays
 
 Arrays provide safe list handling and are essential for managing collections of data in Bash scripts.
 
+
 ---
+
+
+**Rule: BCS0501**
 
 ### Array Declaration and Usage
 
@@ -999,7 +1153,11 @@ for i in "${arr[@]}"; do
 
 **Ref:** See 01-declaration-usage.md
 
+
 ---
+
+
+**Rule: BCS0502**
 
 ### Safe List Handling
 
@@ -1026,13 +1184,21 @@ command "${args[@]}"
 
 **Ref:** See 02-safe-list-handling.md
 
+
 ---
+
+
+**Rule: BCS0600**
 
 ## Functions
 
 Function definition patterns, naming (lowercase_with_underscores), main() for scripts >40 lines, function export (declare -fx), production optimization, and bottom-up organization (messaging → helpers → business logic → main).
 
+
 ---
+
+
+**Rule: BCS0601**
 
 ### Function Definition Pattern
 
@@ -1053,7 +1219,11 @@ main() {
 
 **Ref:** See 01-definition-pattern.md for complete patterns
 
+
 ---
+
+
+**Rule: BCS0602**
 
 ### Function Names
 
@@ -1101,7 +1271,11 @@ my-function() {  # Dash creates issues
 
 **Ref:** See 02-function-names.md for naming conventions, built-in conflicts, best practices
 
+
 ---
+
+
+**Rule: BCS0603**
 
 ### Main Function
 
@@ -1150,7 +1324,11 @@ main "$@"
 
 **Ref:** See 03-main-function.md for benefits, testing patterns, conditional execution
 
+
 ---
+
+
+**Rule: BCS0604**
 
 ### Function Export
 
@@ -1167,7 +1345,11 @@ declare -fx grep find
 
 **Ref:** See 04-function-export.md for use cases and patterns
 
+
 ---
+
+
+**Rule: BCS0605**
 
 ### Production Script Optimization
 
@@ -1186,13 +1368,21 @@ declare -fx grep find
 
 **Ref:** See 05-production-optimization.md for systematic approach
 
+
 ---
+
+
+**Rule: BCS0700**
 
 ## Control Flow
 
 Use `[[ ]]` for conditionals, `(())` for arithmetic, process substitution over pipes to while loops, and safe arithmetic patterns (`i+=1` not `((i++))`). Covers case statements and loop patterns.
 
+
 ---
+
+
+**Rule: BCS0701**
 
 ### Conditionals
 
@@ -1233,7 +1423,11 @@ Use `[[ ]]` for conditionals, `(())` for arithmetic, process substitution over p
 
 **Ref:** See 01-conditionals.md
 
+
 ---
+
+
+**Rule: BCS0702**
 
 ### Case Statements
 
@@ -1272,7 +1466,11 @@ esac
 
 **Ref:** See 02-case-statements.md for extglob patterns, file routing, service control examples
 
+
 ---
+
+
+**Rule: BCS0703**
 
 ### Loops
 
@@ -1301,7 +1499,11 @@ while (($#)); do case $1 in -v) VERBOSE=1 ;; *) break ;; esac; shift; done
 
 **Ref:** See 03-loops.md for complete examples, until loops, nested loops, infinite loops, edge cases
 
+
 ---
+
+
+**Rule: BCS0704**
 
 ### Pipes to While Loops
 
@@ -1343,7 +1545,11 @@ done <<< "$input"
 
 **Ref:** See 04-pipes-to-while.md
 
+
 ---
+
+
+**Rule: BCS0705**
 
 ### Arithmetic Operations
 
@@ -1393,13 +1599,21 @@ i+=1
 
 **Ref:** See 05-arithmetic.md
 
+
 ---
+
+
+**Rule: BCS0800**
 
 ## Error Handling
 
 Mandatory `set -euo pipefail`, standard exit codes (0=success, 1=error, 2=misuse, 5=IO, 22=invalid), trap handling for cleanup, return value checking, and safe error suppression patterns.
 
+
 ---
+
+
+**Rule: BCS0801**
 
 ### Exit on Error
 
@@ -1419,7 +1633,11 @@ set -euo pipefail
 
 **Ref:** See 01-exit-on-error.md
 
+
 ---
+
+
+**Rule: BCS0802**
 
 ### Exit Codes
 
@@ -1447,7 +1665,11 @@ die() { local -i code=${1:-1}; shift; error "$@"; exit "$code"; }
 
 **Ref:** See 02-exit-codes.md
 
+
 ---
+
+
+**Rule: BCS0803**
 
 ### Trap Handling
 
@@ -1489,7 +1711,11 @@ trap 'rm "$temp"' EXIT
 
 **Ref:** See 03-trap-handling.md
 
+
 ---
+
+
+**Rule: BCS0804**
 
 ### Checking Return Values
 
@@ -1535,7 +1761,11 @@ shopt -s inherit_errexit
 
 **Ref:** See 04-return-values.md
 
+
 ---
+
+
+**Rule: BCS0805**
 
 ### Error Suppression
 
@@ -1569,13 +1799,21 @@ command 2>/dev/null || true
 
 **Ref:** See 05-error-suppression.md
 
+
 ---
+
+
+**Rule: BCS0900**
 
 ## Input/Output & Messaging
 
 Standard messaging functions (_msg, vecho, success, warn, info, debug, error, die, yn) with color support, STDOUT vs STDERR separation, usage documentation patterns, and `>&2` at command beginning for errors.
 
+
 ---
+
+
+**Rule: BCS0901**
 
 ### Standardized Messaging and Color Support
 
@@ -1595,7 +1833,11 @@ fi
 
 **Ref:** See 01-color-support.md for extended color palettes
 
+
 ---
+
+
+**Rule: BCS0902**
 
 ### STDOUT vs STDERR
 
@@ -1617,7 +1859,11 @@ somefunc() {
 
 **Ref:** See 02-stdout-stderr.md for complete guidelines
 
+
 ---
+
+
+**Rule: BCS0903**
 
 ### Core Message Functions
 
@@ -1656,7 +1902,11 @@ fi
 
 **Ref:** See 03-core-functions.md
 
+
 ---
+
+
+**Rule: BCS0904**
 
 ### Usage Documentation
 
@@ -1691,7 +1941,11 @@ EOT
 
 **Ref:** See 04-usage-docs.md for advanced help formatting, multi-command patterns
 
+
 ---
+
+
+**Rule: BCS0905**
 
 ### Echo vs Messaging Functions
 
@@ -1720,13 +1974,21 @@ die 1 'Fatal error'
 
 **Ref:** See 05-echo-vs-messaging.md for full messaging function implementations
 
+
 ---
+
+
+**Rule: BCS1000**
 
 ## Command-Line Arguments
 
 Standard parsing pattern supporting short and long options (-h/--help, -v/--version), canonical version format (scriptname X.Y.Z), validation patterns, and guidance on parsing location (main vs top-level).
 
+
 ---
+
+
+**Rule: BCS1001**
 
 ### Standard Argument Parsing Pattern
 
@@ -1757,7 +2019,11 @@ noarg() { (($# > 1)) || die 2 "Option '$1' requires an argument"; }
 
 **Ref:** See 01-parsing-pattern.md
 
+
 ---
+
+
+**Rule: BCS1002**
 
 ### Version Output Format
 
@@ -1781,7 +2047,11 @@ noarg() { (($# > 1)) || die 2 "Option '$1' requires an argument"; }
 
 **Ref:** See 02-version-format.md for semantic versioning, build metadata
 
+
 ---
+
+
+**Rule: BCS1003**
 
 ### Argument Validation
 
@@ -1795,7 +2065,11 @@ noarg() { (($# > 1)) && [[ ${2:0:1} != '-' ]] || die 2 "Missing argument for opt
 
 **Ref:** See 03-validation.md for validation patterns and error handling
 
+
 ---
+
+
+**Rule: BCS1004**
 
 ### Argument Parsing Location
 
@@ -1853,13 +2127,21 @@ esac; shift; done
 
 **Ref:** See 04-parsing-location.md for testing examples, complex parsing patterns, argument validation
 
+
 ---
+
+
+**Rule: BCS1100**
 
 ## File Operations
 
 File testing operators (-e, -f, -d, -r, -w, -x) with quoting, safe wildcard expansion (rm ./* never rm *), process substitution (< <(command)), and here document patterns for multi-line input.
 
+
 ---
+
+
+**Rule: BCS1101**
 
 ### Safe File Testing
 
@@ -1896,7 +2178,11 @@ validate_file() {
 
 **Ref:** See 01-file-testing.md
 
+
 ---
+
+
+**Rule: BCS1102**
 
 ### Wildcard Expansion
 
@@ -1917,7 +2203,11 @@ rm -v *
 
 **Ref:** See 02-wildcard-expansion.md for advanced patterns
 
+
 ---
+
+
+**Rule: BCS1103**
 
 ### Process Substitution
 
@@ -1957,7 +2247,11 @@ diff <(sort f1) f2
 
 **Ref:** See 03-process-substitution.md
 
+
 ---
+
+
+**Rule: BCS1104**
 
 ### Here Documents
 
@@ -1982,13 +2276,21 @@ EOF
 
 **Ref:** See 04-here-documents.md, also 04-quoting/08-here-documents.md for complete patterns
 
+
 ---
+
+
+**Rule: BCS1200**
 
 ## Security Considerations
 
 Never use SUID/SGID on bash scripts, lock down PATH, understand IFS safety, avoid eval (require justification), validate and sanitize inputs early. Prevents privilege escalation and injection attacks.
 
+
 ---
+
+
+**Rule: BCS1201**
 
 ### SUID/SGID
 
@@ -2022,7 +2324,11 @@ sudo /usr/local/bin/script.sh
 
 **Ref:** See 01-suid-sgid.md
 
+
 ---
+
+
+**Rule: BCS1202**
 
 ### PATH Security
 
@@ -2073,7 +2379,11 @@ export PATH=/usr/bin::/bin  # :: = current dir
 
 **Ref:** See 02-path-security.md
 
+
 ---
+
+
+**Rule: BCS1203**
 
 ### IFS Manipulation Safety
 
@@ -2120,7 +2430,11 @@ read -ra fields <<< "$csv"
 
 **Ref:** See 03-ifs-safety.md
 
+
 ---
+
+
+**Rule: BCS1204**
 
 ### Eval Command
 
@@ -2149,7 +2463,11 @@ eval "$user_input"  # Disaster!
 
 **Ref:** See 04-eval-command.md
 
+
 ---
+
+
+**Rule: BCS1205**
 
 ### Input Sanitization
 
@@ -2200,13 +2518,21 @@ rm -- "$user_file"       # ✓ Correct
 
 **Ref:** See 05-input-sanitization.md
 
+
 ---
+
+
+**Rule: BCS1300**
 
 ## Code Style & Best Practices
 
 Code formatting (2-space indent, 100-char lines), commenting practices (explain WHY not WHAT), blank line usage, section banners, language-specific practices, mandatory ShellCheck compliance, and testing patterns.
 
+
 ---
+
+
+**Rule: BCS1301**
 
 ### Code Formatting
 
@@ -2218,7 +2544,11 @@ Code formatting (2-space indent, 100-char lines), commenting practices (explain 
 
 **Ref:** See 01-code-formatting.md for complete formatting guidelines
 
+
 ---
+
+
+**Rule: BCS1302**
 
 ### Comments
 
@@ -2268,7 +2598,11 @@ fi
 
 **Ref:** See 02-comments.md for section comments, documentation patterns, comment styles
 
+
 ---
+
+
+**Rule: BCS1303**
 
 ### Blank Line Usage
 
@@ -2325,54 +2659,11 @@ main "$@"
 
 **Ref:** See 03-blank-lines.md for complete examples, edge cases, style guidelines
 
----
-
-### Blank Line Usage
-
-**Use blank lines strategically to improve readability by creating visual separation between logical blocks.**
-
-**Guidelines:**
-- One blank line between functions
-- One blank line between logical sections within functions
-- One blank line after section comments
-- One blank line between groups of related variables
-- Blank lines before and after multi-line conditional or loop blocks
-- Avoid multiple consecutive blank lines (one is sufficient)
-- No blank line needed between short, related statements
-
-```bash
-#!/bin/bash
-set -euo pipefail
-
-# Script metadata
-VERSION='1.0.0'
-readonly -- VERSION
-                        # ← Blank line after metadata group
-
-# Default values         # ← Blank line before section comment
-declare -- PREFIX=/usr/local
-                        # ← Blank line after variable group
-
-check_prerequisites() {
-  info 'Checking prerequisites...'
-                        # ← Blank line after info call
-  if ! command -v gcc &> /dev/null; then
-    die 1 "'gcc' not found."
-  fi
-                        # ← Blank line between checks
-  success 'Check passed'
-}
-                        # ← Blank line between functions
-main() {
-  check_prerequisites
-}
-```
-
-**Key principle:** One blank line for visual separation between logical groups, avoid multiple consecutive blank lines.
-
-**Ref:** See 03-blank-lines.md for complete guidelines
 
 ---
+
+
+**Rule: BCS1304**
 
 ### Section Comments
 
@@ -2423,7 +2714,11 @@ die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
 
 **Ref:** See 04-section-comments.md for complete patterns, organization strategies
 
+
 ---
+
+
+**Rule: BCS1305**
 
 ### Language Practices
 
@@ -2447,7 +2742,11 @@ declare -r VAR
 
 **Ref:** See 05-language-practices.md
 
+
 ---
+
+
+**Rule: BCS1306**
 
 ### Development Practices
 
@@ -2497,13 +2796,21 @@ set -u
 
 **Ref:** See 06-development-practices.md for complete checklist, testing patterns, CI/CD integration
 
+
 ---
+
+
+**Rule: BCS1400**
 
 ## Advanced Patterns
 
 10 production patterns: debugging (set -x, PS4), dry-run mode, secure temp files (mktemp), environment variables, regex, background jobs, structured logging, performance profiling, testing, and progressive state management.
 
+
 ---
+
+
+**Rule: BCS1401**
 
 ### Debugging and Development
 
@@ -2533,7 +2840,11 @@ DEBUG=1 ./script.sh  # Run with debug output
 
 **Ref:** See 01-debugging.md for advanced debugging, breakpoints, verbose modes
 
+
 ---
+
+
+**Rule: BCS1402**
 
 ### Dry-Run Pattern
 
@@ -2600,7 +2911,11 @@ update_man_database() {
 
 **Ref:** See 02-dry-run.md for nested dry-run, verbose mode integration, complex operation previews
 
+
 ---
+
+
+**Rule: BCS1403**
 
 ### Temporary File Handling
 
@@ -2633,7 +2948,11 @@ TEMP_FILES+=("$(mktemp -d)")
 
 **Ref:** See 03-temp-files.md for security validation, signal handling, --keep-temp option, edge cases
 
+
 ---
+
+
+**Rule: BCS1404**
 
 ### Environment Variable Best Practices
 
@@ -2670,7 +2989,11 @@ check_required_env() {
 
 **Ref:** See 04-env-variables.md for .env file loading, secret handling, validation patterns
 
+
 ---
+
+
+**Rule: BCS1405**
 
 ### Regular Expression Guidelines
 
@@ -2701,7 +3024,11 @@ fi
 
 **Ref:** See 05-regex.md for advanced patterns, lookaheads, validation examples
 
+
 ---
+
+
+**Rule: BCS1406**
 
 ### Background Job Management
 
@@ -2759,7 +3086,11 @@ run_with_timeout() {
 
 **Ref:** See 06-background-jobs.md for parallel processing, job arrays, signal handling
 
+
 ---
+
+
+**Rule: BCS1407**
 
 ### Logging Best Practices
 
@@ -2797,7 +3128,11 @@ log_error() { log ERROR "$@"; }
 
 **Ref:** See 07-logging.md for log rotation, filtering by level, advanced patterns
 
+
 ---
+
+
+**Rule: BCS1408**
 
 ### Performance Profiling
 
@@ -2827,7 +3162,11 @@ timer() {
 
 **Ref:** See 08-profiling.md for detailed profiling, benchmarking patterns
 
+
 ---
+
+
+**Rule: BCS1409**
 
 ### Testing Support Patterns
 
@@ -2903,7 +3242,11 @@ run_tests() {
 
 **Ref:** See 09-testing.md for complete test frameworks, mocking strategies, CI/CD patterns
 
+
 ---
+
+
+**Rule: BCS1410**
 
 ### Progressive State Management
 
@@ -2939,7 +3282,4 @@ fi
 **Key:** Flags change through script based on conditions, actions use final state.
 
 **Ref:** See 10-progressive-state.md
-
----
-
 #fin

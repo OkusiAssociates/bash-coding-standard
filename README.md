@@ -124,6 +124,10 @@ The `bcs` script (symlink to `bash-coding-standard`) provides a comprehensive to
 ./bcs explain BCS0102 -a        # Abstract version
 ./bcs explain BCS0205 -s        # Summary version
 
+# Decode BCS codes to file locations
+./bcs decode BCS010201          # Show file location
+./bcs decode BCS0102 --all      # Show all three tiers
+
 # List all sections
 ./bcs sections                  # Show all 14 sections
 ./bcs toc                       # Alias
@@ -139,7 +143,7 @@ bcs check deploy.sh > compliance-report.txt
 ```
 
 **Toolkit Features:**
-- **10 Subcommands**: display, about, template, check, codes, generate, search, explain, sections, help
+- **11 Subcommands**: display, about, template, check, codes, generate, search, explain, decode, sections, help
 - **AI-powered validation**: Leverage Claude for comprehensive compliance checking
 - **Template generation**: Create BCS-compliant scripts instantly
 - **Comprehensive help**: `bcs help [subcommand]`
@@ -149,7 +153,7 @@ bcs check deploy.sh > compliance-report.txt
 
 ### Subcommands Reference
 
-The `bcs` toolkit provides ten powerful subcommands for working with the Bash Coding Standard:
+The `bcs` toolkit provides eleven powerful subcommands for working with the Bash Coding Standard:
 
 #### display / show (Default)
 
@@ -263,6 +267,372 @@ bcs explain BCS0205 --summary   # Readonly pattern (summary)
 - Section codes (BCS01, BCS02, etc.)
 - Rule codes (BCS0102, BCS0205, etc.)
 - Subrule codes (BCS010201, etc.)
+
+#### decode / resolve
+
+Decode BCS codes to their source file locations or print rule content directly. This is the inverse operation of `bcs codes` - converting codes back to file paths or content.
+
+**Core Options:**
+
+```bash
+# Tier selection (choose one)
+bcs decode BCS####          # Complete tier (default) - full examples and explanations
+bcs decode BCS#### -a       # Abstract tier - rules and patterns only
+bcs decode BCS#### -s       # Summary tier - medium detail with key examples
+bcs decode BCS#### -c       # Complete tier (explicit)
+bcs decode BCS#### --all    # All three tiers
+
+# Output modes
+bcs decode BCS####          # Show file path (default)
+bcs decode BCS#### -p       # Print contents to stdout
+bcs decode BCS#### --print  # Same as -p
+
+# Path format (with file path mode)
+bcs decode BCS#### --relative       # Relative from repo root
+bcs decode BCS#### --basename       # Filename only
+
+# Validation (silent mode)
+bcs decode BCS#### --exists         # Exit 0 if exists, 1 if not (no output)
+```
+
+**Usage Pattern 1: Editor Integration**
+
+Open rules directly in your editor for quick reference or editing:
+
+```bash
+# Open single rule
+vim $(bcs decode BCS0102)                    # Default editor
+code $(bcs decode BCS0205)                   # VSCode
+nano $(bcs decode BCS0103)                   # nano
+
+# Open abstract version (shorter, easier to scan)
+vim $(bcs decode BCS0102 -a)
+
+# Open multiple related rules
+vim $(bcs decode BCS0102) $(bcs decode BCS0103) $(bcs decode BCS0104)
+
+# Open with line number (if you know the section)
+vim +20 $(bcs decode BCS0205)
+
+# Edit and reload
+vim $(bcs decode BCS0102) && bcs generate --canonical
+```
+
+**Usage Pattern 2: Content Viewing**
+
+View rule content directly without opening files:
+
+```bash
+# Quick reference - print to stdout
+bcs decode BCS0102 -p                        # View complete rule
+bcs decode BCS0102 -s -p                     # View summary (shorter)
+bcs decode BCS0102 -a -p                     # View abstract (rules only)
+
+# View with pager
+bcs decode BCS0102 -p | less                 # Scrollable view
+bcs decode BCS0102 -p | more                 # Simple pager
+
+# View all tiers for comprehensive understanding
+bcs decode BCS0102 --all -p                  # All three tiers with separators
+bcs decode BCS0102 --all -p | less           # Browse all tiers
+
+# Extract specific sections
+bcs decode BCS0102 -p | grep -A 10 "Rationale"     # Find rationale section
+bcs decode BCS0102 -p | awk '/^```bash/,/^```/'    # Extract code blocks only
+bcs decode BCS0102 -p | sed -n '1,20p'             # First 20 lines
+```
+
+**Usage Pattern 3: Tier Comparison**
+
+Compare different documentation tiers to understand detail levels:
+
+```bash
+# Side-by-side comparison
+diff -y <(bcs decode BCS0102 -a -p) <(bcs decode BCS0102 -s -p)
+diff -y <(bcs decode BCS0102 -s -p) <(bcs decode BCS0102 -c -p)
+
+# Unified diff
+diff -u <(bcs decode BCS0102 -a -p) <(bcs decode BCS0102 -c -p)
+
+# Show only differences
+diff --suppress-common-lines -y <(bcs decode BCS0102 -a -p) <(bcs decode BCS0102 -c -p)
+
+# Compare different rules
+diff <(bcs decode BCS0102 -p) <(bcs decode BCS0103 -p)
+
+# Word-level comparison
+wdiff <(bcs decode BCS0102 -a -p) <(bcs decode BCS0102 -c -p)
+```
+
+**Usage Pattern 4: Batch Processing**
+
+Process multiple rules programmatically:
+
+```bash
+# Loop through specific codes
+for code in BCS0102 BCS0103 BCS0104; do
+  echo "=== $code ==="
+  bcs decode "$code" -s -p | head -5
+  echo
+done
+
+# Process all codes in a section
+bcs codes | grep "^BCS01" | while IFS=: read -r code name desc; do
+  echo "Processing: $code - $desc"
+  bcs decode "$code" --exists && echo "  ✓ Exists"
+done
+
+# Extract and save all rules
+bcs codes | while IFS=: read -r code rest; do
+  bcs decode "$code" -p > "docs/$code.md"
+done
+
+# Find rules containing specific patterns
+bcs codes | while IFS=: read -r code rest; do
+  if bcs decode "$code" -p | grep -q "readonly"; then
+    echo "$code contains readonly pattern"
+  fi
+done
+
+# Build searchable index
+bcs codes | while IFS=: read -r code name desc; do
+  printf '%s\t%s\t%s\n' "$code" "$desc" "$(bcs decode "$code" --relative)"
+done > bcs-index.tsv
+```
+
+**Usage Pattern 5: Scripting & Validation**
+
+Use in scripts for validation and conditional logic:
+
+```bash
+# Check if code exists (silent)
+if bcs decode BCS0102 --exists; then
+  echo "Rule BCS0102 exists"
+fi
+
+# Exit immediately if code doesn't exist
+bcs decode BCS9999 --exists || { echo "Invalid code"; exit 1; }
+
+# Validate multiple codes
+declare -a codes=(BCS0102 BCS0103 BCS0104 BCS0105)
+for code in "${codes[@]}"; do
+  bcs decode "$code" --exists || echo "Missing: $code"
+done
+
+# Conditional processing
+if bcs decode BCS0205 --exists; then
+  # Extract readonly pattern examples
+  bcs decode BCS0205 -p | awk '/^```bash/,/^```/' > readonly-examples.txt
+fi
+
+# Build validation report
+{
+  echo "BCS Code Validation Report"
+  echo "=========================="
+  echo
+  for code in BCS{01..14}00; do
+    if bcs decode "$code" --exists; then
+      printf '%-8s ✓ Present\n' "$code"
+    else
+      printf '%-8s ✗ Missing\n' "$code"
+    fi
+  done
+} > validation-report.txt
+```
+
+**Usage Pattern 6: Path Manipulation**
+
+Work with file paths in various formats:
+
+```bash
+# Absolute paths (default) - for editor commands
+file=$(bcs decode BCS0102)
+echo "$file"  # /full/path/to/data/01-script-structure/02-shebang.complete.md
+
+# Relative paths - for documentation and portability
+bcs decode BCS0102 --relative
+# Output: data/01-script-structure/02-shebang.complete.md
+
+# Basename only - for file lists
+bcs decode BCS0102 --basename
+# Output: 02-shebang.complete.md
+
+# Build documentation with relative paths
+bcs codes | while IFS=: read -r code name desc; do
+  echo "- [$code - $desc]($(bcs decode "$code" --relative))"
+done > RULES-INDEX.md
+
+# Get all basenames for a section
+bcs codes | grep "^BCS01" | while IFS=: read -r code rest; do
+  bcs decode "$code" --basename
+done
+
+# Create symlinks with basenames
+cd /tmp/bcs-rules
+bcs codes | while IFS=: read -r code rest; do
+  ln -s "$(bcs decode "$code")" "$(bcs decode "$code" --basename)"
+done
+```
+
+**Usage Pattern 7: Documentation Building**
+
+Generate custom documentation from BCS rules:
+
+```bash
+# Create quick reference guide
+{
+  echo "# BCS Quick Reference"
+  echo
+  bcs codes | head -20 | while IFS=: read -r code name desc; do
+    echo "## $code: $desc"
+    echo
+    bcs decode "$code" -a -p | head -15
+    echo
+    echo "---"
+    echo
+  done
+} > BCS-QUICK-REF.md
+
+# Extract all code examples
+mkdir -p examples
+bcs codes | while IFS=: read -r code name rest; do
+  bcs decode "$code" -p | awk '/^```bash/,/^```/' | sed '1d;$d' > "examples/$code-$name.sh"
+done
+
+# Build searchable HTML (requires markdown processor)
+bcs codes | while IFS=: read -r code name desc; do
+  {
+    echo "# $desc"
+    echo
+    echo "**Code:** $code"
+    echo
+    bcs decode "$code" -p
+  } | markdown > "html/$code.html"
+done
+
+# Create table of contents with links
+{
+  echo "# BCS Rules Index"
+  echo
+  echo "| Code | Rule | File |"
+  echo "|------|------|------|"
+  bcs codes | while IFS=: read -r code name desc; do
+    file=$(bcs decode "$code" --relative)
+    printf '| %s | %s | `%s` |\n' "$code" "$desc" "$file"
+  done
+} > RULES-TOC.md
+```
+
+**Usage Pattern 8: Learning Workflows**
+
+Use decode for learning and reference:
+
+```bash
+# Study specific rule
+bcs decode BCS0102 -p | less          # Read full explanation
+
+# Quick lookup during coding
+bcs decode BCS0205 -s -p              # Fast summary reference
+
+# Understand rule hierarchy
+bcs decode BCS01 -a -p                # Section overview
+bcs decode BCS0102 -a -p              # Rule details
+bcs decode BCS010201 -a -p            # Subrule specifics
+
+# Compare learning materials
+bcs decode BCS0102 -s -p > /tmp/summary.txt
+bcs decode BCS0102 -c -p > /tmp/complete.txt
+diff /tmp/summary.txt /tmp/complete.txt
+
+# Extract examples for practice
+bcs decode BCS0205 -p | grep -A 20 "^```bash" | head -25 > practice.sh
+
+# Build personal cheat sheet
+for code in BCS0102 BCS0205 BCS0810 BCS1301; do
+  echo "=== $(bcs codes | grep "^$code:" | cut -d: -f3) ==="
+  bcs decode "$code" -s -p | head -10
+  echo
+done > my-cheatsheet.txt
+```
+
+**Usage Pattern 9: Code Review Integration**
+
+Reference rules during code reviews:
+
+```bash
+# Check if script follows specific rule
+bcs decode BCS0102 -p > /tmp/rule.txt
+grep -A 5 "set -euo pipefail" myscript.sh
+cat /tmp/rule.txt | grep -A 5 "set -euo pipefail"
+
+# Compare script pattern with standard
+diff <(grep -A 10 "readonly" myscript.sh) <(bcs decode BCS0205 -p | grep -A 10 "readonly")
+
+# Get rule reference for review comment
+echo "Please follow $(bcs codes | grep "^BCS0205:" | cut -d: -f3)"
+echo "Reference: $(bcs decode BCS0205 --relative)"
+echo
+bcs decode BCS0205 -a -p
+
+# Build review checklist
+{
+  echo "Code Review Checklist"
+  echo "===================="
+  for code in BCS0102 BCS0103 BCS0201 BCS0301 BCS0401; do
+    desc=$(bcs codes | grep "^$code:" | cut -d: -f3)
+    echo "- [ ] $code: $desc"
+  done
+} > review-checklist.md
+```
+
+**Real-World Examples:**
+
+```bash
+# Example 1: Quick rule reference while coding
+$ bcs decode BCS0102 -s -p
+### Shebang and Initial Setup
+First lines of all scripts must include a `#!shebang`, global `#shellcheck` definitions...
+
+# Example 2: Open rule in editor
+$ vim $(bcs decode BCS0205)
+# Opens: data/02-variables/05-readonly-after-group.complete.md
+
+# Example 3: Compare abstract vs complete
+$ diff -y <(bcs decode BCS0102 -a -p) <(bcs decode BCS0102 -c -p) | less
+
+# Example 4: Validate code existence
+$ bcs decode BCS9999 --exists || echo "Code not found"
+Code not found
+
+# Example 5: Build documentation
+$ bcs codes | head -5 | while IFS=: read code name desc; do
+  echo "# $desc"
+  bcs decode "$code" -p
+  echo
+done > rules-doc.md
+
+# Example 6: Extract code examples
+$ bcs decode BCS0205 -p | awk '/^```bash/,/^```/' | sed '1d;$d' > readonly-examples.sh
+
+# Example 7: BCS prefix optional
+$ bcs decode 0102 -s -p               # Works without BCS prefix
+$ bcs decode BCS0102 -s -p            # Also works with prefix
+
+# Example 8: View all tiers
+$ bcs decode BCS0102 --all -p | less
+### Complete tier (BCS0102)
+[complete content]
+---
+### Abstract tier (BCS0102)
+[abstract content]
+---
+### Summary tier (BCS0102)
+[summary content]
+```
+
+**Purpose:** Resolve BCS codes to file locations or view content directly
+**Inverse of:** `bcs codes` (lists all codes from files)
+**Use cases:** Editor integration, content viewing, tier comparison, batch processing, validation, documentation building, learning workflows, code review
 
 #### sections / toc
 
@@ -472,7 +842,7 @@ bash-coding-standard/
 │   │   └── ...
 │   ├── 02-variables/                # Section 2 rules
 │   └── ...
-├── tests/                           # Test suite (15 test files)
+├── tests/                           # Test suite (16 test files)
 │   ├── test-helpers.sh              # Test helper functions
 │   ├── run-all-tests.sh             # Run entire test suite
 │   ├── test-bash-coding-standard.sh # Core functionality tests
@@ -487,6 +857,7 @@ bash-coding-standard/
 │   ├── test-subcommand-generate.sh  # Generate subcommand tests
 │   ├── test-subcommand-search.sh    # Search subcommand tests
 │   ├── test-subcommand-explain.sh   # Explain subcommand tests
+│   ├── test-subcommand-decode.sh    # Decode subcommand tests
 │   ├── test-subcommand-sections.sh  # Sections subcommand tests
 │   └── test-subcommand-template.sh  # Template subcommand tests
 ├── builtins/                        # High-performance loadable builtins (separate sub-project)

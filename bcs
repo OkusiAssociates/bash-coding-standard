@@ -405,6 +405,233 @@ EOF
 }
 declare -fx cmd_search
 
+# Helper: Find BCS file by code and tier
+# Returns absolute path to matching file, or empty string if not found
+find_bcs_file_by_code() {
+  local -- code="$1"
+  local -- tier="${2:-complete}"
+  local -- data_dir="$BCS_DIR/data"
+
+  # Validate inputs
+  [[ -n "$code" ]] || return 2
+  [[ -d "$data_dir" ]] || return 1
+
+  # Normalize code (remove BCS prefix if present, ensure uppercase)
+  code="${code^^}"
+  code="${code#BCS}"
+
+  # Determine file suffix
+  local -- suffix
+  case "$tier" in
+    complete) suffix='.complete.md' ;;
+    abstract) suffix='.abstract.md' ;;
+    summary) suffix='.summary.md' ;;
+    *) return 2 ;;
+  esac
+
+  # Search for matching file by BCS code
+  local -- file file_code
+
+  while IFS= read -r -d '' file; do
+    file_code=$(get_bcs_code "$file") || continue
+    file_code="${file_code#BCS}"  # Remove BCS prefix
+
+    if [[ "$file_code" == "$code" ]]; then
+      echo "$file"
+      return 0
+    fi
+  done < <(find "$data_dir" -type f -name "*$suffix" -print0)
+
+  return 1
+}
+declare -fx find_bcs_file_by_code
+
+# Decode BCS code to file location
+cmd_decode() {
+  # Parse arguments
+  local -- code='' tier='complete' output_format='absolute'
+  local -i show_all=0 check_exists=0 print_contents=0
+
+  while (($#)); do
+    case "$1" in
+      -h|--help)
+        cat <<'EOF'
+bcs decode - Decode BCS code to file location
+
+Usage: bcs decode [OPTIONS] CODE
+
+Options:
+  -h, --help              Show this help message
+  -a, --abstract          Show abstract tier file location
+  -s, --summary           Show summary tier file location
+  -c, --complete          Show complete tier file location (default)
+  -p, --print             Print file contents to stdout instead of path
+  --all                   Show all three tier file locations (or contents with -p)
+  --relative              Output path relative to repository root
+  --basename              Output only the filename
+  --exists                Exit 0 if code exists, 1 if not (no output)
+
+Arguments:
+  CODE                    BCS code (e.g., BCS010201 or 010201)
+
+Description:
+  Resolves BCS rule code to its source file location in the data/ directory.
+  This is the inverse operation of get_bcs_code() - converting code back to file path.
+
+Examples:
+  bcs decode BCS010201                       # Show complete tier absolute path
+  bcs decode 010201                          # BCS prefix optional
+  bcs decode BCS0205 --relative              # Show relative path from repo root
+  bcs decode BCS0102 --all                   # Show all three tier locations
+  bcs decode BCS0103 --basename              # Show only filename
+  bcs decode BCS0102 -p                      # Print rule contents to stdout
+  bcs decode BCS0102 --all -p                # Print all three tiers with separators
+  bcs decode BCS9999 --exists && echo "exists"  # Check if code exists (scripting)
+
+Use cases:
+  vim $(bcs decode BCS0205)                  # Open rule file in editor
+  bcs decode BCS0102 -p                      # View rule content directly
+  bcs decode BCS0102 -p | less               # View with pager
+  diff <(bcs decode BCS0102 -a -p) <(bcs decode BCS0102 -c -p)  # Compare tiers
+
+EOF
+        return 0
+        ;;
+      -a|--abstract)
+        tier='abstract'
+        shift
+        ;;
+      -s|--summary)
+        tier='summary'
+        shift
+        ;;
+      -c|--complete)
+        tier='complete'
+        shift
+        ;;
+      -p|--print)
+        print_contents=1
+        shift
+        ;;
+      --all)
+        show_all=1
+        shift
+        ;;
+      --relative)
+        output_format='relative'
+        shift
+        ;;
+      --basename)
+        output_format='basename'
+        shift
+        ;;
+      --exists)
+        check_exists=1
+        shift
+        ;;
+      -*)
+        error "Unknown option: $1"
+        return 2
+        ;;
+      *)
+        code="$1"
+        shift
+        ;;
+    esac
+  done
+
+  # Validate code provided
+  if [[ -z "$code" ]]; then
+    error "No BCS code specified"
+    >&2 echo "Usage: bcs decode [OPTIONS] CODE"
+    return 2
+  fi
+
+  # Helper to format output based on format option
+  format_output() {
+    local -- file="$1"
+    case "$output_format" in
+      absolute)
+        echo "$file"
+        ;;
+      relative)
+        echo "${file#"$BCS_DIR"/}"
+        ;;
+      basename)
+        basename "$file"
+        ;;
+    esac
+  }
+
+  # Process based on options
+  if ((show_all)); then
+    # Show all three tiers
+    local -i found=0
+    local -- file
+
+    for tier in complete abstract summary; do
+      file=$(find_bcs_file_by_code "$code" "$tier" 2>/dev/null) || continue
+      ((found+=1))
+
+      if ((check_exists)); then
+        continue  # Just counting, don't output
+      fi
+
+      if ((print_contents)); then
+        # Print contents with tier separator
+        if ((found > 1)); then
+          echo  # Blank line between tiers
+          echo "---"
+          echo
+        fi
+        echo "### $(tr '[:lower:]' '[:upper:]' <<<"${tier:0:1}")${tier:1} tier (BCS${code#BCS})"
+        echo
+        cat "$file"
+      else
+        # Print file path
+        case "$output_format" in
+          absolute|relative|basename)
+            printf '%-9s: %s\n' "$(tr '[:lower:]' '[:upper:]' <<<"${tier:0:1}")${tier:1}" "$(format_output "$file")"
+            ;;
+        esac
+      fi
+    done
+
+    # Check exists mode - return status based on found count
+    if ((check_exists)); then
+      ((found > 0)) && return 0 || return 1
+    fi
+
+    # Normal output mode - verify we found at least one file
+    if ((found > 0)); then
+      return 0
+    fi
+
+    error "BCS code not found: ${code#BCS}"
+    >&2 echo "Use 'bcs codes' to list all available codes"
+    return 1
+  fi
+
+  # Single tier mode
+  local -- file
+  file=$(find_bcs_file_by_code "$code" "$tier" 2>/dev/null) || {
+    ((check_exists)) && return 1
+    error "BCS code not found: ${code#BCS} ($tier tier)"
+    >&2 echo "Use 'bcs codes' to list all available codes"
+    return 1
+  }
+
+  ((check_exists)) && return 0
+
+  if ((print_contents)); then
+    cat "$file"
+  else
+    format_output "$file"
+  fi
+  return 0
+}
+declare -fx cmd_decode
+
 # Explain a specific BCS code
 cmd_explain() {
   # Parse arguments
@@ -463,44 +690,13 @@ EOF
     return 2
   fi
 
-  # Normalize code (remove BCS prefix if present, ensure uppercase)
-  code="${code^^}"  # Uppercase
-  code="${code#BCS}"  # Remove BCS prefix if present
-
-  # Find data directory
-  local -- data_dir="$BCS_DIR/data"
-  if [[ ! -d "$data_dir" ]]; then
-    error "Data directory not found: $data_dir"
-    return 1
-  fi
-
-  # Determine file suffix
-  local -- suffix
-  case "$tier" in
-    complete) suffix='.complete.md' ;;
-    abstract) suffix='.abstract.md' ;;
-    summary) suffix='.summary.md' ;;
-  esac
-
-  # Search for matching file by BCS code
-  local -- file found_file=''
-  local -- file_code
-
-  while IFS= read -r -d '' file; do
-    file_code=$(get_bcs_code "$file") || continue
-    file_code="${file_code#BCS}"  # Remove BCS prefix
-
-    if [[ "$file_code" == "$code" ]]; then
-      found_file="$file"
-      break
-    fi
-  done < <(find "$data_dir" -type f -name "*$suffix" -print0)
-
-  if [[ -z "$found_file" ]]; then
-    error "BCS code not found: BCS$code"
+  # Use helper to find file
+  local -- found_file
+  found_file=$(find_bcs_file_by_code "$code" "$tier") || {
+    error "BCS code not found: ${code#BCS} ($tier tier)"
     >&2 echo "Use 'bcs codes' to list all available codes"
     return 1
-  fi
+  }
 
   # Display the file
   cat "$found_file"
@@ -705,7 +901,7 @@ Code Quality:
 
 Repository:
   Main script:        bash-coding-standard (v$BCS_VERSION)
-  Subcommands:        10 (display, about, template, check, codes, generate, search, explain, sections, help)
+  Subcommands:        11 (display, about, template, check, codes, generate, search, explain, decode, sections, help)
   License:            CC BY-SA 4.0
 
 EOF
@@ -1211,6 +1407,9 @@ cmd_help() {
       explain|show-rule)
         cmd_explain --help
         ;;
+      decode|resolve)
+        cmd_decode --help
+        ;;
       sections|toc)
         cmd_sections --help
         ;;
@@ -1247,6 +1446,7 @@ Commands:
   generate           Regenerate standard from data/ tree
   search PATTERN     Search within the standard
   explain CODE       Show detailed explanation of a BCS code
+  decode CODE        Decode BCS code to file location
   sections           List all sections of the standard
   help [COMMAND]     Show help for a command
 
@@ -1264,6 +1464,7 @@ Examples:
   bcs codes                              # List all BCS codes
   bcs search readonly                    # Search for "readonly"
   bcs explain BCS010201                  # Explain dual-purpose pattern
+  bcs decode BCS010201                   # Show file location for BCS010201
   bcs generate --canonical               # Regenerate canonical standard
   bcs sections                           # List all 14 sections
   bcs help check                         # Show help for check command
@@ -1494,6 +1695,9 @@ case "$subcommand" in
     ;;
   explain|show-rule)
     cmd_explain "$@"
+    ;;
+  decode|resolve)
+    cmd_decode "$@"
     ;;
   sections|toc)
     cmd_sections "$@"
