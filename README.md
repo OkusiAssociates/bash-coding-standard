@@ -105,7 +105,7 @@ The `bcs` script (symlink to `bash-coding-standard`) provides a comprehensive to
 ./bcs check --format markdown script.sh  # Markdown report
 
 # List all BCS rule codes (replaces getbcscode.sh)
-./bcs codes                     # List all 99 BCS codes
+./bcs codes                     # List all 98 BCS codes
 ./bcs list-codes                # Alias
 
 # Regenerate the standard (replaces regenerate-standard.sh)
@@ -139,7 +139,7 @@ bcs check deploy.sh > compliance-report.txt
 ```
 
 **Toolkit Features:**
-- **9 Subcommands**: display, about, template, check, codes, generate, search, explain, sections
+- **10 Subcommands**: display, about, template, check, codes, generate, search, explain, sections, help
 - **AI-powered validation**: Leverage Claude for comprehensive compliance checking
 - **Template generation**: Create BCS-compliant scripts instantly
 - **Comprehensive help**: `bcs help [subcommand]`
@@ -149,7 +149,7 @@ bcs check deploy.sh > compliance-report.txt
 
 ### Subcommands Reference
 
-The `bcs` toolkit provides nine powerful subcommands for working with the Bash Coding Standard:
+The `bcs` toolkit provides ten powerful subcommands for working with the Bash Coding Standard:
 
 #### display / show (Default)
 
@@ -190,7 +190,7 @@ bcs list-codes               # Alias
 #   BCS0205:readonly-after-group:Readonly After Group Declaration
 ```
 
-**Purpose:** Catalog all 99 BCS rule codes with their descriptions
+**Purpose:** Catalog all 98 BCS rule codes with their descriptions
 **Replaces:** `getbcscode.sh` script
 **Use case:** Finding specific rules, building documentation indexes
 
@@ -217,7 +217,7 @@ bcs generate --stdout | wc -l
 **Use case:** Creating custom versions, updating after rule edits
 
 **Tier types:**
-- `complete` - Complete standard with all examples (2,145 lines)
+- `complete` - Complete standard with all examples (2,945 lines)
 - `summary` - Medium detail, key examples only
 - `abstract` - Minimal version, rules and patterns only
 
@@ -266,7 +266,7 @@ bcs explain BCS0205 --summary   # Readonly pattern (summary)
 
 #### sections / toc
 
-List all 16 major sections in the standard:
+List all 14 sections in the standard:
 
 ```bash
 bcs sections                 # List all sections
@@ -303,8 +303,8 @@ bcs about --verbose          # Comprehensive (all information)
 bcs about --stats
 #   Repository Statistics:
 #   - Sections: 14
-#   - Total rules: 99
-#   - Lines of standard: 2,145
+#   - Total rules: 98
+#   - Lines of standard: 2,945
 #   - Source files: 127
 #   - Test files: 15
 ```
@@ -403,7 +403,7 @@ bcs check --strict --format json deploy.sh > compliance-report.json
 14. Advanced patterns usage
 
 **How it works:**
-- Embeds entire BASH-CODING-STANDARD.md (2,384 lines) as Claude's system prompt
+- Embeds entire BASH-CODING-STANDARD.md (2,945 lines) as Claude's system prompt
 - Claude analyzes script with full context of all rules
 - Returns natural language explanations (not cryptic error codes)
 - Understands intent, context, and legitimate exceptions
@@ -458,7 +458,7 @@ shellcheck -x your-script.sh
 
 ```
 bash-coding-standard/
-├── BASH-CODING-STANDARD.md          # The complete coding standard (2,145 lines)
+├── BASH-CODING-STANDARD.md          # The complete coding standard (2,945 lines)
 ├── bash-coding-standard             # Main toolkit script (v1.0.0)
 ├── bcs                              # Symlink to bash-coding-standard (convenience)
 ├── README.md                        # This file
@@ -472,7 +472,7 @@ bash-coding-standard/
 │   │   └── ...
 │   ├── 02-variables/                # Section 2 rules
 │   └── ...
-├── tests/                           # Test suite (13 test files)
+├── tests/                           # Test suite (15 test files)
 │   ├── test-helpers.sh              # Test helper functions
 │   ├── run-all-tests.sh             # Run entire test suite
 │   ├── test-bash-coding-standard.sh # Core functionality tests
@@ -482,11 +482,13 @@ bash-coding-standard/
 │   ├── test-find-bcs-file.sh        # File location tests
 │   ├── test-subcommand-dispatcher.sh # Command routing tests
 │   ├── test-subcommand-display.sh   # Display subcommand tests
+│   ├── test-subcommand-about.sh     # About subcommand tests
 │   ├── test-subcommand-codes.sh     # Codes subcommand tests
 │   ├── test-subcommand-generate.sh  # Generate subcommand tests
 │   ├── test-subcommand-search.sh    # Search subcommand tests
 │   ├── test-subcommand-explain.sh   # Explain subcommand tests
-│   └── test-subcommand-sections.sh  # Sections subcommand tests
+│   ├── test-subcommand-sections.sh  # Sections subcommand tests
+│   └── test-subcommand-template.sh  # Template subcommand tests
 ├── builtins/                        # High-performance loadable builtins (separate sub-project)
 │   ├── README.md                    # Complete user guide
 │   ├── QUICKSTART.md                # Fast-start installation
@@ -609,7 +611,7 @@ done
 
 ### Primary Documents
 
-- **[BASH-CODING-STANDARD.md](BASH-CODING-STANDARD.md)** - The complete coding standard (2,145 lines, 14 sections)
+- **[BASH-CODING-STANDARD.md](BASH-CODING-STANDARD.md)** - The complete coding standard (2,945 lines, 14 sections)
 - **[REBUTTALS-FAQ.md](REBUTTALS-FAQ.md)** - Responses to common criticisms and frequently asked questions about comprehensive Bash standards
 
 ### Standard Structure (14 Sections)
