@@ -136,7 +136,7 @@ declare -fx cmd_codes
 cmd_generate() {
   # Parse arguments
   local -- output_file=''
-  local -- file_type='complete'
+  local -- file_type='abstract'
   local -i use_stdout=1  # Default to stdout for safety
   local -i use_canonical=0
 
@@ -150,17 +150,17 @@ Usage: bcs generate [OPTIONS]
 
 Options:
   -h, --help              Show this help message
-  -t, --type TYPE         File type: complete, abstract, or summary (default: complete)
+  -t, --type TYPE         File type: complete, abstract, or summary (default: abstract)
   -o, --output FILE       Output to specific file
   --canonical             Write to BASH-CODING-STANDARD.md (requires explicit flag)
 
 Default behavior: Output to stdout (safe, non-destructive)
 
 Examples:
-  bcs generate                           # Generate complete standard to stdout
+  bcs generate                           # Generate abstract standard to stdout (default)
   bcs generate --canonical               # Regenerate canonical BASH-CODING-STANDARD.md
-  bcs generate -t abstract               # Generate abstract version to stdout
-  bcs generate -t abstract --canonical   # Regenerate with abstract tier
+  bcs generate -t complete               # Generate complete version to stdout
+  bcs generate -t summary                # Generate summary version to stdout
   bcs generate -t summary -o /tmp/BCS-summary.md
 
 File types:
