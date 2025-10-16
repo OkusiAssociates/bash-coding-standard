@@ -120,13 +120,16 @@ The `bcs` script (symlink to `bash-coding-standard`) provides a comprehensive to
 ./bcs search -C 5 "declare -fx" # With context lines
 
 # Explain specific BCS rules
-./bcs explain BCS010201         # Complete explanation
-./bcs explain BCS0102 -a        # Abstract version
+./bcs explain BCS010201         # Abstract explanation (default)
+./bcs explain BCS0102 -c        # Complete version
 ./bcs explain BCS0205 -s        # Summary version
 
 # Decode BCS codes to file locations
-./bcs decode BCS010201          # Show file location
+./bcs decode BCS010201          # Show file location (abstract tier by default)
+./bcs decode BCS01              # Section codes supported (returns 00-section file)
+./bcs decode BCS01 BCS02 BCS08  # Multiple codes supported
 ./bcs decode BCS0102 --all      # Show all three tiers
+./bcs decode BCS01 BCS0102 -p   # Print contents of multiple codes
 
 # List all sections
 ./bcs sections                  # Show all 14 sections
@@ -249,22 +252,24 @@ bcs search "BCS0205"         # Search for specific code
 Show detailed explanation of a specific BCS rule:
 
 ```bash
-bcs explain BCS####          # Complete explanation (default)
-bcs explain BCS#### -a       # Abstract version
+bcs explain BCS####          # Abstract explanation (default)
+bcs explain BCS#### -a       # Abstract version (explicit)
 bcs explain BCS#### -s       # Summary version
-bcs explain BCS#### -c       # Complete version (explicit)
+bcs explain BCS#### -c       # Complete version
 
 # Examples
-bcs explain BCS010201        # Dual-purpose scripts
-bcs explain BCS0102 -a       # Shebang (abstract)
+bcs explain BCS010201        # Dual-purpose scripts (abstract)
+bcs explain BCS0102 -c       # Shebang (complete version)
 bcs explain BCS0205 --summary   # Readonly pattern (summary)
+bcs explain BCS01            # Section overview (abstract)
 ```
 
 **Purpose:** Get focused documentation for a single rule
+**Default tier:** Abstract (changed from complete in v1.0.0)
 **Use case:** Learning specific patterns, understanding rule context
 
 **Supports:**
-- Section codes (BCS01, BCS02, etc.)
+- Section codes (BCS01, BCS02, etc.) - returns 00-section.{tier}.md
 - Rule codes (BCS0102, BCS0205, etc.)
 - Subrule codes (BCS010201, etc.)
 
@@ -272,14 +277,19 @@ bcs explain BCS0205 --summary   # Readonly pattern (summary)
 
 Decode BCS codes to their source file locations or print rule content directly. This is the inverse operation of `bcs codes` - converting codes back to file paths or content.
 
+**New in v1.0.0:**
+- **Default tier changed to `abstract`** (was `complete`) for faster reference
+- **Section codes supported** - `BCS01`, `BCS02`, etc. return `00-section.{tier}.md` files
+- **Multiple codes supported** - Process multiple codes in a single command
+
 **Core Options:**
 
 ```bash
 # Tier selection (choose one)
-bcs decode BCS####          # Complete tier (default) - full examples and explanations
-bcs decode BCS#### -a       # Abstract tier - rules and patterns only
+bcs decode BCS####          # Abstract tier (default) - rules and patterns only
+bcs decode BCS#### -a       # Abstract tier (explicit)
 bcs decode BCS#### -s       # Summary tier - medium detail with key examples
-bcs decode BCS#### -c       # Complete tier (explicit)
+bcs decode BCS#### -c       # Complete tier - full examples and explanations
 bcs decode BCS#### --all    # All three tiers
 
 # Output modes
@@ -293,6 +303,11 @@ bcs decode BCS#### --basename       # Filename only
 
 # Validation (silent mode)
 bcs decode BCS#### --exists         # Exit 0 if exists, 1 if not (no output)
+
+# Multiple codes (NEW)
+bcs decode BCS01 BCS02 BCS08        # Decode multiple codes
+bcs decode BCS01 BCS0102 -p         # Print multiple codes with separators
+bcs decode BCS01 BCS02 --basename   # Multiple codes with basename format
 ```
 
 **Usage Pattern 1: Editor Integration**
@@ -300,16 +315,19 @@ bcs decode BCS#### --exists         # Exit 0 if exists, 1 if not (no output)
 Open rules directly in your editor for quick reference or editing:
 
 ```bash
-# Open single rule
-vim $(bcs decode BCS0102)                    # Default editor
-code $(bcs decode BCS0205)                   # VSCode
-nano $(bcs decode BCS0103)                   # nano
+# Open single rule (abstract tier by default)
+vim $(bcs decode BCS0102)                    # Default editor (abstract)
+code $(bcs decode BCS0205)                   # VSCode (abstract)
+nano $(bcs decode BCS0103)                   # nano (abstract)
 
-# Open abstract version (shorter, easier to scan)
-vim $(bcs decode BCS0102 -a)
+# Open complete version (with all examples)
+vim $(bcs decode BCS0102 -c)
 
-# Open multiple related rules
-vim $(bcs decode BCS0102) $(bcs decode BCS0103) $(bcs decode BCS0104)
+# Open section overview
+vim $(bcs decode BCS01)                      # Section 1 overview
+
+# Open multiple related rules (NEW: multiple codes support)
+vim $(bcs decode BCS01 BCS0102 BCS0103 --basename | xargs -I {} realpath data/*/{}*)
 
 # Open with line number (if you know the section)
 vim +20 $(bcs decode BCS0205)
@@ -323,10 +341,18 @@ vim $(bcs decode BCS0102) && bcs generate --canonical
 View rule content directly without opening files:
 
 ```bash
-# Quick reference - print to stdout
-bcs decode BCS0102 -p                        # View complete rule
-bcs decode BCS0102 -s -p                     # View summary (shorter)
-bcs decode BCS0102 -a -p                     # View abstract (rules only)
+# Quick reference - print to stdout (abstract by default)
+bcs decode BCS0102 -p                        # View abstract rule (quick reference)
+bcs decode BCS0102 -s -p                     # View summary (medium detail)
+bcs decode BCS0102 -c -p                     # View complete (all examples)
+
+# View section overview (NEW: section codes)
+bcs decode BCS01 -p                          # Section 1 overview (abstract)
+bcs decode BCS01 -c -p                       # Section 1 complete details
+
+# View multiple codes (NEW: multiple codes support)
+bcs decode BCS01 BCS02 BCS08 -p              # Multiple sections with separators
+bcs decode BCS0102 BCS0103 BCS0104 -s -p     # Multiple rules (summary tier)
 
 # View with pager
 bcs decode BCS0102 -p | less                 # Scrollable view
@@ -588,37 +614,46 @@ bcs decode BCS0205 -a -p
 **Real-World Examples:**
 
 ```bash
-# Example 1: Quick rule reference while coding
-$ bcs decode BCS0102 -s -p
-### Shebang and Initial Setup
-First lines of all scripts must include a `#!shebang`, global `#shellcheck` definitions...
+# Example 1: Quick rule reference while coding (abstract by default)
+$ bcs decode BCS0102 -p
+## Shebang and Initial Setup
+First lines: shebang, optional shellcheck directives, brief description...
 
-# Example 2: Open rule in editor
+# Example 2: Open rule in editor (abstract by default)
 $ vim $(bcs decode BCS0205)
-# Opens: data/02-variables/05-readonly-after-group.complete.md
+# Opens: data/02-variables/05-readonly-after-group.abstract.md
 
-# Example 3: Compare abstract vs complete
+# Example 3: View section overview (NEW: section codes)
+$ bcs decode BCS01 -p
+## Script Structure & Layout
+Mandatory 13-step layout: (1) Shebang, (2) ShellCheck directives...
+
+# Example 4: Multiple codes at once (NEW: multiple codes)
+$ bcs decode BCS01 BCS02 BCS08 -p
+[Shows BCS01 content]
+=========================================
+[Shows BCS02 content]
+=========================================
+[Shows BCS08 content]
+
+# Example 5: Compare abstract vs complete
 $ diff -y <(bcs decode BCS0102 -a -p) <(bcs decode BCS0102 -c -p) | less
 
-# Example 4: Validate code existence
+# Example 6: Validate code existence
 $ bcs decode BCS9999 --exists || echo "Code not found"
 Code not found
 
-# Example 5: Build documentation
-$ bcs codes | head -5 | while IFS=: read code name desc; do
-  echo "# $desc"
-  bcs decode "$code" -p
-  echo
-done > rules-doc.md
+# Example 7: Build documentation with multiple codes
+$ bcs decode BCS01 BCS02 BCS03 BCS04 BCS05 -s -p > sections-summary.md
 
-# Example 6: Extract code examples
-$ bcs decode BCS0205 -p | awk '/^```bash/,/^```/' | sed '1d;$d' > readonly-examples.sh
+# Example 8: Extract code examples
+$ bcs decode BCS0205 -c -p | awk '/^```bash/,/^```/' | sed '1d;$d' > readonly-examples.sh
 
-# Example 7: BCS prefix optional
-$ bcs decode 0102 -s -p               # Works without BCS prefix
-$ bcs decode BCS0102 -s -p            # Also works with prefix
+# Example 9: BCS prefix optional
+$ bcs decode 0102 -p                  # Works without BCS prefix
+$ bcs decode BCS0102 -p               # Also works with prefix
 
-# Example 8: View all tiers
+# Example 10: View all tiers
 $ bcs decode BCS0102 --all -p | less
 ### Complete tier (BCS0102)
 [complete content]
@@ -631,6 +666,8 @@ $ bcs decode BCS0102 --all -p | less
 ```
 
 **Purpose:** Resolve BCS codes to file locations or view content directly
+**Default tier:** Abstract (changed from complete in v1.0.0)
+**New features:** Section codes support, multiple codes support
 **Inverse of:** `bcs codes` (lists all codes from files)
 **Use cases:** Editor integration, content viewing, tier comparison, batch processing, validation, documentation building, learning workflows, code review
 
@@ -923,6 +960,69 @@ The BCS code system ensures:
 - **Deterministic generation**: File path directly determines code
 - **Machine-parseable references**: Tools can link rules to specific file locations
 
+### BCS Rules Filename Structure
+
+Understanding the filename structure is critical for adding or modifying rules.
+
+**Filename Format:**
+```
+[0-9][0-9]-{short-rule-desc}.{tier}.md
+```
+
+Where:
+- `[0-9][0-9]` = Two-digit zero-padded number (01, 02, 03, etc.)
+- `{short-rule-desc}` = Brief descriptive name (e.g., `layout`, `shebang`, `readonly-after-group`)
+- `{tier}` = One of: `complete`, `summary`, or `abstract`
+
+**Example:**
+```
+01-script-structure/
+├── 01-layout.complete.md       # BCS0101 - Complete tier
+├── 01-layout.summary.md        # BCS0101 - Summary tier
+├── 01-layout.abstract.md       # BCS0101 - Abstract tier
+├── 02-shebang.complete.md      # BCS0102 - Complete tier
+├── 02-shebang.summary.md       # BCS0102 - Summary tier
+├── 02-shebang.abstract.md      # BCS0102 - Abstract tier
+```
+
+**Critical Filename Rules:**
+
+1. **Unique numbers**: Each two-digit number must be unique within its directory
+   - `01-layout.complete.md` ✓
+   - `01-shebang.complete.md` ✗ (01 already used)
+   - `02-shebang.complete.md` ✓
+
+2. **Three tiers always together**: Every rule must have all three versions with identical numbers and base names
+   - `05-example.complete.md`
+   - `05-example.summary.md`
+   - `05-example.abstract.md`
+
+3. **Short description flexibility**: The descriptive name can be modified slightly without changing the BCS code
+   - `01-layout.complete.md` → BCS0101
+   - `01-script-layout.complete.md` → Still BCS0101 (same number)
+
+4. **No duplicate numbers**: If you rename a rule and the number stays the same, delete the old files first
+   - Renaming `03-old-name.complete.md` → `03-new-name.complete.md`
+   - Must delete all `03-old-name.*.md` files before creating `03-new-name.*.md` files
+
+**Source-Generated Hierarchy:**
+
+**`.complete.md` is the CANONICAL source** - the other two tiers are derivatives:
+
+```
+01-layout.complete.md  (SOURCE - manually written)
+    ↓ generates
+01-layout.summary.md   (DERIVED - compressed version)
+    ↓ generates
+01-layout.abstract.md  (DERIVED - minimal version)
+```
+
+**Workflow:**
+1. Edit the `.complete.md` file (the authoritative version)
+2. Generate `.summary.md` and `.abstract.md` from it using compression tools
+3. Never edit `.summary.md` or `.abstract.md` directly - regenerate them from `.complete.md`
+4. Run `./bcs generate --canonical` to rebuild the final BASH-CODING-STANDARD.md
+
 ## Performance Enhancement: Bash Builtins
 
 The `builtins/` subdirectory contains a **separate sub-project** that provides high-performance bash loadable builtins to replace common external utilities. These builtins run directly inside the bash process, providing **10-158x performance improvements** by eliminating fork/exec overhead.
@@ -1157,6 +1257,25 @@ let g:syntastic_sh_shellcheck_args = '-x'
 
 ## Recent Changes
 
+### v1.0.0 (2025-10-15) - Major Improvements
+
+**BCS Toolkit Enhancements:**
+- **Default tier changed to `abstract`** in `bcs decode` and `bcs explain` for faster reference lookups
+- **Section codes now supported** - `BCS01`, `BCS02`, etc. return `00-section.{tier}.md` files
+- **Multiple codes supported** in `bcs decode` - process multiple codes in a single command
+  - Example: `bcs decode BCS01 BCS02 BCS08 -p` prints all three sections
+  - Automatic separators added between codes in print mode
+- **Three-tier documentation system** fully implemented:
+  - **Complete** (.complete.md) - Full examples and explanations (canonical source)
+  - **Summary** (.summary.md) - Medium detail with key examples (derived)
+  - **Abstract** (.abstract.md) - Rules and patterns only (derived)
+
+**Documentation:**
+- README.md significantly expanded with comprehensive usage patterns
+- Added 9 detailed usage patterns for `bcs decode` command
+- Clarified section codes, multiple codes, and tier selection
+- Updated all examples to reflect new defaults
+
 ### 2025-10-10 Restructuring
 
 The standard was restructured from 15 sections to 14 sections with significant improvements:
@@ -1324,4 +1443,5 @@ Adopted by the **Indonesian Open Technology Foundation (YaTTI)** for standardizi
 
 **For production systems requiring consistent, maintainable, and secure Bash scripting.**
 
-*Last updated: 2025-10-10*
+*Version: 1.0.0*
+*Last updated: 2025-10-15*

@@ -122,14 +122,13 @@ noarg() {
 \`\`\`bash
 #!/usr/bin/env bash
 set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 VERSION='1.0.0'
-SCRIPT_NAME=$(basename "$0")
-
-# Helper function
-noarg() {
-  (($# > 1)) || die 2 "Option '$1' requires an argument"
-}
+SCRIPT_PATH=$(realpath -- "$0")
+SCRIPT_DIR=${SCRIPT_PATH%/*}
+SCRIPT_NAME=${SCRIPT_PATH##*/}
+readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
 
 # Default values
 declare -i VERBOSE=0
@@ -137,29 +136,90 @@ declare -i DRY_RUN=0
 declare -- output_file=''
 declare -a files=()
 
-# Parse arguments
-while (($#)); do case $1 in
-  -o|--output)    noarg "$@"; shift
-                  output_file=$1 ;;
-  -v|--verbose)   VERBOSE+=1 ;;
-  -n|--dry-run)   DRY_RUN=1 ;;
-  -V|--version)   echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
-  -h|--help)      show_help; exit 0 ;;
+# ============================================================================
+# Utility Functions
+# ============================================================================
 
-  # Short option bundling support
-  -[ovnVh]*)    #shellcheck disable=SC2046
-                  set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;
-  -*)             die 22 "Invalid option '$1'" ;;
-  *)              files+=("$1") ;;
-esac; shift; done
+error() {
+  >&2 echo "[$SCRIPT_NAME] ERROR: $*"
+}
 
-# Validate required arguments
-((${#files[@]} > 0)) || die 2 'No input files specified'
-[[ -n "$output_file" ]] || die 2 'Output file required (use -o)'
+die() {
+  local -i exit_code=$1
+  shift
+  (($#)) && error "$@"
+  exit "$exit_code"
+}
 
-# Use parsed arguments
-((VERBOSE)) && echo "Processing ${#files[@]} files"
-((DRY_RUN)) && echo '[DRY RUN] Would write to:' "$output_file"
+noarg() {
+  (($# > 1)) || die 2 "Option '$1' requires an argument"
+}
+
+show_help() {
+  cat <<EOF
+Usage: $SCRIPT_NAME [OPTIONS] FILE...
+
+Process files with various options.
+
+Options:
+  -o, --output FILE  Output file (required)
+  -v, --verbose      Verbose output
+  -n, --dry-run      Dry-run mode
+  -V, --version      Show version
+  -h, --help         Show this help
+
+Examples:
+  $SCRIPT_NAME -o output.txt file1.txt file2.txt
+  $SCRIPT_NAME -v -n -o result.txt *.txt
+EOF
+}
+
+# ============================================================================
+# Main Function
+# ============================================================================
+
+main() {
+  # Parse arguments
+  while (($#)); do case $1 in
+    -o|--output)    noarg "$@"; shift
+                    output_file=$1 ;;
+    -v|--verbose)   VERBOSE+=1 ;;
+    -n|--dry-run)   DRY_RUN=1 ;;
+    -V|--version)   echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
+    -h|--help)      show_help; exit 0 ;;
+
+    # Short option bundling support
+    -[ovnVh]*)    #shellcheck disable=SC2046
+                    set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+    -*)             die 22 "Invalid option '$1'" ;;
+    *)              files+=("$1") ;;
+  esac; shift; done
+
+  # Make variables readonly after parsing
+  readonly -- VERBOSE DRY_RUN output_file
+  readonly -a files
+
+  # Validate required arguments
+  ((${#files[@]} > 0)) || die 2 'No input files specified'
+  [[ -n "$output_file" ]] || die 2 'Output file required (use -o)'
+
+  # Use parsed arguments
+  ((VERBOSE)) && echo "Processing ${#files[@]} files"
+  ((DRY_RUN)) && echo '[DRY RUN] Would write to:' "$output_file"
+
+  # Process files (example logic)
+  local -- file
+  for file in "${files[@]}"; do
+    ((VERBOSE)) && echo "Processing: $file"
+    # Processing logic here
+  done
+
+  ((VERBOSE)) && echo "Would write results to: $output_file"
+}
+
+main "$@"
+
+#fin
 \`\`\`
 
 **Short option bundling examples:**

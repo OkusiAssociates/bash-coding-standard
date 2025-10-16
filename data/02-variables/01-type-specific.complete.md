@@ -279,6 +279,39 @@ declare -A CONFIG=(
 
 declare -A FILE_CHECKSUMS=()
 
+# ============================================================================
+# Color Definitions
+# ============================================================================
+
+if [[ -t 1 && -t 2 ]]; then
+  readonly -- RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' NC=$'\033[0m'
+else
+  readonly -- RED='' GREEN='' YELLOW='' CYAN='' NC=''
+fi
+
+# ============================================================================
+# Utility Functions
+# ============================================================================
+
+_msg() {
+  local -- prefix="$SCRIPT_NAME:" msg
+  case "${FUNCNAME[1]}" in
+    info)    prefix+=" ${CYAN}◉${NC}" ;;
+    warn)    prefix+=" ${YELLOW}⚡${NC}" ;;
+    success) prefix+=" ${GREEN}✓${NC}" ;;
+    *)       ;;
+  esac
+  for msg in "$@"; do printf '%s %s\n' "$prefix" "$msg"; done
+}
+
+info() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
+warn() { >&2 _msg "$@"; }
+success() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
+
+# ============================================================================
+# Business Logic Functions
+# ============================================================================
+
 # Function with local typed variables
 process_file() {
   local -- input_file="$1"

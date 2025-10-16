@@ -11,6 +11,68 @@
   readonly -- BCS_VERSION BCS_PATH BCS_DIR BCS_NAME
 }
 
+# Logging/Messaging system
+declare -i VERBOSE=1
+if [[ -t 1 && -t 2 ]]; then
+  declare -- RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' NC=$'\033[0m'
+else
+  declare -- RED='' GREEN='' YELLOW='' CYAN='' NC=''
+fi
+# _Core messaging function using FUNCNAME
+_msg() {
+  local -- prefix="$BCS_NAME:" msg
+  case ${FUNCNAME[1]} in
+    vecho)   ;;
+    info)    prefix+=" ${CYAN}◉${NC}" ;;
+    warn)    prefix+=" ${YELLOW}⚡${NC}" ;;
+    success) prefix+=" ${GREEN}✓${NC}" ;;
+    error)   prefix+=" ${RED}✗${NC}" ;;
+    *)       ;;
+  esac
+  for msg in "$@"; do printf '%s %s\n' "$prefix" "$msg"; done
+}
+# Verbose output (respects VERBOSE flag)
+vecho() { ((VERBOSE)) || return 0; _msg "$@"; }
+# Info messages
+info() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
+# Warnings (non-fatal)
+warn() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
+# Success messages
+success() { ((VERBOSE)) || return 0; >&2 _msg "$@" || return 0; }
+# Error output (unconditional)
+error() { >&2 _msg "$@"; }
+# Exit with error
+die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
+# Yes/no prompt
+yn() {
+  #((PROMPT)) || return 0
+  local -- reply
+  >&2 read -r -n 1 -p "$(2>&1 warn "${1:-} y/n ")" reply
+  >&2 echo
+  [[ ${reply,,} == y ]]
+}
+
+# pluraliser
+s() { (( ${1:-1} == 1 )) || echo -n 's'; }
+
+# Trim leading and trailing whitespace
+# Falls back to sed if 'trim' utility not available
+#shellcheck disable=SC2120  # Function works with both stdin and arguments
+source trim >/dev/null || {
+  trim() {
+    (($#)) && {
+      local v="$*"
+      v="${v#"${v%%[![:blank:]]*}"}"
+      echo -n "${v%"${v##*[![:blank:]]}"}"
+    } || {
+      sed 's/^[[:space:]]*//;s/[[:space:]]*$//'
+    }
+    return 0
+  }
+  declare -fx trim
+}
+
+
 # Find BASH-CODING-STANDARD.md in standard locations
 find_bcs_file() {
   local -- script_dir="$1"
@@ -49,35 +111,138 @@ get_bcs_code() {
 }
 declare -fx get_bcs_code
 
-# Trim leading and trailing whitespace
-# Falls back to sed if 'trim' utility not available
-#shellcheck disable=SC2120  # Function works with both stdin and arguments
-trim_string() {
-  if command -v trim &>/dev/null; then
-    trim "$@"
-  else
-    sed 's/^[[:space:]]*//;s/[[:space:]]*$//'
-  fi
-}
-declare -fx trim_string
+# Rebuild BCS/ directory structure and create BCS code symlinks
+rebuild_bcs_index() {
+  local -- bcs_index_dir="$BCS_DIR/BCS"
+  local -- data_dir="$BCS_DIR/data"
 
-# Print error message to stderr
-error() {
-  local -- msg
-  for msg in "$@"; do
-    >&2 printf 'bcs: error: %s\n' "$msg"
+  # Validate directories exist
+  [[ -d "$data_dir" ]] || { error "Data directory not found '$data_dir'"; return 1; }
+
+  info 'Starting BCS directory rebuild'
+  >&2 echo
+
+  # Clean BCS directory (preserve .claude directory)
+  info "Cleaning BCS directory '$bcs_index_dir'"
+  local -a subdirs=()
+  readarray -t subdirs < <(find "$bcs_index_dir" -mindepth 1 -maxdepth 1 -type d -not -name '.claude' 2>/dev/null)
+
+  if ((${#subdirs[@]} > 0)); then
+    local -- subdir
+    for subdir in "${subdirs[@]}"; do
+      info "  Removing '$subdir'"
+      rm -rf "$subdir"
+    done
+    success "Removed ${#subdirs[@]} director$(s ${#subdirs[@]})"
+    >&2 echo
+  fi
+
+  # Rebuild directory structure from data/
+  info "Rebuilding directory structure from '$data_dir'"
+
+  # Use find with -printf to extract and recreate directory structure
+  local -a dirs=()
+  readarray -t dirs < <(find "$data_dir" -type d -printf '%P\0' | xargs -0 -n1 echo | grep -v '^$' | grep -v '^templates')
+
+  local -- dir
+  for dir in "${dirs[@]}"; do
+    mkdir -p "$bcs_index_dir/$dir"
   done
+
+  success "Created ${#dirs[@]} director$(s ${#dirs[@]})"
+  >&2 echo
+
+  # Create short numeric symlinks for numbered directories at all levels
+  # Examples: 01 -> 01-script-structure/, 01-script-structure/02 -> 02-shebang/
+  info 'Creating short numeric directory symlinks'
+  >&2 echo
+
+  local -i dir_symlink_count=0
+  for dir in "${dirs[@]}"; do
+    # Extract the basename of the directory
+    local -- dir_basename
+    dir_basename=$(basename "$dir")
+
+    # Check if basename starts with ##- pattern
+    if [[ "$dir_basename" =~ ^([0-9][0-9])- ]]; then
+      local -- num="${BASH_REMATCH[1]}"
+      local -- parent_dir
+      parent_dir=$(dirname "$dir")
+
+      # Determine link location and target
+      local -- link_path target_path
+      if [[ "$parent_dir" == "." ]]; then
+        # Top-level directory: create symlink in BCS root
+        link_path="$bcs_index_dir/$num"
+        target_path="$dir_basename/"
+      else
+        # Subdirectory: create symlink in parent directory
+        link_path="$bcs_index_dir/$parent_dir/$num"
+        target_path="$dir_basename/"
+      fi
+
+      # Only create symlink if it doesn't already exist as a real directory
+      if [[ ! -e "$link_path" ]]; then
+        ln -sf "$target_path" "$link_path"
+        dir_symlink_count+=1
+      fi
+    fi
+  done
+
+  ((dir_symlink_count)) && success "Created $dir_symlink_count directory symlink$(s $dir_symlink_count)"
+  >&2 echo
+
+  # Create BCS code symlinks
+  info 'Creating BCS code symlinks'
+  >&2 echo
+
+  local -a md_files=()
+  readarray -t md_files < <(find "$data_dir" -type f -name '[0-9][0-9]-*.md' ! -name 'README.md' ! -path '*/templates/*' | sort)
+
+  local -- file bcs_code link_dir link_name
+  local -i symlink_count=0 skipped_count=0
+
+  for file in "${md_files[@]}"; do
+    # Determine link directory (same subdirectory structure as file, relative to data/)
+    link_dir="$bcs_index_dir/${file#"$data_dir"/}"
+    link_dir="${link_dir%/*}"  # Remove filename
+
+    # Extract basename and numeric prefix
+    local -- basename
+    basename=$(basename "$file")
+
+    # Extract the ##- prefix (e.g., "01-", "02-", "10-")
+    local -- numeric_prefix
+    if [[ "$basename" =~ ^([0-9][0-9])[-].*\.(complete|summary|abstract)\.md$ ]]; then
+      numeric_prefix="${BASH_REMATCH[1]}"
+      local -- tier=".${BASH_REMATCH[2]}.md"
+
+      # Create link name: just the number + tier (e.g., "01.complete.md")
+      link_name="$link_dir/$numeric_prefix$tier"
+
+      # Create symlink (absolute path)
+      ln -sf "$file" "$link_name"
+      symlink_count+=1
+    else
+      warn "Skipping file with unexpected naming '$file'"
+      skipped_count+=1
+    fi
+  done
+
+  success "Created $symlink_count symlink$(s $symlink_count)"
+  ((skipped_count)) && warn "Skipped $skipped_count file$(s $skipped_count)"
+  >&2 echo
 }
-declare -fx error
+declare -fx rebuild_bcs_index
 
 # List all BCS codes with titles
 cmd_codes() {
   # Handle --help
   if [[ "${1:-}" == '-h' || "${1:-}" == '--help' ]]; then
-    cat <<'EOF'
-bcs codes - List all BCS rule codes
+    cat <<EOF
+$BCS_NAME codes - List all BCS rule codes
 
-Usage: bcs codes
+Usage: $BCS_NAME codes
 
 Lists all BCS rule codes from the data/ directory tree.
 
@@ -96,7 +261,7 @@ EOF
   # Find data directory
   local -- data_dir="$BCS_DIR/data"
   if [[ ! -d "$data_dir" ]]; then
-    error "Data directory not found: $data_dir"
+    error "Data directory not found '$data_dir'"
     return 1
   fi
 
@@ -107,7 +272,7 @@ EOF
   readarray -t files < <(find "$data_dir" -type f -name '[0-9]*.abstract.md' | sort)
 
   if ((${#files[@]} == 0)); then
-    error "No rule files found in $data_dir"
+    error "No rule files found in '$data_dir'"
     return 1
   fi
 
@@ -120,7 +285,7 @@ EOF
 
     # Extract title from first line (remove # and trim)
     hdr=$(head -n1 "$file" | tr -d '#')
-    hdr=$(trim_string <<<"$hdr")
+    hdr=$(trim <<<"$hdr")
 
     # Get shortname: basename without .abstract.md, then remove ##- prefix
     shortname=$(basename -s .abstract.md -- "$file")
@@ -139,6 +304,7 @@ cmd_generate() {
   local -- file_type='abstract'
   local -i use_stdout=1  # Default to stdout for safety
   local -i use_canonical=0
+  local -i force_regenerate=0
 
   while (($#)); do
     case "$1" in
@@ -152,13 +318,15 @@ Options:
   -h, --help              Show this help message
   -t, --type TYPE         File type: complete, abstract, summary, abstract-complete (default: abstract)
   -o, --output FILE       Output to specific file
-  --canonical             Write to BASH-CODING-STANDARD.md (requires explicit flag)
+  --canonical             Generate all three tiers to BASH-CODING-STANDARD.{complete,summary,abstract}.md
+  -f, --force             Force regeneration ignoring timestamps (use with --canonical)
 
 Default behavior: Output to stdout (safe, non-destructive)
 
 Examples:
   bcs generate                           # Generate abstract standard to stdout (default)
-  bcs generate --canonical               # Regenerate canonical BASH-CODING-STANDARD.md
+  bcs generate --canonical               # Generate all three tier files (complete, summary, abstract)
+  bcs generate --canonical --force       # Force regeneration of all three tier files
   bcs generate -t complete               # Generate complete version to stdout
   bcs generate -t summary                # Generate summary version to stdout
   bcs generate -t abstract-complete      # Generate combined abstract+complete version
@@ -169,6 +337,10 @@ File types:
   abstract          - Abstract version (*.abstract.md files)
   summary           - Summary version (*.summary.md files)
   abstract-complete - Combined: abstract then complete for each rule with formfeed separator
+
+Note: When using --canonical, all three tier files are generated and the BCS/ index is rebuilt.
+      The BCS/ index contains symlinks with BCS codes (e.g., BCS0102.complete.md) for quick reference.
+      The --force flag bypasses timestamp checks and regenerates all files unconditionally.
 
 EOF
         return 0
@@ -187,28 +359,196 @@ EOF
         use_stdout=0
         shift
         ;;
+      -f|--force)
+        force_regenerate=1
+        shift
+        ;;
+      -*)
+        error "Unknown option '$1'"
+        return 22
+        ;;
       *)
-        error "Unknown option: $1"
+        error "Unknown argument '$1'"
         return 2
         ;;
     esac
   done
 
-  # Validate file type
+  # Special handling for --canonical: generate all three tiers
+  if ((use_canonical)); then
+    # Force regeneration if requested
+    if ((force_regenerate)); then
+      local -- compress_script="$BCS_DIR"/utils/compress-rule/compress-all.sh
+      local -- data_dir="$BCS_DIR"/data
+
+      if [[ ! -f "$compress_script" ]]; then
+        error "Compression script not found '$compress_script'" \
+              'Cannot force regeneration without compress-all.sh'
+        return 1
+      fi
+
+      info 'Force mode enabled - regenerating all compressed files...'
+
+      # Touch all .complete.md files to force timestamp mismatch
+      # This ensures compress-all.sh will regenerate all files, not just those with mismatched timestamps
+      info 'Touching .complete.md files to force timestamp mismatch...'
+      local -a complete_files=()
+      readarray -t complete_files < <(find "$data_dir" -type f -name '[0-9][0-9]-*.complete.md')
+
+      if ((${#complete_files[@]} > 0)); then
+        touch "${complete_files[@]}" || {
+          error 'Failed to touch .complete.md files' \
+                'Aborting canonical generation'
+          return 1
+        }
+      fi
+
+      # Run compress-all.sh in regenerate mode
+      if ! "$compress_script" --regenerate; then
+        error 'Failed to regenerate compressed files' \
+              'Aborting canonical generation'
+        return 1
+      fi
+
+      >&2 echo
+    fi
+
+    info 'Generating all three tiers for canonical files...'
+
+    # Generate complete tier
+    file_type='complete'
+    output_file="$BCS_DIR/BASH-CODING-STANDARD.complete.md"
+
+    # Find and validate files
+    local -- suffix='.complete.md'
+    local -- data_dir="$BCS_DIR/data"
+    local -a md_files=()
+
+    readarray -t md_files < <(find "$data_dir" -name "[0-9][0-9]-*$suffix" -type f ! -name "00-*" | sort)
+
+    if ((${#md_files[@]} == 0)); then
+      error "No complete files found in '$data_dir'"
+      return 1
+    fi
+
+    info "Generating complete standard from ${#md_files[@]} files..."
+
+    {
+      local -- file bcs_code
+      local -i first_iteration=1
+      for file in "${md_files[@]}"; do
+        if ((first_iteration)); then
+          first_iteration=0
+        else
+          echo -en "\n\n---\n\n\f\n"
+        fi
+        bcs_code=$(get_bcs_code "$file") || bcs_code='BCS????'
+        echo "**Rule: $bcs_code**"
+        echo
+        cat "$file"
+      done
+      echo '#fin'
+    } > "$output_file"
+
+    success "Generated '$output_file'"
+    info "Total lines: $(wc -l < "$output_file")"
+
+    # Generate summary tier
+    file_type='summary'
+    output_file="$BCS_DIR/BASH-CODING-STANDARD.summary.md"
+    suffix='.summary.md'
+    md_files=()
+
+    readarray -t md_files < <(find "$data_dir" -name "[0-9][0-9]-*$suffix" -type f ! -name "00-*" | sort)
+
+    if ((${#md_files[@]} == 0)); then
+      error "No summary files found in '$data_dir'"
+      return 1
+    fi
+
+    info "Generating summary standard from ${#md_files[@]} files..."
+
+    {
+      local -- file bcs_code
+      local -i first_iteration=1
+      for file in "${md_files[@]}"; do
+        if ((first_iteration)); then
+          first_iteration=0
+        else
+          echo -en "\n\n---\n\n\f\n"
+        fi
+        bcs_code=$(get_bcs_code "$file") || bcs_code='BCS????'
+        echo "**Rule: $bcs_code**"
+        echo
+        cat "$file"
+      done
+      echo '#fin'
+    } > "$output_file"
+
+    success "Generated '$output_file'"
+    info "Total lines: $(wc -l < "$output_file")"
+
+    # Generate abstract tier
+    file_type='abstract'
+    output_file="$BCS_DIR/BASH-CODING-STANDARD.abstract.md"
+    suffix='.abstract.md'
+    md_files=()
+
+    readarray -t md_files < <(find "$data_dir" -name "[0-9][0-9]-*$suffix" -type f ! -name "00-*" | sort)
+
+    if ((${#md_files[@]} == 0)); then
+      error "No abstract files found in '$data_dir'"
+      return 1
+    fi
+
+    info "Generating abstract standard from ${#md_files[@]} files..."
+
+    {
+      local -- file bcs_code
+      local -i first_iteration=1
+      for file in "${md_files[@]}"; do
+        if ((first_iteration)); then
+          first_iteration=0
+        else
+          echo -en "\n\n---\n\n\f\n"
+        fi
+        bcs_code=$(get_bcs_code "$file") || bcs_code='BCS????'
+        echo "**Rule: $bcs_code**"
+        echo
+        cat "$file"
+      done
+      echo '#fin'
+    } > "$output_file"
+
+    success "Generated '$output_file'"
+    info "Total lines: $(wc -l < "$output_file")"
+
+    success 'All three tiers generated'
+    >&2 echo
+
+    # Rebuild BCS/ index directory
+    rebuild_bcs_index || {
+      error 'Failed to rebuild BCS/ index'
+      return 1
+    }
+
+    success 'BCS/ index rebuilt successfully'
+    return 0
+  fi
+
+  # Validate file type for non-canonical mode
   case "$file_type" in
     complete|abstract|summary|abstract-complete) ;;
     *)
-      error "Invalid file type: $file_type"
-      error "Must be one of: complete, abstract, summary, abstract-complete"
+      error "Invalid file type '$file_type'"
+      info 'Must be one of: complete, abstract, summary, abstract-complete'
       return 2
       ;;
   esac
 
-  # Determine output file
+  # Determine output file for non-canonical mode
   if ((use_stdout)); then
     output_file='/dev/stdout'
-  elif ((use_canonical)); then
-    output_file="$BCS_DIR/BASH-CODING-STANDARD.md"
   elif [[ -z "$output_file" ]]; then
     # This shouldn't happen given logic above, but safety fallback
     output_file='/dev/stdout'
@@ -226,7 +566,7 @@ EOF
   # Find data directory
   local -- data_dir="$BCS_DIR/data"
   if [[ ! -d "$data_dir" ]]; then
-    error "Data directory not found: $data_dir"
+    error "Data directory not found '$data_dir'"
     return 1
   fi
 
@@ -235,7 +575,7 @@ EOF
   readarray -t md_files < <(find "$data_dir" -name "*$suffix" -type f ! -name 'README.md' | sort)
 
   if ((${#md_files[@]} == 0)); then
-    error "No $file_type files found in $data_dir"
+    error "No $file_type files found in '$data_dir'"
     return 1
   fi
 
@@ -249,20 +589,20 @@ EOF
       if [[ -f "$complete_file" ]]; then
         verified_files+=("$abstract_file")
       else
-        >&2 echo "bcs: warning: Skipping $abstract_file (no corresponding .complete.md)"
+        warn "Skipping '$abstract_file' (no corresponding .complete.md)"
       fi
     done
     md_files=("${verified_files[@]}")
 
     if ((${#md_files[@]} == 0)); then
-      error "No complete file pairs found in $data_dir"
+      error "No complete file pairs found in '$data_dir'"
       return 1
     fi
   fi
 
   # Progress message to stderr (unless stdout mode)
   if [[ "$output_file" != '/dev/stdout' ]]; then
-    >&2 echo "bcs: Generating $file_type standard from ${#md_files[@]} files..."
+    info "Generating $file_type standard from ${#md_files[@]} files..."
   fi
 
   # Generate output
@@ -321,8 +661,8 @@ EOF
 
   # Success message
   if [[ "$output_file" != '/dev/stdout' ]]; then
-    >&2 echo "bcs: Successfully generated: $output_file"
-    >&2 echo "bcs: Total lines: $(wc -l < "$output_file")"
+    success "Generated '$output_file'"
+    info "Total lines: $(wc -l < "$output_file")"
   fi
 
   return 0
@@ -367,8 +707,8 @@ EOF
         shift 2
         ;;
       -*)
-        error "Unknown option: $1"
-        return 2
+        error "Unknown option '$1'"
+        return 22
         ;;
       *)
         pattern="$1"
@@ -380,14 +720,14 @@ EOF
 
   # Validate pattern provided
   if [[ -z "$pattern" ]]; then
-    error "No search pattern specified"
-    >&2 echo "Usage: bcs search [OPTIONS] PATTERN"
+    error 'No search pattern specified'
+    info 'Usage: bcs search [OPTIONS] PATTERN'
     return 2
   fi
 
   # Check BCS_FILE exists
   if [[ ! -f "$BCS_FILE" ]]; then
-    error "Standard file not found: $BCS_FILE"
+    error "Standard file not found '$BCS_FILE'"
     return 1
   fi
 
@@ -399,7 +739,7 @@ EOF
   if grep "${grep_args[@]}" -- "$pattern" "$BCS_FILE"; then
     return 0
   else
-    >&2 echo "bcs: No matches found for: $pattern"
+    info "No matches found for '$pattern'"
     return 1
   fi
 }
@@ -409,7 +749,7 @@ declare -fx cmd_search
 # Returns absolute path to matching file, or empty string if not found
 find_bcs_file_by_code() {
   local -- code="$1"
-  local -- tier="${2:-complete}"
+  local -- tier="${2:-abstract}"
   local -- data_dir="$BCS_DIR/data"
 
   # Validate inputs
@@ -429,6 +769,26 @@ find_bcs_file_by_code() {
     *) return 2 ;;
   esac
 
+  # Handle section codes (2-digit codes like BCS01, BCS02, etc.)
+  # These map to 00-section.{tier}.md files in the section directory
+  if [[ "$code" =~ ^[0-9][0-9]$ ]]; then
+    # Find the section directory (e.g., 01-script-structure for code "01")
+    local -- section_dir
+    section_dir=$(find "$data_dir" -maxdepth 1 -type d -name "$code-*" -print -quit)
+
+    if [[ -n "$section_dir" && -d "$section_dir" ]]; then
+      # Look for 00-section.{tier}.md file
+      local -- section_file="$section_dir/00-section$suffix"
+      if [[ -f "$section_file" ]]; then
+        echo "$section_file"
+        return 0
+      fi
+    fi
+
+    # Section code not found
+    return 1
+  fi
+
   # Search for matching file by BCS code
   local -- file file_code
 
@@ -446,10 +806,346 @@ find_bcs_file_by_code() {
 }
 declare -fx find_bcs_file_by_code
 
+# Parse comma-separated BCS codes, validate, and return array
+parse_codes_option() {
+  local -- codes_str="$1"
+  local -a codes=()
+  local -- code
+
+  # Split on comma, handle spaces
+  IFS=',' read -ra codes <<< "$codes_str"
+
+  # Validate each code
+  local -a valid_codes=()
+  for code in "${codes[@]}"; do
+    # Trim whitespace
+    code=$(trim <<< "$code")
+
+    # Normalize code (add BCS prefix if missing, uppercase)
+    [[ "$code" =~ ^[0-9] ]] && code="BCS$code"
+    code="${code^^}"
+
+    # Validate code exists
+    if find_bcs_file_by_code "${code#BCS}" 'abstract' &>/dev/null; then
+      valid_codes+=("$code")
+    else
+      error "Invalid BCS code '$code'"
+      info "Use 'bcs codes' to list all available codes"
+      return 1
+    fi
+  done
+
+  # Output valid codes
+  printf '%s\n' "${valid_codes[@]}"
+  return 0
+}
+declare -fx parse_codes_option
+
+# Parse comma-separated section numbers, convert to BCS code prefixes
+parse_sections_option() {
+  local -- sections_str="$1"
+  local -a sections=()
+  local -- section
+
+  # Split on comma, handle spaces
+  IFS=',' read -ra sections <<< "$sections_str"
+
+  # Convert each section number to BCS code prefix
+  local -a code_prefixes=()
+  for section in "${sections[@]}"; do
+    # Trim whitespace
+    section=$(trim <<< "$section")
+
+    # Validate section number (1-14)
+    if [[ ! "$section" =~ ^[0-9]+$ ]] || ((section < 0 || section > 14)); then
+      error "Invalid section number '$section' (must be 0-14)"
+      return 1
+    fi
+
+    # Convert to zero-padded prefix (Section 1 → BCS01)
+    printf -v code_prefix 'BCS%02d' "$section"
+    code_prefixes+=("$code_prefix")
+  done
+
+  # Output code prefixes
+  printf '%s\n' "${code_prefixes[@]}"
+  return 0
+}
+declare -fx parse_sections_option
+
+# Load BCS rules filtered by codes or sections
+load_filtered_rules() {
+  local -- tier="${1:-abstract}"
+  shift
+  local -a filters=("$@")
+
+  # Validate tier
+  case "$tier" in
+    complete|abstract|summary) ;;
+    *)
+      error "Invalid tier '$tier' (must be complete, abstract, or summary)"
+      return 2
+      ;;
+  esac
+
+  # If no filters, load full standard
+  if ((${#filters[@]} == 0)); then
+    case "$tier" in
+      complete) cat "$BCS_FILE" ;;
+      abstract|summary)
+        # Generate on-the-fly using cmd_generate logic
+        local -- suffix
+        [[ "$tier" == 'abstract' ]] && suffix='.abstract.md' || suffix='.summary.md'
+
+        local -- data_dir="$BCS_DIR/data"
+        local -a md_files=()
+        readarray -t md_files < <(find "$data_dir" -name "*$suffix" -type f ! -name 'README.md' | sort)
+
+        for file in "${md_files[@]}"; do
+          cat "$file"
+          echo
+        done
+        ;;
+    esac
+    return 0
+  fi
+
+  # Load filtered rules
+  local -- filter file code
+  local -i found_any=0
+
+  for filter in "${filters[@]}"; do
+    # Normalize filter (remove BCS prefix, uppercase)
+    filter="${filter^^}"
+    filter="${filter#BCS}"
+
+    # Find all codes matching this filter (prefix match for sections)
+    while IFS=: read -r code _; do
+      code="${code#BCS}"
+
+      # Check if code matches filter (exact or prefix for sections)
+      if [[ "$code" == "$filter" || "$code" == "$filter"* ]]; then
+        file=$(find_bcs_file_by_code "$code" "$tier" 2>/dev/null) || continue
+
+        # Output rule with BCS code header
+        echo "**Rule: BCS$code**"
+        echo
+        cat "$file"
+        echo
+        echo "---"
+        echo
+        found_any+=1
+      fi
+    done < <(cmd_codes 2>/dev/null)
+  done
+
+  if ((found_any == 0)); then
+    error "No rules found matching filters: ${filters[*]}"
+    return 1
+  fi
+
+  return 0
+}
+declare -fx load_filtered_rules
+
+# Build validation system prompt with optional filtering and tier selection
+build_validation_prompt() {
+  local -- tier="${1:-abstract}"
+  local -- output_format="${2:-text}"
+  shift 2
+  local -a filters=("$@")
+
+  # Start with base prompt header
+  cat <<PROMPT_HEADER
+You are a Bash script compliance validator for the Bash Coding Standard (BCS).
+
+Your task is to analyze the provided bash script against the rules defined in
+the BASH-CODING-STANDARD document that follows.
+
+Analysis requirements:
+1. Check compliance with applicable sections of the standard
+2. Identify violations, warnings, and provide suggestions
+3. Reference specific line numbers for each finding
+4. Reference specific BCS codes for each finding (e.g., BCS0102, BCS0205)
+5. Explain WHY each issue matters (don't just list rule violations)
+
+Output format based on severity:
+  ✓ COMPLIANT: [BCS Code - Section/Rule] - Brief explanation
+  ✗ VIOLATION: [BCS Code - Section/Rule] - Critical issue at line X
+  ⚠ WARNING: [BCS Code - Section/Rule] - Potential issue at line Y
+  💡 SUGGESTION: [Best practice] - Improvement at line Z
+
+Focus areas (when applicable):
+  • BCS01 - Script Structure: shebang, set options, shopt, metadata, function organization
+  • BCS02 - Variables: declarations, scoping, naming, readonly usage
+  • BCS03 - Expansion: parameter expansion, brace usage
+  • BCS04 - Quoting: single vs double quotes, variable quoting in conditionals
+  • BCS05 - Arrays: declaration, iteration, safe list handling
+  • BCS06 - Functions: naming, main() pattern, organization
+  • BCS07 - Control Flow: [[ ]] usage, arithmetic, case statements
+  • BCS08 - Error Handling: set -e, exit codes, traps, return values
+  • BCS09 - I/O: STDERR vs STDOUT placement, messaging functions
+  • BCS10 - Arguments: parsing patterns, validation
+  • BCS11 - File Operations: wildcards, process substitution
+  • BCS12 - Security: PATH, SUID/SGID, eval, input sanitization
+  • BCS13 - Style: indentation, comments (WHY not WHAT), blank lines
+  • BCS14 - Advanced: dry-run patterns, state management, testing support
+
+PROMPT_HEADER
+
+  # Add filtering notice if applicable
+  if ((${#filters[@]} > 0)); then
+    echo
+    echo "**IMPORTANT: Validate ONLY against the following BCS codes/sections:**"
+    printf '  - %s\n' "${filters[@]}"
+    echo
+    echo "Do not report violations for rules outside this scope."
+    echo
+  fi
+
+  # Add standard content
+  echo
+  echo "---"
+  echo
+  echo "# Bash Coding Standard (BCS) Rules"
+  echo
+
+  # Load rules (filtered or full)
+  if ((${#filters[@]})); then
+    load_filtered_rules "$tier" "${filters[@]}"
+  else
+    load_filtered_rules "$tier"
+  fi
+
+  # Add format-specific instructions
+  case "$output_format" in
+    json|bcs-json)
+      cat <<'JSON_INSTRUCTIONS'
+
+---
+
+OUTPUT FORMAT: JSON
+
+Provide output as valid JSON with this exact structure:
+{
+  "file": "filename",
+  "validation_scope": {
+    "codes": ["BCS01", "BCS02"],
+    "tier": "abstract|complete",
+    "timestamp": "ISO8601 timestamp"
+  },
+  "findings": {
+    "compliant": [
+      {"code": "BCS0101", "rule": "Standard Script Layout", "message": "Script follows 13-step structure"}
+    ],
+    "violations": [
+      {"line": 15, "code": "BCS0102", "rule": "Shebang", "severity": "critical", "message": "Missing set -euo pipefail"}
+    ],
+    "warnings": [
+      {"line": 23, "code": "BCS0203", "rule": "Naming", "severity": "warning", "message": "Variable should be UPPER_CASE"}
+    ],
+    "suggestions": [
+      {"line": 45, "code": null, "message": "Consider using readonly for constants"}
+    ]
+  },
+  "summary": {
+    "violations_count": 1,
+    "warnings_count": 1,
+    "suggestions_count": 1,
+    "compliant_count": 15,
+    "compliance_percentage": 93,
+    "assessment": "compliant|needs_work|non_compliant"
+  }
+}
+JSON_INSTRUCTIONS
+      ;;
+    markdown)
+      cat <<'MARKDOWN_INSTRUCTIONS'
+
+---
+
+OUTPUT FORMAT: MARKDOWN
+
+Provide output as well-formatted Markdown with:
+- Title: # BCS Compliance Report: filename
+- Summary section with statistics
+- Detailed findings organized by BCS code
+- Code examples where relevant
+- Actionable recommendations at the end
+
+Use BCS code references in all findings (e.g., **BCS0102 - Shebang and Initial Setup**).
+MARKDOWN_INSTRUCTIONS
+      ;;
+    text)
+      # Text format uses standard symbols (default)
+      ;;
+  esac
+
+  # Add summary requirements
+  cat <<'EOF_SUMMARY'
+
+---
+
+SUMMARY REQUIREMENTS:
+
+Provide a summary with:
+  • Count of violations (critical issues that must be fixed)
+  • Count of warnings (potential issues or minor violations)
+  • Count of suggestions (improvements and best practices)
+  • Compliance percentage (compliant findings / total applicable rules)
+  • Overall assessment: compliant, needs_work, or non_compliant
+  • Exit code recommendation: 0 (compliant), 1 (warnings only), 2 (violations)
+
+Reference BCS codes in all findings. Be specific about line numbers.
+EOF_SUMMARY
+}
+declare -fx build_validation_prompt
+
+# Build Claude command with advanced options
+build_claude_command() {
+  local -- system_prompt_file="$1"
+  local -- append_prompt="${2:-}"
+  local -- allowed_tools="${3:-}"
+  local -- add_dir="${4:-}"
+  local -i skip_permissions="${5:-0}"
+  local -- claude_cmd="${6:-claude}"
+
+  # Base command
+  local -a claude_args=("$claude_cmd" --print --dangerously-skip-permissions)
+
+  # System prompt (required)
+  claude_args+=(--system-prompt "$system_prompt_file")
+
+  # Append prompt (optional)
+  if [[ -n "$append_prompt" ]]; then
+    claude_args+=(--append-system-prompt "$append_prompt")
+  fi
+
+  # Restrict tools for safety (optional)
+  if [[ -n "$allowed_tools" ]]; then
+    claude_args+=(--allowedTools "$allowed_tools")
+  fi
+
+  # Add directory for context (optional)
+  if [[ -n "$add_dir" ]]; then
+    claude_args+=(--add-dir "$add_dir")
+  fi
+
+  # Skip permissions (sandbox mode)
+  if ((skip_permissions)); then
+    claude_args+=(--dangerously-skip-permissions)
+  fi
+
+  # Output the command array
+  printf '%s\n' "${claude_args[@]}"
+}
+declare -fx build_claude_command
+
 # Decode BCS code to file location
 cmd_decode() {
   # Parse arguments
-  local -- code='' tier='complete' output_format='absolute'
+  local -a codes=()
+  local -- tier='abstract' output_format='absolute'
   local -i show_all=0 check_exists=0 print_contents=0
 
   while (($#)); do
@@ -458,13 +1154,13 @@ cmd_decode() {
         cat <<'EOF'
 bcs decode - Decode BCS code to file location
 
-Usage: bcs decode [OPTIONS] CODE
+Usage: bcs decode [OPTIONS] CODE [CODE...]
 
 Options:
   -h, --help              Show this help message
-  -a, --abstract          Show abstract tier file location
+  -a, --abstract          Show abstract tier file location (default)
   -s, --summary           Show summary tier file location
-  -c, --complete          Show complete tier file location (default)
+  -c, --complete          Show complete tier file location
   -p, --print             Print file contents to stdout instead of path
   --all                   Show all three tier file locations (or contents with -p)
   --relative              Output path relative to repository root
@@ -472,20 +1168,22 @@ Options:
   --exists                Exit 0 if code exists, 1 if not (no output)
 
 Arguments:
-  CODE                    BCS code (e.g., BCS010201 or 010201)
+  CODE                    One or more BCS codes (e.g., BCS010201 or 010201)
 
 Description:
   Resolves BCS rule code to its source file location in the data/ directory.
   This is the inverse operation of get_bcs_code() - converting code back to file path.
 
 Examples:
-  bcs decode BCS010201                       # Show complete tier absolute path
+  bcs decode BCS010201                       # Show abstract tier absolute path
   bcs decode 010201                          # BCS prefix optional
+  bcs decode BCS01                           # Section code - shows 00-section file
   bcs decode BCS0205 --relative              # Show relative path from repo root
   bcs decode BCS0102 --all                   # Show all three tier locations
   bcs decode BCS0103 --basename              # Show only filename
   bcs decode BCS0102 -p                      # Print rule contents to stdout
   bcs decode BCS0102 --all -p                # Print all three tiers with separators
+  bcs decode BCS01 BCS02 BCS08 -p            # Print multiple sections
   bcs decode BCS9999 --exists && echo "exists"  # Check if code exists (scripting)
 
 Use cases:
@@ -530,20 +1228,20 @@ EOF
         shift
         ;;
       -*)
-        error "Unknown option: $1"
+        error "Unknown option '$1'"
         return 2
         ;;
       *)
-        code="$1"
+        codes+=("$1")
         shift
         ;;
     esac
   done
 
-  # Validate code provided
-  if [[ -z "$code" ]]; then
-    error "No BCS code specified"
-    >&2 echo "Usage: bcs decode [OPTIONS] CODE"
+  # Validate at least one code provided
+  if ((${#codes[@]} == 0)); then
+    error 'No BCS code specified'
+    info 'Usage: bcs decode [OPTIONS] CODE [CODE...]'
     return 2
   fi
 
@@ -563,72 +1261,91 @@ EOF
     esac
   }
 
-  # Process based on options
-  if ((show_all)); then
-    # Show all three tiers
-    local -i found=0
-    local -- file
+  # Loop through each code and process
+  local -- code
+  local -i code_index=0 total_found=0
 
-    for tier in complete abstract summary; do
-      file=$(find_bcs_file_by_code "$code" "$tier" 2>/dev/null) || continue
-      ((found+=1))
+  for code in "${codes[@]}"; do
+    # Add separator between codes (when multiple codes and print mode)
+    if ((code_index > 0)) && ((print_contents)); then
+      echo
+      echo "========================================="
+      echo
+    fi
 
-      if ((check_exists)); then
-        continue  # Just counting, don't output
-      fi
+    # Process based on options
+    if ((show_all)); then
+      # Show all three tiers
+      local -i found=0
+      local -- file
 
-      if ((print_contents)); then
-        # Print contents with tier separator
-        if ((found > 1)); then
-          echo  # Blank line between tiers
-          echo "---"
-          echo
+      for tier in complete abstract summary; do
+        file=$(find_bcs_file_by_code "$code" "$tier" 2>/dev/null) || continue
+        ((found+=1))
+        ((total_found+=1))
+
+        if ((check_exists)); then
+          continue  # Just counting, don't output
         fi
-        echo "### $(tr '[:lower:]' '[:upper:]' <<<"${tier:0:1}")${tier:1} tier (BCS${code#BCS})"
-        echo
-        cat "$file"
-      else
-        # Print file path
-        case "$output_format" in
-          absolute|relative|basename)
-            printf '%-9s: %s\n' "$(tr '[:lower:]' '[:upper:]' <<<"${tier:0:1}")${tier:1}" "$(format_output "$file")"
-            ;;
-        esac
+
+        if ((print_contents)); then
+          # Print contents with tier separator
+          if ((found > 1)); then
+            echo  # Blank line between tiers
+            echo "---"
+            echo
+          fi
+          echo "### $(tr '[:lower:]' '[:upper:]' <<<"${tier:0:1}")${tier:1} tier (BCS${code#BCS})"
+          echo
+          cat "$file"
+        else
+          # Print file path
+          case "$output_format" in
+            absolute|relative|basename)
+              printf '%-9s: %s\n' "$(tr '[:lower:]' '[:upper:]' <<<"${tier:0:1}")${tier:1}" "$(format_output "$file")"
+              ;;
+          esac
+        fi
+      done
+
+      # For this code, check if we found anything
+      if ((found == 0)) && ! ((check_exists)); then
+        error "BCS code not found '${code#BCS}'"
+        info "Use 'bcs codes' to list all available codes"
       fi
-    done
 
-    # Check exists mode - return status based on found count
-    if ((check_exists)); then
-      ((found > 0)) && return 0 || return 1
+    else
+      # Single tier mode
+      local -- file
+      file=$(find_bcs_file_by_code "$code" "$tier" 2>/dev/null) || {
+        if ! ((check_exists)); then
+          error "BCS code not found: ${code#BCS} ($tier tier)"
+          info "Use 'bcs codes' to list all available codes"
+        fi
+        code_index+=1
+        continue
+      }
+
+      ((total_found+=1))
+
+      if ! ((check_exists)); then
+        if ((print_contents)); then
+          cat "$file"
+        else
+          format_output "$file"
+        fi
+      fi
     fi
 
-    # Normal output mode - verify we found at least one file
-    if ((found > 0)); then
-      return 0
-    fi
+    code_index+=1
+  done
 
-    error "BCS code not found: ${code#BCS}"
-    >&2 echo "Use 'bcs codes' to list all available codes"
-    return 1
+  # Return based on check_exists mode or total found count
+  if ((check_exists)); then
+    ((total_found > 0)) && return 0 || return 1
   fi
 
-  # Single tier mode
-  local -- file
-  file=$(find_bcs_file_by_code "$code" "$tier" 2>/dev/null) || {
-    ((check_exists)) && return 1
-    error "BCS code not found: ${code#BCS} ($tier tier)"
-    >&2 echo "Use 'bcs codes' to list all available codes"
-    return 1
-  }
-
-  ((check_exists)) && return 0
-
-  if ((print_contents)); then
-    cat "$file"
-  else
-    format_output "$file"
-  fi
-  return 0
+  ((total_found > 0)) && return 0 || return 1
 }
 declare -fx cmd_decode
 
@@ -636,7 +1353,7 @@ declare -fx cmd_decode
 cmd_explain() {
   # Parse arguments
   local -- code=''
-  local -- tier='complete'
+  local -- tier='abstract'
 
   while (($#)); do
     case "$1" in
@@ -648,9 +1365,9 @@ Usage: bcs explain [OPTIONS] CODE
 
 Options:
   -h, --help              Show this help message
-  -a, --abstract          Show abstract version
+  -a, --abstract          Show abstract version (default)
   -s, --summary           Show summary version
-  -c, --complete          Show complete version (default)
+  -c, --complete          Show complete version
 
 Examples:
   bcs explain BCS010201                  # Show dual-purpose pattern (complete)
@@ -673,7 +1390,7 @@ EOF
         shift
         ;;
       -*)
-        error "Unknown option: $1"
+        error "Unknown option '$1'"
         return 2
         ;;
       *)
@@ -685,8 +1402,8 @@ EOF
 
   # Validate code provided
   if [[ -z "$code" ]]; then
-    error "No BCS code specified"
-    >&2 echo "Usage: bcs explain [OPTIONS] CODE"
+    error 'No BCS code specified'
+    info 'Usage: bcs explain [OPTIONS] CODE'
     return 2
   fi
 
@@ -694,7 +1411,7 @@ EOF
   local -- found_file
   found_file=$(find_bcs_file_by_code "$code" "$tier") || {
     error "BCS code not found: ${code#BCS} ($tier tier)"
-    >&2 echo "Use 'bcs codes' to list all available codes"
+    info "Use 'bcs codes' to list all available codes"
     return 1
   }
 
@@ -727,7 +1444,7 @@ EOF
 
   # Check BCS_FILE exists
   if [[ ! -f "$BCS_FILE" ]]; then
-    error "Standard file not found: $BCS_FILE"
+    error "Standard file not found '$BCS_FILE'"
     return 1
   fi
 
@@ -800,7 +1517,7 @@ EOF
         shift
         ;;
       *)
-        error "Unknown option: $1"
+        error "Unknown option '$1'"
         return 2
         ;;
     esac
@@ -1071,7 +1788,7 @@ EOF
         shift
         ;;
       *)
-        error "Unknown option: $1"
+        error "Unknown option '$1'"
         return 2
         ;;
     esac
@@ -1081,8 +1798,8 @@ EOF
   case "$template_type" in
     minimal|basic|complete|library) ;;
     *)
-      error "Invalid template type: $template_type"
-      error "Must be one of: minimal, basic, complete, library"
+      error "Invalid template type '$template_type'"
+      error 'Must be one of: minimal, basic, complete, library'
       return 2
       ;;
   esac
@@ -1099,22 +1816,22 @@ EOF
   # Find templates directory
   local -- templates_dir="$BCS_DIR/data/templates"
   if [[ ! -d "$templates_dir" ]]; then
-    error "Templates directory not found: $templates_dir"
+    error "Templates directory not found '$templates_dir'"
     return 1
   fi
 
   # Find template file
   local -- template_file="$templates_dir/$template_type.sh.template"
   if [[ ! -f "$template_file" ]]; then
-    error "Template file not found: $template_file"
+    error "Template file not found '$template_file'"
     return 1
   fi
 
   # Check if output file exists (unless forcing or stdout)
   if [[ -n "$output_file" && "$output_file" != '/dev/stdout' ]]; then
     if [[ -f "$output_file" && $force_overwrite == 0 ]]; then
-      error "Output file already exists: $output_file"
-      error "Use --force to overwrite"
+      error "Output file already exists '$output_file'"
+      error 'Use --force to overwrite'
       return 1
     fi
   fi
@@ -1136,12 +1853,12 @@ EOF
     echo "$content"
   else
     echo "$content" > "$output_dest"
-    >&2 echo "bcs: Generated $template_type template: $output_dest"
+    info "Generated $template_type template '$output_dest'"
 
     # Make executable if requested
     if ((make_executable)); then
       chmod +x "$output_dest"
-      >&2 echo "bcs: Made executable: $output_dest"
+      info "Made executable '$output_dest'"
     fi
   fi
 
@@ -1151,237 +1868,393 @@ declare -fx cmd_template
 
 # Check script compliance using AI
 cmd_check() {
-  # Parse arguments
+  # === SECTION 1: Variable Initialization ===
   local -- script_file=''
-  local -i strict=0
   local -- output_format='text'
+  local -- tier='abstract'
+  local -- codes_option=''
+  local -- sections_option=''
+  local -- append_prompt=''
+  local -- allowed_tools=''
+  local -- add_dir=''
+  local -- severity='all'
   local -- claude_cmd='claude'
+  local -i strict=0
+  local -i skip_permissions=0
 
+  # === SECTION 2: Argument Parsing ===
   while (($#)); do
-    case "$1" in
+    case $1 in
       -h|--help)
-        cat <<'EOF'
-bcs check - AI-powered Bash script compliance checker
+            cat <<'EOF'
+bcs check - Validate bash script against BASH-CODING-STANDARD.md
 
 Usage: bcs check [OPTIONS] SCRIPT_FILE
 
-Options:
+Core Options:
   -h, --help              Show this help message
-  -s, --strict            Strict mode: fail on warnings (for CI/CD)
-  -f, --format FORMAT     Output format: text, json, markdown (default: text)
-  --claude-cmd CMD        Claude Code command (default: claude)
+  -s, --strict            Strict mode (warnings become violations)
+  -f, --format FORMAT     Output format: text|json|markdown|bcs-json
+  -q, --quiet             Suppress non-error output
+
+Filtering Options (Token Optimization):
+  --codes CODE1,CODE2     Validate only specific BCS codes
+                          Examples: BCS01,BCS0205 or 01,0205
+  --sections N1,N2        Validate only specific sections (1-14)
+                          Example: --sections 1,2,8
+  --tier TIER             Documentation tier (default: abstract)
+                          Options: abstract (fast), complete (thorough),
+                                   summary (brief)
+
+Advanced Claude Options:
+  --claude-cmd CMD        Custom Claude command (default: claude)
+  --append-prompt TEXT    Additional system prompt context
+  --allowed-tools TOOLS   Restrict Claude tools (comma-separated)
+                          Example: --allowed-tools Read,Grep
+  --add-dir PATH          Add directory for Claude context
+  --skip-permissions      Skip permission checks (sandbox mode)
+
+Output Control:
+  --severity LEVEL        Filter by severity: all|violations|warnings
+                          (default: all)
 
 Description:
-  Uses Claude AI to analyze bash scripts against BASH-CODING-STANDARD.md.
+  Uses Claude AI to validate bash scripts against BASH-CODING-STANDARD.md.
 
-  The checker validates:
-    • Script structure & layout
-    • Variable declarations & constants
-    • Quoting & string literals
-    • Functions and naming conventions
-    • Error handling patterns
-    • Security considerations
-    • Code style & best practices
+  Token Optimization: By default uses abstract tier (~500 lines) for fast
+  validation. Use --tier complete for thorough checks (~3,285 lines) or
+  filter by --codes/--sections to validate specific rules only.
 
-Output format:
-  ✓ COMPLIANT:   Rule passed
-  ✗ VIOLATION:   Critical issue (line number provided)
-  ⚠ WARNING:     Potential issue or minor violation
-  💡 SUGGESTION:  Improvement recommendation
+Output Formats:
+  text      - Human-readable with symbols (✓ ✗ ⚠ 💡)
+  json      - Basic JSON structure
+  markdown  - Formatted report with sections
+  bcs-json  - Structured JSON with BCS code references
+
+Exit Codes:
+  0 - Script is compliant (no violations or warnings)
+  1 - Script has warnings only (or violations in non-strict mode)
+  2 - Script has violations (always in strict mode)
 
 Examples:
-  bcs check myscript.sh                      # Basic compliance check
-  bcs check --strict deploy.sh               # Strict mode for CI/CD
-  bcs check --format json install.sh         # JSON output for parsing
-  bcs check --format markdown script.sh      # Detailed markdown report
+  # Quick validation (abstract tier, ~500 lines)
+  bcs check myscript.sh
+
+  # Validate only script structure rules
+  bcs check --sections 1 myscript.sh
+
+  # Thorough validation of specific codes
+  bcs check --codes BCS01,BCS08 --tier complete myscript.sh
+
+  # CI/CD mode: strict, quiet, violations only
+  bcs check --strict --quiet --severity violations deploy.sh
+
+  # JSON output for parsing
+  bcs check --format bcs-json myscript.sh > report.json
+
+  # Add project context
+  bcs check --add-dir ./lib myscript.sh
+
+  # Comprehensive check with all rules
+  bcs check --tier complete --strict myscript.sh
 
 Requirements:
   Requires 'claude' CLI (Claude Code) to be installed and available in PATH.
   Get Claude Code at: https://claude.ai/code
 
 EOF
-        return 0
-        ;;
+              return 0
+              ;;
+
       -s|--strict)
-        strict=1
-        shift
-        ;;
+              strict=1 ;;
+
       -f|--format)
-        output_format="$2"
-        shift 2
-        ;;
+              shift
+              [[ -n "${1:-}" ]] || { error 'Option --format requires an argument'; return 22; }
+              output_format="$1"
+              # Validate format
+              case $output_format in
+                text|json|markdown|bcs-json) ;;
+                *)
+                  error "Invalid output format '$output_format'"
+                  info 'Must be one of: text, json, markdown, bcs-json'
+                  return 2
+                  ;;
+              esac
+              ;;
+
+      --codes)
+              shift
+              [[ -n "${1:-}" ]] || { error 'Option --codes requires an argument'; return 2; }
+              codes_option="$1"
+              ;;
+
+      --sections)
+              shift
+              [[ -n "${1:-}" ]] || { error 'Option --sections requires an argument'; return 2; }
+              sections_option="$1"
+              ;;
+
+      --tier)
+              shift
+              [[ -n "${1:-}" ]] || { error 'Option --tier requires an argument'; return 2; }
+              tier="$1"
+              # Validate tier
+              case $tier in
+                abstract|complete|summary) ;;
+                *)  error "Invalid tier '$tier'"
+                    info 'Must be one of: abstract, complete, summary'
+                    return 2
+                    ;;
+              esac
+              ;;
+
+      --append-prompt)
+              shift
+              [[ -n "${1:-}" ]] || { error 'Option --append-prompt requires an argument'; return 2; }
+              append_prompt="$1"
+              ;;
+
+      --allowed-tools)
+              shift
+              [[ -n "${1:-}" ]] || { error 'Option --allowed-tools requires an argument'; return 2; }
+              allowed_tools="$1"
+              ;;
+
+      --add-dir)
+              shift
+              [[ -n "${1:-}" ]] || { error 'Option --add-dir requires an argument'; return 2; }
+              add_dir="$1"
+              [[ -d "$add_dir" ]] || { error "Directory not found '$add_dir'"; return 1; }
+              ;;
+
+      --skip-permissions)
+              skip_permissions=1
+              ;;
+
+      --severity)
+              shift
+              [[ -n "${1:-}" ]] || { error 'Option --severity requires an argument'; return 2; }
+              severity="$1"
+              case "$severity" in
+                all|violations|warnings) ;;
+                *)
+                  error "Invalid severity '$severity'"
+                  info 'Must be one of: all, violations, warnings'
+                  return 2
+                  ;;
+              esac
+              ;;
+
       --claude-cmd)
-        claude_cmd="$2"
-        shift 2
-        ;;
-      -*)
-        error "Unknown option: $1"
-        return 2
-        ;;
-      *)
-        script_file="$1"
-        shift
-        break
-        ;;
+              shift
+              [[ -n "${1:-}" ]] || { error 'Option --claude-cmd requires an argument'; return 2; }
+              claude_cmd="$1"
+              ;;
+
+      -v|--verbose)
+              VERBOSE+=1 ;;
+
+      -q|--quiet)
+              VERBOSE=0 ;;
+
+      --)     shift
+              (($#)) && script_file="$1"
+              break
+              ;;
+
+      -[sfvq]*) #shellcheck disable=SC2046 #split up single options
+              set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}";;
+
+      -*)     error "Invalid option '$1'";
+              info "Use 'bcs check --help' for usage information"
+              return 22
+              ;;
+
+      *)      script_file="$1"
+              break
+              ;;
     esac
+    shift
   done
 
-  # Validate script file provided
-  if [[ -z "$script_file" ]]; then
+  # === SECTION 3: Validation ===
+  [[ -n "$script_file" ]] || {
     error 'No script file specified'
-    >&2 echo 'Usage: bcs check [OPTIONS] SCRIPT_FILE'
+    info  'Usage: bcs check [OPTIONS] SCRIPT_FILE'
     return 2
-  fi
+  }
 
-  # Validate file exists and is readable
-  if [[ ! -f "$script_file" ]]; then
-    error "File not found: $script_file"
-    return 1
-  fi
+  [[ -f "$script_file" ]] || { error "Script file not found '$script_file'"; return 1; }
 
-  if [[ ! -r "$script_file" ]]; then
-    error "File not readable: $script_file"
-    return 1
-  fi
+  [[ -r "$script_file" ]] || { error "Script file not readable '$script_file'"; return 1; }
 
-  # Validate format
-  case "$output_format" in
-    text|json|markdown) ;;
-    *)
-      error "Invalid output format: $output_format"
-      error 'Must be one of: text, json, markdown'
-      return 2
-      ;;
-  esac
-
-  # Check if claude is available
+  # Check Claude availability
   if ! command -v "$claude_cmd" &>/dev/null; then
-    error "Claude CLI not found: $claude_cmd"
-    error 'Please install Claude Code from: https://claude.ai/code'
-    error 'Or specify alternative command with --claude-cmd'
+    error "Claude CLI not found '$claude_cmd'"
+    info  'Please install Claude Code from: https://claude.ai/code' \
+          'Or specify alternative command with --claude-cmd'
     return 127
   fi
 
-  # Check if BCS_FILE exists
-  if [[ ! -f "$BCS_FILE" ]]; then
-    error "Standard file not found: $BCS_FILE"
-    return 1
+  # Validate mutually exclusive options
+  if [[ -n "$codes_option" && -n "$sections_option" ]]; then
+    error 'Options --codes and --sections are mutually exclusive'
+    return 2
   fi
 
-  # Construct system prompt
-  local -- system_prompt
-  system_prompt=$(cat <<'PROMPT_HEADER'
-You are a Bash script compliance checker for the Bash Coding Standard (BCS).
+  # === SECTION 4: Filter Processing ===
+  local -a filters=()
 
-Your task is to analyze the provided bash script against ALL rules defined in
-the BASH-CODING-STANDARD.md document that follows.
+  if [[ -n "$codes_option" ]]; then
+    info "Filtering by codes '$codes_option'"
+    # Parse and validate codes
+    local -a parsed_codes=()
+    readarray -t parsed_codes < <(parse_codes_option "$codes_option") || {
+      error 'Failed to parse BCS codes'
+      return 2
+    }
+    filters=("${parsed_codes[@]}")
+  elif [[ -n "$sections_option" ]]; then
+    info "Filtering by sections: $sections_option"
+    # Convert sections to code prefixes
+    local -a parsed_sections=()
+    readarray -t parsed_sections < <(parse_sections_option "$sections_option") || {
+      error 'Failed to parse sections'
+      return 2
+    }
+    filters=("${parsed_sections[@]}")
+  fi
 
-Analysis requirements:
-1. Check compliance with all 14 sections of the standard
-2. Identify violations, warnings, and provide suggestions
-3. Reference specific line numbers for each finding
-4. Explain WHY each issue matters (don't just list rule violations)
+  # === SECTION 5: Prompt Construction ===
+  info "Building validation prompt (tier: $tier)..."
 
-Output format based on severity:
-  ✓ COMPLIANT: [Section/Rule] - Brief explanation
-  ✗ VIOLATION: [Section/Rule] - Critical issue at line X
-  ⚠ WARNING: [Section/Rule] - Potential issue at line Y
-  💡 SUGGESTION: [Best practice] - Improvement at line Z
+  local -- temp_prompt
+  temp_prompt=$(mktemp) || { error 'Failed to create temporary file'; return 1; }
+  trap 'rm -f "$temp_prompt"' RETURN
 
-Focus areas:
-  • Script Structure: shebang, set options, shopt, metadata, function organization
-  • Variables: declarations, scoping, naming, readonly usage
-  • Quoting: single vs double quotes, variable quoting in conditionals
-  • Functions: naming, main() pattern, organization
-  • Control Flow: [[ ]] usage, arithmetic, case statements
-  • Error Handling: set -e, exit codes, traps, return values
-  • I/O: STDERR vs STDOUT placement, messaging functions
-  • Arguments: parsing patterns, validation
-  • File Operations: wildcards, process substitution
-  • Security: PATH, SUID/SGID, eval, input sanitization
-  • Style: indentation, comments (WHY not WHAT), blank lines
-  • Advanced: dry-run patterns, state management, testing support
+  # Build system prompt with filtering
+  if ((${#filters[@]} > 0)); then
+    build_validation_prompt "$tier" "$output_format" "${filters[@]}" > "$temp_prompt"
+  else
+    build_validation_prompt "$tier" "$output_format" > "$temp_prompt"
+  fi
 
-Summary requirements:
-  • Count of violations (critical issues)
-  • Count of warnings (potential issues)
-  • Count of suggestions (improvements)
-  • Compliance percentage (sections fully compliant / 14)
-  • Overall assessment (compliant, needs work, non-compliant)
+  local -i prompt_lines prompt_bytes
+  prompt_lines=$(wc -l < "$temp_prompt")
+  prompt_bytes=$(wc -c < "$temp_prompt")
+  info "Generated prompt: $prompt_lines lines, $prompt_bytes bytes"
 
-The complete BASH-CODING-STANDARD.md follows:
+  # === SECTION 6: Claude Command Construction ===
+  info 'Preparing Claude command...'
 
-PROMPT_HEADER
-)
+  local -a claude_args=()
+  readarray -t claude_args < <(build_claude_command \
+    "$temp_prompt" \
+    "$append_prompt" \
+    "$allowed_tools" \
+    "$add_dir" \
+    "$skip_permissions" \
+    "$claude_cmd"
+  )
 
-  # Append the full BCS document
-  system_prompt+=$'\n\n'
-  system_prompt+=$(cat "$BCS_FILE")
+  # === SECTION 7: Claude Invocation ===
+  info "Validating script '$script_file'"
 
-  # Add format-specific instructions
+  local -- validation_output
+  local -i claude_exit=0
+
+  # Pipe script to Claude
+  validation_output=$("${claude_args[@]}" < "$script_file" 2>&1) || claude_exit=$?
+
+  if ((claude_exit)); then
+    error "Claude validation failed (exit code $claude_exit)"
+    >&2 echo "$validation_output"
+    return $claude_exit
+  fi
+
+  # === SECTION 8: Output Processing ===
+  # Parse output for violations/warnings count
+  local -i violations=0
+  local -i warnings=0
+
   case "$output_format" in
-    json)
-      system_prompt+=$'\n\n'
-      system_prompt+='Output the analysis as valid JSON with this structure:
-{
-  "file": "filename",
-  "compliant": ["list of compliant areas"],
-  "violations": [{"line": N, "rule": "...", "message": "..."}],
-  "warnings": [{"line": N, "rule": "...", "message": "..."}],
-  "suggestions": [{"line": N, "message": "..."}],
-  "summary": {
-    "violations_count": N,
-    "warnings_count": N,
-    "suggestions_count": N,
-    "compliance_percentage": N,
-    "assessment": "compliant|needs_work|non_compliant"
-  }
-}'
+    bcs-json|json)
+      # Parse JSON for counts
+      if command -v jq &>/dev/null; then
+        violations=$(jq -r '.summary.violations_count // .summary.violations // 0' <<< "$validation_output" 2>/dev/null) || violations=0
+        warnings=$(jq -r '.summary.warnings_count // .summary.warnings // 0' <<< "$validation_output" 2>/dev/null) || warnings=0
+      else
+        # Fallback: count text markers in JSON
+        violations=$(grep -c '"severity"[[:space:]]*:[[:space:]]*"critical"' <<< "$validation_output" 2>/dev/null) || violations=0
+        warnings=$(grep -c '"severity"[[:space:]]*:[[:space:]]*"warning"' <<< "$validation_output" 2>/dev/null) || warnings=0
+      fi
       ;;
-    markdown)
-      system_prompt+=$'\n\n'
-      system_prompt+='Output the analysis as well-formatted Markdown with:
-- Title: # BCS Compliance Report: filename
-- Summary section with statistics
-- Detailed findings organized by section
-- Code examples where relevant
-- Actionable recommendations at the end'
+    *)
+      # Count markers in text output
+      violations=$(grep -c '^✗ VIOLATION:' <<< "$validation_output" 2>/dev/null) || violations=0
+      warnings=$(grep -c '^⚠ WARNING:' <<< "$validation_output" 2>/dev/null) || warnings=0
       ;;
   esac
 
-  # Add strict mode instruction
-  if ((strict)); then
-    system_prompt+=$'\n\n'
-    system_prompt+='STRICT MODE: Treat warnings as violations for CI/CD purposes.'
+  # Filter output by severity if requested
+  case "$severity" in
+    violations)
+      # Show only violations
+      if [[ $output_format == bcs-json || $output_format == json ]]; then
+        if command -v jq &>/dev/null; then
+          jq 'del(.findings.warnings, .findings.suggestions) | del(.warnings, .suggestions)' <<< "$validation_output" 2>/dev/null || echo "$validation_output"
+        else
+          grep -E '"severity"[[:space:]]*:[[:space:]]*"critical"' <<< "$validation_output" || echo "$validation_output"
+        fi
+      else
+        grep -E '^✗ VIOLATION:' <<< "$validation_output" || true
+      fi
+      ;;
+    warnings)
+      # Show only warnings
+      if [[ $output_format == bcs-json || $output_format == json ]]; then
+        if command -v jq &>/dev/null; then
+          jq 'del(.findings.violations, .findings.suggestions) | del(.violations, .suggestions)' <<< "$validation_output" 2>/dev/null || echo "$validation_output"
+        else
+          grep -E '"severity"[[:space:]]*:[[:space:]]*"warning"' <<< "$validation_output" || echo "$validation_output"
+        fi
+      else
+        grep -E '^⚠ WARNING:' <<< "$validation_output" || true
+      fi
+      ;;
+    all)
+      # Show everything
+      echo "$validation_output"
+      ;;
+  esac
+
+  # === SECTION 9: Exit Code Determination ===
+  local -i exit_code=0
+
+  if ((violations > 0)); then
+    if ((strict)); then
+      exit_code=2  # Violations always return 2 in strict mode
+      error "Validation failed: $violations violation$(s $violations) found"
+    else
+      exit_code=1  # Violations return 1 in normal mode
+      warn "Validation issues: $violations violation$(s $violations) found"
+    fi
+  elif ((warnings)); then
+    if ((strict)); then
+      exit_code=2  # Warnings become violations in strict mode
+      error "Validation failed: $warnings warning$(s $warnings) found (strict mode)"
+    else
+      exit_code=1  # Warnings return 1 in normal mode
+      warn "Validation issues: $warnings warning$(s $warnings) found"
+    fi
+  else
+    exit_code=0  # Clean validation
+    success 'Script is compliant with BCS'
   fi
 
-  # Show progress
-  >&2 echo "bcs: Analyzing $script_file against BASH-CODING-STANDARD.md..."
-  >&2 echo "bcs: Using Claude AI for comprehensive compliance check..."
-
-  # Create user message with script content
-  local -- user_message
-  user_message="Please analyze the following bash script for compliance with the Bash Coding Standard:
-
-File: $script_file
-
-\`\`\`bash
-$(cat "$script_file")
-\`\`\`
-
-Provide a comprehensive compliance analysis with violations, warnings, and suggestions."
-
-  # Invoke Claude with system prompt and user message
-  echo "$user_message" | "$claude_cmd" -p "$system_prompt"
-  local -i exit_code=$?
-
-  if ((exit_code != 0)); then
-    >&2 echo
-    error "Claude analysis failed with exit code: $exit_code"
-    return "$exit_code"
-  fi
-
-  return 0
+  return "$exit_code"
 }
 declare -fx cmd_check
 
@@ -1423,8 +2296,8 @@ cmd_help() {
         cmd_check --help
         ;;
       *)
-        error "Unknown command: $topic"
-        >&2 echo "Run 'bcs help' for list of commands"
+        error "Unknown command '$topic'"
+        info "Run 'bcs help' for list of commands"
         return 2
         ;;
     esac
@@ -1482,7 +2355,7 @@ cmd_display() {
   if [[ -z "$BCS_FILE" ]]; then
     BCS_PATH="$(realpath -- "${BASH_SOURCE[0]}")"
     BCS_FILE=$(find_bcs_file "${BCS_PATH%/*}") || {
-      >&2 echo "bcs: error: BASH-CODING-STANDARD.md not found when sourcing"
+      error 'BASH-CODING-STANDARD.md not found when sourcing'
       return 1
     }
     BCS_MD=''
@@ -1545,7 +2418,7 @@ EOF
                     ;;
       -*)           viewer_args+=("$1")
                     ;;
-      *)            >&2 echo "bcs: error: Too many arguments '$1'"
+      *)            error "Too many arguments '$1'"
                     return 2
                     ;;
     esac
@@ -1555,8 +2428,8 @@ EOF
   # Validate that at most one sub-command was specified
   local -i subcommand_count=$((force_cat + force_bash + force_json + force_md2ansi))
   if ((subcommand_count > 1)); then
-    >&2 echo "bcs: error: Multiple sub-commands specified"
-    >&2 echo "Only one of -c, -b, -j, -a may be used at a time"
+    error 'Multiple sub-commands specified'
+    info 'Only one of -c, -b, -j, -a may be used at a time'
     return 2
   fi
 
@@ -1580,14 +2453,14 @@ EOF
       printf '{\"bcs\":\"%s\"}\n' "$content"
     fi
     return 0
-  
+
   elif ((force_bash)); then
     declare -gx BCS_MD
     ((squeeze_blanks)) && BCS_MD="$(cat -s "${viewer_args[@]}" -- "$BCS_FILE")" \
                        || BCS_MD="$(cat "${viewer_args[@]}" -- "$BCS_FILE")"
     declare -p BCS_MD
     return 0
-  
+
   elif ((force_cat)); then
     #shellcheck disable=SC2015  # False positive: cat always returns 0
     ((squeeze_blanks)) && cat -s "${viewer_args[@]}" -- "$BCS_FILE" \
@@ -1619,7 +2492,7 @@ if [[ "${BASH_SOURCE[0]}" != "$0" ]]; then
     BCS_MD="$(cat -- "$BCS_FILE")"
     true
   } || {
-    >&2 echo "bcs: error: BASH-CODING-STANDARD.md not found when sourcing"
+    error "BASH-CODING-STANDARD.md not found when sourcing"
     false
   }
   return
@@ -1627,17 +2500,19 @@ fi
 
 
 # Executed mode - run as standalone script ------------------------------------
+#!/bin/bash
+# bcs main program
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose
 
 # Script metadata and find BASH-CODING-STANDARD.md
 declare -- BCS_FILE
 BCS_FILE=$(find_bcs_file "${BCS_PATH%/*}") || {
-  >&2 echo "bcs: error: BASH-CODING-STANDARD.md not found"
-  >&2 echo 'Searched locations:'
-  >&2 echo "  - ${BCS_PATH%/*}/BASH-CODING-STANDARD.md"
-  >&2 echo '  - /usr/local/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md'
-  >&2 echo '  - /usr/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md'
+  error "BASH-CODING-STANDARD.md not found"
+  info  'Searched locations:' \
+        "  - ${BCS_PATH%/*}/BASH-CODING-STANDARD.md" \
+        '  - /usr/local/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md' \
+        '  - /usr/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md'
   exit 1
 }
 
@@ -1706,8 +2581,8 @@ case "$subcommand" in
     cmd_help "$@"
     ;;
   *)
-    error "Unknown command: $subcommand"
-    >&2 echo "Try 'bcs help' for usage information"
+    error "Unknown command '$subcommand'"
+    info 'Try 'bcs help' for usage information'
     exit 2
     ;;
 esac
