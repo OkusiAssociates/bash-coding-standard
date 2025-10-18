@@ -1,4 +1,4 @@
-### Derived Variables
+## Derived Variables
 
 **Derived variables are variables computed from other variables, often for paths, configurations, or composite values. Group derived variables together with clear section comments explaining their dependencies. Document special cases or hardcoded values. When base variables can change (especially during argument parsing), remember to update all derived variables. Derived variables reduce duplication and ensure consistency when base values change.**
 

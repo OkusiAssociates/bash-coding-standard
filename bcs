@@ -1166,6 +1166,56 @@ EOF
 }
 declare -fx cmd_codes
 
+# Helper function to fix header level based on file depth
+# Args: filepath data_dir
+fix_header_level() {
+  local -- filepath="$1"
+  local -- data_dir="$2"
+  local -- relative_path="${filepath#$data_dir/}"
+  local -i slash_count depth
+  local -- first_line header_text header_marker
+
+  # Count directory separators to determine depth
+  slash_count=$(grep -o '/' <<<"$relative_path" | wc -l)
+
+  # Special case: 00-section files are depth 1 (section)
+  if [[ $(basename "$filepath") =~ ^00-section\. ]]; then
+    depth=1
+  else
+    # Depth 0: files directly in data/ (should not happen)
+    # Depth 1: files in data/##-section/ (rules)
+    # Depth 2+: files in data/##-section/##-rule/ (subrules)
+    case $slash_count in
+      0) depth=1 ;;  # Shouldn't happen, treat as section
+      1) depth=2 ;;  # Rule level
+      *) depth=3 ;;  # Subrule level
+    esac
+  fi
+
+  # Get correct header marker
+  case $depth in
+    1) header_marker='#' ;;
+    2) header_marker='##' ;;
+    *) header_marker='###' ;;
+  esac
+
+  # Read first line
+  first_line=$(head -n 1 "$filepath")
+
+  # Check if first line is a header
+  if [[ "$first_line" =~ ^#+[[:space:]] ]]; then
+    # Extract header text (strip existing # markers)
+    header_text=$(sed -E 's/^#+[[:space:]]*//' <<<"$first_line")
+    # Output corrected header
+    echo "$header_marker $header_text"
+    # Output rest of file
+    tail -n +2 "$filepath"
+  else
+    # First line is not a header, output file as-is
+    cat "$filepath"
+  fi
+}
+
 # Regenerate BASH-CODING-STANDARD.md from data/ tree
 cmd_generate() {
   # Parse arguments
@@ -1322,13 +1372,13 @@ EOF
         basename_file=$(basename "$file")
         if [[ "$basename_file" =~ ^00-header\. ]]; then
           # Output header without Rule prefix
-          cat "$file"
+          fix_header_level "$file" "$data_dir"
         else
           # Output with Rule prefix for all other files
           bcs_code=$(get_bcs_code "$file") || bcs_code='BCS????'
           echo "**Rule: $bcs_code**"
           echo
-          cat "$file"
+          fix_header_level "$file" "$data_dir"
         fi
       done
       echo '#fin'
@@ -1366,13 +1416,13 @@ EOF
         basename_file=$(basename "$file")
         if [[ "$basename_file" =~ ^00-header\. ]]; then
           # Output header without Rule prefix
-          cat "$file"
+          fix_header_level "$file" "$data_dir"
         else
           # Output with Rule prefix for all other files
           bcs_code=$(get_bcs_code "$file") || bcs_code='BCS????'
           echo "**Rule: $bcs_code**"
           echo
-          cat "$file"
+          fix_header_level "$file" "$data_dir"
         fi
       done
       echo '#fin'
@@ -1410,13 +1460,13 @@ EOF
         basename_file=$(basename "$file")
         if [[ "$basename_file" =~ ^00-header\. ]]; then
           # Output header without Rule prefix
-          cat "$file"
+          fix_header_level "$file" "$data_dir"
         else
           # Output with Rule prefix for all other files
           bcs_code=$(get_bcs_code "$file") || bcs_code='BCS????'
           echo "**Rule: $bcs_code**"
           echo
-          cat "$file"
+          fix_header_level "$file" "$data_dir"
         fi
       done
       echo '#fin'
@@ -2295,11 +2345,11 @@ EOF
   local -- line prev_line='' prev_prev_line=''
 
   while IFS= read -r line; do
-    # Check if line 2 back was a section code (BCS##00) and current line is a ## header
-    if [[ "$prev_prev_line" =~ ^\*\*Rule:\ BCS[0-9]+00\*\*$ && "$line" =~ ^##\  ]]; then
-      # This ## header is a section header
+    # Check if line 2 back was a section code (BCS##00) and current line is a # header
+    if [[ "$prev_prev_line" =~ ^\*\*Rule:\ BCS[0-9]+00\*\*$ && "$line" =~ ^#\  ]]; then
+      # This # header is a section header
       count+=1
-      echo "$count. ${line#\#\# }"
+      echo "$count. ${line#\# }"
     fi
     prev_prev_line="$prev_line"
     prev_line="$line"
@@ -2939,7 +2989,6 @@ EOF
               ;;
 
       *)      script_file="$1"
-              break
               ;;
     esac
     shift
@@ -2996,9 +3045,9 @@ EOF
   # === SECTION 5: Prompt Construction ===
   info "Building validation prompt (tier: $tier)..."
 
-  local -- temp_prompt
+  local -- temp_prompt=''
   temp_prompt=$(mktemp) || { error 'Failed to create temporary file'; return 1; }
-  trap 'rm -f "$temp_prompt"' RETURN
+  trap 'rm -f "${temp_prompt:-}"' RETURN
 
   # Build system prompt with filtering
   if ((${#filters[@]} > 0)); then

@@ -151,7 +151,8 @@ validate_claude_cli() {
 }
 
 build_system_prompt_summary() {
-  cat <<'PROMPT'
+  local -- bcs_code="$1"
+  cat <<PROMPT
 You are a technical documentation compressor specializing in Bash Coding Standard rules.
 
 TASK: The user will provide a source .complete.md file path and an output file path in their prompt. Use the Read tool to read the source file, compress it to .summary.md format, then use the Write tool to write the compressed result to the output file path.
@@ -159,13 +160,17 @@ TASK: The user will provide a source .complete.md file path and an output file p
 TARGET SIZE: Maximum 10,000 bytes (strict limit)
 
 CRITICAL REQUIREMENTS (NON-NEGOTIABLE):
-1. NEVER alter, simplify, or change code examples - preserve EXACT syntax
-2. NEVER lose salient technical details - accuracy is paramount
-3. Keep ALL rationale points (may condense wording, not content)
-4. Keep 3-5 most critical anti-patterns with examples
-5. Keep 2-3 most important edge cases
-6. Preserve all code blocks completely
-7. Maintain technical precision in all statements
+1. FIRST LINE: Must be markdown header matching file depth:
+   - If file contains "/data/##-section/##-rule/" (3 levels) → Use "###" (subrule)
+   - If file contains "/data/##-section/" only (2 levels) → Use "##" (rule)
+   - If filename starts with "00-section" → Use "#" (section)
+2. NEVER alter, simplify, or change code examples - preserve EXACT syntax
+3. NEVER lose salient technical details - accuracy is paramount
+4. Keep ALL rationale points (may condense wording, not content)
+5. Keep 3-5 most critical anti-patterns with examples
+6. Keep 2-3 most important edge cases
+7. Preserve all code blocks completely
+8. Maintain technical precision in all statements
 
 COMPRESSION APPROACH:
 - Remove verbose explanations while keeping technical facts
@@ -197,17 +202,20 @@ TASK: The user will provide a source .complete.md file path and an output file p
 TARGET SIZE: Maximum 1,500 bytes (ultra-compressed, strict limit)
 
 CRITICAL REQUIREMENTS (NON-NEGOTIABLE):
-1. NEVER alter code examples - preserve EXACT syntax (but use minimal examples)
-2. Keep only THE MOST critical technical details
-3. Top 2-3 rationale points (most measurable/technical)
-4. One minimal but ACCURATE code example (5-8 lines max)
-5. 1-2 most critical anti-patterns only
-6. Add reference line as LAST LINE: "**Ref:** $bcs_code" (file must end with single newline, no extra blank lines)
+1. FIRST LINE: Must be markdown header matching file depth:
+   - If file contains "/data/##-section/##-rule/" (3 levels) → Use "###" (subrule)
+   - If file contains "/data/##-section/" only (2 levels) → Use "##" (rule)
+   - If filename starts with "00-section" → Use "#" (section)
+2. NEVER alter code examples - preserve EXACT syntax (but use minimal examples)
+3. Keep only THE MOST critical technical details
+4. Top 2-3 rationale points (most measurable/technical)
+5. One minimal but ACCURATE code example (5-8 lines max)
+6. 1-2 most critical anti-patterns only
 7. Extreme brevity - every word must add unique value
 
 COMPRESSION APPROACH:
 - One-sentence rule statement in bold
-- Inline anti-patterns using `→` notation where possible
+- Inline anti-patterns using \`→\` notation where possible
 - Remove all elaboration - state fact, move on
 - Keep only information that changes behavior or prevents catastrophic errors
 - Use minimal examples showing core pattern only
@@ -220,7 +228,6 @@ CRITICAL FILE WRITING:
 - The file content will be directly concatenated into the final document
 - Think of the file content as the final published content, not a report about compression
 - The file should start immediately with the rule title/content (markdown format)
-- File MUST end with "**Ref:** BCS####" line followed by exactly one newline character
 
 OUTPUT: Use Write tool to create ultra-concise markdown file following .abstract.md structure, under 1,500 bytes.
 PROMPT
@@ -237,12 +244,15 @@ TASK: The user will provide a source .complete.md file path and an output file p
 TARGET SIZE: Maximum 1,500 bytes (STRICT - previous attempt was $current_size bytes)
 
 CRITICAL REQUIREMENTS (NON-NEGOTIABLE):
-1. NEVER alter code examples - preserve EXACT syntax
-2. RUTHLESSLY remove all non-essential text
-3. ONE rationale point only (most critical)
-4. ONE minimal code example (3-5 lines max)
-5. ONE anti-pattern maximum
-6. Add reference line as LAST LINE: "**Ref:** $bcs_code" (file must end with single newline, no extra blank lines)
+1. FIRST LINE: Must be markdown header matching file depth:
+   - If file contains "/data/##-section/##-rule/" (3 levels) → Use "###" (subrule)
+   - If file contains "/data/##-section/" only (2 levels) → Use "##" (rule)
+   - If filename starts with "00-section" → Use "#" (section)
+2. NEVER alter code examples - preserve EXACT syntax
+3. RUTHLESSLY remove all non-essential text
+4. ONE rationale point only (most critical)
+5. ONE minimal code example (3-5 lines max)
+6. ONE anti-pattern maximum
 7. Ultra-extreme brevity - remove all elaboration
 
 COMPRESSION APPROACH:
@@ -260,7 +270,6 @@ CRITICAL FILE WRITING:
 - The file content will be directly concatenated into the final document
 - Think of the file content as the final published content, not a report about compression
 - The file should start immediately with the rule title/content (markdown format)
-- File MUST end with "**Ref:** BCS####" line followed by exactly one newline character
 
 OUTPUT: Use Write tool to create ultra-minimal markdown file, MUST be under 1,500 bytes.
 PROMPT
@@ -268,6 +277,7 @@ PROMPT
 
 build_system_prompt_summary_strict() {
   local -i current_size=$1
+  local -- bcs_code="$2"
   cat <<PROMPT
 You are a technical documentation compressor specializing in Bash Coding Standard rules.
 
@@ -276,12 +286,16 @@ TASK: The user will provide a source .complete.md file path and an output file p
 TARGET SIZE: Maximum 10,000 bytes (STRICT - previous attempt was $current_size bytes)
 
 CRITICAL REQUIREMENTS (NON-NEGOTIABLE):
-1. NEVER alter code examples - preserve EXACT syntax
-2. Reduce rationale to 2-3 key points
-3. Keep 2-3 most critical anti-patterns only
-4. Keep 1-2 most important edge cases
-5. Preserve code blocks but remove verbose explanations
-6. Remove all redundant elaboration
+1. FIRST LINE: Must be markdown header matching file depth:
+   - If file contains "/data/##-section/##-rule/" (3 levels) → Use "###" (subrule)
+   - If file contains "/data/##-section/" only (2 levels) → Use "##" (rule)
+   - If filename starts with "00-section" → Use "#" (section)
+2. NEVER alter code examples - preserve EXACT syntax
+3. Reduce rationale to 2-3 key points
+4. Keep 2-3 most critical anti-patterns only
+5. Keep 1-2 most important edge cases
+6. Preserve code blocks but remove verbose explanations
+7. Remove all redundant elaboration
 
 COMPRESSION APPROACH:
 - Remove all verbose explanations and elaboration
@@ -371,14 +385,14 @@ compress_rule_to_tier() {
     if ((attempt == 1)); then
       # First attempt - standard prompt
       if [[ "$tier" == 'summary' ]]; then
-        system_prompt=$(build_system_prompt_summary)
+        system_prompt=$(build_system_prompt_summary "$bcs_code")
       else
         system_prompt=$(build_system_prompt_abstract "$bcs_code")
       fi
     else
       # Retry with stricter prompt
       if [[ "$tier" == 'summary' ]]; then
-        system_prompt=$(build_system_prompt_summary_strict "$file_size")
+        system_prompt=$(build_system_prompt_summary_strict "$file_size" "$bcs_code")
       else
         system_prompt=$(build_system_prompt_abstract_strict "$file_size" "$bcs_code")
       fi

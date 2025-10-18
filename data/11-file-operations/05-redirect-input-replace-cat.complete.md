@@ -1,4 +1,4 @@
-# Input Redirection vs Cat: Performance Optimization
+## Input Redirection vs Cat: Performance Optimization
 
 ## Summary
 
