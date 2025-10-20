@@ -27,14 +27,14 @@ install:
 	install -d $(BINDIR)
 	install -m 755 bash-coding-standard $(BINDIR)/
 	ln -sf bash-coding-standard $(BINDIR)/bcs
-	install -d $(SHAREDIR)
-	install -m 644 BASH-CODING-STANDARD.complete.md $(SHAREDIR)/
-	install -m 644 BASH-CODING-STANDARD.summary.md $(SHAREDIR)/
-	install -m 644 BASH-CODING-STANDARD.abstract.md $(SHAREDIR)/
+	install -d -m 2775 -g bcs $(SHAREDIR)
+	install -m 664 -g bcs BASH-CODING-STANDARD.complete.md $(SHAREDIR)/
+	install -m 664 -g bcs BASH-CODING-STANDARD.summary.md $(SHAREDIR)/
+	install -m 664 -g bcs BASH-CODING-STANDARD.abstract.md $(SHAREDIR)/
 	ln -sf BASH-CODING-STANDARD.abstract.md $(SHAREDIR)/BASH-CODING-STANDARD.md
-	cp -r data $(SHAREDIR)/
+	cp -a data $(SHAREDIR)/ && chgrp -R bcs $(SHAREDIR)/data && find $(SHAREDIR)/data -type d -exec chmod 2775 {} + && find $(SHAREDIR)/data -type f -exec chmod 664 {} +
 	@if [ -d BCS ]; then \
-		cp -r BCS $(SHAREDIR)/ && \
+		cp -a BCS $(SHAREDIR)/ && chgrp -R bcs $(SHAREDIR)/BCS && find $(SHAREDIR)/BCS -type d -exec chmod 2775 {} + && \
 		echo "  - BCS index installed"; \
 	else \
 		echo "  - BCS index not found (run 'bcs generate --canonical' to create)"; \
