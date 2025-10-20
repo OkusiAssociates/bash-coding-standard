@@ -229,7 +229,7 @@ yn() {
   local -- prompt="${1:-Continue?}"
   local -- response
 
-  while true; do
+  while ((1)); do
     read -rp "$prompt [y/n] " response
     case "$response" in
       [Yy]*) return 0 ;;

@@ -57,7 +57,7 @@ die 1 'Critical dependency missing'
 ```bash
 # Color-coded status
 success 'Build completed'        # Green checkmark
-warn 'Using default settings'    # Yellow warning
+warn 'Using default settings'    # ▲ Yellow warning
 error 'Compilation failed'       # Red X
 info 'Tests running...'          # Cyan info icon
 ```
@@ -214,7 +214,7 @@ _msg() {
 
   case "${FUNCNAME[1]}" in
     success) prefix+=" ${GREEN}✓${NC}" ;;
-    warn)    prefix+=" ${YELLOW}⚡${NC}" ;;
+    warn)    prefix+=" ${YELLOW}▲${NC}" ;;
     info)    prefix+=" ${CYAN}◉${NC}" ;;
     error)   prefix+=" ${RED}✗${NC}" ;;
     *)       ;;

@@ -24,7 +24,7 @@ _msg() {
   # Detect calling function and set appropriate prefix/color
   case "${FUNCNAME[1]}" in
     success) prefix+=" ${GREEN}✓${NC}" ;;
-    warn)    prefix+=" ${YELLOW}⚡${NC}" ;;
+    warn)    prefix+=" ${YELLOW}▲${NC}" ;;
     info)    prefix+=" ${CYAN}◉${NC}" ;;
     error)   prefix+=" ${RED}✗${NC}" ;;
     debug)   prefix+=" ${YELLOW}DEBUG${NC}:" ;;
@@ -184,7 +184,7 @@ _msg() {
 
   case "${FUNCNAME[1]}" in
     success) prefix+=" ${GREEN}✓${NC}" ;;
-    warn)    prefix+=" ${YELLOW}⚡${NC}" ;;
+    warn)    prefix+=" ${YELLOW}▲${NC}" ;;
     info)    prefix+=" ${CYAN}◉${NC}" ;;
     error)   prefix+=" ${RED}✗${NC}" ;;
     debug)   prefix+=" ${YELLOW}DEBUG${NC}:" ;;

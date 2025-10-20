@@ -731,6 +731,18 @@ main "$@"
 
 **Infinite loops:**
 
+> **Performance Note:** Benchmark testing (Bash 5.2.21, 13th Gen Intel i9-13900HX) demonstrates significant performance differences between infinite loop constructs:
+>
+> | Construct | 100K iterations | 1M iterations | 5M iterations | 1M with work | Performance |
+> |-----------|----------------|---------------|---------------|--------------|-------------|
+> | `while ((1))` | 0.091s | 0.885s | 4.270s | 1.432s | **Baseline (fastest)** ⚡ |
+> | `while :` | 0.102s | 1.009s | 4.837s | 1.575s | +9-14% slower |
+> | `while true` | 0.110s | 1.079s | 5.231s | 1.647s | **+15-22% slower** 🐌 |
+>
+> **Recommendation:** Use `while ((1))` for optimal performance. Use `while :` for POSIX compatibility. Avoid `while true` due to command execution overhead.
+>
+> See `/ai/scripts/bcx/docs/BENCHMARK-RESULTS.md` for complete analysis.
+
 ```bash
 #!/bin/bash
 set -euo pipefail
@@ -742,14 +754,14 @@ SCRIPT_DIR=${SCRIPT_PATH%/*}
 SCRIPT_NAME=${SCRIPT_PATH##*/}
 readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
 
-# ✓ CORRECT - Infinite loop with break condition
+# ✓ RECOMMENDED - Infinite loop with break condition (fastest option)
 monitor_service() {
   local -- service="$1"
   local -i interval="${2:-5}"
 
   info "Monitoring service: $service (interval: ${interval}s)"
 
-  while true; do
+  while ((1)); do
     if ! systemctl is-active --quiet "$service"; then
       error "Service $service is down!"
       # Could send alert here
@@ -761,7 +773,7 @@ monitor_service() {
   done
 }
 
-# ✓ CORRECT - Infinite loop with exit condition
+# ✓ RECOMMENDED - Infinite loop with exit condition
 daemon_loop() {
   local -- pid_file='/var/run/daemon.pid'
 
@@ -773,7 +785,7 @@ daemon_loop() {
 
   info 'Daemon started'
 
-  while true; do
+  while ((1)); do
     # Check if we should stop
     if [[ ! -f "$pid_file" ]]; then
       info 'PID file removed, stopping daemon'
@@ -790,11 +802,11 @@ daemon_loop() {
   info 'Daemon stopped'
 }
 
-# ✓ CORRECT - Interactive loop
+# ✓ RECOMMENDED - Interactive loop
 interactive_menu() {
   local -- choice
 
-  while true; do
+  while ((1)); do
     echo ''
     echo 'Menu:'
     echo '  1) Start service'
@@ -811,6 +823,23 @@ interactive_menu() {
       q|Q) info 'Goodbye!'; break ;;
       *) warn 'Invalid choice' ;;
     esac
+  done
+}
+
+# ✓ ACCEPTABLE - POSIX-compatible infinite loop (for /bin/sh scripts)
+posix_daemon() {
+  # Use while : when POSIX compatibility is required
+  while :; do
+    process_item || break
+    sleep 1
+  done
+}
+
+# ✗ AVOID - Slowest option due to command execution overhead
+slow_monitor() {
+  while true; do  # Not recommended: 15-22% slower than while ((1))
+    check_status
+    sleep 5
   done
 }
 
@@ -872,9 +901,7 @@ process_tree() {
   local -- dir file
 
   for dir in "${dirs[@]}"; do
-    if [[ ! -d "$dir" ]]; then
-      continue
-    fi
+    [[ -d "$dir" ]] || continue
 
     info "Processing directory: $dir"
 
@@ -944,10 +971,8 @@ error() { >&2 _msg "$@"; }
 success() { >&2 _msg "$@"; }
 
 die() {
-  local -i exit_code=${1:-1}
-  shift
-  (($#)) && error "$@"
-  exit "$exit_code"
+  (($# > 2)) && error "${@:2}"
+  exit "${1:-1}"
 }
 
 # ============================================================================
@@ -955,9 +980,7 @@ die() {
 # ============================================================================
 
 noarg() {
-  if (($# < 2)) || [[ "$2" =~ ^- ]]; then
-    die 22 "Option $1 requires an argument"
-  fi
+  (($# > 1)) && [[ "${2:0:1}" != '-' ]] || die 22 "Option ${1@Q} requires an argument"
 }
 
 # Retry command with backoff
@@ -995,17 +1018,17 @@ process_file() {
 
   # Validate file
   if [[ ! -f "$file" ]]; then
-    error "File not found: $file"
+    error "File not found ${file@Q}"
     return 2
   fi
 
   if [[ ! -r "$file" ]]; then
-    error "File not readable: $file"
+    error "File not readable ${file@Q}"
     return 1
   fi
 
   if [[ ! -s "$file" ]]; then
-    warn "File is empty: $file"
+    warn "File is empty ${file@Q}"
     return 0
   fi
 
@@ -1022,19 +1045,19 @@ process_file() {
 
   while IFS= read -r line; do
     # Skip empty lines
-    [[ -z "$line" ]] && continue
+    [[ -n "$line" ]] || continue
 
     # Skip comments
-    [[ "$line" =~ ^# ]] && continue
+    [[ ! "$line" =~ ^# ]] || continue
 
     ((line_count+=1))
-    ((VERBOSE)) && info "  Line $line_count: $line"
+    ((VERBOSE)) && info "  Line $line_count: $line" || :
 
     # Process line (with retry)
-    if ! retry_with_backoff process_line "$line"; then
-      error "Failed to process line $line_count in $file"
+    retry_with_backoff process_line "$line" || {
+      error "Failed to process line $line_count in ${file@Q}"
       return 1
-    fi
+    }
   done < "$file"
 
   success "Processed $line_count lines from: $file"
@@ -1120,6 +1143,7 @@ main() {
 
       --)
         shift
+        INPUT_PATTERNS+=("$@")
         break
         ;;
 
@@ -1251,6 +1275,22 @@ for ((i=0; i<10; i+=1)); do
   echo "$i"
 done
 
+# ✗ Wrong - redundant comparison in arithmetic context
+while (($# > 0)); do  # Nonsense: $# is already truthy when non-zero
+  case $1 in
+    --opt) shift ;;
+  esac
+  shift
+done
+
+# ✓ Correct - arithmetic context evaluates non-zero as true
+while (($#)); do  # Clean and idiomatic
+  case $1 in
+    --opt) shift ;;
+  esac
+  shift
+done
+
 # ✗ Wrong - break with no argument (ambiguous in nested loops)
 for i in {1..10}; do
   for j in {1..10}; do
@@ -1303,15 +1343,15 @@ while IFS= read -r line; do
 done < file.txt
 
 # ✗ Wrong - infinite loop without safety check
-while true; do
+while ((1)); do
   process_item
   # No break condition - runs forever!
 done
 
-# ✓ Correct - infinite loop with exit condition
+# ✓ Correct - infinite loop with exit condition (using fastest construct)
 iteration=0
 max_iterations=1000
-while true; do
+while ((1)); do
   process_item
 
   ((iteration+=1))
@@ -1402,9 +1442,9 @@ process_items() {
 # Empty file
 touch empty.txt
 
-count=0
+declare -i count=0
 while read -r line; do
-  ((count+=1))
+  count+=1
 done < empty.txt
 
 echo "Count: $count"  # Output: 0 (zero iterations)
@@ -1415,11 +1455,13 @@ echo "Count: $count"  # Output: 0 (zero iterations)
 - **For loops** - best for arrays, globs, and known ranges
 - **While loops** - best for reading input, argument parsing, and condition-based iteration
 - **Until loops** - rarely used, prefer while with opposite condition
+- **Infinite loops** - use `while ((1))` for optimal performance, `while :` for POSIX compatibility, avoid `while true` (15-22% slower)
 - **Always quote arrays** - `"${array[@]}"` for safe iteration
 - **Use process substitution** - `< <(command)` to avoid subshell in while loops
 - **Prefer arrays over strings** - for file lists and collections
 - **Never parse ls** - use glob patterns or find with process substitution
 - **Use i+=1 not i++** - ++ returns original value, fails with set -e when 0
+- **Avoid redundant comparisons** - use `while (($#))` not `while (($# > 0))` in arithmetic context
 - **Break and continue** - for early exit and conditional skipping
 - **Specify break level** - `break 2` for nested loops
 - **IFS= read -r** - always use with while loops reading input

@@ -268,7 +268,7 @@ _msg() {
   case ${FUNCNAME[1]} in
     vecho)   : ;;
     info)    prefix+=" ${CYAN}◉${NC}" ;;
-    warn)    prefix+=" ${YELLOW}⚡${NC}" ;;
+    warn)    prefix+=" ${YELLOW}▲${NC}" ;;
 #    debug)   prefix+=" ${CYAN}DEBUG${NC}" ;;
     success) prefix+=" ${GREEN}✓${NC}" ;;
     error)   prefix+=" ${RED}✗${NC}" ;;

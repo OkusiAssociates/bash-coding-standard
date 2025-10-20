@@ -297,7 +297,7 @@ _msg() {
   local -- prefix="$SCRIPT_NAME:" msg
   case "${FUNCNAME[1]}" in
     info)    prefix+=" ${CYAN}◉${NC}" ;;
-    warn)    prefix+=" ${YELLOW}⚡${NC}" ;;
+    warn)    prefix+=" ${YELLOW}▲${NC}" ;;
     success) prefix+=" ${GREEN}✓${NC}" ;;
     *)       ;;
   esac

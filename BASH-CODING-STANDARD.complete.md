@@ -1,5 +1,3 @@
-**Rule: BCS00**
-
 # Bash Coding Standard
 
 This document defines a comprehensive Bash coding standard and presumes Bash 5.2 and higher; this is not a compatibility standard.
@@ -122,7 +120,7 @@ _msg() {
   case "$status" in
     vecho)   : ;;
     info)    prefix+=" ${CYAN}◉${NC}" ;;
-    warn)    prefix+=" ${YELLOW}⚡${NC}" ;;
+    warn)    prefix+=" ${YELLOW}▲${NC}" ;;
 #    debug)   prefix+=" ${CYAN}DEBUG${NC}" ;;
     success) prefix+=" ${GREEN}✓${NC}" ;;
     error)   prefix+=" ${RED}✗${NC}" ;;
@@ -1514,7 +1512,7 @@ _msg() {
   case ${FUNCNAME[1]} in
     vecho)   : ;;
     info)    prefix+=" ${CYAN}◉${NC}" ;;
-    warn)    prefix+=" ${YELLOW}⚡${NC}" ;;
+    warn)    prefix+=" ${YELLOW}▲${NC}" ;;
 #    debug)   prefix+=" ${CYAN}DEBUG${NC}" ;;
     success) prefix+=" ${GREEN}✓${NC}" ;;
     error)   prefix+=" ${RED}✗${NC}" ;;
@@ -3252,7 +3250,7 @@ yn() {
   local -- prompt="${1:-Continue?}"
   local -- response
 
-  while true; do
+  while ((1)); do
     read -rp "$prompt [y/n] " response
     case "$response" in
       [Yy]*) return 0 ;;
@@ -3933,7 +3931,7 @@ _msg() {
   local -- prefix="$SCRIPT_NAME:" msg
   case "${FUNCNAME[1]}" in
     info)    prefix+=" ${CYAN}◉${NC}" ;;
-    warn)    prefix+=" ${YELLOW}⚡${NC}" ;;
+    warn)    prefix+=" ${YELLOW}▲${NC}" ;;
     success) prefix+=" ${GREEN}✓${NC}" ;;
     *)       ;;
   esac
@@ -5203,7 +5201,7 @@ _msg() {
   local -- prefix="$SCRIPT_NAME:" msg
   case "${FUNCNAME[1]}" in
     info) prefix+=" ◉" ;;
-    warn) prefix+=" ⚠" ;;
+    warn) prefix+=" ▲" ;;
     error) prefix+=" ✗" ;;
     success) prefix+=" ✓" ;;
     debug) prefix+=" ⋯" ;;
@@ -10554,7 +10552,7 @@ _msg() {
   local -- prefix="$SCRIPT_NAME:" msg
   case "${FUNCNAME[1]}" in
     info) prefix+=" ◉" ;;
-    warn) prefix+=" ⚠" ;;
+    warn) prefix+=" ▲" ;;
     error) prefix+=" ✗" ;;
     success) prefix+=" ✓" ;;
     *) ;;
@@ -12096,6 +12094,18 @@ main "$@"
 
 **Infinite loops:**
 
+> **Performance Note:** Benchmark testing (Bash 5.2.21, 13th Gen Intel i9-13900HX) demonstrates significant performance differences between infinite loop constructs:
+>
+> | Construct | 100K iterations | 1M iterations | 5M iterations | 1M with work | Performance |
+> |-----------|----------------|---------------|---------------|--------------|-------------|
+> | `while ((1))` | 0.091s | 0.885s | 4.270s | 1.432s | **Baseline (fastest)** ⚡ |
+> | `while :` | 0.102s | 1.009s | 4.837s | 1.575s | +9-14% slower |
+> | `while true` | 0.110s | 1.079s | 5.231s | 1.647s | **+15-22% slower** 🐌 |
+>
+> **Recommendation:** Use `while ((1))` for optimal performance. Use `while :` for POSIX compatibility. Avoid `while true` due to command execution overhead.
+>
+> See `/ai/scripts/bcx/docs/BENCHMARK-RESULTS.md` for complete analysis.
+
 ```bash
 #!/bin/bash
 set -euo pipefail
@@ -12107,14 +12117,14 @@ SCRIPT_DIR=${SCRIPT_PATH%/*}
 SCRIPT_NAME=${SCRIPT_PATH##*/}
 readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
 
-# ✓ CORRECT - Infinite loop with break condition
+# ✓ RECOMMENDED - Infinite loop with break condition (fastest option)
 monitor_service() {
   local -- service="$1"
   local -i interval="${2:-5}"
 
   info "Monitoring service: $service (interval: ${interval}s)"
 
-  while true; do
+  while ((1)); do
     if ! systemctl is-active --quiet "$service"; then
       error "Service $service is down!"
       # Could send alert here
@@ -12126,7 +12136,7 @@ monitor_service() {
   done
 }
 
-# ✓ CORRECT - Infinite loop with exit condition
+# ✓ RECOMMENDED - Infinite loop with exit condition
 daemon_loop() {
   local -- pid_file='/var/run/daemon.pid'
 
@@ -12138,7 +12148,7 @@ daemon_loop() {
 
   info 'Daemon started'
 
-  while true; do
+  while ((1)); do
     # Check if we should stop
     if [[ ! -f "$pid_file" ]]; then
       info 'PID file removed, stopping daemon'
@@ -12155,11 +12165,11 @@ daemon_loop() {
   info 'Daemon stopped'
 }
 
-# ✓ CORRECT - Interactive loop
+# ✓ RECOMMENDED - Interactive loop
 interactive_menu() {
   local -- choice
 
-  while true; do
+  while ((1)); do
     echo ''
     echo 'Menu:'
     echo '  1) Start service'
@@ -12176,6 +12186,23 @@ interactive_menu() {
       q|Q) info 'Goodbye!'; break ;;
       *) warn 'Invalid choice' ;;
     esac
+  done
+}
+
+# ✓ ACCEPTABLE - POSIX-compatible infinite loop (for /bin/sh scripts)
+posix_daemon() {
+  # Use while : when POSIX compatibility is required
+  while :; do
+    process_item || break
+    sleep 1
+  done
+}
+
+# ✗ AVOID - Slowest option due to command execution overhead
+slow_monitor() {
+  while true; do  # Not recommended: 15-22% slower than while ((1))
+    check_status
+    sleep 5
   done
 }
 
@@ -12237,9 +12264,7 @@ process_tree() {
   local -- dir file
 
   for dir in "${dirs[@]}"; do
-    if [[ ! -d "$dir" ]]; then
-      continue
-    fi
+    [[ -d "$dir" ]] || continue
 
     info "Processing directory: $dir"
 
@@ -12309,10 +12334,8 @@ error() { >&2 _msg "$@"; }
 success() { >&2 _msg "$@"; }
 
 die() {
-  local -i exit_code=${1:-1}
-  shift
-  (($#)) && error "$@"
-  exit "$exit_code"
+  (($# > 2)) && error "${@:2}"
+  exit "${1:-1}"
 }
 
 # ============================================================================
@@ -12320,9 +12343,7 @@ die() {
 # ============================================================================
 
 noarg() {
-  if (($# < 2)) || [[ "$2" =~ ^- ]]; then
-    die 22 "Option $1 requires an argument"
-  fi
+  (($# > 1)) && [[ "${2:0:1}" != '-' ]] || die 22 "Option ${1@Q} requires an argument"
 }
 
 # Retry command with backoff
@@ -12360,17 +12381,17 @@ process_file() {
 
   # Validate file
   if [[ ! -f "$file" ]]; then
-    error "File not found: $file"
+    error "File not found ${file@Q}"
     return 2
   fi
 
   if [[ ! -r "$file" ]]; then
-    error "File not readable: $file"
+    error "File not readable ${file@Q}"
     return 1
   fi
 
   if [[ ! -s "$file" ]]; then
-    warn "File is empty: $file"
+    warn "File is empty ${file@Q}"
     return 0
   fi
 
@@ -12387,19 +12408,19 @@ process_file() {
 
   while IFS= read -r line; do
     # Skip empty lines
-    [[ -z "$line" ]] && continue
+    [[ -n "$line" ]] || continue
 
     # Skip comments
-    [[ "$line" =~ ^# ]] && continue
+    [[ ! "$line" =~ ^# ]] || continue
 
     ((line_count+=1))
-    ((VERBOSE)) && info "  Line $line_count: $line"
+    ((VERBOSE)) && info "  Line $line_count: $line" || :
 
     # Process line (with retry)
-    if ! retry_with_backoff process_line "$line"; then
-      error "Failed to process line $line_count in $file"
+    retry_with_backoff process_line "$line" || {
+      error "Failed to process line $line_count in ${file@Q}"
       return 1
-    fi
+    }
   done < "$file"
 
   success "Processed $line_count lines from: $file"
@@ -12485,6 +12506,7 @@ main() {
 
       --)
         shift
+        INPUT_PATTERNS+=("$@")
         break
         ;;
 
@@ -12616,6 +12638,22 @@ for ((i=0; i<10; i+=1)); do
   echo "$i"
 done
 
+# ✗ Wrong - redundant comparison in arithmetic context
+while (($# > 0)); do  # Nonsense: $# is already truthy when non-zero
+  case $1 in
+    --opt) shift ;;
+  esac
+  shift
+done
+
+# ✓ Correct - arithmetic context evaluates non-zero as true
+while (($#)); do  # Clean and idiomatic
+  case $1 in
+    --opt) shift ;;
+  esac
+  shift
+done
+
 # ✗ Wrong - break with no argument (ambiguous in nested loops)
 for i in {1..10}; do
   for j in {1..10}; do
@@ -12668,15 +12706,15 @@ while IFS= read -r line; do
 done < file.txt
 
 # ✗ Wrong - infinite loop without safety check
-while true; do
+while ((1)); do
   process_item
   # No break condition - runs forever!
 done
 
-# ✓ Correct - infinite loop with exit condition
+# ✓ Correct - infinite loop with exit condition (using fastest construct)
 iteration=0
 max_iterations=1000
-while true; do
+while ((1)); do
   process_item
 
   ((iteration+=1))
@@ -12767,9 +12805,9 @@ process_items() {
 # Empty file
 touch empty.txt
 
-count=0
+declare -i count=0
 while read -r line; do
-  ((count+=1))
+  count+=1
 done < empty.txt
 
 echo "Count: $count"  # Output: 0 (zero iterations)
@@ -12780,11 +12818,13 @@ echo "Count: $count"  # Output: 0 (zero iterations)
 - **For loops** - best for arrays, globs, and known ranges
 - **While loops** - best for reading input, argument parsing, and condition-based iteration
 - **Until loops** - rarely used, prefer while with opposite condition
+- **Infinite loops** - use `while ((1))` for optimal performance, `while :` for POSIX compatibility, avoid `while true` (15-22% slower)
 - **Always quote arrays** - `"${array[@]}"` for safe iteration
 - **Use process substitution** - `< <(command)` to avoid subshell in while loops
 - **Prefer arrays over strings** - for file lists and collections
 - **Never parse ls** - use glob patterns or find with process substitution
 - **Use i+=1 not i++** - ++ returns original value, fails with set -e when 0
+- **Avoid redundant comparisons** - use `while (($#))` not `while (($# > 0))` in arithmetic context
 - **Break and continue** - for early exit and conditional skipping
 - **Specify break level** - `break 2` for nested loops
 - **IFS= read -r** - always use with while loops reading input
@@ -15408,7 +15448,7 @@ _msg() {
   # Detect calling function and set appropriate prefix/color
   case "${FUNCNAME[1]}" in
     success) prefix+=" ${GREEN}✓${NC}" ;;
-    warn)    prefix+=" ${YELLOW}⚡${NC}" ;;
+    warn)    prefix+=" ${YELLOW}▲${NC}" ;;
     info)    prefix+=" ${CYAN}◉${NC}" ;;
     error)   prefix+=" ${RED}✗${NC}" ;;
     debug)   prefix+=" ${YELLOW}DEBUG${NC}:" ;;
@@ -15568,7 +15608,7 @@ _msg() {
 
   case "${FUNCNAME[1]}" in
     success) prefix+=" ${GREEN}✓${NC}" ;;
-    warn)    prefix+=" ${YELLOW}⚡${NC}" ;;
+    warn)    prefix+=" ${YELLOW}▲${NC}" ;;
     info)    prefix+=" ${CYAN}◉${NC}" ;;
     error)   prefix+=" ${RED}✗${NC}" ;;
     debug)   prefix+=" ${YELLOW}DEBUG${NC}:" ;;
@@ -15916,7 +15956,7 @@ die 1 'Critical dependency missing'
 ```bash
 # Color-coded status
 success 'Build completed'        # Green checkmark
-warn 'Using default settings'    # Yellow warning
+warn 'Using default settings'    # ▲ Yellow warning
 error 'Compilation failed'       # Red X
 info 'Tests running...'          # Cyan info icon
 ```
@@ -16073,7 +16113,7 @@ _msg() {
 
   case "${FUNCNAME[1]}" in
     success) prefix+=" ${GREEN}✓${NC}" ;;
-    warn)    prefix+=" ${YELLOW}⚡${NC}" ;;
+    warn)    prefix+=" ${YELLOW}▲${NC}" ;;
     info)    prefix+=" ${CYAN}◉${NC}" ;;
     error)   prefix+=" ${RED}✗${NC}" ;;
     *)       ;;
@@ -16503,6 +16543,313 @@ test_message_separation() {
 ---
 
 
+**Rule: BCS0906**
+
+## Color Management Library
+
+For scripts requiring more sophisticated color management than inline declarations (BCS0901), use a dedicated color management library that provides a two-tier system, automatic terminal detection, and integration with the BCS _msg system (BCS0903).
+
+**Rationale:**
+
+- **Namespace Control**: Two-tier system (basic vs complete) prevents pollution of the global namespace
+- **Flexibility**: Auto-detection, force-on, or force-off modes for different deployment scenarios
+- **_msg Integration**: `flags` option sets standard BCS control variables (VERBOSE, DEBUG, DRY_RUN, PROMPT)
+- **Reusability**: Dual-purpose pattern (BCS010201) allows sourcing as library or executing for demonstration
+- **Maintainability**: Centralized color definitions rather than scattered inline declarations
+- **Testing**: Built-in verbose mode for debugging color variable states
+
+**Two-Tier Color System:**
+
+**Basic tier (5 variables)** - Default, minimal namespace pollution:
+```bash
+NC          # No Color / Reset
+RED         # Error messages
+GREEN       # Success messages
+YELLOW      # Warnings
+CYAN        # Information
+```
+
+**Complete tier (12 variables)** - Opt-in, full ANSI capability:
+```bash
+# Basic tier (above) plus:
+BLUE        # Additional color option
+MAGENTA     # Additional color option
+BOLD        # Text emphasis
+ITALIC      # Text styling
+UNDERLINE   # Text emphasis
+DIM         # De-emphasized text
+REVERSE     # Inverted colors
+```
+
+**Library Function Signature:**
+
+```bash
+color_set [OPTIONS...]
+```
+
+**Options (combinable in any order):**
+
+| Option | Description |
+|--------|-------------|
+| `basic` | Enable basic 5-variable set (default) |
+| `complete` | Enable complete 12-variable set |
+| `auto` | Auto-detect terminal (checks stdout AND stderr) (default) |
+| `always` | Force colors on (even when piped/redirected) |
+| `never`, `none` | Force colors off |
+| `verbose`, `-v`, `--verbose` | Print all variable declarations |
+| `flags` | Set BCS _msg globals: VERBOSE, DEBUG, DRY_RUN, PROMPT |
+| `--help`, `-h`, `help` | Display usage (executable mode only) |
+
+**BCS _msg System Integration:**
+
+The `flags` option initializes standard BCS control variables used by core message functions (BCS0903):
+
+```bash
+source color-set.sh
+color_set complete flags
+
+# Now these globals are set:
+# VERBOSE=1 (or preserved if already set)
+# DEBUG=0
+# DRY_RUN=1
+# PROMPT=1
+```
+
+This integration enables one-line initialization of both colors and messaging control:
+```bash
+#!/bin/bash
+source /usr/local/lib/color-set.sh
+color_set complete flags
+
+# Colors and _msg system now ready
+info "Starting process"
+success "Operation completed"
+```
+
+**Dual-Purpose Pattern (BCS010201):**
+
+The library implements the dual-purpose pattern, working both as a sourceable library and standalone utility:
+
+```bash
+# Usage 1: Source as library
+source color-set.sh
+color_set complete
+echo "${RED}Error:${NC} Failed"
+
+# Usage 2: Execute for demonstration
+./color-set.sh complete verbose
+./color-set.sh --help
+```
+
+**Implementation Example:**
+
+```bash
+#!/bin/bash
+# color-set.sh - Color management library
+
+color_set() {
+  local -i color=-1 complete=0 verbose=0 flags=0
+  while (($#)); do
+    case ${1:-auto} in
+      complete) complete=1 ;;
+      basic)    complete=0 ;;
+      flags)    flags=1 ;;
+      verbose|-v|--verbose) verbose=1 ;;
+      always)   color=1 ;;
+      never|none) color=0 ;;
+      auto)     color=-1 ;;
+      *)        >&2 echo "$FUNCNAME: error: Invalid option ${1@Q}"
+                return 1 ;;
+    esac
+    shift
+  done
+
+  # Auto-detect: both stdout AND stderr must be TTY
+  ((color == -1)) && { [[ -t 1 && -t 2 ]] && color=1 || color=0; }
+
+  # Set BCS control flags if requested
+  if ((flags)); then
+    declare -ig VERBOSE=${VERBOSE:-1}
+    ((complete)) && declare -ig DEBUG=0 DRY_RUN=1 PROMPT=1 || :
+  fi
+
+  # Declare color variables
+  if ((color)); then
+    declare -g NC=$'\033[0m' RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m'
+    ((complete)) && declare -g BLUE=$'\033[0;34m' MAGENTA=$'\033[0;35m' BOLD=$'\033[1m' ITALIC=$'\033[3m' UNDERLINE=$'\033[4m' DIM=$'\033[2m' REVERSE=$'\033[7m' || :
+  else
+    declare -g NC='' RED='' GREEN='' YELLOW='' CYAN=''
+    ((complete)) && declare -g BLUE='' MAGENTA='' BOLD='' ITALIC='' UNDERLINE='' DIM='' REVERSE='' || :
+  fi
+
+  # Verbose output if requested
+  if ((verbose)); then
+    ((flags)) && declare -p VERBOSE || :
+    declare -p NC RED GREEN YELLOW CYAN
+    ((complete)) && {
+      ((flags)) && declare -p DEBUG DRY_RUN PROMPT || :
+      declare -p BLUE MAGENTA BOLD ITALIC UNDERLINE DIM REVERSE
+    } || :
+  fi
+
+  return 0
+}
+declare -fx color_set
+
+# Dual-purpose pattern: early return when sourced
+[[ ${BASH_SOURCE[0]} == "$0" ]] || return 0
+
+# Executable section (only runs when executed directly)
+#!/bin/bash #semantic
+set -euo pipefail
+
+# Help handling
+if [[ ${1:-} =~ ^(-h|--help|help)$ ]]; then
+  cat <<'HELP'
+Usage: color-set.sh [OPTIONS...]
+
+Dual-purpose bash library for terminal color management.
+
+OPTIONS:
+  complete          Enable complete color set (12 variables)
+  basic             Enable basic color set (5 variables) [default]
+  always            Force colors on
+  never, none       Force colors off
+  auto              Auto-detect TTY [default]
+  verbose, -v       Print variable declarations
+  flags             Set BCS globals (VERBOSE, DEBUG, DRY_RUN, PROMPT)
+  --help, -h        Display this help
+
+EXAMPLES:
+  ./color-set.sh complete verbose
+  source color-set.sh && color_set complete flags
+HELP
+  exit 0
+fi
+
+color_set "$@"
+
+#fin
+```
+
+**Usage Examples:**
+
+**Basic usage:**
+```bash
+#!/bin/bash
+source color-set.sh
+color_set basic
+
+echo "${RED}Error:${NC} Operation failed"
+echo "${GREEN}Success:${NC} Operation completed"
+echo "${YELLOW}Warning:${NC} Deprecated feature"
+```
+
+**Complete tier with attributes:**
+```bash
+source color-set.sh
+color_set complete
+
+echo "${BOLD}${RED}CRITICAL ERROR${NC}"
+echo "${ITALIC}${CYAN}Note:${NC} ${DIM}Additional details${NC}"
+echo "${UNDERLINE}Important${NC}"
+```
+
+**Force colors for piped output:**
+```bash
+#!/bin/bash
+source color-set.sh
+color_set complete always
+
+# Colors preserved even when piped
+./script.sh | less -R
+```
+
+**Disable colors for logging:**
+```bash
+#!/bin/bash
+source color-set.sh
+color_set never
+
+# No ANSI codes in log files
+exec > /var/log/script.log 2>&1
+```
+
+**Integrated with BCS _msg system:**
+```bash
+#!/bin/bash
+source color-set.sh
+color_set complete flags
+
+# Now have colors AND messaging functions
+info "Starting process"        # Uses CYAN, respects VERBOSE
+success "Build completed"       # Uses GREEN, respects VERBOSE
+error "Connection failed"       # Uses RED, always shown
+debug "State: x=$x"            # Uses YELLOW, respects DEBUG
+```
+
+**Testing color variables:**
+```bash
+# Show all variables in current shell
+source color-set.sh
+color_set complete verbose
+
+# Test as executable
+./color-set.sh complete verbose
+
+# Test piped output (should disable colors)
+./color-set.sh auto verbose | cat
+```
+
+**Anti-patterns:**
+
+❌ **Scattered inline color declarations:**
+```bash
+# DON'T: Duplicate declarations across scripts
+RED=$'\033[0;31m'
+GREEN=$'\033[0;32m'
+# ... repeated in every script
+```
+
+❌ **Always loading complete tier:**
+```bash
+# DON'T: Pollute namespace when only need basic colors
+source color-set.sh
+color_set complete  # Unnecessary if only using RED/GREEN/YELLOW/CYAN
+```
+
+❌ **Testing only stdout:**
+```bash
+# DON'T: Incomplete terminal detection
+[[ -t 1 ]] && color=1  # Fails when stderr redirected
+# DO: Test both streams
+[[ -t 1 && -t 2 ]] && color=1
+```
+
+❌ **Forcing colors without user control:**
+```bash
+# DON'T: Hardcode color mode
+color_set always
+# DO: Respect environment or provide flag
+color_set ${COLOR_MODE:-auto}
+```
+
+**Reference Implementation:**
+
+See `/usr/local/lib/color-set.sh` or https://github.com/Open-Technology-Foundation/bash-libs/color-set
+
+**Cross-References:**
+
+- **BCS0901** (Standardized Messaging and Color Support) - Basic inline color pattern that this enhances
+- **BCS0903** (Core Message Functions) - _msg system that uses these colors and control flags
+- **BCS010201** (Dual-Purpose Scripts) - Pattern this library implements
+
+**Ref:** BCS0906
+
+
+---
+
+
 **Rule: BCS1000**
 
 # Command-Line Arguments
@@ -16919,7 +17266,7 @@ esac; shift; done
 
 **Rule: BCS1005**
 
-# Short-Option Disaggregation in Command-Line Processing Loops
+## Short-Option Disaggregation in Command-Line Processing Loops
 
 ## Overview
 
@@ -21175,7 +21522,17 @@ fi
 - Obvious conditionals
 - Standard patterns already documented in this style guide
 - Code that is self-explanatory through good naming
-\`\`\`
+
+**Emoticons:**
+In codebase documentation, internal and external, you may use any of these icons:
+
+     info    ◉
+     debug   ⦿
+     warn    ▲
+     success ✓
+     error   ✗ 
+
+Avoid use of any other icon/emoticon unless it can be justified.
 
 
 ---
@@ -21437,6 +21794,67 @@ set -u
 # Support verbose/debug modes
 # Return meaningful exit codes
 \`\`\`
+
+
+---
+
+
+**Rule: BCS1307**
+
+## Emoticons
+
+In codebase documentation, internal and external, you may freely use any of these icons in context.
+
+## Standard Severity Levels
+
+    ◉  info: Informational
+    ⦿ debug: Verbose/Debug
+    ▲  warn: Warning
+    ✗  error: Error
+    ✓  success: success/done
+
+## Standard Extended Icons
+
+    ⚠  Caution/Important
+    ☢  Fatal/Critical
+    ↻  Redo/Retry/Update
+
+### Status & Feedback
+
+    ⚠  Alert/Important
+    ◆  Checkpoint
+    ●  In Progress
+    ○  Pending
+    ◐  Partial
+
+### Actions & Operations
+
+    ↻  Refresh/Retry/Reload
+    ⟲  Cycle/Repeat
+    ▶  Start/Execute/Play
+    ■  Stop/Halt
+    ⏸  Pause
+    ⏹  Terminate
+    ⎆  Power/System
+    ☰  Menu/List
+    ⚙  Settings/Config
+
+### Directional & Flow
+
+    →  Forward/Next/Continue
+    ←  Back/Previous
+    ↑  Up/Upgrade/Increase
+    ↓  Down/Downgrade/Decrease
+    ⇄  Swap/Exchange
+    ⇅  Sync/Bidirectional
+    ⤴  Return/Back Up
+    ⤵  Forward/Down Into
+
+### Process States
+
+    ⟳  Processing/Loading
+    ⏱  Timer/Duration
+
 
 
 ---

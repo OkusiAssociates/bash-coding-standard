@@ -29,7 +29,7 @@ _msg() {
   case ${FUNCNAME[1]} in
     vecho)   ;;
     info)    prefix+=" ${CYAN}◉${NC}" ;;
-    warn)    prefix+=" ${YELLOW}⚡${NC}" ;;
+    warn)    prefix+=" ${YELLOW}▲${NC}" ;;
     success) prefix+=" ${GREEN}✓${NC}" ;;
     error)   prefix+=" ${RED}✗${NC}" ;;
     *)       ;;
@@ -159,7 +159,7 @@ get_bcs_code() {
 
   # Extract all ##- patterns from path
   readarray -t heads < <(grep -so '[0-9][0-9]-' <<<"$filepath")
-  ((${#heads[@]})) || return 1
+  [[ ${#heads[@]} -eq 0 ]] && return 1
 
   # Concatenate all numbers and remove dashes
   printf -v bcs_ref '%s' "${heads[@]}"
@@ -1176,7 +1176,7 @@ fix_header_level() {
   local -- first_line header_text header_marker
 
   # Count directory separators to determine depth
-  slash_count=$(grep -o '/' <<<"$relative_path" | wc -l)
+  slash_count=$( (grep -o '/' <<<"$relative_path" || true) | wc -l)
 
   # Special case: 00-section files are depth 1 (section)
   if [[ $(basename "$filepath") =~ ^00-section\. ]]; then
@@ -1362,7 +1362,7 @@ EOF
       local -- file bcs_code basename_file
       local -i first_iteration=1
       for file in "${md_files[@]}"; do
-        if ((first_iteration)); then
+        if [[ $first_iteration -eq 1 ]]; then
           first_iteration=0
         else
           echo -en "\n\n---\n\n\f\n"
@@ -1406,7 +1406,7 @@ EOF
       local -- file bcs_code basename_file
       local -i first_iteration=1
       for file in "${md_files[@]}"; do
-        if ((first_iteration)); then
+        if [[ $first_iteration -eq 1 ]]; then
           first_iteration=0
         else
           echo -en "\n\n---\n\n\f\n"
@@ -1450,7 +1450,7 @@ EOF
       local -- file bcs_code basename_file
       local -i first_iteration=1
       for file in "${md_files[@]}"; do
-        if ((first_iteration)); then
+        if [[ $first_iteration -eq 1 ]]; then
           first_iteration=0
         else
           echo -en "\n\n---\n\n\f\n"

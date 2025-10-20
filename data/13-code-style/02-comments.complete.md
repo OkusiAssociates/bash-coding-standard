@@ -45,4 +45,14 @@ fi
 - Obvious conditionals
 - Standard patterns already documented in this style guide
 - Code that is self-explanatory through good naming
-\`\`\`
+
+**Emoticons:**
+In codebase documentation, internal and external, you may use any of these icons:
+
+     info    ◉
+     debug   ⦿
+     warn    ▲
+     success ✓
+     error   ✗ 
+
+Avoid use of any other icon/emoticon unless it can be justified.

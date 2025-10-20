@@ -38,7 +38,7 @@ die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
 yn() {
   local -- prompt="${1:-Continue?}"
   local -- response
-  while true; do
+  while ((1)); do
     read -r -p "$prompt [y/n] " response
     case "$response" in
       [Yy]*) return 0 ;;
