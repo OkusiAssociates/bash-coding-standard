@@ -1,3 +1,4 @@
+.gitignore
 shellcheck
 *.backup*
 BASH-CODING-STYLE.md
