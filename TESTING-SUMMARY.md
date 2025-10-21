@@ -384,7 +384,7 @@ get_default_tier() {
 
 #### 2. Missing main() Function in bcs Script
 **Location**: `bash-coding-standard` script (3615 lines)
-**Impact**: HIGH - Violates BCS0101 (scripts >40 lines require main())
+**Impact**: HIGH - Violates BCS0101 (scripts >200 lines require main())
 **Found By**: `test-self-compliance.sh` → `test_function_definitions()`
 **Status**: NEEDS REFACTORING
 **Recommendation**: Wrap execution logic in main() function, follows BCS0101 pattern

@@ -8,7 +8,7 @@
 
 ### When to Skip `main()` Function
 
-**Small scripts under 40 lines** can skip `main()` and run directly:
+**Small scripts under 200 lines** can skip `main()` and run directly:
 
 ```bash
 #!/usr/bin/env bash
@@ -158,7 +158,7 @@ trap 'cleanup $?' SIGINT SIGTERM EXIT
 The 13-step layout is **strongly recommended** for all scripts, but these edge cases represent legitimate exceptions:
 
 ### Simplifications
-- **Tiny scripts (<40 lines)** - Skip `main()`, run code directly
+- **Tiny scripts (<200 lines)** - Skip `main()`, run code directly
 - **Library files** - Skip `set -e`, `main()`, script invocation
 - **One-off utilities** - May skip color definitions, verbose messaging
 

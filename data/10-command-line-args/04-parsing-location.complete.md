@@ -47,7 +47,7 @@ main "$@"
 #fin
 \`\`\`
 
-**Alternative:** For very simple scripts (< 40 lines) without a \`main()\` function, top-level parsing is acceptable:
+**Alternative:** For very simple scripts (< 200 lines) without a \`main()\` function, top-level parsing is acceptable:
 
 \`\`\`bash
 #!/bin/bash

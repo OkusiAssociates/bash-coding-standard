@@ -294,10 +294,10 @@ die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
 # Yes/no prompt
 yn() {
   #((PROMPT)) || return 0
-  local -- reply
-  >&2 read -r -n 1 -p "$(2>&1 warn "${1:-} y/n ")" reply
+  local -- REPLY
+  >&2 read -r -n 1 -p "$(2>&1 warn "${1:-'Continue?'}") y/n "
   >&2 echo
-  [[ ${reply,,} == y ]]
+  [[ ${REPLY,,} == y ]]
 }
 ```
 
@@ -512,7 +512,7 @@ Covers eight critical anti-patterns:
 **For special scenarios where the layout may be modified, see BCS010103 (Edge Cases and Variations).**
 
 Covers five edge cases:
-1. Tiny scripts (<40 lines) - May skip `main()`
+1. Tiny scripts (<200 lines) - May skip `main()`
 2. Sourced libraries - Skip `set -e`, `main()`, invocation
 3. External configuration - Add config sourcing
 4. Platform-specific code - Add platform detection

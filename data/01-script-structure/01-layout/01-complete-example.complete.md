@@ -92,15 +92,13 @@ die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
 # Yes/no prompt
 yn() {
   #((PROMPT)) || return 0
-  local -- reply
-  >&2 read -r -n 1 -p "$(2>&1 warn "${1:-} y/n ")" reply
+  local -- REPLY
+  >&2 read -r -n 1 -p "$(2>&1 warn "${1:-'Continue?'}") y/n "
   >&2 echo
-  [[ ${reply,,} == y ]]
+  [[ ${REPLY,,} == y ]]
 }
 
-noarg() {
-  (($# > 1)) || die 22 "Option '$1' requires an argument"
-}
+noarg() { (($# > 1)) || die 22 "Option '$1' requires an argument"; }
 
 # ============================================================================
 # Step 10: Business Logic Functions

@@ -690,7 +690,7 @@ Every script must follow this structure:
 8. Color definitions (if terminal output)
 9. Utility functions (messaging, helpers)
 10. Business logic functions
-11. `main()` function (for scripts >40 lines)
+11. `main()` function (for scripts >200 lines)
 12. Script invocation: `main "$@"`
 13. End marker: `#fin`
 
@@ -1225,7 +1225,7 @@ Modern software development increasingly relies on automated refactoring, AI-ass
 
 The standard is built on four foundational pillars (detailed in Core Principles section):
 
-1. **Structural Discipline**: 13-step mandatory script structure, bottom-up function organization, required `main()` for scripts >40 lines
+1. **Structural Discipline**: 13-step mandatory script structure, bottom-up function organization, required `main()` for scripts >200 lines
 2. **Safety & Reliability**: Strict error handling (`set -euo pipefail`), safe arithmetic patterns, process substitution over pipes, explicit wildcard paths
 3. **Code Clarity**: Explicit variable declarations with type hints, readonly after group pattern, consistent quoting discipline (single for static, double for expansion)
 4. **Production Quality**: Standard messaging functions, ShellCheck compliance, security hardening (no SUID/SGID, PATH validation, input sanitization)
@@ -1241,7 +1241,7 @@ The standard is built on four foundational pillars (detailed in Core Principles 
 
 The standard emphasizes **avoiding over-engineering**. Scripts should be as simple as necessary, but no simpler:
 
-- Scripts >40 lines require `main()` function; shorter scripts can be simpler
+- Scripts >200 lines require `main()` function; shorter scripts can be simpler
 - Remove unused utility functions in production
 - Include only required structures—not every script needs all patterns
 - Provides comprehensive patterns for complex scripts while allowing simpler structures for straightforward tasks

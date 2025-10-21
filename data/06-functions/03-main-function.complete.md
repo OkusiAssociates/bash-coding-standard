@@ -1,6 +1,6 @@
 ## Main Function
 
-**Always include a `main()` function for scripts longer than approximately 40 lines. The main function serves as the single entry point, orchestrating the script's logic and making the code more organized, testable, and maintainable. Place `main "$@"` at the bottom of the script, just before the `#fin` marker.**
+**Always include a `main()` function for scripts longer than approximately 200 lines. The main function serves as the single entry point, orchestrating the script's logic and making the code more organized, testable, and maintainable. Place `main "$@"` at the bottom of the script, just before the `#fin` marker.**
 
 **Rationale:**
 
@@ -15,14 +15,14 @@
 
 ```bash
 # Use main() when:
-# - Script is longer than ~40 lines
+# - Script is longer than ~200 lines
 # - Script has multiple functions
 # - Script requires argument parsing
 # - Script needs to be testable
 # - Script has complex logic flow
 
 # Can skip main() when:
-# - Script is trivial (< 40 lines)
+# - Script is trivial (< 200 lines)
 # - Script is a simple wrapper
 # - Script has no functions
 # - Script is linear (no branching)
@@ -55,13 +55,18 @@ main() {
   # Parse arguments
   while (($#)); do case $1 in
     -h|--help) usage; return 0 ;;
+    # short options...
     *) die 22 "Invalid option: $1" ;;
   esac; shift; done
+  # Argument validation
+  : ...
 
   # Main logic
   info 'Starting processing...'
+  : ...
 
   # ... business logic ...
+  : ...
 
   # Return success
   return 0
@@ -655,7 +660,7 @@ fi
 
 **Summary:**
 
-- **Use main() for scripts >40 lines** - provides organization and testability
+- **Use main() for scripts >200 lines** - provides organization and testability
 - **Single entry point** - all execution flows through main()
 - **Place main() at end** - define helpers first, main last
 - **Always call with "$@"** - `main "$@"` to pass all arguments

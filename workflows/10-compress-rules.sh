@@ -12,24 +12,26 @@ SCRIPT_NAME=${SCRIPT_PATH##*/}
 readonly -- SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
 
 # Project paths
-PROJECT_DIR=$(realpath -- "$SCRIPT_DIR/..")
-DATA_DIR="$PROJECT_DIR/data"
-BCS_CMD="$PROJECT_DIR/bcs"
+PROJECT_DIR=$(realpath -- "$SCRIPT_DIR"/..)
+DATA_DIR="$PROJECT_DIR"/data
+BCS_CMD="$PROJECT_DIR"/bcs
 readonly -- PROJECT_DIR DATA_DIR BCS_CMD
 
 # Global variables
-declare -i VERBOSE=1 QUIET=0 DRY_RUN=0 REPORT_ONLY=1
-declare -- TIER='both' CONTEXT_LEVEL='none' CLAUDE_CMD='claude'
+declare -i VERBOSE=1 DRY_RUN=0 REPORT_ONLY=1
+declare -- TIER=both CONTEXT_LEVEL=none CLAUDE_CMD=claude
 declare -i SUMMARY_LIMIT=10000 ABSTRACT_LIMIT=1500
 
 # Colors
-if [[ -t 1 && -t 2 ]]; then
-  declare -- RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m'
-  declare -- CYAN=$'\033[0;36m' BOLD=$'\033[1m' NC=$'\033[0m'
-else
-  declare -- RED='' GREEN='' YELLOW='' CYAN='' BOLD='' NC=''
+if [[ ! -v NOCOLOR ]]; then
+  if [[ -t 1 && -t 2 ]]; then
+    declare -- RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' BOLD=$'\033[1m' NC=$'\033[0m'
+  else
+    declare -- RED='' GREEN='' YELLOW='' CYAN='' BOLD='' NC=''
+  fi
+  declare -n NOCOLOR=NC
+  readonly -- RED GREEN YELLOW CYAN BOLD NC
 fi
-readonly -- RED GREEN YELLOW CYAN BOLD NC
 
 # Messaging functions
 _msg() {
@@ -45,10 +47,11 @@ _msg() {
   for msg in "$@"; do printf '%s %s\n' "$prefix" "$msg"; done
 }
 
-vecho() { ((VERBOSE && !QUIET)) || return 0; _msg "$@"; }
-info() { ((VERBOSE && !QUIET)) || return 0; >&2 _msg "$@"; }
-warn() { ((QUIET)) || >&2 _msg "$@"; }
-success() { ((VERBOSE && !QUIET)) || return 0; >&2 _msg "$@"; }
+#shellcheck disable=SC2317
+vecho() { ((VERBOSE)) || return 0; _msg "$@"; }
+info() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
+warn() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
+success() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 error() { >&2 _msg "$@"; }
 die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
 
@@ -116,7 +119,6 @@ parse_arguments() {
         usage 0
         ;;
       -q|--quiet)
-        QUIET=1
         VERBOSE=0
         shift
         ;;
@@ -258,7 +260,7 @@ report_oversized_files() {
   echo ""
 
   local -i oversized_summary=0 oversized_abstract=0
-  local -- file size_str
+  local -- file
   local -i size
 
   # Check summary files
@@ -299,7 +301,7 @@ report_oversized_files() {
   local -i total_oversized=$((oversized_summary + oversized_abstract))
   if [[ "$total_oversized" -gt 0 ]]; then
     warn "${BOLD}Summary:${NC} $total_oversized oversized file(s) found"
-    warn "Run with --regenerate to compress files"
+    warn 'Run with --regenerate to compress files'
     return 1
   else
     success "${BOLD}Summary:${NC} All files within size limits"
@@ -321,11 +323,10 @@ regenerate_compressed_files() {
   cmd+=(--claude-cmd "$CLAUDE_CMD")
   cmd+=(--summary-limit "$SUMMARY_LIMIT")
   cmd+=(--abstract-limit "$ABSTRACT_LIMIT")
-  ((QUIET)) && cmd+=(--quiet)
   ((VERBOSE)) && cmd+=(--verbose)
 
   info "Command: ${cmd[*]}"
-  echo ""
+  >&2 echo
 
   if ((DRY_RUN)); then
     info "DRY-RUN: Would execute compression"
@@ -338,7 +339,7 @@ regenerate_compressed_files() {
     return 0
   else
     local -i exit_code=$?
-    error "Compression failed with exit code: $exit_code"
+    error "Compression failed with exit code $exit_code"
     return "$exit_code"
   fi
 }

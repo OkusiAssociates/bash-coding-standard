@@ -218,11 +218,11 @@ die() {
 
 # Yes/no prompt
 yn() {
-  ((PROMPT)) || return 0
-  local -- reply
-  >&2 read -r -n 1 -p "$SCRIPT_NAME: ${YELLOW}$1${NC} y/n " reply
+  #((PROMPT)) || return 0
+  local -- REPLY
+  >&2 read -r -n 1 -p "$(2>&1 warn "${1:-'Continue?'}") y/n "
   >&2 echo
-  [[ ${reply,,} == y ]]
+  [[ ${REPLY,,} == y ]]
 }
 
 # ============================================================================

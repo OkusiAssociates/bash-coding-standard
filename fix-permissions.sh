@@ -23,32 +23,56 @@ else
   readonly -- RED='' GREEN='' YELLOW='' BLUE='' NC=''
 fi
 
-info() { >&2 echo "${BLUE}◉${NC} $*"; }
-success() { >&2 echo "${GREEN}✓${NC} $*"; }
-warn() { >&2 echo "${YELLOW}▲${NC} $*"; }
-error() { >&2 echo "${RED}✗${NC} $*"; }
-die() { error "$@"; exit 1; }
+# Messaging functions
+_msg() {
+  local -- prefix="${1:?'_msg: missing required parameter: prefix'}"
+  shift
+  local -- msg
+  for msg in "$@"; do >&2 echo "$SCRIPT_NAME: $prefix $msg"; done
+}
+info() { _msg "${BLUE}◉${NC}" "$@"; }
+success() { _msg "${GREEN}✓${NC}" "$@"; }
+warn() { _msg "${YELLOW}▲${NC}" "$@"; }
+error() { _msg "${RED}✗${NC}" "$@"; }
+die() { error "${@:2}"; exit ${1:-1}; }
+
+yn() {
+  #((PROMPT)) || return 0
+  local -- REPLY
+  >&2 read -r -n 1 -p "$(2>&1 warn "${1:-'Continue?'}") y/n "
+  >&2 echo
+  [[ ${REPLY,,} == y ]]
+}
 
 main() {
   info "BCS Permissions Fix Script v${VERSION}"
-  echo
+  >&2 echo
 
   # Check if group exists
-  if ! getent group "$GROUP" >/dev/null 2>&1; then
-    die "Group '${GROUP}' does not exist. Create it first: sudo groupadd -g 8088 ${GROUP}"
-  fi
+  getent group "$GROUP" >/dev/null 2>&1 \
+      || die "Group '${GROUP}' does not exist. Create it first: sudo groupadd -g 8088 ${GROUP}"
 
   # Check if running as root for installed location
-  if [[ $EUID -ne 0 ]]; then
+  if ((EUID)); then
     warn "Not running as root. Can only fix repository permissions, not ${INSTALL_DIR}"
-    warn "Run with sudo to fix both locations"
-    echo
+    warn 'Run with sudo to fix both locations'
+    >&2 echo
+  fi
+
+  # Prompt user to proceed if running from terminal
+  if [[ -t 0 ]]; then
+    info 'This will modify file and directory permissions for:'
+    info "  - Repository: ${REPO_DIR}"
+    ((EUID == 0)) && info "  - Installed: ${INSTALL_DIR}"
+    >&2 echo
+    yn 'Proceed with permission changes?' || die 'Operation cancelled by user'
+    >&2 echo
   fi
 
   # Fix repository permissions
   info "Fixing repository permissions: ${REPO_DIR}"
 
-  if [[ $EUID -eq 0 ]]; then
+  if ((EUID == 0)); then
     chgrp -R "$GROUP" "$REPO_DIR"
   else
     sudo chgrp -R "$GROUP" "$REPO_DIR"
@@ -63,10 +87,10 @@ main() {
   [[ -f "$REPO_DIR/testcode" ]] && chmod 775 "$REPO_DIR/testcode"
   find "$REPO_DIR" -name "*.sh" -type f -exec chmod 775 {} +
 
-  success "Repository permissions fixed"
+  success 'Repository permissions fixed'
 
   # Fix installed location (if running as root)
-  if [[ $EUID -eq 0 ]]; then
+  if ((EUID == 0)); then
     if [[ -d "$INSTALL_DIR" ]]; then
       info "Fixing installed location permissions: ${INSTALL_DIR}"
 
@@ -74,14 +98,14 @@ main() {
       find "$INSTALL_DIR" -type d -exec chmod 2775 {} +
       find "$INSTALL_DIR" -type f -exec chmod 664 {} +
 
-      success "Installed location permissions fixed"
+      success 'Installed location permissions fixed'
     else
       warn "Installed location not found: ${INSTALL_DIR}"
     fi
   fi
 
-  echo
-  success "Permission fix complete"
+  >&2 echo
+  success 'Permission fix complete'
   info "Group '${GROUP}' members can now read/write all BCS files"
   info "New files will automatically inherit '${GROUP}' group ownership (setgid)"
 }

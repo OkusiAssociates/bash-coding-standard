@@ -36,16 +36,11 @@ error() { >&2 _msg "$@"; }
 die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
 
 yn() {
-  local -- prompt="${1:-Continue?}"
-  local -- response
-  while ((1)); do
-    read -r -p "$prompt [y/n] " response
-    case "$response" in
-      [Yy]*) return 0 ;;
-      [Nn]*) return 1 ;;
-      *) echo "Please answer y or n." ;;
-    esac
-  done
+  #((PROMPT)) || return 0
+  local -- REPLY
+  >&2 read -r -n 1 -p "$(2>&1 warn "${1:-'Continue?'}") y/n "
+  >&2 echo
+  [[ ${REPLY,,} == y ]]
 }
 
 show_help() {

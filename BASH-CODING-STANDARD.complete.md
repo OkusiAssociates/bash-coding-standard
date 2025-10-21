@@ -139,15 +139,13 @@ die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
 # Yes/no prompt
 yn() {
   #((PROMPT)) || return 0
-  local -- reply
-  >&2 read -r -n 1 -p "$(2>&1 warn "${1:-} y/n ")" reply
+  local -- REPLY
+  >&2 read -r -n 1 -p "$(2>&1 warn "${1:-'Continue?'}") y/n "
   >&2 echo
-  [[ ${reply,,} == y ]]
+  [[ ${REPLY,,} == y ]]
 }
 
-noarg() {
-  (($# > 1)) || die 22 "Option '$1' requires an argument"
-}
+noarg() { (($# > 1)) || die 22 "Option '$1' requires an argument"; }
 
 # ============================================================================
 # Step 10: Business Logic Functions
@@ -1016,7 +1014,7 @@ Following the correct patterns ensures scripts are safe, maintainable, and predi
 
 ### When to Skip `main()` Function
 
-**Small scripts under 40 lines** can skip `main()` and run directly:
+**Small scripts under 200 lines** can skip `main()` and run directly:
 
 ```bash
 #!/usr/bin/env bash
@@ -1166,7 +1164,7 @@ trap 'cleanup $?' SIGINT SIGTERM EXIT
 The 13-step layout is **strongly recommended** for all scripts, but these edge cases represent legitimate exceptions:
 
 ### Simplifications
-- **Tiny scripts (<40 lines)** - Skip `main()`, run code directly
+- **Tiny scripts (<200 lines)** - Skip `main()`, run code directly
 - **Library files** - Skip `set -e`, `main()`, script invocation
 - **One-off utilities** - May skip color definitions, verbose messaging
 
@@ -1538,10 +1536,10 @@ die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
 # Yes/no prompt
 yn() {
   #((PROMPT)) || return 0
-  local -- reply
-  >&2 read -r -n 1 -p "$(2>&1 warn "${1:-} y/n ")" reply
+  local -- REPLY
+  >&2 read -r -n 1 -p "$(2>&1 warn "${1:-'Continue?'}") y/n "
   >&2 echo
-  [[ ${reply,,} == y ]]
+  [[ ${REPLY,,} == y ]]
 }
 ```
 
@@ -1756,7 +1754,7 @@ Covers eight critical anti-patterns:
 **For special scenarios where the layout may be modified, see BCS010103 (Edge Cases and Variations).**
 
 Covers five edge cases:
-1. Tiny scripts (<40 lines) - May skip `main()`
+1. Tiny scripts (<200 lines) - May skip `main()`
 2. Sourced libraries - Skip `set -e`, `main()`, invocation
 3. External configuration - Add config sourcing
 4. Platform-specific code - Add platform detection
@@ -3247,22 +3245,14 @@ EOF
 # ============================================================================
 
 yn() {
-  local -- prompt="${1:-Continue?}"
-  local -- response
-
-  while ((1)); do
-    read -rp "$prompt [y/n] " response
-    case "$response" in
-      [Yy]*) return 0 ;;
-      [Nn]*) return 1 ;;
-      *) warn 'Please answer y or n' ;;
-    esac
-  done
+  #((PROMPT)) || return 0
+  local -- REPLY
+  >&2 read -r -n 1 -p "$(2>&1 warn "${1:-'Continue?'}") y/n "
+  >&2 echo
+  [[ ${REPLY,,} == y ]]
 }
 
-noarg() {
-  (($# < 2)) && die 2 "Option $1 requires an argument"
-}
+noarg() { (($# < 2)) && die 2 "Option $1 requires an argument"; }
 
 # ============================================================================
 # Layer 4: Validation functions
@@ -9239,7 +9229,7 @@ echo "${unique[@]}"  # Output: a b c d
 
 # Functions
 
-This section defines function definition patterns, naming conventions (lowercase_with_underscores), and organization principles. It mandates the `main()` function for scripts exceeding 40 lines to improve structure and testability, explains function export for sourceable libraries (`declare -fx`), and details production optimization practices where unused utility functions should be removed once scripts mature. Functions should be organized bottom-up: messaging functions first, then helpers, then business logic, with `main()` last—this ensures each function can safely call previously defined functions and readers understand primitives before composition.
+This section defines function definition patterns, naming conventions (lowercase_with_underscores), and organization principles. It mandates the `main()` function for scripts exceeding 200 lines to improve structure and testability, explains function export for sourceable libraries (`declare -fx`), and details production optimization practices where unused utility functions should be removed once scripts mature. Functions should be organized bottom-up: messaging functions first, then helpers, then business logic, with `main()` last—this ensures each function can safely call previously defined functions and readers understand primitives before composition.
 
 
 ---
@@ -9331,7 +9321,7 @@ my-function() {  # Dash creates issues in some contexts
 
 ## Main Function
 
-**Always include a `main()` function for scripts longer than approximately 40 lines. The main function serves as the single entry point, orchestrating the script's logic and making the code more organized, testable, and maintainable. Place `main "$@"` at the bottom of the script, just before the `#fin` marker.**
+**Always include a `main()` function for scripts longer than approximately 200 lines. The main function serves as the single entry point, orchestrating the script's logic and making the code more organized, testable, and maintainable. Place `main "$@"` at the bottom of the script, just before the `#fin` marker.**
 
 **Rationale:**
 
@@ -9346,14 +9336,14 @@ my-function() {  # Dash creates issues in some contexts
 
 ```bash
 # Use main() when:
-# - Script is longer than ~40 lines
+# - Script is longer than ~200 lines
 # - Script has multiple functions
 # - Script requires argument parsing
 # - Script needs to be testable
 # - Script has complex logic flow
 
 # Can skip main() when:
-# - Script is trivial (< 40 lines)
+# - Script is trivial (< 200 lines)
 # - Script is a simple wrapper
 # - Script has no functions
 # - Script is linear (no branching)
@@ -9386,13 +9376,18 @@ main() {
   # Parse arguments
   while (($#)); do case $1 in
     -h|--help) usage; return 0 ;;
+    # short options...
     *) die 22 "Invalid option: $1" ;;
   esac; shift; done
+  # Argument validation
+  : ...
 
   # Main logic
   info 'Starting processing...'
+  : ...
 
   # ... business logic ...
+  : ...
 
   # Return success
   return 0
@@ -9986,7 +9981,7 @@ fi
 
 **Summary:**
 
-- **Use main() for scripts >40 lines** - provides organization and testability
+- **Use main() for scripts >200 lines** - provides organization and testability
 - **Single entry point** - all execution flows through main()
 - **Place main() at end** - define helpers first, main last
 - **Always call with "$@"** - `main "$@"` to pass all arguments
@@ -15642,11 +15637,11 @@ die() {
 
 # Yes/no prompt
 yn() {
-  ((PROMPT)) || return 0
-  local -- reply
-  >&2 read -r -n 1 -p "$SCRIPT_NAME: ${YELLOW}$1${NC} y/n " reply
+  #((PROMPT)) || return 0
+  local -- REPLY
+  >&2 read -r -n 1 -p "$(2>&1 warn "${1:-'Continue?'}") y/n "
   >&2 echo
-  [[ ${reply,,} == y ]]
+  [[ ${REPLY,,} == y ]]
 }
 
 # ============================================================================
@@ -17243,7 +17238,7 @@ main "$@"
 #fin
 \`\`\`
 
-**Alternative:** For very simple scripts (< 40 lines) without a \`main()\` function, top-level parsing is acceptable:
+**Alternative:** For very simple scripts (< 200 lines) without a \`main()\` function, top-level parsing is acceptable:
 
 \`\`\`bash
 #!/bin/bash

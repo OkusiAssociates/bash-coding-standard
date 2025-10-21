@@ -226,22 +226,14 @@ EOF
 # ============================================================================
 
 yn() {
-  local -- prompt="${1:-Continue?}"
-  local -- response
-
-  while ((1)); do
-    read -rp "$prompt [y/n] " response
-    case "$response" in
-      [Yy]*) return 0 ;;
-      [Nn]*) return 1 ;;
-      *) warn 'Please answer y or n' ;;
-    esac
-  done
+  #((PROMPT)) || return 0
+  local -- REPLY
+  >&2 read -r -n 1 -p "$(2>&1 warn "${1:-'Continue?'}") y/n "
+  >&2 echo
+  [[ ${REPLY,,} == y ]]
 }
 
-noarg() {
-  (($# < 2)) && die 2 "Option $1 requires an argument"
-}
+noarg() { (($# < 2)) && die 2 "Option $1 requires an argument"; }
 
 # ============================================================================
 # Layer 4: Validation functions

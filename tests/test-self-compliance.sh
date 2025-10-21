@@ -84,13 +84,13 @@ test_function_definitions() {
     warn "Few functions found ($func_count)"
   fi
 
-  # Check for main function (required for scripts >40 lines)
+  # Check for main function (required for scripts >200 lines)
   local -i line_count
   line_count=$(wc -l < "$BCS_SCRIPT")
 
-  if [[ "$line_count" -gt 40 ]]; then
+  if [[ "$line_count" -gt 200 ]]; then
     if grep -q '^main()' "$BCS_SCRIPT"; then
-      pass "Has main() function (required for scripts >40 lines)"
+      pass "Has main() function (required for scripts >200 lines)"
     else
       fail "Missing main() function (script has $line_count lines, requires main)"
     fi

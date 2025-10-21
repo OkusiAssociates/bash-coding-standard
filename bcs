@@ -51,10 +51,10 @@ die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
 # Yes/no prompt
 yn() {
   #((PROMPT)) || return 0
-  local -- reply
-  >&2 read -r -n 1 -p "$(2>&1 warn "${1:-} y/n ")" reply
+  local -- REPLY
+  >&2 read -r -n 1 -p "$(2>&1 warn "${1:-'Continue?'}") y/n "
   >&2 echo
-  [[ ${reply,,} == y ]]
+  [[ ${REPLY,,} == y ]]
 }
 
 # pluraliser
@@ -592,43 +592,81 @@ compress_rule_to_tier() {
     return 0
   fi
 
-  # Build context append-prompt based on context_level (once, before retry loop)
-  local -- append_prompt=""
+  # Build context file based on context_level (once, before retry loop)
+  # Use temp file to avoid command substitution null byte issues with form feed chars
+  local -- context_file_persistent=""
   case "$context_level" in
     abstract)
-      ((compress_verbose)) && vecho "    Using abstract context for cross-reference"
-      append_prompt=$(build_context_abstract) || {
-        ((compress_verbose)) && warn "    Failed to build abstract context, continuing without it"
-        append_prompt=""
+      ((compress_verbose)) && vecho "    Using abstract context (excluding $bcs_code)"
+      context_file_persistent=$(mktemp) || {
+        ((compress_verbose)) && warn "    Failed to create context temp file"
+        context_file_persistent=""
       }
+      if [[ -n "$context_file_persistent" ]]; then
+        if ! build_context_abstract_exclude "$bcs_code" "$context_file_persistent"; then
+          ((compress_verbose)) && warn "    Failed to build abstract context with exclusion, falling back to full context"
+          if ! build_context_abstract > "$context_file_persistent"; then
+            ((compress_verbose)) && warn "    Failed to build abstract context, continuing without it"
+            rm -f "$context_file_persistent"
+            context_file_persistent=""
+          fi
+        fi
+      fi
       ;;
     summary)
-      ((compress_verbose)) && vecho "    Using summary context for cross-reference"
-      append_prompt=$(build_context_summary) || {
-        ((compress_verbose)) && warn "    Failed to build summary context, continuing without it"
-        append_prompt=""
+      ((compress_verbose)) && vecho "    Using summary context (excluding $bcs_code)"
+      context_file_persistent=$(mktemp) || {
+        ((compress_verbose)) && warn "    Failed to create context temp file"
+        context_file_persistent=""
       }
+      if [[ -n "$context_file_persistent" ]]; then
+        if ! build_context_summary_exclude "$bcs_code" "$context_file_persistent"; then
+          ((compress_verbose)) && warn "    Failed to build summary context with exclusion, falling back to full context"
+          if ! build_context_summary > "$context_file_persistent"; then
+            ((compress_verbose)) && warn "    Failed to build summary context, continuing without it"
+            rm -f "$context_file_persistent"
+            context_file_persistent=""
+          fi
+        fi
+      fi
       ;;
     complete)
-      ((compress_verbose)) && vecho "    Using complete context for cross-reference"
-      append_prompt=$(build_context_complete) || {
-        ((compress_verbose)) && warn "    Failed to build complete context, continuing without it"
-        append_prompt=""
+      ((compress_verbose)) && vecho "    Using complete context (excluding $bcs_code)"
+      context_file_persistent=$(mktemp) || {
+        ((compress_verbose)) && warn "    Failed to create context temp file"
+        context_file_persistent=""
       }
+      if [[ -n "$context_file_persistent" ]]; then
+        if ! build_context_complete_exclude "$bcs_code" "$context_file_persistent"; then
+          ((compress_verbose)) && warn "    Failed to build complete context with exclusion, falling back to full context"
+          if ! build_context_complete > "$context_file_persistent"; then
+            ((compress_verbose)) && warn "    Failed to build complete context, continuing without it"
+            rm -f "$context_file_persistent"
+            context_file_persistent=""
+          fi
+        fi
+      fi
       ;;
     toc)
       ((compress_verbose)) && vecho "    Using TOC context for structure awareness"
-      append_prompt=$(build_context_toc) || {
-        ((compress_verbose)) && warn "    Failed to build TOC context, continuing without it"
-        append_prompt=""
+      context_file_persistent=$(mktemp) || {
+        ((compress_verbose)) && warn "    Failed to create context temp file"
+        context_file_persistent=""
       }
+      if [[ -n "$context_file_persistent" ]]; then
+        if ! build_context_toc > "$context_file_persistent"; then
+          ((compress_verbose)) && warn "    Failed to build TOC context, continuing without it"
+          rm -f "$context_file_persistent"
+          context_file_persistent=""
+        fi
+      fi
       ;;
     none|"")
-      append_prompt=""
+      context_file_persistent=""
       ;;
     *)
       ((compress_verbose)) && warn "    Unknown context level '$context_level', using none"
-      append_prompt=""
+      context_file_persistent=""
       ;;
   esac
 
@@ -660,28 +698,16 @@ compress_rule_to_tier() {
     temp_file=$(mktemp) || { error 'Failed to create temporary file'; return 1; }
 
     # Invoke Claude with file paths as prompt (Read/Write tools enabled)
-    # If context is provided, write it to a temp file to avoid ARG_MAX limit
+    # Context is already in context_file_persistent if needed
     local -i claude_exit=0
-    local -- context_file=""
 
-    if [[ -n "$append_prompt" ]]; then
-      # Write large context to temp file instead of passing as command-line argument
-      context_file=$(mktemp) || { error 'Failed to create context temp file'; rm -f "$temp_file"; return 1; }
-      printf '%s\n' "$append_prompt" > "$context_file" || {
-        error 'Failed to write context file'
-        rm -f "$temp_file" "$context_file"
-        return 1
-      }
-
+    if [[ -n "$context_file_persistent" ]]; then
       # Tell Claude to read context file first, then process the target file
       "$claude_cmd" --print --dangerously-skip-permissions \
          --allowedTools "Read" "Write" \
          --system-prompt "$system_prompt" \
-         "Read context: $context_file | Read source: $complete_file | Write compressed to: $temp_file" \
+         "Read context: $context_file_persistent | Read source: $complete_file | Write compressed to: $temp_file" \
          2>&1 | tee /dev/stderr || claude_exit=$?
-
-      # Clean up context file
-      rm -f "$context_file"
     else
       "$claude_cmd" --print --dangerously-skip-permissions \
          --allowedTools "Read" "Write" \
@@ -733,6 +759,7 @@ compress_rule_to_tier() {
         fi
 
         ((compress_verbose)) && success "  ✓ Generated ($file_size bytes): $target_file"
+        [[ -n "$context_file_persistent" ]] && rm -f "$context_file_persistent"
         return 0  # Success
       else
         # Oversized - retry or give up
@@ -764,6 +791,7 @@ compress_rule_to_tier() {
           fi
 
           ((compress_verbose)) && warn "  ⚠ OVERSIZED ($file_size bytes > $target_size): $target_file"
+          [[ -n "$context_file_persistent" ]] && rm -f "$context_file_persistent"
           return 2  # Oversized
         fi
       fi
@@ -783,11 +811,13 @@ compress_rule_to_tier() {
 
       # Not a retryable error or out of retries
       error "  ✗ FAILED: Claude invocation failed for $target_file (exit code: $claude_exit)"
+      [[ -n "$context_file_persistent" ]] && rm -f "$context_file_persistent"
       return 1  # Failed
     fi
   done
 
   # Should not reach here (all retries exhausted)
+  [[ -n "$context_file_persistent" ]] && rm -f "$context_file_persistent"
   return 1
 }
 declare -fx compress_rule_to_tier
@@ -844,6 +874,7 @@ compress_process_all_rules() {
   local -i summary_limit="${6:-10000}"
   local -i abstract_limit="${7:-1500}"
   local -- context_level="${8:-none}"  # Context level parameter
+  local -i force="${9:-0}"  # Force regeneration parameter
   local -i regenerate=1  # Always regenerate when called
 
   # Find all complete files
@@ -858,6 +889,22 @@ compress_process_all_rules() {
   fi
 
   ((compress_verbose)) && info "Found $file_count .complete.md files"
+
+  # If force flag is set, touch all .complete.md files to trigger regeneration
+  if ((force)); then
+    ((compress_verbose)) && info 'Force mode: touching all .complete.md files to bypass timestamp checks'
+    if ((dry_run)); then
+      ((compress_verbose)) && info '[DRY-RUN] Would touch all .complete.md files'
+    else
+      local -- file
+      for file in "${complete_files[@]}"; do
+        touch "$file" || {
+          warn "Failed to touch: $file"
+        }
+      done
+    fi
+  fi
+
   ((compress_verbose)) && >&2 echo
 
   # Process each file
@@ -1107,6 +1154,180 @@ END_CONTEXT
 }
 declare -fx build_context_complete
 
+# Build context prompt with summary standard, excluding specified BCS code
+# Args: bcs_code to exclude, output_file
+# Returns: 0 on success, 1 on failure
+# Note: Caller is responsible for cleaning up the output file
+build_context_summary_exclude() {
+  local -- exclude_code="${1:?'build_context_summary_exclude: BCS code required'}"
+  local -- output_file="${2:?'build_context_summary_exclude: output file required'}"
+
+  # Generate temporary file with excluded rule
+  local -- temp_data
+  temp_data=$(mktemp) || {
+    warn "Failed to create temp file for context generation"
+    return 1
+  }
+
+  # Generate summary standard excluding the current rule
+  if ! cmd_generate -t summary -x "$exclude_code" -o "$temp_data" 2>/dev/null; then
+    warn "Failed to generate summary context excluding $exclude_code"
+    rm -f "$temp_data"
+    return 1
+  fi
+
+  # Build context file with header, data, and footer
+  {
+    cat <<'CONTEXT'
+=== CONTEXT: Full BCS Summary Standard for Cross-Reference ===
+
+Below is the complete BASH-CODING-STANDARD in summary form (EXCLUDING the current rule being compressed). Use this to:
+
+1. **Identify concepts already explained in other rules** - avoid duplicating explanations
+2. **Maintain consistent terminology** across all rules (use same terms for same concepts)
+3. **Reference related rules** where appropriate (e.g., "see BCS0205 for readonly pattern")
+4. **Understand overall structure** - see how your rule fits into the bigger picture
+5. **Deduplicate aggressively** - if concept X is explained in BCS01, don't re-explain in BCS08
+
+CRITICAL: Use this context to eliminate cross-rule duplication. If a concept is already
+clearly explained in another rule, reference it instead of repeating the explanation.
+
+================================================================================
+
+CONTEXT
+    cat "$temp_data"
+    cat <<'END_CONTEXT'
+
+================================================================================
+
+=== END CONTEXT ===
+
+Now compress the target rule file with full awareness of the above context.
+END_CONTEXT
+  } > "$output_file"
+
+  # Cleanup temp data file
+  rm -f "$temp_data"
+  return 0
+}
+declare -fx build_context_summary_exclude
+
+# Build context prompt with abstract standard, excluding specified BCS code
+# Args: bcs_code to exclude, output_file
+# Returns: 0 on success, 1 on failure
+# Note: Caller is responsible for cleaning up the output file
+build_context_abstract_exclude() {
+  local -- exclude_code="${1:?'build_context_abstract_exclude: BCS code required'}"
+  local -- output_file="${2:?'build_context_abstract_exclude: output file required'}"
+
+  # Generate temporary file with excluded rule
+  local -- temp_data
+  temp_data=$(mktemp) || {
+    warn "Failed to create temp file for context generation"
+    return 1
+  }
+
+  # Generate abstract standard excluding the current rule
+  if ! cmd_generate -t abstract -x "$exclude_code" -o "$temp_data" 2>/dev/null; then
+    warn "Failed to generate abstract context excluding $exclude_code"
+    rm -f "$temp_data"
+    return 1
+  fi
+
+  # Build context file with header, data, and footer
+  {
+    cat <<'CONTEXT'
+=== CONTEXT: Full BCS Abstract Standard for Cross-Reference ===
+
+Below is the complete BASH-CODING-STANDARD in abstract form (EXCLUDING the current rule being compressed). Use this to:
+
+1. **Identify concepts already explained in other rules** - avoid duplicating explanations
+2. **Maintain consistent terminology** across all rules (use same terms for same concepts)
+3. **Reference related rules** where appropriate (e.g., "see BCS0205 for readonly pattern")
+4. **Understand overall structure** - see how your rule fits into the bigger picture
+5. **Deduplicate aggressively** - if concept X is explained in BCS01, don't re-explain in BCS08
+
+CRITICAL: Use this context to eliminate cross-rule duplication. If a concept is already
+clearly explained in another rule, reference it instead of repeating the explanation.
+
+================================================================================
+
+CONTEXT
+    cat "$temp_data"
+    cat <<'END_CONTEXT'
+
+================================================================================
+
+=== END CONTEXT ===
+
+Now compress the target rule file with full awareness of the above context.
+END_CONTEXT
+  } > "$output_file"
+
+  # Cleanup temp data file
+  rm -f "$temp_data"
+  return 0
+}
+declare -fx build_context_abstract_exclude
+
+# Build context prompt with complete standard, excluding specified BCS code
+# Args: bcs_code to exclude, output_file
+# Returns: 0 on success, 1 on failure
+# Note: Caller is responsible for cleaning up the output file
+build_context_complete_exclude() {
+  local -- exclude_code="${1:?'build_context_complete_exclude: BCS code required'}"
+  local -- output_file="${2:?'build_context_complete_exclude: output file required'}"
+
+  # Generate temporary file with excluded rule
+  local -- temp_data
+  temp_data=$(mktemp) || {
+    warn "Failed to create temp file for context generation"
+    return 1
+  }
+
+  # Generate complete standard excluding the current rule
+  if ! cmd_generate -t complete -x "$exclude_code" -o "$temp_data" 2>/dev/null; then
+    warn "Failed to generate complete context excluding $exclude_code"
+    rm -f "$temp_data"
+    return 1
+  fi
+
+  # Build context file with header, data, and footer
+  {
+    cat <<'CONTEXT'
+=== CONTEXT: Full BCS Complete Standard for Cross-Reference ===
+
+Below is the complete BASH-CODING-STANDARD in its full form (EXCLUDING the current rule being compressed). Use this to:
+
+1. **Identify concepts already explained in other rules** - avoid duplicating explanations
+2. **Maintain consistent terminology** across all rules (use same terms for same concepts)
+3. **Reference related rules** where appropriate (e.g., "see BCS0205 for readonly pattern")
+4. **Understand overall structure** - see how your rule fits into the bigger picture
+5. **Deduplicate aggressively** - if concept X is explained in BCS01, don't re-explain in BCS08
+
+CRITICAL: Use this context to eliminate cross-rule duplication. If a concept is already
+clearly explained in another rule, reference it instead of repeating the explanation.
+
+================================================================================
+
+CONTEXT
+    cat "$temp_data"
+    cat <<'END_CONTEXT'
+
+================================================================================
+
+=== END CONTEXT ===
+
+Now compress the target rule file with full awareness of the above context.
+END_CONTEXT
+  } > "$output_file"
+
+  # Cleanup temp data file
+  rm -f "$temp_data"
+  return 0
+}
+declare -fx build_context_complete_exclude
+
 # List all BCS codes with titles
 cmd_codes() {
   # Handle --help
@@ -1216,6 +1437,112 @@ fix_header_level() {
   fi
 }
 
+# Parse comma-separated exclusion list into array
+# Args: exclusion_string array_name
+# Returns: Populates named array with normalized BCS codes
+parse_exclusion_list() {
+  local -- exclusion_string="$1"
+  local -- array_name="$2"
+  local -a codes=()
+  local -- code
+
+  # Split by comma
+  IFS=',' read -ra codes <<<"$exclusion_string"
+
+  # Normalize each code (add BCS prefix if missing, uppercase)
+  for code in "${codes[@]}"; do
+    # Trim whitespace
+    code=$(trim <<<"$code")
+
+    # Skip empty codes
+    [[ -z "$code" ]] && continue
+
+    # Add BCS prefix if missing
+    if [[ ! "$code" =~ ^BCS ]]; then
+      code="BCS$code"
+    fi
+
+    # Store in named array using nameref
+    eval "$array_name+=(\"$code\")"
+  done
+}
+declare -fx parse_exclusion_list
+
+# Check if a BCS code should be excluded based on exclusion patterns
+# Args: bcs_code exclusion_array_name
+# Returns: 0 if excluded, 1 if not excluded
+is_excluded() {
+  local -- bcs_code="$1"
+  local -- array_name="$2"
+  local -- pattern
+
+  # Get array contents using nameref indirection
+  #shellcheck disable=SC1087
+  eval "local -a patterns=(\"\${$array_name[@]}\")"
+
+  for pattern in "${patterns[@]}"; do
+    # Exact match or prefix match
+    # BCS01 excludes BCS0101, BCS0102, etc.
+    # BCS0102 excludes BCS0102, BCS010201, etc.
+    if [[ "$bcs_code" == "$pattern"* ]]; then
+      return 0
+    fi
+  done
+
+  return 1
+}
+declare -fx is_excluded
+
+# Filter md_files array based on exclusion patterns
+# Usage: readarray -t md_files < <(filter_excluded_files md_files exclusion_codes)
+# Returns: Outputs filtered file paths (one per line) and excluded count as last line prefixed with "EXCLUDED:"
+filter_excluded_files() {
+  local -- files_array_name="$1"
+  local -- exclusion_array_name="$2"
+
+  # Get current array contents
+  #shellcheck disable=SC1087
+  eval "local -a files=(\"\${$files_array_name[@]}\")"
+  #shellcheck disable=SC1087
+  eval "local -a exclusions=(\"\${$exclusion_array_name[@]}\")"
+
+  # If no exclusions, output all files
+  if (( ${#exclusions[@]} == 0 )); then
+    printf '%s\n' "${files[@]}"
+    echo "EXCLUDED:0"
+    return 0
+  fi
+
+  # Build new filtered array
+  local -a filtered=()
+  local -- file bcs_code basename_file
+  local -i excluded_count=0
+
+  for file in "${files[@]}"; do
+    # Skip header files (never exclude these)
+    basename_file=$(basename "$file")
+    if [[ "$basename_file" =~ ^00-header\. ]]; then
+      filtered+=("$file")
+      continue
+    fi
+
+    # Get BCS code and check if excluded
+    bcs_code=$(get_bcs_code "$file") || bcs_code=''
+
+    if [[ -n "$bcs_code" ]] && is_excluded "$bcs_code" "$exclusion_array_name"; then
+      excluded_count+=1
+    else
+      filtered+=("$file")
+    fi
+  done
+
+  # Output filtered files
+  printf '%s\n' "${filtered[@]}"
+  echo "EXCLUDED:$excluded_count"
+  return 0
+}
+declare -fx filter_excluded_files
+
 # Regenerate BASH-CODING-STANDARD.md from data/ tree
 cmd_generate() {
   # Parse arguments
@@ -1225,6 +1552,8 @@ cmd_generate() {
   local -i use_stdout=1  # Default to stdout for safety
   local -i use_canonical=0
   local -i force_regenerate=0
+  local -- exclusion_string=''
+  local -a exclusion_codes=()
 
   while (($#)); do
     case "$1" in
@@ -1238,6 +1567,7 @@ Options:
   -h, --help              Show this help message
   -t, --type TYPE         File type: complete, abstract, summary, abstract-complete (default: abstract)
   -o, --output FILE       Output to specific file
+  -x, --exclude CODES     Exclude BCS codes (comma-separated, BCS prefix optional)
   --canonical             Generate all three tiers to BASH-CODING-STANDARD.{complete,summary,abstract}.md
   -f, --force             Force regeneration ignoring timestamps (use with --canonical)
 
@@ -1251,12 +1581,21 @@ Examples:
   bcs generate -t summary                # Generate summary version to stdout
   bcs generate -t abstract-complete      # Generate combined abstract+complete version
   bcs generate -t summary -o /tmp/BCS-summary.md
+  bcs generate -x 0103,0201              # Exclude BCS0103 and BCS0201
+  bcs generate -x BCS01 --tier summary   # Exclude entire Section 1 from summary
+  bcs generate --exclude 0103,010201,02  # Exclude specific rules and Section 2
 
 File types:
   complete          - Complete standard (*.complete.md files)
   abstract          - Abstract version (*.abstract.md files)
   summary           - Summary version (*.summary.md files)
   abstract-complete - Combined: abstract then complete for each rule with formfeed separator
+
+Exclusion pattern matching:
+  - BCS prefix is optional: -x 0103 = -x BCS0103
+  - Prefix matching: -x BCS01 excludes BCS0101, BCS0102, etc. (entire section)
+  - Multiple codes: -x 0103,0201,010201 (comma-separated)
+  - Works with all tiers and --canonical mode
 
 Note: When using --canonical, all three tier files are generated and the BCS/ index is rebuilt.
       The BCS/ index contains symlinks with BCS codes (e.g., BCS0102.complete.md) for quick reference.
@@ -1272,6 +1611,10 @@ EOF
       -o|--output)
         output_file="$2"
         use_stdout=0
+        shift 2
+        ;;
+      -x|--exclude)
+        exclusion_string="$2"
         shift 2
         ;;
       --canonical)
@@ -1293,6 +1636,11 @@ EOF
         ;;
     esac
   done
+
+  # Parse exclusion list if provided
+  if [[ -n "$exclusion_string" ]]; then
+    parse_exclusion_list "$exclusion_string" exclusion_codes
+  fi
 
   # Special handling for --canonical: generate all three tiers
   if ((use_canonical)); then
@@ -1356,6 +1704,19 @@ EOF
       return 1
     fi
 
+    # Apply exclusions if provided
+    local -i excluded_count=0
+    if ((${#exclusion_codes[@]} > 0)); then
+      local -- filter_output
+      filter_output=$(filter_excluded_files md_files exclusion_codes)
+      excluded_count=$(grep "^EXCLUDED:" <<<"$filter_output" | cut -d: -f2)
+      readarray -t md_files < <(grep -v "^EXCLUDED:" <<<"$filter_output")
+      if ((excluded_count > 0)); then
+        >&2 echo
+        info "Excluding $excluded_count rule$(s $excluded_count): ${exclusion_codes[*]}"
+      fi
+    fi
+
     info "Generating complete standard from ${#md_files[@]} files..."
 
     {
@@ -1400,6 +1761,18 @@ EOF
       return 1
     fi
 
+    # Apply exclusions if provided
+    if ((${#exclusion_codes[@]} > 0)); then
+      local -- filter_output
+      filter_output=$(filter_excluded_files md_files exclusion_codes)
+      excluded_count=$(grep "^EXCLUDED:" <<<"$filter_output" | cut -d: -f2)
+      readarray -t md_files < <(grep -v "^EXCLUDED:" <<<"$filter_output")
+      if ((excluded_count > 0)); then
+        >&2 echo
+        info "Excluding $excluded_count rule$(s $excluded_count): ${exclusion_codes[*]}"
+      fi
+    fi
+
     info "Generating summary standard from ${#md_files[@]} files..."
 
     {
@@ -1442,6 +1815,18 @@ EOF
     if ((${#md_files[@]} == 0)); then
       error "No abstract files found in '$data_dir'"
       return 1
+    fi
+
+    # Apply exclusions if provided
+    if ((${#exclusion_codes[@]} > 0)); then
+      local -- filter_output
+      filter_output=$(filter_excluded_files md_files exclusion_codes)
+      excluded_count=$(grep "^EXCLUDED:" <<<"$filter_output" | cut -d: -f2)
+      readarray -t md_files < <(grep -v "^EXCLUDED:" <<<"$filter_output")
+      if ((excluded_count > 0)); then
+        >&2 echo
+        info "Excluding $excluded_count rule$(s $excluded_count): ${exclusion_codes[*]}"
+      fi
     fi
 
     info "Generating abstract standard from ${#md_files[@]} files..."
@@ -1526,6 +1911,19 @@ EOF
   if ((${#md_files[@]} == 0)); then
     error "No $file_type files found in '$data_dir'"
     return 1
+  fi
+
+  # Apply exclusions if provided
+  local -i excluded_count=0
+  if ((${#exclusion_codes[@]} > 0)); then
+    local -- filter_output
+    filter_output=$(filter_excluded_files md_files exclusion_codes)
+    excluded_count=$(grep "^EXCLUDED:" <<<"$filter_output" | cut -d: -f2)
+    readarray -t md_files < <(grep -v "^EXCLUDED:" <<<"$filter_output")
+    if ((excluded_count > 0)) && [[ "$output_file" != '/dev/stdout' ]]; then
+      >&2 echo
+      info "Excluding $excluded_count rule$(s $excluded_count): ${exclusion_codes[*]}"
+    fi
   fi
 
   # For abstract-complete type, verify that each abstract file has a corresponding complete file
@@ -3182,6 +3580,7 @@ cmd_compress() {
   local -i dry_run=0
   local -i compress_verbose=1
   local -i regenerate=0
+  local -i force=0
   local -i report_only=1  # Default mode
   local -i summary_limit=10000
   local -i abstract_limit=1500
@@ -3200,6 +3599,7 @@ MODES:
 
 OPTIONS:
   --tier TIER            Process specific tier: summary or abstract (default: both)
+  --force                Force regeneration even if timestamps match (use with --regenerate)
   --claude-cmd CMD       Claude CLI command path (default: claude)
   --summary-limit N      Summary file size limit in bytes (default: 10000)
   --abstract-limit N     Abstract file size limit in bytes (default: 1500)
@@ -3231,9 +3631,16 @@ MODES IN DETAIL:
   --regenerate
     • Deletes existing compressed files
     • Regenerates all .summary.md and .abstract.md files from .complete.md
+    • Skips files where all three tiers have matching timestamps (unless --force used)
     • Uses Claude AI with specialized compression prompts
     • Syncs timestamps across all three tiers
     • Automatic retry with stricter prompts for oversized files
+
+  --force (use with --regenerate)
+    • Forces regeneration even when timestamps match
+    • Touches all .complete.md files to trigger regeneration
+    • Useful when changing compression prompts or context levels
+    • Ensures all files are reprocessed regardless of timestamp
 
 SIZE LIMITS:
   complete:  20000 bytes (informational only, not enforced)
@@ -3303,6 +3710,9 @@ EXAMPLES:
   # Production regeneration (recommended settings)
   bcs compress --regenerate --context-level abstract --verbose
 
+  # Force regeneration (ignore timestamps)
+  bcs compress --regenerate --force --context-level abstract
+
   # Use custom Claude command and limits
   bcs compress --regenerate --context-level abstract \
     --claude-cmd /usr/local/bin/claude \
@@ -3337,6 +3747,10 @@ EOF
       --regenerate)
         regenerate=1
         report_only=0
+        ;;
+
+      -f|--force)
+        force=1
         ;;
 
       --tier)
@@ -3389,7 +3803,7 @@ EOF
         compress_verbose=0
         ;;
 
-      -[nvqh]*) #shellcheck disable=SC2046
+      -[nvqhf]*) #shellcheck disable=SC2046
         set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}"
         ;;
 
@@ -3430,7 +3844,7 @@ EOF
 
   # Process all rules
   compress_process_all_rules "$data_dir" "$tier" "$claude_cmd" "$dry_run" \
-    "$compress_verbose" "$summary_limit" "$abstract_limit" "$context_level"
+    "$compress_verbose" "$summary_limit" "$abstract_limit" "$context_level" "$force"
 
   # Show statistics (note: this is a simplified version - full stats tracking
   # would require modifying the helper functions to return statistics)
