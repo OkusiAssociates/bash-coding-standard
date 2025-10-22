@@ -41,9 +41,9 @@ jobs:
       - name: Generate tier files
         run: |
           echo "Regenerating tier files..."
-          ./bcs generate -o BASH-CODING-STANDARD.complete.md
-          ./bcs generate -t abstract -o BASH-CODING-STANDARD.abstract.md
-          ./bcs generate -t summary -o BASH-CODING-STANDARD.summary.md
+          ./bcs generate -o data/BASH-CODING-STANDARD.complete.md
+          ./bcs generate -t abstract -o data/BASH-CODING-STANDARD.abstract.md
+          ./bcs generate -t summary -o data/BASH-CODING-STANDARD.summary.md
 
       - name: Run full test suite
         run: |

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Test suite for workflows/check-compliance.sh
+# Test suite for workflows/40-check-compliance.sh
 
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose
@@ -7,7 +7,7 @@ shopt -s inherit_errexit shift_verbose
 SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
 SCRIPT_DIR=${SCRIPT_PATH%/*}
 PROJECT_DIR=$(realpath -- "$SCRIPT_DIR/..")
-CHECK_COMPLIANCE_SCRIPT="$PROJECT_DIR/workflows/check-compliance.sh"
+CHECK_COMPLIANCE_SCRIPT="$PROJECT_DIR/workflows/40-check-compliance.sh"
 FIXTURES_DIR="$SCRIPT_DIR/fixtures"
 readonly -- SCRIPT_PATH SCRIPT_DIR PROJECT_DIR CHECK_COMPLIANCE_SCRIPT FIXTURES_DIR
 

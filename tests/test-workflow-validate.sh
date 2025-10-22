@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Test suite for workflows/validate-data.sh
+# Test suite for workflows/30-validate-data.sh
 # Tests all 11 validation checks
 
 set -euo pipefail
@@ -13,7 +13,7 @@ readonly -- SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
 
 # Project paths
 PROJECT_DIR=$(realpath -- "$SCRIPT_DIR/..")
-VALIDATE_SCRIPT="$PROJECT_DIR/workflows/validate-data.sh"
+VALIDATE_SCRIPT="$PROJECT_DIR/workflows/30-validate-data.sh"
 DATA_DIR="$PROJECT_DIR/data"
 readonly -- PROJECT_DIR VALIDATE_SCRIPT DATA_DIR
 

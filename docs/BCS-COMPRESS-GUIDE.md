@@ -101,7 +101,7 @@ bcs compress --regenerate --context-level toc
 ### abstract (Recommended for Most Cases)
 
 **Description:**
-- Includes full BASH-CODING-STANDARD.abstract.md (~83KB)
+- Includes full data/BASH-CODING-STANDARD.abstract.md (~83KB)
 - Full awareness of all other rules for cross-reference
 - Can identify and eliminate cross-rule duplication
 - Maintains consistent terminology across standard
@@ -136,7 +136,7 @@ bcs compress --regenerate --context-level abstract --verbose
 ### summary (Detailed Context)
 
 **Description:**
-- Includes full BASH-CODING-STANDARD.summary.md (~310KB)
+- Includes full data/BASH-CODING-STANDARD.summary.md (~310KB)
 - More detailed context than abstract tier
 - Useful when compressing to abstract tier with rich examples
 - Higher token cost than abstract context
@@ -164,7 +164,7 @@ bcs compress --regenerate --context-level summary
 ### complete (Maximum Context)
 
 **Description:**
-- Includes full BASH-CODING-STANDARD.complete.md (~520KB)
+- Includes full data/BASH-CODING-STANDARD.complete.md (~520KB)
 - Most comprehensive context with all examples and rationale
 - Highest token cost, slowest processing
 - Maximum awareness of entire standard
@@ -357,9 +357,9 @@ Based on --context-level:
 
 - `none`: No additional context
 - `toc`: Reads BASH-CODING-STANDARD.toc.md (if exists, else generates)
-- `abstract`: Reads BASH-CODING-STANDARD.abstract.md
-- `summary`: Reads BASH-CODING-STANDARD.summary.md
-- `complete`: Reads BASH-CODING-STANDARD.complete.md
+- `abstract`: Reads data/BASH-CODING-STANDARD.abstract.md
+- `summary`: Reads data/BASH-CODING-STANDARD.summary.md
+- `complete`: Reads data/BASH-CODING-STANDARD.complete.md
 
 #### 3. Compression Invocation
 

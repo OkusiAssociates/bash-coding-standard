@@ -38,7 +38,7 @@ test_decode_basic() {
 
   # Should return a file path (default tier determined by BASH-CODING-STANDARD.md symlink)
   assert_contains "$output" "data/" "Output contains data/ directory"
-  assert_contains "$output" ".abstract.md" "Output contains abstract tier file (default from symlink)"
+  assert_contains "$output" ".summary.md" "Output contains summary tier file (default from symlink)"
   assert_contains "$output" "01-script-structure" "Output contains correct section"
   assert_contains "$output" "02-shebang" "Output contains correct rule"
   assert_contains "$output" "01-dual-purpose" "Output contains correct subrule"
@@ -134,7 +134,7 @@ test_decode_basename() {
   fi
 
   # Should still have the correct filename (default tier determined by symlink)
-  assert_equals "$output" "02-shebang.abstract.md" "Basename shows correct filename (abstract tier from symlink)"
+  assert_equals "$output" "02-shebang.summary.md" "Basename shows correct filename (summary tier from symlink)"
 }
 
 test_decode_exists() {
@@ -178,7 +178,7 @@ test_decode_section_code() {
   output=$("$SCRIPT" decode BCS0100 2>&1)
 
   # Should decode to section file (default tier determined by symlink)
-  assert_contains "$output" "00-section.abstract.md" "Section code decodes to section file (abstract tier from symlink)"
+  assert_contains "$output" "00-section.summary.md" "Section code decodes to section file (summary tier from symlink)"
   assert_contains "$output" "01-script-structure" "Contains correct section directory"
 }
 
@@ -190,7 +190,7 @@ test_decode_subrule_code() {
   output=$("$SCRIPT" decode BCS010201 2>&1)
 
   # Should decode to subrule file (default tier determined by symlink)
-  assert_contains "$output" "01-dual-purpose.abstract.md" "Subrule code decodes to subrule file (abstract tier from symlink)"
+  assert_contains "$output" "01-dual-purpose.summary.md" "Subrule code decodes to subrule file (summary tier from symlink)"
   assert_contains "$output" "02-shebang" "Contains rule directory"
 }
 

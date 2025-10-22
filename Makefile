@@ -28,11 +28,8 @@ install:
 	install -m 755 bash-coding-standard $(BINDIR)/
 	ln -sf bash-coding-standard $(BINDIR)/bcs
 	install -d -m 2775 -g bcs $(SHAREDIR)
-	install -m 664 -g bcs BASH-CODING-STANDARD.complete.md $(SHAREDIR)/
-	install -m 664 -g bcs BASH-CODING-STANDARD.summary.md $(SHAREDIR)/
-	install -m 664 -g bcs BASH-CODING-STANDARD.abstract.md $(SHAREDIR)/
-	ln -sf BASH-CODING-STANDARD.abstract.md $(SHAREDIR)/BASH-CODING-STANDARD.md
 	cp -a data $(SHAREDIR)/ && chgrp -R bcs $(SHAREDIR)/data && find $(SHAREDIR)/data -type d -exec chmod 2775 {} + && find $(SHAREDIR)/data -type f -exec chmod 664 {} +
+	ln -sf data/BASH-CODING-STANDARD.abstract.md $(SHAREDIR)/BASH-CODING-STANDARD.md
 	@if [ -d BCS ]; then \
 		cp -a BCS $(SHAREDIR)/ && chgrp -R bcs $(SHAREDIR)/BCS && find $(SHAREDIR)/BCS -type d -exec chmod 2775 {} + && \
 		echo "  - BCS index installed"; \
@@ -44,7 +41,7 @@ install:
 	@echo ""
 	@echo "Installed files:"
 	@echo "  - Executable: $(BINDIR)/bash-coding-standard (and bcs symlink)"
-	@echo "  - Standard docs (3 tiers): $(SHAREDIR)/BASH-CODING-STANDARD.*.md"
+	@echo "  - Standard docs (3 tiers): $(SHAREDIR)/data/BASH-CODING-STANDARD.*.md"
 	@echo "  - Data directory: $(SHAREDIR)/data/ (300+ rule files + templates)"
 	@echo "  - BCS index: $(SHAREDIR)/BCS/ (convenience symlinks, if available)"
 	@echo ""

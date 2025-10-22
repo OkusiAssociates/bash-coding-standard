@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Test suite for workflows/generate-canonical.sh
+# Test suite for workflows/20-generate-canonical.sh
 
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose
@@ -7,7 +7,7 @@ shopt -s inherit_errexit shift_verbose
 SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
 SCRIPT_DIR=${SCRIPT_PATH%/*}
 PROJECT_DIR=$(realpath -- "$SCRIPT_DIR/..")
-GENERATE_SCRIPT="$PROJECT_DIR/workflows/generate-canonical.sh"
+GENERATE_SCRIPT="$PROJECT_DIR/workflows/20-generate-canonical.sh"
 readonly -- SCRIPT_PATH SCRIPT_DIR PROJECT_DIR GENERATE_SCRIPT
 
 # shellcheck source=tests/test-helpers.sh

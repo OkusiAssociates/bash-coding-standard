@@ -179,6 +179,11 @@ test_file_naming_conventions() {
       continue
     fi
 
+    # Skip BASH-CODING-STANDARD.*.md tier files (generated output, not source rules)
+    if [[ "$basename_file" =~ ^BASH-CODING-STANDARD\.(complete|abstract|summary)\.md$ ]]; then
+      continue
+    fi
+
     # Valid pattern: NN-something.{complete|abstract|summary}.md
     if [[ ! "$basename_file" =~ ^[0-9]{2}-[a-z0-9-]+\.(complete|abstract|summary)\.md$ ]]; then
       invalid_names+=("$file")

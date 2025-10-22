@@ -7,7 +7,7 @@ shopt -s inherit_errexit shift_verbose
 SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
 SCRIPT_DIR=${SCRIPT_PATH%/*}
 PROJECT_DIR=$(realpath -- "$SCRIPT_DIR/..")
-DELETE_RULE_SCRIPT="$PROJECT_DIR/workflows/delete-rule.sh"
+DELETE_RULE_SCRIPT="$PROJECT_DIR/workflows/03-delete-rule.sh"
 readonly -- SCRIPT_PATH SCRIPT_DIR PROJECT_DIR DELETE_RULE_SCRIPT
 
 # shellcheck source=tests/test-helpers.sh

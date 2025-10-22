@@ -57,13 +57,13 @@ test_workflow_search_decode_verify() {
   # Workflow: Search for keyword → Decode matching code → Verify content
   local -- search_output code_output
 
-  # Search for "readonly"
-  search_output=$("$SCRIPT" search "readonly" 2>&1 | head -50 || true)
+  # Search for "readonly" (term commonly appears in multiple rules)
+  search_output=$("$SCRIPT" search "readonly" 2>&1 | head -100 || true)
 
-  if [[ "$search_output" =~ BCS[0-9]+ ]]; then
+  if [[ "$search_output" =~ \*\*Rule:\ BCS[0-9]+ ]]; then
     pass "Search found BCS codes"
 
-    # Extract first BCS code
+    # Extract first BCS code (from format: **Rule: BCS0205**)
     local -- first_code
     first_code=$(echo "$search_output" | grep -oE 'BCS[0-9]+' | head -1)
 
