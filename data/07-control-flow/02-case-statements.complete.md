@@ -86,11 +86,10 @@ Use compact format when each case performs a single action or simple command.
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-VERSION='1.0.0'
-SCRIPT_PATH=$(realpath -- "$0")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
+declare -r VERSION='1.0.0'
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 declare -i VERBOSE=0
 declare -i DRY_RUN=0
@@ -141,11 +140,10 @@ Use expanded format when cases have multi-line actions, require comments, or per
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-VERSION='1.0.0'
-SCRIPT_PATH=$(realpath -- "$0")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
+declare -r VERSION='1.0.0'
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 declare -i INSTALL_BUILTIN=0
 declare -i VERBOSE=0
@@ -305,11 +303,10 @@ esac
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-VERSION='1.0.0'
-SCRIPT_PATH=$(realpath -- "$0")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
+declare -r VERSION='1.0.0'
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # ============================================================================
 # Global Variables
@@ -540,11 +537,10 @@ main "$@"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-VERSION='1.0.0'
-SCRIPT_PATH=$(realpath -- "$0")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
+declare -r VERSION='1.0.0'
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Route files based on extension
 process_file_by_type() {
@@ -654,11 +650,10 @@ main "$@"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-VERSION='1.0.0'
-SCRIPT_PATH=$(realpath -- "$0")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
+declare -r VERSION='1.0.0'
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Service control script
 SERVICE_NAME='myapp'

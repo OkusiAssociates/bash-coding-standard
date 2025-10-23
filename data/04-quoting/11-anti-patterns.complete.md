@@ -390,11 +390,10 @@ set -euo pipefail
 
 # ✓ CORRECT VERSION
 
-VERSION='1.0.0'                              # ✓ Single quotes for static
-SCRIPT_PATH=$(realpath -- "$0")          # ✓ Quoted variable
-SCRIPT_DIR=${SCRIPT_PATH%/*}                 # ✓ Braces needed for expansion
-SCRIPT_NAME=${SCRIPT_PATH##*/}               # ✓ Braces needed for expansion
-readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
+declare -r VERSION='1.0.0'                   # ✓ Single quotes for static
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "$0")   # ✓ Quoted variable
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}  # ✓ Braces needed
 
 # ✓ Minimal quoting
 readonly PREFIX="${PREFIX:-/usr/local}"      # ✓ Braces needed for default

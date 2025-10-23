@@ -1,6 +1,6 @@
 ## Script Metadata
 
-**Every script must declare standard metadata variables (VERSION, SCRIPT_PATH, SCRIPT_DIR, SCRIPT_NAME) immediately after `shopt` settings and before any other code. Make these readonly as a group.**
+**Every script must declare standard metadata variables (VERSION, SCRIPT_PATH, SCRIPT_DIR, SCRIPT_NAME) immediately after `shopt` settings and before any other code. Declare them as readonly using `declare -r`.**
 
 **Rationale:**
 
@@ -19,11 +19,10 @@ set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Script metadata - immediately after shopt
-VERSION='1.0.0'
-SCRIPT_PATH=$(realpath -- "$0")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
+declare -r VERSION='1.0.0'
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Rest of script follows
 \`\`\`
@@ -121,20 +120,20 @@ EOF
 }
 \`\`\`
 
-**Why readonly as a group:**
+**Why declare -r for metadata:**
 
 \`\`\`bash
-# ✓ Correct - make readonly together after all assignments
-VERSION='1.0.0'
-SCRIPT_PATH=$(realpath -- "$0")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
+# ✓ Correct - declare as readonly immediately
+declare -r VERSION='1.0.0'
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # This pattern:
-# 1. Groups related declarations visibly
-# 2. Makes intent clear (these are immutable metadata)
-# 3. Prevents accidental reassignment anywhere in script
+# 1. Makes each variable immediately immutable at declaration
+# 2. Clear, concise single-line declarations
+# 3. SCRIPT_DIR and SCRIPT_NAME combined (both derived from SCRIPT_PATH)
+# 4. SC2155 disable documents intentional command substitution in declare -r
 \`\`\`
 
 **Using metadata for resource location:**
@@ -144,11 +143,10 @@ readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-VERSION='1.0.0'
-SCRIPT_PATH=$(realpath -- "$0")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
+declare -r VERSION='1.0.0'
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Load libraries relative to script location
 source "$SCRIPT_DIR/lib/logging.sh"
@@ -226,6 +224,31 @@ SCRIPT_PATH=$(readlink -en -- "$0")
 # enable -f /usr/local/lib/bash-builtins/realpath.so realpath
 \`\`\`
 
+**About shellcheck SC2155:**
+
+\`\`\`bash
+# shellcheck SC2155 warns about command substitution in declare -r
+# This is because it masks the return value of the command:
+
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+#shellcheck disable=SC2155
+
+# Why we disable SC2155 for SCRIPT_PATH:
+# 1. realpath failure is acceptable here - we WANT the script to fail early
+#    if the script file doesn't exist
+# 2. The metadata variables are set exactly once at script startup
+# 3. The command substitution is simple and well-understood
+# 4. The pattern is concise and immediately makes the variable readonly
+
+# Alternative (avoiding SC2155) would be more verbose:
+SCRIPT_PATH=$(realpath -- "$0") || die 1 "Failed to resolve script path"
+declare -r SCRIPT_PATH
+
+# We choose the concise pattern with documented disable directive
+# because the failure mode (script doesn't exist) should cause immediate
+# script termination anyway.
+\`\`\`
+
 **Anti-patterns to avoid:**
 
 \`\`\`bash
@@ -255,11 +278,11 @@ readonly VERSION='1.0.0'
 readonly SCRIPT_PATH=$(realpath -- "$0")
 readonly SCRIPT_DIR=${SCRIPT_PATH%/*}  # Can't assign to readonly variable!
 
-# ✓ Correct - assign first, then make readonly as group
-VERSION='1.0.0'
-SCRIPT_PATH=$(realpath -- "$0")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-readonly -- VERSION SCRIPT_PATH SCRIPT_DIR
+# ✓ Correct - declare as readonly immediately
+declare -r VERSION='1.0.0'
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*}
 
 # ✗ Wrong - no VERSION variable
 # Every script should have a version for tracking
@@ -297,11 +320,10 @@ set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Script metadata
-VERSION='1.0.0'
-SCRIPT_PATH=$(realpath -- "$0")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
+declare -r VERSION='1.0.0'
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Global variables
 declare -- LOG_FILE="$SCRIPT_DIR/../logs/$SCRIPT_NAME.log"

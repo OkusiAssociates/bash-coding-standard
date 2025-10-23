@@ -36,64 +36,77 @@ This is the rulet tier: extracted rules in 1-2 sentence format with BCS code ref
 **Rule: BCS0100**
 
 ## Script Structure & Layout - Rulets
-## Shebang and Initial Setup
-- [BCS0102] Use one of three allowable shebangs: `#!/bin/bash` (most portable), `#!/usr/bin/bash` (BSD systems), or `#!/usr/bin/env bash` (maximum portability via PATH).
-- [BCS0102] Place the shebang on the first line, followed by optional global `#shellcheck` directives with explanatory comments, then a brief description comment, then `set -euo pipefail` as the first command.
-## Strict Mode and Shell Options
-- [BCS0101] Always use `set -euo pipefail` as the first command after shebang/comments/shellcheck (Step 4) to enable strict error handling before any other commands execute.
-- [BCS0105] Always use `shopt -s inherit_errexit shift_verbose extglob` for critical error propagation, shift error detection, and extended pattern matching.
-- [BCS0105] Choose either `shopt -s nullglob` (for arrays/loops - unmatched globs expand to empty) or `shopt -s failglob` (for strict scripts - unmatched globs cause error); never rely on default bash behavior where unmatched globs remain as literal strings.
-- [BCS0105] Use `shopt -s globstar` optionally when recursive `**` matching is needed, but beware performance impact on deep directory trees.
+## Mandatory 13-Step Structure
+- [BCS0101] Every Bash script must follow the exact 13-step layout: (1) shebang, (2) shellcheck directives, (3) description, (4) `set -euo pipefail`, (5) `shopt` settings, (6) script metadata, (7) global variables, (8) color definitions, (9) utility functions, (10) business logic functions, (11) `main()`, (12) script invocation, (13) `#fin` marker.
+- [BCS0101] Place `set -euo pipefail` at line 4 (after shebang, shellcheck, and description comment) before any commands execute to enable strict error handling immediately.
+- [BCS0101] Scripts over 100 lines must use a `main()` function as the single entry point for execution flow; smaller scripts may run code directly.
+- [BCS0101] Always end scripts with the `#fin` or `#end` marker to visually confirm file completeness and prevent truncation errors.
+## Shebang
+- [BCS0102] Use one of three acceptable shebangs: `#!/bin/bash` (most portable Linux), `#!/usr/bin/bash` (BSD systems), or `#!/usr/bin/env bash` (maximum portability via PATH search).
+- [BCS0102] Place the shebang as the absolute first line (line 1) of every script with no leading whitespace or comments.
 ## Script Metadata
-- [BCS0103] Always declare standard metadata variables immediately after `shopt` settings (Step 6): `VERSION='1.0.0'`, `SCRIPT_PATH=$(realpath -- "$0")`, `SCRIPT_DIR=${SCRIPT_PATH%/*}`, `SCRIPT_NAME=${SCRIPT_PATH##*/}`.
-- [BCS0103] Use `realpath -- "$0"` (not `readlink`) to resolve SCRIPT_PATH reliably; this is the canonical BCS approach and supports loadable builtins for maximum performance.
-- [BCS0103] Make metadata variables readonly as a group after all assignments: `readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME`.
-- [BCS0103] Derive SCRIPT_DIR and SCRIPT_NAME from SCRIPT_PATH using parameter expansion (`${SCRIPT_PATH%/*}` and `${SCRIPT_PATH##*/}`) rather than external commands.
-## Global Variable Declarations
-- [BCS0101] Declare all global variables up front (Step 7) with explicit types: `declare -i` for integers, `declare --` for strings, `declare -a` for indexed arrays, `declare -A` for associative arrays.
-- [BCS0101] Group all global declarations together after metadata and before color definitions; never scatter declarations throughout the file.
-- [BCS0101] For variables modified during argument parsing, declare them mutable first, then make readonly after parsing is complete.
+- [BCS0103] Declare standard metadata immediately after `shopt` settings using: `declare -r VERSION='1.0.0'`, `declare -r SCRIPT_PATH=$(realpath -- "$0")`, `declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}`.
+- [BCS0103] Always use `realpath` (not `readlink`) to resolve `SCRIPT_PATH` to canonical absolute paths, catching missing scripts early; disable shellcheck SC2155 with explanatory comment: `#shellcheck disable=SC2155`.
+- [BCS0103] Make metadata variables readonly at declaration using `declare -r` to prevent accidental modification throughout script execution.
+- [BCS0103] Use `SCRIPT_DIR` for loading companion files and resources relative to script location, not `PWD` which reflects current working directory.
+## Global Variables
+- [BCS0101] Declare all global variables immediately after metadata (step 7) with explicit type declarations: `declare -i` for integers, `declare --` for strings, `declare -a` for indexed arrays, `declare -A` for associative arrays.
+- [BCS0101] Group all global variable declarations in one location before any function definitions to make script state visible at a glance.
+- [BCS0101] Defer `readonly` declarations until after argument parsing for variables that need modification during initialization; make them readonly before business logic executes.
 ## Color Definitions
-- [BCS0101] Conditionally define color codes (Step 8) based on terminal detection: `if [[ -t 1 && -t 2 ]]; then readonly -- RED=$'\033[0;31m' ...; else readonly -- RED='' ...; fi`.
-- [BCS0101] Skip color definitions entirely if your script doesn't use colored output.
-## Function Organization Pattern
-- [BCS0107,BCS0101] Always organize functions bottom-up in 7 layers: (1) messaging functions, (2) documentation functions, (3) helper/utility functions, (4) validation functions, (5) business logic functions, (6) orchestration functions, (7) `main()` function.
-- [BCS0107] Each function can only call functions defined above it (earlier in the file); dependencies flow downward, never upward.
-- [BCS0107] Place all messaging functions first (`_msg()`, `info()`, `warn()`, `error()`, `die()`, `success()`) as the lowest-level primitives used by everything.
-- [BCS0107] Define business logic functions after utilities and validation, so they can safely call lower-layer functions.
-## Main Function and Script Invocation
-- [BCS0101] Use a `main()` function (Step 11) for scripts over ~200 lines; place it last before script invocation.
-- [BCS0101] Parse command-line arguments inside `main()`, make variables readonly after parsing, then execute workflow in clear sequence.
-- [BCS0101] Invoke main with `main "$@"` (Step 12), always quoting `"$@"` to preserve argument array properly.
-## End Marker
-- [BCS0101] Always end scripts with `#fin` or `#end` marker (Step 13) to visually confirm the file is complete and not truncated.
+- [BCS0101] Define color variables conditionally based on terminal detection: `if [[ -t 1 && -t 2 ]]; then readonly -- RED=$'\033[0;31m' ...; else readonly -- RED='' ...; fi`.
+- [BCS0101] Make color variables readonly immediately after conditional assignment to prevent modification: `readonly -- RED GREEN YELLOW CYAN NC`.
+- [BCS0101] Skip color definitions entirely if your script produces no colored terminal output.
+## Standard shopt Settings
+- [BCS0105] Always enable `shopt -s inherit_errexit shift_verbose extglob nullglob` in all scripts for proper error handling, argument safety, extended patterns, and safe glob expansion.
+- [BCS0105] The `inherit_errexit` setting is critical: without it, `set -e` does not apply inside command substitutions `$(...)` or subshells `(...)`, causing silent failures.
+- [BCS0105] Choose `nullglob` for scripts with file loops (unmatched globs expand to empty, loop skips) or `failglob` for strict scripts (unmatched globs cause errors).
+- [BCS0105] Use `extglob` to enable advanced patterns: `!(*.txt)` excludes .txt files, `@(jpg|png)` matches alternatives, `+(pattern)` matches one or more.
+## Function Organization (Bottom-Up)
+- [BCS0107] Always organize functions bottom-up in 7 layers: (1) messaging functions, (2) documentation functions, (3) helper/utility functions, (4) validation functions, (5) business logic functions, (6) orchestration functions, (7) `main()` function.
+- [BCS0107] Place messaging functions (`_msg()`, `info()`, `warn()`, `error()`, `die()`) first as lowest-level primitives used by everything; they must have zero dependencies.
+- [BCS0107] Each function may only call functions defined above it (earlier in file), establishing clear dependency hierarchy flowing downward from primitives to composition.
+- [BCS0107] Place `main()` function last before script invocation, as the highest-level orchestrator that calls all other layers.
+- [BCS0107] Use section comments to visually separate function layers: `# ============================================================================` `# Layer 3: Helper/Utility Functions` `# ============================================================================`.
+## Utility Functions
+- [BCS0101] Implement standard messaging functions in step 9: `_msg()` (core), `vecho()` (verbose), `info()`, `warn()`, `success()`, `error()`, `die()`, `yn()` (yes/no prompt), `noarg()` (argument validation).
+- [BCS0101] Place all utility functions before business logic functions since business logic depends on messaging, validation, and helper utilities.
+- [BCS0101] Remove unused utility functions before production deployment to reduce script size, but keep them during development for flexibility.
 ## Dual-Purpose Scripts
-- [BCS010201] For scripts that can be both executed and sourced, define all library functions first, then use early return pattern: `[[ ${BASH_SOURCE[0]} != "$0" ]] && return 0`.
-- [BCS010201] Only apply `set -euo pipefail` and `shopt` settings in the executable section (after the early return), never when sourced, to avoid modifying the caller's shell environment.
-- [BCS010201] Guard metadata initialization with `if [[ ! -v VARIABLE ]]` to allow safe re-sourcing without errors.
-- [BCS010201] Export functions with `declare -fx` if they need to be available to subshells.
+- [BCS010201] For scripts that can be both executed and sourced, place all function definitions first, then use early return pattern: `[[ ${BASH_SOURCE[0]} != "$0" ]] && return 0` before any executable code.
+- [BCS010201] Apply `set -euo pipefail` and `shopt` settings only in the executable section (after the early return check), never when sourced, to avoid modifying the caller's shell environment.
+- [BCS010201] Use visual separator comment `# ----------------------------------------------------------------------------` to clearly mark the boundary between sourceable functions and executable code.
+- [BCS010201] Guard metadata initialization with idempotent check: `if [[ ! -v SCRIPT_VERSION ]]; then declare -x SCRIPT_VERSION='1.0.0'; ...; fi` to allow safe re-sourcing.
+- [BCS010201] Export functions with `declare -fx function_name` when they need to be available in subshells.
 ## FHS Compliance
-- [BCS0104] Design installation scripts to follow Filesystem Hierarchy Standard (FHS): use `$PREFIX/bin/` for executables, `$PREFIX/share/` for data, `$PREFIX/lib/` for libraries, `$PREFIX/etc/` or `/etc/` for configuration.
-- [BCS0104] Support PREFIX customization via environment variable: `PREFIX="${PREFIX:-/usr/local}"` to enable user install, local install, and system install scenarios.
-- [BCS0104] Search multiple FHS locations when loading resources: script directory (development), `/usr/local/share/` (local install), `/usr/share/` (system install), `${XDG_DATA_HOME:-$HOME/.local/share}/` (user install).
-- [BCS0104] For user-specific files, follow XDG Base Directory specification: `XDG_CONFIG_HOME`, `XDG_DATA_HOME`, `XDG_CACHE_HOME`, `XDG_STATE_HOME` with appropriate fallbacks.
+- [BCS0104] Follow Filesystem Hierarchy Standard (FHS) for scripts that install system-wide: executables in `$PREFIX/bin`, data files in `$PREFIX/share/appname`, libraries in `$PREFIX/lib/appname`, config in `$PREFIX/etc/appname`.
+- [BCS0104] Support customizable `PREFIX` via environment variable with default: `declare -- PREFIX="${PREFIX:-/usr/local}"` to enable user installs, system installs, and package manager integration.
+- [BCS0104] Search multiple FHS locations when loading resources: script directory (development), `/usr/local/share/app` (local install), `/usr/share/app` (system install), `${XDG_DATA_HOME:-$HOME/.local/share}/app` (user install).
+- [BCS0104] Use XDG Base Directory specification for user-specific files: `XDG_CONFIG_HOME`, `XDG_DATA_HOME`, `XDG_CACHE_HOME`, `XDG_STATE_HOME` with fallbacks to `$HOME/.config`, `$HOME/.local/share`, etc.
+- [BCS0104] Preserve existing user configuration files during upgrades: `[[ -f "$CONFIG_FILE" ]] || install config.example "$CONFIG_FILE"` instead of unconditional overwrites.
 ## File Extensions
-- [BCS0106] Use no extension for executables that will be in PATH; use `.sh` extension for executables in local/project directories.
-- [BCS0106] Always use `.sh` extension for libraries; libraries should not be executable unless they're dual-purpose scripts.
-## Complete Structure Summary
-- [BCS0101] Follow the mandatory 13-step structure: (1) shebang, (2) shellcheck directives (optional), (3) brief description, (4) `set -euo pipefail`, (5) `shopt` settings, (6) script metadata, (7) global variables, (8) color definitions (optional), (9) utility functions, (10) business logic functions, (11) `main()` function, (12) script invocation `main "$@"`, (13) end marker `#fin`.
-- [BCS0101] Scripts under ~200 lines may skip the `main()` function (steps 11-12) and run directly, but all other steps remain required.
+- [BCS0106] Use no extension for executables installed to PATH (e.g., `myapp` not `myapp.sh`) for cleaner command-line interface.
+- [BCS0106] Use `.sh` extension for library files meant to be sourced (not executed directly) and for executables not in PATH.
+- [BCS0106] Make library files non-executable (`chmod 644`) to clearly indicate they should be sourced, not run.
+## Script Invocation
+- [BCS0101] Invoke `main()` function at step 12 with quoted argument array: `main "$@"` to preserve all arguments with proper spacing and special characters.
+- [BCS0101] For small scripts without `main()`, write business logic directly at step 12, but still follow all other structural requirements.
 ## Anti-Patterns to Avoid
-- [BCS010102] Never declare variables after they're used; always declare all globals up front in Step 7.
-- [BCS010102] Never define business logic before utility functions; utilities must come first so business logic can call them.
-- [BCS010102] Never make variables readonly before argument parsing if they need to be modified during parsing.
-- [BCS010102] Never mix global declarations with function definitions; keep all declarations grouped together.
-- [BCS010102] Never use `$0` directly without `realpath` for SCRIPT_PATH; relative paths and symlinks must be resolved.
+- [BCS010102] Never place business logic before utility functions; this creates forward references where functions call utilities that aren't defined yet.
+- [BCS010102] Never declare variables after they're first used; with `set -u`, this causes "unbound variable" errors.
+- [BCS010102] Never make variables readonly before argument parsing if they need modification during initialization; use progressive readonly after parsing.
+- [BCS010102] Never skip `set -euo pipefail` or place it after commands execute; errors in early commands will be silently ignored.
+- [BCS010102] Never use `$0` directly without `realpath` for SCRIPT_PATH; relative paths and symlinks will break resource loading.
 ## Edge Cases
-- [BCS010103] Sourced library files should skip `set -e`, `main()`, and script invocation to avoid modifying caller's shell.
-- [BCS010103] Scripts requiring external configuration should source config files between metadata and business logic, then make variables readonly afterward.
-- [BCS010103] Scripts with cleanup requirements should define cleanup function in utilities layer, then set trap after function definition but before business logic: `trap 'cleanup $?' SIGINT SIGTERM EXIT`.
-- [BCS010103] Tiny scripts under ~200 lines can skip `main()` function and run business logic directly, but must still follow other structural requirements.
+- [BCS010103] Tiny scripts under 100 lines may skip `main()` function and run code directly, but must still follow all other 13 steps.
+- [BCS010103] Library files meant only for sourcing should skip `set -e` (would modify caller), `main()`, and script invocation; just define functions and end with `#fin`.
+- [BCS010103] Scripts with cleanup requirements should define cleanup function in step 9 (utilities), then set trap after function definition: `trap 'cleanup $?' SIGINT SIGTERM EXIT`.
+- [BCS010103] Scripts sourcing external configuration should source config files between step 7 (globals) and step 9 (utilities), then make variables readonly after sourcing.
+- [BCS010103] Handle edge case of script in root directory: `SCRIPT_DIR=${SCRIPT_PATH%/*}; [[ -z "$SCRIPT_DIR" ]] && SCRIPT_DIR='/'` since parameter expansion returns empty string for `/script`.
+## Complete Example References
+- [BCS010101] See BCS010101 for a comprehensive 462-line installation script demonstrating all 13 steps with dry-run mode, force mode, systemd integration, and full argument parsing.
+- [BCS010102] See BCS010102 for eight common anti-patterns with side-by-side wrong/correct comparisons showing proper fixes.
+- [BCS010103] See BCS010103 for five edge cases covering tiny scripts, sourced libraries, external config, platform detection, and cleanup traps.
 
 
 ---
@@ -105,47 +118,46 @@ This is the rulet tier: extracted rules in 1-2 sentence format with BCS code ref
 ## Type-Specific Declarations
 - [BCS0201] Always use explicit type declarations to make variable intent clear: `declare -i` for integers, `declare --` for strings, `declare -a` for indexed arrays, `declare -A` for associative arrays.
 - [BCS0201] Declare integer variables with `declare -i count=0` to enable automatic arithmetic evaluation and type enforcement.
-- [BCS0201] Use `declare --` with the `--` separator for string variables to prevent option injection when variable names might start with hyphens.
-- [BCS0201] Declare indexed arrays with `declare -a files=()` for ordered lists; use quoted expansion `"${files[@]}"` to preserve spaces during iteration.
-- [BCS0201] Declare associative arrays with `declare -A config=()` for key-value maps; Bash 4.0+ required.
-- [BCS0201] Never assign scalars to array variables; use array syntax: `files=('item')` not `files='item'`.
+- [BCS0201] Use `declare --` for string variables with `--` separator to prevent option injection when variable names start with `-`.
+- [BCS0201] Declare indexed arrays with `declare -a files=()` for ordered lists; never assign scalars to array variables.
+- [BCS0201] Declare associative arrays with `declare -A config=()` for key-value maps; requires Bash 4.0+.
+- [BCS0201] Use `readonly --` to declare constants that should never change after initialization.
+- [BCS0201] Always declare function variables as `local` (with type modifiers like `local -i`, `local -a`) to prevent global namespace pollution.
 ## Variable Scoping
 - [BCS0202] Always declare function-specific variables as `local` to prevent namespace pollution and unexpected side effects.
-- [BCS0202] Use `local` for ALL function parameters and temporary variables: `local -- file="$1"` to prevent global leaks.
-- [BCS0202] In recursive functions, always use `local` declarations; without them, each recursive call overwrites the same global variable causing failures.
+- [BCS0202] Without `local`, function variables become global and can overwrite global variables, persist after function returns, and interfere with recursive calls.
 ## Naming Conventions
-- [BCS0203] Use UPPER_CASE for constants and global variables: `readonly MAX_RETRIES=3`, `VERBOSE=1`.
-- [BCS0203] Use lower_case with underscores for local variables: `local file_count=0`; CamelCase acceptable for important locals.
+- [BCS0203] Use UPPER_CASE for constants and environment variables: `readonly MAX_RETRIES=3`, `export DATABASE_URL`.
+- [BCS0203] Use lower_case with underscores for local variables: `local file_count=0`; CamelCase is acceptable for important locals.
 - [BCS0203] Prefix internal/private functions with underscore: `_validate_input()` to signal internal use only.
-- [BCS0203] Never use lowercase single-letter variable names (reserved for shell) or all-caps shell built-in names like `PATH`, `HOME`, `USER`.
+- [BCS0203] Avoid lowercase single-letter names (reserved for shell) and all-caps shell variables like `PATH`, `HOME`, `USER`.
 ## Constants and Environment Variables
-- [BCS0204] Use `readonly --` for values that never change: script metadata, configuration paths determined at startup.
-- [BCS0204] Use `declare -x` or `export` for variables needed by child processes: `declare -x DATABASE_URL='...'`.
-- [BCS0204] Combine `readonly` with `export` for constants that must be available in subprocesses: `declare -rx BUILD_ENV='production'`.
-- [BCS0204] Never export constants unnecessarily (child processes don't need internal script constants); only use `readonly` for true script-internal constants.
+- [BCS0204] Use `readonly --` for values that never change: script metadata, configuration paths, derived constants.
+- [BCS0204] Use `declare -x` or `export` for variables needed by child processes: environment configuration, settings inherited by subshells.
+- [BCS0204] Combine `readonly` and `export` for constants that must be available in subprocesses: `declare -rx BUILD_ENV='production'`.
+- [BCS0204] Never export constants unnecessarily; only make readonly if child processes don't need the value.
 ## Readonly After Group Pattern
 - [BCS0205] When declaring multiple readonly variables, initialize them first with values, then make them all readonly in a single statement: `readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME`.
-- [BCS0205] Group logically related variables together for readability: script metadata group, color definitions group, path constants group, configuration defaults group.
-- [BCS0205] For conditional initialization (like terminal color detection), define all variables in both branches, then make readonly after the conditional: `readonly -- RED GREEN YELLOW CYAN NC`.
-- [BCS0205] Initialize derived variables in dependency order before making readonly: base values first, then derived values, then group readonly statement.
-- [BCS0205] For variables that can only be made readonly after argument parsing, make them readonly immediately after parsing completes: `readonly -- VERBOSE DRY_RUN`.
-- [BCS0205,BCS0206] Never make variables readonly individually when they belong to a logical group; this improves maintainability and visual clarity.
+- [BCS0205] Group logically related variables together for readability: script metadata, color definitions, path constants, configuration defaults.
+- [BCS0205] Exception: Script metadata (VERSION, SCRIPT_PATH, SCRIPT_DIR, SCRIPT_NAME) should use `declare -r` for immediate readonly declaration as of BCS v1.0.1.
+- [BCS0205] Always use `--` separator in readonly statements to prevent option injection bugs.
+- [BCS0205] For conditional initialization (like terminal colors), ensure all variables are defined before making the group readonly.
+- [BCS0205] Make variables readonly as early as possible once values are final; for argument-parsed values, make readonly after parsing completes.
 ## Readonly Declaration
-- [BCS0206] Use `readonly` with type-specific flags when declaring constant arrays: `readonly -a REQUIRED=(pandoc git)`.
-- [BCS0206] Always use `--` separator with readonly to prevent option injection: `readonly -- SCRIPT_PATH="$(realpath -- "$0")"`.
+- [BCS0206] Use `readonly -a` for constant arrays and `readonly --` for constant strings to prevent accidental modification.
+- [BCS0206] Always use `--` separator with readonly declarations: `readonly -- SCRIPT_PATH="$(realpath -- "$0")"`.
 ## Boolean Flags Pattern
-- [BCS0207] Declare boolean flags as integers with explicit initialization: `declare -i DRY_RUN=0` for false, `declare -i VERBOSE=1` for true.
-- [BCS0207] Test boolean flags in conditionals using `((FLAG))` arithmetic syntax: `((DRY_RUN)) && info 'Dry-run mode'`.
-- [BCS0207] Name boolean flags descriptively in ALL_CAPS: `INSTALL_BUILTIN`, `NON_INTERACTIVE`, `SKIP_BUILD`.
-- [BCS0207] Set boolean flags from command-line parsing with simple assignment: `--dry-run) DRY_RUN=1 ;;`.
+- [BCS0207] Declare boolean flags as integers with explicit initialization: `declare -i DRY_RUN=0`, `declare -i VERBOSE=1`.
+- [BCS0207] Test flags in conditionals using `((FLAG))` which returns true for non-zero, false for zero.
+- [BCS0207] Name flags descriptively in ALL_CAPS: `DRY_RUN`, `INSTALL_BUILTIN`, `NON_INTERACTIVE`.
+- [BCS0207] Avoid mixing boolean flags with integer counters; use separate variables for distinct purposes.
 ## Derived Variables Pattern
-- [BCS0209] Group derived variables together with clear section comments explaining their dependencies: `# Derived from PREFIX` or `# Derived paths`.
-- [BCS0209] Always derive variables from base values rather than duplicating: `BIN_DIR="$PREFIX/bin"` not `BIN_DIR='/usr/local/bin'`.
-- [BCS0209] When base variables change during argument parsing, create an update function to recalculate all derived variables: `update_derived_paths()`.
-- [BCS0209] Use environment variable fallbacks with parameter expansion for flexible derivation: `CONFIG_BASE="${XDG_CONFIG_HOME:-$HOME/.config}"`.
-- [BCS0209] Document hardcoded exceptions that don't derive from base values with explanatory comments: `# Hardcoded by design - system requirement`.
+- [BCS0209] Derive variables from base values to maintain single source of truth: `BIN_DIR="$PREFIX/bin"`, `CONFIG_FILE="$CONFIG_DIR/config.conf"`.
+- [BCS0209] Group derived variables with section comments explaining dependencies: "# Derived from PREFIX" or "# Derived paths".
+- [BCS0209] When base variables change during execution (especially argument parsing), update all derived variables immediately using dedicated update functions.
+- [BCS0209] Use environment fallbacks for XDG paths: `CONFIG_BASE="${XDG_CONFIG_HOME:-$HOME/.config}"`, then derive app-specific paths.
+- [BCS0209] Document hardcoded values that don't derive: explain special cases like system-wide paths that must be fixed regardless of PREFIX.
 - [BCS0209] Make derived variables readonly only after all parsing and derivation is complete to allow updates when base values change.
-- [BCS0209] Maintain consistent derivation patterns: if one path derives from `APP_NAME`, all related paths should derive from `APP_NAME`.
 
 
 ---
@@ -155,28 +167,24 @@ This is the rulet tier: extracted rules in 1-2 sentence format with BCS code ref
 
 ## Variable Expansion & Parameter Substitution - Rulets
 ## Default Form
-- [BCS0302] Always use `"$var"` as the default form for variable expansion; only add braces when syntactically required.
-- [BCS0302] Never use braces for standalone variables like `"${var}"`, `"${HOME}"`, or `"${SCRIPT_DIR}"` - use simple form `"$var"` instead.
-## Parameter Expansion Operations
-- [BCS0301] Use braces for parameter expansion operations: `${var##pattern}` for prefix removal, `${var%pattern}` for suffix removal, `${var:-default}` for defaults.
-- [BCS0301] Use braces for substring extraction `${var:0:5}`, pattern substitution `${var//old/new}`, and case conversion `${var,,}` or `${var^^}`.
-- [BCS0301] Use braces for array operations: `${array[index]}` for element access, `${array[@]}` for all elements, `${#array[@]}` for length.
-- [BCS0301] Use braces for special parameter expansion: `${@:2}` for positional parameters from 2nd onward, `${10}` for parameters beyond $9, `${!var}` for indirect expansion.
+- [BCS0302] Always use `"$var"` without braces as the default form for standalone variables: `"$HOME"`, `"$SCRIPT_DIR"`, `"$1"`.
+- [BCS0302] Only use braces `"${var}"` when syntactically necessary; braces add visual noise and should make necessary cases stand out.
+## Required Brace Usage
+- [BCS0301,BCS0302] Use braces for parameter expansion operations: `"${var##*/}"` (remove prefix), `"${var%/*}"` (remove suffix), `"${var:-default}"` (default value), `"${var:0:5}"` (substring), `"${var//old/new}"` (substitution), `"${var,,}"` (case conversion).
+- [BCS0302] Use braces for variable concatenation without separators: `"${var1}${var2}${var3}"` or `"${prefix}suffix"` when variable immediately followed by alphanumeric.
+- [BCS0301,BCS0302] Use braces for array access: `"${array[index]}"`, `"${array[@]}"`, `"${#array[@]}"`.
+- [BCS0301,BCS0302] Use braces for special parameter expansion: `"${@:2}"` (positional parameters from 2nd), `"${10}"` (parameters beyond $9), `"${!var}"` (indirect expansion).
 ## Path Concatenation
-- [BCS0302] Use `"$var"/path` or `"$var/path"` for path concatenation with separators - quotes handle concatenation without requiring braces.
-- [BCS0302] Never use `"${PREFIX}"/bin` or `"${PREFIX}/bin"` when a separator (slash) is present - use `"$PREFIX"/bin` or `"$PREFIX/bin"` instead.
-- [BCS0302] The pattern `"$var"/literal/"$var"` (mixing quoted variables with unquoted literals/separators) is preferred in assignments, conditionals, and command arguments.
-## Variable Concatenation
-- [BCS0302] Use braces for variable concatenation without separators: `"${var1}${var2}${var3}"` or `"${prefix}suffix"` when immediately followed by alphanumeric characters.
-- [BCS0302] Use braces to prevent ambiguity when next character is alphanumeric: `"${var}_suffix"` prevents `$var_suffix` interpretation, `"${prefix}123"` prevents `$prefix123` interpretation.
-- [BCS0302] No braces needed when separator is present: `"$var-suffix"`, `"$var.suffix"`, `"$var/path"` - the separator naturally delimits.
-## Strings and Messages
-- [BCS0302] Use simple form in echo/info strings: `echo "Installing to $PREFIX/bin"` and `info "Found $count files"` - separators (spaces, slashes) make braces unnecessary.
-- [BCS0302] Never use braces in string interpolation when separators are present: `echo "Binary: $BIN_DIR/file"` not `echo "Binary: ${BIN_DIR}/file"`.
-## Conditionals
-- [BCS0302] Use simple form in conditionals: `[[ -d "$path" ]]`, `[[ -f "$SCRIPT_DIR"/file ]]`, `if [[ "$var" == 'value' ]]` - braces add unnecessary noise.
-## Rationale
-- [BCS0302] Braces add visual noise without providing value when not required; using them only when necessary makes code cleaner and necessary cases stand out.
+- [BCS0302] Use simple form for path concatenation with separators: `"$PREFIX"/bin` or `"$PREFIX/bin"`, never `"${PREFIX}"/bin`.
+- [BCS0302] Mix quoted variables with unquoted literals/separators in assignments and commands: `"$path"/file.txt`, `"$HOME"/.config/"$APP"/settings`, `[[ -f "$dir"/subdir/file ]]`.
+## String Interpolation
+- [BCS0302] Use simple form in echo/info strings: `echo "Installing to $PREFIX/bin"`, `info "Found $count files"`, never `echo "Installing to ${PREFIX}/bin"`.
+- [BCS0302] Use simple form in conditionals: `[[ -d "$path" ]]`, `[[ -f "$SCRIPT_DIR"/file ]]`, never `[[ -d "${path}" ]]`.
+## Edge Cases
+- [BCS0302] Use braces when next character is alphanumeric with no separator: `"${var}_suffix"` (prevents `$var_suffix` interpretation), `"${prefix}123"` (prevents `$prefix123` interpretation).
+- [BCS0302] Omit braces when separator present: `"$var-suffix"` (dash), `"$var.suffix"` (dot), `"$var/path"` (slash).
+## Key Principle
+- [BCS0300,BCS0302] Default to `"$var"` for simplicity and readability; reserve `"${var}"` exclusively for cases where shell requires braces for correct parsing.
 
 
 ---
@@ -185,49 +193,52 @@ This is the rulet tier: extracted rules in 1-2 sentence format with BCS code ref
 **Rule: BCS0400**
 
 ## Quoting & String Literals - Rulets
-## Core Principle
-- [BCS0400] Use single quotes (`'...'`) for static string literals; use double quotes (`"..."`) only when variable expansion, command substitution, or escape sequences are needed.
+## General Principles
+- [BCS0400] Use single quotes (`'...'`) for static string literals and double quotes (`"..."`) only when variable expansion, command substitution, or escape sequences are needed.
+- [BCS0400] Single quotes signal "literal text" while double quotes signal "shell processing needed" - this semantic distinction clarifies intent for both developers and AI assistants.
 ## Static Strings and Constants
 - [BCS0401] Always use single quotes for string literals that contain no variables: `info 'Checking prerequisites...'` not `info "Checking prerequisites..."`.
-- [BCS0401] Use single quotes for SQL queries, regex patterns, and shell commands stored as strings to prevent accidental variable expansion: `regex='^\$[0-9]+\.[0-9]{2}$'`.
-- [BCS0401] Single quotes require no escaping of special characters like `$`, `` ` ``, `\`, `!` - what you see is what you get.
-## One-Word Literals Exception
-- [BCS0402] Literal one-word values containing only alphanumeric, underscore, hyphen, dot, or slash may be left unquoted in assignments and conditionals, but quoting is more defensive: `VAR=value` or `VAR='value'`.
-- [BCS0402] Never leave unquoted: values with spaces, wildcards (`*.txt`), special characters (`@`, `$`), empty strings, values starting with hyphen in conditionals, or any value with `()`, quotes, or backslashes.
-- [BCS0402] Always quote variables even when concatenating with literals: `FILE="$basename.txt"` not `FILE=$basename.txt`.
+- [BCS0401] Single quotes prevent accidental variable expansion, command substitution, and eliminate the need to escape special characters like `$`, `` ` ``, `\`, `!`.
+- [BCS0401] Use double quotes only when the string requires variable expansion or command substitution: `info "Processing $count files"`.
+- [BCS0401] For empty strings, prefer single quotes for consistency: `var=''` not `var=""`.
+## One-Word Literals
+- [BCS0402] Literal one-word values containing only safe characters (alphanumeric, underscore, hyphen, dot, slash) may be left unquoted in variable assignments and conditionals, but quoting is more defensive and recommended: `ORGANIZATION=Okusi` is acceptable but `ORGANIZATION='Okusi'` is better.
+- [BCS0402] Values with spaces, wildcards, special characters (`@`, `*`, `?`, etc.), or starting with hyphens must always be quoted: `EMAIL='user@domain.com'`, `PATTERN='*.txt'`, `MESSAGE='Hello world'`.
+- [BCS0402] When in doubt, quote everything - the reduction in visual noise from omitting quotes on one-word literals is not worth the mental overhead or risk of bugs when values change.
 ## Strings with Variables
-- [BCS0403] Use double quotes when strings contain variables that need expansion: `info "Installing to $PREFIX/bin"` or `echo "Processed $count files"`.
-- [BCS0403] Combine double quotes with nested single quotes to protect literal quotes: `die 2 "Unknown option '$1'"`.
+- [BCS0403] Use double quotes when strings contain variables that need expansion: `error "'$compiler' not found"`, `info "Installing to $PREFIX/bin"`.
+- [BCS0403] Do not use braces around variables unless required for parameter expansion, array access, or adjacent variables: `echo "$PREFIX/bin"` not `echo "${PREFIX}/bin"`.
+## Mixed Quoting
+- [BCS0404] When a string contains both static text and variables, use double quotes with nested single quotes for literal protection: `die 2 "Unknown option '$1'"`, `warn "Cannot access '$file_path'"`.
 ## Command Substitution
-- [BCS0405] Use double quotes when including command substitution: `echo "Current time: $(date +%T)"` or `VERSION="$(git describe --tags)"`.
+- [BCS0405] Always use double quotes when including command substitution: `echo "Current time: $(date +%T)"`, `info "Found $(wc -l "$file") lines"`.
 ## Variables in Conditionals
-- [BCS0406] Always quote variables in test expressions to prevent word splitting and glob expansion: `[[ -f "$file" ]]` not `[[ -f $file ]]`.
-- [BCS0406] Quote variables in all file tests (`-f`, `-d`, `-r`, `-w`, `-x`), string comparisons, and integer comparisons: `[[ "$count" -eq 0 ]]`.
-- [BCS0406] Static comparison values follow normal quoting rules: single quotes for multi-word literals (`[[ "$msg" == 'hello world' ]]`), optional quotes for one-word literals (`[[ "$action" == start ]]` or `[[ "$action" == 'start' ]]`).
-- [BCS0406] For glob pattern matching, quote the variable but leave the pattern unquoted: `[[ "$filename" == *.txt ]]`; for literal matching, quote both: `[[ "$filename" == '*.txt' ]]`.
-- [BCS0406] For regex matching with `=~`, quote the variable but leave the pattern unquoted: `[[ "$email" =~ ^[a-z]+@[a-z]+$ ]]` or store pattern in variable: `[[ "$input" =~ $pattern ]]`.
+- [BCS0406] Always quote variables in test expressions to prevent word splitting and glob expansion, even when the variable is guaranteed to contain a safe value: `[[ -f "$file" ]]` not `[[ -f $file ]]`.
+- [BCS0406] Quote variables in all conditional contexts: file tests `[[ -d "$path" ]]`, string comparisons `[[ "$name" == "$expected" ]]`, integer comparisons `[[ "$count" -eq 0 ]]`, logical operators `[[ -f "$file" && -r "$file" ]]`.
+- [BCS0406] Static comparison values follow normal quoting rules - use single quotes for multi-word literals or special characters `[[ "$message" == 'file not found' ]]`, but one-word literals can be unquoted `[[ "$action" == start ]]`.
+- [BCS0406] For glob pattern matching, leave the right-side pattern unquoted: `[[ "$filename" == *.txt ]]`; for literal matching, quote it: `[[ "$filename" == '*.txt' ]]`.
+- [BCS0406] For regex matching with `=~`, keep the pattern unquoted or in an unquoted variable: `[[ "$email" =~ ^[a-z]+@[a-z]+$ ]]` or `pattern='^test'; [[ "$input" =~ $pattern ]]`.
 ## Array Expansions
-- [BCS0407] Always quote array expansions: `"${array[@]}"` for separate elements, `"${array[*]}"` for single concatenated string.
-- [BCS0407] Use `"${array[@]}"` for iteration, function arguments, command arguments, and array copying: `for item in "${array[@]}"`.
-- [BCS0407] Use `"${array[*]}"` for display, logging, or creating CSV with custom IFS: `IFS=','; csv="${array[*]}"`.
-- [BCS0407] Unquoted array expansions undergo word splitting and lose empty elements; always quote to preserve element boundaries: `copy=("${original[@]}")` not `copy=(${original[@]})`.
+- [BCS0407] Always quote array expansions to preserve element boundaries: `"${array[@]}"` for separate elements, `"${array[*]}"` for a single concatenated string.
+- [BCS0407] Use `"${array[@]}"` for iteration, function arguments, and command arguments: `for item in "${array[@]}"`, `my_function "${array[@]}"`.
+- [BCS0407] Use `"${array[*]}"` for display, logging, or creating comma-separated values with custom IFS: `echo "Items: ${array[*]}"`, `IFS=','; csv="${array[*]}"`.
+- [BCS0407] Unquoted array expansions undergo word splitting and glob expansion, breaking elements with spaces and losing empty elements - never use unquoted: `${array[@]}`.
 ## Here Documents
-- [BCS0408] Use single quotes on delimiter for literal content (no expansion): `cat <<'EOF'` keeps `$VAR` and `$(command)` literal.
-- [BCS0408] Use unquoted delimiter for variable expansion: `cat <<EOF` expands `$VAR` and `$(command)`.
+- [BCS0408] Use single-quoted delimiter for literal here-docs with no expansion: `cat <<'EOF'` preserves `$VAR` and `$(command)` as literal text.
+- [BCS0408] Use unquoted delimiter (or double-quoted, which is equivalent) for here-docs requiring variable/command expansion: `cat <<EOF` expands `$VAR` and `$(command)`.
 ## Echo and Printf
-- [BCS0409] Use single quotes for static strings in echo/printf: `echo 'Installation complete'` not `echo "Installation complete"`.
-- [BCS0409] Use double quotes when echo/printf contains variables: `echo "Installing to $PREFIX/bin"` or `printf 'Found %d files in %s\n' "$count" "$dir"`.
+- [BCS0409] Use single quotes for static echo/printf strings: `echo 'Installation complete'`, `printf '%s\n' 'Processing files'`.
+- [BCS0409] Use double quotes for echo/printf with variables: `echo "$SCRIPT_NAME $VERSION"`, `printf 'Found %d files in %s\n' "$count" "$dir"`.
 ## Anti-Patterns
-- [BCS0411] Never use double quotes for static strings with no variables: `info "Starting process..."` is wrong, use `info 'Starting process...'`.
-- [BCS0411] Never leave variables unquoted in conditionals, assignments, or commands: `[[ -f $file ]]`, `rm $file`, `echo $result` are all wrong.
-- [BCS0411] Never use braces when not required: `echo "${HOME}/bin"` should be `echo "$HOME/bin"`; braces only needed for `${var##pattern}`, `${var:-default}`, `${array[@]}`, `${var1}${var2}`.
-- [BCS0411] Never mix quote styles inconsistently: pick single quotes for all static strings, double quotes for all strings with variables.
-- [BCS0411] Never use unquoted glob patterns in variables: `pattern='*.txt'; echo $pattern` expands to all .txt files; use `echo "$pattern"` to preserve literal.
-- [BCS0411] Never use quoted delimiter when variables needed in heredoc: `cat <<"EOF"` with `$VAR` inside prevents expansion; use `cat <<EOF`.
-## Utility Functions
-- [BCS0412] Use parameter expansion for string trimming: `v="${v#"${v%%[![:blank:]]*}"}"; v="${v%"${v##*[![:blank:]]}"}"` removes leading/trailing whitespace.
-- [BCS0413] Display declared variables without the declare statement prefix: `decp() { declare -p "$@" | sed 's/^declare -[a-zA-Z-]* //'; }`.
-- [BCS0414] Create pluralization helper that returns 's' for non-singular counts: `s() { (( ${1:-1} == 1 )) || echo -n 's'; }` for use like `echo "$count file$(s "$count")"`.
+- [BCS0411] Never use double quotes for static strings with no variables: `info "Checking prerequisites..."` is wrong, use `info 'Checking prerequisites...'`.
+- [BCS0411] Never leave variables unquoted in conditionals, assignments, or commands: `[[ -f $file ]]`, `rm $temp_file`, `for item in ${items[@]}` are all wrong.
+- [BCS0411] Never use braces when not required: `echo "${HOME}/bin"` should be `echo "$HOME/bin"`; use braces only for parameter expansion `"${var##pattern}"`, arrays `"${array[@]}"`, defaults `"${var:-default}"`, or adjacent variables `"${var1}${var2}"`.
+- [BCS0411] Never mix quote styles inconsistently within similar contexts: pick single quotes for all static strings and stick with it.
+- [BCS0411] Never use unquoted variables with glob characters or special characters: `pattern='*.txt'; echo $pattern` expands to all `.txt` files.
+## Helper Functions
+- [BCS0412] Trim whitespace from strings: `trim() { local v="$*"; v="${v#"${v%%[![:blank:]]*}"}"; echo -n "${v%"${v##*[![:blank:]]}"}";}`.
+- [BCS0413] Display declared variables without type decorations: `decp() { declare -p "$@" | sed 's/^declare -[a-zA-Z-]* //'; }`.
+- [BCS0414] Pluralization helper for output messages: `s() { (( ${1:-1} == 1 )) || echo -n 's'; }` prints 's' unless count is 1.
 
 
 ---
@@ -237,53 +248,49 @@ This is the rulet tier: extracted rules in 1-2 sentence format with BCS code ref
 
 ## Arrays - Rulets
 ## Array Declaration
-- [BCS0501] Always declare arrays explicitly with `declare -a array=()` for indexed arrays to signal intent, ensure type safety, and prevent accidental scalar assignment.
-- [BCS0501] Use `local -a array=()` for arrays within functions to prevent global scope pollution and maintain proper variable scoping.
-- [BCS0501] Initialize arrays with elements using parentheses: `declare -a colors=('red' 'green' 'blue')` for immediate population.
+- [BCS0501] Always declare indexed arrays explicitly with `declare -a array=()` to signal array type, prevent scalar assignment, and enable type safety.
+- [BCS0501] Use `local -a` for array declarations inside functions to prevent global pollution and control scope.
+- [BCS0501] Initialize arrays with elements using parentheses syntax: `declare -a colors=('red' 'green' 'blue')`.
 ## Array Expansion and Iteration
-- [BCS0501] Always quote array expansion with `"${array[@]}"` to preserve element boundaries and prevent word splitting on spaces or special characters.
-- [BCS0501] Never use unquoted array expansion `${array[@]}` or `"$array"` without `[@]`; the former breaks with spaces, the latter only processes the first element.
-- [BCS0501] Use `"${array[@]}"` not `"${array[*]}"` for iteration; `[@]` expands each element as a separate word, `[*]` treats all elements as a single string.
+- [BCS0501] Always quote array expansion with `"${array[@]}"` to preserve element boundaries and handle spaces safely; never use unquoted `${array[@]}`.
+- [BCS0501] Use `"${array[@]}"` for iteration where each element becomes a separate word; never use `"${array[*]}"` which creates a single string.
+- [BCS0501] Iterate over array values directly with `for item in "${array[@]}"` rather than iterating over indices with `"${!array[@]}"`.
 ## Array Modification
-- [BCS0501] Append elements with `+=` operator: `array+=("element")` for single items, `array+=("item1" "item2")` for multiple items, or `array+=("${other_array[@]}")` to merge arrays.
-- [BCS0501] Get array length with `${#array[@]}`; check if empty with `((${#array[@]} == 0))` or set default if empty with `((${#array[@]})) || array=('default')`.
-- [BCS0501] Delete array elements with `unset 'array[index]'` (always quote the subscript), clear entire array with `array=()`, or access last element with `${array[-1]}` (Bash 4.3+).
-## Reading Data into Arrays
-- [BCS0501] Use `readarray -t array < <(command)` or `mapfile -t array < <(command)` to capture command output into arrays; `-t` removes trailing newlines, `< <()` avoids subshell issues.
-- [BCS0501] Split strings into arrays with `IFS='delimiter' read -ra array <<< "$string"` for delimiter-separated values like CSV or PATH components.
-- [BCS0501] Read files into arrays with `readarray -t lines < file.txt` to process one line per element, preserving spaces and special characters.
-## Safe List Handling
-- [BCS0502] Always use arrays to store lists of files, command arguments, or any collection where elements may contain spaces, special characters, or wildcards; string-based lists inevitably fail with edge cases.
-- [BCS0502] Never use string concatenation for lists like `files="file1 file2 file3"`; word splitting breaks iteration and command arguments when elements contain spaces.
-- [BCS0502] Build commands dynamically with arrays: `cmd_args=('-o' 'output.txt' '--verbose')` then execute with `"${cmd_args[@]}"` to safely handle arguments with spaces or special characters.
-## Command Argument Construction
-- [BCS0502] Construct commands with conditional arguments using arrays: initialize with `cmd=('base' 'args')`, add conditionally with `((flag)) && cmd+=('--option')`, execute with `"${cmd[@]}"`.
-- [BCS0502] Build complex commands like `find` or `rsync` in arrays, adding options conditionally: `find_args=("$dir" '-type' 'f')`, then `[[ -n "$pattern" ]] && find_args+=('-name' "$pattern")`, finally `find "${find_args[@]}"`.
-- [BCS0502] Never use `eval` or string concatenation for command building; arrays eliminate quoting issues and security risks associated with string-based command construction.
-## Array Patterns
-- [BCS0501] Collect dynamic arguments during parsing: `declare -a files=()`, then `files+=("$arg")` in parse loop, finally iterate with `for file in "${files[@]}"`.
-- [BCS0501] Check array membership by iterating elements: `for element; do [[ "$element" == "$search" ]] && return 0; done; return 1` in a function receiving array as arguments.
-- [BCS0501] Avoid iterating with indices `for i in "${!array[@]}"; do echo "${array[$i]}"; done` when you can iterate values directly with `for value in "${array[@]}"`.
-## Glob and File Collection
-- [BCS0502] Collect glob results directly into arrays: `files=(*.txt)` safely captures matching files; always use `shopt -s nullglob` to handle zero matches gracefully.
-- [BCS0502] Never parse `ls` output into strings with `files=$(ls *.txt)`; use glob into array `files=(*.txt)` or `readarray -t files < <(find ...)` for complex searches.
-- [BCS0502] Use `while IFS= read -r -d '' file; do array+=("$file"); done < <(find ... -print0)` for null-delimited file collection when filenames may contain newlines.
-## Passing Arrays to Functions
-- [BCS0502] Pass arrays to functions with `func "${array[@]}"` and receive with `local -a items=("$@")` to preserve all elements as separate arguments.
-- [BCS0502] Return arrays from functions by printing elements with `printf '%s\n' "${array[@]}"` and capture with `readarray -t result < <(func)`.
-- [BCS0502] Never pass arrays as single-quoted strings; always expand with `"${array[@]}"` so each element becomes a separate function argument.
-## Array Anti-Patterns
-- [BCS0501,BCS0502] Never use unquoted expansion `for item in ${array[@]}` or single-element reference `for item in "$array"`; both break safe iteration and element preservation.
-- [BCS0502] Avoid IFS manipulation for splitting `IFS=','; for item in $string; do ...` when you can use `IFS=',' read -ra array <<< "$string"` followed by array iteration.
-- [BCS0502] Never build file lists with string concatenation or command substitution into strings; word splitting destroys filenames with spaces and makes commands fail.
-## Advanced Array Operations
-- [BCS0502] Merge multiple arrays with `combined=("${arr1[@]}" "${arr2[@]}" "${arr3[@]}")` to create a new array containing all elements from source arrays.
-- [BCS0502] Extract array slices with `"${array[@]:start:length}"` syntax: `"${array[@]:2:4}"` returns 4 elements starting at index 2.
-- [BCS0502] Handle empty arrays safely; `for item in "${empty[@]}"` performs zero iterations without errors, and empty arrays pass zero arguments to functions.
-## Key Principles
-- [BCS0501,BCS0502] Arrays are the only safe way to handle lists in Bash; they preserve element boundaries, prevent word splitting, and eliminate glob expansion issues that plague string-based lists.
-- [BCS0502] Always quote array expansion as `"${array[@]}"` never `${array[@]}` or `"${array[*]}"` to ensure each element is treated as a separate, intact word during iteration or argument passing.
-- [BCS0502] Use arrays for all collections: file lists, command arguments, options, configuration values; string-based lists will fail with spaces, quotes, wildcards, or special characters.
+- [BCS0501] Append single elements with `array+=("value")` and multiple elements with `array+=("val1" "val2" "val3")`.
+- [BCS0501] Get array length with `${#array[@]}`; check for empty arrays with `((${#array[@]} == 0))` or `((${#array[@]})) || default_action`.
+- [BCS0501] Delete array elements with `unset 'array[i]'` (quoted to prevent glob expansion); clear entire array with `array=()`.
+- [BCS0501] Access last element with `${array[-1]}` (Bash 4.3+) and extract slices with `"${array[@]:start:length}"`.
+## Reading Into Arrays
+- [BCS0501] Use `readarray -t array < <(command)` to read command output into arrays; `-t` removes trailing newlines and `< <()` avoids subshells.
+- [BCS0501] Split delimited strings with `IFS=',' read -ra fields <<< "$csv_line"` but prefer arrays over IFS manipulation for list handling.
+- [BCS0501] Read files into arrays with `readarray -t lines < file.txt` where each line becomes one array element.
+## Safe List Handling with Arrays
+- [BCS0502] Always use arrays to store lists of files, arguments, or any elements that may contain spaces, special characters, or wildcards; never use space/newline-separated strings.
+- [BCS0502] Arrays preserve element boundaries without word splitting or glob expansion when expanded with `"${array[@]}"`, unlike string-based lists which break on spaces.
+- [BCS0502] Build command arguments in arrays and execute with `"${array[@]}"` to safely handle arguments containing spaces, quotes, or special characters.
+## Safe Command Construction
+- [BCS0502] Construct complex commands by building argument arrays and conditionally adding elements: `cmd_args+=('-flag')` if condition met, then execute with `"${cmd_args[@]}"`.
+- [BCS0502] Never concatenate strings for command arguments (`cmd="arg1 $arg2"`); use arrays (`cmd_args=('arg1' "$arg2")`) to avoid word splitting and eval dangers.
+- [BCS0502] For SSH, rsync, find, tar, or any command with dynamic arguments, build the full command in an array: `ssh_args+=('-i' "$keyfile")` then `ssh "${ssh_args[@]}"`.
+## File List Processing
+- [BCS0502] Collect glob results directly into arrays with `files=(*.txt)` using `nullglob` to handle no-matches safely, then iterate with `for file in "${files[@]}"`.
+- [BCS0502] Gather files from commands with null-delimited output: `while IFS= read -r -d '' file; do array+=("$file"); done < <(find ... -print0)`.
+- [BCS0502] Check if glob matched anything by testing array length: `((${#files[@]} > 0))` or `[[ ${#files[@]} -eq 0 ]]`.
+## Function Argument Passing
+- [BCS0502] Pass arrays to functions with `function_name "${array[@]}"` and receive with `local -a items=("$@")` to preserve all elements as separate arguments.
+- [BCS0502] Return arrays from functions by printing elements with `printf '%s\n' "${array[@]}"` and capturing with `readarray -t result < <(function_name)`.
+## Anti-Patterns to Avoid
+- [BCS0501,BCS0502] Never iterate with unquoted `${array[@]}` or use `for item in "$array"` (without `[@]`) which only processes the first element.
+- [BCS0501] Never assign scalars to array variables; use array syntax even for single elements: `files=('item')` not `files='item'`.
+- [BCS0502] Never use `eval` with constructed commands; build commands in arrays and execute directly with `"${array[@]}"`.
+- [BCS0502] Never parse `ls` output into strings (`files=$(ls *.txt)`); use globs directly into arrays (`files=(*.txt)`).
+- [BCS0502] Never manipulate IFS for iteration over lists; use arrays which handle element boundaries naturally without IFS changes.
+## Array Operators Summary
+- [BCS0501] Key array operators: `declare -a arr=()` (create), `arr+=("val")` (append), `${#arr[@]}` (length), `"${arr[@]}"` (all elements), `"${arr[i]}"` (single element), `"${arr[-1]}"` (last element), `"${arr[@]:start:len}"` (slice), `unset 'arr[i]'` (delete element), `"${!arr[@]}"` (indices).
+## Special Cases
+- [BCS0502] Empty arrays iterate safely (zero iterations) and can be passed to functions (zero arguments received); no special handling needed.
+- [BCS0502] Arrays safely preserve elements containing spaces, quotes, dollars, wildcards, and newlines when expanded with `"${array[@]}"`.
+- [BCS0502] Merge multiple arrays with `combined=("${arr1[@]}" "${arr2[@]}" "${arr3[@]}")` to concatenate all elements into a new array.
 
 
 ---
@@ -292,47 +299,42 @@ This is the rulet tier: extracted rules in 1-2 sentence format with BCS code ref
 **Rule: BCS0600**
 
 ## Functions - Rulets
-
 ## Function Definition Pattern
-
-- [BCS0601] Use single-line format for simple operations: `vecho() { ((VERBOSE)) || return 0; _msg "$@"; }`.
-- [BCS0601] Use multi-line format with local variables for complex functions: declare locals first, then function body, then explicit return.
-
+- [BCS0601] Use single-line functions for simple operations: `vecho() { ((VERBOSE)) || return 0; _msg "$@"; }`
+- [BCS0601] Use multi-line functions with local variables for complex operations, always declaring locals at the top of the function body.
+- [BCS0601] Always return explicit exit codes from functions: `return "$exitcode"` not implicit returns.
 ## Function Naming
-
-- [BCS0602] Always use lowercase with underscores for function names to match shell conventions: `my_function()`, `process_log_file()`.
-- [BCS0602] Use leading underscore for private/internal functions: `_my_private_function()`, `_validate_input()`.
-- [BCS0602] Never use CamelCase or UPPER_CASE for function names; this can be confused with variables or commands.
-- [BCS0602] Never override built-in commands without good reason; if you must wrap built-ins, use a different name like `change_dir()` instead of `cd()`.
-- [BCS0602] Never use special characters like dashes in function names: `my-function()` creates issues in some contexts.
-
+- [BCS0602] Always use lowercase_with_underscores for function names to match shell conventions and avoid conflicts with built-in commands.
+- [BCS0602] Prefix private/internal functions with underscore: `_my_private_function()`, `_validate_input()`.
+- [BCS0602] Never use CamelCase or UPPER_CASE for function names; avoid special characters like dashes.
+- [BCS0602] Never override built-in commands unless absolutely necessary; if you must wrap built-ins, use a different name: `change_dir()` not `cd()`.
 ## Main Function
-
-- [BCS0603] Always include a `main()` function for scripts longer than approximately 200 lines to improve organization, testability, and maintainability.
-- [BCS0603] Place `main "$@"` at the bottom of the script, just before the `#fin` marker, to ensure all helper functions are defined first.
-- [BCS0603] Parse command-line arguments inside `main()` using local variables, not outside it with globals: `local -i verbose=0; while (($#)); do case $1 in -v) verbose=1 ;; esac; shift; done`.
-- [BCS0603] Make parsed option variables readonly after parsing to prevent accidental modification: `readonly -- verbose dry_run output_dir`.
-- [BCS0603] Use `main()` as the orchestrator that coordinates work by calling helper functions in the right order, not by doing the heavy lifting itself.
-- [BCS0603] Return appropriate exit codes from `main()`: 0 for success, non-zero for errors.
-- [BCS0603] Use `if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then main "$@"; fi` pattern to make scripts sourceable for testing without automatic execution.
-- [BCS0603] Always pass all arguments to main with `main "$@"`, never call it without arguments.
-
-## Function Export
-
-- [BCS0604] Export functions with `declare -fx` when they need to be available in subshells or when creating sourceable libraries.
-- [BCS0604] Group function exports together for readability: `declare -fx grep find` for multiple related functions.
-
-## Production Optimization
-
-- [BCS0605] Remove unused utility functions once a script is mature and ready for production: if `yn()`, `decp()`, `trim()`, `s()` are not used, delete them.
-- [BCS0605] Remove unused global variables that are not referenced: `PROMPT`, `DEBUG`, color variables if terminal output is not used.
-- [BCS0605] Remove unused messaging functions that your script doesn't call; a simple script may only need `error()` and `die()`, not the full messaging suite.
-- [BCS0605] Keep only the functions and variables your script actually needs to reduce script size, improve clarity, and eliminate maintenance burden.
-
+- [BCS0603] Always include a `main()` function for scripts longer than approximately 200 lines; place `main "$@"` at the bottom just before `#fin`.
+- [BCS0603] Use `main()` as the single entry point to orchestrate script logic: parsing arguments, validating input, calling helper functions in the right order, and returning appropriate exit codes.
+- [BCS0603] Parse command-line arguments inside `main()`, not in global scope; make parsed option variables readonly after validation.
+- [BCS0603] Place `main()` function definition at the end of the script after all helper functions are defined; this ensures bottom-up function organization.
+- [BCS0603] For testable scripts, use conditional invocation: `if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then main "$@"; fi` to prevent execution when sourced.
+- [BCS0603] Skip `main()` function only for trivial scripts (<200 lines) with no functions, linear flow, or simple wrappers.
 ## Function Organization
-
-- [BCS0600,BCS0603] Organize functions bottom-up: messaging functions first (lowest level), then helpers, then business logic, with `main()` last (highest level).
-- [BCS0600,BCS0603] This bottom-up organization ensures each function can safely call previously defined functions and readers understand primitives before composition.
+- [BCS0603,BCS0107] Organize functions bottom-up: messaging functions first (lowest level), then documentation/helpers, then validation, then business logic, then orchestration, with `main()` last (highest level).
+- [BCS0603] Separate script into clear sections with comment dividers: messaging functions, documentation functions, helper functions, business logic functions, main function.
+## Function Export
+- [BCS0604] Export functions with `declare -fx` when they need to be available in subshells or when creating sourceable libraries.
+- [BCS0604] Batch export related functions together: `declare -fx grep find` after defining wrapper functions.
+## Production Optimization
+- [BCS0605] Remove unused utility functions from mature production scripts: if `yn()`, `decp()`, `trim()`, `s()` are not called, delete them.
+- [BCS0605] Remove unused global variables from production scripts: if `PROMPT`, `DEBUG` are not referenced, delete them.
+- [BCS0605] Remove unused messaging functions your script doesn't call; keep only what your script actually needs to reduce size and improve clarity.
+- [BCS0605] Simple scripts may only need `error()` and `die()`, not the full messaging suite; optimize accordingly.
+## Error Handling in Main
+- [BCS0603] Track errors in `main()` using counters: `local -i errors=0` then `((errors+=1))` on failures; return non-zero if `((errors > 0))`.
+- [BCS0603] Use trap for cleanup in `main()`: `trap cleanup EXIT` at the start ensures cleanup happens on any exit path.
+- [BCS0603] Make `main()` return 0 for success and non-zero for errors to enable `main "$@"` invocation at script level with `set -e`.
+## Main Function Anti-Patterns
+- [BCS0603] Never define functions after calling `main "$@"`; all functions must be defined before the main invocation.
+- [BCS0603] Never parse arguments outside `main()` in global scope; this consumes `"$@"` before main receives it.
+- [BCS0603] Never call main without passing arguments: use `main "$@"` not `main` to preserve all command-line arguments.
+- [BCS0603] Never mix global and local state unnecessarily; prefer all logic and variables local to `main()` for clean scope.
 
 
 ---
@@ -341,60 +343,47 @@ This is the rulet tier: extracted rules in 1-2 sentence format with BCS code ref
 **Rule: BCS0700**
 
 ## Control Flow - Rulets
-
 ## Conditionals
-
-- [BCS0701] Always use `[[ ]]` for string and file tests, `(())` for arithmetic tests: `[[ -f "$file" ]]` for files, `((count > 0))` for numbers.
-- [BCS0701] Never use `[ ]` (old test syntax) - it requires quotes, doesn't support pattern matching, and lacks logical operators inside brackets.
-- [BCS0701] Quote variables in `[[ ]]` tests even though not strictly required: `[[ "$var" == "value" ]]` for clarity and consistency.
-- [BCS0701] Use pattern matching in `[[ ]]` with `==` for globs and `=~` for regex: `[[ "$file" == *.txt ]]` or `[[ "$email" =~ ^[a-z]+@[a-z]+\.[a-z]+$ ]]`.
-- [BCS0701] Use short-circuit evaluation for concise conditionals: `[[ -f "$file" ]] && source "$file"` or `((VERBOSE)) || return 0`.
-- [BCS0701] Never use `-a` and `-o` operators inside `[ ]` - they are deprecated and fragile; use `[[ ]]` with `&&` and `||` instead.
-
+- [BCS0701] Always use `[[ ]]` for string and file tests, `(())` for arithmetic comparisons: `[[ -f "$file" ]]` for files, `((count > 0))` for numbers.
+- [BCS0701] Never use `[ ]` for conditionals; use `[[ ]]` which handles unquoted variables safely, supports pattern matching with `==` and `=~`, and allows `&&`/`||` operators inside brackets.
+- [BCS0701] Use short-circuit evaluation for concise conditionals: `[[ -f "$file" ]] && source "$file"` executes second command only if first succeeds, `((VERBOSE)) || return 0` executes second only if first fails.
+- [BCS0701] Quote variables in `[[ ]]` conditionals for clarity even though not strictly required: `[[ "$var" == "value" ]]` not `[[ $var == "value" ]]`.
 ## Case Statements
-
-- [BCS0702] Use case statements for multi-way branching based on pattern matching a single value, not for testing multiple variables or complex conditions.
-- [BCS0702] Choose compact format (single-line actions with aligned `;;`) for simple cases like argument parsing; use expanded format (multi-line actions with `;;` on separate line) for complex logic.
-- [BCS0702] Always quote the test variable but don't quote literal patterns: `case "$filename" in` not `case $filename in`, and `*.txt)` not `"*.txt")`.
-- [BCS0702] Always include default case `*)` to handle unexpected values explicitly and prevent silent failures.
-- [BCS0702] Use alternation with `|` for multiple patterns: `-h|--help|help)` action `;;` instead of separate cases.
-- [BCS0702] Enable `shopt -s extglob` for advanced patterns: `@(start|stop|restart)` for exactly one, `!(*.tmp|*.bak)` for exclusion, `+([0-9])` for one or more digits.
-- [BCS0702] Align actions consistently at same column (typically 14-18 characters) in compact format for visual clarity.
-- [BCS0702] Never attempt fall-through patterns - Bash doesn't support them; use explicit alternation: `200|201|204)` not separate cases expecting fall-through.
-- [BCS0702] Use case for pattern matching (file extensions, option flags, action routing), use if/elif for complex conditions involving multiple variables or ranges.
-
+- [BCS0702] Use case statements for multi-way branching based on pattern matching of a single variable; they're more readable and efficient than long if/elif chains.
+- [BCS0702] Always quote the test variable but never quote literal patterns: `case "$filename" in` followed by `*.txt)` not `"*.txt")`.
+- [BCS0702] Use compact format (all on one line with aligned `;;`) for simple single-action cases like argument parsing: `-v|--verbose) VERBOSE=1 ;;`
+- [BCS0702] Use expanded format (action on next line, `;;` on separate line) for multi-line logic or complex operations requiring comments.
+- [BCS0702] Always include a default `*)` case to handle unexpected values explicitly: `*) die 22 "Invalid option: $1" ;;`
+- [BCS0702] Use alternation with `|` for multiple patterns: `-h|--help|help)` matches any of the three forms.
+- [BCS0702] Enable extglob for advanced patterns: `shopt -s extglob` allows `@(pattern)` (exactly one), `+(pattern)` (one or more), `*(pattern)` (zero or more), `?(pattern)` (zero or one), `!(pattern)` (anything except).
+- [BCS0702] Align actions at consistent column (14-18 characters) for visual clarity in compact format.
+- [BCS0702] Never use case for testing multiple variables or complex conditional logic; use if/elif with `[[ ]]` instead.
 ## Loops
-
-- [BCS0703] Always quote arrays in for loops: `for item in "${array[@]}"` not `for item in ${array[@]}` to preserve element boundaries with spaces.
-- [BCS0703] Use for loops for arrays, globs, and known ranges; use while loops for reading input, argument parsing, and condition-based iteration.
-- [BCS0703] Enable `shopt -s nullglob` before glob loops to handle zero matches gracefully: `for file in *.txt` expands to nothing if no matches instead of literal `*.txt`.
-- [BCS0703] Use C-style for loops for numeric iteration: `for ((i=1; i<=10; i+=1))` not `for i in $(seq 1 10)` to avoid external commands.
-- [BCS0703] Read files line-by-line with `while IFS= read -r line; do ... done < "$file"` preserving backslashes and avoiding word splitting.
-- [BCS0703] Use `break N` to exit N levels of nested loops explicitly: `break 2` breaks both inner and outer loop for clarity.
-- [BCS0703] Use `continue` to skip remaining loop body and proceed to next iteration for early conditional filtering.
-- [BCS0703] Use `while ((1))` for infinite loops (fastest option, 15-22% faster than `while true`), or `while :` for POSIX compatibility.
-- [BCS0703] Never parse `ls` output - use glob patterns directly: `for file in *.txt` not `for file in $(ls *.txt)`.
-- [BCS0703] Use process substitution for null-delimited input: `while IFS= read -r -d '' file; do ... done < <(find . -print0)` to handle filenames with newlines.
-- [BCS0703] Avoid redundant comparisons in arithmetic context: use `while (($#))` not `while (($# > 0))` since non-zero is truthy.
-
+- [BCS0703] Use for loops for arrays, globs, and known ranges; while loops for reading input, argument parsing, and condition-based iteration; avoid until loops (prefer while with opposite condition).
+- [BCS0703] Always quote array expansion in for loops: `for file in "${files[@]}"` preserves element boundaries including spaces.
+- [BCS0703] Use C-style for loops for numeric iteration: `for ((i=0; i<10; i+=1))` with explicit increment `i+=1` never `i++`.
+- [BCS0703] Never parse `ls` output; use glob patterns directly: `for file in *.txt` not `for file in $(ls *.txt)`.
+- [BCS0703] Use `while IFS= read -r line; do` for line-by-line file processing; always include `IFS=` and `-r` flags.
+- [BCS0703] Use `while (($#))` not `while (($# > 0))` for argument parsing loops; non-zero values are truthy in arithmetic context, making the comparison redundant.
+- [BCS0703] Use `while ((1))` for infinite loops (fastest, recommended), `while :` for POSIX compatibility, never `while true` (15-22% slower due to command execution overhead).
+- [BCS0703] Use `break` for early loop exit and `continue` for conditional skipping; specify break level for nested loops: `break 2` exits two levels.
+- [BCS0703] Enable `nullglob` to handle empty glob matches safely: `shopt -s nullglob` makes `for file in *.txt` execute zero iterations if no matches.
+- [BCS0703] Never iterate over unquoted strings with spaces; always use arrays: `files=('file 1.txt' 'file 2.txt')` then `for file in "${files[@]}"`.
 ## Pipes to While Loops
-
-- [BCS0704] Never pipe commands to while loops - pipes create subshells where variable assignments don't persist outside the loop; use process substitution `< <(command)` instead.
-- [BCS0704] Use `readarray -t array < <(command)` when collecting command output into array - simpler and more efficient than while loop.
-- [BCS0704] Use here-string `<<< "$variable"` when input is already in a variable: `while read -r line; done <<< "$input"`.
-- [BCS0704] The pipe subshell issue is silent - counters stay at 0, arrays stay empty, flags stay unset - no error messages, script continues with wrong values.
-- [BCS0704] With `set -e`, command failures in process substitution are detected properly: `< <(failing_command)` exits script, but pipe may not.
-
+- [BCS0704] Never pipe commands to while loops; pipes create subshells where variable assignments don't persist outside the loop, causing silent failures.
+- [BCS0704] Always use process substitution instead of pipes: `while read -r line; do ((count+=1)); done < <(command)` keeps loop in current shell so variables persist.
+- [BCS0704] Use `readarray -t array < <(command)` when collecting lines into an array; it's cleaner and faster than manual while loop appending.
+- [BCS0704] Use here-string `while read -r line; done <<< "$var"` when input is already in a variable.
+- [BCS0704] For null-delimited input (filenames with newlines), use `while IFS= read -r -d '' file; done < <(find . -print0)` or `readarray -d '' -t files < <(find . -print0)`.
+- [BCS0704] Remember pipe creates process tree: parent shell → subshell (while loop with modified variables) → subshell exits → changes discarded; process substitution avoids this.
 ## Arithmetic Operations
-
-- [BCS0705] Always declare integer variables with `declare -i` for automatic arithmetic context, type safety, and clarity: `declare -i count=0 total max_retries=3`.
-- [BCS0705] Use `i+=1` or `((i+=1))` for increment; never use `((i++))` - it returns the original value and fails with `set -e` when i=0.
-- [BCS0705] Use `((++i))` only if you need the incremented value returned (pre-increment); `((i+=1))` always returns 0 (success) regardless of value.
-- [BCS0705] Use `(())` for arithmetic assignments without $ on variables inside: `((result = x * y + z))` not `((result = $x * $y + $z))`.
-- [BCS0705] Use `(())` for arithmetic conditionals not `[[ ]]` with `-gt/-lt`: `((count > 10))` not `[[ "$count" -gt 10 ]]` for clarity and conciseness.
-- [BCS0705] Never use `expr` command for arithmetic - it's slow and external; use `$(())` or `(())` instead: `result=$((i + j))`.
-- [BCS0705] Remember Bash only does integer arithmetic - division truncates: `((result = 10 / 3))` gives 3 not 3.333; use `bc` or `awk` for floating-point.
-- [BCS0705] Use ternary operator in arithmetic for conditional assignment: `((max = a > b ? a : b))` (Bash 5.2+).
+- [BCS0705] Always declare integer variables with `declare -i` for automatic arithmetic context, type safety, and clarity: `declare -i count=0 total=0`.
+- [BCS0705] Use `i+=1` for increment (clearest and safest) or `((++i))` (pre-increment, safe); never use `((i++))` which returns old value and fails with `set -e` when i=0.
+- [BCS0705] Use `(())` for arithmetic operations without `$` on variables: `((result = x * y + z))` not `((result = $x * $y + $z))`.
+- [BCS0705] Use `$(())` for arithmetic in assignments or command arguments: `result=$((i * 2 + 5))` or `echo "$((count / total))".`
+- [BCS0705] Always use `(())` for arithmetic conditionals, never `[[ ]]` with `-gt`/`-lt`: `((count > 10))` not `[[ "$count" -gt 10 ]]`.
+- [BCS0705] Remember integer division truncates toward zero: `((result = 10 / 3))` gives 3 not 3.33; use `bc` or `awk` for floating point.
+- [BCS0705] Never use `expr` command for arithmetic; it's slow, external, and error-prone: use `$(())` or `(())` instead.
 
 
 ---
@@ -403,60 +392,48 @@ This is the rulet tier: extracted rules in 1-2 sentence format with BCS code ref
 **Rule: BCS0800**
 
 ## Error Handling - Rulets
-
-## Exit on Error Configuration
-
-- [BCS0801] Always use `set -euo pipefail` immediately after the shebang to enable strict error handling: `-e` exits on command failure, `-u` exits on undefined variables, `-o pipefail` exits if any command in a pipeline fails.
-- [BCS0801] Strongly recommend `shopt -s inherit_errexit` to make command substitution inherit errexit behavior: `output=$(failing_command)` will exit with set -e.
-- [BCS0801] Handle expected failures explicitly using `command || true`, conditional checks `if command; then`, or temporarily disable errexit with `set +e; risky_command; set -e`.
-- [BCS0801] Check if optional variables exist before using them: `[[ -n "${OPTIONAL_VAR:-}" ]]` prevents exit on undefined variable.
-
-## Standard Exit Codes
-
-- [BCS0802] Use standard exit codes consistently: `0` for success, `1` for general error, `2` for misuse/missing argument, `22` for invalid argument (EINVAL), `5` for I/O error.
-- [BCS0802] Implement a standard `die()` function: `die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }` for consistent error exits with optional messages.
-- [BCS0802] Define exit codes as readonly constants for readability: `readonly -i ERR_CONFIG=3 ERR_NETWORK=4` then use `die "$ERR_CONFIG" 'Failed to load config'`.
-- [BCS0802] Never use exit codes above 125 for custom codes to avoid conflicts with signal codes (128+n) and shell reserved codes.
-
-## Trap Handling for Cleanup
-
-- [BCS0803] Always implement a `cleanup()` function with trap for resource cleanup: `trap 'cleanup $?' SIGINT SIGTERM EXIT` ensures cleanup runs on all exit paths.
-- [BCS0803] Disable trap at the start of cleanup function to prevent recursion: `trap - SIGINT SIGTERM EXIT` must be first line in `cleanup()`.
-- [BCS0803] Preserve the original exit code in cleanup: `cleanup() { local -i exitcode=${1:-0}; trap - SIGINT SIGTERM EXIT; # cleanup; exit "$exitcode"; }`.
-- [BCS0803] Install traps early before creating resources to prevent leaks: set `trap 'cleanup $?' EXIT` before `temp_file=$(mktemp)`.
-- [BCS0803] Use single quotes in trap commands to delay variable expansion: `trap 'rm -f "$temp_file"' EXIT` not `trap "rm -f $temp_file" EXIT`.
-
-## Return Value Checking
-
-- [BCS0804] Always check return values of critical operations with explicit error messages: `mv "$source" "$dest" || die 1 "Failed to move $source to $dest"`.
-- [BCS0804] Use `set -o pipefail` to catch pipeline failures: without it, `cat missing_file | grep pattern` continues even if cat fails.
-- [BCS0804] Check command substitution results explicitly: `output=$(command) || die 1 "Command failed"` because `set -e` doesn't catch substitution failures.
-- [BCS0804] Use different patterns for different needs: `if ! command; then error; exit 1; fi` for informative errors, `command || die 1 "msg"` for concise checks, `command || { cleanup; exit 1; }` for cleanup on failure.
-- [BCS0804] Handle partial failures in loops by tracking counts: increment `success_count` and `fail_count`, return non-zero if any failures occurred.
-
+## Exit on Error
+- [BCS0801] Always use `set -euo pipefail` at line 5 (after script description) to enable strict error detection: `-e` exits on command failure, `-u` exits on undefined variables, `-o pipefail` exits if any command in a pipeline fails.
+- [BCS0801] Add `shopt -s inherit_errexit` to make command substitution inherit `set -e` behavior, ensuring `output=$(failing_command)` exits on failure.
+- [BCS0801] Allow specific commands to fail using `command_that_might_fail || true` or wrap in conditional: `if command_that_might_fail; then ... else ... fi`.
+- [BCS0801] Check if optional variables exist before using with: `[[ -n "${OPTIONAL_VAR:-}" ]]` to prevent exit on undefined variable with `set -u`.
+- [BCS0801] Never capture command substitution in assignment without checking: `result=$(failing_command)` doesn't exit with `set -e`; use `result=$(cmd) || die 1` or enable `shopt -s inherit_errexit`.
+## Exit Codes
+- [BCS0802] Implement standard `die()` function: `die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }` for consistent error handling with exit codes and messages.
+- [BCS0802] Use standard exit codes: `0` for success, `1` for general error, `2` for misuse/missing argument, `22` for invalid argument (EINVAL), `5` for I/O error.
+- [BCS0802] Never use exit codes above 125 for custom errors; codes 126-127 are reserved for shell errors, 128+n for fatal signals, and 255 is out of range.
+- [BCS0802] Define exit code constants as readonly integers for readability: `readonly -i SUCCESS=0 ERR_GENERAL=1 ERR_USAGE=2 ERR_CONFIG=3`.
+- [BCS0802] Check exit codes in case statements to handle different failure modes: `case $? in 1) ... ;; 2) ... ;; *) ... ;; esac`.
+## Trap Handling
+- [BCS0803] Implement standard cleanup function pattern: capture exit code with `cleanup() { local -i exitcode=${1:-0}; trap - SIGINT SIGTERM EXIT; ... ; exit "$exitcode"; }`.
+- [BCS0803] Install trap early before creating resources: `trap 'cleanup $?' SIGINT SIGTERM EXIT` ensures cleanup runs on normal exit, errors, Ctrl+C, and kill signals.
+- [BCS0803] Always disable trap at start of cleanup function with `trap - SIGINT SIGTERM EXIT` to prevent recursion if cleanup itself fails.
+- [BCS0803] Preserve exit code by capturing immediately: `trap 'cleanup $?' EXIT` passes original exit status; never use `trap 'cleanup' EXIT` as `$?` may change.
+- [BCS0803] Use single quotes in trap commands to delay variable expansion: `trap 'rm -f "$temp_file"' EXIT` evaluates variables when trap fires, not when set.
+- [BCS0803] Create temp files and directories before trap installation risks resource leaks; always use: `temp_file=$(mktemp) || die 1 'Failed'; trap 'rm -f "$temp_file"' EXIT`.
+## Checking Return Values
+- [BCS0804] Always check return values of critical operations with explicit conditionals: `if ! mv "$source" "$dest"; then die 1 "Failed to move $source to $dest"; fi`.
+- [BCS0804] Provide informative error messages including context: `die 1 "Failed to move $source to $dest"` not just `die 1 "Move failed"`.
+- [BCS0804] Check command substitution results explicitly: `output=$(command) || die 1 "command failed"` or enable `shopt -s inherit_errexit` to inherit `set -e` in subshells.
+- [BCS0804] Use `set -o pipefail` to catch pipeline failures: without it, `cat missing_file | grep pattern` continues even if cat fails; with it, entire pipeline fails.
+- [BCS0804] Check `PIPESTATUS` array for individual pipeline command exit codes: `if ((PIPESTATUS[0] != 0)); then die 1 "First command failed"; fi`.
+- [BCS0804] Use cleanup on failure pattern: `operation || { error "Failed"; cleanup_resources; die 1; }` ensures partial state is cleaned up.
+- [BCS0804,BCS0802] Capture and check exit codes when different codes require different actions: `cmd; exit_code=$?; case $exit_code in 0) ... ;; 1) ... ;; esac`.
 ## Error Suppression
-
-- [BCS0805] Only suppress errors when failure is expected, non-critical, and safe to ignore; always document WHY with a comment above the suppression.
-- [BCS0805] Never suppress critical operations like file operations, data processing, system configuration, or security operations: `cp "$important" "$backup" 2>/dev/null || true` is dangerous.
-- [BCS0805] Use `|| true` to ignore return codes while keeping stderr visible; use `2>/dev/null` to suppress error messages while checking return code; use both only when both are irrelevant.
-- [BCS0805] Appropriate suppression cases: checking if commands exist `command -v optional_tool >/dev/null 2>&1`, cleanup operations `rm -f /tmp/myapp_* 2>/dev/null || true`, idempotent operations `install -d "$dir" 2>/dev/null || true`.
-- [BCS0805] Verify after suppressed operations when possible: after `install -d "$dir" 2>/dev/null || true`, check `[[ -d "$dir" ]] || die 1 "Failed to create $dir"`.
-
-## Conditional Declarations with Exit Code Handling
-
-- [BCS0806] Append `|| :` after arithmetic conditionals to prevent false conditions from triggering `set -e` exit: `((complete)) && declare -g BLUE=$'\033[0;34m' || :`.
-- [BCS0806] Prefer colon `:` over `true` for no-op fallback as it's the traditional Unix idiom and more concise: `((condition)) && action || :`.
-- [BCS0806] Use `|| :` only for optional operations like conditional variable declarations, feature-gated actions, or optional logging; never for critical operations that must succeed.
-- [BCS0806] For critical operations, use explicit error handling instead: `if ((flag)); then critical_operation || die 1 "Operation failed"; fi` not `((flag)) && critical_operation || :`.
-- [BCS0806] Use if statements for complex conditional logic with multiple statements; use `((condition)) && action || :` only for simple one-line conditional declarations.
-
-## Configuration and Best Practices
-
-- [BCS0800] Configure error handling with `set -euo pipefail` before any other commands run to catch failures early.
-- [BCS0801,BCS0804] Remember that `set -e` has limitations: doesn't catch pipeline failures (except last command without pipefail), commands in conditionals, commands with `||`, or command substitution without `inherit_errexit`.
-- [BCS0803,BCS0805] Document all error suppression and cleanup decisions with comments explaining the rationale and why it's safe.
-- [BCS0804] Provide context in error messages including what failed and with what inputs: `die 1 "Failed to move $file to $dest"` not `die 1 "Move failed"`.
-- [BCS0801,BCS0804] Test error paths to ensure failures are caught correctly and cleanup runs as expected; verify both success and failure scenarios.
+- [BCS0805] Only suppress errors when failure is expected, non-critical, and explicitly documented: add comment explaining WHY suppression is safe before every `2>/dev/null` or `|| true`.
+- [BCS0805] Never suppress critical operations like file copies, data processing, system configuration, security operations, or dependency checks; these must fail explicitly.
+- [BCS0805] Use `2>/dev/null` to suppress only error messages while still checking return code: `if ! command 2>/dev/null; then error "command failed"; fi`.
+- [BCS0805] Use `|| true` to ignore return code while keeping error messages visible for debugging.
+- [BCS0805] Use combined suppression `2>/dev/null || true` only when both error messages and return code are completely irrelevant: `rmdir /tmp/maybe_exists 2>/dev/null || true`.
+- [BCS0805] Appropriate suppression cases: checking if optional commands exist (`command -v tool >/dev/null 2>&1`), cleanup operations (`rm -f /tmp/files 2>/dev/null || true`), idempotent operations (`install -d "$dir" 2>/dev/null || true`).
+- [BCS0805] Verify system state after suppressed operations when possible: after `install -d "$dir" 2>/dev/null || true`, check `[[ -d "$dir" ]] || die 1 "Failed to create $dir"`.
+## Conditional Declarations
+- [BCS0806] Append `|| :` after `((condition)) && action` to prevent false conditions from triggering `set -e` exit: `((complete)) && declare -g BLUE=$'\033[0;34m' || :`.
+- [BCS0806] Use colon `:` instead of `true` as no-op fallback; it's the traditional Unix idiom, built-in, and more concise.
+- [BCS0806] Arithmetic conditionals `(())` return 0 (success) when true, 1 (failure) when false; under `set -e`, false conditions without `|| :` will exit the script.
+- [BCS0806] Use `|| :` pattern only for optional operations like feature-gated variable declarations; never suppress critical operations that must succeed.
+- [BCS0806] Prefer explicit `if` statements over `((condition)) && action || :` for complex logic with multiple statements or when clarity is more important than conciseness.
+- [BCS0806,BCS0805] Never use `|| :` to suppress critical operation failures; use explicit error handling: `if ((flag)); then critical_op || die 1 "Failed"; fi`.
 
 
 ---
@@ -465,73 +442,46 @@ This is the rulet tier: extracted rules in 1-2 sentence format with BCS code ref
 **Rule: BCS0900**
 
 ## Input/Output & Messaging - Rulets
-
 ## Color Support
-
-- [BCS0901] Detect terminal output before enabling colors: test both stdout AND stderr with `[[ -t 1 && -t 2 ]]`, then declare color variables or set them to empty strings.
+- [BCS0901] Declare global flags for messaging control: `declare -i VERBOSE=1 PROMPT=1 DEBUG=0`.
+- [BCS0901] Only initialize color variables when both stdout and stderr are terminals: `if [[ -t 1 && -t 2 ]]; then` set colors, `else` set empty strings.
+- [BCS0901] Use ANSI escape sequences in `$'...'` format for colors: `RED=$'\033[0;31m'`, `GREEN=$'\033[0;32m'`, `YELLOW=$'\033[0;33m'`, `CYAN=$'\033[0;36m'`, `NC=$'\033[0m'`.
 - [BCS0901] Always make color variables readonly after initialization: `readonly -- RED GREEN YELLOW CYAN NC`.
-- [BCS0901] Use ANSI escape codes with `$'\033[0;31m'` syntax for color definitions, not `\e` or `\x1b`.
-
-## Stream Separation
-
-- [BCS0902] Always send error messages to stderr by placing `>&2` at the beginning of the command for clarity: `>&2 echo "error message"`.
-- [BCS0902] Separate data output (stdout) from diagnostic messages (stderr) so scripts can be piped without mixing streams.
-
-## Core Message Functions
-
-- [BCS0903] Implement a private `_msg()` core function that inspects `FUNCNAME[1]` to determine the calling function and format messages with appropriate prefixes and colors automatically.
-- [BCS0903] Create conditional messaging functions that respect verbosity flags: `vecho()`, `info()`, `warn()`, `success()`, and `debug()` should check `((VERBOSE))` or `((DEBUG))` before outputting.
-- [BCS0903] Always make `error()` unconditional (always displays) and send to stderr: `error() { >&2 _msg "$@"; }`.
-- [BCS0903] Implement `die()` with exit code as first parameter: `die() { local -i exit_code=${1:-1}; shift; (($#)) && error "$@"; exit "$exit_code"; }`.
-- [BCS0903] Send all conditional messaging functions (info, warn, success, debug) to stderr with `>&2` prefix so they don't interfere with data output.
-- [BCS0903] Use consistent prefixes in all messages: include `$SCRIPT_NAME` and appropriate symbols (, �, �, ).
-- [BCS0903] Implement `yn()` prompt function that respects `PROMPT` flag: `((PROMPT)) || return 0` for non-interactive mode.
-- [BCS0903] Declare global control flags with integer type: `declare -i VERBOSE=0 DEBUG=0 PROMPT=1`.
-
-## _msg Function Pattern
-
-- [BCS0903] Use `case "${FUNCNAME[1]}" in` within `_msg()` to detect calling function and set appropriate prefix/color without duplicating logic across functions.
-- [BCS0903] Loop through all arguments in `_msg()` to print each on a separate line: `for msg in "$@"; do printf '%s %s\n' "$prefix" "$msg"; done`.
-
+## Stream Handling
+- [BCS0902] All error messages must go to stderr, not stdout.
+- [BCS0902] Place `>&2` at the beginning of commands for clarity: `>&2 echo "error message"` not `echo "error message" >&2`.
+## Core Messaging Functions
+- [BCS0903] Implement a private `_msg()` core function that inspects `FUNCNAME[1]` to determine formatting and prefix based on the calling function name.
+- [BCS0903] Use `_msg()` as the single source of message formatting logic; all public messaging functions (`info`, `warn`, `error`, `success`, `debug`) should call `_msg()` to avoid duplication.
+- [BCS0903] Conditional messaging functions (`vecho`, `info`, `warn`, `success`) must check the VERBOSE flag and return early if not enabled: `((VERBOSE)) || return 0`.
+- [BCS0903] Debug output function must check DEBUG flag: `debug() { ((DEBUG)) || return 0; >&2 _msg "$@"; }`.
+- [BCS0903] Error messages must always display regardless of verbosity: `error() { >&2 _msg "$@"; }`.
+- [BCS0903] The `die()` function must accept exit code as first parameter, then optional message arguments: `die() { local -i exit_code=${1:-1}; shift; (($#)) && error "$@"; exit "$exit_code"; }`.
+- [BCS0903] Use symbol prefixes in messages for visual scanning: `✓` (success), `▲` (warning), `◉` (info), `✗` (error), `DEBUG:` (debug).
+- [BCS0903] Send all operational messages to stderr using `>&2`: `success() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }`.
+- [BCS0903] The `yn()` prompt function must respect the PROMPT flag for non-interactive mode: `((PROMPT)) || return 0`.
+- [BCS0903] Format `_msg()` case statement to detect calling function: `case "${FUNCNAME[1]}" in success) prefix+=" ${GREEN}✓${NC}" ;; ... esac`.
 ## Usage Documentation
-
-- [BCS0904] Create help text using heredocs with `cat <<EOT` for multi-line formatted output that always displays.
-- [BCS0904] Include script name, version, description, usage pattern, options with short/long forms, and examples in help text.
-- [BCS0904] Reference `$SCRIPT_NAME` and `$VERSION` variables in help text for consistency.
-
+- [BCS0904] Use here-documents for help text with `cat <<EOT` containing usage, options, and examples.
+- [BCS0904] Include script name and version in help output: `$SCRIPT_NAME $VERSION - Brief description`.
+- [BCS0904] Document all options with both short and long forms: `-v|--verbose`, `-h|--help`.
+- [BCS0904] Provide concrete examples section showing common use cases.
 ## Echo vs Messaging Functions
-
-- [BCS0905] Use messaging functions (`info`, `success`, `warn`, `error`) for operational status updates that should respect verbosity settings and go to stderr.
-- [BCS0905] Use plain `echo` for data output (stdout) that will be captured, piped, or parsed: `result=$(get_data)`.
-- [BCS0905] Use plain `echo` or `cat` for help text and documentation that must always display regardless of verbosity settings.
-- [BCS0905] Use plain `echo` for structured multi-line output like reports, tables, or formatted data.
-- [BCS0905] Never use messaging functions (`info`, `warn`) for data that needs to be captured or piped; they go to stderr and won't be captured by command substitution.
-- [BCS0905] Use `echo` for version output and final summary results that users explicitly requested.
-- [BCS0905] Use messaging functions for progress indicators during data generation (go to stderr), while actual data goes to stdout via `echo`.
-
-## Decision Matrix
-
-- [BCS0905] If output is operational status or diagnostics � use messaging functions to stderr.
-- [BCS0905] If output is data intended for capture/piping � use `echo` to stdout.
-- [BCS0905] If output should respect verbosity flags � use messaging functions.
-- [BCS0905] If output must always display � use `echo` (or `error()` for critical messages).
-- [BCS0905] If output needs color/formatting/symbols � use messaging functions.
-
+- [BCS0905] Use messaging functions (`info`, `warn`, `error`, `success`) for operational status updates that should go to stderr and respect verbosity settings.
+- [BCS0905] Use plain `echo` for data output to stdout, help text, structured reports, and output that must always display regardless of verbosity.
+- [BCS0905] Never use messaging functions for data output that will be captured or piped: use `echo` to stdout instead.
+- [BCS0905] Use `echo` with here-documents for multi-line formatted output like help text or reports, not multiple messaging function calls.
+- [BCS0905] Functions that return data must use `echo` to stdout: `get_value() { echo "$result"; }` not `info "$result"`.
+- [BCS0905] Separate operational messages (stderr via messaging functions) from data output (stdout via echo) to enable proper script composition and piping.
+- [BCS0905] Version and help output should use `echo` (always display), never messaging functions that respect VERBOSE.
 ## Color Management Library
-
-- [BCS0906] For sophisticated color management, use a dedicated library with two-tier system (basic 5 variables, complete 12 variables) instead of inline declarations.
-- [BCS0906] Implement basic tier with: `NC`, `RED`, `GREEN`, `YELLOW`, `CYAN` (default to minimize namespace pollution).
-- [BCS0906] Implement complete tier with basic plus: `BLUE`, `MAGENTA`, `BOLD`, `ITALIC`, `UNDERLINE`, `DIM`, `REVERSE` (opt-in).
-- [BCS0906] Provide `color_set` function with options: `basic`, `complete`, `auto`, `always`, `never`, `verbose`, `flags`.
-- [BCS0906] Use `flags` option to initialize BCS control variables: `VERBOSE`, `DEBUG`, `DRY_RUN`, `PROMPT` for _msg system integration.
-- [BCS0906] Implement dual-purpose pattern (BCS010201) in color library: sourceable as library or executable for demonstration.
-- [BCS0906] Auto-detect terminal by testing both stdout AND stderr: `[[ -t 1 && -t 2 ]]` before enabling colors.
-- [BCS0906] Export `color_set` function with `declare -fx color_set` for use in sourced mode.
-
-## Production Optimization
-
-- [BCS0903,BCS0905] Remove unused messaging functions before production deployment: if script never uses `yn()`, `debug()`, or `success()`, delete them to reduce script size.
-- [BCS0903] Remove unused global control flags (PROMPT, DEBUG) if the script doesn't reference them.
+- [BCS0906] For scripts requiring sophisticated color management beyond inline declarations, use a dedicated color management library with basic (5 variables) and complete (12 variables) tiers.
+- [BCS0906] Implement `color_set()` function supporting options: `basic` (default 5 colors), `complete` (12 colors), `auto` (terminal detection), `always` (force on), `never` (force off), `verbose` (show declarations), `flags` (set BCS globals).
+- [BCS0906] Basic tier provides: `NC`, `RED`, `GREEN`, `YELLOW`, `CYAN`; complete tier adds: `BLUE`, `MAGENTA`, `BOLD`, `ITALIC`, `UNDERLINE`, `DIM`, `REVERSE`.
+- [BCS0906] Auto-detection must test both stdout AND stderr are terminals: `[[ -t 1 && -t 2 ]] && color=1 || color=0`.
+- [BCS0906] The `flags` option should initialize BCS messaging control variables: `VERBOSE=${VERBOSE:-1}`, and with complete tier: `DEBUG=0 DRY_RUN=1 PROMPT=1`.
+- [BCS0906] Implement dual-purpose pattern so library can be sourced (`source color-set.sh && color_set complete`) or executed for demonstration (`./color-set.sh complete verbose`).
+- [BCS0906] Export the `color_set` function for library usage: `declare -fx color_set`.
 
 
 ---
@@ -540,65 +490,36 @@ This is the rulet tier: extracted rules in 1-2 sentence format with BCS code ref
 **Rule: BCS1000**
 
 ## Command-Line Arguments - Rulets
-
 ## Standard Parsing Pattern
-
-- [BCS1001] Use `while (($#)); do case $1 in ... esac; shift; done` for argument parsing; arithmetic test `(($#))` is more efficient than `[[ $# -gt 0 ]]`.
-- [BCS1001] Support both short and long options in case branches: `-v|--verbose)` pattern for user flexibility.
-- [BCS1001] For options requiring arguments, always call `noarg "$@"` before shifting to validate argument exists: `-o|--output) noarg "$@"; shift; output_file=$1 ;;`.
-- [BCS1001] Place mandatory `shift` at end of loop after `esac` to advance to next argument; without this, loop runs infinitely.
-- [BCS1001] For options that exit immediately (help, version), use `exit 0` and no shift is needed: `-h|--help) show_help; exit 0 ;;`.
-- [BCS1001] Implement `noarg()` helper function: `noarg() { (($# > 1)) || die 2 "Option '$1' requires an argument"; }`.
-- [BCS1001] Catch invalid options with `-*)` case before positional arguments: `die 22 "Invalid option '$1'"` using exit code 22 (EINVAL).
-- [BCS1001] Collect positional arguments in default case: `*) Paths+=("$1") ;;`.
-
+- [BCS1001] Use `while (($#)); do case $1 in ... esac; shift; done` for argument parsing - arithmetic test `(($#))` is more efficient than `[[ $# -gt 0 ]]`.
+- [BCS1001] Support both short and long options in case patterns: `-v|--verbose)` for user flexibility.
+- [BCS1001] Call `noarg "$@"` before shifting when an option requires an argument to validate the argument exists: `-o|--output) noarg "$@"; shift; output_file=$1 ;;`.
+- [BCS1001] Place mandatory `shift` at end of loop after `esac` to advance to next argument - without this, infinite loop results.
+- [BCS1001] Use `case $1 in` instead of if/elif chains for cleaner, more scannable option handling.
+- [BCS1001] Implement `noarg() { (($# > 1)) || die 2 "Option '$1' requires an argument"; }` to validate option arguments exist before capturing them.
+## Options and Arguments
+- [BCS1001] For options with arguments, use pattern: `noarg "$@"; shift; variable=$1 ;;` - first shift moves to value, second shift (at loop end) moves past it.
+- [BCS1001] For boolean flags, just set variables without shifting: `-v|--verbose) VERBOSE+=1 ;;` - shift happens at loop end.
+- [BCS1001] For options that exit immediately, use `exit 0` and no shift needed: `-V|--version) echo "$SCRIPT_NAME $VERSION"; exit 0 ;;`.
+- [BCS1001] Use `+=1` for stackable options to allow `-vvv` to set `VERBOSE=3`.
+- [BCS1001] Catch invalid options with `-*) die 22 "Invalid option '$1'" ;;` before positional argument case.
+- [BCS1001] Collect positional arguments in default case: `*) files+=("$1") ;;`.
 ## Short Option Bundling
-
-- [BCS1005] Support short option bundling to allow `-vvn` instead of `-v -v -n` following Unix conventions.
-- [BCS1005] Use pure bash method for 68% faster performance with no external dependencies: `opt=${1:1}; new_args=(); while ((${#opt})); do new_args+=("-${opt:0:1}"); opt=${opt:1}; done; set -- '' "${new_args[@]}" "${@:2}"`.
-- [BCS1005] Alternative grep method (slower, external dependency): `-[amLpvqVh]*) #shellcheck disable=SC2046; set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;`.
-- [BCS1005] Alternative fold method (marginally faster than grep): `-[amLpvqVh]*) set -- '' $(printf -- "-%c " $(fold -w1 <<<"${1:1}")) "${@:2}" ;;`.
-- [BCS1005] List valid short options explicitly in bundling pattern `-[ovnVh]*` to prevent incorrect disaggregation of unknown options.
-- [BCS1005] Document that options requiring arguments must be placed at end of bundle or used separately: `-vno output.txt` works (becomes `-v -n -o output.txt`), but `-von output.txt` fails.
-
+- [BCS1005] Support short option bundling with pattern `-[ovnVh]*)` that explicitly lists valid short options - prevents incorrect disaggregation of unknown options.
+- [BCS1005] Use pure bash method for 68% performance improvement (318 iter/sec vs 190 iter/sec) and no external dependencies: `opt=${1:1}; new_args=(); while ((${#opt})); do new_args+=("-${opt:0:1}"); opt=${opt:1}; done; set -- '' "${new_args[@]}" "${@:2}"`.
+- [BCS1005] Alternative grep method (current standard): `set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}"` requires `#shellcheck disable=SC2046`.
+- [BCS1005] Alternative fold method: `set -- '' $(printf -- "-%c " $(fold -w1 <<<"${1:1}")) "${@:2}"` is 3% faster than grep but still requires external command.
+- [BCS1005] Place bundling case before `-*)` invalid option handler and after all explicit option cases.
+- [BCS1005] Options requiring arguments cannot be in middle of bundle: `-vno output.txt` works (expands to `-v -n -o output.txt`), but `-von output.txt` fails (`-o` captures "n" as argument).
 ## Version Output
-
-- [BCS1002] Format version output as `scriptname version-number` without the word "version": `echo "$SCRIPT_NAME $VERSION"; exit 0`.
-- [BCS1002] Never include the word "version" between script name and version number; this follows GNU standards.
-
-## Argument Validation
-
-- [BCS1003] Validate option arguments with `noarg()`: `noarg() { (($# > 1)) && [[ ${2:0:1} != '-' ]] || die 2 "Missing argument for option '$1'"; }`.
-- [BCS1003] Check that next argument doesn't start with `-` to catch missing arguments: `[[ ${2:0:1} != '-' ]]`.
-
+- [BCS1002] Format version output as `$SCRIPT_NAME $VERSION` without the word "version" between them: `echo "$SCRIPT_NAME $VERSION"; exit 0` produces "myscript 1.2.3".
+## Validation
+- [BCS1003] Validate required arguments after parsing loop, before making variables readonly: `((${#files[@]} > 0)) || die 2 'No input files specified'`.
+- [BCS1003] Validate option values and detect conflicts: `[[ "$mode" =~ ^(normal|fast|safe)$ ]] || die 2 "Invalid mode: '$mode'"`.
 ## Parsing Location
-
-- [BCS1004] Place argument parsing inside `main()` function rather than at top level for better testability, cleaner variable scoping, and encapsulation.
-- [BCS1004] Top-level parsing is acceptable only for very simple scripts (< 200 lines) without a `main()` function.
-- [BCS1004] Make variables readonly after parsing completes: `readonly -- VERBOSE DRY_RUN output_file`.
-
-## Flag Variables
-
-- [BCS1001] Use integer flags for boolean options: `declare -i VERBOSE=0` with `VERBOSE+=1` for stackable flags like `-vvv`.
-- [BCS1001] Use compound assignments for multi-flag options: `-p|--prompt) PROMPT=1; VERBOSE=1 ;;` to enable multiple behaviors.
-- [BCS1001] Test boolean flags with arithmetic: `((VERBOSE))` or `((DRY_RUN))`.
-
-## Required Arguments Validation
-
-- [BCS1001,BCS1004] Validate required arguments after parsing completes: `((${#files[@]} > 0)) || die 2 'No input files specified'`.
-- [BCS1001,BCS1004] Check for required options: `[[ -n "$output_file" ]] || die 2 'Output file required (use -o)'`.
-
-## Performance Considerations
-
-- [BCS1005] Pure bash disaggregation is ~318 iter/sec vs ~190 iter/sec for grep (68% faster) with no external dependencies or shellcheck warnings.
-- [BCS1005] For scripts called frequently or in tight loops, always use pure bash method for short option bundling.
-- [BCS1005] grep/fold methods are acceptable when argument parsing happens once at startup and performance is not critical.
-
-## Edge Cases
-
-- [BCS1005] Options requiring arguments cannot be in middle of bundle; document that they should be at end, separate, or use long-form.
-- [BCS1005] Use `set -- '' "${new_args[@]}" "${@:2}"` with leading empty string to handle edge case where no options are provided.
-- [BCS1001] Invalid option case `-*)` must come after bundling case to catch unrecognized options properly.
+- [BCS1004] Place argument parsing inside `main()` function for better testability, cleaner scoping, and easier mocking - not at top level.
+- [BCS1004] Make variables readonly after parsing completes: `readonly -- VERBOSE DRY_RUN output_file` prevents accidental modification.
+- [BCS1004] For very simple scripts (<200 lines) without `main()`, top-level parsing is acceptable.
 
 
 ---
@@ -607,55 +528,43 @@ This is the rulet tier: extracted rules in 1-2 sentence format with BCS code ref
 **Rule: BCS1100**
 
 ## File Operations - Rulets
-
-## File Testing
-
-- [BCS1101] Always quote variables in file tests and use `[[ ]]` not `[ ]` or `test`: `[[ -f "$file" ]]` not `[[ -f $file ]]` or `[ -f "$file" ]`.
-- [BCS1101] Use `-f` for regular files, `-d` for directories, `-e` for any file type existence check.
-- [BCS1101] Validate file prerequisites before use: `[[ -f "$config" ]] || die 3 "Config not found: $config"` then `[[ -r "$config" ]] || die 5 "Cannot read: $config"`.
-- [BCS1101] Use `-r` to test readability, `-w` for writability, `-x` for executability before attempting operations.
-- [BCS1101] Test file emptiness with `-s` (true if size > 0): `[[ -s "$logfile" ]] || warn 'Log file is empty'`.
-- [BCS1101] Compare file modification times with `-nt` (newer than) or `-ot` (older than): `[[ "$source" -nt "$dest" ]] && cp "$source" "$dest"`.
-- [BCS1101] Combine file tests with `&&` or `||` in single conditional: `[[ -f "$file" && -r "$file" && -s "$file" ]]`.
-- [BCS1101] Always include filename in error messages for debugging: `die 2 "File not found: $file"` not `die 2 "File not found"`.
-
-## Wildcard Expansion Safety
-
-- [BCS1102] Always use explicit path prefix for wildcard expansion to prevent filenames starting with `-` from being interpreted as flags: `rm -v ./*` not `rm -v *`.
+## Safe File Testing
+- [BCS1101] Always quote variables in file tests with `[[ ]]`: `[[ -f "$file" ]]` not `[[ -f $file ]]`.
+- [BCS1101] Use `[[ ]]` for file tests, never `[ ]` or `test` command.
+- [BCS1101] Test file existence and readability before sourcing or processing: `[[ -f "$file" && -r "$file" ]] || die 3 "Cannot read: $file"`.
+- [BCS1101] Use `-e` for any file type, `-f` for regular files only, `-d` for directories only.
+- [BCS1101] Test file permissions before operations: `-r` for readable, `-w` for writable, `-x` for executable.
+- [BCS1101] Use `-s` to test if file is non-empty (size > 0).
+- [BCS1101] Compare file timestamps with `-nt` (newer than) or `-ot` (older than): `[[ "$source" -nt "$dest" ]] && cp "$source" "$dest"`.
+- [BCS1101] Check multiple conditions with `&&` or `||`: `[[ -f "$config" && -r "$config" ]] || die 3 "Config not found"`.
+- [BCS1101] Always include filename in error messages for debugging: `die 2 "File not found: $file"`.
+## Wildcard Expansion
+- [BCS1102] Always use explicit path prefix with wildcards to prevent filenames starting with `-` being interpreted as flags: `rm ./*` not `rm *`.
 - [BCS1102] Use explicit path in loops: `for file in ./*.txt; do` not `for file in *.txt; do`.
-
 ## Process Substitution
-
-- [BCS1103] Use `<(command)` to provide command output as file-like input, eliminating temporary files and avoiding subshell variable scope issues.
-- [BCS1103] Use `>(command)` to redirect output to a command as if writing to a file: `tee >(wc -l) >(grep ERROR) > output.txt`.
-- [BCS1103] Prefer process substitution over pipes to while loops to preserve variable scope: `while read -r line; do ((count+=1)); done < <(command)` not `command | while read -r line; do`.
-- [BCS1103] Use `readarray` with process substitution for populating arrays: `readarray -t users < <(cut -d: -f1 /etc/passwd)`.
-- [BCS1103] Use process substitution with `diff` to compare command outputs without temporary files: `diff <(sort file1) <(sort file2)`.
-- [BCS1103] Use `tee` with multiple output process substitutions for parallel processing: `cat log | tee >(grep ERROR > errors.log) >(grep WARN > warnings.log) > all.log`.
-- [BCS1103] Quote variables inside process substitution like normal: `<(sort "$file1")` not `<(sort $file1)`.
-- [BCS1103] Use null-delimited input with process substitution for safe filename handling: `while IFS= read -r -d '' file; do ...; done < <(find /data -print0)`.
-- [BCS1103] Never use process substitution where simple command substitution suffices: use `result=$(command)` not `result=$(cat <(command))`.
-
+- [BCS1103] Use process substitution `<(command)` to provide command output as file-like input, eliminating temporary files and avoiding subshell issues.
+- [BCS1103] Use input process substitution to compare command outputs: `diff <(sort file1) <(sort file2)`.
+- [BCS1103] Use output process substitution `>(command)` to send data to commands as if writing to files: `tee >(wc -l) >(grep ERROR)`.
+- [BCS1103] Avoid subshell variable scope issues in while loops with process substitution: `while read -r line; do ((count+=1)); done < <(cat file)` not `cat file | while read; do`.
+- [BCS1103] Use `readarray` with process substitution to populate arrays from command output: `readarray -t users < <(getent passwd | cut -d: -f1)`.
+- [BCS1103] Process files in parallel with tee and multiple output substitutions: `cat log | tee >(grep ERROR > errors.txt) >(grep WARN > warn.txt) >/dev/null`.
+- [BCS1103] Quote variables inside process substitution like normal: `diff <(sort "$file1") <(sort "$file2")`.
+- [BCS1103] Never use process substitution for simple command output; use command substitution instead: `result=$(command)` not `result=$(cat <(command))`.
+- [BCS1103] Never use process substitution for single file input; use direct redirection: `grep pattern < file` not `grep pattern < <(cat file)`.
+- [BCS1103] Use here-string for variable expansion, not process substitution: `command <<< "$var"` not `command < <(echo "$var")`.
+- [BCS1103] Assign process substitution to file descriptors for delayed reading: `exec 3< <(long_command)` then `read -r line <&3`.
 ## Here Documents
-
-- [BCS1104] Use here documents for multi-line strings or input with appropriate quoting.
-- [BCS1104] Use `<<'EOF'` (single quotes) to prevent variable expansion in here documents: `cat <<'EOF'\nLiteral $VAR\nEOF`.
-- [BCS1104] Use `<<EOF` (no quotes) to enable variable expansion: `cat <<EOF\nExpanded: $VAR\nEOF`.
-
-## Input Redirection Optimization
-
-- [BCS1105] Use `< filename` instead of `cat filename` for single-file input to commands for 3-4x performance improvement: `grep pattern < file` not `cat file | grep pattern`.
-- [BCS1105] Use `content=$(< file)` instead of `content=$(cat file)` in command substitution for 100x+ speedup.
-- [BCS1105] Optimize loops by replacing `$(cat "$file")` with `$(< "$file")` to eliminate process fork overhead in every iteration.
-- [BCS1105] Use `cat` when concatenating multiple files (redirection cannot combine multiple sources): `cat file1 file2 file3` not `< file1 file2 file3`.
-- [BCS1105] Use `cat` when needing cat-specific options like `-n` (line numbers), `-A` (show all), `-E` (show ends), `-T` (show tabs), `-s` (squeeze blank).
-- [BCS1105] Never use `< filename` alone without a command to consume input; it opens the file descriptor but produces no output.
-
-## Combined Patterns
-
-- [BCS1101,BCS1102] Validate before glob operations: `[[ -d "$dir" ]] || die 1 "Directory not found: $dir"` then `for file in "$dir"/*.txt; do`.
-- [BCS1103,BCS1105] Use process substitution with redirection for maximum efficiency: `while read -r line; do ...; done < <(< "$file" grep pattern)`.
-- [BCS1101,BCS1103] Test file existence before using in process substitution: `[[ -f "$config" ]] || die 3 "Not found: $config"` then `diff <(sort "$config") <(sort "$backup")`.
+- [BCS1104] Use here documents for multi-line strings: `cat <<'EOF' ... EOF` for literal text, `cat <<EOF ... EOF` for variable expansion.
+- [BCS1104] Quote the delimiter with single quotes to prevent variable expansion: `cat <<'EOF'` preserves `$var` literally.
+- [BCS1104] Omit quotes on delimiter to enable variable expansion: `cat <<EOF` expands `$USER` to actual value.
+## Input Redirection Performance
+- [BCS1105] Use `$(< file)` instead of `$(cat file)` in command substitution for 100x+ speedup by eliminating process fork overhead.
+- [BCS1105] Use `command < file` instead of `cat file | command` for 3-4x speedup in single-file operations.
+- [BCS1105] Replace `cat` with `<` redirection in loops to eliminate cumulative fork overhead: `for f in *.txt; do data=$(< "$f"); done`.
+- [BCS1105] Never use `< file` alone without a consuming command; it opens stdin but produces no output.
+- [BCS1105] Use `cat` when concatenating multiple files; `< file1 file2` is invalid syntax.
+- [BCS1105] Use `cat` when needing options like `-n` (line numbers), `-A` (show all), `-b` (number non-blank), `-s` (squeeze blank).
+- [BCS1105] Process creation overhead dominates I/O time even for large files, making `< file` consistently faster regardless of file size.
 
 
 ---
@@ -664,56 +573,44 @@ This is the rulet tier: extracted rules in 1-2 sentence format with BCS code ref
 **Rule: BCS1200**
 
 ## Security Considerations - Rulets
-
 ## SUID/SGID Prohibition
-
-- [BCS1201] Never use SUID (`chmod u+s`) or SGID (`chmod g+s`) bits on Bash scripts under any circumstances - catastrophically dangerous due to IFS exploitation, PATH manipulation, library injection, shell expansion exploits, race conditions, and interpreter vulnerabilities.
-- [BCS1201] Use `sudo` with configured `/etc/sudoers` permissions instead of SUID scripts: `username ALL=(root) NOPASSWD: /usr/local/bin/script.sh`.
-- [BCS1201] For compiled programs needing specific privileges, use capabilities (`setcap cap_net_bind_service=+ep`) instead of full SUID root.
-- [BCS1201] If elevated privileges are absolutely required for a script, use a SUID wrapper written in C that validates input, sanitizes environment, and executes the script safely.
-- [BCS1201] Audit systems regularly for SUID/SGID scripts: `find / -type f \( -perm -4000 -o -perm -2000 \) -exec file {} \; | grep -i script` should return nothing.
-
+- [BCS1201] Never use SUID (Set User ID) or SGID (Set Group ID) bits on Bash scripts under any circumstances; this is a critical security prohibition with no exceptions.
+- [BCS1201] Use `sudo` with configured permissions instead of SUID bits: configure `/etc/sudoers` for specific commands and users.
+- [BCS1201] SUID/SGID on shell scripts enables multiple attack vectors: IFS exploitation, PATH manipulation via interpreter resolution, library injection through `LD_PRELOAD`, shell expansion exploits, and TOCTOU race conditions.
+- [BCS1201] The kernel executes the interpreter with SUID privileges before the script's security measures take effect, allowing attackers to inject malicious code during this window.
+- [BCS1201] Find and audit all SUID/SGID scripts on your system: `find / -type f \( -perm -4000 -o -perm -2000 \) -exec file {} \; | grep -i script` should return nothing.
+- [BCS1201] Use compiled C wrapper programs with SUID if elevated privileges are absolutely required, never SUID shell scripts.
 ## PATH Security
-
-- [BCS1202] Always lock down PATH at script start to prevent command hijacking: `readonly PATH='/usr/local/bin:/usr/bin:/bin'; export PATH`.
-- [BCS1202] Set secure PATH immediately after `set -euo pipefail` - never trust inherited PATH from caller's environment.
+- [BCS1202] Lock down PATH immediately at script start to prevent command substitution attacks: `readonly PATH='/usr/local/bin:/usr/bin:/bin'; export PATH`.
 - [BCS1202] Never include current directory (`.`), empty elements (`::` or leading/trailing `:`), `/tmp`, or user home directories in PATH.
-- [BCS1202] Use absolute paths for critical commands as defense in depth: `/bin/tar`, `/usr/bin/systemctl`, `/bin/rm`.
-- [BCS1202] Validate inherited PATH if you cannot set it: check for `.`, empty elements, `/tmp`, or writable directories using regex tests.
-- [BCS1202] Verify critical commands resolve to expected locations: `[[ "$(command -v tar)" == "/bin/tar" ]] || die 1 "Security: tar not from /bin/tar"`.
-- [BCS1202] Always use `--` separator before file arguments to prevent option injection: `rm -- "$user_file"` not `rm "$user_file"`.
-
-## IFS Manipulation Safety
-
-- [BCS1203] Set IFS explicitly to known-safe value at script start and make readonly: `IFS=$' \t\n'; readonly IFS; export IFS`.
-- [BCS1203] Use one-line IFS assignment for single commands (safest pattern): `IFS=',' read -ra fields <<< "$csv_data"` - IFS automatically resets after the command.
-- [BCS1203] Isolate IFS changes in subshells: `( IFS=','; read -ra fields <<< "$data"; process "${fields[@]}" )` - change cannot leak.
-- [BCS1203] Use `local -- IFS` in functions to scope changes: declare IFS local before modifying, automatic restoration on function return.
-- [BCS1203] Always save and restore if modifying IFS: `saved_ifs="$IFS"; IFS=','; read -ra fields <<< "$data"; IFS="$saved_ifs"`.
-- [BCS1203] Never trust inherited IFS - attacker can manipulate it in calling environment to exploit field splitting and enable command injection.
-
+- [BCS1202] Validate inherited PATH if you cannot set it: reject paths containing `.`, empty elements, `/tmp`, or starting with `/home`.
+- [BCS1202] Use absolute command paths for maximum security and defense in depth: `/bin/tar`, `/usr/bin/systemctl`, `/bin/rm`.
+- [BCS1202] Place PATH setting in first few lines after `set -euo pipefail`, before any commands execute.
+- [BCS1202] Verify critical commands are from expected locations: `[[ "$(command -v tar)" == "/bin/tar" ]] || die 1 "Security: tar not from expected location"`.
+## IFS Safety
+- [BCS1203] Set IFS to known-safe value at script start and make it readonly to prevent field splitting attacks: `IFS=$' \t\n'; readonly IFS; export IFS`.
+- [BCS1203] Use one-line IFS assignment for single commands to automatically restore IFS: `IFS=',' read -ra fields <<< "$csv_data"`.
+- [BCS1203] Isolate IFS changes with subshells to prevent global side effects: `( IFS=','; read -ra fields <<< "$data"; process "${fields[@]}" )`.
+- [BCS1203] Use `local -- IFS` in functions to scope IFS changes to function lifetime only.
+- [BCS1203] Always save and restore IFS when modifying globally: `saved_ifs="$IFS"; IFS=','; ...; IFS="$saved_ifs"`.
+- [BCS1203] Never trust inherited IFS values; attackers can manipulate IFS in the calling environment to exploit field splitting.
 ## Eval Command Prohibition
-
-- [BCS1204] Never use `eval` with any user input - enables complete command injection and system compromise with no sandboxing.
-- [BCS1204] Avoid `eval` entirely even with trusted input - better alternatives exist for all common use cases using arrays, indirect expansion, or proper data structures.
-- [BCS1204] Use arrays for dynamic command construction: `cmd=(find "$path" -type f); [[ -n "$pattern" ]] && cmd+=(-name "$pattern"); "${cmd[@]}"`.
-- [BCS1204] Use indirect expansion for variable references: `echo "${!var_name}"` not `eval "echo \\$$var_name"`.
-- [BCS1204] Use associative arrays for dynamic data: `declare -A data; data[$key]=$value; echo "${data[$key]}"` not `eval "$key='$value'"`.
-- [BCS1204] Use case statements or associative arrays for function dispatch: `case "$action" in start) start_function ;;` not `eval "${action}_function"`.
-- [BCS1204] Use `printf -v` for dynamic variable assignment: `printf -v "$var_name" '%s' "$value"` not `eval "$var_name='$value'"`.
-- [BCS1204] Even sanitized input can contain metacharacters that enable injection through eval's double-expansion behavior.
-
+- [BCS1204] Never use `eval` with untrusted input; avoid `eval` entirely unless absolutely necessary, and seek alternatives first.
+- [BCS1204] Use arrays for dynamic command construction instead of eval: `cmd=(find "$path" -name "*.txt"); "${cmd[@]}"`.
+- [BCS1204] Use indirect expansion for variable references instead of eval: `echo "${!var_name}"` not `eval "echo \\$$var_name"`.
+- [BCS1204] Use associative arrays for dynamic data instead of eval: `declare -A data; data[$key]=$value` not `eval "${key}=$value"`.
+- [BCS1204] Use case statements or array lookups for function dispatch instead of eval: `case "$action" in start) start_func ;; esac`.
+- [BCS1204] `eval` executes arbitrary code with full script privileges and performs expansion twice, enabling complete system compromise through code injection.
+- [BCS1204] Use `printf -v "$var_name" '%s' "$value"` for safe variable assignment instead of `eval "$var_name='$value'"`.
 ## Input Sanitization
-
-- [BCS1205] Always validate and sanitize user input before use - never trust it even if it "looks safe".
-- [BCS1205] Use whitelist validation (define what IS allowed) not blacklist (define what isn't) - blacklists are always incomplete and bypassable.
-- [BCS1205] Validate filenames to prevent directory traversal: remove all `..` and `/`, allow only `[a-zA-Z0-9._-]+`, reject leading dots and excessive length.
-- [BCS1205] Validate integers with regex: `[[ "$input" =~ ^-?[0-9]+$ ]]` for signed, `[[ "$input" =~ ^[0-9]+$ ]]` for unsigned, reject leading zeros.
-- [BCS1205] Validate paths stay within allowed directory: `real_path=$(realpath -e -- "$input_path"); [[ "$real_path" == "$allowed_dir"* ]] || die 5 "Path outside allowed directory"`.
-- [BCS1205] Always use `--` separator in commands to prevent option injection: `rm -- "$user_file"` prevents `-rf` being interpreted as option.
-- [BCS1205] Validate against whitelist for choice inputs: iterate allowed values, reject if no match: `for choice in "${valid[@]}"; do [[ "$input" == "$choice" ]] && return 0; done; die 22 "Invalid"`.
-- [BCS1205] Validate early before any processing - fail securely with clear error messages on invalid input.
-- [BCS1205] Check input type, format, range, and length constraints - comprehensive validation prevents injection and logic errors.
+- [BCS1205] Always validate and sanitize user input to prevent injection attacks, directory traversal, and security vulnerabilities; fail early by rejecting invalid input before processing.
+- [BCS1205] Sanitize filenames by removing directory traversal attempts (`..`, `/`) and allowing only safe characters: `[[ "$name" =~ ^[a-zA-Z0-9._-]+$ ]] || die 22 "Invalid filename"`.
+- [BCS1205] Validate numeric input with regex before use: `[[ "$input" =~ ^[0-9]+$ ]] || die 22 "Invalid positive integer"` and check ranges where applicable.
+- [BCS1205] Validate paths are within allowed directories using realpath: `real_path=$(realpath -e -- "$input"); [[ "$real_path" == "$allowed_dir"* ]] || die 5 "Path outside allowed directory"`.
+- [BCS1205] Use whitelist validation (define what IS allowed) over blacklist validation (define what isn't allowed); blacklists are always incomplete and bypassable.
+- [BCS1205] Always use `--` separator in commands to prevent option injection: `rm -- "$user_file"` not `rm "$user_file"` (prevents `--delete-all` attacks).
+- [BCS1205] Never pass user input directly to shell commands or use eval with user input; use case statements to whitelist allowed commands.
+- [BCS1205] Validate input type, format, range, and length; check for leading zeros in numbers, credentials in URLs, dangerous characters in filenames.
 
 
 ---
@@ -722,52 +619,41 @@ This is the rulet tier: extracted rules in 1-2 sentence format with BCS code ref
 **Rule: BCS1300**
 
 ## Code Style & Best Practices - Rulets
-
 ## Code Formatting
-
-- [BCS1301] Use 2 spaces for indentation, never tabs, and maintain consistent indentation throughout the script.
-- [BCS1301] Keep lines under 100 characters when practical; long file paths and URLs may exceed this limit when necessary using line continuation with `\`.
-
+- [BCS1301] Use 2 spaces for indentation (NOT tabs) and maintain consistent indentation throughout.
+- [BCS1301] Keep lines under 100 characters when practical; long file paths and URLs can exceed this limit when necessary.
+- [BCS1301] Use line continuation with `\` for long commands.
 ## Comments
-
-- [BCS1302] Focus comments on explaining WHY (rationale, business logic, non-obvious decisions) rather than WHAT the code already shows.
-- [BCS1302] Use comments to explain non-obvious business rules, edge cases, intentional deviations, complex logic, why specific approaches were chosen, and subtle gotchas or side effects.
-- [BCS1302] Avoid commenting simple variable assignments, obvious conditionals, standard patterns already documented, or self-explanatory code with good naming.
-- [BCS1302,BCS1307] In documentation use standardized icons: `◉` (info), `⦿` (debug), `▲` (warn), `✓` (success), `✗` (error); avoid other emoticons unless justified.
-
-## Blank Line Usage
-
-- [BCS1303] Use one blank line between functions, between logical sections within functions, after section comments, between groups of related variables, and before/after multi-line conditional or loop blocks.
-- [BCS1303] Avoid multiple consecutive blank lines; one blank line is sufficient for visual separation.
-- [BCS1303] No blank line needed between short, related statements.
-
+- [BCS1302] Focus comments on explaining WHY (rationale, business logic, non-obvious decisions) rather than WHAT (which the code already shows).
+- [BCS1302] Document intentional deviations, non-obvious business rules, edge cases, and why specific approaches were chosen: `# PROFILE_DIR intentionally hardcoded to /etc/profile.d for system-wide bash profile integration`.
+- [BCS1302] Avoid commenting simple variable assignments, obvious conditionals, standard patterns, or self-explanatory code.
+- [BCS1302] Use standardized emoticons only: `◉` (info), `⦿` (debug), `▲` (warn), `✓` (success), `✗` (error).
+## Blank Lines
+- [BCS1303] Use one blank line between functions to create visual separation.
+- [BCS1303] Use one blank line between logical sections within functions, after section comments, and between groups of related variables.
+- [BCS1303] Place blank lines before and after multi-line conditional or loop blocks; avoid multiple consecutive blank lines (one is sufficient).
+- [BCS1303] Never use blank lines between short, related statements.
 ## Section Comments
-
-- [BCS1304] Use simple `# Description` format (no dashes, no box drawing) for section comments to organize code into logical groups.
-- [BCS1304] Keep section comments short and descriptive (2-4 words typically), place immediately before the group described, and follow with a blank line after the group.
-- [BCS1304] Reserve 80-dash separators (`# ---...---`) for major script divisions only; use lightweight section comments for grouping related variables, functions, or logical blocks.
-- [BCS1304] Common section comment patterns: `# Default values`, `# Derived paths`, `# Core message function`, `# Conditional messaging functions`, `# Unconditional messaging functions`, `# Helper functions`, `# Business logic`, `# Validation functions`.
-
+- [BCS1304] Use lightweight section comments (`# Description`) without dashes or box drawing to organize code into logical groups.
+- [BCS1304] Keep section comments short (2-4 words): `# Default values`, `# Derived paths`, `# Core message function`.
+- [BCS1304] Place section comment immediately before the group it describes, followed by a blank line after the group.
+- [BCS1304] Reserve 80-dash separators for major script divisions only; use simple section comments for grouping related variables, functions, or logical blocks.
 ## Language Best Practices
-
-- [BCS1305] Always use `$()` for command substitution instead of backticks; it's more readable, nests naturally without escaping, and has better editor support.
-- [BCS1305] Prefer shell builtins over external commands: use `$(())` instead of `expr`, `${var##*/}` instead of `basename`, `${var%/*}` instead of `dirname`, `${var^^}` or `${var,,}` instead of `tr` for case conversion, and `[[` instead of `[` or `test`.
-- [BCS1305] Builtins are 10-100x faster than external commands because they avoid process creation, have no PATH dependency, and are guaranteed in bash.
-
+- [BCS1305] Always use `$()` instead of backticks for command substitution: `var=$(command)` not ``var=`command` ``.
+- [BCS1305] Prefer shell builtins over external commands for 10-100x performance improvement and better reliability: `$((x + y))` not `$(expr "$x" + "$y")`.
+- [BCS1305] Use builtin alternatives: `${var##*/}` for basename, `${var%/*}` for dirname, `${var^^}` for uppercase, `${var,,}` for lowercase, `[[` instead of `[` or `test`.
+- [BCS1305] Avoid external commands (`expr`, `basename`, `dirname`, `tr` for case conversion, `seq`) when builtins exist; builtins are guaranteed in bash and require no PATH dependency.
 ## Development Practices
-
-- [BCS1306] ShellCheck is compulsory for all scripts; use `#shellcheck disable=SCxxxx` only for documented exceptions with explanatory comments.
-- [BCS1306] Always end scripts with `#fin` or `#end` marker after the `main "$@"` invocation.
-- [BCS1306] Use defensive programming: set default values for critical variables with `: "${VAR:=default}"`, validate inputs early, and guard against unset variables with `set -u`.
-- [BCS1306] Optimize performance by minimizing subshells, using built-in string operations over external commands, batching operations when possible, and using process substitution over temp files.
-- [BCS1306] Make functions testable with dependency injection for external commands, support verbose/debug modes, and return meaningful exit codes.
-
+- [BCS1306] ShellCheck compliance is compulsory for all scripts; use `#shellcheck disable=SCxxxx` only for documented exceptions with explanatory comments.
+- [BCS1306] Always end scripts with `#fin` (or `#end`) marker after `main "$@"`.
+- [BCS1306] Use defensive programming: default critical variables with `: "${VERBOSE:=0}"`, validate inputs early with `[[ -n "$1" ]] || die 1 'Argument required'`, and guard against unset variables with `set -u`.
+- [BCS1306] Minimize subshells, use built-in string operations over external commands, batch operations when possible, and use process substitution over temp files for performance.
+- [BCS1306] Make functions testable with dependency injection, support verbose/debug modes, and return meaningful exit codes for testing support.
 ## Emoticons
-
 - [BCS1307] Standard severity icons: `◉` (info), `⦿` (debug), `▲` (warn), `✗` (error), `✓` (success).
 - [BCS1307] Extended icons: `⚠` (caution/important), `☢` (fatal/critical), `↻` (redo/retry/update), `◆` (checkpoint), `●` (in progress), `○` (pending), `◐` (partial).
 - [BCS1307] Action icons: `▶` (start/execute), `■` (stop), `⏸` (pause), `⏹` (terminate), `⚙` (settings/config), `☰` (menu/list).
-- [BCS1307] Directional icons: `→` (forward/next), `←` (back), `↑` (up/upgrade), `↓` (down/downgrade), `⇄` (swap), `⇅` (sync/bidirectional).
+- [BCS1307] Directional icons: `→` (forward/next), `←` (back/previous), `↑` (up/upgrade), `↓` (down/downgrade), `⇄` (swap), `⇅` (sync), `⟳` (processing/loading), `⏱` (timer/duration).
 
 
 ---
@@ -776,74 +662,53 @@ This is the rulet tier: extracted rules in 1-2 sentence format with BCS code ref
 **Rule: BCS1400**
 
 ## Advanced Patterns - Rulets
-
-## Debugging and Development
-
-- [BCS1401] Enable trace mode with `set -x` when `DEBUG=1` and enhance trace output with `export PS4='+ ${BASH_SOURCE##*/}:${LINENO}:${FUNCNAME[0]:+${FUNCNAME[0]}():} '` for readable debugging.
-- [BCS1401] Implement conditional debug output with `debug() { ((DEBUG)) || return 0; >&2 _msg "$@"; }` to show messages only when debugging is enabled.
-
+## Debugging & Development
+- [BCS1401] Enable debug mode with `declare -i DEBUG="${DEBUG:-0}"` and activate trace output using `((DEBUG)) && set -x` for troubleshooting.
+- [BCS1401] Customize trace output with `export PS4='+ ${BASH_SOURCE##*/}:${LINENO}:${FUNCNAME[0]:+${FUNCNAME[0]}():} '` to show filename, line number, and function name in debug traces.
+- [BCS1401] Implement conditional debug output with a `debug()` function that checks `((DEBUG))` before calling `_msg()` to stderr.
 ## Dry-Run Pattern
-
-- [BCS1402] Check dry-run flag at the start of state-modifying functions with `if ((DRY_RUN)); then info '[DRY-RUN] Would perform action'; return 0; fi` to preview operations safely.
-- [BCS1402] Display preview messages with `[DRY-RUN]` prefix using `info` and return early (exit code 0) without performing actual operations.
-- [BCS1402] Parse dry-run from command-line with `-n|--dry-run) DRY_RUN=1` and `-N|--not-dry-run) DRY_RUN=0` flags.
-- [BCS1402] Maintain identical control flow in dry-run mode (same function calls, same logic paths) to verify logic without side effects.
-
+- [BCS1402] Implement dry-run mode by declaring `declare -i DRY_RUN=0` and checking `((DRY_RUN))` at the start of functions that modify state, displaying preview messages with `[DRY-RUN]` prefix and returning early without performing actual operations.
+- [BCS1402] Parse dry-run flags with `-n|--dry-run) DRY_RUN=1` and `-N|--not-dry-run) DRY_RUN=0` for toggling preview mode.
+- [BCS1402] Structure dry-run functions to maintain identical control flow whether in preview or execution mode, ensuring logic verification without side effects.
 ## Temporary File Handling
-
-- [BCS1403] Always use `mktemp` to create temporary files (`temp_file=$(mktemp)`) or directories (`temp_dir=$(mktemp -d)`), never hard-code temp file paths.
-- [BCS1403] Set up cleanup trap immediately after creating temp resources: `trap 'rm -f "$temp_file"' EXIT` for files, `trap 'rm -rf "$temp_dir"' EXIT` for directories.
-- [BCS1403] Check mktemp success with `|| die 1 'Failed to create temporary file'` and make temp file variables readonly after creation.
-- [BCS1403] Use custom templates for recognizable temp files: `mktemp /tmp/"$SCRIPT_NAME".XXXXXX` (at least 3 X's required).
-- [BCS1403] Register multiple temp resources in array with cleanup function: `TEMP_FILES+=("$temp_file")` and `trap cleanup_temp_files EXIT`.
-- [BCS1403] Validate temp file security by checking permissions (0600 for files, 0700 for directories) and ownership when handling sensitive data.
-- [BCS1403] Never overwrite EXIT trap when creating multiple temp files; use single trap with cleanup function or list all files: `trap 'rm -f "$temp1" "$temp2"' EXIT`.
-- [BCS1403] Preserve exit code in cleanup function with `local -i exit_code=$?` and `return "$exit_code"` to maintain original script exit status.
-
-## Environment Variable Best Practices
-
-- [BCS1404] Validate required environment variables with `: "${REQUIRED_VAR:?Environment variable REQUIRED_VAR not set}"` to exit script if not set.
-- [BCS1404] Provide defaults for optional environment variables with `: "${OPTIONAL_VAR:=default_value}"` or `export VAR="${VAR:-default}"`.
-- [BCS1404] Check multiple required variables in loop: `for var in "${REQUIRED[@]}"; do [[ -n "${!var:-}" ]] || error "Required variable '$var' not set"; done`.
-
-## Regular Expression Guidelines
-
-- [BCS1405] Use POSIX character classes for portability: `[[:alnum:]]` for alphanumeric, `[[:digit:]]` for digits, `[[:space:]]` for whitespace, `[[:xdigit:]]` for hexadecimal.
-- [BCS1405] Store complex regex patterns in readonly variables: `readonly -- EMAIL_REGEX='^[[:alnum:]._%+-]+@[[:alnum:].-]+\.[[:alpha:]]{2,}$'`.
-- [BCS1405] Extract capture groups from `BASH_REMATCH` after successful regex match: `if [[ "$version" =~ ^v?([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then major="${BASH_REMATCH[1]}"; fi`.
-
+- [BCS1403] Always use `mktemp` to create temporary files and directories with secure permissions (0600 for files, 0700 for directories), never hard-code temp file paths like `/tmp/myapp.txt`.
+- [BCS1403] Set up cleanup traps immediately after creating temp resources: `temp_file=$(mktemp) || die 1 'Failed to create temp file'` followed by `trap 'rm -f "$temp_file"' EXIT`.
+- [BCS1403] Store temp file paths in variables and make them readonly when possible: `readonly -- temp_file` to prevent accidental modification.
+- [BCS1403] For multiple temp resources, use an array with a cleanup function: `declare -a TEMP_RESOURCES=()` and `cleanup() { for resource in "${TEMP_RESOURCES[@]}"; do rm -rf "$resource"; done }` with `trap cleanup EXIT`.
+- [BCS1403] Never use hard-coded paths, PIDs in filenames, or manual temp file creation - these create security vulnerabilities and race conditions.
+- [BCS1403] Use custom templates when helpful: `mktemp /tmp/"$SCRIPT_NAME".XXXXXX` (minimum 3 X's required for uniqueness).
+- [BCS1403] Verify temp file security by checking permissions (0600), ownership (current user), and file type (regular file) when handling sensitive data.
+- [BCS1403] Implement `--keep-temp` option for debugging by checking the flag in cleanup function before removing temp resources.
+## Environment Variables
+- [BCS1404] Validate required environment variables with `: "${REQUIRED_VAR:?Environment variable REQUIRED_VAR not set}"` to exit immediately if not set.
+- [BCS1404] Provide defaults for optional environment variables using `: "${OPTIONAL_VAR:=default_value}"` or `export VAR="${VAR:-default}"`.
+- [BCS1404] Check multiple required variables by iterating through an array and testing `[[ -n "${!var:-}" ]]` to ensure all are set before proceeding.
+## Regular Expressions
+- [BCS1405] Use POSIX character classes for portability: `[[:alnum:]]`, `[[:digit:]]`, `[[:space:]]`, `[[:xdigit:]]` instead of literal ranges.
+- [BCS1405] Store complex regex patterns in readonly variables: `readonly -- EMAIL_REGEX='^[[:alnum:]._%+-]+@[[:alnum:].-]+\.[[:alpha:]]{2,}$'` then use `[[ "$email" =~ $EMAIL_REGEX ]]`.
+- [BCS1405] Access regex capture groups through `BASH_REMATCH` array after successful match: `major="${BASH_REMATCH[1]}"`.
 ## Background Job Management
-
-- [BCS1406] Start background jobs with `command &` and track PID with `PID=$!` for later process management.
-- [BCS1406] Check if background process is still running with `kill -0 "$PID" 2>/dev/null` before attempting to wait or kill.
-- [BCS1406] Wait for background jobs with timeout: `timeout 10 wait "$PID"` and kill on timeout with `kill "$PID" 2>/dev/null || true`.
-- [BCS1406] Track multiple background jobs in array: `PIDS+=($!)` and wait for all with `for pid in "${PIDS[@]}"; do wait "$pid"; done`.
-
-## Logging Best Practices
-
-- [BCS1407] Create structured log entries with ISO8601 timestamp, script name, level, and message: `printf '[%s] [%s] [%-5s] %s\n' "$(date -Ins)" "$SCRIPT_NAME" "$level" "$message" >> "$LOG_FILE"`.
-- [BCS1407] Ensure log directory exists before logging: `[[ -d "${LOG_FILE%/*}" ]] || mkdir -p "${LOG_FILE%/*}"`.
-- [BCS1407] Provide convenience logging functions: `log_debug()`, `log_info()`, `log_warn()`, `log_error()` that call main `log()` function.
-
+- [BCS1406] Track background process PIDs with `command &` followed by `PID=$!` to enable monitoring and control.
+- [BCS1406] Check if background process is still running using `kill -0 "$PID" 2>/dev/null` which returns 0 if process exists.
+- [BCS1406] Use `timeout` command with `wait` for timed background operations: `timeout 10 wait "$PID"` returns 124 on timeout.
+- [BCS1406] Manage multiple background jobs by storing PIDs in an array `PIDS+=($!)` and iterating with `for pid in "${PIDS[@]}"; do wait "$pid"; done`.
+## Logging
+- [BCS1407] Implement structured logging with ISO8601 timestamps, script name, log level, and message: `printf '[%s] [%s] [%-5s] %s\n' "$(date -Ins)" "$SCRIPT_NAME" "$level" "$message" >> "$LOG_FILE"`.
+- [BCS1407] Define log file location with defaults and create log directory if needed: `readonly LOG_FILE="${LOG_FILE:-/var/log/${SCRIPT_NAME}.log}"` followed by `mkdir -p "${LOG_FILE%/*}"`.
+- [BCS1407] Provide convenience logging functions (`log_debug`, `log_info`, `log_warn`, `log_error`) that wrap the main `log()` function.
 ## Performance Profiling
-
-- [BCS1408] Use `SECONDS` builtin for simple timing: `SECONDS=0; operation; info "Completed in ${SECONDS}s"`.
-- [BCS1408] Use `EPOCHREALTIME` for high-precision timing: `start=$EPOCHREALTIME; "$@"; end=$EPOCHREALTIME; runtime=$(awk "BEGIN {print $end - $start}")`.
-
-## Testing Support Patterns
-
-- [BCS1409] Implement dependency injection by declaring command wrappers: `declare -f FIND_CMD >/dev/null || FIND_CMD() { find "$@"; }` for mockable external commands.
-- [BCS1409] Use `TEST_MODE` flag to conditionally enable test behavior: `declare -i TEST_MODE="${TEST_MODE:-0}"` and override destructive operations in test mode.
-- [BCS1409] Create assertion function for tests: `assert() { [[ "$expected" != "$actual" ]] && { >&2 echo "ASSERT FAIL: $message"; return 1; }; return 0; }`.
-- [BCS1409] Implement test runner that finds and executes all `test_*` functions: `for test_func in $(declare -F | awk '$3 ~ /^test_/ {print $3}'); do "$test_func"; done`.
-
+- [BCS1408] Use the `SECONDS` builtin for simple timing by resetting `SECONDS=0` before operation and reading elapsed time after completion.
+- [BCS1408] Use `EPOCHREALTIME` for high-precision timing: capture `start=$EPOCHREALTIME` before operation, `end=$EPOCHREALTIME` after, calculate with `awk "BEGIN {print $end - $start}"`.
+## Testing Support
+- [BCS1409] Implement dependency injection by declaring command wrappers as functions: `declare -f FIND_CMD >/dev/null || FIND_CMD() { find "$@"; }` allows test mocking.
+- [BCS1409] Use `declare -i TEST_MODE="${TEST_MODE:-0}"` flag to enable test-specific behavior like using test data directories or disabling destructive operations.
+- [BCS1409] Implement assert function for test validation: check expected vs actual values, output detailed failure message to stderr, return 1 on failure.
+- [BCS1409] Create test runner that discovers functions matching `test_*` pattern, executes each, tracks passed/failed counts, and returns 0 only if all pass.
 ## Progressive State Management
-
-- [BCS1410] Declare all boolean flags at the top with initial values: `declare -i INSTALL_BUILTIN=0`.
-- [BCS1410] Progressively adjust flags based on runtime conditions: parse command-line arguments first, then validate dependencies, then check for failures.
-- [BCS1410] Separate user intent from runtime state using distinct flags: `BUILTIN_REQUESTED=1` (what user asked for) vs `INSTALL_BUILTIN=0` (what will actually happen).
-- [BCS1410] Disable features when prerequisites fail: `check_builtin_support || INSTALL_BUILTIN=0` to fail gracefully rather than error out.
-- [BCS1410] Execute actions based on final flag state: `((INSTALL_BUILTIN)) && install_builtin` runs only if flag is still enabled after all checks.
-- [BCS1410] Never modify flags during execution phase; only change them in setup/validation phases to maintain clear separation between decision logic and action.
-- [BCS1410] Document state transitions with comments showing how flags change throughout script lifecycle.
+- [BCS1410] Declare boolean flags with initial values at script start: `declare -i INSTALL_BUILTIN=0`, `declare -i BUILTIN_REQUESTED=0`, `declare -i SKIP_BUILTIN=0`.
+- [BCS1410] Parse command-line arguments to set flags based on user input, tracking both user intent (e.g., `BUILTIN_REQUESTED`) and current state (e.g., `INSTALL_BUILTIN`).
+- [BCS1410] Progressively adjust flags based on runtime conditions in logical order: parse arguments → validate dependencies → check build success → execute actions.
+- [BCS1410] Separate decision logic from execution by modifying flags during validation phase, then executing actions based on final flag state: `((INSTALL_BUILTIN)) && install_builtin`.
+- [BCS1410] Disable features when prerequisites fail by resetting flags: `check_builtin_support || INSTALL_BUILTIN=0` ensures fail-safe behavior.
+- [BCS1410] Never modify flags during execution phase - only in setup and validation phases to maintain clear separation between decision-making and action.
 #fin

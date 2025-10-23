@@ -707,19 +707,39 @@ compress_rule_to_tier() {
     # Context is already in context_file_persistent if needed
     local -i claude_exit=0
 
+    # Skip tee if stderr is not a terminal (non-interactive or piped)
+    local use_tee=0
+    [[ -t 2 ]] && use_tee=1
+
     if [[ -n "$context_file_persistent" ]]; then
       # Tell Claude to read context file first, then process the target file
-      "$claude_cmd" --print --dangerously-skip-permissions \
-         --allowedTools "Read" "Write" \
-         --system-prompt "$system_prompt" \
-         "Read context: $context_file_persistent | Read source: $complete_file | Write compressed to: $temp_file" \
-         2>&1 | tee /dev/stderr || claude_exit=$?
+      if ((use_tee)); then
+        "$claude_cmd" --print --dangerously-skip-permissions \
+           --allowedTools "Read" "Write" \
+           --system-prompt "$system_prompt" \
+           "Read context: $context_file_persistent | Read source: $complete_file | Write compressed to: $temp_file" \
+           2>&1 | tee /dev/stderr || claude_exit=$?
+      else
+        "$claude_cmd" --print --dangerously-skip-permissions \
+           --allowedTools "Read" "Write" \
+           --system-prompt "$system_prompt" \
+           "Read context: $context_file_persistent | Read source: $complete_file | Write compressed to: $temp_file" \
+           2>&1 || claude_exit=$?
+      fi
     else
-      "$claude_cmd" --print --dangerously-skip-permissions \
-         --allowedTools "Read" "Write" \
-         --system-prompt "$system_prompt" \
-         "Read file: $complete_file | Write compressed output to: $temp_file" \
-         2>&1 | tee /dev/stderr || claude_exit=$?
+      if ((use_tee)); then
+        "$claude_cmd" --print --dangerously-skip-permissions \
+           --allowedTools "Read" "Write" \
+           --system-prompt "$system_prompt" \
+           "Read file: $complete_file | Write compressed output to: $temp_file" \
+           2>&1 | tee /dev/stderr || claude_exit=$?
+      else
+        "$claude_cmd" --print --dangerously-skip-permissions \
+           --allowedTools "Read" "Write" \
+           --system-prompt "$system_prompt" \
+           "Read file: $complete_file | Write compressed output to: $temp_file" \
+           2>&1 || claude_exit=$?
+      fi
     fi
 
     # Check if Claude invocation succeeded
@@ -2574,6 +2594,15 @@ find_bcs_file_by_code() {
     complete) suffix='.complete.md' ;;
     abstract) suffix='.abstract.md' ;;
     summary) suffix='.summary.md' ;;
+    rulet)
+      # Rulet files only exist at section level (00-*.rulet.md)
+      # Only 2-digit section codes are valid (e.g., BCS02)
+      if [[ ${#code} -ne 2 ]]; then
+        # Rule codes (4+ digits) not supported for rulet tier
+        return 2
+      fi
+      suffix='.rulet.md'
+      ;;
     *) return 2 ;;
   esac
 
@@ -2589,17 +2618,28 @@ find_bcs_file_by_code() {
 
   # Handle section codes (2-digit codes like BCS01, BCS02, etc.)
   # These map to 00-section.{tier}.md files in the section directory
+  # For rulet tier, map to 00-{category-name}.rulet.md files
   if [[ "$code" =~ ^[0-9][0-9]$ ]]; then
     # Find the section directory (e.g., 01-script-structure for code "01")
     local -- section_dir
     section_dir=$(find "$data_dir" -maxdepth 1 -type d -name "$code-*" -print -quit)
 
     if [[ -n "$section_dir" && -d "$section_dir" ]]; then
-      # Look for 00-section.{tier}.md file
-      local -- section_file="$section_dir/00-section$suffix"
-      if [[ -f "$section_file" ]]; then
-        echo "$section_file"
-        return 0
+      if [[ "$tier" == "rulet" ]]; then
+        # For rulet tier, look for 00-{category-name}.rulet.md file
+        local -- rulet_file
+        rulet_file=$(find "$section_dir" -maxdepth 1 -type f -name "00-*.rulet.md" -print -quit)
+        if [[ -n "$rulet_file" && -f "$rulet_file" ]]; then
+          echo "$rulet_file"
+          return 0
+        fi
+      else
+        # Look for 00-section.{tier}.md file
+        local -- section_file="$section_dir/00-section$suffix"
+        if [[ -f "$section_file" ]]; then
+          echo "$section_file"
+          return 0
+        fi
       fi
     fi
 
@@ -2699,9 +2739,9 @@ load_filtered_rules() {
 
   # Validate tier
   case "$tier" in
-    complete|abstract|summary) ;;
+    complete|abstract|summary|rulet) ;;
     *)
-      error "Invalid tier '$tier' (must be complete, abstract, or summary)"
+      error "Invalid tier '$tier' (must be complete, abstract, summary, or rulet)"
       return 2
       ;;
   esac
@@ -2719,6 +2759,18 @@ load_filtered_rules() {
         data_dir=$(find_data_dir) || return 1
         local -a md_files=()
         readarray -t md_files < <(find "$data_dir" -name "*$suffix" -type f ! -name 'README.md' | sort)
+
+        for file in "${md_files[@]}"; do
+          cat "$file"
+          echo
+        done
+        ;;
+      rulet)
+        # Load all *.rulet.md files (section-level files)
+        local -- data_dir
+        data_dir=$(find_data_dir) || return 1
+        local -a md_files=()
+        readarray -t md_files < <(find "$data_dir" -name "*.rulet.md" -type f ! -name 'README.md' ! -name 'BASH-CODING-STANDARD.*' | sort)
 
         for file in "${md_files[@]}"; do
           cat "$file"
@@ -2981,6 +3033,7 @@ Options:
   -a, --abstract          Show abstract tier file location (default)
   -s, --summary           Show summary tier file location
   -c, --complete          Show complete tier file location
+  -r, --rulet             Show rulet tier file location (section-level only)
   -p, --print             Print file contents to stdout instead of path
   --all                   Show all three tier file locations (or contents with -p)
   --relative              Output path relative to repository root
@@ -2989,10 +3042,15 @@ Options:
 
 Arguments:
   CODE                    One or more BCS codes (e.g., BCS010201 or 010201)
+                          Note: Rulet tier only supports section codes (2-digit like BCS02)
 
 Description:
   Resolves BCS rule code to its source file location in the data/ directory.
   This is the inverse operation of get_bcs_code() - converting code back to file path.
+
+  Important: Rulet tier files only exist at section level (00-*.rulet.md), not
+  individual rule level. When using --rulet, only 2-digit section codes (like
+  BCS02) are valid. Rule codes (4+ digits like BCS0205) will not be found.
 
 Examples:
   bcs decode BCS010201                       # Show abstract tier absolute path
@@ -3025,6 +3083,10 @@ EOF
         ;;
       -c|--complete)
         tier='complete'
+        shift
+        ;;
+      -r|--rulet)
+        tier='rulet'
         shift
         ;;
       -p|--print)
@@ -3095,11 +3157,11 @@ EOF
 
     # Process based on options
     if ((show_all)); then
-      # Show all three tiers
+      # Show all tiers
       local -i found=0
       local -- file
 
-      for tier in complete abstract summary; do
+      for tier in complete abstract summary rulet; do
         file=$(find_bcs_file_by_code "$code" "$tier" 2>/dev/null) || continue
         ((found+=1))
         ((total_found+=1))
@@ -3678,7 +3740,7 @@ Filtering Options (Token Optimization):
                           Example: --sections 1,2,8
   --tier TIER             Documentation tier (default: abstract)
                           Options: abstract (fast), complete (thorough),
-                                   summary (brief)
+                                   summary (brief), rulet (ultra-concise)
 
 Advanced Claude Options:
   --claude-cmd CMD        Custom Claude command (default: claude)
@@ -3696,8 +3758,9 @@ Description:
   Uses Claude AI to validate bash scripts against BASH-CODING-STANDARD.md.
 
   Token Optimization: By default uses abstract tier (~500 lines) for fast
-  validation. Use --tier complete for thorough checks (~3,285 lines) or
-  filter by --codes/--sections to validate specific rules only.
+  validation. Use --tier complete for thorough checks (~3,285 lines), --tier
+  rulet for ultra-concise rules (~280 lines), or filter by --codes/--sections
+  to validate specific rules only.
 
 Output Formats:
   text      - Human-readable with symbols (✓ ✗ ⚠ 💡)
@@ -3776,9 +3839,9 @@ EOF
         tier="$1"
         # Validate tier
         case $tier in
-          abstract|complete|summary) ;;
+          abstract|complete|summary|rulet) ;;
           *)  error "Invalid tier '$tier'"
-              info 'Must be one of: abstract, complete, summary'
+              info 'Must be one of: abstract, complete, summary, rulet'
               return 2
               ;;
         esac

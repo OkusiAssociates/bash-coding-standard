@@ -1,68 +1,41 @@
 # Input/Output & Messaging - Rulets
-
 ## Color Support
-
-- [BCS0901] Detect terminal output before enabling colors: test both stdout AND stderr with `[[ -t 1 && -t 2 ]]`, then declare color variables or set them to empty strings.
+- [BCS0901] Declare global flags for messaging control: `declare -i VERBOSE=1 PROMPT=1 DEBUG=0`.
+- [BCS0901] Only initialize color variables when both stdout and stderr are terminals: `if [[ -t 1 && -t 2 ]]; then` set colors, `else` set empty strings.
+- [BCS0901] Use ANSI escape sequences in `$'...'` format for colors: `RED=$'\033[0;31m'`, `GREEN=$'\033[0;32m'`, `YELLOW=$'\033[0;33m'`, `CYAN=$'\033[0;36m'`, `NC=$'\033[0m'`.
 - [BCS0901] Always make color variables readonly after initialization: `readonly -- RED GREEN YELLOW CYAN NC`.
-- [BCS0901] Use ANSI escape codes with `$'\033[0;31m'` syntax for color definitions, not `\e` or `\x1b`.
-
-## Stream Separation
-
-- [BCS0902] Always send error messages to stderr by placing `>&2` at the beginning of the command for clarity: `>&2 echo "error message"`.
-- [BCS0902] Separate data output (stdout) from diagnostic messages (stderr) so scripts can be piped without mixing streams.
-
-## Core Message Functions
-
-- [BCS0903] Implement a private `_msg()` core function that inspects `FUNCNAME[1]` to determine the calling function and format messages with appropriate prefixes and colors automatically.
-- [BCS0903] Create conditional messaging functions that respect verbosity flags: `vecho()`, `info()`, `warn()`, `success()`, and `debug()` should check `((VERBOSE))` or `((DEBUG))` before outputting.
-- [BCS0903] Always make `error()` unconditional (always displays) and send to stderr: `error() { >&2 _msg "$@"; }`.
-- [BCS0903] Implement `die()` with exit code as first parameter: `die() { local -i exit_code=${1:-1}; shift; (($#)) && error "$@"; exit "$exit_code"; }`.
-- [BCS0903] Send all conditional messaging functions (info, warn, success, debug) to stderr with `>&2` prefix so they don't interfere with data output.
-- [BCS0903] Use consistent prefixes in all messages: include `$SCRIPT_NAME` and appropriate symbols (, ², É, ).
-- [BCS0903] Implement `yn()` prompt function that respects `PROMPT` flag: `((PROMPT)) || return 0` for non-interactive mode.
-- [BCS0903] Declare global control flags with integer type: `declare -i VERBOSE=0 DEBUG=0 PROMPT=1`.
-
-## _msg Function Pattern
-
-- [BCS0903] Use `case "${FUNCNAME[1]}" in` within `_msg()` to detect calling function and set appropriate prefix/color without duplicating logic across functions.
-- [BCS0903] Loop through all arguments in `_msg()` to print each on a separate line: `for msg in "$@"; do printf '%s %s\n' "$prefix" "$msg"; done`.
-
+## Stream Handling
+- [BCS0902] All error messages must go to stderr, not stdout.
+- [BCS0902] Place `>&2` at the beginning of commands for clarity: `>&2 echo "error message"` not `echo "error message" >&2`.
+## Core Messaging Functions
+- [BCS0903] Implement a private `_msg()` core function that inspects `FUNCNAME[1]` to determine formatting and prefix based on the calling function name.
+- [BCS0903] Use `_msg()` as the single source of message formatting logic; all public messaging functions (`info`, `warn`, `error`, `success`, `debug`) should call `_msg()` to avoid duplication.
+- [BCS0903] Conditional messaging functions (`vecho`, `info`, `warn`, `success`) must check the VERBOSE flag and return early if not enabled: `((VERBOSE)) || return 0`.
+- [BCS0903] Debug output function must check DEBUG flag: `debug() { ((DEBUG)) || return 0; >&2 _msg "$@"; }`.
+- [BCS0903] Error messages must always display regardless of verbosity: `error() { >&2 _msg "$@"; }`.
+- [BCS0903] The `die()` function must accept exit code as first parameter, then optional message arguments: `die() { local -i exit_code=${1:-1}; shift; (($#)) && error "$@"; exit "$exit_code"; }`.
+- [BCS0903] Use symbol prefixes in messages for visual scanning: `âœ“` (success), `â–²` (warning), `â—‰` (info), `âœ—` (error), `DEBUG:` (debug).
+- [BCS0903] Send all operational messages to stderr using `>&2`: `success() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }`.
+- [BCS0903] The `yn()` prompt function must respect the PROMPT flag for non-interactive mode: `((PROMPT)) || return 0`.
+- [BCS0903] Format `_msg()` case statement to detect calling function: `case "${FUNCNAME[1]}" in success) prefix+=" ${GREEN}âœ“${NC}" ;; ... esac`.
 ## Usage Documentation
-
-- [BCS0904] Create help text using heredocs with `cat <<EOT` for multi-line formatted output that always displays.
-- [BCS0904] Include script name, version, description, usage pattern, options with short/long forms, and examples in help text.
-- [BCS0904] Reference `$SCRIPT_NAME` and `$VERSION` variables in help text for consistency.
-
+- [BCS0904] Use here-documents for help text with `cat <<EOT` containing usage, options, and examples.
+- [BCS0904] Include script name and version in help output: `$SCRIPT_NAME $VERSION - Brief description`.
+- [BCS0904] Document all options with both short and long forms: `-v|--verbose`, `-h|--help`.
+- [BCS0904] Provide concrete examples section showing common use cases.
 ## Echo vs Messaging Functions
-
-- [BCS0905] Use messaging functions (`info`, `success`, `warn`, `error`) for operational status updates that should respect verbosity settings and go to stderr.
-- [BCS0905] Use plain `echo` for data output (stdout) that will be captured, piped, or parsed: `result=$(get_data)`.
-- [BCS0905] Use plain `echo` or `cat` for help text and documentation that must always display regardless of verbosity settings.
-- [BCS0905] Use plain `echo` for structured multi-line output like reports, tables, or formatted data.
-- [BCS0905] Never use messaging functions (`info`, `warn`) for data that needs to be captured or piped; they go to stderr and won't be captured by command substitution.
-- [BCS0905] Use `echo` for version output and final summary results that users explicitly requested.
-- [BCS0905] Use messaging functions for progress indicators during data generation (go to stderr), while actual data goes to stdout via `echo`.
-
-## Decision Matrix
-
-- [BCS0905] If output is operational status or diagnostics ’ use messaging functions to stderr.
-- [BCS0905] If output is data intended for capture/piping ’ use `echo` to stdout.
-- [BCS0905] If output should respect verbosity flags ’ use messaging functions.
-- [BCS0905] If output must always display ’ use `echo` (or `error()` for critical messages).
-- [BCS0905] If output needs color/formatting/symbols ’ use messaging functions.
-
+- [BCS0905] Use messaging functions (`info`, `warn`, `error`, `success`) for operational status updates that should go to stderr and respect verbosity settings.
+- [BCS0905] Use plain `echo` for data output to stdout, help text, structured reports, and output that must always display regardless of verbosity.
+- [BCS0905] Never use messaging functions for data output that will be captured or piped: use `echo` to stdout instead.
+- [BCS0905] Use `echo` with here-documents for multi-line formatted output like help text or reports, not multiple messaging function calls.
+- [BCS0905] Functions that return data must use `echo` to stdout: `get_value() { echo "$result"; }` not `info "$result"`.
+- [BCS0905] Separate operational messages (stderr via messaging functions) from data output (stdout via echo) to enable proper script composition and piping.
+- [BCS0905] Version and help output should use `echo` (always display), never messaging functions that respect VERBOSE.
 ## Color Management Library
-
-- [BCS0906] For sophisticated color management, use a dedicated library with two-tier system (basic 5 variables, complete 12 variables) instead of inline declarations.
-- [BCS0906] Implement basic tier with: `NC`, `RED`, `GREEN`, `YELLOW`, `CYAN` (default to minimize namespace pollution).
-- [BCS0906] Implement complete tier with basic plus: `BLUE`, `MAGENTA`, `BOLD`, `ITALIC`, `UNDERLINE`, `DIM`, `REVERSE` (opt-in).
-- [BCS0906] Provide `color_set` function with options: `basic`, `complete`, `auto`, `always`, `never`, `verbose`, `flags`.
-- [BCS0906] Use `flags` option to initialize BCS control variables: `VERBOSE`, `DEBUG`, `DRY_RUN`, `PROMPT` for _msg system integration.
-- [BCS0906] Implement dual-purpose pattern (BCS010201) in color library: sourceable as library or executable for demonstration.
-- [BCS0906] Auto-detect terminal by testing both stdout AND stderr: `[[ -t 1 && -t 2 ]]` before enabling colors.
-- [BCS0906] Export `color_set` function with `declare -fx color_set` for use in sourced mode.
-
-## Production Optimization
-
-- [BCS0903,BCS0905] Remove unused messaging functions before production deployment: if script never uses `yn()`, `debug()`, or `success()`, delete them to reduce script size.
-- [BCS0903] Remove unused global control flags (PROMPT, DEBUG) if the script doesn't reference them.
+- [BCS0906] For scripts requiring sophisticated color management beyond inline declarations, use a dedicated color management library with basic (5 variables) and complete (12 variables) tiers.
+- [BCS0906] Implement `color_set()` function supporting options: `basic` (default 5 colors), `complete` (12 colors), `auto` (terminal detection), `always` (force on), `never` (force off), `verbose` (show declarations), `flags` (set BCS globals).
+- [BCS0906] Basic tier provides: `NC`, `RED`, `GREEN`, `YELLOW`, `CYAN`; complete tier adds: `BLUE`, `MAGENTA`, `BOLD`, `ITALIC`, `UNDERLINE`, `DIM`, `REVERSE`.
+- [BCS0906] Auto-detection must test both stdout AND stderr are terminals: `[[ -t 1 && -t 2 ]] && color=1 || color=0`.
+- [BCS0906] The `flags` option should initialize BCS messaging control variables: `VERBOSE=${VERBOSE:-1}`, and with complete tier: `DEBUG=0 DRY_RUN=1 PROMPT=1`.
+- [BCS0906] Implement dual-purpose pattern so library can be sourced (`source color-set.sh && color_set complete`) or executed for demonstration (`./color-set.sh complete verbose`).
+- [BCS0906] Export the `color_set` function for library usage: `declare -fx color_set`.

@@ -1,42 +1,37 @@
 # Functions - Rulets
-
 ## Function Definition Pattern
-
-- [BCS0601] Use single-line format for simple operations: `vecho() { ((VERBOSE)) || return 0; _msg "$@"; }`.
-- [BCS0601] Use multi-line format with local variables for complex functions: declare locals first, then function body, then explicit return.
-
+- [BCS0601] Use single-line functions for simple operations: `vecho() { ((VERBOSE)) || return 0; _msg "$@"; }`
+- [BCS0601] Use multi-line functions with local variables for complex operations, always declaring locals at the top of the function body.
+- [BCS0601] Always return explicit exit codes from functions: `return "$exitcode"` not implicit returns.
 ## Function Naming
-
-- [BCS0602] Always use lowercase with underscores for function names to match shell conventions: `my_function()`, `process_log_file()`.
-- [BCS0602] Use leading underscore for private/internal functions: `_my_private_function()`, `_validate_input()`.
-- [BCS0602] Never use CamelCase or UPPER_CASE for function names; this can be confused with variables or commands.
-- [BCS0602] Never override built-in commands without good reason; if you must wrap built-ins, use a different name like `change_dir()` instead of `cd()`.
-- [BCS0602] Never use special characters like dashes in function names: `my-function()` creates issues in some contexts.
-
+- [BCS0602] Always use lowercase_with_underscores for function names to match shell conventions and avoid conflicts with built-in commands.
+- [BCS0602] Prefix private/internal functions with underscore: `_my_private_function()`, `_validate_input()`.
+- [BCS0602] Never use CamelCase or UPPER_CASE for function names; avoid special characters like dashes.
+- [BCS0602] Never override built-in commands unless absolutely necessary; if you must wrap built-ins, use a different name: `change_dir()` not `cd()`.
 ## Main Function
-
-- [BCS0603] Always include a `main()` function for scripts longer than approximately 200 lines to improve organization, testability, and maintainability.
-- [BCS0603] Place `main "$@"` at the bottom of the script, just before the `#fin` marker, to ensure all helper functions are defined first.
-- [BCS0603] Parse command-line arguments inside `main()` using local variables, not outside it with globals: `local -i verbose=0; while (($#)); do case $1 in -v) verbose=1 ;; esac; shift; done`.
-- [BCS0603] Make parsed option variables readonly after parsing to prevent accidental modification: `readonly -- verbose dry_run output_dir`.
-- [BCS0603] Use `main()` as the orchestrator that coordinates work by calling helper functions in the right order, not by doing the heavy lifting itself.
-- [BCS0603] Return appropriate exit codes from `main()`: 0 for success, non-zero for errors.
-- [BCS0603] Use `if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then main "$@"; fi` pattern to make scripts sourceable for testing without automatic execution.
-- [BCS0603] Always pass all arguments to main with `main "$@"`, never call it without arguments.
-
-## Function Export
-
-- [BCS0604] Export functions with `declare -fx` when they need to be available in subshells or when creating sourceable libraries.
-- [BCS0604] Group function exports together for readability: `declare -fx grep find` for multiple related functions.
-
-## Production Optimization
-
-- [BCS0605] Remove unused utility functions once a script is mature and ready for production: if `yn()`, `decp()`, `trim()`, `s()` are not used, delete them.
-- [BCS0605] Remove unused global variables that are not referenced: `PROMPT`, `DEBUG`, color variables if terminal output is not used.
-- [BCS0605] Remove unused messaging functions that your script doesn't call; a simple script may only need `error()` and `die()`, not the full messaging suite.
-- [BCS0605] Keep only the functions and variables your script actually needs to reduce script size, improve clarity, and eliminate maintenance burden.
-
+- [BCS0603] Always include a `main()` function for scripts longer than approximately 200 lines; place `main "$@"` at the bottom just before `#fin`.
+- [BCS0603] Use `main()` as the single entry point to orchestrate script logic: parsing arguments, validating input, calling helper functions in the right order, and returning appropriate exit codes.
+- [BCS0603] Parse command-line arguments inside `main()`, not in global scope; make parsed option variables readonly after validation.
+- [BCS0603] Place `main()` function definition at the end of the script after all helper functions are defined; this ensures bottom-up function organization.
+- [BCS0603] For testable scripts, use conditional invocation: `if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then main "$@"; fi` to prevent execution when sourced.
+- [BCS0603] Skip `main()` function only for trivial scripts (<200 lines) with no functions, linear flow, or simple wrappers.
 ## Function Organization
-
-- [BCS0600,BCS0603] Organize functions bottom-up: messaging functions first (lowest level), then helpers, then business logic, with `main()` last (highest level).
-- [BCS0600,BCS0603] This bottom-up organization ensures each function can safely call previously defined functions and readers understand primitives before composition.
+- [BCS0603,BCS0107] Organize functions bottom-up: messaging functions first (lowest level), then documentation/helpers, then validation, then business logic, then orchestration, with `main()` last (highest level).
+- [BCS0603] Separate script into clear sections with comment dividers: messaging functions, documentation functions, helper functions, business logic functions, main function.
+## Function Export
+- [BCS0604] Export functions with `declare -fx` when they need to be available in subshells or when creating sourceable libraries.
+- [BCS0604] Batch export related functions together: `declare -fx grep find` after defining wrapper functions.
+## Production Optimization
+- [BCS0605] Remove unused utility functions from mature production scripts: if `yn()`, `decp()`, `trim()`, `s()` are not called, delete them.
+- [BCS0605] Remove unused global variables from production scripts: if `PROMPT`, `DEBUG` are not referenced, delete them.
+- [BCS0605] Remove unused messaging functions your script doesn't call; keep only what your script actually needs to reduce size and improve clarity.
+- [BCS0605] Simple scripts may only need `error()` and `die()`, not the full messaging suite; optimize accordingly.
+## Error Handling in Main
+- [BCS0603] Track errors in `main()` using counters: `local -i errors=0` then `((errors+=1))` on failures; return non-zero if `((errors > 0))`.
+- [BCS0603] Use trap for cleanup in `main()`: `trap cleanup EXIT` at the start ensures cleanup happens on any exit path.
+- [BCS0603] Make `main()` return 0 for success and non-zero for errors to enable `main "$@"` invocation at script level with `set -e`.
+## Main Function Anti-Patterns
+- [BCS0603] Never define functions after calling `main "$@"`; all functions must be defined before the main invocation.
+- [BCS0603] Never parse arguments outside `main()` in global scope; this consumes `"$@"` before main receives it.
+- [BCS0603] Never call main without passing arguments: use `main "$@"` not `main` to preserve all command-line arguments.
+- [BCS0603] Never mix global and local state unnecessarily; prefer all logic and variables local to `main()` for clean scope.

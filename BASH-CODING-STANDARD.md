@@ -1,1 +1,1 @@
-data/BASH-CODING-STANDARD.summary.md
+data/BASH-CODING-STANDARD.rulet.md
