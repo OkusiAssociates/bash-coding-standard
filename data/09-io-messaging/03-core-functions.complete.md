@@ -14,15 +14,47 @@
 
 **Core messaging function pattern:**
 
-The pattern uses a private `_msg()` function that inspects `FUNCNAME[1]` (the calling function) to determine formatting:
+The pattern uses a private `_msg()` function that inspects `FUNCNAME[1]` (the calling function) to determine formatting.
+
+### Understanding FUNCNAME Inspection
+
+**The FUNCNAME array** is a Bash built-in that contains the current function call stack:
+- `${FUNCNAME[0]}` = Current function name (`_msg` in this case)
+- `${FUNCNAME[1]}` = Calling function name (`info`, `warn`, `error`, etc.)
+- `${FUNCNAME[2]}` = Function that called the calling function
+- And so on up the call stack
+
+**Why this is powerful:**
+
+Instead of passing a parameter (`_msg "INFO" "$message"`), we inspect `FUNCNAME[1]` to automatically detect **who called us**. This enables a single `_msg()` implementation to format differently based on caller.
+
+**Call stack example:**
+```bash
+main() {
+  process_file "test.txt"
+}
+
+process_file() {
+  info "Processing $1"
+  # When info() calls _msg():
+  #   FUNCNAME[0] = "_msg"     (current function)
+  #   FUNCNAME[1] = "info"     (caller - this determines formatting!)
+  #   FUNCNAME[2] = "process_file"
+  #   FUNCNAME[3] = "main"
+}
+```
+
+**Implementation:**
 
 \`\`\`bash
 # Private core messaging function
 _msg() {
   local -- prefix="$SCRIPT_NAME:" msg
 
-  # Detect calling function and set appropriate prefix/color
+  # Inspect FUNCNAME[1] to detect calling function
+  # This determines which color/symbol to use
   case "${FUNCNAME[1]}" in
+    vecho)   ;;  # No special prefix
     success) prefix+=" ${GREEN}✓${NC}" ;;
     warn)    prefix+=" ${YELLOW}▲${NC}" ;;
     info)    prefix+=" ${CYAN}◉${NC}" ;;
@@ -37,6 +69,13 @@ _msg() {
   done
 }
 \`\`\`
+
+**Benefits of FUNCNAME inspection:**
+1. **DRY**: Single `_msg()` function, no duplication
+2. **Automatic**: Caller doesn't pass formatting hint, it's detected automatically
+3. **Consistent**: Impossible to pass wrong level (`info "ERROR: ..."` prevented)
+4. **Maintainable**: Add new message types by adding wrapper functions, no `_msg()` changes needed
+5. **Self-documenting**: Function name IS the message level
 
 **Public wrapper functions:**
 

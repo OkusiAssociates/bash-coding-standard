@@ -300,9 +300,152 @@ install -d "$USER_CACHE_DIR"
 install -d "$USER_STATE_DIR"
 \`\`\`
 
+**Production-Ready Templates (Copy-Paste Ready):**
+
+These templates are extracted from the `bcs` script itself and demonstrate production-tested FHS compliance patterns. Adapt by replacing `yatti/bash-coding-standard` with your organization/project name.
+
+**Template 1: Find File in FHS Locations**
+
+This template searches for a specific file across all standard FHS locations, supporting development mode, custom PREFIX installs, system-local, and system-wide installations.
+
+\`\`\`bash
+# Find specific file (e.g., BASH-CODING-STANDARD.md, config.yml, data.json)
+# Usage: bcs_file=$(find_bcs_file "$SCRIPT_DIR") || die 'File not found'
+find_bcs_file() {
+  local -- script_dir=$1
+  local -- install_share="${script_dir%/bin}/share/yatti/bash-coding-standard"
+  local -a search_paths=(
+    "$script_dir"                                 # Development: same directory
+    "$install_share"                              # Custom PREFIX: relative to bin/
+    /usr/local/share/yatti/bash-coding-standard   # System-local install
+    /usr/share/yatti/bash-coding-standard         # System-wide install
+  )
+  local -- path
+  for path in "${search_paths[@]}"; do
+    [[ -f "$path"/BASH-CODING-STANDARD.md ]] && { echo "$path"/BASH-CODING-STANDARD.md; return 0; }
+  done
+
+  return 1
+}
+declare -fx find_bcs_file
+
+# Usage example:
+BCS_FILE=$(find_bcs_file "$SCRIPT_DIR") || die 1 'BASH-CODING-STANDARD.md not found'
+\`\`\`
+
+**Key features of this template:**
+- **`install_share` calculation**: Dynamically computes share directory from bin directory using `${script_dir%/bin}/share/...`
+- **Four search locations**: Development, custom PREFIX, /usr/local, /usr
+- **Early return on found**: Uses `&& { echo ...; return 0; }` for immediate success
+- **Export**: Uses `declare -fx` for use in subshells if needed
+
+**Adaptation guide:**
+```bash
+# Replace 'yatti/bash-coding-standard' with your org/project:
+install_share="${script_dir%/bin}/share/myorg/myproject"
+/usr/local/share/myorg/myproject
+/usr/share/myorg/myproject
+
+# Replace 'BASH-CODING-STANDARD.md' with your target file:
+[[ -f "$path"/config.yml ]] && { echo "$path"/config.yml; return 0; }
+
+# Rename function to match purpose:
+find_config_file() { ... }
+find_template_file() { ... }
+```
+
+**Template 2: Find Data Directory**
+
+This template finds the data directory itself (rather than a specific file), useful for scripts that need to enumerate or access multiple files within the data directory.
+
+\`\`\`bash
+# Find data directory in FHS locations
+# Usage: data_dir=$(find_data_dir) || die 'Data directory not found'
+find_data_dir() {
+  local -- install_share="${BCS_DIR%/bin}/share/yatti/bash-coding-standard/data"
+  local -a search_paths=(
+    "$BCS_DIR/data"                                   # Development mode
+    "$install_share"                                  # Custom PREFIX install
+    /usr/local/share/yatti/bash-coding-standard/data  # System-local install
+    /usr/share/yatti/bash-coding-standard/data        # System-wide install
+  )
+  local -- path
+  for path in "${search_paths[@]}"; do
+    [[ -d "$path" ]] && { echo "$path"; return 0; }
+  done
+
+  return 1
+}
+declare -fx find_data_dir
+
+# Usage example:
+DATA_DIR=$(find_data_dir) || die 1 'Data directory not found'
+\`\`\`
+
+**Differences from Template 1:**
+- **Directory check**: Uses `[[ -d "$path" ]]` instead of `[[ -f ... ]]`
+- **Returns directory**: Echoes directory path, not file path
+- **Enables enumeration**: Caller can then use `find "$DATA_DIR" ...` or `for file in "$DATA_DIR"/*.md`
+
+**Usage patterns:**
+\`\`\`bash
+# Pattern 1: Find and enumerate files
+DATA_DIR=$(find_data_dir) || die 1 'Data directory not found'
+readarray -t md_files < <(find "$DATA_DIR" -name '*.md' | sort)
+
+# Pattern 2: Check for specific files in data directory
+DATA_DIR=$(find_data_dir) || die 1 'Data directory not found'
+[[ -f "$DATA_DIR"/templates/basic.sh ]] || die 1 'Template not found'
+
+# Pattern 3: Iterate over data files
+DATA_DIR=$(find_data_dir) || die 1 'Data directory not found'
+for file in "$DATA_DIR"/*.json; do
+  process_json "$file"
+done
+\`\`\`
+
+**Combined Template: Universal FHS Resource Finder**
+
+For maximum flexibility, combine both patterns into a generic resource finder:
+
+\`\`\`bash
+# Generic FHS resource finder
+# Usage: find_resource file "config.yml" || die 'Config not found'
+# Usage: find_resource dir "data" || die 'Data directory not found'
+find_resource() {
+  local -- type=$1     # 'file' or 'dir'
+  local -- name=$2     # Resource name
+  local -- install_base="${SCRIPT_DIR%/bin}/share/myorg/myproject"
+  local -a search_paths=(
+    "$SCRIPT_DIR"                        # Development
+    "$install_base"                      # Custom PREFIX
+    /usr/local/share/myorg/myproject     # Local install
+    /usr/share/myorg/myproject           # System install
+  )
+
+  local -- path
+  for path in "${search_paths[@]}"; do
+    local -- resource="$path/$name"
+    case "$type" in
+      file) [[ -f "$resource" ]] && { echo "$resource"; return 0; } ;;
+      dir)  [[ -d "$resource" ]] && { echo "$resource"; return 0; } ;;
+      *)    die 2 "Invalid resource type ${type@Q}" ;;
+    esac
+  done
+
+  return 1
+}
+declare -fx find_resource
+
+# Usage:
+CONFIG=$(find_resource file config.yml) || die 'Config not found'
+DATA_DIR=$(find_resource dir data) || die 'Data directory not found'
+TEMPLATE=$(find_resource file templates/basic.sh) || die 'Template not found'
+\`\`\`
+
 **Real-world example from this repository:**
 
-The `bash-coding-standard` script searches for `BASH-CODING-STANDARD.md` in:
+The actual `bash-coding-standard` (bcs) script uses these exact patterns (lines 137-171 in bcs). Here's the simplified version showing the file search:
 
 \`\`\`bash
 find_bcs_file() {

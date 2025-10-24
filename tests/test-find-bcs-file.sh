@@ -51,8 +51,14 @@ test_find_bcs_file() {
     "find_bcs_file output is a valid file path"
 
   # Test 5: Test with empty string
+  # Empty path should still succeed if file exists in FHS paths
   result=$(find_bcs_file "" 2>/dev/null) || exit_code=$?
-  assert_failure "$exit_code" "find_bcs_file handles empty path correctly"
+  if [[ -f /usr/local/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md ]] || \
+     [[ -f /usr/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md ]]; then
+    assert_success "$exit_code" "find_bcs_file falls back to FHS paths even with empty input"
+  else
+    assert_failure "$exit_code" "find_bcs_file returns error when no file found anywhere"
+  fi
 }
 
 # Run tests

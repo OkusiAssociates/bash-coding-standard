@@ -78,8 +78,8 @@ git clone https://github.com/OkusiAssociates/bash-coding-standard.git
 cd bash-coding-standard
 
 # Run from cloned directory (development mode)
-./bash-coding-standard          # Main script
-./bcs                           # Convenience symlink (shorter)
+./bcs                              # Main CLI toolkit script (v1.0.0, 156KB)
+./bash-coding-standard             # Symlink to bcs (backwards compatibility)
 
 # Or install system-wide (recommended for system use)
 sudo make install
@@ -87,9 +87,10 @@ sudo make install
 # Or install manually
 sudo mkdir -p /usr/local/bin
 sudo mkdir -p /usr/local/share/yatti/bash-coding-standard
-sudo cp bash-coding-standard /usr/local/bin/
-sudo chmod +x /usr/local/bin/bash-coding-standard
-sudo cp BASH-CODING-STANDARD.md /usr/local/share/yatti/bash-coding-standard/
+sudo cp bcs /usr/local/bin/
+sudo ln -s /usr/local/bin/bcs /usr/local/bin/bash-coding-standard
+sudo chmod +x /usr/local/bin/bcs
+sudo cp -r data /usr/local/share/yatti/bash-coding-standard/
 ```
 
 **Uninstall:**
@@ -103,7 +104,7 @@ sudo rm -rf /usr/local/share/yatti/bash-coding-standard
 
 ### Using the BCS Toolkit
 
-The `bcs` script (symlink to `bash-coding-standard`) provides a comprehensive toolkit with multiple subcommands:
+The `bcs` script provides a comprehensive toolkit with multiple subcommands:
 
 ```bash
 # View the standard (default command)
@@ -174,7 +175,7 @@ bcs check deploy.sh > compliance-report.txt
 ```
 
 **Toolkit Features:**
-- **11 Subcommands**: display, about, template, check, compress, codes, generate, search, decode, sections, help
+- **13 Subcommands**: display, about, template, check, compress, codes, generate, generate-rulets, search, decode, sections, default, help
 - **No command aliases** - Simplified UX with canonical names only (v1.0.0+)
 - **Symlink-based tier detection** - Default tier from BASH-CODING-STANDARD.md symlink
 - **AI-powered validation**: Leverage Claude for comprehensive compliance checking
@@ -187,7 +188,7 @@ bcs check deploy.sh > compliance-report.txt
 
 ### Subcommands Reference
 
-The `bcs` toolkit provides twelve powerful subcommands for working with the Bash Coding Standard:
+The `bcs` toolkit provides 12 powerful subcommands for working with the Bash Coding Standard:
 
 #### display (Default)
 
@@ -564,7 +565,7 @@ Test suite: `tests/test-subcommand-generate-rulets.sh` (19/19 tests passing)
 
 The `bcs` script provides a unified command interface with multiple benefits:
 
-- Single command interface (`bcs`) with 12 specialized subcommands
+- Single command interface (`bcs`) with 13 subcommands
 - Consistent help system (`bcs help <subcommand>`)
 - Better error messages and validation
 - Backward compatibility with legacy options (e.g., `bcs -c`, `bcs --json`)
@@ -584,29 +585,29 @@ shellcheck -x your-script.sh
 
 ## Workflows
 
-**NEW:** The `workflows/` directory provides production-ready scripts for common BCS maintenance and development tasks. These 8 comprehensive workflow scripts (2,700+ lines) automate rule management, data validation, and compliance checking.
+**NEW:** The `workflows/` directory provides production-ready scripts for common BCS maintenance and development tasks. These 8 comprehensive workflow scripts (2,939 lines) automate rule management, data validation, and compliance checking.
 
 **Quick Overview:**
-- 🔍 **validate-data.sh** - 11 validation checks for data integrity
-- 📊 **interrogate-rule.sh** - Inspect rules by BCS code or file path
-- ✅ **check-compliance.sh** - Batch compliance checking with reports
-- 📝 **generate-canonical.sh** - Generate canonical BCS files
-- 🗜️ **compress-rules.sh** - AI-powered rule compression
-- ➕ **add-rule.sh** - Create new rules interactively
-- ✏️ **modify-rule.sh** - Safely edit existing rules
-- 🗑️ **delete-rule.sh** - Delete rules with safety checks
+- 🔍 **30-validate-data.sh** - 11 validation checks for data integrity
+- 📊 **04-interrogate-rule.sh** - Inspect rules by BCS code or file path
+- ✅ **40-check-compliance.sh** - Batch compliance checking with reports
+- 📝 **20-generate-canonical.sh** - Generate canonical BCS files
+- 🗜️ **10-compress-rules.sh** - AI-powered rule compression
+- ➕ **01-add-rule.sh** - Create new rules interactively
+- ✏️ **02-modify-rule.sh** - Safely edit existing rules
+- 🗑️ **03-delete-rule.sh** - Delete rules with safety checks
 
 All workflows include dry-run modes, backup options, and comprehensive error handling.
 
 ### Available Workflows
 
-#### validate-data.sh
+#### 30-validate-data.sh
 Comprehensive validation of the `data/` directory structure:
 
 ```bash
-./workflows/validate-data.sh              # Run all 11 validation checks
-./workflows/validate-data.sh --check tier-completeness  # Specific check
-./workflows/validate-data.sh --quiet      # Minimal output
+./workflows/30-validate-data.sh              # Run all 11 validation checks
+./workflows/30-validate-data.sh --check tier-completeness  # Specific check
+./workflows/30-validate-data.sh --quiet      # Minimal output
 ```
 
 **Validation checks:**
@@ -622,91 +623,91 @@ Comprehensive validation of the `data/` directory structure:
 10. Cross-reference validation
 11. Sequential numbering checks
 
-#### interrogate-rule.sh
+#### 04-interrogate-rule.sh
 Inspect rules by BCS code or file path:
 
 ```bash
-./workflows/interrogate-rule.sh BCS0102              # Show rule info
-./workflows/interrogate-rule.sh BCS0102 --show-tiers # Show all three tiers
-./workflows/interrogate-rule.sh BCS0102 --format json  # JSON output
-./workflows/interrogate-rule.sh data/01-script-structure/03-metadata.complete.md
+./workflows/04-interrogate-rule.sh BCS0102              # Show rule info
+./workflows/04-interrogate-rule.sh BCS0102 --show-tiers # Show all three tiers
+./workflows/04-interrogate-rule.sh BCS0102 --format json  # JSON output
+./workflows/04-interrogate-rule.sh data/01-script-structure/03-metadata.complete.md
 ```
 
-#### check-compliance.sh
+#### 40-check-compliance.sh
 Batch compliance checking with multiple output formats:
 
 ```bash
-./workflows/check-compliance.sh script.sh           # Check single script
-./workflows/check-compliance.sh *.sh                # Batch checking
-./workflows/check-compliance.sh --format json script.sh
-./workflows/check-compliance.sh --strict deploy.sh  # CI/CD mode
+./workflows/40-check-compliance.sh script.sh           # Check single script
+./workflows/40-check-compliance.sh *.sh                # Batch checking
+./workflows/40-check-compliance.sh --format json script.sh
+./workflows/40-check-compliance.sh --strict deploy.sh  # CI/CD mode
 ```
 
-#### generate-canonical.sh
+#### 20-generate-canonical.sh
 Generate canonical BASH-CODING-STANDARD files from data/:
 
 ```bash
-./workflows/generate-canonical.sh                   # Generate all tiers
-./workflows/generate-canonical.sh --tier complete   # Specific tier
-./workflows/generate-canonical.sh --backup          # Backup before generating
-./workflows/generate-canonical.sh --validate        # Validate after generation
+./workflows/20-generate-canonical.sh                   # Generate all tiers
+./workflows/20-generate-canonical.sh --tier complete   # Specific tier
+./workflows/20-generate-canonical.sh --backup          # Backup before generating
+./workflows/20-generate-canonical.sh --validate        # Validate after generation
 ```
 
-#### compress-rules.sh
+#### 10-compress-rules.sh
 AI-powered wrapper for rule compression:
 
 ```bash
-./workflows/compress-rules.sh                       # Check for oversized files
-./workflows/compress-rules.sh --regenerate          # Regenerate all tiers
-./workflows/compress-rules.sh --context-level abstract  # With context awareness
-./workflows/compress-rules.sh --dry-run             # Preview changes
+./workflows/10-compress-rules.sh                       # Check for oversized files
+./workflows/10-compress-rules.sh --regenerate          # Regenerate all tiers
+./workflows/10-compress-rules.sh --context-level abstract  # With context awareness
+./workflows/10-compress-rules.sh --dry-run             # Preview changes
 ```
 
-#### add-rule.sh
+#### 01-add-rule.sh
 Add new BCS rules interactively:
 
 ```bash
-./workflows/add-rule.sh                             # Interactive mode
-./workflows/add-rule.sh --section 02 --number 10 --name new-rule
-./workflows/add-rule.sh --no-interactive --section 08 --number 05 --name trap-handlers
+./workflows/01-add-rule.sh                             # Interactive mode
+./workflows/01-add-rule.sh --section 02 --number 10 --name new-rule
+./workflows/01-add-rule.sh --no-interactive --section 08 --number 05 --name trap-handlers
 ```
 
-#### modify-rule.sh
+#### 02-modify-rule.sh
 Modify existing rules safely:
 
 ```bash
-./workflows/modify-rule.sh BCS0206                  # Edit by code
-./workflows/modify-rule.sh data/02-variables/06-special-vars.complete.md
-./workflows/modify-rule.sh BCS0206 --no-compress   # Skip auto-compression
-./workflows/modify-rule.sh BCS0206 --validate      # Validate after edit
+./workflows/02-modify-rule.sh BCS0206                  # Edit by code
+./workflows/02-modify-rule.sh data/02-variables/06-special-vars.complete.md
+./workflows/02-modify-rule.sh BCS0206 --no-compress   # Skip auto-compression
+./workflows/02-modify-rule.sh BCS0206 --validate      # Validate after edit
 ```
 
-#### delete-rule.sh
+#### 03-delete-rule.sh
 Delete rules with safety checks:
 
 ```bash
-./workflows/delete-rule.sh BCS9999                  # Delete with confirmation
-./workflows/delete-rule.sh BCS9999 --dry-run        # Preview deletion
-./workflows/delete-rule.sh BCS9999 --force --no-backup  # Skip confirmation and backup
-./workflows/delete-rule.sh BCS9999 --no-check-refs  # Skip reference checking
+./workflows/03-delete-rule.sh BCS9999                  # Delete with confirmation
+./workflows/03-delete-rule.sh BCS9999 --dry-run        # Preview deletion
+./workflows/03-delete-rule.sh BCS9999 --force --no-backup  # Skip confirmation and backup
+./workflows/03-delete-rule.sh BCS9999 --no-check-refs  # Skip reference checking
 ```
 
 ### Real-World Examples
 
 The `examples/` directory contains three production-ready BCS-compliant scripts demonstrating real-world patterns:
 
-**production-deploy.sh** (305 lines)
+**production-deploy.sh** (304 lines)
 - Production deployment with backup and rollback
 - Environment validation, health checks
 - Dry-run mode, confirmation prompts
 - Demonstrates: Complete BCS compliance, error handling, user interaction
 
-**data-processor.sh** (184 lines)
+**data-processor.sh** (183 lines)
 - CSV file processing with validation
 - Field validation, statistics tracking
 - Demonstrates: Array operations, file I/O, validation patterns
 
-**system-monitor.sh** (380 lines)
+**system-monitor.sh** (366 lines)
 - System resource monitoring with alerts
 - CPU, memory, disk usage tracking
 - Email alerts, continuous monitoring mode
@@ -724,14 +725,14 @@ See **[docs/WORKFLOWS.md](docs/WORKFLOWS.md)** (1132 lines) for:
 ### Testing
 
 All workflow scripts have comprehensive test coverage:
-- `tests/test-workflow-validate.sh` - 16 tests
-- `tests/test-workflow-interrogate.sh` - 10 tests
-- `tests/test-workflow-check-compliance.sh` - 10 tests
-- `tests/test-workflow-generate.sh` - 9 tests
-- `tests/test-workflow-compress.sh` - 10 tests
-- `tests/test-workflow-add.sh` - 8 tests
-- `tests/test-workflow-modify.sh` - 10 tests
-- `tests/test-workflow-delete.sh` - 11 tests
+- `tests/test-workflow-validate.sh` - 20 tests
+- `tests/test-workflow-interrogate.sh` - 20 tests
+- `tests/test-workflow-check-compliance.sh` - 14 tests
+- `tests/test-workflow-generate.sh` - 12 tests
+- `tests/test-workflow-compress.sh` - 12 tests
+- `tests/test-workflow-add.sh` - 14 tests
+- `tests/test-workflow-modify.sh` - 12 tests
+- `tests/test-workflow-delete.sh` - 14 tests
 
 Run all workflow tests:
 ```bash
@@ -855,12 +856,11 @@ main "$@"
 
 ```
 bash-coding-standard/
-├── BASH-CODING-STANDARD.md          # Symlink to default tier (currently summary)
-├── bash-coding-standard             # Main toolkit script (v1.0.0)
-├── bcs                              # Symlink to bash-coding-standard (convenience)
+├── bcs                              # Main CLI toolkit script (v1.0.0, 156KB)
+├── bash-coding-standard             # Symlink to bcs (backwards compatibility)
 ├── README.md                        # This file
 ├── ACTION-ITEMS.md                  # Consolidated action items from archived planning docs
-├── TESTING-SUMMARY.md               # Test suite documentation (19 files, 600+ tests, 74% pass)
+├── TESTING-SUMMARY.md               # Test suite documentation (31 test files)
 ├── LICENSE                          # CC BY-SA 4.0 license
 ├── Makefile                         # Installation/uninstallation helper
 ├── docs/                            # Comprehensive usage guides
@@ -868,6 +868,7 @@ bash-coding-standard/
 │   └── BCS-COMPRESS-GUIDE.md        # Complete compression guide (665 lines)
 ├── .gudang/                         # Archived analysis and planning documents
 ├── data/                            # Canonical rule source files (generates standard)
+│   ├── BASH-CODING-STANDARD.md      # Symlink to default tier (currently summary)
 │   ├── BASH-CODING-STANDARD.complete.md # Complete tier (21,431 lines)
 │   ├── BASH-CODING-STANDARD.summary.md  # Summary tier (12,666 lines) - gitignored
 │   ├── BASH-CODING-STANDARD.abstract.md # Abstract tier (3,794 lines) - gitignored
@@ -879,19 +880,19 @@ bash-coding-standard/
 │   ├── 02-variables/                # Section 2 rules
 │   └── ...
 ├── workflows/                       # User workflow scripts for typical BCS operations
-│   ├── validate-data.sh             # Validate data/ directory (11 checks)
-│   ├── interrogate-rule.sh          # Inspect rules by BCS code or file path
-│   ├── check-compliance.sh          # Batch compliance checking with reports
-│   ├── generate-canonical.sh        # Generate canonical BCS files from data/
-│   ├── compress-rules.sh            # AI-powered rule compression wrapper
-│   ├── add-rule.sh                  # Add new BCS rule interactively
-│   ├── modify-rule.sh               # Modify existing rule safely
-│   └── delete-rule.sh               # Delete rule with safety checks
+│   ├── 01-add-rule.sh               # Add new BCS rule interactively
+│   ├── 02-modify-rule.sh            # Modify existing rule safely
+│   ├── 03-delete-rule.sh            # Delete rule with safety checks
+│   ├── 04-interrogate-rule.sh       # Inspect rules by BCS code or file path
+│   ├── 10-compress-rules.sh         # AI-powered rule compression wrapper
+│   ├── 20-generate-canonical.sh     # Generate canonical BCS files from data/
+│   ├── 30-validate-data.sh          # Validate data/ directory (11 checks)
+│   └── 40-check-compliance.sh       # Batch compliance checking with reports
 ├── examples/                        # Real-world BCS-compliant example scripts
 │   ├── production-deploy.sh         # Production deployment with backup/rollback
 │   ├── data-processor.sh            # CSV processing with validation
 │   └── system-monitor.sh            # System resource monitoring with alerts
-├── tests/                           # Test suite (27 test files, 650+ tests)
+├── tests/                           # Test suite (31 test files)
 │   ├── test-helpers.sh              # Test helper functions (12 enhanced helpers)
 │   ├── coverage.sh                  # Test coverage analyzer
 │   ├── run-all-tests.sh             # Run entire test suite
@@ -1690,10 +1691,10 @@ done
 
 ### Primary Documents
 
-- **[BASH-CODING-STANDARD.md](BASH-CODING-STANDARD.md)** - The coding standard (symlink to summary tier, 12,666 lines, 14 sections)
+- **[BASH-CODING-STANDARD.md](data/BASH-CODING-STANDARD.md)** - The coding standard (symlink to summary tier, 12,666 lines, 14 sections)
   - Also available: [Complete tier](data/BASH-CODING-STANDARD.complete.md) (21,431 lines), [Abstract tier](data/BASH-CODING-STANDARD.abstract.md) (3,794 lines)
 - **[ACTION-ITEMS.md](ACTION-ITEMS.md)** - Consolidated action items from archived planning documents
-- **[TESTING-SUMMARY.md](TESTING-SUMMARY.md)** - Test suite documentation (27 files, 650+ tests)
+- **[TESTING-SUMMARY.md](TESTING-SUMMARY.md)** - Test suite documentation (31 test files)
 
 **Usage Guides:**
 - **[docs/WORKFLOWS.md](docs/WORKFLOWS.md)** - **NEW:** Complete workflow automation guide (1,132 lines, 14 sections)
@@ -1724,7 +1725,7 @@ done
 
 ### For Human Developers
 
-1. Read [BASH-CODING-STANDARD.md](BASH-CODING-STANDARD.md) thoroughly
+1. Read [BASH-CODING-STANDARD.md](data/BASH-CODING-STANDARD.md) thoroughly
 2. Use the standard utility functions (`_msg`, `vecho`, `success`, `warn`, `info`, `error`, `die`)
 3. Always run `shellcheck -x` before committing
 4. Follow the 14-section structure when reading/writing complex scripts
@@ -1732,7 +1733,7 @@ done
 
 ### For AI Assistants
 
-1. All generated scripts must comply with BASH-CODING-STANDARD.md
+1. All generated scripts must comply with [BASH-CODING-STANDARD.md](data/BASH-CODING-STANDARD.md)
 2. Use the standard messaging functions consistently
 3. Include proper error handling in all functions
 4. Remove unused utility functions in production scripts (see Section 6: Production Script Optimization)
@@ -1765,22 +1766,22 @@ let g:syntastic_sh_shellcheck_args = '-x'
 ### v1.1.0 (2025-10-17) - Workflow System Addition
 
 **NEW: Comprehensive Workflow Automation System**
-- **8 Production-Ready Workflow Scripts** (2,700+ lines)
-  - `validate-data.sh` - 11 validation checks for data/ directory integrity
-  - `interrogate-rule.sh` - Rule inspection with multiple output formats
-  - `check-compliance.sh` - Batch compliance checking with JSON/markdown reports
-  - `generate-canonical.sh` - Canonical file generation with backup/validation
-  - `compress-rules.sh` - AI-powered compression with context awareness
-  - `add-rule.sh` - Interactive rule creation with templates
-  - `modify-rule.sh` - Safe rule modification with auto-backup
-  - `delete-rule.sh` - Safe deletion with reference checking
+- **8 Production-Ready Workflow Scripts** (2,939 lines)
+  - `01-add-rule.sh` - Interactive rule creation with templates
+  - `02-modify-rule.sh` - Safe rule modification with auto-backup
+  - `03-delete-rule.sh` - Safe deletion with reference checking
+  - `04-interrogate-rule.sh` - Rule inspection with multiple output formats
+  - `10-compress-rules.sh` - AI-powered compression with context awareness
+  - `20-generate-canonical.sh` - Canonical file generation with backup/validation
+  - `30-validate-data.sh` - 11 validation checks for data/ directory integrity
+  - `40-check-compliance.sh` - Batch compliance checking with JSON/markdown reports
 
-- **Real-World Examples** (3 scripts, 870 lines)
+- **Real-World Examples** (3 scripts, 853 lines)
   - `production-deploy.sh` - Production deployment patterns
   - `data-processor.sh` - CSV processing and validation
   - `system-monitor.sh` - System resource monitoring
 
-- **Comprehensive Testing** (8 test suites, 59 tests)
+- **Comprehensive Testing** (8 test suites, 118 tests)
   - Test fixtures for all scenarios
   - Integration with existing test framework
   - All tests use standard test-helpers.sh pattern
@@ -1808,11 +1809,11 @@ let g:syntastic_sh_shellcheck_args = '-x'
   - Use canonical names only: `display`, `about`, `codes`, `generate`, `search`, `sections`
 
 - **Symlink-based default tier detection** implemented (v1.0.0+)
-  - New function: `get_default_tier()` reads `BASH-CODING-STANDARD.md` symlink
+  - New function: `get_default_tier()` reads `data/BASH-CODING-STANDARD.md` symlink
   - Default tier now dynamic based on symlink target (`.complete.md`, `.abstract.md`, `.summary.md`)
   - Commands affected: `generate`, `decode`, `check`
   - Single source of truth for default tier configuration
-  - Change default tier project-wide: `ln -sf data/BASH-CODING-STANDARD.complete.md BASH-CODING-STANDARD.md`
+  - Change default tier project-wide: `ln -sf BASH-CODING-STANDARD.complete.md data/BASH-CODING-STANDARD.md`
 
 - **Test Suite Enhancements** (see `TESTING-SUMMARY.md`)
   - **19 test files** (was 15), 600+ tests, **74% pass rate** (was 6%)

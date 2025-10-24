@@ -1,1 +1,0 @@
-data/BASH-CODING-STANDARD.rulet.md

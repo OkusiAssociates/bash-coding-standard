@@ -36,8 +36,8 @@ test_get_default_tier_returns_valid_tier() {
   local -- tier
   tier=$(get_default_tier)
 
-  # Should be one of: abstract, summary, complete
-  if [[ "$tier" =~ ^(abstract|summary|complete)$ ]]; then
+  # Should be one of: abstract, summary, complete, rulet
+  if [[ "$tier" =~ ^(abstract|summary|complete|rulet)$ ]]; then
     pass "Returns valid tier: $tier"
   else
     fail "Invalid tier returned: $tier"
@@ -51,12 +51,12 @@ test_get_default_tier_matches_symlink() {
   local -- script_dir symlink_target expected_tier
   script_dir=$(dirname "$SCRIPT")
 
-  if [[ ! -L "$script_dir"/BASH-CODING-STANDARD.md ]]; then
+  if [[ ! -L "$script_dir"/data/BASH-CODING-STANDARD.md ]]; then
     skip_test "BASH-CODING-STANDARD.md is not a symlink"
     return 0
   fi
 
-  symlink_target=$(readlink "$script_dir"/BASH-CODING-STANDARD.md)
+  symlink_target=$(readlink "$script_dir"/data/BASH-CODING-STANDARD.md)
 
   # Extract tier from symlink target
   if [[ "$symlink_target" =~ \.complete\.md$ ]]; then
@@ -65,6 +65,8 @@ test_get_default_tier_matches_symlink() {
     expected_tier='summary'
   elif [[ "$symlink_target" =~ \.abstract\.md$ ]]; then
     expected_tier='abstract'
+  elif [[ "$symlink_target" =~ \.rulet\.md$ ]]; then
+    expected_tier='rulet'
   else
     skip_test "Cannot determine tier from symlink target: $symlink_target"
     return 0

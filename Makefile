@@ -25,12 +25,13 @@ help:
 
 install:
 	install -d $(BINDIR)
-	install -m 755 bash-coding-standard $(BINDIR)/
-	ln -sf bash-coding-standard $(BINDIR)/bcs
+	install -m 755 bcs $(BINDIR)/
+	ln -sf bcs $(BINDIR)/bash-coding-standard
 	install -d -m 2775 -g bcs $(SHAREDIR)
 	cp -a data $(SHAREDIR)/ && chgrp -R bcs $(SHAREDIR)/data && find $(SHAREDIR)/data -type d -exec chmod 2775 {} + && find $(SHAREDIR)/data -type f -exec chmod 664 {} +
-	ln -sf data/BASH-CODING-STANDARD.abstract.md $(SHAREDIR)/BASH-CODING-STANDARD.md
+	ln -sf BASH-CODING-STANDARD.abstract.md $(SHAREDIR)/data/BASH-CODING-STANDARD.md
 	@if [ -d BCS ]; then \
+		rm -rf $(SHAREDIR)/BCS && \
 		cp -a BCS $(SHAREDIR)/ && chgrp -R bcs $(SHAREDIR)/BCS && find $(SHAREDIR)/BCS -type d -exec chmod 2775 {} + && \
 		echo "  - BCS index installed"; \
 	else \
@@ -40,17 +41,17 @@ install:
 	@echo "✓ Installed to $(PREFIX)"
 	@echo ""
 	@echo "Installed files:"
-	@echo "  - Executable: $(BINDIR)/bash-coding-standard (and bcs symlink)"
+	@echo "  - Executable: $(BINDIR)/bcs (and bash-coding-standard symlink)"
 	@echo "  - Standard docs (3 tiers): $(SHAREDIR)/data/BASH-CODING-STANDARD.*.md"
 	@echo "  - Data directory: $(SHAREDIR)/data/ (300+ rule files + templates)"
 	@echo "  - BCS index: $(SHAREDIR)/BCS/ (convenience symlinks, if available)"
 	@echo ""
-	@echo "Run: bash-coding-standard"
-	@echo "Help: bash-coding-standard --help"
+	@echo "Run: bcs"
+	@echo "Help: bcs --help"
 
 uninstall:
-	rm -f $(BINDIR)/bash-coding-standard
 	rm -f $(BINDIR)/bcs
+	rm -f $(BINDIR)/bash-coding-standard
 	rm -rf $(SHAREDIR)
 	@echo ""
 	@echo "✓ Uninstalled from $(PREFIX)"

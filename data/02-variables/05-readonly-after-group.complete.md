@@ -11,6 +11,40 @@
 - **Readability**: Separates initialization phase (values) from protection phase (readonly)
 - **Error Detection**: If any variable hasn't been initialized before readonly, script fails explicitly
 
+**Three-Step Progressive Readonly Workflow:**
+
+This is the standard pattern for variables that can only be finalized after argument parsing or runtime configuration:
+
+**Step 1 - Declare with defaults:**
+```bash
+declare -i VERBOSE=0 DRY_RUN=0
+declare -- OUTPUT_FILE='' PREFIX='/usr/local'
+```
+
+**Step 2 - Parse and modify in main():**
+```bash
+main() {
+  while (($#)); do case $1 in
+    -v) VERBOSE=1 ;;
+    -n) DRY_RUN=1 ;;
+    --output) noarg "$@"; shift; OUTPUT_FILE="$1" ;;
+    --prefix) noarg "$@"; shift; PREFIX="$1" ;;
+  esac; shift; done
+
+  # Step 3 - Make readonly AFTER parsing complete
+  readonly -- VERBOSE DRY_RUN OUTPUT_FILE PREFIX
+
+  # Now safe to use - all readonly
+  ((VERBOSE)) && info "Using prefix: $PREFIX"
+}
+```
+
+**Rationale for three-step pattern:**
+- Variables must be **mutable during parsing** (Step 2)
+- Making readonly **too early** prevents modification
+- Making readonly **after parsing** locks in final values (Step 3)
+- Prevents accidental modification throughout rest of script
+
 **Exception - Script Metadata:**
 
 **Note:** As of BCS v1.0.1, the **preferred pattern** for script metadata variables (VERSION, SCRIPT_PATH, SCRIPT_DIR, SCRIPT_NAME) is `declare -r` for immediate readonly declaration. While readonly-after-group remains valid for metadata, `declare -r` is now recommended (see BCS0103). All other variable groups (colors, paths, configuration) continue to use the readonly-after-group pattern described below.
