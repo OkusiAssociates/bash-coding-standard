@@ -1,0 +1,77 @@
+#!/bin/bash
+
+printline() {
+  local -i cols remaining COL=1
+  local -- row_col char="${1:-}" prefix="${2:-}"
+  [[ -z $char ]] && char='-'
+  char=${char:0:1}
+
+  # Print prefix text if provided
+  [[ -z "$prefix" ]] || printf '%s' "$prefix"
+
+  # Get terminal width - use COLUMNS first (much faster)
+  cols=${COLUMNS:-$(tput cols 2>/dev/null || echo 78)}
+
+  # Only try to get cursor position if we're in a terminal
+  if [[ -t 1 && -c /dev/tty ]]; then
+    # Combine stty operations in subshell to minimize overhead
+    row_col=$(
+      exec </dev/tty
+      declare -- oldstty R='' col=''
+      oldstty=$(stty -g)
+      stty raw -echo min 0 time 1
+      printf "\033[6n" >/dev/tty
+      #shellcheck disable=SC2034 # R is delimiter, not variable
+      IFS='[;' read -r -d R _ _ col
+      stty "$oldstty"
+      echo "$col"
+    )
+    [[ $row_col =~ ^[0-9]+$ ]] && COL=$row_col
+  fi
+
+  # Calculate remaining columns
+  remaining=$((cols - COL + 1))
+  ((remaining < 0)) && remaining=0
+
+  # Print the character 'remaining' times using brace expansion
+  ((remaining > 0)) && eval "printf '%.0s$char' {1..$remaining}"
+  printf "\n"
+}
+declare -fx printline
+
+# Only run main if the script is being executed directly (not sourced)
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  set -euo pipefail
+  # Capture script path, avoiding SC2155
+  SCRIPT_PATH="$(readlink -en -- "$0")"
+  readonly -- SCRIPT_PATH
+  
+  #shellcheck disable=SC2034 # Used in help text
+  readonly -- SCRIPT_DIR="${SCRIPT_PATH%/*}" SCRIPT_NAME="${SCRIPT_PATH##*/}"
+  [[ ${1:-} == '-h' || ${1:-} == '--help' ]] && {
+    cat <<-EOT
+$SCRIPT_NAME $(cat "$SCRIPT_DIR"/.version)
+
+Print a line of repeated chars from the current
+cursor position to the end of the line.
+
+usage: $SCRIPT_NAME [char [text]]
+
+char is any single printable character. default '-'.
+text is any text to print before the line chars.
+
+examples:
+  $SCRIPT_NAME
+  $SCRIPT_NAME '='
+  echo -n "123 abc "; printline '#'
+  $SCRIPT_NAME '*' '# topic header '
+  $SCRIPT_NAME '=' '    ## section 1 '
+  $SCRIPT_NAME '-' '        ### subsection 1 '
+EOT
+  exit 0
+  }
+
+  printline "$@"
+fi
+
+#fin

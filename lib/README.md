@@ -172,6 +172,48 @@ This directory contains vendored copies of external dependencies to ensure the B
 
 ---
 
+### printline/ - Terminal Line Drawing Utility
+
+**Purpose:** Draw a line from cursor position to end of terminal
+
+**Size:** ~52KB (script + docs + version file)
+
+**Used by:** Terminal output formatting, section dividers, header decoration
+
+**Upstream:** /ai/scripts/printline (internal YaTTI tool)
+**Git commit:** `5e6428871a638c3f6bc080c42bbe192ff917b5bd`
+**Last synced:** 2025-10-09 10:11:35 +0800
+
+**License:** GPL v3 (see LICENSES/printline.LICENSE)
+
+**Contents:**
+- `printline` - Main line drawing script (v1.0.0)
+- `.version` - Version file (sourced by --help)
+- `README.md` - Complete documentation with examples
+- `LICENSE` - GPL v3 license
+
+**Features:**
+- ✅ Intelligent cursor position detection
+- ✅ Customizable character (default '-')
+- ✅ Optional prefix text
+- ✅ Fast terminal width detection (uses $COLUMNS first)
+- ✅ Dual-mode (executable or sourceable function)
+- ✅ TTY-aware (graceful fallback for non-interactive use)
+
+**Installed to system:**
+- `printline` installed to `/usr/local/bin/printline`
+- Usage: `printline [char [text]]`
+- Examples:
+  - `printline` - Draw line with default '-' character
+  - `printline '='` - Draw line with '=' character
+  - `echo -n "Section: "; printline '#'` - Print text then line
+  - `printline '*' '# Header '` - Print prefix then line
+  - `source printline; printline '-' 'Section: '` - Use as function
+
+**Note:** GPL v3 is a copyleft license, distinct from BCS's CC BY-SA 4.0.
+
+---
+
 ### shlock/ - Shell Locking Utility
 
 **Purpose:** Process locking and synchronization for shell scripts
@@ -429,6 +471,24 @@ cd /ai/scripts/File/dux
 git log -1 --format="%H %ci"
 ```
 
+### Update printline
+
+```bash
+# Sync with upstream
+cd /ai/scripts/printline
+git pull
+
+# Copy to BCS lib/
+cd /ai/scripts/Okusi/bash-coding-standard
+cp /ai/scripts/printline/printline lib/printline/
+cp /ai/scripts/printline/.version lib/printline/
+chmod +x lib/printline/printline
+
+# Update this README with new git commit hash
+cd /ai/scripts/printline
+git log -1 --format="%H %ci"
+```
+
 ### Update shlock
 
 ```bash
@@ -576,6 +636,13 @@ chmod +x lib/remblanks/remblanks
 - ✅ Security hardened with proper temp file and signal handling
 - ✅ Self-contained (~56KB including docs)
 
+**printline:**
+- ✅ Elegant terminal line drawing utility
+- ✅ Useful for script output formatting and section dividers
+- ✅ Dual-mode operation (executable or sourceable)
+- ✅ Intelligent cursor position detection
+- ✅ Self-contained (~52KB including docs)
+
 **shlock:**
 - ✅ Required by bcs-compliance agent
 - ✅ Small single script (~16KB)
@@ -614,19 +681,20 @@ chmod +x lib/remblanks/remblanks
 
 ## Total Size
 
-**Vendored dependencies:** ~492KB total
+**Vendored dependencies:** ~540KB total
 - agents/: 16KB
 - md2ansi/: 60KB
 - mdheaders/: 54KB
 - whichx/: 45KB
 - dux/: 56KB
+- printline/: 52KB
 - shlock/: 16KB
 - trim/: 92KB
 - timer/: 47KB
 - post_slug/: 40KB
 - hr2int/: 3KB
 - remblanks/: 1KB
-- LICENSES/: 286KB (incl. mdheaders, whichx, dux GPL v3)
+- LICENSES/: 321KB (incl. mdheaders, whichx, dux, printline GPL v3)
 
 This is a negligible increase for a repository of this size, and the benefit of "works immediately after git clone" is well worth it.
 

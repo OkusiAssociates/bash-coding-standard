@@ -140,6 +140,16 @@ The following dependencies are vendored in the `lib/` directory and work out-of-
   - License: GPL v3 (copyleft, distinct from BCS's CC BY-SA 4.0)
   - Dependencies: du, numfmt (GNU coreutils)
 
+- **printline** - Terminal line drawing utility
+  - Used by: Terminal output formatting, section dividers, header decoration
+  - Bundled version: git commit 5e64288 (v1.0.0, ~52KB: script + docs + version file)
+  - Installed to: `/usr/local/bin/printline`
+  - Usage: `printline [char [text]]`
+  - Features: Intelligent cursor detection, customizable character, optional prefix, dual-mode (executable/sourceable)
+  - Upstream: /ai/scripts/printline (internal YaTTI tool)
+  - License: GPL v3 (copyleft, distinct from BCS's CC BY-SA 4.0)
+  - Dependencies: stty, tput (standard utilities)
+
 - **bcs-rulet-extractor** - AI agent for rulet generation
   - Used by: `bcs generate-rulets` (extract concise rules)
   - Bundled version: v1.0.1 (~5KB)
@@ -185,7 +195,7 @@ The following dependencies are vendored in the `lib/` directory and work out-of-
   - License: ⚠️ No explicit license (internal YaTTI utility)
   - Dependencies: grep
 
-**Total size:** ~492KB (vendored dependencies + licenses)
+**Total size:** ~540KB (vendored dependencies + licenses)
 
 **Benefits:**
 - ✅ Works immediately after `git clone`
@@ -995,7 +1005,7 @@ bash-coding-standard/
 ├── TESTING-SUMMARY.md               # Test suite documentation (31 test files)
 ├── LICENSE                          # CC BY-SA 4.0 license
 ├── Makefile                         # Installation/uninstallation helper
-├── lib/                             # Vendored dependencies (~492KB total)
+├── lib/                             # Vendored dependencies (~540KB total)
 │   ├── README.md                    # Dependency documentation and update procedures
 │   ├── agents/                      # Claude AI agent wrappers
 │   │   ├── bcs-rulet-extractor      # Rulet generation agent (v1.0.1, ~5KB)
@@ -1014,6 +1024,10 @@ bash-coding-standard/
 │   ├── dux/                         # Directory size analyzer (~56KB)
 │   │   ├── dir-sizes                # Main script (installed to /usr/local/bin, symlinked as 'dux')
 │   │   └── README.md, LICENSE       # Documentation (GPL v3)
+│   ├── printline/                   # Terminal line drawing utility (~52KB)
+│   │   ├── printline                # Main script (installed to /usr/local/bin)
+│   │   ├── .version                 # Version file
+│   │   └── README.md, LICENSE       # Documentation (GPL v3)
 │   ├── shlock/                      # Process locking utility (~16KB)
 │   │   └── shlock                   # Shell locking script
 │   ├── trim/                        # String trimming utilities (~92KB)
@@ -1031,11 +1045,12 @@ bash-coding-standard/
 │   │   └── hr2int.bash              # Number conversion script (hr↔int)
 │   ├── remblanks/                   # Comment/blank line stripper (~1KB)
 │   │   └── remblanks                # Tiny grep-based utility
-│   └── LICENSES/                    # Dependency licenses (~286KB)
+│   └── LICENSES/                    # Dependency licenses (~321KB)
 │       ├── md2ansi.LICENSE          # MIT license
 │       ├── mdheaders.LICENSE        # GPL v3 license
 │       ├── whichx.LICENSE           # GPL v3 license
 │       ├── dux.LICENSE              # GPL v3 license
+│       ├── printline.LICENSE        # GPL v3 license
 │       ├── shlock.LICENSE           # MIT license
 │       ├── trim.LICENSE             # GPL v3 license
 │       ├── timer.LICENSE            # GPL v3 license
