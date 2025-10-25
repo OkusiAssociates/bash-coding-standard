@@ -32,6 +32,7 @@ Modern software development increasingly relies on automated refactoring, AI-ass
 ## Table of Contents
 
 - [Quick Start](#quick-start)
+  - [Prerequisites](#prerequisites)
   - [Installation](#installation)
   - [Using the BCS Toolkit](#using-the-bcs-toolkit)
   - [Subcommands Reference](#subcommands-reference)
@@ -67,6 +68,42 @@ Modern software development increasingly relies on automated refactoring, AI-ass
 - [Acknowledgments](#acknowledgments)
 
 ## Quick Start
+
+### Prerequisites
+
+Before using the Bash Coding Standard toolkit, ensure you have:
+
+#### Required
+
+- **Bash 5.2+** - Modern Bash version (check: `bash --version`)
+- **ShellCheck** - Static analysis tool (mandatory for BCS compliance)
+
+  **Installation:**
+  ```bash
+  # Ubuntu/Debian
+  sudo apt install shellcheck
+
+  # macOS
+  brew install shellcheck
+
+  # Fedora/RHEL
+  sudo dnf install ShellCheck
+
+  # Alpine Linux
+  apk add shellcheck
+
+  # Or download from: https://www.shellcheck.net/
+  ```
+
+  **Verify installation:**
+  ```bash
+  shellcheck --version  # Should be 0.8.0 or higher
+  ```
+
+#### Optional
+
+- **Claude Code CLI** - For AI-powered features (`bcs check`, `bcs compress`)
+  - Install from: https://claude.com/code
 
 ### Installation
 
