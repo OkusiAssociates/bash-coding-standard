@@ -104,9 +104,11 @@ Before using the Bash Coding Standard toolkit, ensure you have:
 
 The following dependencies are vendored in the `lib/` directory and work out-of-box:
 
-- **md2ansi** - Beautiful terminal markdown display
+- **md2ansi & md** - Beautiful terminal markdown display
   - Used by: `bcs display` (enhanced viewing experience)
-  - Bundled version: git commit 6e8d7dc (~60KB)
+  - Bundled version: git commit 6e8d7dc (~60KB: 2 scripts + 5 libs)
+  - Installed to: `/usr/local/bin/md2ansi` and `/usr/local/bin/md`
+  - Usage: `md file.md` (paginated) or `md2ansi file.md` (direct output)
   - Upstream: https://github.com/Open-Technology-Foundation/md2ansi.bash
 
 - **bcs-rulet-extractor** - AI agent for rulet generation
@@ -970,7 +972,8 @@ bash-coding-standard/
 │   │   ├── bcs-rulet-extractor      # Rulet generation agent (v1.0.1, ~5KB)
 │   │   └── bcs-compliance           # Compliance checking wrapper (v1.0.1, ~900B)
 │   ├── md2ansi/                     # Markdown to ANSI renderer (~60KB)
-│   │   ├── md2ansi                  # Main renderer script
+│   │   ├── md2ansi                  # Main renderer script (installed to /usr/local/bin)
+│   │   ├── md                       # Pager wrapper (installed to /usr/local/bin)
 │   │   └── lib/                     # Renderer library files
 │   ├── shlock/                      # Process locking utility (~16KB)
 │   │   └── shlock                   # Shell locking script

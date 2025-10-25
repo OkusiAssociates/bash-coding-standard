@@ -30,7 +30,7 @@ This directory contains vendored copies of external dependencies to ensure the B
 
 **Purpose:** Beautiful terminal display of markdown documents
 
-**Size:** ~60KB (main script + 5 library files)
+**Size:** ~60KB (2 scripts + 5 library files)
 
 **Used by:** `bcs display` command (optional enhancement)
 
@@ -42,11 +42,16 @@ This directory contains vendored copies of external dependencies to ensure the B
 
 **Contents:**
 - `md2ansi` - Main markdown renderer script
+- `md` - Wrapper script that pipes md2ansi through less for pagination
 - `lib/ansi-colors.sh` - ANSI color definitions
 - `lib/parser.sh` - Markdown parsing engine
 - `lib/renderer.sh` - ANSI rendering engine
 - `lib/tables.sh` - Table rendering support
 - `lib/utils.sh` - Utility functions
+
+**Installed to system:**
+- Both `md2ansi` and `md` are installed to `/usr/local/bin/` for system-wide access
+- Use `md file.md` for paginated viewing or `md2ansi file.md` for direct output
 
 ---
 
@@ -246,8 +251,9 @@ git pull
 # Copy to BCS lib/
 cd /ai/scripts/Okusi/bash-coding-standard
 cp /ai/scripts/Markdown/md2ansi.bash/md2ansi lib/md2ansi/
+cp /ai/scripts/Markdown/md2ansi.bash/md lib/md2ansi/
 cp /ai/scripts/Markdown/md2ansi.bash/lib/*.sh lib/md2ansi/lib/
-chmod +x lib/md2ansi/md2ansi
+chmod +x lib/md2ansi/md2ansi lib/md2ansi/md
 
 # Update this README with new git commit hash
 cd /ai/scripts/Markdown/md2ansi.bash
