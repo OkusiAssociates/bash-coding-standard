@@ -30,7 +30,7 @@ install:
 	install -d -m 2775 -g bcs $(SHAREDIR)
 	cp -a data $(SHAREDIR)/ && chgrp -R bcs $(SHAREDIR)/data && find $(SHAREDIR)/data -type d -exec chmod 2775 {} + && find $(SHAREDIR)/data -type f -exec chmod 664 {} +
 	ln -sf BASH-CODING-STANDARD.abstract.md $(SHAREDIR)/data/BASH-CODING-STANDARD.md
-	cp -a lib $(SHAREDIR)/ && chgrp -R bcs $(SHAREDIR)/lib && find $(SHAREDIR)/lib -type d -exec chmod 2775 {} + && find $(SHAREDIR)/lib -type f -exec chmod 664 {} + && chmod 775 $(SHAREDIR)/lib/agents/* $(SHAREDIR)/lib/md2ansi/md2ansi $(SHAREDIR)/lib/shlock/shlock
+	cp -a lib $(SHAREDIR)/ && chgrp -R bcs $(SHAREDIR)/lib && find $(SHAREDIR)/lib -type d -exec chmod 2775 {} + && find $(SHAREDIR)/lib -type f -exec chmod 664 {} + && chmod 775 $(SHAREDIR)/lib/agents/* $(SHAREDIR)/lib/md2ansi/md2ansi $(SHAREDIR)/lib/shlock/shlock $(SHAREDIR)/lib/trim/*.bash
 	@if [ -d BCS ]; then \
 		rm -rf $(SHAREDIR)/BCS && \
 		cp -a BCS $(SHAREDIR)/ && chgrp -R bcs $(SHAREDIR)/BCS && find $(SHAREDIR)/BCS -type d -exec chmod 2775 {} + && \
@@ -45,7 +45,7 @@ install:
 	@echo "  - Executable: $(BINDIR)/bcs (and bash-coding-standard symlink)"
 	@echo "  - Standard docs (3 tiers): $(SHAREDIR)/data/BASH-CODING-STANDARD.*.md"
 	@echo "  - Data directory: $(SHAREDIR)/data/ (300+ rule files + templates)"
-	@echo "  - Vendored dependencies: $(SHAREDIR)/lib/ (~168KB: md2ansi, agents, shlock)"
+	@echo "  - Vendored dependencies: $(SHAREDIR)/lib/ (~260KB: md2ansi, agents, shlock, trim)"
 	@echo "  - BCS index: $(SHAREDIR)/BCS/ (convenience symlinks, if available)"
 	@echo ""
 	@echo "Run: bcs"

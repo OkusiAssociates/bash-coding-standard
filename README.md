@@ -122,7 +122,13 @@ The following dependencies are vendored in the `lib/` directory and work out-of-
   - Bundled version: git commit 49f1439 (~16KB)
   - Upstream: https://github.com/Open-Technology-Foundation/shlock
 
-**Total size:** ~168KB (vendored dependencies + licenses)
+- **trim** - String trimming utilities
+  - Used by: Available for general script use
+  - Bundled version: git commit 8b37c55 (~92KB: 6 utilities + docs)
+  - Upstream: https://github.com/Open-Technology-Foundation/trim
+  - License: GPL v3 (copyleft, distinct from BCS's CC BY-SA 4.0)
+
+**Total size:** ~260KB (vendored dependencies + licenses)
 
 **Benefits:**
 - ✅ Works immediately after `git clone`
@@ -931,7 +937,7 @@ bash-coding-standard/
 ├── TESTING-SUMMARY.md               # Test suite documentation (31 test files)
 ├── LICENSE                          # CC BY-SA 4.0 license
 ├── Makefile                         # Installation/uninstallation helper
-├── lib/                             # Vendored dependencies (~168KB total)
+├── lib/                             # Vendored dependencies (~260KB total)
 │   ├── README.md                    # Dependency documentation and update procedures
 │   ├── agents/                      # Claude AI agent wrappers
 │   │   ├── bcs-rulet-extractor      # Rulet generation agent (v1.0.1, ~5KB)
@@ -941,9 +947,15 @@ bash-coding-standard/
 │   │   └── lib/                     # Renderer library files
 │   ├── shlock/                      # Process locking utility (~16KB)
 │   │   └── shlock                   # Shell locking script
-│   └── LICENSES/                    # Dependency licenses (~76KB)
+│   ├── trim/                        # String trimming utilities (~92KB)
+│   │   ├── trim, ltrim, rtrim       # Whitespace trimming scripts
+│   │   ├── trimall, squeeze         # Whitespace normalization
+│   │   ├── trimv                    # Trim with variable assignment
+│   │   └── README.md, LICENSE       # Documentation (GPL v3)
+│   └── LICENSES/                    # Dependency licenses (~111KB)
 │       ├── md2ansi.LICENSE          # MIT license
-│       └── shlock.LICENSE           # MIT license
+│       ├── shlock.LICENSE           # MIT license
+│       └── trim.LICENSE             # GPL v3 license
 ├── docs/                            # Comprehensive usage guides
 │   ├── BCS-DECODE-PATTERNS.md       # Advanced decode patterns and workflows (481 lines)
 │   └── BCS-COMPRESS-GUIDE.md        # Complete compression guide (665 lines)

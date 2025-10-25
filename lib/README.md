@@ -66,6 +66,40 @@ This directory contains vendored copies of external dependencies to ensure the B
 
 ---
 
+### trim/ - String Trimming Utilities
+
+**Purpose:** Pure Bash string trimming and whitespace manipulation utilities
+
+**Size:** ~92KB (6 utilities + README + LICENSE)
+
+**Used by:** Available for general use in scripts
+
+**Upstream:** https://github.com/Open-Technology-Foundation/trim
+**Git commit:** `8b37c556f40fad179451ada68e6553d17d811973`
+**Last synced:** 2025-10-25 10:33:44 +0800
+
+**License:** GPL v3 (see LICENSES/trim.LICENSE)
+
+**Contents:**
+- `trim` / `trim.bash` - Remove leading and trailing whitespace
+- `ltrim` / `ltrim.bash` - Remove leading whitespace only
+- `rtrim` / `rtrim.bash` - Remove trailing whitespace only
+- `trimall` / `trimall.bash` - Normalize whitespace (trim + collapse internal spaces)
+- `squeeze` / `squeeze.bash` - Collapse consecutive whitespace
+- `trimv` / `trimv.bash` - Trim with direct variable assignment (no subshell)
+- `README.md` - Complete documentation with examples
+- `LICENSE` - GPL v3 license
+
+**Features:**
+- ✅ Zero dependencies - Pure Bash implementation
+- ✅ Fast - No subprocess overhead
+- ✅ Dual-mode - Use as commands OR source as functions
+- ✅ Pipeline-friendly - Full stdin/stdout support
+
+**Note:** GPL v3 is a copyleft license, distinct from BCS's CC BY-SA 4.0. These utilities remain independently licensed under GPL v3.
+
+---
+
 ## Path Resolution
 
 The `bcs` script searches for dependencies in priority order:
@@ -131,6 +165,33 @@ chmod +x lib/agents/*
 grep VERSION lib/agents/bcs-rulet-extractor
 ```
 
+### Update trim
+
+```bash
+# Sync with upstream
+cd /ai/scripts/lib/str/trim
+git pull
+
+# Copy to BCS lib/
+cd /ai/scripts/Okusi/bash-coding-standard
+cp /ai/scripts/lib/str/trim/{trim,ltrim,rtrim,trimall,squeeze,trimv}.bash lib/trim/
+cp /ai/scripts/lib/str/trim/{README.md,LICENSE} lib/trim/
+chmod +x lib/trim/*.bash
+
+# Recreate symlinks
+cd lib/trim
+ln -sf trim.bash trim
+ln -sf ltrim.bash ltrim
+ln -sf rtrim.bash rtrim
+ln -sf trimall.bash trimall
+ln -sf squeeze.bash squeeze
+ln -sf trimv.bash trimv
+
+# Update this README with new git commit hash
+cd /ai/scripts/lib/str/trim
+git log -1 --format="%H %ci"
+```
+
 ---
 
 ## Why Vendor These Dependencies?
@@ -150,15 +211,22 @@ grep VERSION lib/agents/bcs-rulet-extractor
 - ✅ Small single script (~16KB)
 - ✅ No external dependencies
 
+**trim:**
+- ✅ Pure Bash string manipulation utilities
+- ✅ Zero external dependencies
+- ✅ Useful for script development
+- ✅ Dual-mode (command-line and sourceable functions)
+
 ---
 
 ## Total Size
 
-**Vendored dependencies:** ~168KB total
+**Vendored dependencies:** ~260KB total
 - agents/: 16KB
 - md2ansi/: 60KB
 - shlock/: 16KB
-- LICENSES/: 76KB
+- trim/: 92KB
+- LICENSES/: 111KB
 
 This is a negligible increase for a repository of this size, and the benefit of "works immediately after git clone" is well worth it.
 
