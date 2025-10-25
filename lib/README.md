@@ -131,6 +131,47 @@ This directory contains vendored copies of external dependencies to ensure the B
 
 ---
 
+### dux/ - Directory Size Analyzer (dir-sizes)
+
+**Purpose:** Display directory sizes in sorted human-readable format
+
+**Size:** ~56KB (script + docs)
+
+**Used by:** Disk space analysis and directory size monitoring
+
+**Upstream:** /ai/scripts/File/dux (internal YaTTI tool)
+**Git commit:** `ee0927ce87cc516ad9243a8214e48b041892d559`
+**Last synced:** 2025-09-21 10:40:03 +0800
+
+**License:** GPL v3 (see LICENSES/dux.LICENSE)
+
+**Contents:**
+- `dir-sizes` - Main directory size analyzer script (v1.2.0)
+- `README.md` - Complete documentation with usage examples
+- `LICENSE` - GPL v3 license
+
+**Features:**
+- ✅ Recursive size calculation (includes all nested content)
+- ✅ Human-readable output with IEC units (B, KiB, MiB, GiB, TiB)
+- ✅ Sorted results (smallest to largest)
+- ✅ Graceful permission error handling
+- ✅ Secure temporary file handling
+- ✅ Signal handling for clean interruption (Ctrl+C safe)
+- ✅ Fast performance using native `du` command
+
+**Installed to system:**
+- `dir-sizes` installed to `/usr/local/bin/dir-sizes`
+- Symlink `dux` → `dir-sizes` created in `/usr/local/bin/`
+- Usage: `dir-sizes [directory]` or `dux [directory]`
+- Examples:
+  - `dux` - Analyze current directory
+  - `dir-sizes /var` - Analyze /var subdirectories
+  - `dux ~/Documents | tail -10` - Show 10 largest directories
+
+**Note:** GPL v3 is a copyleft license, distinct from BCS's CC BY-SA 4.0.
+
+---
+
 ### shlock/ - Shell Locking Utility
 
 **Purpose:** Process locking and synchronization for shell scripts
@@ -371,6 +412,23 @@ cd /ai/scripts/File/whichx
 git log -1 --format="%H %ci"
 ```
 
+### Update dux
+
+```bash
+# Sync with upstream
+cd /ai/scripts/File/dux
+git pull
+
+# Copy to BCS lib/
+cd /ai/scripts/Okusi/bash-coding-standard
+cp /ai/scripts/File/dux/dir-sizes lib/dux/
+chmod +x lib/dux/dir-sizes
+
+# Update this README with new git commit hash
+cd /ai/scripts/File/dux
+git log -1 --format="%H %ci"
+```
+
 ### Update shlock
 
 ```bash
@@ -512,6 +570,12 @@ chmod +x lib/remblanks/remblanks
 - ✅ Useful for scripting (silent mode, specific exit codes)
 - ✅ Self-contained (~45KB including docs)
 
+**dux:**
+- ✅ Fast directory size analyzer with sorted human-readable output
+- ✅ Essential for disk space analysis and monitoring
+- ✅ Security hardened with proper temp file and signal handling
+- ✅ Self-contained (~56KB including docs)
+
 **shlock:**
 - ✅ Required by bcs-compliance agent
 - ✅ Small single script (~16KB)
@@ -550,18 +614,19 @@ chmod +x lib/remblanks/remblanks
 
 ## Total Size
 
-**Vendored dependencies:** ~445KB total
+**Vendored dependencies:** ~492KB total
 - agents/: 16KB
 - md2ansi/: 60KB
 - mdheaders/: 54KB
 - whichx/: 45KB
+- dux/: 56KB
 - shlock/: 16KB
 - trim/: 92KB
 - timer/: 47KB
 - post_slug/: 40KB
 - hr2int/: 3KB
 - remblanks/: 1KB
-- LICENSES/: 251KB (incl. mdheaders, whichx GPL v3)
+- LICENSES/: 286KB (incl. mdheaders, whichx, dux GPL v3)
 
 This is a negligible increase for a repository of this size, and the benefit of "works immediately after git clone" is well worth it.
 

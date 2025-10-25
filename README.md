@@ -130,6 +130,16 @@ The following dependencies are vendored in the `lib/` directory and work out-of-
   - License: GPL v3 (copyleft, distinct from BCS's CC BY-SA 4.0)
   - Note: Shadows system 'which' command via /usr/local/bin priority
 
+- **dux (dir-sizes)** - Directory size analyzer
+  - Used by: Disk space analysis and directory size monitoring
+  - Bundled version: git commit ee0927c (v1.2.0, ~56KB: script + docs)
+  - Installed to: `/usr/local/bin/dir-sizes` and symlinked as `/usr/local/bin/dux`
+  - Usage: `dir-sizes [directory]` or `dux [directory]`
+  - Features: Recursive size calculation, human-readable IEC units, sorted output, graceful error handling
+  - Upstream: /ai/scripts/File/dux (internal YaTTI tool)
+  - License: GPL v3 (copyleft, distinct from BCS's CC BY-SA 4.0)
+  - Dependencies: du, numfmt (GNU coreutils)
+
 - **bcs-rulet-extractor** - AI agent for rulet generation
   - Used by: `bcs generate-rulets` (extract concise rules)
   - Bundled version: v1.0.1 (~5KB)
@@ -175,7 +185,7 @@ The following dependencies are vendored in the `lib/` directory and work out-of-
   - License: ⚠️ No explicit license (internal YaTTI utility)
   - Dependencies: grep
 
-**Total size:** ~345KB (vendored dependencies + licenses)
+**Total size:** ~492KB (vendored dependencies + licenses)
 
 **Benefits:**
 - ✅ Works immediately after `git clone`
@@ -985,7 +995,7 @@ bash-coding-standard/
 ├── TESTING-SUMMARY.md               # Test suite documentation (31 test files)
 ├── LICENSE                          # CC BY-SA 4.0 license
 ├── Makefile                         # Installation/uninstallation helper
-├── lib/                             # Vendored dependencies (~445KB total)
+├── lib/                             # Vendored dependencies (~492KB total)
 │   ├── README.md                    # Dependency documentation and update procedures
 │   ├── agents/                      # Claude AI agent wrappers
 │   │   ├── bcs-rulet-extractor      # Rulet generation agent (v1.0.1, ~5KB)
@@ -1000,6 +1010,9 @@ bash-coding-standard/
 │   │   └── README.md, LICENSE       # Documentation (GPL v3)
 │   ├── whichx/                      # Command locator (~45KB)
 │   │   ├── whichx                   # Main script (installed to /usr/local/bin, symlinked as 'which')
+│   │   └── README.md, LICENSE       # Documentation (GPL v3)
+│   ├── dux/                         # Directory size analyzer (~56KB)
+│   │   ├── dir-sizes                # Main script (installed to /usr/local/bin, symlinked as 'dux')
 │   │   └── README.md, LICENSE       # Documentation (GPL v3)
 │   ├── shlock/                      # Process locking utility (~16KB)
 │   │   └── shlock                   # Shell locking script
@@ -1018,10 +1031,11 @@ bash-coding-standard/
 │   │   └── hr2int.bash              # Number conversion script (hr↔int)
 │   ├── remblanks/                   # Comment/blank line stripper (~1KB)
 │   │   └── remblanks                # Tiny grep-based utility
-│   └── LICENSES/                    # Dependency licenses (~251KB)
+│   └── LICENSES/                    # Dependency licenses (~286KB)
 │       ├── md2ansi.LICENSE          # MIT license
 │       ├── mdheaders.LICENSE        # GPL v3 license
 │       ├── whichx.LICENSE           # GPL v3 license
+│       ├── dux.LICENSE              # GPL v3 license
 │       ├── shlock.LICENSE           # MIT license
 │       ├── trim.LICENSE             # GPL v3 license
 │       ├── timer.LICENSE            # GPL v3 license
