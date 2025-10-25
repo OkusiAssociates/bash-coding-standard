@@ -210,9 +210,9 @@ sync_library() {
 
   # Create target directory
   if ((DRY_RUN)); then
-    vecho "  [DRY-RUN] Would create directory: $target_dir"
+    vecho "  [DRY-RUN] Would ensure directory exists: $target_dir"
   else
-    mkdir -p "$target_dir" || {
+    mkdir -p "$target_dir" 2>/dev/null || {
       error "  Failed to create directory: $target_dir"
       ((FAILED_COUNT+=1))
       return 1

@@ -76,7 +76,7 @@ This directory contains vendored copies of external dependencies to ensure the B
 
 **Upstream:** https://github.com/Open-Technology-Foundation/trim
 **Git commit:** `8b37c556f40fad179451ada68e6553d17d811973`
-**Last synced:** 2025-10-25 10:33:44 +0800
+**Last synced:** 2025-10-19 06:50:49 +0800
 
 **License:** GPL v3 (see LICENSES/trim.LICENSE)
 
@@ -110,7 +110,7 @@ This directory contains vendored copies of external dependencies to ensure the B
 
 **Upstream:** https://github.com/Open-Technology-Foundation/timer
 **Git commit:** `f8ac47a76082d4da5c8808bdc0211a6b1e385c28`
-**Last synced:** 2025-10-25 12:04:34 +0800
+**Last synced:** 2025-10-23 22:00:34 +0800
 
 **License:** GPL v3 (see LICENSES/timer.LICENSE)
 
@@ -140,7 +140,7 @@ This directory contains vendored copies of external dependencies to ensure the B
 
 **Upstream:** https://github.com/Open-Technology-Foundation/post_slug
 **Git commit:** `d4f73ff5eee87b50b3bc4c607029a099e6c11bc9`
-**Last synced:** 2025-10-25 12:04:34 +0800
+**Last synced:** 2025-10-09 10:11:12 +0800
 
 **License:** GPL v3 (see LICENSES/post_slug.LICENSE)
 
