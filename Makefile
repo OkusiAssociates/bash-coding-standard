@@ -3,6 +3,10 @@
 #   sudo make install                  # Install to /usr/local
 #   sudo make PREFIX=/usr install      # Install to /usr (system-wide)
 #   sudo make uninstall                # Uninstall from /usr/local
+#
+# Note: Install will detect and warn about existing symlinks in BINDIR
+#       before installation. This protects development symlinks from being
+#       silently overwritten. User confirmation is required to proceed.
 
 PREFIX ?= /usr/local
 BINDIR = $(PREFIX)/bin
@@ -24,6 +28,40 @@ help:
 	@echo "  sudo make uninstall                # Uninstall"
 
 install:
+	@# Phase 1: Detect existing symlinks in destination
+	@echo "Checking for existing symlinks in $(BINDIR)..."
+	@SYMLINKS=""; \
+	for FILE in bcs md2ansi md mdheaders libmdheaders.bash whichx dir-sizes printline; do \
+		if [ -L "$(BINDIR)/$$FILE" ]; then \
+			TARGET=$$(readlink -f "$(BINDIR)/$$FILE" 2>/dev/null || echo "<broken symlink>"); \
+			SYMLINKS="$$SYMLINKS$(BINDIR)/$$FILE -> $$TARGET\n"; \
+		fi; \
+	done; \
+	if [ -n "$$SYMLINKS" ]; then \
+		echo ""; \
+		echo "▲ Warning: The following files are symlinks and will be removed:"; \
+		printf "$$SYMLINKS" | sed 's/^/  /'; \
+		echo ""; \
+		read -p "Remove these symlinks and continue? [y/N] " REPLY; \
+		case "$$REPLY" in \
+			[Yy]*) \
+				echo "Removing symlinks..."; \
+				for FILE in bcs md2ansi md mdheaders libmdheaders.bash whichx dir-sizes printline; do \
+					[ -L "$(BINDIR)/$$FILE" ] && rm -f "$(BINDIR)/$$FILE"; \
+				done; \
+				echo "✓ Symlinks removed"; \
+				echo ""; \
+				;; \
+			*) \
+				echo "Installation cancelled."; \
+				exit 1; \
+				;; \
+		esac; \
+	else \
+		echo "✓ No conflicting symlinks found"; \
+		echo ""; \
+	fi
+	@# Phase 2: Normal installation
 	install -d $(BINDIR)
 	install -m 755 bcs $(BINDIR)/
 	ln -sf bcs $(BINDIR)/bash-coding-standard
