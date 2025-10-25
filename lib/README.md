@@ -214,6 +214,51 @@ This directory contains vendored copies of external dependencies to ensure the B
 
 ---
 
+### bcx/ - Terminal Calculator with REPL
+
+**Purpose:** Floating-point calculator with interactive REPL mode
+
+**Size:** ~44KB (script + docs + LICENSE)
+
+**Used by:** Quick calculations from command line or scripts
+
+**Upstream:** /ai/scripts/bcx (internal YaTTI tool)
+**Git commit:** `f10947282674653b9ce6e2c8d88e9a825be339c6`
+**Last synced:** 2025-10-20 09:34:43 +0800
+
+**License:** GPL v3 (see LICENSES/bcx.LICENSE)
+
+**Contents:**
+- `bcx` - Main calculator script (v1.0.0)
+- `README.md` - Complete documentation with examples
+- `LICENSE` - GPL v3 license
+
+**Features:**
+- ✅ Interactive REPL with readline history (arrow keys, Ctrl-R search)
+- ✅ Single-expression mode for quick calculations
+- ✅ Persistent command history (~/.bcx_history)
+- ✅ x → * conversion in terminal mode (e.g., `3x4` becomes `3*4`)
+- ✅ Clean error handling with clear feedback
+- ✅ Math library support (sqrt, sin, cos, atan, log, exp, etc.)
+- ✅ Proper Ctrl-C handling in REPL mode
+- ✅ BCS-compliant implementation
+
+**Installed to system:**
+- `bcx` installed to `/usr/local/bin/bcx`
+- Usage: `bcx [expression]`
+- Examples:
+  - `bcx "3.14 * 2"` - Quick calculation (returns 6.28)
+  - `bcx "sqrt(144)"` - Math functions (returns 12)
+  - `bcx 42x72/3.14` - x converts to * (returns ~963.8)
+  - `bcx` - Interactive REPL mode
+  - `result=$(bcx "42 * 72 / 3.14")` - Use in scripts
+
+**Dependencies:** bc (command-line calculator)
+
+**Note:** GPL v3 is a copyleft license, distinct from BCS's CC BY-SA 4.0.
+
+---
+
 ### shlock/ - Shell Locking Utility
 
 **Purpose:** Process locking and synchronization for shell scripts
@@ -698,12 +743,12 @@ The repository includes an automated sync utility that updates all vendored depe
 
 **Output format:**
 ```
-◉ Syncing 11 libraries from /ai/scripts...
+◉ Syncing 12 libraries from /ai/scripts...
 ✓ shlock    synced (16KB)
 ✓ trim      synced (92KB, with docs)
 ✓ timer     synced (47KB, with docs)
 ...
-◉ Total: 11 libraries synced, ~540KB
+◉ Total: 12 libraries synced, ~544KB
 ```
 
 ### Sync Manifest (.sync-manifest)
@@ -726,6 +771,7 @@ lib_subdir|upstream_path|file_pattern|copy_docs
 shlock|/ai/scripts/lib/shlock|shlock|no
 trim|/ai/scripts/lib/str/trim|{trim,ltrim,rtrim,trimall,squeeze,trimv}.bash|yes
 md2ansi|/ai/scripts/Markdown/md2ansi.bash|md2ansi md lib/*.sh|yes
+bcx|/ai/scripts/bcx|bcx|yes
 ```
 
 **Note:** The `.sync-manifest` file is gitignored to allow per-environment customization. A template is committed as `lib/.sync-manifest.template`.
@@ -746,6 +792,7 @@ bcs (main script)
 ├── whichx (independent utility)
 ├── dux (independent utility)
 ├── printline (independent utility)
+├── bcx (independent utility)
 └── agents/
     ├── bcs-rulet-extractor (uses Claude CLI)
     └── bcs-compliance (uses shlock, Claude CLI)
@@ -755,6 +802,7 @@ bcs (main script)
 **Runtime dependencies:**
 - **md2ansi** → Uses `lib/*.sh` (ansi-colors, parser, renderer, tables, utils)
 - **mdheaders** → Requires `libmdheaders.bash` library
+- **bcx** → Requires `bc` command-line calculator
 - **bcs-compliance** → Requires `shlock` for locking
 - **agents** → Require Claude Code CLI (`claude` command in PATH)
 
@@ -791,6 +839,8 @@ mdheaders upgrade -l 2 doc.md # Upgrade headers by 2 levels
 which python                  # Find command (uses whichx)
 dux /var                      # Analyze directory sizes
 printline '='                 # Draw horizontal line
+bcx "3.14 * 2"                # Quick calculation
+bcx                           # Interactive calculator REPL
 ```
 
 **Sourcing from lib/ in development:**
@@ -1277,20 +1327,21 @@ brew install coreutils
 
 ## Total Size
 
-**Vendored dependencies:** ~540KB total
+**Vendored dependencies:** ~544KB total
 - agents/: 16KB
 - md2ansi/: 60KB
 - mdheaders/: 54KB
 - whichx/: 45KB
 - dux/: 56KB
 - printline/: 52KB
+- bcx/: 44KB
 - shlock/: 16KB
 - trim/: 92KB
 - timer/: 47KB
 - post_slug/: 40KB
 - hr2int/: 3KB
 - remblanks/: 1KB
-- LICENSES/: 321KB (incl. mdheaders, whichx, dux, printline GPL v3)
+- LICENSES/: 356KB (incl. mdheaders, whichx, dux, printline, bcx GPL v3)
 
 This is a negligible increase for a repository of this size, and the benefit of "works immediately after git clone" is well worth it.
 
@@ -1301,6 +1352,7 @@ This is a negligible increase for a repository of this size, and the benefit of 
 These tools should be installed by users via package manager:
 
 - **Bash 5.2+** - Required (system shell)
+- **bc** - Required for bcx calculator (`apt install bc`)
 - **ShellCheck** - Required for validation (`apt install shellcheck`)
 - **Claude Code CLI** - Optional for AI features (install from https://claude.com/code)
 

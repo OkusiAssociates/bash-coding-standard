@@ -102,7 +102,7 @@ Before using the Bash Coding Standard toolkit, ensure you have:
 
 #### Bundled Libraries and Scripts (No Installation Required)
 
-The BCS includes **12 vendored tools** (~540KB total) in the `lib/` directory that work out-of-box after `git clone`. All tools are installed system-wide via `sudo make install`.
+The BCS includes **13 vendored tools** (~544KB total) in the `lib/` directory that work out-of-box after `git clone`. All tools are installed system-wide via `sudo make install`.
 
 **Quick Reference:**
 
@@ -110,7 +110,7 @@ The BCS includes **12 vendored tools** (~540KB total) in the `lib/` directory th
 |----------|-------|---------|
 | **Core BCS** | bcs-rulet-extractor, bcs-compliance | AI agents for BCS operations |
 | **Markdown** | md2ansi, md, mdheaders | Document rendering and manipulation |
-| **File/System** | whichx, dux, printline | Command location, disk analysis, terminal formatting |
+| **File/System** | whichx, dux, printline, bcx | Command location, disk analysis, terminal formatting, calculations |
 | **Development** | shlock, trim, timer, post_slug, hr2int, remblanks | Scripting utilities |
 
 ---
@@ -213,6 +213,25 @@ The BCS includes **12 vendored tools** (~540KB total) in the `lib/` directory th
 - **License:** GPL v3
 - **Dependencies:** stty, tput (standard utilities)
 
+**bcx** (v1.0.0, git commit [f109472], ~44KB)
+- **Purpose:** Terminal calculator for floating-point expressions with interactive REPL
+- **Installation:** `/usr/local/bin/bcx`
+- **Usage:**
+  ```bash
+  bcx "3.14 * 2"         # Quick calculation (returns 6.28)
+  bcx "sqrt(144)"        # Math functions (returns 12)
+  bcx                    # Interactive REPL mode
+  result=$(bcx "42 * 72 / 3.14")  # Use in scripts
+  ```
+- **Features:**
+  - ✅ Interactive REPL with readline history (arrow keys, Ctrl-R search)
+  - ✅ Persistent command history (~/.bcx_history)
+  - ✅ Math library support (sqrt, sin, cos, atan, log, exp)
+  - ✅ x → * conversion in terminal mode (e.g., `3x4` becomes `3*4`)
+  - ✅ Clean error handling and proper Ctrl-C support
+- **License:** GPL v3
+- **Dependencies:** bc (command-line calculator)
+
 ---
 
 ##### Development Utilities
@@ -271,7 +290,7 @@ The BCS includes **12 vendored tools** (~540KB total) in the `lib/` directory th
 **Installation Behavior:**
 
 Running `sudo make install` installs these tools to `/usr/local/bin/`:
-- ✅ **Always installed:** bcs, md2ansi, md, mdheaders, whichx, dir-sizes, printline
+- ✅ **Always installed:** bcs, md2ansi, md, mdheaders, whichx, dir-sizes, printline, bcx
 - ✅ **Symlinks created:** bash-coding-standard → bcs, which → whichx, dux → dir-sizes
 - ⚠️ **Symlink protection:** Install detects existing symlinks and prompts before removal
 - ℹ️ **Not installed:** Agents, trim, timer, post_slug, hr2int, remblanks, shlock

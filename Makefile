@@ -31,7 +31,7 @@ install:
 	@# Phase 1: Detect existing symlinks in destination
 	@echo "Checking for existing symlinks in $(BINDIR)..."
 	@SYMLINKS=""; \
-	for FILE in bcs md2ansi md mdheaders libmdheaders.bash whichx dir-sizes printline; do \
+	for FILE in bcs md2ansi md mdheaders libmdheaders.bash whichx dir-sizes printline bcx; do \
 		if [ -L "$(BINDIR)/$$FILE" ]; then \
 			TARGET=$$(readlink -f "$(BINDIR)/$$FILE" 2>/dev/null || echo "<broken symlink>"); \
 			SYMLINKS="$$SYMLINKS$(BINDIR)/$$FILE -> $$TARGET\n"; \
@@ -46,7 +46,7 @@ install:
 		case "$$REPLY" in \
 			[Yy]*) \
 				echo "Removing symlinks..."; \
-				for FILE in bcs md2ansi md mdheaders libmdheaders.bash whichx dir-sizes printline; do \
+				for FILE in bcs md2ansi md mdheaders libmdheaders.bash whichx dir-sizes printline bcx; do \
 					[ -L "$(BINDIR)/$$FILE" ] && rm -f "$(BINDIR)/$$FILE"; \
 				done; \
 				echo "✓ Symlinks removed"; \
@@ -74,10 +74,11 @@ install:
 	install -m 755 lib/dux/dir-sizes $(BINDIR)/
 	ln -sf dir-sizes $(BINDIR)/dux
 	install -m 755 lib/printline/printline $(BINDIR)/
+	install -m 755 lib/bcx/bcx $(BINDIR)/
 	install -d -m 2775 -g bcs $(SHAREDIR)
 	cp -a data $(SHAREDIR)/ && chgrp -R bcs $(SHAREDIR)/data && find $(SHAREDIR)/data -type d -exec chmod 2775 {} + && find $(SHAREDIR)/data -type f -exec chmod 664 {} +
 	ln -sf BASH-CODING-STANDARD.abstract.md $(SHAREDIR)/data/BASH-CODING-STANDARD.md
-	cp -a lib $(SHAREDIR)/ && chgrp -R bcs $(SHAREDIR)/lib && find $(SHAREDIR)/lib -type d -exec chmod 2775 {} + && find $(SHAREDIR)/lib -type f -exec chmod 664 {} + && chmod 775 $(SHAREDIR)/lib/agents/* $(SHAREDIR)/lib/md2ansi/md2ansi $(SHAREDIR)/lib/md2ansi/md $(SHAREDIR)/lib/mdheaders/mdheaders $(SHAREDIR)/lib/mdheaders/libmdheaders.bash $(SHAREDIR)/lib/whichx/whichx $(SHAREDIR)/lib/dux/dir-sizes $(SHAREDIR)/lib/printline/printline $(SHAREDIR)/lib/shlock/shlock $(SHAREDIR)/lib/trim/*.bash $(SHAREDIR)/lib/timer/timer $(SHAREDIR)/lib/post_slug/post_slug.bash $(SHAREDIR)/lib/hr2int/hr2int.bash $(SHAREDIR)/lib/remblanks/remblanks
+	cp -a lib $(SHAREDIR)/ && chgrp -R bcs $(SHAREDIR)/lib && find $(SHAREDIR)/lib -type d -exec chmod 2775 {} + && find $(SHAREDIR)/lib -type f -exec chmod 664 {} + && chmod 775 $(SHAREDIR)/lib/agents/* $(SHAREDIR)/lib/md2ansi/md2ansi $(SHAREDIR)/lib/md2ansi/md $(SHAREDIR)/lib/mdheaders/mdheaders $(SHAREDIR)/lib/mdheaders/libmdheaders.bash $(SHAREDIR)/lib/whichx/whichx $(SHAREDIR)/lib/dux/dir-sizes $(SHAREDIR)/lib/printline/printline $(SHAREDIR)/lib/bcx/bcx $(SHAREDIR)/lib/shlock/shlock $(SHAREDIR)/lib/trim/*.bash $(SHAREDIR)/lib/timer/timer $(SHAREDIR)/lib/post_slug/post_slug.bash $(SHAREDIR)/lib/hr2int/hr2int.bash $(SHAREDIR)/lib/remblanks/remblanks
 	@if [ -d BCS ]; then \
 		rm -rf $(SHAREDIR)/BCS && \
 		cp -a BCS $(SHAREDIR)/ && chgrp -R bcs $(SHAREDIR)/BCS && find $(SHAREDIR)/BCS -type d -exec chmod 2775 {} + && \
@@ -94,9 +95,10 @@ install:
 	@echo "  - Command locator: $(BINDIR)/whichx (and which symlink)"
 	@echo "  - Directory analyzer: $(BINDIR)/dir-sizes (and dux symlink)"
 	@echo "  - Line drawing: $(BINDIR)/printline"
+	@echo "  - Calculator: $(BINDIR)/bcx"
 	@echo "  - Standard docs (3 tiers): $(SHAREDIR)/data/BASH-CODING-STANDARD.*.md"
 	@echo "  - Data directory: $(SHAREDIR)/data/ (300+ rule files + templates)"
-	@echo "  - Vendored dependencies: $(SHAREDIR)/lib/ (~540KB: md2ansi, mdheaders, whichx, dux, printline, agents, shlock, trim, timer, post_slug, hr2int, remblanks)"
+	@echo "  - Vendored dependencies: $(SHAREDIR)/lib/ (~544KB: md2ansi, mdheaders, whichx, dux, printline, bcx, agents, shlock, trim, timer, post_slug, hr2int, remblanks)"
 	@echo "  - BCS index: $(SHAREDIR)/BCS/ (convenience symlinks, if available)"
 	@echo ""
 	@echo "Run: bcs"
@@ -106,6 +108,7 @@ install:
 	@echo "Command locator: which <command>  (or whichx <command>)"
 	@echo "Directory sizes: dir-sizes [directory]  (or dux [directory])"
 	@echo "Line drawing: printline [char [text]]"
+	@echo "Calculator: bcx [expression]  (or bcx for interactive mode)"
 
 uninstall:
 	rm -f $(BINDIR)/bcs
@@ -119,6 +122,7 @@ uninstall:
 	rm -f $(BINDIR)/dir-sizes
 	rm -f $(BINDIR)/dux
 	rm -f $(BINDIR)/printline
+	rm -f $(BINDIR)/bcx
 	rm -rf $(SHAREDIR)
 	@echo ""
 	@echo "✓ Uninstalled from $(PREFIX)"
