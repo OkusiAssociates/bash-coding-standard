@@ -55,6 +55,43 @@ This directory contains vendored copies of external dependencies to ensure the B
 
 ---
 
+### mdheaders/ - Markdown Header Level Manipulation
+
+**Purpose:** CLI tool for modifying markdown header levels (upgrade, downgrade, normalize)
+
+**Size:** ~54KB (2 scripts + docs)
+
+**Used by:** General markdown document manipulation
+
+**Upstream:** /ai/scripts/Markdown/mdheaders
+**Git commit:** `6837187071ecf602be393dabd19f9bd16ef46372`
+**Last synced:** 2025-10-23 11:06:57 +0800
+
+**License:** GPL v3 (see LICENSES/mdheaders.LICENSE)
+
+**Contents:**
+- `mdheaders` - Main CLI tool for header manipulation
+- `libmdheaders.bash` - Library file sourced by mdheaders
+
+**Features:**
+- ✅ Upgrade headers - Increase levels (# → ##)
+- ✅ Downgrade headers - Decrease levels (## → #)
+- ✅ Normalize headers - Auto-detect minimum level and normalize to target
+- ✅ Code block awareness - Preserves fenced code blocks (``` and ~~~)
+- ✅ Flexible output - stdout, file, or in-place modification with backups
+- ✅ Safety features - Validates H1-H6 boundaries
+
+**Installed to system:**
+- Both `mdheaders` and `libmdheaders.bash` are installed to `/usr/local/bin/`
+- Usage: `mdheaders {upgrade|downgrade|normalize} [OPTIONS] file.md`
+- Examples:
+  - `mdheaders upgrade -l 2 -ib README.md` (upgrade 2 levels in-place with backup)
+  - `mdheaders normalize --start-level=2 doc.md` (normalize to start at H2)
+
+**Note:** GPL v3 is a copyleft license, distinct from BCS's CC BY-SA 4.0.
+
+---
+
 ### shlock/ - Shell Locking Utility
 
 **Purpose:** Process locking and synchronization for shell scripts
@@ -260,6 +297,24 @@ cd /ai/scripts/Markdown/md2ansi.bash
 git log -1 --format="%H %ci"
 ```
 
+### Update mdheaders
+
+```bash
+# Sync with upstream
+cd /ai/scripts/Markdown/mdheaders
+git pull
+
+# Copy to BCS lib/
+cd /ai/scripts/Okusi/bash-coding-standard
+cp /ai/scripts/Markdown/mdheaders/mdheaders lib/mdheaders/
+cp /ai/scripts/Markdown/mdheaders/libmdheaders.bash lib/mdheaders/
+chmod +x lib/mdheaders/mdheaders lib/mdheaders/libmdheaders.bash
+
+# Update this README with new git commit hash
+cd /ai/scripts/Markdown/mdheaders
+git log -1 --format="%H %ci"
+```
+
 ### Update shlock
 
 ```bash
@@ -389,6 +444,12 @@ chmod +x lib/remblanks/remblanks
 - ✅ Self-contained (~60KB, acceptable)
 - ✅ Eliminates installation step
 
+**mdheaders:**
+- ✅ Powerful markdown header manipulation tool
+- ✅ Useful for document restructuring and normalization
+- ✅ Code block awareness prevents corruption
+- ✅ Self-contained (~54KB including library)
+
 **shlock:**
 - ✅ Required by bcs-compliance agent
 - ✅ Small single script (~16KB)
@@ -427,16 +488,17 @@ chmod +x lib/remblanks/remblanks
 
 ## Total Size
 
-**Vendored dependencies:** ~345KB total
+**Vendored dependencies:** ~400KB total
 - agents/: 16KB
 - md2ansi/: 60KB
+- mdheaders/: 54KB
 - shlock/: 16KB
 - trim/: 92KB
 - timer/: 47KB
 - post_slug/: 40KB
 - hr2int/: 3KB
 - remblanks/: 1KB
-- LICENSES/: 181KB
+- LICENSES/: 216KB (incl. mdheaders GPL v3)
 
 This is a negligible increase for a repository of this size, and the benefit of "works immediately after git clone" is well worth it.
 

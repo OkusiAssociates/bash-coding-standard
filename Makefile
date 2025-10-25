@@ -29,10 +29,12 @@ install:
 	ln -sf bcs $(BINDIR)/bash-coding-standard
 	install -m 755 lib/md2ansi/md2ansi $(BINDIR)/
 	install -m 755 lib/md2ansi/md $(BINDIR)/
+	install -m 755 lib/mdheaders/mdheaders $(BINDIR)/
+	install -m 755 lib/mdheaders/libmdheaders.bash $(BINDIR)/
 	install -d -m 2775 -g bcs $(SHAREDIR)
 	cp -a data $(SHAREDIR)/ && chgrp -R bcs $(SHAREDIR)/data && find $(SHAREDIR)/data -type d -exec chmod 2775 {} + && find $(SHAREDIR)/data -type f -exec chmod 664 {} +
 	ln -sf BASH-CODING-STANDARD.abstract.md $(SHAREDIR)/data/BASH-CODING-STANDARD.md
-	cp -a lib $(SHAREDIR)/ && chgrp -R bcs $(SHAREDIR)/lib && find $(SHAREDIR)/lib -type d -exec chmod 2775 {} + && find $(SHAREDIR)/lib -type f -exec chmod 664 {} + && chmod 775 $(SHAREDIR)/lib/agents/* $(SHAREDIR)/lib/md2ansi/md2ansi $(SHAREDIR)/lib/md2ansi/md $(SHAREDIR)/lib/shlock/shlock $(SHAREDIR)/lib/trim/*.bash $(SHAREDIR)/lib/timer/timer $(SHAREDIR)/lib/post_slug/post_slug.bash $(SHAREDIR)/lib/hr2int/hr2int.bash $(SHAREDIR)/lib/remblanks/remblanks
+	cp -a lib $(SHAREDIR)/ && chgrp -R bcs $(SHAREDIR)/lib && find $(SHAREDIR)/lib -type d -exec chmod 2775 {} + && find $(SHAREDIR)/lib -type f -exec chmod 664 {} + && chmod 775 $(SHAREDIR)/lib/agents/* $(SHAREDIR)/lib/md2ansi/md2ansi $(SHAREDIR)/lib/md2ansi/md $(SHAREDIR)/lib/mdheaders/mdheaders $(SHAREDIR)/lib/mdheaders/libmdheaders.bash $(SHAREDIR)/lib/shlock/shlock $(SHAREDIR)/lib/trim/*.bash $(SHAREDIR)/lib/timer/timer $(SHAREDIR)/lib/post_slug/post_slug.bash $(SHAREDIR)/lib/hr2int/hr2int.bash $(SHAREDIR)/lib/remblanks/remblanks
 	@if [ -d BCS ]; then \
 		rm -rf $(SHAREDIR)/BCS && \
 		cp -a BCS $(SHAREDIR)/ && chgrp -R bcs $(SHAREDIR)/BCS && find $(SHAREDIR)/BCS -type d -exec chmod 2775 {} + && \
@@ -45,21 +47,24 @@ install:
 	@echo ""
 	@echo "Installed files:"
 	@echo "  - Executables: $(BINDIR)/bcs (and bash-coding-standard symlink)"
-	@echo "  - Markdown tools: $(BINDIR)/md2ansi, $(BINDIR)/md"
+	@echo "  - Markdown tools: $(BINDIR)/md2ansi, $(BINDIR)/md, $(BINDIR)/mdheaders"
 	@echo "  - Standard docs (3 tiers): $(SHAREDIR)/data/BASH-CODING-STANDARD.*.md"
 	@echo "  - Data directory: $(SHAREDIR)/data/ (300+ rule files + templates)"
-	@echo "  - Vendored dependencies: $(SHAREDIR)/lib/ (~345KB: md2ansi, agents, shlock, trim, timer, post_slug, hr2int, remblanks)"
+	@echo "  - Vendored dependencies: $(SHAREDIR)/lib/ (~400KB: md2ansi, mdheaders, agents, shlock, trim, timer, post_slug, hr2int, remblanks)"
 	@echo "  - BCS index: $(SHAREDIR)/BCS/ (convenience symlinks, if available)"
 	@echo ""
 	@echo "Run: bcs"
 	@echo "Help: bcs --help"
 	@echo "Markdown viewer: md file.md  (or md2ansi file.md)"
+	@echo "Header manipulation: mdheaders {upgrade|downgrade|normalize} file.md"
 
 uninstall:
 	rm -f $(BINDIR)/bcs
 	rm -f $(BINDIR)/bash-coding-standard
 	rm -f $(BINDIR)/md2ansi
 	rm -f $(BINDIR)/md
+	rm -f $(BINDIR)/mdheaders
+	rm -f $(BINDIR)/libmdheaders.bash
 	rm -rf $(SHAREDIR)
 	@echo ""
 	@echo "✓ Uninstalled from $(PREFIX)"

@@ -111,6 +111,15 @@ The following dependencies are vendored in the `lib/` directory and work out-of-
   - Usage: `md file.md` (paginated) or `md2ansi file.md` (direct output)
   - Upstream: https://github.com/Open-Technology-Foundation/md2ansi.bash
 
+- **mdheaders** - Markdown header level manipulation
+  - Used by: General markdown document restructuring
+  - Bundled version: git commit 6837187 (~54KB: 2 scripts + docs)
+  - Installed to: `/usr/local/bin/mdheaders` and `/usr/local/bin/libmdheaders.bash`
+  - Usage: `mdheaders {upgrade|downgrade|normalize} [OPTIONS] file.md`
+  - Features: Upgrade/downgrade headers, normalize to target level, code block awareness
+  - Upstream: /ai/scripts/Markdown/mdheaders (internal YaTTI tool)
+  - License: GPL v3 (copyleft, distinct from BCS's CC BY-SA 4.0)
+
 - **bcs-rulet-extractor** - AI agent for rulet generation
   - Used by: `bcs generate-rulets` (extract concise rules)
   - Bundled version: v1.0.1 (~5KB)
@@ -966,7 +975,7 @@ bash-coding-standard/
 ├── TESTING-SUMMARY.md               # Test suite documentation (31 test files)
 ├── LICENSE                          # CC BY-SA 4.0 license
 ├── Makefile                         # Installation/uninstallation helper
-├── lib/                             # Vendored dependencies (~345KB total)
+├── lib/                             # Vendored dependencies (~400KB total)
 │   ├── README.md                    # Dependency documentation and update procedures
 │   ├── agents/                      # Claude AI agent wrappers
 │   │   ├── bcs-rulet-extractor      # Rulet generation agent (v1.0.1, ~5KB)
@@ -975,6 +984,10 @@ bash-coding-standard/
 │   │   ├── md2ansi                  # Main renderer script (installed to /usr/local/bin)
 │   │   ├── md                       # Pager wrapper (installed to /usr/local/bin)
 │   │   └── lib/                     # Renderer library files
+│   ├── mdheaders/                   # Markdown header manipulation (~54KB)
+│   │   ├── mdheaders                # Main CLI tool (installed to /usr/local/bin)
+│   │   ├── libmdheaders.bash        # Library file (installed to /usr/local/bin)
+│   │   └── README.md, LICENSE       # Documentation (GPL v3)
 │   ├── shlock/                      # Process locking utility (~16KB)
 │   │   └── shlock                   # Shell locking script
 │   ├── trim/                        # String trimming utilities (~92KB)
@@ -992,8 +1005,9 @@ bash-coding-standard/
 │   │   └── hr2int.bash              # Number conversion script (hr↔int)
 │   ├── remblanks/                   # Comment/blank line stripper (~1KB)
 │   │   └── remblanks                # Tiny grep-based utility
-│   └── LICENSES/                    # Dependency licenses (~181KB)
+│   └── LICENSES/                    # Dependency licenses (~216KB)
 │       ├── md2ansi.LICENSE          # MIT license
+│       ├── mdheaders.LICENSE        # GPL v3 license
 │       ├── shlock.LICENSE           # MIT license
 │       ├── trim.LICENSE             # GPL v3 license
 │       ├── timer.LICENSE            # GPL v3 license
