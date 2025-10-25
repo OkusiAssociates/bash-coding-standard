@@ -160,9 +160,13 @@ declare -fx find_bcs_file
 # Priority: lib/agents/ (bundled) → /ai/scripts (development)
 find_agent() {
   local -- agent_name=$1
+  local -- install_share="${BCS_DIR%/bin}/share/yatti/bash-coding-standard/lib/agents"
   local -a search_paths=(
-    "$BCS_DIR/lib/agents/$agent_name"           # Vendored (priority 1)
-    "/ai/scripts/claude/agents/$agent_name"     # Development (priority 2)
+    "$BCS_DIR/lib/agents/$agent_name"                       # Same directory (development)
+    "$install_share/$agent_name"                            # Relative to script (installed)
+    /usr/local/share/yatti/bash-coding-standard/lib/agents/"$agent_name"  # YaTTI local install
+    /usr/share/yatti/bash-coding-standard/lib/agents/"$agent_name"        # YaTTI system install
+    "/ai/scripts/claude/agents/$agent_name"                 # Development fallback
   )
 
   local -- path
@@ -178,11 +182,15 @@ find_agent() {
 declare -fx find_agent
 
 # Find md2ansi in vendored, system PATH, or development locations
-# Priority: lib/md2ansi/ (bundled) → system PATH (priority 2)
+# Priority: lib/md2ansi/ (bundled) → system PATH
 find_md2ansi() {
+  local -- install_share="${BCS_DIR%/bin}/share/yatti/bash-coding-standard/lib/md2ansi"
   local -a search_paths=(
-    "$BCS_DIR/lib/md2ansi/md2ansi"              # Vendored (priority 1)
-    "$(command -v md2ansi 2>/dev/null || true)" # System PATH (priority 2)
+    "$BCS_DIR/lib/md2ansi/md2ansi"                       # Same directory (development)
+    "$install_share/md2ansi"                             # Relative to script (installed)
+    /usr/local/share/yatti/bash-coding-standard/lib/md2ansi/md2ansi  # YaTTI local install
+    /usr/share/yatti/bash-coding-standard/lib/md2ansi/md2ansi        # YaTTI system install
+    "$(command -v md2ansi 2>/dev/null || true)"          # System PATH (fallback)
   )
 
   local -- path

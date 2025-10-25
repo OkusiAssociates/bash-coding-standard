@@ -5,19 +5,32 @@ set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
 declare -r VERSION='1.0.1'
-declare -r BCS_DIR=/ai/scripts/Okusi/bash-coding-standard
+
+# Determine BCS directory dynamically based on this script's location
+# When installed: /usr/local/share/yatti/bash-coding-standard/lib/agents/bcs-compliance
+# When in repo:   /ai/scripts/Okusi/bash-coding-standard/lib/agents/bcs-compliance
+declare -- SCRIPT_PATH
+SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*}                          # lib/agents/
+declare -r LIB_DIR=${SCRIPT_DIR%/*}                              # lib/
+declare -r BCS_DIR=${LIB_DIR%/*}                                 # bash-coding-standard/
 declare -r BCS_NAME=BASH-CODING-STANDARD.summary.md
 declare -r BCS_PATH="$BCS_DIR"/data/"$BCS_NAME"
 
 # Find shlock (vendored → development → system PATH)
 declare -- SHLOCK_CMD=''
-if [[ -x "$BCS_DIR/lib/shlock/shlock" ]]; then
-  SHLOCK_CMD="$BCS_DIR/lib/shlock/shlock"
-elif [[ -x /ai/scripts/lib/shlock/shlock ]]; then
-  SHLOCK_CMD=/ai/scripts/lib/shlock/shlock
-else
-  SHLOCK_CMD=$(command -v shlock 2>/dev/null || echo '')
-fi
+declare -a shlock_paths=(
+  "$BCS_DIR/lib/shlock/shlock"                               # Vendored (same BCS installation)
+  /ai/scripts/lib/shlock/shlock                              # Development environment
+  "$(command -v shlock 2>/dev/null || echo '')"              # System PATH
+)
+
+for path in "${shlock_paths[@]}"; do
+  if [[ -n "$path" && -x "$path" ]]; then
+    SHLOCK_CMD=$path
+    break
+  fi
+done
 
 if [[ -z "$SHLOCK_CMD" ]]; then
   >&2 echo 'bcs-compliance: error: shlock not found'
