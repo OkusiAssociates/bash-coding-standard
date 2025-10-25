@@ -100,110 +100,195 @@ Before using the Bash Coding Standard toolkit, ensure you have:
   shellcheck --version  # Should be 0.8.0 or higher
   ```
 
-#### Bundled (No Installation Required)
+#### Bundled Libraries and Scripts (No Installation Required)
 
-The following dependencies are vendored in the `lib/` directory and work out-of-box:
+The BCS includes **12 vendored tools** (~540KB total) in the `lib/` directory that work out-of-box after `git clone`. All tools are installed system-wide via `sudo make install`.
 
-- **md2ansi & md** - Beautiful terminal markdown display
-  - Used by: `bcs display` (enhanced viewing experience)
-  - Bundled version: git commit 6e8d7dc (~60KB: 2 scripts + 5 libs)
-  - Installed to: `/usr/local/bin/md2ansi` and `/usr/local/bin/md`
-  - Usage: `md file.md` (paginated) or `md2ansi file.md` (direct output)
-  - Upstream: https://github.com/Open-Technology-Foundation/md2ansi.bash
+**Quick Reference:**
 
-- **mdheaders** - Markdown header level manipulation
-  - Used by: General markdown document restructuring
-  - Bundled version: git commit 6837187 (~54KB: 2 scripts + docs)
-  - Installed to: `/usr/local/bin/mdheaders` and `/usr/local/bin/libmdheaders.bash`
-  - Usage: `mdheaders {upgrade|downgrade|normalize} [OPTIONS] file.md`
-  - Features: Upgrade/downgrade headers, normalize to target level, code block awareness
-  - Upstream: /ai/scripts/Markdown/mdheaders (internal YaTTI tool)
-  - License: GPL v3 (copyleft, distinct from BCS's CC BY-SA 4.0)
+| Category | Tools | Purpose |
+|----------|-------|---------|
+| **Core BCS** | bcs-rulet-extractor, bcs-compliance | AI agents for BCS operations |
+| **Markdown** | md2ansi, md, mdheaders | Document rendering and manipulation |
+| **File/System** | whichx, dux, printline | Command location, disk analysis, terminal formatting |
+| **Development** | shlock, trim, timer, post_slug, hr2int, remblanks | Scripting utilities |
 
-- **whichx** - Robust command locator (drop-in 'which' replacement)
-  - Used by: Enhanced command location with proper error handling
-  - Bundled version: git commit 6f2b28b (v2.0, ~45KB: script + docs)
-  - Installed to: `/usr/local/bin/whichx` and symlinked as `/usr/local/bin/which`
-  - Usage: `which <command>` or `whichx <command>`
-  - Features: POSIX-compliant, canonical paths, silent mode, all matches, specific exit codes
-  - Upstream: https://github.com/Open-Technology-Foundation/whichx
-  - License: GPL v3 (copyleft, distinct from BCS's CC BY-SA 4.0)
-  - Note: Shadows system 'which' command via /usr/local/bin priority
+---
 
-- **dux (dir-sizes)** - Directory size analyzer
-  - Used by: Disk space analysis and directory size monitoring
-  - Bundled version: git commit ee0927c (v1.2.0, ~56KB: script + docs)
-  - Installed to: `/usr/local/bin/dir-sizes` and symlinked as `/usr/local/bin/dux`
-  - Usage: `dir-sizes [directory]` or `dux [directory]`
-  - Features: Recursive size calculation, human-readable IEC units, sorted output, graceful error handling
-  - Upstream: /ai/scripts/File/dux (internal YaTTI tool)
-  - License: GPL v3 (copyleft, distinct from BCS's CC BY-SA 4.0)
-  - Dependencies: du, numfmt (GNU coreutils)
+##### Core BCS Tools
 
-- **printline** - Terminal line drawing utility
-  - Used by: Terminal output formatting, section dividers, header decoration
-  - Bundled version: git commit 5e64288 (v1.0.0, ~52KB: script + docs + version file)
-  - Installed to: `/usr/local/bin/printline`
-  - Usage: `printline [char [text]]`
-  - Features: Intelligent cursor detection, customizable character, optional prefix, dual-mode (executable/sourceable)
-  - Upstream: /ai/scripts/printline (internal YaTTI tool)
-  - License: GPL v3 (copyleft, distinct from BCS's CC BY-SA 4.0)
-  - Dependencies: stty, tput (standard utilities)
+**bcs-rulet-extractor** (v1.0.1, ~5KB)
+- **Purpose:** Extract concise rulets from complete.md rulefiles using Claude AI
+- **Used by:** `bcs generate-rulets` subcommand
+- **Installation:** Not installed to PATH (internal use only)
 
-- **bcs-rulet-extractor** - AI agent for rulet generation
-  - Used by: `bcs generate-rulets` (extract concise rules)
-  - Bundled version: v1.0.1 (~5KB)
+**bcs-compliance** (v1.0.1, ~900B)
+- **Purpose:** BCS compliance checking wrapper for Claude
+- **Used by:** External compliance workflows
+- **Installation:** Not installed to PATH (internal use only)
+- **Requires:** Claude Code CLI, shlock utility
 
-- **bcs-compliance** - AI agent for compliance checking
-  - Used by: External compliance workflows
-  - Bundled version: v1.0.1 (~900B)
+---
 
-- **shlock** - Process locking utility
-  - Used by: bcs-compliance agent
-  - Bundled version: git commit 49f1439 (~16KB)
-  - Upstream: https://github.com/Open-Technology-Foundation/shlock
+##### Markdown Tools
 
-- **trim** - String trimming utilities
-  - Used by: Available for general script use
-  - Bundled version: git commit 8b37c55 (~92KB: 6 utilities + docs)
-  - Upstream: https://github.com/Open-Technology-Foundation/trim
-  - License: GPL v3 (copyleft, distinct from BCS's CC BY-SA 4.0)
+**md2ansi** & **md** (git commit [6e8d7dc](https://github.com/Open-Technology-Foundation/md2ansi.bash), ~60KB)
+- **Purpose:** Beautiful ANSI terminal rendering of markdown documents
+- **Installation:** `/usr/local/bin/md2ansi` and `/usr/local/bin/md`
+- **Usage:**
+  ```bash
+  md README.md               # Paginated viewing with less
+  md2ansi file.md            # Direct ANSI output to stdout
+  ```
+- **Features:**
+  - ✅ Full markdown support (headers, lists, tables, code blocks)
+  - ✅ Syntax highlighting for code blocks
+  - ✅ Color-coded elements
+- **License:** MIT
+- **Used by:** `bcs display` for enhanced viewing
 
-- **timer** - High-precision command timer
-  - Used by: Available for benchmarking and performance analysis
-  - Bundled version: git commit f8ac47a (~47KB: script + docs)
-  - Upstream: https://github.com/Open-Technology-Foundation/timer
-  - License: GPL v3 (copyleft, distinct from BCS's CC BY-SA 4.0)
-  - Dependencies: Pure Bash (none!)
+**mdheaders** (git commit [6837187](https://github.com/Open-Technology-Foundation/whichx), ~54KB)
+- **Purpose:** Markdown header level manipulation (upgrade/downgrade/normalize)
+- **Installation:** `/usr/local/bin/mdheaders` and `/usr/local/bin/libmdheaders.bash`
+- **Usage:**
+  ```bash
+  mdheaders upgrade -l 2 -ib file.md      # Increase levels, backup
+  mdheaders normalize --start-level=2 doc.md  # Normalize to H2
+  ```
+- **Features:**
+  - ✅ Upgrade/downgrade header levels
+  - ✅ Normalize to target minimum level
+  - ✅ Code block awareness (preserves fenced blocks)
+- **License:** GPL v3
 
-- **post_slug** - URL/filename slug generator
-  - Used by: Available for URL generation and file naming
-  - Bundled version: git commit d4f73ff (~40KB: script + license)
-  - Upstream: https://github.com/Open-Technology-Foundation/post_slug
-  - License: GPL v3 (copyleft, distinct from BCS's CC BY-SA 4.0)
-  - Dependencies: sed, iconv, tr (standard utilities)
+---
 
-- **hr2int** - Human-readable number converter
-  - Used by: Available for size/capacity calculations
-  - Bundled version: ~3KB (single script, no git repo)
-  - License: ⚠️ No explicit license (internal YaTTI utility)
-  - Dependencies: numfmt (GNU coreutils)
+##### File & System Tools
 
-- **remblanks** - Comment/blank line stripper
-  - Used by: Available for config file processing
-  - Bundled version: ~1KB (tiny script, no git repo)
-  - License: ⚠️ No explicit license (internal YaTTI utility)
-  - Dependencies: grep
+**whichx** (v2.0, git commit [6f2b28b](https://github.com/Open-Technology-Foundation/whichx), ~45KB)
+- **Purpose:** Robust command locator - drop-in replacement for system `which`
+- **Installation:** `/usr/local/bin/whichx` + symlink `/usr/local/bin/which`
+- **Usage:**
+  ```bash
+  which python3              # Find python3 location
+  whichx -a bash             # Show all bash instances in PATH
+  whichx -c vim              # Show canonical path (follow symlinks)
+  ```
+- **Features:**
+  - ✅ POSIX-compliant PATH searching
+  - ✅ Specific exit codes for scripting
+  - ✅ Silent mode (`-s`) for conditional checks
+- **License:** GPL v3
+- **Note:** Shadows system `which` via `/usr/local/bin` priority
 
-**Total size:** ~540KB (vendored dependencies + licenses)
+**dux / dir-sizes** (v1.2.0, git commit [ee0927c], ~56KB)
+- **Purpose:** Directory size analyzer with sorted human-readable output
+- **Installation:** `/usr/local/bin/dir-sizes` + symlink `/usr/local/bin/dux`
+- **Usage:**
+  ```bash
+  dux                        # Analyze current directory
+  dir-sizes /var             # Analyze /var subdirectories
+  dux ~/Documents | tail -10 # Show 10 largest directories
+  ```
+- **Features:**
+  - ✅ Recursive size calculation
+  - ✅ Human-readable IEC units (B, KiB, MiB, GiB)
+  - ✅ Sorted output (smallest to largest)
+- **License:** GPL v3
+- **Dependencies:** du, numfmt (GNU coreutils)
+
+**printline** (v1.0.0, git commit [5e64288], ~52KB)
+- **Purpose:** Terminal line drawing utility for section dividers and headers
+- **Installation:** `/usr/local/bin/printline`
+- **Usage:**
+  ```bash
+  printline                  # Draw line with '-' character
+  printline '=' 'Section: '  # Print prefix then line
+  echo -n "Status: "; printline '#'  # Combine with output
+  ```
+- **Features:**
+  - ✅ Intelligent cursor position detection
+  - ✅ Customizable character (default: `-`)
+  - ✅ Dual-mode (executable or sourceable function)
+- **License:** GPL v3
+- **Dependencies:** stty, tput (standard utilities)
+
+---
+
+##### Development Utilities
+
+**shlock** (git commit [49f1439](https://github.com/Open-Technology-Foundation/shlock), ~16KB)
+- **Purpose:** Process locking and synchronization for shell scripts
+- **Installation:** Not installed to PATH (used by bcs-compliance)
+- **License:** MIT
+
+**trim** (git commit [8b37c55](https://github.com/Open-Technology-Foundation/trim), ~92KB)
+- **Purpose:** Pure Bash string trimming utilities (6 utilities)
+- **Installation:** Not installed to PATH (available for sourcing from lib/)
+- **Tools:** `trim`, `ltrim`, `rtrim`, `trimall`, `squeeze`, `trimv`
+- **Features:**
+  - ✅ Zero dependencies (pure Bash)
+  - ✅ Dual-mode (command-line or sourceable)
+  - ✅ No subprocess overhead
+- **License:** GPL v3
+
+**timer** (git commit [f8ac47a](https://github.com/Open-Technology-Foundation/timer), ~47KB)
+- **Purpose:** Microsecond-precision command execution timing
+- **Installation:** Not installed to PATH (available for sourcing from lib/)
+- **Usage:** Source and wrap commands for performance measurement
+- **Features:**
+  - ✅ Microsecond precision using `$EPOCHREALTIME`
+  - ✅ Optional formatted output (days/hours/minutes/seconds)
+  - ✅ Exit code preservation
+- **License:** GPL v3
+- **Dependencies:** Pure Bash (none!)
+
+**post_slug** (git commit [d4f73ff](https://github.com/Open-Technology-Foundation/post_slug), ~40KB)
+- **Purpose:** Convert strings into URL or filename-friendly slugs
+- **Installation:** Not installed to PATH (available for sourcing from lib/)
+- **Features:**
+  - ✅ HTML entity handling
+  - ✅ UTF-8 to ASCII transliteration
+  - ✅ Customizable separator
+- **License:** GPL v3
+- **Dependencies:** sed, iconv, tr (standard utilities)
+
+**hr2int** (~3KB, internal YaTTI utility)
+- **Purpose:** Convert human-readable numbers with size suffixes to integers
+- **Installation:** Not installed to PATH (available for sourcing from lib/)
+- **Functions:** `hr2int()` (1k → 1024), `int2hr()` (1024 → 1k)
+- **License:** ⚠️ No explicit license (internal tool)
+- **Dependencies:** numfmt (GNU coreutils)
+
+**remblanks** (~1KB, internal YaTTI utility)
+- **Purpose:** Strip comments and blank lines from input
+- **Installation:** Not installed to PATH (available for sourcing from lib/)
+- **License:** ⚠️ No explicit license (internal tool)
+- **Dependencies:** grep
+
+---
+
+**Installation Behavior:**
+
+Running `sudo make install` installs these tools to `/usr/local/bin/`:
+- ✅ **Always installed:** bcs, md2ansi, md, mdheaders, whichx, dir-sizes, printline
+- ✅ **Symlinks created:** bash-coding-standard → bcs, which → whichx, dux → dir-sizes
+- ⚠️ **Symlink protection:** Install detects existing symlinks and prompts before removal
+- ℹ️ **Not installed:** Agents, trim, timer, post_slug, hr2int, remblanks, shlock
 
 **Benefits:**
 - ✅ Works immediately after `git clone`
 - ✅ No external dependency installation needed
 - ✅ Consistent versions across all installations
+- ✅ System-wide availability after installation
 - ✅ Includes utilities for common scripting tasks
 
-See `lib/README.md` for detailed documentation and update procedures.
+**Complete Documentation:** See [`lib/README.md`](lib/README.md) for:
+- Detailed feature descriptions
+- Complete usage examples
+- Update procedures for each tool
+- Licensing information
+- Total size breakdown (~540KB)
 
 #### Optional
 
