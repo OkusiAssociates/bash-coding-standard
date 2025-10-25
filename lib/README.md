@@ -92,6 +92,45 @@ This directory contains vendored copies of external dependencies to ensure the B
 
 ---
 
+### whichx/ - Robust Command Locator
+
+**Purpose:** Enhanced 'which' command implementation with proper error handling
+
+**Size:** ~45KB (script + docs)
+
+**Used by:** Drop-in replacement for standard 'which' command
+
+**Upstream:** https://github.com/Open-Technology-Foundation/whichx
+**Git commit:** `6f2b28b2f87520b3a76005ab7beed5c770b72de9`
+**Last synced:** 2025-10-04 13:20:39 +0800
+
+**License:** GPL v3 (see LICENSES/whichx.LICENSE)
+
+**Contents:**
+- `whichx` - Main command locator script (v2.0)
+
+**Features:**
+- ✅ POSIX-compliant PATH searching
+- ✅ Canonical path resolution (follow symlinks with `-c`)
+- ✅ Show all matches in PATH (with `-a`)
+- ✅ Silent mode for scripting (with `-s`)
+- ✅ Enhanced error handling with specific exit codes
+- ✅ Zero dependencies beyond bash
+
+**Installed to system:**
+- `whichx` installed to `/usr/local/bin/whichx`
+- Symlink `which` → `whichx` created in `/usr/local/bin/`
+- Drop-in replacement for system 'which' command (higher priority in PATH)
+- Usage: `which <command>` or `whichx <command>`
+- Examples:
+  - `which ls` - Find location of ls command
+  - `whichx -a python` - Find all python executables in PATH
+  - `whichx -c vim` - Show canonical path (follow symlinks)
+
+**Note:** GPL v3 is a copyleft license, distinct from BCS's CC BY-SA 4.0.
+
+---
+
 ### shlock/ - Shell Locking Utility
 
 **Purpose:** Process locking and synchronization for shell scripts
@@ -315,6 +354,23 @@ cd /ai/scripts/Markdown/mdheaders
 git log -1 --format="%H %ci"
 ```
 
+### Update whichx
+
+```bash
+# Sync with upstream
+cd /ai/scripts/File/whichx
+git pull
+
+# Copy to BCS lib/
+cd /ai/scripts/Okusi/bash-coding-standard
+cp /ai/scripts/File/whichx/whichx lib/whichx/
+chmod +x lib/whichx/whichx
+
+# Update this README with new git commit hash
+cd /ai/scripts/File/whichx
+git log -1 --format="%H %ci"
+```
+
 ### Update shlock
 
 ```bash
@@ -450,6 +506,12 @@ chmod +x lib/remblanks/remblanks
 - ✅ Code block awareness prevents corruption
 - ✅ Self-contained (~54KB including library)
 
+**whichx:**
+- ✅ Robust drop-in replacement for 'which' command
+- ✅ Enhanced error handling and POSIX compliance
+- ✅ Useful for scripting (silent mode, specific exit codes)
+- ✅ Self-contained (~45KB including docs)
+
 **shlock:**
 - ✅ Required by bcs-compliance agent
 - ✅ Small single script (~16KB)
@@ -488,17 +550,18 @@ chmod +x lib/remblanks/remblanks
 
 ## Total Size
 
-**Vendored dependencies:** ~400KB total
+**Vendored dependencies:** ~445KB total
 - agents/: 16KB
 - md2ansi/: 60KB
 - mdheaders/: 54KB
+- whichx/: 45KB
 - shlock/: 16KB
 - trim/: 92KB
 - timer/: 47KB
 - post_slug/: 40KB
 - hr2int/: 3KB
 - remblanks/: 1KB
-- LICENSES/: 216KB (incl. mdheaders GPL v3)
+- LICENSES/: 251KB (incl. mdheaders, whichx GPL v3)
 
 This is a negligible increase for a repository of this size, and the benefit of "works immediately after git clone" is well worth it.
 

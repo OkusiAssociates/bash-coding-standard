@@ -120,6 +120,16 @@ The following dependencies are vendored in the `lib/` directory and work out-of-
   - Upstream: /ai/scripts/Markdown/mdheaders (internal YaTTI tool)
   - License: GPL v3 (copyleft, distinct from BCS's CC BY-SA 4.0)
 
+- **whichx** - Robust command locator (drop-in 'which' replacement)
+  - Used by: Enhanced command location with proper error handling
+  - Bundled version: git commit 6f2b28b (v2.0, ~45KB: script + docs)
+  - Installed to: `/usr/local/bin/whichx` and symlinked as `/usr/local/bin/which`
+  - Usage: `which <command>` or `whichx <command>`
+  - Features: POSIX-compliant, canonical paths, silent mode, all matches, specific exit codes
+  - Upstream: https://github.com/Open-Technology-Foundation/whichx
+  - License: GPL v3 (copyleft, distinct from BCS's CC BY-SA 4.0)
+  - Note: Shadows system 'which' command via /usr/local/bin priority
+
 - **bcs-rulet-extractor** - AI agent for rulet generation
   - Used by: `bcs generate-rulets` (extract concise rules)
   - Bundled version: v1.0.1 (~5KB)
@@ -975,7 +985,7 @@ bash-coding-standard/
 ├── TESTING-SUMMARY.md               # Test suite documentation (31 test files)
 ├── LICENSE                          # CC BY-SA 4.0 license
 ├── Makefile                         # Installation/uninstallation helper
-├── lib/                             # Vendored dependencies (~400KB total)
+├── lib/                             # Vendored dependencies (~445KB total)
 │   ├── README.md                    # Dependency documentation and update procedures
 │   ├── agents/                      # Claude AI agent wrappers
 │   │   ├── bcs-rulet-extractor      # Rulet generation agent (v1.0.1, ~5KB)
@@ -987,6 +997,9 @@ bash-coding-standard/
 │   ├── mdheaders/                   # Markdown header manipulation (~54KB)
 │   │   ├── mdheaders                # Main CLI tool (installed to /usr/local/bin)
 │   │   ├── libmdheaders.bash        # Library file (installed to /usr/local/bin)
+│   │   └── README.md, LICENSE       # Documentation (GPL v3)
+│   ├── whichx/                      # Command locator (~45KB)
+│   │   ├── whichx                   # Main script (installed to /usr/local/bin, symlinked as 'which')
 │   │   └── README.md, LICENSE       # Documentation (GPL v3)
 │   ├── shlock/                      # Process locking utility (~16KB)
 │   │   └── shlock                   # Shell locking script
@@ -1005,9 +1018,10 @@ bash-coding-standard/
 │   │   └── hr2int.bash              # Number conversion script (hr↔int)
 │   ├── remblanks/                   # Comment/blank line stripper (~1KB)
 │   │   └── remblanks                # Tiny grep-based utility
-│   └── LICENSES/                    # Dependency licenses (~216KB)
+│   └── LICENSES/                    # Dependency licenses (~251KB)
 │       ├── md2ansi.LICENSE          # MIT license
 │       ├── mdheaders.LICENSE        # GPL v3 license
+│       ├── whichx.LICENSE           # GPL v3 license
 │       ├── shlock.LICENSE           # MIT license
 │       ├── trim.LICENSE             # GPL v3 license
 │       ├── timer.LICENSE            # GPL v3 license
