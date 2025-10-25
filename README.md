@@ -128,12 +128,39 @@ The following dependencies are vendored in the `lib/` directory and work out-of-
   - Upstream: https://github.com/Open-Technology-Foundation/trim
   - License: GPL v3 (copyleft, distinct from BCS's CC BY-SA 4.0)
 
-**Total size:** ~260KB (vendored dependencies + licenses)
+- **timer** - High-precision command timer
+  - Used by: Available for benchmarking and performance analysis
+  - Bundled version: git commit f8ac47a (~47KB: script + docs)
+  - Upstream: https://github.com/Open-Technology-Foundation/timer
+  - License: GPL v3 (copyleft, distinct from BCS's CC BY-SA 4.0)
+  - Dependencies: Pure Bash (none!)
+
+- **post_slug** - URL/filename slug generator
+  - Used by: Available for URL generation and file naming
+  - Bundled version: git commit d4f73ff (~40KB: script + license)
+  - Upstream: https://github.com/Open-Technology-Foundation/post_slug
+  - License: GPL v3 (copyleft, distinct from BCS's CC BY-SA 4.0)
+  - Dependencies: sed, iconv, tr (standard utilities)
+
+- **hr2int** - Human-readable number converter
+  - Used by: Available for size/capacity calculations
+  - Bundled version: ~3KB (single script, no git repo)
+  - License: ⚠️ No explicit license (internal YaTTI utility)
+  - Dependencies: numfmt (GNU coreutils)
+
+- **remblanks** - Comment/blank line stripper
+  - Used by: Available for config file processing
+  - Bundled version: ~1KB (tiny script, no git repo)
+  - License: ⚠️ No explicit license (internal YaTTI utility)
+  - Dependencies: grep
+
+**Total size:** ~345KB (vendored dependencies + licenses)
 
 **Benefits:**
 - ✅ Works immediately after `git clone`
 - ✅ No external dependency installation needed
 - ✅ Consistent versions across all installations
+- ✅ Includes utilities for common scripting tasks
 
 See `lib/README.md` for detailed documentation and update procedures.
 
@@ -937,7 +964,7 @@ bash-coding-standard/
 ├── TESTING-SUMMARY.md               # Test suite documentation (31 test files)
 ├── LICENSE                          # CC BY-SA 4.0 license
 ├── Makefile                         # Installation/uninstallation helper
-├── lib/                             # Vendored dependencies (~260KB total)
+├── lib/                             # Vendored dependencies (~345KB total)
 │   ├── README.md                    # Dependency documentation and update procedures
 │   ├── agents/                      # Claude AI agent wrappers
 │   │   ├── bcs-rulet-extractor      # Rulet generation agent (v1.0.1, ~5KB)
@@ -952,10 +979,22 @@ bash-coding-standard/
 │   │   ├── trimall, squeeze         # Whitespace normalization
 │   │   ├── trimv                    # Trim with variable assignment
 │   │   └── README.md, LICENSE       # Documentation (GPL v3)
-│   └── LICENSES/                    # Dependency licenses (~111KB)
+│   ├── timer/                       # High-precision command timer (~47KB)
+│   │   ├── timer                    # Microsecond-precision timer script
+│   │   └── README.md, LICENSE       # Documentation (GPL v3)
+│   ├── post_slug/                   # URL/filename slug generator (~40KB)
+│   │   ├── post_slug.bash           # Slug generation script
+│   │   └── LICENSE                  # GPL v3 license
+│   ├── hr2int/                      # Human-readable number converter (~3KB)
+│   │   └── hr2int.bash              # Number conversion script (hr↔int)
+│   ├── remblanks/                   # Comment/blank line stripper (~1KB)
+│   │   └── remblanks                # Tiny grep-based utility
+│   └── LICENSES/                    # Dependency licenses (~181KB)
 │       ├── md2ansi.LICENSE          # MIT license
 │       ├── shlock.LICENSE           # MIT license
-│       └── trim.LICENSE             # GPL v3 license
+│       ├── trim.LICENSE             # GPL v3 license
+│       ├── timer.LICENSE            # GPL v3 license
+│       └── post_slug.LICENSE        # GPL v3 license
 ├── docs/                            # Comprehensive usage guides
 │   ├── BCS-DECODE-PATTERNS.md       # Advanced decode patterns and workflows (481 lines)
 │   └── BCS-COMPRESS-GUIDE.md        # Complete compression guide (665 lines)

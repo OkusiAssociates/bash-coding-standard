@@ -100,6 +100,125 @@ This directory contains vendored copies of external dependencies to ensure the B
 
 ---
 
+### timer/ - High-Precision Command Timer
+
+**Purpose:** Microsecond-precision command execution timing
+
+**Size:** ~7KB (single script + README + LICENSE)
+
+**Used by:** Available for general use in scripts and benchmarking
+
+**Upstream:** https://github.com/Open-Technology-Foundation/timer
+**Git commit:** `f8ac47a76082d4da5c8808bdc0211a6b1e385c28`
+**Last synced:** 2025-10-25 12:04:34 +0800
+
+**License:** GPL v3 (see LICENSES/timer.LICENSE)
+
+**Contents:**
+- `timer` - High-precision command timer script with optional formatted output
+- `README.md` - Complete documentation with usage examples
+- `LICENSE` - GPL v3 license
+
+**Features:**
+- ✅ Zero dependencies - Pure Bash using EPOCHREALTIME
+- ✅ Microsecond precision - Accurate to microseconds
+- ✅ Dual-mode - Use as command or source as function
+- ✅ Formatted output - Optional human-readable format (days/hours/minutes/seconds)
+- ✅ Exit code preservation - Maintains command exit status
+
+**Note:** GPL v3 is a copyleft license, distinct from BCS's CC BY-SA 4.0.
+
+---
+
+### post_slug/ - URL/Filename Slug Generator
+
+**Purpose:** Convert strings into URL or filename-friendly slugs
+
+**Size:** ~5KB (single script + LICENSE)
+
+**Used by:** Available for general use in scripts (URL generation, file naming)
+
+**Upstream:** https://github.com/Open-Technology-Foundation/post_slug
+**Git commit:** `d4f73ff5eee87b50b3bc4c607029a099e6c11bc9`
+**Last synced:** 2025-10-25 12:04:34 +0800
+
+**License:** GPL v3 (see LICENSES/post_slug.LICENSE)
+
+**Contents:**
+- `post_slug.bash` - Slug generation function with multiple transformations
+- `LICENSE` - GPL v3 license
+
+**Features:**
+- ✅ HTML entity handling - Replaces HTML entities with separator
+- ✅ ASCII transliteration - Converts UTF-8 to ASCII via iconv
+- ✅ Customizable separator - Default hyphen, configurable
+- ✅ Case preservation option - Optional lowercase conversion
+- ✅ Length limits - Filesystem-safe 255 character limit
+
+**Dependencies:** sed, iconv, tr (standard utilities)
+
+**Note:** GPL v3 is a copyleft license, distinct from BCS's CC BY-SA 4.0.
+
+---
+
+### hr2int/ - Human-Readable Number Converter
+
+**Purpose:** Convert human-readable numbers with size suffixes to integers
+
+**Size:** ~3KB (single script)
+
+**Used by:** Available for general use in scripts (parsing sizes, capacity calculations)
+
+**Upstream:** Internal YaTTI utility (no public repository)
+**Last synced:** 2025-10-25 12:04:34 +0800
+
+**License:** ⚠️ No explicit license (internal YaTTI utility)
+
+**Contents:**
+- `hr2int.bash` - Conversion functions for both directions
+  - `hr2int()` - Convert human-readable to integer (1k → 1024, 1K → 1000)
+  - `int2hr()` - Convert integer to human-readable (1024 → 1k, 1000 → 1K)
+
+**Features:**
+- ✅ IEC binary format - Lowercase suffixes (b,k,m,g,t,p) = powers of 1024
+- ✅ SI decimal format - Uppercase suffixes (B,K,M,G,T,P) = powers of 1000
+- ✅ Bidirectional - Convert both ways (hr→int, int→hr)
+- ✅ Batch processing - Handle multiple values in one call
+
+**Dependencies:** numfmt (GNU coreutils)
+
+**Note:** No explicit license. Treated as internal YaTTI utility.
+
+---
+
+### remblanks/ - Comment and Blank Line Stripper
+
+**Purpose:** Strip comments and blank lines from input
+
+**Size:** ~534 bytes (tiny single script)
+
+**Used by:** Available for general use in scripts (config file processing, cleanup)
+
+**Upstream:** Internal YaTTI utility (no public repository)
+**Last synced:** 2025-10-25 12:04:34 +0800
+
+**License:** ⚠️ No explicit license (internal YaTTI utility)
+
+**Contents:**
+- `remblanks` - Simple grep-based comment/blank line remover
+
+**Features:**
+- ✅ Dual-mode - Works as pipe or with string arguments
+- ✅ Tiny footprint - Only 534 bytes
+- ✅ Fast - Single grep invocation
+- ✅ Sourceable - Can be sourced as function
+
+**Dependencies:** grep
+
+**Note:** No explicit license. Treated as internal YaTTI utility.
+
+---
+
 ## Path Resolution
 
 The `bcs` script searches for dependencies in priority order:
@@ -192,6 +311,64 @@ cd /ai/scripts/lib/str/trim
 git log -1 --format="%H %ci"
 ```
 
+### Update timer
+
+```bash
+# Sync with upstream
+cd /ai/scripts/lib/timer
+git pull
+
+# Copy to BCS lib/
+cd /ai/scripts/Okusi/bash-coding-standard
+cp /ai/scripts/lib/timer/timer lib/timer/
+cp /ai/scripts/lib/timer/{README.md,LICENSE} lib/timer/
+chmod +x lib/timer/timer
+
+# Update this README with new git commit hash
+cd /ai/scripts/lib/timer
+git log -1 --format="%H %ci"
+```
+
+### Update post_slug
+
+```bash
+# Sync with upstream
+cd /ai/scripts/lib/post_slug
+git pull
+
+# Copy to BCS lib/
+cd /ai/scripts/Okusi/bash-coding-standard
+cp /ai/scripts/lib/post_slug/post_slug.bash lib/post_slug/
+cp /ai/scripts/lib/post_slug/LICENSE lib/post_slug/
+chmod +x lib/post_slug/post_slug.bash
+
+# Update this README with new git commit hash
+cd /ai/scripts/lib/post_slug
+git log -1 --format="%H %ci"
+```
+
+### Update hr2int
+
+```bash
+# Copy from /ai/scripts/lib/hr2int/
+cd /ai/scripts/Okusi/bash-coding-standard
+cp /ai/scripts/lib/hr2int/hr2int.bash lib/hr2int/
+chmod +x lib/hr2int/hr2int.bash
+
+# Note: Not a git repo - manually track changes
+```
+
+### Update remblanks
+
+```bash
+# Copy from /ai/scripts/lib/remblanks/
+cd /ai/scripts/Okusi/bash-coding-standard
+cp /ai/scripts/lib/remblanks/remblanks lib/remblanks/
+chmod +x lib/remblanks/remblanks
+
+# Note: Not a git repo - manually track changes
+```
+
 ---
 
 ## Why Vendor These Dependencies?
@@ -217,16 +394,43 @@ git log -1 --format="%H %ci"
 - ✅ Useful for script development
 - ✅ Dual-mode (command-line and sourceable functions)
 
+**timer:**
+- ✅ Pure Bash high-precision timing
+- ✅ Zero external dependencies
+- ✅ Microsecond precision for benchmarking
+- ✅ Useful for performance analysis
+
+**post_slug:**
+- ✅ URL/filename slug generation
+- ✅ UTF-8 to ASCII conversion
+- ✅ Useful for web applications and file naming
+- ✅ Minimal dependencies (sed, iconv, tr)
+
+**hr2int:**
+- ✅ Human-readable number conversion
+- ✅ Useful for capacity/size calculations
+- ✅ Bidirectional conversion (hr↔int)
+- ✅ Minimal dependencies (numfmt)
+
+**remblanks:**
+- ✅ Tiny utility for config file processing
+- ✅ Fast comment/blank line stripping
+- ✅ Minimal dependencies (grep)
+
 ---
 
 ## Total Size
 
-**Vendored dependencies:** ~260KB total
+**Vendored dependencies:** ~345KB total
 - agents/: 16KB
 - md2ansi/: 60KB
 - shlock/: 16KB
 - trim/: 92KB
-- LICENSES/: 111KB
+- timer/: 47KB
+- post_slug/: 40KB
+- hr2int/: 3KB
+- remblanks/: 1KB
+- LICENSES/: 181KB
 
 This is a negligible increase for a repository of this size, and the benefit of "works immediately after git clone" is well worth it.
 
