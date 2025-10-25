@@ -1697,42 +1697,18 @@ EOF
   if ((use_canonical)); then
     # Force regeneration if requested
     if ((force_regenerate)); then
-      local -- compress_script="$BCS_DIR"/utils/compress-rule/compress-all.sh
       local -- data_dir
       data_dir=$(find_data_dir) || { error 'Data directory not found'; return 1; }
 
-      if [[ ! -f "$compress_script" ]]; then
-        error "Compression script not found '$compress_script'" \
-              'Cannot force regeneration without compress-all.sh'
-        return 1
-      fi
-
       info 'Force mode enabled - regenerating all compressed files...'
 
-      # Touch all .complete.md files to force timestamp mismatch
-      # This ensures compress-all.sh will regenerate all files, not just those with mismatched timestamps
-      info 'Touching .complete.md files to force timestamp mismatch...'
-      local -a complete_files=()
-      readarray -t complete_files < <(find "$data_dir" -type f -name '[0-9][0-9]-*.complete.md')
-
-      if ((${#complete_files[@]} > 0)); then
-        local -- file newtime
-        for file in "${complete_files[@]}"; do
-          newtime=$(awk -v t="$(date +%s.%N -r "$file")" 'BEGIN {printf "%.9f", t + 0.001}')
-          touch -d "@$newtime" "$file" || {
-              error 'Failed to touch .complete.md files' \
-                    'Aborting canonical generation'
-              return 1
-           }
-        done
-      fi
-
-      # Run compress-all.sh in regenerate mode
-      if ! "$compress_script" --regenerate; then
+      # Call integrated compression system
+      # Signature: data_dir tier claude_cmd dry_run compress_verbose summary_limit abstract_limit context_level force
+      compress_process_all_rules "$data_dir" '' 'claude' 0 1 10000 1500 'none' 1 || {
         error 'Failed to regenerate compressed files' \
               'Aborting canonical generation'
         return 1
-      fi
+      }
 
       >&2 echo
     fi
