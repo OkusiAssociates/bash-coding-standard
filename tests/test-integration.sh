@@ -57,8 +57,8 @@ test_workflow_search_decode_verify() {
   # Workflow: Search for keyword → Decode matching code → Verify content
   local -- search_output code_output
 
-  # Search for "readonly" (term commonly appears in multiple rules)
-  search_output=$("$SCRIPT" search "readonly" 2>&1 | head -100 || true)
+  # Search for "readonly" with sufficient context to capture Rule markers
+  search_output=$("$SCRIPT" search -C 10 "readonly" 2>&1 | head -100 || true)
 
   # Check for BCS codes in either format: **Rule: BCS####** (complete/abstract/summary) or [BCS####] (rulet)
   if [[ "$search_output" =~ \*\*Rule:\ BCS[0-9]+ ]] || [[ "$search_output" =~ \[BCS[0-9]+ ]]; then

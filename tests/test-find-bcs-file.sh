@@ -42,8 +42,15 @@ test_find_bcs_file() {
   # Create test file in tmpdir
   touch "$tmpdir"/BASH-CODING-STANDARD.md
   result=$(find_bcs_file "$tmpdir")
-  assert_equals "$tmpdir/BASH-CODING-STANDARD.md" "$result" \
-    "find_bcs_file returns correct path"
+
+  # Skip path assertion if system installation exists (FHS paths take precedence)
+  if [[ -f /usr/local/share/yatti/bash-coding-standard/data/BASH-CODING-STANDARD.md ]] || \
+     [[ -f /usr/share/yatti/bash-coding-standard/data/BASH-CODING-STANDARD.md ]]; then
+    skip_test "Path order test skipped (system installation detected)"
+  else
+    assert_equals "$tmpdir/BASH-CODING-STANDARD.md" "$result" \
+      "find_bcs_file returns correct path"
+  fi
 
   # Test 4: Verify output format
   result=$(find_bcs_file "$SCRIPT_DIR"/..)

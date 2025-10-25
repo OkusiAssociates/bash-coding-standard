@@ -332,6 +332,11 @@ test_rulet_files_validity() {
   for file in "${rulet_files[@]}"; do
     basename_file=$(basename "$file")
 
+    # Skip consolidated rulet file (BASH-CODING-STANDARD.rulet.md)
+    if [[ "$basename_file" == "BASH-CODING-STANDARD.rulet.md" ]]; then
+      continue
+    fi
+
     # Rulet files should only be at section level: 00-{category}.rulet.md
     if [[ ! "$basename_file" =~ ^00-[a-z0-9-]+\.rulet\.md$ ]]; then
       fail "Invalid rulet file name: $basename_file (should be 00-{category}.rulet.md)"
