@@ -152,6 +152,53 @@ find_bcs_file() {
 }
 declare -fx find_bcs_file
 
+# ============================================================================
+# DEPENDENCY PATH RESOLUTION
+# ============================================================================
+
+# Find agent script in vendored or development locations
+# Priority: lib/agents/ (bundled) → /ai/scripts (development)
+find_agent() {
+  local -- agent_name=$1
+  local -a search_paths=(
+    "$BCS_DIR/lib/agents/$agent_name"           # Vendored (priority 1)
+    "/ai/scripts/claude/agents/$agent_name"     # Development (priority 2)
+  )
+
+  local -- path
+  for path in "${search_paths[@]}"; do
+    if [[ -x "$path" ]]; then
+      echo "$path"
+      return 0
+    fi
+  done
+
+  return 1
+}
+declare -fx find_agent
+
+# Find md2ansi in vendored, system PATH, or development locations
+# Priority: lib/md2ansi/ (bundled) → system PATH (priority 2)
+find_md2ansi() {
+  local -a search_paths=(
+    "$BCS_DIR/lib/md2ansi/md2ansi"              # Vendored (priority 1)
+    "$(command -v md2ansi 2>/dev/null || true)" # System PATH (priority 2)
+  )
+
+  local -- path
+  for path in "${search_paths[@]}"; do
+    if [[ -n "$path" && -x "$path" ]]; then
+      echo "$path"
+      return 0
+    fi
+  done
+
+  return 1
+}
+declare -fx find_md2ansi
+
+# ============================================================================
+
 # Find data/ directory in standard locations
 find_data_dir() {
   local -- install_share="${BCS_DIR%/bin}/share/yatti/bash-coding-standard/data"
@@ -2111,7 +2158,8 @@ cmd_generate_rulets() {
   local -- category=''
   local -i batch_mode=0
   local -i force=0
-  local -- agent_cmd='/ai/scripts/claude/agents/bcs-rulet-extractor'
+  local -- agent_cmd
+  agent_cmd=$(find_agent 'bcs-rulet-extractor') || agent_cmd=''
 
   while (($#)); do
     case $1 in
@@ -2125,7 +2173,7 @@ Options:
   -h, --help              Show this help message
   -a, --all               Generate rulets for all 14 categories (batch mode)
   -f, --force             Force regeneration even if rulet file exists
-  --agent-cmd CMD         Path to bcs-rulet-extractor agent (default: /ai/scripts/claude/agents/bcs-rulet-extractor)
+  --agent-cmd CMD         Path to bcs-rulet-extractor agent (default: auto-detect from lib/agents/ or /ai/scripts/claude/agents/)
 
 Arguments:
   CATEGORY                Category number (01-14) or name (e.g., 'variables', '02-variables')
@@ -2150,7 +2198,7 @@ Output:
   Example: data/02-variables/00-variables.rulet.md
 
 Requirements:
-  - bcs-rulet-extractor agent must be installed at /ai/scripts/claude/agents/
+  - bcs-rulet-extractor agent (bundled in lib/agents/, auto-detected)
   - claude.x must be available in PATH
 
 Note:
@@ -2182,9 +2230,12 @@ EOF
   done
 
   # Verify agent exists
-  if [[ ! -x "$agent_cmd" ]]; then
-    error "bcs-rulet-extractor agent not found or not executable: $agent_cmd"
-    info 'Install with: chmod +x /ai/scripts/claude/agents/bcs-rulet-extractor'
+  if [[ -z "$agent_cmd" || ! -x "$agent_cmd" ]]; then
+    error 'bcs-rulet-extractor agent not found'
+    info 'Expected locations:'
+    info '  - lib/agents/bcs-rulet-extractor (bundled)'
+    info '  - /ai/scripts/claude/agents/bcs-rulet-extractor (development)'
+    info 'Or specify custom path with: --agent-cmd /path/to/bcs-rulet-extractor'
     return 1
   fi
 
@@ -4685,9 +4736,13 @@ EOF
                        || cat "${viewer_args[@]}" -- "$BCS_FILE"
     return 0
   # Use md2ansi for formatted output if available and outputting to terminal
-  elif ((force_md2ansi)) || [[ -t 1 ]] && command -v md2ansi &>/dev/null; then
-    md2ansi "${viewer_args[@]}" -- "$BCS_FILE" | less -FXRS
-    return 0
+  elif ((force_md2ansi)) || [[ -t 1 ]]; then
+    local -- md2ansi_cmd
+    md2ansi_cmd=$(find_md2ansi) || md2ansi_cmd=''
+    if [[ -n "$md2ansi_cmd" ]]; then
+      "$md2ansi_cmd" "${viewer_args[@]}" -- "$BCS_FILE" | less -FXRS
+      return 0
+    fi
   fi
 
   # final fall back to cat

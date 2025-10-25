@@ -100,6 +100,37 @@ Before using the Bash Coding Standard toolkit, ensure you have:
   shellcheck --version  # Should be 0.8.0 or higher
   ```
 
+#### Bundled (No Installation Required)
+
+The following dependencies are vendored in the `lib/` directory and work out-of-box:
+
+- **md2ansi** - Beautiful terminal markdown display
+  - Used by: `bcs display` (enhanced viewing experience)
+  - Bundled version: git commit 6e8d7dc (~60KB)
+  - Upstream: https://github.com/Open-Technology-Foundation/md2ansi.bash
+
+- **bcs-rulet-extractor** - AI agent for rulet generation
+  - Used by: `bcs generate-rulets` (extract concise rules)
+  - Bundled version: v1.0.1 (~5KB)
+
+- **bcs-compliance** - AI agent for compliance checking
+  - Used by: External compliance workflows
+  - Bundled version: v1.0.1 (~900B)
+
+- **shlock** - Process locking utility
+  - Used by: bcs-compliance agent
+  - Bundled version: git commit 49f1439 (~16KB)
+  - Upstream: https://github.com/Open-Technology-Foundation/shlock
+
+**Total size:** ~168KB (vendored dependencies + licenses)
+
+**Benefits:**
+- ✅ Works immediately after `git clone`
+- ✅ No external dependency installation needed
+- ✅ Consistent versions across all installations
+
+See `lib/README.md` for detailed documentation and update procedures.
+
 #### Optional
 
 - **Claude Code CLI** - For AI-powered features (`bcs check`, `bcs compress`)
@@ -900,6 +931,19 @@ bash-coding-standard/
 ├── TESTING-SUMMARY.md               # Test suite documentation (31 test files)
 ├── LICENSE                          # CC BY-SA 4.0 license
 ├── Makefile                         # Installation/uninstallation helper
+├── lib/                             # Vendored dependencies (~168KB total)
+│   ├── README.md                    # Dependency documentation and update procedures
+│   ├── agents/                      # Claude AI agent wrappers
+│   │   ├── bcs-rulet-extractor      # Rulet generation agent (v1.0.1, ~5KB)
+│   │   └── bcs-compliance           # Compliance checking wrapper (v1.0.1, ~900B)
+│   ├── md2ansi/                     # Markdown to ANSI renderer (~60KB)
+│   │   ├── md2ansi                  # Main renderer script
+│   │   └── lib/                     # Renderer library files
+│   ├── shlock/                      # Process locking utility (~16KB)
+│   │   └── shlock                   # Shell locking script
+│   └── LICENSES/                    # Dependency licenses (~76KB)
+│       ├── md2ansi.LICENSE          # MIT license
+│       └── shlock.LICENSE           # MIT license
 ├── docs/                            # Comprehensive usage guides
 │   ├── BCS-DECODE-PATTERNS.md       # Advanced decode patterns and workflows (481 lines)
 │   └── BCS-COMPRESS-GUIDE.md        # Complete compression guide (665 lines)
