@@ -140,6 +140,77 @@ install-deps:
 	@echo "✓ Dependencies installed"
 
 install:
+	@# Phase 0: Check and optionally install dependencies
+	@echo "Checking for missing optional dependencies..."
+	@MISSING=""; \
+	command -v shellcheck >/dev/null 2>&1 || MISSING="$$MISSING shellcheck"; \
+	command -v jq >/dev/null 2>&1 || MISSING="$$MISSING jq"; \
+	command -v less >/dev/null 2>&1 || MISSING="$$MISSING less"; \
+	command -v bc >/dev/null 2>&1 || MISSING="$$MISSING bc"; \
+	command -v iconv >/dev/null 2>&1 || MISSING="$$MISSING libc-bin"; \
+	if [ -n "$$MISSING" ]; then \
+		echo "Missing dependencies:$$MISSING"; \
+		echo ""; \
+		read -p "Install missing dependencies? [y/N] " REPLY; \
+		case "$$REPLY" in \
+			[Yy]*) \
+				echo "Installing dependencies..."; \
+				echo ""; \
+				if command -v apt-get >/dev/null 2>&1; then \
+					echo "Detected package manager: apt-get (Debian/Ubuntu)"; \
+					apt-get update && apt-get install -y$$MISSING || { \
+						echo "▲ Warning: Dependency installation failed"; \
+						echo "You can try manually: sudo make install-deps"; \
+						echo ""; \
+					}; \
+				elif command -v dnf >/dev/null 2>&1; then \
+					echo "Detected package manager: dnf (Fedora/RHEL)"; \
+					MISSING_DNF=""; \
+					command -v shellcheck >/dev/null 2>&1 || MISSING_DNF="$$MISSING_DNF ShellCheck"; \
+					command -v jq >/dev/null 2>&1 || MISSING_DNF="$$MISSING_DNF jq"; \
+					command -v less >/dev/null 2>&1 || MISSING_DNF="$$MISSING_DNF less"; \
+					command -v bc >/dev/null 2>&1 || MISSING_DNF="$$MISSING_DNF bc"; \
+					command -v iconv >/dev/null 2>&1 || MISSING_DNF="$$MISSING_DNF glibc-common"; \
+					dnf install -y$$MISSING_DNF || { \
+						echo "▲ Warning: Dependency installation failed"; \
+						echo "You can try manually: sudo make install-deps"; \
+						echo ""; \
+					}; \
+				elif command -v pacman >/dev/null 2>&1; then \
+					echo "Detected package manager: pacman (Arch Linux)"; \
+					MISSING_PAC=""; \
+					command -v shellcheck >/dev/null 2>&1 || MISSING_PAC="$$MISSING_PAC shellcheck"; \
+					command -v jq >/dev/null 2>&1 || MISSING_PAC="$$MISSING_PAC jq"; \
+					command -v less >/dev/null 2>&1 || MISSING_PAC="$$MISSING_PAC less"; \
+					command -v bc >/dev/null 2>&1 || MISSING_PAC="$$MISSING_PAC bc"; \
+					pacman -S --noconfirm$$MISSING_PAC || { \
+						echo "▲ Warning: Dependency installation failed"; \
+						echo "You can try manually: sudo make install-deps"; \
+						echo ""; \
+					}; \
+				else \
+					echo "▲ Unsupported package manager"; \
+					echo "Please install manually: sudo make install-deps"; \
+					echo ""; \
+				fi; \
+				echo "✓ Dependencies installed"; \
+				echo ""; \
+				;; \
+			*) \
+				echo "Skipping dependency installation."; \
+				echo "You can install them later with: sudo make install-deps"; \
+				echo ""; \
+				;; \
+		esac; \
+	else \
+		echo "✓ All optional dependencies installed"; \
+		echo ""; \
+	fi
+	@if ! command -v claude >/dev/null 2>&1; then \
+		echo "◉ Note: 'claude' is not installed (optional)"; \
+		echo "   Install from: https://github.com/anthropics/claude-code"; \
+		echo ""; \
+	fi
 	@# Phase 1: Detect existing symlinks in destination
 	@echo "Checking for existing symlinks in $(BINDIR)..."
 	@SYMLINKS=""; \
