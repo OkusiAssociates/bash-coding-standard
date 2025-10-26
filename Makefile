@@ -211,6 +211,58 @@ install:
 		echo "   Install from: https://github.com/anthropics/claude-code"; \
 		echo ""; \
 	fi
+	@# Phase 0a: Group creation and user management
+	@echo "Checking 'bcs' group membership..."
+	@if ! getent group bcs >/dev/null 2>&1; then \
+		echo "Creating 'bcs' group..."; \
+		groupadd bcs || { \
+			echo "✗ Failed to create 'bcs' group"; \
+			echo "  You may need to run: sudo make install"; \
+			exit 1; \
+		}; \
+		echo "✓ Group 'bcs' created"; \
+	else \
+		echo "✓ Group 'bcs' exists"; \
+	fi
+	@REAL_USER=""; \
+	if [ -n "$$SUDO_USER" ] && [ "$$SUDO_USER" != "root" ]; then \
+		REAL_USER="$$SUDO_USER"; \
+	elif [ -n "$$LOGNAME" ] && [ "$$LOGNAME" != "root" ]; then \
+		REAL_USER="$$LOGNAME"; \
+	else \
+		REAL_USER=$$(whoami 2>/dev/null || echo ""); \
+		if [ "$$REAL_USER" = "root" ]; then \
+			REAL_USER=""; \
+		fi; \
+	fi; \
+	if [ -n "$$REAL_USER" ]; then \
+		echo "Detected user: $$REAL_USER"; \
+		if id -nG "$$REAL_USER" 2>/dev/null | grep -qw bcs; then \
+			echo "✓ User '$$REAL_USER' is already in 'bcs' group"; \
+		else \
+			echo "Adding user '$$REAL_USER' to 'bcs' group..."; \
+			usermod -aG bcs "$$REAL_USER" || { \
+				echo "▲ Warning: Failed to add user '$$REAL_USER' to 'bcs' group"; \
+				echo "  You can add manually: sudo usermod -aG bcs $$REAL_USER"; \
+			}; \
+			echo "✓ User '$$REAL_USER' added to 'bcs' group"; \
+		fi; \
+		echo ""; \
+		echo "◉ Important: User '$$REAL_USER' must log out and log back in"; \
+		echo "  for group membership to take effect."; \
+		echo ""; \
+	else \
+		echo "▲ Warning: Could not detect user (installing as root)"; \
+		echo "  Add users to 'bcs' group manually:"; \
+		echo "  sudo usermod -aG bcs <username>"; \
+		echo ""; \
+		echo "◉ Important: Users must log out and log back in"; \
+		echo "  for group membership to take effect."; \
+		echo ""; \
+	fi
+	@echo "To add additional users to 'bcs' group:"
+	@echo "  sudo usermod -aG bcs <username>"
+	@echo ""
 	@# Phase 1: Detect existing symlinks in destination
 	@echo "Checking for existing symlinks in $(BINDIR)..."
 	@SYMLINKS=""; \
