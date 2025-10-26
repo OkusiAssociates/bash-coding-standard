@@ -1,5 +1,5 @@
 #!/bin/bash
-#shellcheck disable=SC2317 #SC2034  # Some metadata variables may be unused
+#shellcheck disable=SC2317,SC2155
 # bcx - terminal calculator for floating point expressions
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
@@ -116,13 +116,12 @@ Then:
   ? 23x42         # can use x for * on command line
   ? 23 x 42       # with spaces
 EOT
-  exit "${1:-0}"
 }
 
 ## EXECUTION ##
 
 # Simple Argument parsing
-[[ ${1:-} == '-h' || ${1:-} == '--help' ]] && show_help 0
+[[ ${1:-} == '-h' || ${1:-} == '--help' ]] && { show_help; exit 0; }
 [[ ${1:-} == '-V' || ${1:-} == '--version' ]] && { echo "bcx $VERSION"; exit 0; }
 
 # Locate bc command
@@ -150,7 +149,7 @@ if (($#)); then
   evaluate_expression "$expression" || err=1
 else
   # No expression provided - show help in non-terminal mode
-  ((is_terminal)) || >&2 show_help 1
+  ((is_terminal)) || { >&2 show_help; exit 1; }
 fi
 
 # Interactive REPL if terminal

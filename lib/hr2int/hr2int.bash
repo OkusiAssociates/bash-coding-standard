@@ -1,4 +1,7 @@
 #!/bin/bash
+# Convert human-readable numbers with size suffixes to plain integers, and reverse
+
+# ----------------------------------------------------------------------
 # Function: hr2int
 # Desc    : Convert human-readable numbers with size suffixes to plain integers
 #         : Lowercase suffixes (b,k,m,g,t,p) = IEC binary format (powers of 1024)
@@ -10,7 +13,7 @@
 #         : hr2int 34m    # Returns: 35651584 (34 × 1024²)
 #         : hr2int 34M    # Returns: 34000000 (34 × 1000²)
 hr2int() {
-  local -- num='' h='' fmt=si
+  local -- num h fmt=si
   local LC_ALL=C  # Set once, outside the loop
   while (($#)); do
     num=${1:-0}
@@ -31,7 +34,7 @@ hr2int() {
         fmt=si
       fi
     fi
-    numfmt --from="$fmt" "${num^^}" || { >&2 echo "${FUNCNAME[0]}: Invalid input '$1'"; return 1; }
+    numfmt --from="$fmt" "${num^^}" || { >&2 echo "${FUNCNAME[0]}: Invalid input ${1@Q}"; return 1; }
     shift 1
   done
   return 0
@@ -57,7 +60,7 @@ int2hr() {
   while (($#)); do
     # Validate input is an integer
     if ! [[ ${1:-0} =~ ^-?[0-9]+$ ]]; then
-      >&2 echo "${FUNCNAME[0]}: Invalid integer '$1'"
+      >&2 echo "${FUNCNAME[0]}: Invalid integer ${1@Q}"
       return 1
     fi
 
@@ -67,12 +70,12 @@ int2hr() {
 
     # Pre-validate format
     if [[ ! $fmt =~ ^(si|iec)$ ]]; then
-      >&2 echo "${FUNCNAME[0]}: Invalid format '$fmt' (use 'si' or 'iec')"
+      >&2 echo "${FUNCNAME[0]}: Invalid format ${fmt@Q} (use 'si' or 'iec')"
       return 1
     fi
 
     # Use -- to handle negative numbers properly
-    hr=$(numfmt --to="$fmt" -- "$num") || { >&2 echo "${FUNCNAME[0]}: Conversion failed for '$num'"; return 1; }
+    hr=$(numfmt --to="$fmt" -- "$num") || { >&2 echo "${FUNCNAME[0]}: Conversion failed for ${num@Q}'"; return 1; }
     [[ $fmt == 'iec' ]] && hr="${hr,,}"
     echo "$hr"
     shift 1

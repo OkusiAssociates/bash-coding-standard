@@ -1,17 +1,14 @@
 #!/bin/bash
 # Display directory sizes in sorted human-readable format
 set -euo pipefail
-# Critical shopt settings for safety
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Lock down PATH for security
 readonly PATH="/usr/local/bin:/usr/bin:/bin"
 export PATH
 
-declare -r VERSION='1.2.0'
-#shellcheck disable=SC2155
-declare -r SCRIPT_PATH=$(realpath -e -- "$0")  # Full path to script
-declare -r SCRIPT_NAME=${SCRIPT_PATH##*/}      # Script basename
+declare -r VERSION='1.2.1'
+declare -r SCRIPT_NAME=${0##*/} # Script basename
 
 # Global for trap cleanup
 declare -- DIRSIZES_TMPFILE=''
@@ -87,9 +84,10 @@ EOT
 # Cleanup function for trap
 # --------------------------------------------------------------------------------
 cleanup() {
-  local -i exitcode=${1:-0}
-  [[ -n "${DIRSIZES_TMPFILE:-}" ]] && [[ -f "$DIRSIZES_TMPFILE" ]] && rm -f "$DIRSIZES_TMPFILE"
-  exit "$exitcode"
+  if [[ -n "${DIRSIZES_TMPFILE:-}" ]] && [[ -f "$DIRSIZES_TMPFILE" ]]; then
+    rm -f "$DIRSIZES_TMPFILE"
+  fi
+  exit "${1:-0}"
 }
 
 # --------------------------------------------------------------------------------
@@ -159,9 +157,8 @@ main() {
   mv "$DIRSIZES_TMPFILE".sorted "$DIRSIZES_TMPFILE"
 
   # Second pass: display with human-readable sizes while preserving order
-  local -- output_dir dummy
-  # shellcheck disable=SC2034  # dummy is used to consume middle field
-  while read -r size dummy output_dir; do
+  local -- output_dir
+  while read -r size _ output_dir; do
     hr_size=$(numfmt --to=iec --suffix=B --format="%.1f" "$size")
     printf "%-10s\t%s\n" "$hr_size" "$output_dir"
   done < "$DIRSIZES_TMPFILE"

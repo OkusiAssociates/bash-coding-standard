@@ -59,9 +59,13 @@ yn() {
   [[ ${REPLY,,} == y ]]
 }
 
-# pluraliser
+# Pluralisers
+# 's' English puraliser y/ies
+# "files$(y "${#Files[@]")"
 s() { (( ${1:-1} == 1 )) || echo -n 's'; }
-y() { (( ${1:-1} == 1 )) && echo -n y || echo -n 'ies'; }
+# 'y' English puraliser y/ies
+# "director$(y "${#Dirs[@]")"
+y() { (( ${1:-1} == 1 )) && echo -n 'y' || echo -n 'ies'; }
 
 arg2(){
   if ((${#@}-1<1)) || [[ "${2:0:1}" == '-' ]]; then

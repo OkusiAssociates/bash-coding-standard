@@ -13,7 +13,7 @@ declare -i opt_all=0 opt_canonical=0 opt_silent=0
 declare -a targets=()
 
 # Usage documentation
-usage() {
+show_help() {
   cat <<EOT
 $SCRIPT_NAME $VERSION - Locate a command
 
@@ -65,13 +65,10 @@ Dependencies: bash, readlink
 
 See also: which
 EOT
-  exit $EXIT_SUCCESS
 }
 
 # Print error messages to stderr
-error() {
-  ((opt_silent)) || >&2 printf '%s: %s\n' "$SCRIPT_NAME" "$*"
-}
+error() { ((opt_silent)) || >&2 printf '%s: error: %s\n' "$SCRIPT_NAME" "$*"; }
 
 # Get canonical path if requested
 get_path() {
@@ -135,8 +132,8 @@ main() {
       -a|--all)       opt_all=1 ;;
       -c|--canonical) opt_canonical=1 ;;
       -s|--silent)    opt_silent=1 ;;
-      -V|--version)   printf '%s %s\n' "$SCRIPT_NAME" "$VERSION"; exit $EXIT_SUCCESS ;;
-      -h|--help)      usage ;;
+      -V|--version)   echo "$SCRIPT_NAME $VERSION"; exit $EXIT_SUCCESS ;;
+      -h|--help)      show_help; exit $EXIT_SUCCESS ;;
       --)             shift; targets+=("$@"); break ;;
       -[acsVh]*) #shellcheck disable=SC2046 #split up single options
                       set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;

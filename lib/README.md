@@ -35,8 +35,8 @@ This directory contains vendored copies of external dependencies to ensure the B
 **Used by:** `bcs display` command (optional enhancement)
 
 **Upstream:** https://github.com/Open-Technology-Foundation/md2ansi.bash
-**Git commit:** `6e8d7dc28e341232388875287f48c5c47a5c6d3e`
-**Last synced:** 2025-10-18 14:38:51 +0800
+**Git commit:** `ccb34b95bbcc62579e8e3a730f062886fce2ccd8`
+**Last synced:** 2025-10-25 19:24:22 +0800
 
 **License:** MIT (see LICENSES/md2ansi.LICENSE)
 
@@ -318,8 +318,8 @@ This directory contains vendored copies of external dependencies to ensure the B
 **Used by:** Available for general use in scripts and benchmarking
 
 **Upstream:** https://github.com/Open-Technology-Foundation/timer
-**Git commit:** `f8ac47a76082d4da5c8808bdc0211a6b1e385c28`
-**Last synced:** 2025-10-23 22:00:34 +0800
+**Git commit:** `79bcd61bcbede56e7b593d1d1758be907ad2b8ee`
+**Last synced:** 2025-10-26 07:08:48 +0800
 
 **License:** GPL v3 (see LICENSES/timer.LICENSE)
 

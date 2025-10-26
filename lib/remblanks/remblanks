@@ -1,6 +1,6 @@
 #!/bin/bash
+# Remove #comment lines and blank lines from input or string argument
 
-# Function to strip comments and blank lines
 # Works both as a pipe and with string arguments
 remblanks() {
   if (($#)); then
@@ -11,10 +11,11 @@ remblanks() {
     grep -v '^[[:blank:]]*#\|^[[:blank:]]*$'
   fi
 }
-# Export function for use in subshells
 declare -fx remblanks
 
 # If script is executed directly (not sourced), run the function
-[[ "${BASH_SOURCE[0]}" != "$0" ]] || remblanks "$@"
+[[ "${BASH_SOURCE[0]}" != "$0" ]] || return 0
+
+remblanks "$@"
 
 #fin

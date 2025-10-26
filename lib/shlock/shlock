@@ -1,5 +1,5 @@
 #!/bin/bash
-#shellcheck disable=SC2317  # Unreachable code warnings for cleanup() and show_usage() - called via trap and die
+#shellcheck disable=SC2317  # Unreachable code warnings for cleanup() and show_help() - called via trap and die
 #
 # shlock - File-based locking system with stale lock detection
 #
@@ -82,10 +82,7 @@ declare -i TIMEOUT_SECONDS=0
 # Messaging functions -----------------
 error() { >&2 echo "$SCRIPT_NAME: error: $*"; }
 
-die() {
-  (($#>1)) && error "${@:2}"
-  exit "${1:-1}"
-}
+die() { (($#>1)) && error "${@:2}"; exit "${1:-1}"; }
 
 # Helper functions --------------------
 # Validate that $2 exists and is numeric, die with error if not
@@ -151,7 +148,7 @@ cleanup() {
 }
 
 # Usage -------------------------------
-show_usage() {
+show_help() {
   cat >&2 <<EOF
 Usage: $SCRIPT_NAME [OPTIONS] [LOCKNAME] -- COMMAND [ARGS...]
 
@@ -202,7 +199,7 @@ main() {
   while (($#)); do
     case $1 in
       -h|--help)
-        show_usage; exit 0
+        show_help; exit 0
         ;;
       -V|--version)
         echo "$SCRIPT_NAME $VERSION"; exit 0
