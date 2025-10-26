@@ -316,6 +316,18 @@ Running `sudo make install` installs these tools to `/usr/local/bin/`:
 
 ### Installation
 
+**Quick Install (one-liner):**
+
+```bash
+# Install to /usr/local (keeps cloned repo)
+git clone https://github.com/OkusiAssociates/bash-coding-standard.git && cd bash-coding-standard && sudo make install
+
+# Or install with auto-cleanup
+git clone https://github.com/OkusiAssociates/bash-coding-standard.git /tmp/bcs-install && cd /tmp/bcs-install && sudo make install && cd - && rm -rf /tmp/bcs-install
+```
+
+**Standard Installation:**
+
 Clone this repository and optionally install system-wide:
 
 ```bash
