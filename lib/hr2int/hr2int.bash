@@ -85,4 +85,25 @@ int2hr() {
 }
 declare -fx int2hr
 
+[[ ${BASH_SOURCE[0]} == "$0" ]] || return 0
+
+#/bin/bash #semantic ----------------------------------------------------------
+set -euo pipefail
+
+# Quick help
+if [[ $* == *'-h'* ]]; then
+  grep '^# ' "$(realpath -e -- "$0")" | sed 's/^# //'
+  exit 0
+fi
+
+
+if [[ $(basename -- "$0") == hr2int ]]; then
+  hr2int "$@"
+elif [[ $(basename -- "$0") == int2hr ]]; then
+  int2hr "$@"
+else
+  >&2 echo "Invalid basename $(basename -- "$0")"
+  exit 1
+fi 
+
 #fin

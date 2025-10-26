@@ -445,6 +445,37 @@ compress_validate_claude_cli() {
 }
 declare -fx compress_validate_claude_cli
 
+# Sanitize UTF-8 encoding in a file by replacing control characters
+sanitize_utf8() {
+  local -- file="$1"
+  local -- temp_file="${file}.utf8tmp"
+
+  # Replace control characters with UTF-8 symbols, then validate encoding
+  # 0x0c (FF)  → remove (form feed)
+  # 0x13 (DC3) → ✓ (CHECK MARK)
+  # 0x17 (ETB) → ✗ (BALLOT X)
+  # 0x14 (DC4) → – (EN DASH)
+  # 0x92       → ' (RIGHT SINGLE QUOTATION MARK)
+
+  if sed 's/\x0c//g; s/\x13/✓/g; s/\x17/✗/g; s/\x14/–/g' "$file" | \
+     iconv -f WINDOWS-1252 -t UTF-8//TRANSLIT 2>/dev/null > "$temp_file"; then
+    # Success with iconv conversion
+    :
+  else
+    # Fallback: just sed replacements without iconv
+    sed 's/\x0c//g; s/\x13/✓/g; s/\x17/✗/g; s/\x14/–/g; s/\x92/'\''/g' "$file" > "$temp_file"
+  fi
+
+  if [[ -s "$temp_file" ]]; then
+    mv "$temp_file" "$file"
+    return 0
+  else
+    rm -f "$temp_file"
+    return 1
+  fi
+}
+declare -fx sanitize_utf8
+
 # Build system prompt for summary tier compression
 compress_build_system_prompt_summary() {
   cat <<'PROMPT'
@@ -831,6 +862,9 @@ compress_rule_to_tier() {
         continue
       fi
 
+      # Sanitize UTF-8 encoding in Claude's output
+      sanitize_utf8 "$temp_file" || ((compress_verbose)) && warn "  ⚠ UTF-8 sanitization failed"
+
       # Check file size
       file_size=$(wc -c < "$temp_file")
 
@@ -874,6 +908,9 @@ compress_rule_to_tier() {
         else
           # Max retries reached - keep the oversized file
           mv "$temp_file" "$target_file" || { error "Failed to write: $target_file"; return 1; }
+
+          # Sanitize UTF-8 encoding in oversized file
+          sanitize_utf8 "$target_file" || ((compress_verbose)) && warn "  ⚠ UTF-8 sanitization failed"
 
           # Copy permissions with fallback
           if ! chmod --reference="$complete_file" "$target_file" 2>/dev/null; then

@@ -14,7 +14,7 @@ remblanks() {
 declare -fx remblanks
 
 # If script is executed directly (not sourced), run the function
-[[ "${BASH_SOURCE[0]}" != "$0" ]] || return 0
+[[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0
 
 remblanks "$@"
 

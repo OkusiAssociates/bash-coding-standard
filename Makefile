@@ -12,7 +12,10 @@ PREFIX ?= /usr/local
 BINDIR = $(PREFIX)/bin
 SHAREDIR = $(PREFIX)/share/yatti/bash-coding-standard
 
-.PHONY: install uninstall help
+# Trim utility scripts to install
+TRIM_SCRIPTS = ltrim rtrim trim trimall trimv squeeze
+
+.PHONY: install uninstall help check-deps install-deps
 
 help:
 	@echo "bash-coding-standard Makefile"
@@ -26,12 +29,123 @@ help:
 	@echo "  sudo make install                  # Install to /usr/local"
 	@echo "  sudo make PREFIX=/usr install      # Install to /usr"
 	@echo "  sudo make uninstall                # Uninstall"
+	@echo "  make check-deps                    # Check optional dependencies"
+	@echo "  sudo make install-deps             # Install missing dependencies"
+
+check-deps:
+	@echo "Checking optional dependencies..."
+	@echo ""
+	@MISSING=""; \
+	if ! command -v shellcheck >/dev/null 2>&1; then \
+		echo "  ✗ shellcheck   (not found - recommended for script validation)"; \
+		MISSING="$$MISSING shellcheck"; \
+	else \
+		echo "  ✓ shellcheck   ($$(shellcheck --version | grep '^version:' | awk '{print $$2}'))"; \
+	fi; \
+	if ! command -v jq >/dev/null 2>&1; then \
+		echo "  ✗ jq           (not found - used for JSON processing)"; \
+		MISSING="$$MISSING jq"; \
+	else \
+		echo "  ✓ jq           ($$(jq --version 2>&1))"; \
+	fi; \
+	if ! command -v less >/dev/null 2>&1; then \
+		echo "  ✗ less         (not found - used for paging)"; \
+		MISSING="$$MISSING less"; \
+	else \
+		echo "  ✓ less         ($$(less --version 2>&1 | head -1))"; \
+	fi; \
+	if ! command -v bc >/dev/null 2>&1; then \
+		echo "  ✗ bc           (not found - used for calculations)"; \
+		MISSING="$$MISSING bc"; \
+	else \
+		echo "  ✓ bc           ($$(echo 'print "version: "; 1+1' | bc -q 2>/dev/null || echo 'installed'))"; \
+	fi; \
+	if command -v iconv >/dev/null 2>&1; then \
+		echo "  ✓ iconv        (built-in - glibc)"; \
+	else \
+		echo "  ✗ iconv        (not found - used for character encoding)"; \
+		MISSING="$$MISSING libc-bin"; \
+	fi; \
+	if ! command -v claude >/dev/null 2>&1; then \
+		echo "  ◉ claude       (not found - manual install required)"; \
+		echo "                 Install from: https://github.com/anthropics/claude-code"; \
+	else \
+		echo "  ✓ claude       ($$(claude --version 2>&1 | head -1))"; \
+	fi; \
+	echo ""; \
+	if [ -n "$$MISSING" ]; then \
+		echo "Missing dependencies:$$MISSING"; \
+		echo ""; \
+		echo "Run 'sudo make install-deps' to install them automatically"; \
+	else \
+		echo "✓ All optional dependencies are installed"; \
+	fi
+
+install-deps:
+	@echo "Installing optional dependencies..."
+	@echo ""
+	@# Detect package manager
+	@if command -v apt-get >/dev/null 2>&1; then \
+		echo "Detected package manager: apt-get (Debian/Ubuntu)"; \
+		MISSING=""; \
+		command -v shellcheck >/dev/null 2>&1 || MISSING="$$MISSING shellcheck"; \
+		command -v jq >/dev/null 2>&1 || MISSING="$$MISSING jq"; \
+		command -v less >/dev/null 2>&1 || MISSING="$$MISSING less"; \
+		command -v bc >/dev/null 2>&1 || MISSING="$$MISSING bc"; \
+		command -v iconv >/dev/null 2>&1 || MISSING="$$MISSING libc-bin"; \
+		if [ -n "$$MISSING" ]; then \
+			echo "Installing:$$MISSING"; \
+			apt-get update && apt-get install -y$$MISSING; \
+		else \
+			echo "✓ All dependencies already installed"; \
+		fi; \
+	elif command -v dnf >/dev/null 2>&1; then \
+		echo "Detected package manager: dnf (Fedora/RHEL)"; \
+		MISSING=""; \
+		command -v shellcheck >/dev/null 2>&1 || MISSING="$$MISSING ShellCheck"; \
+		command -v jq >/dev/null 2>&1 || MISSING="$$MISSING jq"; \
+		command -v less >/dev/null 2>&1 || MISSING="$$MISSING less"; \
+		command -v bc >/dev/null 2>&1 || MISSING="$$MISSING bc"; \
+		command -v iconv >/dev/null 2>&1 || MISSING="$$MISSING glibc-common"; \
+		if [ -n "$$MISSING" ]; then \
+			echo "Installing:$$MISSING"; \
+			dnf install -y$$MISSING; \
+		else \
+			echo "✓ All dependencies already installed"; \
+		fi; \
+	elif command -v pacman >/dev/null 2>&1; then \
+		echo "Detected package manager: pacman (Arch Linux)"; \
+		MISSING=""; \
+		command -v shellcheck >/dev/null 2>&1 || MISSING="$$MISSING shellcheck"; \
+		command -v jq >/dev/null 2>&1 || MISSING="$$MISSING jq"; \
+		command -v less >/dev/null 2>&1 || MISSING="$$MISSING less"; \
+		command -v bc >/dev/null 2>&1 || MISSING="$$MISSING bc"; \
+		if [ -n "$$MISSING" ]; then \
+			echo "Installing:$$MISSING"; \
+			pacman -S --noconfirm$$MISSING; \
+		else \
+			echo "✓ All dependencies already installed"; \
+		fi; \
+	else \
+		echo "▲ Unsupported package manager"; \
+		echo "Please install manually: shellcheck jq less bc"; \
+		exit 1; \
+	fi
+	@echo ""
+	@if ! command -v claude >/dev/null 2>&1; then \
+		echo "◉ Note: 'claude' must be installed manually"; \
+		echo "   Install from: https://github.com/anthropics/claude-code"; \
+	fi
+	@echo ""
+	@echo "✓ Dependencies installed"
 
 install:
 	@# Phase 1: Detect existing symlinks in destination
 	@echo "Checking for existing symlinks in $(BINDIR)..."
 	@SYMLINKS=""; \
-	for FILE in bcs md2ansi md mdheaders libmdheaders.bash whichx dir-sizes printline bcx; do \
+	for FILE in bcs md2ansi md mdheaders libmdheaders.bash whichx dir-sizes printline bcx \
+	            shlock timer post_slug remblanks hr2int int2hr \
+	            ltrim rtrim trim trimall trimv squeeze; do \
 		if [ -L "$(BINDIR)/$$FILE" ]; then \
 			TARGET=$$(readlink -f "$(BINDIR)/$$FILE" 2>/dev/null || echo "<broken symlink>"); \
 			SYMLINKS="$$SYMLINKS$(BINDIR)/$$FILE -> $$TARGET\n"; \
@@ -46,7 +160,9 @@ install:
 		case "$$REPLY" in \
 			[Yy]*) \
 				echo "Removing symlinks..."; \
-				for FILE in bcs md2ansi md mdheaders libmdheaders.bash whichx dir-sizes printline bcx; do \
+				for FILE in bcs md2ansi md mdheaders libmdheaders.bash whichx dir-sizes printline bcx \
+				            shlock timer post_slug remblanks hr2int int2hr \
+				            ltrim rtrim trim trimall trimv squeeze; do \
 					[ -L "$(BINDIR)/$$FILE" ] && rm -f "$(BINDIR)/$$FILE"; \
 				done; \
 				echo "✓ Symlinks removed"; \
@@ -75,6 +191,15 @@ install:
 	ln -sf dir-sizes $(BINDIR)/dux
 	install -m 755 lib/printline/printline $(BINDIR)/
 	install -m 755 lib/bcx/bcx $(BINDIR)/
+	install -m 755 lib/shlock/shlock $(BINDIR)/
+	install -m 755 lib/timer/timer $(BINDIR)/
+	install -m 755 lib/post_slug/post_slug.bash $(BINDIR)/post_slug
+	install -m 755 lib/remblanks/remblanks $(BINDIR)/
+	install -m 755 lib/hr2int/hr2int.bash $(BINDIR)/hr2int
+	ln -sf hr2int $(BINDIR)/int2hr
+	@for SCRIPT in $(TRIM_SCRIPTS); do \
+		install -m 755 lib/trim/$$SCRIPT.bash $(BINDIR)/$$SCRIPT; \
+	done
 	install -d -m 2775 -g bcs $(SHAREDIR)
 	cp -a data $(SHAREDIR)/ && chgrp -R bcs $(SHAREDIR)/data && find $(SHAREDIR)/data -type d -exec chmod 2775 {} + && find $(SHAREDIR)/data -type f -exec chmod 664 {} +
 	ln -sf BASH-CODING-STANDARD.abstract.md $(SHAREDIR)/data/BASH-CODING-STANDARD.md
@@ -89,26 +214,44 @@ install:
 	@echo ""
 	@echo "✓ Installed to $(PREFIX)"
 	@echo ""
-	@echo "Installed files:"
-	@echo "  - Executables: $(BINDIR)/bcs (and bash-coding-standard symlink)"
-	@echo "  - Markdown tools: $(BINDIR)/md2ansi, $(BINDIR)/md, $(BINDIR)/mdheaders"
-	@echo "  - Command locator: $(BINDIR)/whichx (and which symlink)"
-	@echo "  - Directory analyzer: $(BINDIR)/dir-sizes (and dux symlink)"
-	@echo "  - Line drawing: $(BINDIR)/printline"
-	@echo "  - Calculator: $(BINDIR)/bcx"
+	@echo "Installed files (23 commands):"
+	@echo "  - Main executable: $(BINDIR)/bcs (and bash-coding-standard symlink)"
+	@echo "  - Markdown tools: md2ansi, md, mdheaders"
+	@echo "  - Command locator: whichx (and which symlink)"
+	@echo "  - Directory analyzer: dir-sizes (and dux symlink)"
+	@echo "  - Line drawing: printline"
+	@echo "  - Calculator: bcx"
+	@echo "  - File locking: shlock"
+	@echo "  - Timer: timer"
+	@echo "  - URL slug: post_slug"
+	@echo "  - Blank line remover: remblanks"
+	@echo "  - Number converter: hr2int (and int2hr symlink)"
+	@echo "  - String trim: ltrim, rtrim, trim, trimall, trimv, squeeze"
 	@echo "  - Standard docs (3 tiers): $(SHAREDIR)/data/BASH-CODING-STANDARD.*.md"
 	@echo "  - Data directory: $(SHAREDIR)/data/ (300+ rule files + templates)"
-	@echo "  - Vendored dependencies: $(SHAREDIR)/lib/ (~544KB: md2ansi, mdheaders, whichx, dux, printline, bcx, agents, shlock, trim, timer, post_slug, hr2int, remblanks)"
+	@echo "  - Vendored dependencies: $(SHAREDIR)/lib/ (~544KB)"
 	@echo "  - BCS index: $(SHAREDIR)/BCS/ (convenience symlinks, if available)"
 	@echo ""
-	@echo "Run: bcs"
-	@echo "Help: bcs --help"
-	@echo "Markdown viewer: md file.md  (or md2ansi file.md)"
-	@echo "Header manipulation: mdheaders {upgrade|downgrade|normalize} file.md"
-	@echo "Command locator: which <command>  (or whichx <command>)"
-	@echo "Directory sizes: dir-sizes [directory]  (or dux [directory])"
-	@echo "Line drawing: printline [char [text]]"
-	@echo "Calculator: bcx [expression]  (or bcx for interactive mode)"
+	@echo "Usage examples:"
+	@echo "  bcs                                  # View BCS standard"
+	@echo "  bcs --help                           # Show help"
+	@echo "  md file.md                           # View markdown file"
+	@echo "  mdheaders upgrade file.md            # Manipulate headers"
+	@echo "  which <command>                      # Locate command"
+	@echo "  dir-sizes [directory]                # Show directory sizes"
+	@echo "  printline [char [text]]              # Draw lines"
+	@echo "  bcx '2 + 2'                          # Calculator"
+	@echo "  shlock -f /tmp/mylock.lock           # File locking"
+	@echo "  timer 5m                             # Timer"
+	@echo "  post_slug 'My Blog Post'             # URL slug"
+	@echo "  remblanks < file.txt                 # Remove blank lines"
+	@echo "  hr2int 10M                           # Human to integer (10000000)"
+	@echo "  int2hr 10000000                      # Integer to human (10.0M)"
+	@echo "  ltrim ' text '                       # Left trim"
+	@echo ""
+	@echo "Check dependencies:"
+	@echo "  make check-deps                      # Check optional tools"
+	@echo "  sudo make install-deps               # Install missing tools"
 
 uninstall:
 	rm -f $(BINDIR)/bcs
@@ -123,6 +266,15 @@ uninstall:
 	rm -f $(BINDIR)/dux
 	rm -f $(BINDIR)/printline
 	rm -f $(BINDIR)/bcx
+	rm -f $(BINDIR)/shlock
+	rm -f $(BINDIR)/timer
+	rm -f $(BINDIR)/post_slug
+	rm -f $(BINDIR)/remblanks
+	rm -f $(BINDIR)/hr2int
+	rm -f $(BINDIR)/int2hr
+	@for SCRIPT in $(TRIM_SCRIPTS); do \
+		rm -f $(BINDIR)/$$SCRIPT; \
+	done
 	rm -rf $(SHAREDIR)
 	@echo ""
 	@echo "✓ Uninstalled from $(PREFIX)"
