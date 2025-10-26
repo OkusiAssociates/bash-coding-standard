@@ -3509,29 +3509,25 @@ EOF
         ;;
       -s|--stats)
         show_stats=1
-        shift
         ;;
       -l|--links)
         show_links=1
-        shift
         ;;
       -v|--verbose)
         show_verbose=1
-        shift
         ;;
       -q|--quote)
         show_quote=1
-        shift
         ;;
       --json)
         show_json=1
-        shift
         ;;
       *)
         error "Unknown option ${1@Q}"
         return 2
         ;;
     esac
+    shift
   done
 
   # Gather statistics
@@ -4008,8 +4004,6 @@ EOF
         ;;
 
       --codes)
-        shift
-        [[ -n "${1:-}" ]] || { error 'Option --codes requires an argument'; return 2; }
         arg2 "$@"; shift
         codes_option="$1"
         ;;
