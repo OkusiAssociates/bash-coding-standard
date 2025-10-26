@@ -3509,18 +3509,23 @@ EOF
         ;;
       -s|--stats)
         show_stats=1
+        shift
         ;;
       -l|--links)
         show_links=1
+        shift
         ;;
       -v|--verbose)
         show_verbose=1
+        shift
         ;;
       -q|--quote)
         show_quote=1
+        shift
         ;;
       --json)
         show_json=1
+        shift
         ;;
       *)
         error "Unknown option ${1@Q}"
