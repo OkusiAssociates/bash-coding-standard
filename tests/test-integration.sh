@@ -57,13 +57,14 @@ test_workflow_search_decode_verify() {
   # Workflow: Search for keyword → Decode matching code → Verify content
   local -- search_output code_output
 
-  # Search for "readonly"
-  search_output=$("$SCRIPT" search "readonly" 2>&1 | head -50 || true)
+  # Search for "readonly" with sufficient context to capture Rule markers
+  search_output=$("$SCRIPT" search -C 10 "readonly" 2>&1 | head -100 || true)
 
-  if [[ "$search_output" =~ BCS[0-9]+ ]]; then
+  # Check for BCS codes in either format: **Rule: BCS####** (complete/abstract/summary) or [BCS####] (rulet)
+  if [[ "$search_output" =~ \*\*Rule:\ BCS[0-9]+ ]] || [[ "$search_output" =~ \[BCS[0-9]+ ]]; then
     pass "Search found BCS codes"
 
-    # Extract first BCS code
+    # Extract first BCS code (works for both formats)
     local -- first_code
     first_code=$(echo "$search_output" | grep -oE 'BCS[0-9]+' | head -1)
 
@@ -155,18 +156,19 @@ test_workflow_codes_decode_all() {
       pass "Found substantial number of codes ($code_count codes)"
 
       # Test decoding a sample (not all - too slow)
+      # Use complete tier to ensure all codes can be decoded (rulet only has section-level)
       local -- sample_codes
       sample_codes=$(echo "$codes_output" | grep -oE '^BCS[0-9]+' | head -5)
 
       local -- code success_count=0
       for code in $sample_codes; do
-        if "$SCRIPT" decode "$code" --exists 2>&1 >/dev/null; then
+        if "$SCRIPT" decode "$code" --exists -c 2>&1 >/dev/null; then
           ((success_count+=1))
         fi
       done
 
       if [[ "$success_count" -eq 5 ]]; then
-        pass "All sampled codes ($success_count/5) decode successfully"
+        pass "All sampled codes ($success_count/5) decode successfully in complete tier"
       else
         fail "Some codes failed to decode ($success_count/5 succeeded)"
       fi
@@ -278,7 +280,7 @@ test_workflow_template_customization() {
   local -- test_desc="Test Application"
   local -- test_version="2.5.0"
 
-  "$SCRIPT" template -n "$test_name" -d "$test_desc" -v "$test_version" -o "$tmpfile" 2>&1 >/dev/null
+  "$SCRIPT" template -n "$test_name" -d "$test_desc" -v "$test_version" -o "$tmpfile" --force 2>&1 >/dev/null
 
   if [[ -f "$tmpfile" ]]; then
     local -- content

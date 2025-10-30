@@ -32,6 +32,7 @@ Modern software development increasingly relies on automated refactoring, AI-ass
 ## Table of Contents
 
 - [Quick Start](#quick-start)
+  - [Prerequisites](#prerequisites)
   - [Installation](#installation)
   - [Using the BCS Toolkit](#using-the-bcs-toolkit)
   - [Subcommands Reference](#subcommands-reference)
@@ -45,6 +46,15 @@ Modern software development increasingly relies on automated refactoring, AI-ass
 - [Minimal Example](#minimal-example)
 - [Repository Structure](#repository-structure)
 - [BCS Code Structure](#bcs-code-structure)
+- [BCS Ruleset Structure](#bcs-ruleset-structure)
+  - [Terminology](#terminology)
+  - [Multi-Tier Documentation System](#multi-tier-documentation-system)
+  - [File Naming Conventions](#file-naming-conventions)
+  - [Directory Hierarchy](#directory-hierarchy)
+  - [BCS Code Mapping](#bcs-code-mapping)
+  - [Tier Generation Workflow](#tier-generation-workflow)
+  - [Working with Rulesets](#working-with-rulesets)
+  - [Relationship Diagram](#relationship-diagram)
 - [Performance Enhancement: Bash Builtins](#performance-enhancement-bash-builtins)
 - [Documentation](#documentation)
 - [Usage Guidance](#usage-guidance)
@@ -59,7 +69,264 @@ Modern software development increasingly relies on automated refactoring, AI-ass
 
 ## Quick Start
 
+### Prerequisites
+
+Before using the Bash Coding Standard toolkit, ensure you have:
+
+#### Required
+
+- **Bash 5.2+** - Modern Bash version (check: `bash --version`)
+- **ShellCheck** - Static analysis tool (mandatory for BCS compliance)
+
+  **Installation:**
+  ```bash
+  # Ubuntu/Debian
+  sudo apt install shellcheck
+
+  # macOS
+  brew install shellcheck
+
+  # Fedora/RHEL
+  sudo dnf install ShellCheck
+
+  # Alpine Linux
+  apk add shellcheck
+
+  # Or download from: https://www.shellcheck.net/
+  ```
+
+  **Verify installation:**
+  ```bash
+  shellcheck --version  # Should be 0.8.0 or higher
+  ```
+
+#### Bundled Libraries and Scripts (No Installation Required)
+
+The BCS includes **13 vendored tools** (~544KB total) in the `lib/` directory that work out-of-box after `git clone`. All tools are installed system-wide via `sudo make install`.
+
+**Quick Reference:**
+
+| Category | Tools | Purpose |
+|----------|-------|---------|
+| **Core BCS** | bcs-rulet-extractor, bcs-compliance | AI agents for BCS operations |
+| **Markdown** | md2ansi, md, mdheaders | Document rendering and manipulation |
+| **File/System** | whichx, dux, printline, bcx | Command location, disk analysis, terminal formatting, calculations |
+| **Development** | shlock, trim, timer, post_slug, hr2int, remblanks | Scripting utilities |
+
+---
+
+##### Core BCS Tools
+
+**bcs-rulet-extractor** (v1.0.1, ~5KB)
+- **Purpose:** Extract concise rulets from complete.md rulefiles using Claude AI
+- **Used by:** `bcs generate-rulets` subcommand
+- **Installation:** Not installed to PATH (internal use only)
+
+**bcs-compliance** (v1.0.1, ~900B)
+- **Purpose:** BCS compliance checking wrapper for Claude
+- **Used by:** External compliance workflows
+- **Installation:** Not installed to PATH (internal use only)
+- **Requires:** Claude Code CLI, shlock utility
+
+---
+
+##### Markdown Tools
+
+**md2ansi** & **md** (git commit [6e8d7dc](https://github.com/Open-Technology-Foundation/md2ansi.bash), ~60KB)
+- **Purpose:** Beautiful ANSI terminal rendering of markdown documents
+- **Installation:** `/usr/local/bin/md2ansi` and `/usr/local/bin/md`
+- **Usage:**
+  ```bash
+  md README.md               # Paginated viewing with less
+  md2ansi file.md            # Direct ANSI output to stdout
+  ```
+- **Features:**
+  - ✅ Full markdown support (headers, lists, tables, code blocks)
+  - ✅ Syntax highlighting for code blocks
+  - ✅ Color-coded elements
+- **License:** MIT
+- **Used by:** `bcs display` for enhanced viewing
+
+**mdheaders** (git commit [6837187](https://github.com/Open-Technology-Foundation/whichx), ~54KB)
+- **Purpose:** Markdown header level manipulation (upgrade/downgrade/normalize)
+- **Installation:** `/usr/local/bin/mdheaders` and `/usr/local/bin/libmdheaders.bash`
+- **Usage:**
+  ```bash
+  mdheaders upgrade -l 2 -ib file.md      # Increase levels, backup
+  mdheaders normalize --start-level=2 doc.md  # Normalize to H2
+  ```
+- **Features:**
+  - ✅ Upgrade/downgrade header levels
+  - ✅ Normalize to target minimum level
+  - ✅ Code block awareness (preserves fenced blocks)
+- **License:** GPL v3
+
+---
+
+##### File & System Tools
+
+**whichx** (v2.0, git commit [6f2b28b](https://github.com/Open-Technology-Foundation/whichx), ~45KB)
+- **Purpose:** Robust command locator - drop-in replacement for system `which`
+- **Installation:** `/usr/local/bin/whichx` + symlink `/usr/local/bin/which`
+- **Usage:**
+  ```bash
+  which python3              # Find python3 location
+  whichx -a bash             # Show all bash instances in PATH
+  whichx -c vim              # Show canonical path (follow symlinks)
+  ```
+- **Features:**
+  - ✅ POSIX-compliant PATH searching
+  - ✅ Specific exit codes for scripting
+  - ✅ Silent mode (`-s`) for conditional checks
+- **License:** GPL v3
+- **Note:** Shadows system `which` via `/usr/local/bin` priority
+
+**dux / dir-sizes** (v1.2.0, git commit [ee0927c], ~56KB)
+- **Purpose:** Directory size analyzer with sorted human-readable output
+- **Installation:** `/usr/local/bin/dir-sizes` + symlink `/usr/local/bin/dux`
+- **Usage:**
+  ```bash
+  dux                        # Analyze current directory
+  dir-sizes /var             # Analyze /var subdirectories
+  dux ~/Documents | tail -10 # Show 10 largest directories
+  ```
+- **Features:**
+  - ✅ Recursive size calculation
+  - ✅ Human-readable IEC units (B, KiB, MiB, GiB)
+  - ✅ Sorted output (smallest to largest)
+- **License:** GPL v3
+- **Dependencies:** du, numfmt (GNU coreutils)
+
+**printline** (v1.0.0, git commit [5e64288], ~52KB)
+- **Purpose:** Terminal line drawing utility for section dividers and headers
+- **Installation:** `/usr/local/bin/printline`
+- **Usage:**
+  ```bash
+  printline                  # Draw line with '-' character
+  printline '=' 'Section: '  # Print prefix then line
+  echo -n "Status: "; printline '#'  # Combine with output
+  ```
+- **Features:**
+  - ✅ Intelligent cursor position detection
+  - ✅ Customizable character (default: `-`)
+  - ✅ Dual-mode (executable or sourceable function)
+- **License:** GPL v3
+- **Dependencies:** stty, tput (standard utilities)
+
+**bcx** (v1.0.0, git commit [f109472], ~44KB)
+- **Purpose:** Terminal calculator for floating-point expressions with interactive REPL
+- **Installation:** `/usr/local/bin/bcx`
+- **Usage:**
+  ```bash
+  bcx "3.14 * 2"         # Quick calculation (returns 6.28)
+  bcx "sqrt(144)"        # Math functions (returns 12)
+  bcx                    # Interactive REPL mode
+  result=$(bcx "42 * 72 / 3.14")  # Use in scripts
+  ```
+- **Features:**
+  - ✅ Interactive REPL with readline history (arrow keys, Ctrl-R search)
+  - ✅ Persistent command history (~/.bcx_history)
+  - ✅ Math library support (sqrt, sin, cos, atan, log, exp)
+  - ✅ x → * conversion in terminal mode (e.g., `3x4` becomes `3*4`)
+  - ✅ Clean error handling and proper Ctrl-C support
+- **License:** GPL v3
+- **Dependencies:** bc (command-line calculator)
+
+---
+
+##### Development Utilities
+
+**shlock** (git commit [49f1439](https://github.com/Open-Technology-Foundation/shlock), ~16KB)
+- **Purpose:** Process locking and synchronization for shell scripts
+- **Installation:** Not installed to PATH (used by bcs-compliance)
+- **License:** MIT
+
+**trim** (git commit [8b37c55](https://github.com/Open-Technology-Foundation/trim), ~92KB)
+- **Purpose:** Pure Bash string trimming utilities (6 utilities)
+- **Installation:** Not installed to PATH (available for sourcing from lib/)
+- **Tools:** `trim`, `ltrim`, `rtrim`, `trimall`, `squeeze`, `trimv`
+- **Features:**
+  - ✅ Zero dependencies (pure Bash)
+  - ✅ Dual-mode (command-line or sourceable)
+  - ✅ No subprocess overhead
+- **License:** GPL v3
+
+**timer** (git commit [f8ac47a](https://github.com/Open-Technology-Foundation/timer), ~47KB)
+- **Purpose:** Microsecond-precision command execution timing
+- **Installation:** Not installed to PATH (available for sourcing from lib/)
+- **Usage:** Source and wrap commands for performance measurement
+- **Features:**
+  - ✅ Microsecond precision using `$EPOCHREALTIME`
+  - ✅ Optional formatted output (days/hours/minutes/seconds)
+  - ✅ Exit code preservation
+- **License:** GPL v3
+- **Dependencies:** Pure Bash (none!)
+
+**post_slug** (git commit [d4f73ff](https://github.com/Open-Technology-Foundation/post_slug), ~40KB)
+- **Purpose:** Convert strings into URL or filename-friendly slugs
+- **Installation:** Not installed to PATH (available for sourcing from lib/)
+- **Features:**
+  - ✅ HTML entity handling
+  - ✅ UTF-8 to ASCII transliteration
+  - ✅ Customizable separator
+- **License:** GPL v3
+- **Dependencies:** sed, iconv, tr (standard utilities)
+
+**hr2int** (~3KB, internal YaTTI utility)
+- **Purpose:** Convert human-readable numbers with size suffixes to integers
+- **Installation:** Not installed to PATH (available for sourcing from lib/)
+- **Functions:** `hr2int()` (1k → 1024), `int2hr()` (1024 → 1k)
+- **License:** ⚠️ No explicit license (internal tool)
+- **Dependencies:** numfmt (GNU coreutils)
+
+**remblanks** (~1KB, internal YaTTI utility)
+- **Purpose:** Strip comments and blank lines from input
+- **Installation:** Not installed to PATH (available for sourcing from lib/)
+- **License:** ⚠️ No explicit license (internal tool)
+- **Dependencies:** grep
+
+---
+
+**Installation Behavior:**
+
+Running `sudo make install` installs these tools to `/usr/local/bin/`:
+- ✅ **Always installed:** bcs, md2ansi, md, mdheaders, whichx, dir-sizes, printline, bcx
+- ✅ **Symlinks created:** bash-coding-standard → bcs, which → whichx, dux → dir-sizes
+- ⚠️ **Symlink protection:** Install detects existing symlinks and prompts before removal
+- ℹ️ **Not installed:** Agents, trim, timer, post_slug, hr2int, remblanks, shlock
+
+**Benefits:**
+- ✅ Works immediately after `git clone`
+- ✅ No external dependency installation needed
+- ✅ Consistent versions across all installations
+- ✅ System-wide availability after installation
+- ✅ Includes utilities for common scripting tasks
+
+**Complete Documentation:** See [`lib/README.md`](lib/README.md) for:
+- Detailed feature descriptions
+- Complete usage examples
+- Update procedures for each tool
+- Licensing information
+- Total size breakdown (~540KB)
+
+#### Optional
+
+- **Claude Code CLI** - For AI-powered features (`bcs check`, `bcs compress`)
+  - Install from: https://claude.com/code
+
 ### Installation
+
+**Quick Install (one-liner):**
+
+```bash
+# Install to /usr/local (keeps cloned repo)
+git clone https://github.com/OkusiAssociates/bash-coding-standard.git && cd bash-coding-standard && sudo make install
+
+# Or install with auto-cleanup
+git clone https://github.com/OkusiAssociates/bash-coding-standard.git /tmp/bcs-install && cd /tmp/bcs-install && sudo make install && cd - && rm -rf /tmp/bcs-install
+```
+
+**Standard Installation:**
 
 Clone this repository and optionally install system-wide:
 
@@ -69,8 +336,8 @@ git clone https://github.com/OkusiAssociates/bash-coding-standard.git
 cd bash-coding-standard
 
 # Run from cloned directory (development mode)
-./bash-coding-standard          # Main script
-./bcs                           # Convenience symlink (shorter)
+./bcs                              # Main CLI toolkit script (v1.0.0, 156KB)
+./bash-coding-standard             # Symlink to bcs (backwards compatibility)
 
 # Or install system-wide (recommended for system use)
 sudo make install
@@ -78,9 +345,10 @@ sudo make install
 # Or install manually
 sudo mkdir -p /usr/local/bin
 sudo mkdir -p /usr/local/share/yatti/bash-coding-standard
-sudo cp bash-coding-standard /usr/local/bin/
-sudo chmod +x /usr/local/bin/bash-coding-standard
-sudo cp BASH-CODING-STANDARD.md /usr/local/share/yatti/bash-coding-standard/
+sudo cp bcs /usr/local/bin/
+sudo ln -s /usr/local/bin/bcs /usr/local/bin/bash-coding-standard
+sudo chmod +x /usr/local/bin/bcs
+sudo cp -r data /usr/local/share/yatti/bash-coding-standard/
 ```
 
 **Uninstall:**
@@ -94,7 +362,7 @@ sudo rm -rf /usr/local/share/yatti/bash-coding-standard
 
 ### Using the BCS Toolkit
 
-The `bcs` script (symlink to `bash-coding-standard`) provides a comprehensive toolkit with multiple subcommands:
+The `bcs` script provides a comprehensive toolkit with multiple subcommands:
 
 ```bash
 # View the standard (default command)
@@ -165,7 +433,7 @@ bcs check deploy.sh > compliance-report.txt
 ```
 
 **Toolkit Features:**
-- **11 Subcommands**: display, about, template, check, compress, codes, generate, search, decode, sections, help
+- **13 Subcommands**: display, about, template, check, compress, codes, generate, generate-rulets, search, decode, sections, default, help
 - **No command aliases** - Simplified UX with canonical names only (v1.0.0+)
 - **Symlink-based tier detection** - Default tier from BASH-CODING-STANDARD.md symlink
 - **AI-powered validation**: Leverage Claude for comprehensive compliance checking
@@ -178,7 +446,7 @@ bcs check deploy.sh > compliance-report.txt
 
 ### Subcommands Reference
 
-The `bcs` toolkit provides eleven powerful subcommands for working with the Bash Coding Standard:
+The `bcs` toolkit provides 12 powerful subcommands for working with the Bash Coding Standard:
 
 #### display (Default)
 
@@ -274,7 +542,7 @@ Resolve BCS codes to file locations or print rule content directly.
 **Options:**
 ```bash
 # Tier selection
-bcs decode BCS####              # Default tier (symlink-based, currently abstract)
+bcs decode BCS####              # Default tier (symlink-based, currently summary)
 bcs decode BCS#### -c           # Complete tier  -s summary  -a abstract  --all (all three)
 
 # Output modes
@@ -305,7 +573,7 @@ bcs decode BCS01 BCS08 BCS13 -p
 ```
 
 **Purpose:** Resolve BCS codes to file locations or view rule content
-**Default tier:** Symlink-based (currently abstract)
+**Default tier:** Symlink-based (currently summary)
 **New in v1.0.0:** Section codes, multiple codes, symlink-based defaults
 
 **See also:** `docs/BCS-DECODE-PATTERNS.md` for 9 advanced usage patterns (editor integration, tier comparison, batch processing, etc.)
@@ -447,7 +715,7 @@ bcs check --strict --format json deploy.sh > compliance-report.json
 14. Advanced patterns usage
 
 **How it works:**
-- Embeds entire BASH-CODING-STANDARD.md (3,525 lines, abstract tier) as Claude's system prompt
+- Embeds entire BASH-CODING-STANDARD.md (symlink to tier file in data/) as Claude's system prompt
 - Claude analyzes script with full context of all rules
 - Returns natural language explanations (not cryptic error codes)
 - Understands intent, context, and legitimate exceptions
@@ -496,11 +764,66 @@ bcs compress --regenerate --context-level abstract   # Recommended (deduplicatio
 
 **Note:** Developer-mode feature for maintaining the multi-tier system. Most users don't need this - the repository already contains compressed tiers. See `docs/BCS-COMPRESS-GUIDE.md` for detailed guide.
 
+#### generate-rulets
+
+AI-powered extraction of highly concise rulets (1-2 sentence rules) from .complete.md files using the `bcs-rulet-extractor` agent.
+
+**Basic usage:**
+```bash
+bcs generate-rulets 02                    # Generate rulet file for category 02 (variables)
+bcs generate-rulets variables             # Same - by category name
+bcs generate-rulets --all                 # Generate for all 14 categories
+bcs generate-rulets --all --force         # Force regeneration of existing files
+```
+
+**Options:**
+```bash
+-a, --all                    Generate rulets for all categories
+-f, --force                  Force regeneration of existing rulet files
+--agent-cmd PATH             Path to bcs-rulet-extractor agent (default: /ai/scripts/claude/agents/bcs-rulet-extractor)
+```
+
+**Purpose:** Extract concise, actionable rules (rulets) from complete.md files
+**Requires:** `bcs-rulet-extractor` agent with `claude.x` CLI
+**Use case:** Creating quick reference guides, AI-optimized rule summaries
+
+**Output format:**
+- Files written to: `data/{NN}-{category}/00-{category}.rulet.md`
+- Example: `data/02-variables/00-variables.rulet.md`
+
+**Rulet format:**
+Each rulet is a 1-2 sentence bullet point with:
+- BCS code prefix: `[BCS0205]` or `[BCS0205,BCS0206]` for multiple sources
+- Concise statement: actionable rule in imperative voice
+- Code examples: inline backticks where helpful
+
+**Example rulets:**
+```markdown
+## Readonly After Group Pattern
+
+- [BCS0205] When declaring multiple readonly variables, initialize them first with values, then make them all readonly in a single statement: `readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME`.
+- [BCS0205,BCS0206] Never make variables readonly individually when they belong to a logical group; this improves maintainability and visual clarity.
+```
+
+**Category resolution:**
+The command accepts flexible category inputs:
+- Numeric: `01`, `02`, `1`, `2`
+- Name: `variables`, `arrays`, `functions`
+- Full directory name: `01-script-structure`, `02-variables`
+
+**Retry logic:**
+The agent includes exponential backoff retry logic (3 retries with 5s, 10s, 20s delays) to handle API rate limits gracefully.
+
+**Testing:**
+Test suite: `tests/test-subcommand-generate-rulets.sh` (19/19 tests passing)
+
+**Note:** This is a developer-mode feature for maintaining rulet documentation. The repository already contains rulet files extracted from complete.md files. Use `--force` to regenerate if complete.md files have been updated.
+
 ### Unified Toolkit Benefits
 
 The `bcs` script provides a unified command interface with multiple benefits:
 
-- Single command interface (`bcs`) with 11 specialized subcommands
+- Single command interface (`bcs`) with 13 subcommands
 - Consistent help system (`bcs help <subcommand>`)
 - Better error messages and validation
 - Backward compatibility with legacy options (e.g., `bcs -c`, `bcs --json`)
@@ -520,29 +843,29 @@ shellcheck -x your-script.sh
 
 ## Workflows
 
-**NEW:** The `workflows/` directory provides production-ready scripts for common BCS maintenance and development tasks. These 8 comprehensive workflow scripts (2,700+ lines) automate rule management, data validation, and compliance checking.
+**NEW:** The `workflows/` directory provides production-ready scripts for common BCS maintenance and development tasks. These 8 comprehensive workflow scripts (2,939 lines) automate rule management, data validation, and compliance checking.
 
 **Quick Overview:**
-- 🔍 **validate-data.sh** - 11 validation checks for data integrity
-- 📊 **interrogate-rule.sh** - Inspect rules by BCS code or file path
-- ✅ **check-compliance.sh** - Batch compliance checking with reports
-- 📝 **generate-canonical.sh** - Generate canonical BCS files
-- 🗜️ **compress-rules.sh** - AI-powered rule compression
-- ➕ **add-rule.sh** - Create new rules interactively
-- ✏️ **modify-rule.sh** - Safely edit existing rules
-- 🗑️ **delete-rule.sh** - Delete rules with safety checks
+- 🔍 **30-validate-data.sh** - 11 validation checks for data integrity
+- 📊 **04-interrogate-rule.sh** - Inspect rules by BCS code or file path
+- ✅ **40-check-compliance.sh** - Batch compliance checking with reports
+- 📝 **20-generate-canonical.sh** - Generate canonical BCS files
+- 🗜️ **10-compress-rules.sh** - AI-powered rule compression
+- ➕ **01-add-rule.sh** - Create new rules interactively
+- ✏️ **02-modify-rule.sh** - Safely edit existing rules
+- 🗑️ **03-delete-rule.sh** - Delete rules with safety checks
 
 All workflows include dry-run modes, backup options, and comprehensive error handling.
 
 ### Available Workflows
 
-#### validate-data.sh
+#### 30-validate-data.sh
 Comprehensive validation of the `data/` directory structure:
 
 ```bash
-./workflows/validate-data.sh              # Run all 11 validation checks
-./workflows/validate-data.sh --check tier-completeness  # Specific check
-./workflows/validate-data.sh --quiet      # Minimal output
+./workflows/30-validate-data.sh              # Run all 11 validation checks
+./workflows/30-validate-data.sh --check tier-completeness  # Specific check
+./workflows/30-validate-data.sh --quiet      # Minimal output
 ```
 
 **Validation checks:**
@@ -558,91 +881,91 @@ Comprehensive validation of the `data/` directory structure:
 10. Cross-reference validation
 11. Sequential numbering checks
 
-#### interrogate-rule.sh
+#### 04-interrogate-rule.sh
 Inspect rules by BCS code or file path:
 
 ```bash
-./workflows/interrogate-rule.sh BCS0102              # Show rule info
-./workflows/interrogate-rule.sh BCS0102 --show-tiers # Show all three tiers
-./workflows/interrogate-rule.sh BCS0102 --format json  # JSON output
-./workflows/interrogate-rule.sh data/01-script-structure/03-metadata.complete.md
+./workflows/04-interrogate-rule.sh BCS0102              # Show rule info
+./workflows/04-interrogate-rule.sh BCS0102 --show-tiers # Show all three tiers
+./workflows/04-interrogate-rule.sh BCS0102 --format json  # JSON output
+./workflows/04-interrogate-rule.sh data/01-script-structure/03-metadata.complete.md
 ```
 
-#### check-compliance.sh
+#### 40-check-compliance.sh
 Batch compliance checking with multiple output formats:
 
 ```bash
-./workflows/check-compliance.sh script.sh           # Check single script
-./workflows/check-compliance.sh *.sh                # Batch checking
-./workflows/check-compliance.sh --format json script.sh
-./workflows/check-compliance.sh --strict deploy.sh  # CI/CD mode
+./workflows/40-check-compliance.sh script.sh           # Check single script
+./workflows/40-check-compliance.sh *.sh                # Batch checking
+./workflows/40-check-compliance.sh --format json script.sh
+./workflows/40-check-compliance.sh --strict deploy.sh  # CI/CD mode
 ```
 
-#### generate-canonical.sh
+#### 20-generate-canonical.sh
 Generate canonical BASH-CODING-STANDARD files from data/:
 
 ```bash
-./workflows/generate-canonical.sh                   # Generate all tiers
-./workflows/generate-canonical.sh --tier complete   # Specific tier
-./workflows/generate-canonical.sh --backup          # Backup before generating
-./workflows/generate-canonical.sh --validate        # Validate after generation
+./workflows/20-generate-canonical.sh                   # Generate all tiers
+./workflows/20-generate-canonical.sh --tier complete   # Specific tier
+./workflows/20-generate-canonical.sh --backup          # Backup before generating
+./workflows/20-generate-canonical.sh --validate        # Validate after generation
 ```
 
-#### compress-rules.sh
+#### 10-compress-rules.sh
 AI-powered wrapper for rule compression:
 
 ```bash
-./workflows/compress-rules.sh                       # Check for oversized files
-./workflows/compress-rules.sh --regenerate          # Regenerate all tiers
-./workflows/compress-rules.sh --context-level abstract  # With context awareness
-./workflows/compress-rules.sh --dry-run             # Preview changes
+./workflows/10-compress-rules.sh                       # Check for oversized files
+./workflows/10-compress-rules.sh --regenerate          # Regenerate all tiers
+./workflows/10-compress-rules.sh --context-level abstract  # With context awareness
+./workflows/10-compress-rules.sh --dry-run             # Preview changes
 ```
 
-#### add-rule.sh
+#### 01-add-rule.sh
 Add new BCS rules interactively:
 
 ```bash
-./workflows/add-rule.sh                             # Interactive mode
-./workflows/add-rule.sh --section 02 --number 10 --name new-rule
-./workflows/add-rule.sh --no-interactive --section 08 --number 05 --name trap-handlers
+./workflows/01-add-rule.sh                             # Interactive mode
+./workflows/01-add-rule.sh --section 02 --number 10 --name new-rule
+./workflows/01-add-rule.sh --no-interactive --section 08 --number 05 --name trap-handlers
 ```
 
-#### modify-rule.sh
+#### 02-modify-rule.sh
 Modify existing rules safely:
 
 ```bash
-./workflows/modify-rule.sh BCS0206                  # Edit by code
-./workflows/modify-rule.sh data/02-variables/06-special-vars.complete.md
-./workflows/modify-rule.sh BCS0206 --no-compress   # Skip auto-compression
-./workflows/modify-rule.sh BCS0206 --validate      # Validate after edit
+./workflows/02-modify-rule.sh BCS0206                  # Edit by code
+./workflows/02-modify-rule.sh data/02-variables/06-special-vars.complete.md
+./workflows/02-modify-rule.sh BCS0206 --no-compress   # Skip auto-compression
+./workflows/02-modify-rule.sh BCS0206 --validate      # Validate after edit
 ```
 
-#### delete-rule.sh
+#### 03-delete-rule.sh
 Delete rules with safety checks:
 
 ```bash
-./workflows/delete-rule.sh BCS9999                  # Delete with confirmation
-./workflows/delete-rule.sh BCS9999 --dry-run        # Preview deletion
-./workflows/delete-rule.sh BCS9999 --force --no-backup  # Skip confirmation and backup
-./workflows/delete-rule.sh BCS9999 --no-check-refs  # Skip reference checking
+./workflows/03-delete-rule.sh BCS9999                  # Delete with confirmation
+./workflows/03-delete-rule.sh BCS9999 --dry-run        # Preview deletion
+./workflows/03-delete-rule.sh BCS9999 --force --no-backup  # Skip confirmation and backup
+./workflows/03-delete-rule.sh BCS9999 --no-check-refs  # Skip reference checking
 ```
 
 ### Real-World Examples
 
 The `examples/` directory contains three production-ready BCS-compliant scripts demonstrating real-world patterns:
 
-**production-deploy.sh** (305 lines)
+**production-deploy.sh** (304 lines)
 - Production deployment with backup and rollback
 - Environment validation, health checks
 - Dry-run mode, confirmation prompts
 - Demonstrates: Complete BCS compliance, error handling, user interaction
 
-**data-processor.sh** (184 lines)
+**data-processor.sh** (183 lines)
 - CSV file processing with validation
 - Field validation, statistics tracking
 - Demonstrates: Array operations, file I/O, validation patterns
 
-**system-monitor.sh** (380 lines)
+**system-monitor.sh** (366 lines)
 - System resource monitoring with alerts
 - CPU, memory, disk usage tracking
 - Email alerts, continuous monitoring mode
@@ -660,14 +983,14 @@ See **[docs/WORKFLOWS.md](docs/WORKFLOWS.md)** (1132 lines) for:
 ### Testing
 
 All workflow scripts have comprehensive test coverage:
-- `tests/test-workflow-validate.sh` - 16 tests
-- `tests/test-workflow-interrogate.sh` - 10 tests
-- `tests/test-workflow-check-compliance.sh` - 10 tests
-- `tests/test-workflow-generate.sh` - 9 tests
-- `tests/test-workflow-compress.sh` - 10 tests
-- `tests/test-workflow-add.sh` - 8 tests
-- `tests/test-workflow-modify.sh` - 10 tests
-- `tests/test-workflow-delete.sh` - 11 tests
+- `tests/test-workflow-validate.sh` - 20 tests
+- `tests/test-workflow-interrogate.sh` - 20 tests
+- `tests/test-workflow-check-compliance.sh` - 14 tests
+- `tests/test-workflow-generate.sh` - 12 tests
+- `tests/test-workflow-compress.sh` - 12 tests
+- `tests/test-workflow-add.sh` - 14 tests
+- `tests/test-workflow-modify.sh` - 12 tests
+- `tests/test-workflow-delete.sh` - 14 tests
 
 Run all workflow tests:
 ```bash
@@ -791,22 +1114,72 @@ main "$@"
 
 ```
 bash-coding-standard/
-├── BASH-CODING-STANDARD.md          # Symlink to default tier (currently abstract, 3,794 lines)
-├── BASH-CODING-STANDARD.complete.md # Complete tier (21,431 lines)
-├── BASH-CODING-STANDARD.summary.md  # Summary tier (12,666 lines)
-├── BASH-CODING-STANDARD.abstract.md # Abstract tier (3,794 lines)
-├── bash-coding-standard             # Main toolkit script (v1.0.0)
-├── bcs                              # Symlink to bash-coding-standard (convenience)
+├── bcs                              # Main CLI toolkit script (v1.0.0, 156KB)
+├── bash-coding-standard             # Symlink to bcs (backwards compatibility)
 ├── README.md                        # This file
 ├── ACTION-ITEMS.md                  # Consolidated action items from archived planning docs
-├── TESTING-SUMMARY.md               # Test suite documentation (19 files, 600+ tests, 74% pass)
+├── TESTING-SUMMARY.md               # Test suite documentation (31 test files)
 ├── LICENSE                          # CC BY-SA 4.0 license
 ├── Makefile                         # Installation/uninstallation helper
+├── lib/                             # Vendored dependencies (~540KB total)
+│   ├── README.md                    # Dependency documentation and update procedures
+│   ├── agents/                      # Claude AI agent wrappers
+│   │   ├── bcs-rulet-extractor      # Rulet generation agent (v1.0.1, ~5KB)
+│   │   └── bcs-compliance           # Compliance checking wrapper (v1.0.1, ~900B)
+│   ├── md2ansi/                     # Markdown to ANSI renderer (~60KB)
+│   │   ├── md2ansi                  # Main renderer script (installed to /usr/local/bin)
+│   │   ├── md                       # Pager wrapper (installed to /usr/local/bin)
+│   │   └── lib/                     # Renderer library files
+│   ├── mdheaders/                   # Markdown header manipulation (~54KB)
+│   │   ├── mdheaders                # Main CLI tool (installed to /usr/local/bin)
+│   │   ├── libmdheaders.bash        # Library file (installed to /usr/local/bin)
+│   │   └── README.md, LICENSE       # Documentation (GPL v3)
+│   ├── whichx/                      # Command locator (~45KB)
+│   │   ├── whichx                   # Main script (installed to /usr/local/bin, symlinked as 'which')
+│   │   └── README.md, LICENSE       # Documentation (GPL v3)
+│   ├── dux/                         # Directory size analyzer (~56KB)
+│   │   ├── dir-sizes                # Main script (installed to /usr/local/bin, symlinked as 'dux')
+│   │   └── README.md, LICENSE       # Documentation (GPL v3)
+│   ├── printline/                   # Terminal line drawing utility (~52KB)
+│   │   ├── printline                # Main script (installed to /usr/local/bin)
+│   │   ├── .version                 # Version file
+│   │   └── README.md, LICENSE       # Documentation (GPL v3)
+│   ├── shlock/                      # Process locking utility (~16KB)
+│   │   └── shlock                   # Shell locking script
+│   ├── trim/                        # String trimming utilities (~92KB)
+│   │   ├── trim, ltrim, rtrim       # Whitespace trimming scripts
+│   │   ├── trimall, squeeze         # Whitespace normalization
+│   │   ├── trimv                    # Trim with variable assignment
+│   │   └── README.md, LICENSE       # Documentation (GPL v3)
+│   ├── timer/                       # High-precision command timer (~47KB)
+│   │   ├── timer                    # Microsecond-precision timer script
+│   │   └── README.md, LICENSE       # Documentation (GPL v3)
+│   ├── post_slug/                   # URL/filename slug generator (~40KB)
+│   │   ├── post_slug.bash           # Slug generation script
+│   │   └── LICENSE                  # GPL v3 license
+│   ├── hr2int/                      # Human-readable number converter (~3KB)
+│   │   └── hr2int.bash              # Number conversion script (hr↔int)
+│   ├── remblanks/                   # Comment/blank line stripper (~1KB)
+│   │   └── remblanks                # Tiny grep-based utility
+│   └── LICENSES/                    # Dependency licenses (~321KB)
+│       ├── md2ansi.LICENSE          # MIT license
+│       ├── mdheaders.LICENSE        # GPL v3 license
+│       ├── whichx.LICENSE           # GPL v3 license
+│       ├── dux.LICENSE              # GPL v3 license
+│       ├── printline.LICENSE        # GPL v3 license
+│       ├── shlock.LICENSE           # MIT license
+│       ├── trim.LICENSE             # GPL v3 license
+│       ├── timer.LICENSE            # GPL v3 license
+│       └── post_slug.LICENSE        # GPL v3 license
 ├── docs/                            # Comprehensive usage guides
 │   ├── BCS-DECODE-PATTERNS.md       # Advanced decode patterns and workflows (481 lines)
 │   └── BCS-COMPRESS-GUIDE.md        # Complete compression guide (665 lines)
 ├── .gudang/                         # Archived analysis and planning documents
 ├── data/                            # Canonical rule source files (generates standard)
+│   ├── BASH-CODING-STANDARD.md      # Symlink to default tier (currently summary)
+│   ├── BASH-CODING-STANDARD.complete.md # Complete tier (21,431 lines)
+│   ├── BASH-CODING-STANDARD.summary.md  # Summary tier (12,666 lines) - gitignored
+│   ├── BASH-CODING-STANDARD.abstract.md # Abstract tier (3,794 lines) - gitignored
 │   ├── 01-script-structure/         # Section 1 rules
 │   │   ├── 02-shebang/              # Shebang subsection
 │   │   │   └── 01-dual-purpose.md   # BCS010201 - Dual-purpose scripts
@@ -815,19 +1188,19 @@ bash-coding-standard/
 │   ├── 02-variables/                # Section 2 rules
 │   └── ...
 ├── workflows/                       # User workflow scripts for typical BCS operations
-│   ├── validate-data.sh             # Validate data/ directory (11 checks)
-│   ├── interrogate-rule.sh          # Inspect rules by BCS code or file path
-│   ├── check-compliance.sh          # Batch compliance checking with reports
-│   ├── generate-canonical.sh        # Generate canonical BCS files from data/
-│   ├── compress-rules.sh            # AI-powered rule compression wrapper
-│   ├── add-rule.sh                  # Add new BCS rule interactively
-│   ├── modify-rule.sh               # Modify existing rule safely
-│   └── delete-rule.sh               # Delete rule with safety checks
+│   ├── 01-add-rule.sh               # Add new BCS rule interactively
+│   ├── 02-modify-rule.sh            # Modify existing rule safely
+│   ├── 03-delete-rule.sh            # Delete rule with safety checks
+│   ├── 04-interrogate-rule.sh       # Inspect rules by BCS code or file path
+│   ├── 10-compress-rules.sh         # AI-powered rule compression wrapper
+│   ├── 20-generate-canonical.sh     # Generate canonical BCS files from data/
+│   ├── 30-validate-data.sh          # Validate data/ directory (11 checks)
+│   └── 40-check-compliance.sh       # Batch compliance checking with reports
 ├── examples/                        # Real-world BCS-compliant example scripts
 │   ├── production-deploy.sh         # Production deployment with backup/rollback
 │   ├── data-processor.sh            # CSV processing with validation
 │   └── system-monitor.sh            # System resource monitoring with alerts
-├── tests/                           # Test suite (27 test files, 650+ tests)
+├── tests/                           # Test suite (31 test files)
 │   ├── test-helpers.sh              # Test helper functions (12 enhanced helpers)
 │   ├── coverage.sh                  # Test coverage analyzer
 │   ├── run-all-tests.sh             # Run entire test suite
@@ -983,6 +1356,590 @@ Where:
 3. Never edit `.summary.md` or `.abstract.md` directly - regenerate them from `.complete.md`
 4. Run `./bcs generate --canonical` to rebuild the final BASH-CODING-STANDARD.md
 
+## BCS Ruleset Structure
+
+This section provides comprehensive documentation of the BCS ruleset architecture, terminology, and file organization. Understanding this structure is essential for both human programmers and AI assistants working with the Bash Coding Standard.
+
+### Terminology
+
+The BCS uses precise terminology to describe different components of the ruleset:
+
+#### Rule
+
+A **rule** is a description of a specific coding requirement or pattern in markdown format. Each rule documents:
+- What the requirement is (the rule itself)
+- Why it exists (rationale)
+- How to implement it (examples)
+- What not to do (anti-patterns)
+
+Example: "Always use `set -euo pipefail` early in scripts (BCS0801)"
+
+#### Rule Category (rulecat)
+
+A **rule category** (rulecat) is a logical grouping of related rules represented as a directory in the `data/` tree. Each rulecat corresponds to one of the 14 major sections of the Bash Coding Standard.
+
+**Name format:** `{[0-9][0-9]}-{short-category-title}/`
+
+Examples:
+- `01-script-structure/` - Rules about script organization and layout
+- `02-variables/` - Rules about variable declarations and constants
+- `07-control-flow/` - Rules about conditionals, loops, and case statements
+- `14-advanced-patterns/` - Rules about debugging, logging, and testing
+
+Within each rulecat directory, there are rulefiles.
+
+#### Rule File (rulefile)
+
+A **rulefile** contains a description of a rule or group of rules in markdown format. Rulefiles exist in three tiers plus an optional rulet format.
+
+**Name format:** `{[0-9][0-9]}-{rule-file-title}.{tier}.md`
+
+Examples:
+- `02-shebang.complete.md` - Complete version of shebang rule
+- `02-shebang.summary.md` - Summary version of shebang rule
+- `02-shebang.abstract.md` - Abstract version of shebang rule
+- `00-variables.rulet.md` - Rulet extraction for variables category
+
+**The canonical rulefile for any rule is `.complete.md`** - the summary and abstract tiers are generated from complete, and rulet files are extracted from complete.
+
+Within each rulefile, there are extractable rulets.
+
+#### Rulet
+
+A **rulet** is a highly refined, accurate, and concise rule expressed as a one- or two-sentence bullet point. Rulets are the distilled essence of rules, optimized for quick reference and AI consumption.
+
+**Characteristics:**
+- 1-2 sentences maximum per rulet
+- Actionable: "what to do" and "what not to do"
+- Include code examples in backticks where helpful
+- No explanations, rationale, or background - only pure rules
+- Grouped under logical section headers
+- **Prefixed with BCS code reference** to show source rule(s)
+
+**BCS Code Reference Format:**
+
+Each rulet is prefixed with its source BCS code(s) in square brackets:
+
+- **Single source**: `[BCS0205] Rulet text here...`
+- **Multiple sources**: `[BCS0205,BCS0206] Combined rulet from multiple rules...`
+
+This enables quick lookup using `bcs decode BCS0205` to read the full source rule.
+
+**Example rulets:**
+```markdown
+## Variable Quoting in Conditionals
+
+- [BCS0406] Always quote variables in test expressions: `[[ -f "$file" ]]`
+- [BCS0406] Never leave variables unquoted in conditionals
+- [BCS0406] Quote variables in integer comparisons: `[[ "$count" -eq 0 ]]`
+
+## Readonly After Group Pattern
+
+- [BCS0205] When declaring multiple readonly variables, initialize them first with values, then make them all readonly in a single statement: `readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME`.
+- [BCS0205] Group logically related variables together for readability: script metadata group, color definitions group, path constants group.
+- [BCS0205,BCS0206] Never make variables readonly individually when they belong to a logical group; this improves maintainability and visual clarity.
+```
+
+**Rulet file format:** `00-{short-category-title}.rulet.md`
+
+Example: `data/02-variables/00-variables.rulet.md`
+
+### Multi-Tier Documentation System
+
+The BCS uses a sophisticated four-tier documentation system to serve different use cases:
+
+#### Complete Tier (.complete.md) - CANONICAL SOURCE
+
+- **Purpose**: Authoritative, fully-detailed documentation
+- **Audience**: Learning, reference, comprehensive understanding
+- **Content**: Full examples, rationale, edge cases, anti-patterns
+- **Status**: **SOURCE** - manually written and edited
+- **Size**: Largest (typically 200-2000 lines per rule)
+- **Example**: `data/02-variables/05-readonly-after-group.complete.md`
+
+**This is the ONLY file you should edit.** All other tiers are generated from complete.
+
+#### Summary Tier (.summary.md) - DERIVED
+
+- **Purpose**: Balanced documentation with key examples
+- **Audience**: Daily reference, quick lookup
+- **Content**: Essential examples, concise explanations
+- **Status**: **DERIVED** - generated from .complete.md using `bcs compress`
+- **Size**: Medium (typically 50-70% of complete)
+- **Example**: `data/02-variables/05-readonly-after-group.summary.md`
+
+**Never edit directly** - regenerate using `bcs compress`.
+
+#### Abstract Tier (.abstract.md) - DERIVED
+
+- **Purpose**: Minimal, rules-only documentation
+- **Audience**: Experienced developers, quick scanning
+- **Content**: Rules only, minimal examples
+- **Status**: **DERIVED** - generated from .summary.md using `bcs compress`
+- **Size**: Smallest (typically 15-30% of complete)
+- **Example**: `data/02-variables/05-readonly-after-group.abstract.md`
+
+**Never edit directly** - regenerate using `bcs compress`.
+
+#### Rulet Format (.rulet.md) - EXTRACTED
+
+- **Purpose**: Ultra-concise, one-liner rule extraction
+- **Audience**: AI assistants, cheat sheets, quick reference
+- **Content**: 1-2 sentence rulets with minimal code examples
+- **Status**: **EXTRACTED** - generated from all .complete.md files in category using `bcs generate-rulets`
+- **Size**: One file per category (typically 50-200 lines total)
+- **Example**: `data/02-variables/00-variables.rulet.md`
+
+**Never edit directly** - regenerate using `bcs generate-rulets`.
+
+### File Naming Conventions
+
+Understanding the naming patterns is critical for navigating and modifying the BCS ruleset.
+
+#### Rule Category Directory
+
+**Format:** `{[0-9][0-9]}-{short-category-title}/`
+
+- Two-digit zero-padded number (01-14)
+- Hyphen separator
+- Lowercase with hyphens
+- No spaces
+
+**Examples:**
+```
+01-script-structure/
+02-variables/
+07-control-flow/
+14-advanced-patterns/
+```
+
+#### Rule File
+
+**Format:** `{[0-9][0-9]}-{rule-file-title}.{tier}.md`
+
+- Two-digit zero-padded number (matches position in category)
+- Hyphen separator
+- Lowercase descriptive title with hyphens
+- Tier identifier (`.complete`, `.summary`, `.abstract`)
+- Markdown extension (`.md`)
+
+**Examples:**
+```
+02-shebang.complete.md
+02-shebang.summary.md
+02-shebang.abstract.md
+05-readonly-after-group.complete.md
+05-readonly-after-group.summary.md
+05-readonly-after-group.abstract.md
+```
+
+#### Section Overview File
+
+**Format:** `00-section.{tier}.md`
+
+Every rulecat contains a section overview file that describes the category as a whole.
+
+**Examples:**
+```
+data/02-variables/00-section.complete.md
+data/02-variables/00-section.summary.md
+data/02-variables/00-section.abstract.md
+```
+
+#### Rulet File
+
+**Format:** `00-{short-category-title}.rulet.md`
+
+One rulet file per category, containing extracted rulets from all rules in that category.
+
+**Examples:**
+```
+data/01-script-structure/00-script-structure.rulet.md
+data/02-variables/00-variables.rulet.md
+data/07-control-flow/00-control-flow.rulet.md
+```
+
+#### Subrule Directory
+
+**Format:** `{[0-9][0-9]}-{rule-file-title}/`
+
+When a rule has sub-rules, create a directory with the same numeric prefix and title as the parent rule.
+
+**Example:**
+```
+02-shebang.complete.md              (Parent rule - BCS0102)
+02-shebang/                         (Subrule directory)
+└── 01-dual-purpose.complete.md     (Subrule - BCS010201)
+```
+
+### Directory Hierarchy
+
+The complete `data/` directory structure follows this pattern:
+
+```
+data/
+├── 00-header.{complete,summary,abstract}.md    # Document header
+├── BASH-CODING-STANDARD.{complete,summary,abstract}.md  # Generated standard files
+│
+├── 01-script-structure/                        # BCS01 - Script Structure category
+│   ├── 00-script-structure.rulet.md            # Rulet file for category
+│   ├── 00-section.{complete,summary,abstract}.md  # Section overview
+│   ├── 01-layout/                              # Subrule directory for layout
+│   │   ├── 01-complete-example.{complete,summary,abstract}.md
+│   │   ├── 02-anti-patterns.{complete,summary,abstract}.md
+│   │   └── 03-edge-cases.{complete,summary,abstract}.md
+│   ├── 01-layout.{complete,summary,abstract}.md    # BCS0101 - Layout rule
+│   ├── 02-shebang/                             # Subrule directory for shebang
+│   │   └── 01-dual-purpose.{complete,summary,abstract}.md  # BCS010201
+│   ├── 02-shebang.{complete,summary,abstract}.md   # BCS0102 - Shebang rule
+│   ├── 03-metadata.{complete,summary,abstract}.md  # BCS0103 - Metadata rule
+│   ├── 04-fhs.{complete,summary,abstract}.md       # BCS0104 - FHS rule
+│   ├── 05-shopt.{complete,summary,abstract}.md     # BCS0105 - shopt rule
+│   ├── 06-extensions.{complete,summary,abstract}.md  # BCS0106 - Extensions rule
+│   └── 07-function-organization.{complete,summary,abstract}.md  # BCS0107
+│
+├── 02-variables/                               # BCS02 - Variables category
+│   ├── 00-variables.rulet.md                   # Rulet file for category
+│   ├── 00-section.{complete,summary,abstract}.md  # Section overview
+│   ├── 01-type-specific.{complete,summary,abstract}.md  # BCS0201
+│   ├── 02-scoping.{complete,summary,abstract}.md      # BCS0202
+│   ├── 03-naming.{complete,summary,abstract}.md       # BCS0203
+│   └── ...                                     # Additional variable rules
+│
+├── 03-expansion/                               # BCS03 - Expansion category
+├── 04-quoting/                                 # BCS04 - Quoting category
+├── 05-arrays/                                  # BCS05 - Arrays category
+├── 06-functions/                               # BCS06 - Functions category
+├── 07-control-flow/                            # BCS07 - Control Flow category
+├── 08-error-handling/                          # BCS08 - Error Handling category
+├── 09-io-messaging/                            # BCS09 - I/O & Messaging category
+├── 10-command-line-args/                       # BCS10 - Command-Line Args category
+├── 11-file-operations/                         # BCS11 - File Operations category
+├── 12-security/                                # BCS12 - Security category
+├── 13-code-style/                              # BCS13 - Code Style category
+├── 14-advanced-patterns/                       # BCS14 - Advanced Patterns category
+│
+├── templates/                                  # Script templates
+│   ├── minimal.sh.template
+│   ├── basic.sh.template
+│   ├── complete.sh.template
+│   └── library.sh.template
+│
+└── README.md                                   # Data directory documentation
+```
+
+**Key observations:**
+- **14 rule categories** (01-14), each with its own directory
+- **Section overviews** (`00-section.*.md`) in every category
+- **Rulet files** (`00-*.rulet.md`) in every category
+- **Three tiers** (complete, summary, abstract) for every rule
+- **Subrule directories** have same numeric prefix as parent rule
+- **Consistent naming** enables deterministic code generation
+
+### BCS Code Mapping
+
+BCS codes are derived directly from the directory and file structure. Understanding this mapping is essential for navigating the ruleset.
+
+#### Code Generation Rules
+
+**Pattern:** Extract numeric prefixes from file path, concatenate, prefix with "BCS"
+
+**Examples:**
+
+| File Path | Numeric Extraction | BCS Code |
+|-----------|-------------------|----------|
+| `01-script-structure/` | `01` | `BCS01` (section) |
+| `01-script-structure/00-section.md` | `01` + `00` | `BCS0100` (section overview) |
+| `01-script-structure/02-shebang.md` | `01` + `02` | `BCS0102` (rule) |
+| `01-script-structure/02-shebang/01-dual-purpose.md` | `01` + `02` + `01` | `BCS010201` (subrule) |
+| `02-variables/05-readonly-after-group.md` | `02` + `05` | `BCS0205` (rule) |
+| `14-advanced-patterns/03-temp-files.md` | `14` + `03` | `BCS1403` (rule) |
+
+#### Code Types
+
+**Section Code** (2 digits): `BCS01`, `BCS02`, ..., `BCS14`
+- Identifies a rule category
+- Maps to directory: `01-script-structure/`, `02-variables/`, etc.
+
+**Section Overview Code** (4 digits ending in 00): `BCS0100`, `BCS0200`
+- Identifies section overview file
+- Maps to file: `01-script-structure/00-section.md`
+
+**Rule Code** (4 digits): `BCS0102`, `BCS0205`, `BCS1403`
+- Identifies a specific rule
+- Maps to file: `01-script-structure/02-shebang.md`
+
+**Subrule Code** (6+ digits): `BCS010201`, `BCS01020304`
+- Identifies a subrule or sub-subrule
+- Maps to file: `01-script-structure/02-shebang/01-dual-purpose.md`
+- System supports unlimited nesting depth
+
+#### Decoding BCS Codes
+
+Use the `bcs decode` command to resolve BCS codes to file locations:
+
+```bash
+# Decode to file path (default tier from BASH-CODING-STANDARD.md symlink)
+bcs decode BCS0102
+# Output: data/01-script-structure/02-shebang.summary.md
+
+# Decode to file path (specific tier)
+bcs decode BCS0102 -c      # complete tier
+bcs decode BCS0102 -s      # summary tier
+bcs decode BCS0102 -a      # abstract tier
+
+# Print rule content to stdout
+bcs decode BCS0102 -p      # Print default tier content
+bcs decode BCS0102 -c -p   # Print complete tier content
+
+# Decode section code
+bcs decode BCS01           # Returns: data/01-script-structure/00-section.summary.md
+bcs decode BCS01 -p        # Print section overview content
+
+# Decode multiple codes
+bcs decode BCS01 BCS02 BCS08 -p   # Print multiple sections
+
+# Show all tiers
+bcs decode BCS0102 --all   # Show paths to all three tiers
+```
+
+See `docs/BCS-DECODE-PATTERNS.md` for comprehensive decode usage patterns.
+
+### Tier Generation Workflow
+
+Understanding the generation hierarchy is critical for maintaining the BCS ruleset.
+
+```
+                    EDIT THIS
+                        ↓
+            ┌──────────────────────┐
+            │  .complete.md        │  ← SOURCE (manually written)
+            │  (2,000 lines)       │
+            └──────────────────────┘
+                        ↓
+                 bcs compress
+                 --tier summary
+                        ↓
+            ┌──────────────────────┐
+            │  .summary.md         │  ← DERIVED (compressed)
+            │  (1,200 lines)       │
+            └──────────────────────┘
+                        ↓
+                 bcs compress
+                 --tier abstract
+                        ↓
+            ┌──────────────────────┐
+            │  .abstract.md        │  ← DERIVED (compressed)
+            │  (400 lines)         │
+            └──────────────────────┘
+                        ↓
+              bcs generate-rulets
+             (process all .complete
+              files in category)
+                        ↓
+            ┌──────────────────────┐
+            │  .rulet.md           │  ← EXTRACTED (one-liners)
+            │  (150 lines)         │
+            └──────────────────────┘
+```
+
+**Generation Commands:**
+
+```bash
+# Compress complete → summary → abstract
+cd /path/to/bash-coding-standard
+bcs compress --regenerate           # Regenerate all tiers
+
+# Extract rulets from complete files
+bcs generate-rulets --regenerate    # Regenerate all rulet files
+
+# Generate final standard document
+bcs generate --canonical            # Generate BASH-CODING-STANDARD.md
+```
+
+**Critical Rules:**
+
+1. **Only edit .complete.md files** - Never edit .summary.md, .abstract.md, or .rulet.md
+2. **Regenerate after edits** - Run `bcs compress` and `bcs generate-rulets` after editing .complete.md
+3. **Version control .complete.md only** - Derived files are gitignored (except rulet files which are tracked for reference)
+4. **Test before committing** - Run `bcs generate --canonical` to ensure standard regenerates correctly
+
+### Working with Rulesets
+
+#### Adding a New Rule
+
+1. **Create .complete.md file** with appropriate numeric prefix:
+   ```bash
+   cd data/02-variables
+   touch 10-my-new-rule.complete.md
+   ```
+
+2. **Write comprehensive rule** in .complete.md:
+   - Clear title and BCS code comment
+   - Full explanation with rationale
+   - Multiple examples
+   - Anti-patterns
+   - Edge cases
+
+3. **Generate derived tiers**:
+   ```bash
+   bcs compress --regenerate --category 02
+   ```
+
+4. **Update rulet file**:
+   ```bash
+   bcs generate-rulets --regenerate --category 02
+   ```
+
+5. **Regenerate standard**:
+   ```bash
+   bcs generate --canonical
+   ```
+
+6. **Verify**:
+   ```bash
+   bcs codes | grep BCS0210    # Check code appears
+   bcs decode BCS0210 -p       # View rule content
+   ```
+
+#### Modifying an Existing Rule
+
+1. **Edit .complete.md file** (never edit derived tiers):
+   ```bash
+   vim data/02-variables/05-readonly-after-group.complete.md
+   ```
+
+2. **Regenerate derived tiers**:
+   ```bash
+   bcs compress --regenerate --tier summary
+   bcs compress --regenerate --tier abstract
+   ```
+
+3. **Update rulet file**:
+   ```bash
+   bcs generate-rulets --regenerate --category 02
+   ```
+
+4. **Verify changes**:
+   ```bash
+   bcs decode BCS0205 -p
+   ```
+
+#### Deleting a Rule
+
+1. **Remove all tier files**:
+   ```bash
+   rm data/02-variables/05-readonly-after-group.*.md
+   ```
+
+2. **Regenerate rulet file**:
+   ```bash
+   bcs generate-rulets --regenerate --category 02
+   ```
+
+3. **Regenerate standard**:
+   ```bash
+   bcs generate --canonical
+   ```
+
+4. **Verify removal**:
+   ```bash
+   bcs codes | grep BCS0205    # Should not appear
+   ```
+
+### Relationship Diagram
+
+Visual representation of how all components relate:
+
+```
+BCS RULESET ARCHITECTURE
+═══════════════════════════════════════════════════════════════
+
+ RULECAT (Category Directory)
+ ┌────────────────────────────────────────────────────────────┐
+ │ 02-variables/                              BCS02 (Section) │
+ │                                                             │
+ │  SECTION OVERVIEW                                           │
+ │  ┌───────────────────────────────────────────────────────┐ │
+ │  │ 00-section.complete.md      BCS0200 (Overview)        │ │
+ │  │ 00-section.summary.md       (DERIVED)                 │ │
+ │  │ 00-section.abstract.md      (DERIVED)                 │ │
+ │  └───────────────────────────────────────────────────────┘ │
+ │                                                             │
+ │  RULET FILE (Category Summary)                              │
+ │  ┌───────────────────────────────────────────────────────┐ │
+ │  │ 00-variables.rulet.md       (EXTRACTED from all       │ │
+ │  │                              .complete.md files)       │ │
+ │  └───────────────────────────────────────────────────────┘ │
+ │                                                             │
+ │  RULEFILE (Individual Rule)                                 │
+ │  ┌───────────────────────────────────────────────────────┐ │
+ │  │ 05-readonly-after-group.complete.md   BCS0205         │ │
+ │  │ 05-readonly-after-group.summary.md    (DERIVED)       │ │
+ │  │ 05-readonly-after-group.abstract.md   (DERIVED)       │ │
+ │  └───────────────────────────────────────────────────────┘ │
+ │                                                             │
+ │  SUBRULE DIRECTORY                                          │
+ │  ┌───────────────────────────────────────────────────────┐ │
+ │  │ 07-boolean-flags/             (Subrule container)     │ │
+ │  │ └── 01-integer-declaration.complete.md  BCS020701     │ │
+ │  │     01-integer-declaration.summary.md   (DERIVED)     │ │
+ │  │     01-integer-declaration.abstract.md  (DERIVED)     │ │
+ │  └───────────────────────────────────────────────────────┘ │
+ └────────────────────────────────────────────────────────────┘
+
+GENERATION FLOW
+═══════════════════════════════════════════════════════════════
+
+  .complete.md (SOURCE)
+       ↓
+  [bcs compress]
+       ↓
+  .summary.md (DERIVED)
+       ↓
+  [bcs compress]
+       ↓
+  .abstract.md (DERIVED)
+       ↓
+  [bcs generate-rulets]
+       ↓
+  .rulet.md (EXTRACTED)
+```
+
+### Cross-References
+
+Related documentation:
+- **[BCS Code Structure](#bcs-code-structure)** - How BCS codes are generated from file paths
+- **[bcs compress](docs/BCS-COMPRESS-GUIDE.md)** - Complete guide to tier compression
+- **[bcs decode](docs/BCS-DECODE-PATTERNS.md)** - Advanced decode patterns and workflows
+- **[bcs generate](#generate)** - Regenerating the canonical standard
+- **[bcs generate-rulets](#generate-rulets)** - Generating rulet files (future)
+- **[Data README](data/README.md)** - Data directory structure documentation
+
+### Summary
+
+**Key Takeaways for Programmers:**
+- Edit only `.complete.md` files (canonical source)
+- Regenerate derived tiers after editing
+- Use `bcs codes` to find BCS codes
+- Use `bcs decode` to resolve codes to files
+- Follow strict naming conventions
+- Rulet files provide quick reference
+
+**Key Takeaways for AI Assistants:**
+- `.complete.md` = SOURCE (edit here)
+- `.summary.md` and `.abstract.md` = DERIVED (never edit)
+- `.rulet.md` = EXTRACTED (never edit)
+- BCS codes map directly to file paths
+- Multi-tier system serves different use cases
+- Rulets are optimized for AI consumption
+
+**File Generation Hierarchy:**
+```
+complete.md → summary.md → abstract.md → rulet.md
+  (SOURCE)     (DERIVED)     (DERIVED)   (EXTRACTED)
+```
+
 ## Performance Enhancement: Bash Builtins
 
 The `builtins/` subdirectory contains a **separate sub-project** that provides high-performance bash loadable builtins to replace common external utilities. These builtins run directly inside the bash process, providing **10-158x performance improvements** by eliminating fork/exec overhead.
@@ -1042,10 +1999,10 @@ done
 
 ### Primary Documents
 
-- **[BASH-CODING-STANDARD.md](BASH-CODING-STANDARD.md)** - The coding standard (symlink to abstract tier, 3,794 lines, 14 sections)
-  - Also available: [Complete tier](BASH-CODING-STANDARD.complete.md) (21,431 lines), [Summary tier](BASH-CODING-STANDARD.summary.md) (12,666 lines)
+- **[BASH-CODING-STANDARD.md](data/BASH-CODING-STANDARD.md)** - The coding standard (symlink to summary tier, 12,666 lines, 14 sections)
+  - Also available: [Complete tier](data/BASH-CODING-STANDARD.complete.md) (21,431 lines), [Abstract tier](data/BASH-CODING-STANDARD.abstract.md) (3,794 lines)
 - **[ACTION-ITEMS.md](ACTION-ITEMS.md)** - Consolidated action items from archived planning documents
-- **[TESTING-SUMMARY.md](TESTING-SUMMARY.md)** - Test suite documentation (27 files, 650+ tests)
+- **[TESTING-SUMMARY.md](TESTING-SUMMARY.md)** - Test suite documentation (31 test files)
 
 **Usage Guides:**
 - **[docs/WORKFLOWS.md](docs/WORKFLOWS.md)** - **NEW:** Complete workflow automation guide (1,132 lines, 14 sections)
@@ -1076,7 +2033,7 @@ done
 
 ### For Human Developers
 
-1. Read [BASH-CODING-STANDARD.md](BASH-CODING-STANDARD.md) thoroughly
+1. Read [BASH-CODING-STANDARD.md](data/BASH-CODING-STANDARD.md) thoroughly
 2. Use the standard utility functions (`_msg`, `vecho`, `success`, `warn`, `info`, `error`, `die`)
 3. Always run `shellcheck -x` before committing
 4. Follow the 14-section structure when reading/writing complex scripts
@@ -1084,7 +2041,7 @@ done
 
 ### For AI Assistants
 
-1. All generated scripts must comply with BASH-CODING-STANDARD.md
+1. All generated scripts must comply with [BASH-CODING-STANDARD.md](data/BASH-CODING-STANDARD.md)
 2. Use the standard messaging functions consistently
 3. Include proper error handling in all functions
 4. Remove unused utility functions in production scripts (see Section 6: Production Script Optimization)
@@ -1117,22 +2074,22 @@ let g:syntastic_sh_shellcheck_args = '-x'
 ### v1.1.0 (2025-10-17) - Workflow System Addition
 
 **NEW: Comprehensive Workflow Automation System**
-- **8 Production-Ready Workflow Scripts** (2,700+ lines)
-  - `validate-data.sh` - 11 validation checks for data/ directory integrity
-  - `interrogate-rule.sh` - Rule inspection with multiple output formats
-  - `check-compliance.sh` - Batch compliance checking with JSON/markdown reports
-  - `generate-canonical.sh` - Canonical file generation with backup/validation
-  - `compress-rules.sh` - AI-powered compression with context awareness
-  - `add-rule.sh` - Interactive rule creation with templates
-  - `modify-rule.sh` - Safe rule modification with auto-backup
-  - `delete-rule.sh` - Safe deletion with reference checking
+- **8 Production-Ready Workflow Scripts** (2,939 lines)
+  - `01-add-rule.sh` - Interactive rule creation with templates
+  - `02-modify-rule.sh` - Safe rule modification with auto-backup
+  - `03-delete-rule.sh` - Safe deletion with reference checking
+  - `04-interrogate-rule.sh` - Rule inspection with multiple output formats
+  - `10-compress-rules.sh` - AI-powered compression with context awareness
+  - `20-generate-canonical.sh` - Canonical file generation with backup/validation
+  - `30-validate-data.sh` - 11 validation checks for data/ directory integrity
+  - `40-check-compliance.sh` - Batch compliance checking with JSON/markdown reports
 
-- **Real-World Examples** (3 scripts, 870 lines)
+- **Real-World Examples** (3 scripts, 853 lines)
   - `production-deploy.sh` - Production deployment patterns
   - `data-processor.sh` - CSV processing and validation
   - `system-monitor.sh` - System resource monitoring
 
-- **Comprehensive Testing** (8 test suites, 59 tests)
+- **Comprehensive Testing** (8 test suites, 118 tests)
   - Test fixtures for all scenarios
   - Integration with existing test framework
   - All tests use standard test-helpers.sh pattern
@@ -1160,11 +2117,11 @@ let g:syntastic_sh_shellcheck_args = '-x'
   - Use canonical names only: `display`, `about`, `codes`, `generate`, `search`, `sections`
 
 - **Symlink-based default tier detection** implemented (v1.0.0+)
-  - New function: `get_default_tier()` reads `BASH-CODING-STANDARD.md` symlink
+  - New function: `get_default_tier()` reads `data/BASH-CODING-STANDARD.md` symlink
   - Default tier now dynamic based on symlink target (`.complete.md`, `.abstract.md`, `.summary.md`)
   - Commands affected: `generate`, `decode`, `check`
   - Single source of truth for default tier configuration
-  - Change default tier project-wide: `ln -sf BASH-CODING-STANDARD.complete.md BASH-CODING-STANDARD.md`
+  - Change default tier project-wide: `ln -sf BASH-CODING-STANDARD.complete.md data/BASH-CODING-STANDARD.md`
 
 - **Test Suite Enhancements** (see `TESTING-SUMMARY.md`)
   - **19 test files** (was 15), 600+ tests, **74% pass rate** (was 6%)

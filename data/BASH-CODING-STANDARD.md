@@ -1,0 +1,1 @@
+BASH-CODING-STANDARD.abstract.md

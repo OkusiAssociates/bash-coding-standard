@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Test suite for workflows/interrogate-rule.sh
+# Test suite for workflows/04-interrogate-rule.sh
 # Tests rule interrogation by BCS code and file path
 
 set -euo pipefail
@@ -13,7 +13,7 @@ readonly -- SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
 
 # Project paths
 PROJECT_DIR=$(realpath -- "$SCRIPT_DIR/..")
-INTERROGATE_SCRIPT="$PROJECT_DIR/workflows/interrogate-rule.sh"
+INTERROGATE_SCRIPT="$PROJECT_DIR/workflows/04-interrogate-rule.sh"
 readonly -- PROJECT_DIR INTERROGATE_SCRIPT
 
 # Source test helpers

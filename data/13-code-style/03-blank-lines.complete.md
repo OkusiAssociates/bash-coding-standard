@@ -7,10 +7,10 @@ Use blank lines strategically to improve readability by creating visual separati
 set -euo pipefail
 
 # Script metadata
-VERSION='1.0.0'
-SCRIPT_PATH=$(realpath -- "$0")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-readonly -- VERSION SCRIPT_PATH SCRIPT_DIR
+declare -r VERSION='1.0.0'
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*}
                                           # ← Blank line after metadata group
 
 # Default values                          # ← Blank line before section comment

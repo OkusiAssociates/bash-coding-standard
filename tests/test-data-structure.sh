@@ -179,6 +179,16 @@ test_file_naming_conventions() {
       continue
     fi
 
+    # Skip BASH-CODING-STANDARD.*.md tier files (generated output, not source rules)
+    if [[ "$basename_file" =~ ^BASH-CODING-STANDARD\.(complete|abstract|summary|rulet)\.md$ ]]; then
+      continue
+    fi
+
+    # Skip 00-{category}.rulet.md files (section-level rulet files)
+    if [[ "$basename_file" =~ ^00-[a-z0-9-]+\.rulet\.md$ ]]; then
+      continue
+    fi
+
     # Valid pattern: NN-something.{complete|abstract|summary}.md
     if [[ ! "$basename_file" =~ ^[0-9]{2}-[a-z0-9-]+\.(complete|abstract|summary)\.md$ ]]; then
       invalid_names+=("$file")
@@ -302,6 +312,45 @@ test_header_files_exist() {
   fi
 }
 
+test_rulet_files_validity() {
+  test_section "Rulet File Validity Tests"
+
+  # Find all .rulet.md files
+  local -a rulet_files=()
+  while IFS= read -r -d '' file; do
+    rulet_files+=("$file")
+  done < <(find "$DATA_DIR" -type f -name "*.rulet.md" -print0 | sort -z)
+
+  if [[ "${#rulet_files[@]}" -eq 0 ]]; then
+    skip_test "No rulet files found (optional tier)"
+    return 0
+  fi
+
+  local -i invalid_count=0
+  local -- file basename_file
+
+  for file in "${rulet_files[@]}"; do
+    basename_file=$(basename "$file")
+
+    # Skip consolidated rulet file (BASH-CODING-STANDARD.rulet.md)
+    if [[ "$basename_file" == "BASH-CODING-STANDARD.rulet.md" ]]; then
+      continue
+    fi
+
+    # Rulet files should only be at section level: 00-{category}.rulet.md
+    if [[ ! "$basename_file" =~ ^00-[a-z0-9-]+\.rulet\.md$ ]]; then
+      fail "Invalid rulet file name: $basename_file (should be 00-{category}.rulet.md)"
+      ((invalid_count+=1))
+    fi
+  done
+
+  if [[ "$invalid_count" -eq 0 ]]; then
+    pass "All ${#rulet_files[@]} rulet files follow naming convention"
+  else
+    fail "$invalid_count rulet files have invalid names"
+  fi
+}
+
 # Run all tests
 test_data_directory_exists
 test_tier_file_completeness
@@ -313,6 +362,7 @@ test_no_alphabetic_suffixes
 test_section_count
 test_bcs_code_decodability
 test_header_files_exist
+test_rulet_files_validity
 
 print_summary
 

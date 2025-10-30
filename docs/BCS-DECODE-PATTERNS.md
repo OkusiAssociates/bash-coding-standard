@@ -463,8 +463,8 @@ The `bcs decode` command is a powerful tool for working with BCS rules:
 - **Silent validation**: Check existence without output (--exists)
 
 **Default behavior:**
-- Default tier is determined by the BASH-CODING-STANDARD.md symlink (currently abstract)
-- Change project-wide: `ln -sf BASH-CODING-STANDARD.{tier}.md BASH-CODING-STANDARD.md`
+- Default tier is determined by the BASH-CODING-STANDARD.md symlink (currently summary)
+- Change project-wide: `ln -sf data/BASH-CODING-STANDARD.{tier}.md BASH-CODING-STANDARD.md`
 
 **Inverse operation:**
 - `bcs codes` lists all codes from files

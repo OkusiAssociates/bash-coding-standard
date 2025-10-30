@@ -7,7 +7,7 @@ shopt -s inherit_errexit shift_verbose
 SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
 SCRIPT_DIR=${SCRIPT_PATH%/*}
 PROJECT_DIR=$(realpath -- "$SCRIPT_DIR/..")
-ADD_RULE_SCRIPT="$PROJECT_DIR/workflows/add-rule.sh"
+ADD_RULE_SCRIPT="$PROJECT_DIR/workflows/01-add-rule.sh"
 readonly -- SCRIPT_PATH SCRIPT_DIR PROJECT_DIR ADD_RULE_SCRIPT
 
 # shellcheck source=tests/test-helpers.sh

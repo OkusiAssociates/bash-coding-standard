@@ -11,15 +11,54 @@
 - **Readability**: Separates initialization phase (values) from protection phase (readonly)
 - **Error Detection**: If any variable hasn't been initialized before readonly, script fails explicitly
 
-**Standard pattern:**
+**Three-Step Progressive Readonly Workflow:**
+
+This is the standard pattern for variables that can only be finalized after argument parsing or runtime configuration:
+
+**Step 1 - Declare with defaults:**
+```bash
+declare -i VERBOSE=0 DRY_RUN=0
+declare -- OUTPUT_FILE='' PREFIX='/usr/local'
+```
+
+**Step 2 - Parse and modify in main():**
+```bash
+main() {
+  while (($#)); do case $1 in
+    -v) VERBOSE=1 ;;
+    -n) DRY_RUN=1 ;;
+    --output) noarg "$@"; shift; OUTPUT_FILE="$1" ;;
+    --prefix) noarg "$@"; shift; PREFIX="$1" ;;
+  esac; shift; done
+
+  # Step 3 - Make readonly AFTER parsing complete
+  readonly -- VERBOSE DRY_RUN OUTPUT_FILE PREFIX
+
+  # Now safe to use - all readonly
+  ((VERBOSE)) && info "Using prefix: $PREFIX"
+}
+```
+
+**Rationale for three-step pattern:**
+- Variables must be **mutable during parsing** (Step 2)
+- Making readonly **too early** prevents modification
+- Making readonly **after parsing** locks in final values (Step 3)
+- Prevents accidental modification throughout rest of script
+
+**Exception - Script Metadata:**
+
+**Note:** As of BCS v1.0.1, the **preferred pattern** for script metadata variables (VERSION, SCRIPT_PATH, SCRIPT_DIR, SCRIPT_NAME) is `declare -r` for immediate readonly declaration. While readonly-after-group remains valid for metadata, `declare -r` is now recommended (see BCS0103). All other variable groups (colors, paths, configuration) continue to use the readonly-after-group pattern described below.
+
+The important principle is that script metadata variables must be readonly. The specific mechanism (readonly-after-group vs declare -r) is less critical than ensuring immutability is achieved.
+
+**Standard pattern (for non-metadata variables):**
 
 ```bash
-# Script metadata
-VERSION='1.0.0'
-SCRIPT_PATH=$(realpath -- "$0")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
+# Script metadata (exception - uses declare -r, see BCS0103)
+declare -r VERSION='1.0.0'
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Message function flags
 declare -i VERBOSE=1 PROMPT=1 DEBUG=0
@@ -31,30 +70,31 @@ else
 fi
 ```
 
-**Why this pattern works:**
+**Why readonly-after-group pattern works:**
 
 \`\`\`bash
+# For non-metadata variable groups (paths, colors, config):
+
 # Phase 1: Initialize all variables
-VERSION='1.0.0'
-SCRIPT_PATH=$(realpath -- "$0")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-SCRIPT_NAME=${SCRIPT_PATH##*/}
+PREFIX="${PREFIX:-/usr/local}"
+BIN_DIR="$PREFIX/bin"
+SHARE_DIR="$PREFIX/share"
+LIB_DIR="$PREFIX/lib"
 
 # Phase 2: Protect entire group
-readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
+readonly -- PREFIX BIN_DIR SHARE_DIR LIB_DIR
 
 # Now all four variables are immutable
 \`\`\`
 
 **What groups belong together:**
 
-**1. Script metadata group:**
+**1. Script metadata group (exception - uses declare -r, see BCS0103):**
 \`\`\`bash
-VERSION='1.0.0'
-SCRIPT_PATH=$(realpath -- "$0")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
+declare -r VERSION='1.0.0'
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 \`\`\`
 
 **2. Color definitions group:**
@@ -105,14 +145,13 @@ set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # ============================================================================
-# Script Metadata (Group 1)
+# Script Metadata (Group 1 - exception: uses declare -r, see BCS0103)
 # ============================================================================
 
-VERSION='1.0.0'
-SCRIPT_PATH=$(realpath -- "$0")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
+declare -r VERSION='1.0.0'
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # ============================================================================
 # Color Definitions (Group 2)
@@ -181,58 +220,57 @@ main "$@"
 **Anti-patterns to avoid:**
 
 \`\`\`bash
-# ✗ Wrong - making each variable readonly individually
-readonly VERSION='1.0.0'
-readonly SCRIPT_PATH=$(realpath -- "$0")
-readonly SCRIPT_DIR=${SCRIPT_PATH%/*}
-readonly SCRIPT_NAME=${SCRIPT_PATH##*/}
-
-# Problems:
-# 1. If SCRIPT_PATH assignment fails, you can't see which variable it is
-# 2. If SCRIPT_DIR depends on SCRIPT_PATH, but SCRIPT_PATH is readonly,
-#    you can't reassign SCRIPT_PATH even temporarily
-# 3. Visually cluttered - readonly keyword repeated
-
-# ✓ Correct - initialize all, then make readonly as group
+# For script metadata (see BCS0103):
+# ⚠ Valid but not preferred - readonly-after-group for metadata
 VERSION='1.0.0'
 SCRIPT_PATH=$(realpath -- "$0")
 SCRIPT_DIR=${SCRIPT_PATH%/*}
 SCRIPT_NAME=${SCRIPT_PATH##*/}
 readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
 
-# ✗ Wrong - making readonly before all values are set
-VERSION='1.0.0'
-readonly -- VERSION  # Premature!
-SCRIPT_PATH=$(realpath -- "$0")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
+# ✓ Preferred - declare -r for script metadata (BCS0103)
+declare -r VERSION='1.0.0'
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
-# If SCRIPT_PATH assignment fails, VERSION is readonly but
-# SCRIPT_DIR is not, creating inconsistent protection
+# Note: Both patterns above are valid. The declare -r pattern is preferred
+# as of BCS v1.0.1 for its conciseness and immediate immutability.
+
+# For non-metadata variable groups:
+# ✗ Wrong - making readonly before all values are set
+PREFIX='/usr/local'
+readonly -- PREFIX  # Premature!
+BIN_DIR="$PREFIX/bin"
+SHARE_DIR="$PREFIX/share"
+
+# If BIN_DIR assignment fails, PREFIX is readonly but
+# SHARE_DIR is not, creating inconsistent protection
 
 # ✓ Correct - all values set, then all readonly
-VERSION='1.0.0'
-SCRIPT_PATH=$(realpath -- "$0")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-readonly -- VERSION SCRIPT_PATH SCRIPT_DIR
+PREFIX="${PREFIX:-/usr/local}"
+BIN_DIR="$PREFIX/bin"
+SHARE_DIR="$PREFIX/share"
+readonly -- PREFIX BIN_DIR SHARE_DIR
 
 # ✗ Wrong - forgetting -- separator
-readonly VERSION SCRIPT_PATH  # Risky if variable name starts with -
+readonly PREFIX BIN_DIR  # Risky if variable name starts with -
 
 # ✓ Correct - always use -- separator
-readonly -- VERSION SCRIPT_PATH
+readonly -- PREFIX BIN_DIR
 
 # ✗ Wrong - mixing related and unrelated variables
 CONFIG_FILE='config.conf'
 VERBOSE=1
-SCRIPT_PATH=$(realpath -- "$0")
-readonly -- CONFIG_FILE VERBOSE SCRIPT_PATH
+PREFIX='/usr/local'
+readonly -- CONFIG_FILE VERBOSE PREFIX
 # These don't form a logical group!
 
 # ✓ Correct - group logically related variables
-SCRIPT_PATH=$(realpath -- "$0")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
+PREFIX="${PREFIX:-/usr/local}"
+BIN_DIR="$PREFIX/bin"
+SHARE_DIR="$PREFIX/share"
+readonly -- PREFIX BIN_DIR SHARE_DIR
 
 CONFIG_FILE='config.conf'
 LOG_FILE='app.log'
@@ -312,11 +350,10 @@ Some variables can only be made readonly after argument parsing:
 #!/bin/bash
 set -euo pipefail
 
-VERSION='1.0.0'
-SCRIPT_PATH=$(realpath -- "$0")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
+declare -r VERSION='1.0.0'
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Mutable flags (will be readonly after parsing)
 declare -i VERBOSE=0

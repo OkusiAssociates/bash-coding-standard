@@ -121,7 +121,7 @@ fi
 EOF
 
   local -- output
-  output=$(bash "$test_script" "$SCRIPT" 2>&1)
+  output=$(bash "$test_script" "$SCRIPT" 2>&1 | grep -v "warning: command substitution: ignored null byte")
   assert_equals "BCS_MD populated" "$output" "BCS_MD is populated when sourcing"
 
   # Test --bash option exports BCS_MD
@@ -195,7 +195,11 @@ test_special_characters_in_path() {
 
   # Copy files to spaced directory
   cp "$SCRIPT" "$spaced_dir"/
-  cp "$SCRIPT_DIR"/../BASH-CODING-STANDARD.md "$spaced_dir"/
+  # Copy data directory with tier files (symlink target needs actual files)
+  mkdir -p "$spaced_dir"/data
+  cp "$SCRIPT_DIR"/../data/BASH-CODING-STANDARD.*.md "$spaced_dir"/data/ 2>/dev/null || true
+  # Create symlink to summary tier
+  ln -sf data/BASH-CODING-STANDARD.summary.md "$spaced_dir"/BASH-CODING-STANDARD.md
   chmod +x "$spaced_dir"/bash-coding-standard
 
   # Test execution

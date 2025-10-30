@@ -1,0 +1,164 @@
+#!/bin/bash
+#shellcheck disable=SC2317,SC2155
+# bcx - terminal calculator for floating point expressions
+set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
+
+## INITIALIZATION ##
+
+# Script metadata
+declare -r VERSION='1.0.0' # 2025-10-20
+
+# Global variables
+declare -- BC errfile expression
+declare -i err=0 is_terminal=0
+
+# History configuration
+declare -r HISTFILE="$HOME"/.bcx_history
+declare -ri HISTSIZE=1000 HISTFILESIZE=2000
+
+## FUNCTIONS ##
+
+cleanup() {
+  local -i exit_code=${1:-$?}
+  ((is_terminal)) && history -w "$HISTFILE" 2>/dev/null
+  rm -f "$errfile"
+  return "$exit_code"
+}
+
+setup_history() {
+  # Enable readline history for interactive mode
+  set -o history
+  history -r "$HISTFILE" 2>/dev/null || :
+}
+
+process_expression() {
+  # Normalize expression: remove spaces
+  local -- expr="$*"
+  expr=${expr// /}   # remove all space chars
+  echo "$expr"
+}
+
+evaluate_expression() {
+  # Evaluate expression with bc and return error status
+  local -- expr="$1"
+  local -i exit_code=0
+
+  "$BC" --mathlib <<<"$expr" 2>"$errfile"
+
+  if [[ -s "$errfile" ]]; then
+    >&2 echo "bcx: ✗ Invalid expression ${expr@Q}"
+    >&2 cat "$errfile"
+    exit_code=1
+  fi
+
+  return "$exit_code"
+}
+
+interactive_sigint_handler() {
+  # Handle Ctrl-C during interactive REPL
+  >&2 echo
+  cleanup 130
+  exit 130
+}
+
+interactive_loop() {
+  # Interactive REPL for terminal mode with readline history
+  # Set custom SIGINT handler for REPL
+  trap 'interactive_sigint_handler' SIGINT
+
+  local -- expr
+  local -i read_rc
+  while ((1)); do
+    >&2 read -e -r -p '> ' expr
+    read_rc=$?
+    ((read_rc == 0)) || break # read failed - Ctrl-D (EOF)
+    [[ -n $expr ]] || break
+    history -s "$expr"
+    evaluate_expression "$expr" || :
+  done
+
+  # Restore original trap
+  trap 'cleanup $?' SIGINT
+}
+
+show_help() {
+  cat <<'EOT'
+bcx - terminal calculator for floating point expressions
+
+This is a wrapper script for bc (see: man bc).
+
+Because bc at the terminal sucks.
+
+```shell
+0:~/bcx:biksu@okusi$ bc --mathlib <<<"42*72/3.14%0.137"
+.00000000000000000000043
+0:~/bcx:biksu@okusi$ bcx 42x72 /3.14% 0.137
+> 42*72/3.14%0.137
+.00000000000000000000043
+>
+```
+
+Usage: bcx expression
+
+Examples:
+  bcx 3.14*2
+  bcx 23x42       # x → * when in terminal mode
+  bcx "sqrt(2)"
+  fp_result=$(bcx 42*69*72/3.14)
+
+Setup alias in ~/.bashrc:
+  alias ?='/usr/local/bin/bcx'
+
+Then:
+  ? 23*42         # ✓ no spaces around *
+  ? 23 * 42       # ✗ Incorrect on command line!
+  ? 23x42         # can use x for * on command line
+  ? 23 x 42       # with spaces
+EOT
+}
+
+## EXECUTION ##
+
+# Simple Argument parsing
+[[ ${1:-} == '-h' || ${1:-} == '--help' ]] && { show_help; exit 0; }
+[[ ${1:-} == '-V' || ${1:-} == '--version' ]] && { echo "bcx $VERSION"; exit 0; }
+
+# Locate bc command
+declare -r BC=$(command -v bc) || { >&2 echo "bcx: ✗ 'bc' not found"; exit 1; }
+
+# Setup error file with mktemp
+declare -r errfile=$(mktemp -t bcx-error.XXXXXX) || { >&2 echo 'bcx: ✗ Cannot create temp file'; exit 1; }
+
+# Setup exit trap
+trap 'cleanup $?' SIGINT SIGTERM EXIT
+
+# Terminal detection
+declare -i is_terminal
+[[ -t 1 ]] && is_terminal=1 || is_terminal=0
+readonly is_terminal
+
+# Check if we have an expression
+if (($#)); then
+  # Process and evaluate initial expression
+  expression=$(process_expression "$@")
+  ((is_terminal==0)) || {
+    expression=${expression//x/*} # convert x to * if is_terminal
+    >&2 echo "> $expression"
+  }
+  evaluate_expression "$expression" || err=1
+else
+  # No expression provided - show help in non-terminal mode
+  ((is_terminal)) || { >&2 show_help; exit 1; }
+fi
+
+# Interactive REPL if terminal
+if ((is_terminal)); then
+  setup_history
+  (($#==0)) || history -s "$expression"  # Add initial expression to history if provided
+  interactive_loop
+  set +o history  # Disable history to prevent script commands from being saved
+fi
+
+exit "$err"
+#fin

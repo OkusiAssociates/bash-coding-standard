@@ -72,7 +72,7 @@ EOF
 
   # Test sourcing
   local -- output
-  output=$(bash "$test_script" "$SCRIPT" 2>&1)
+  output=$(bash "$test_script" "$SCRIPT" 2>&1 | grep -v "warning: command substitution: ignored null byte")
   assert_equals "success" "$output" "Sourcing script sets up variables and functions"
 
   # Test 2: BCS_MD is pre-loaded in sourced mode

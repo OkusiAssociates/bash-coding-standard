@@ -295,7 +295,7 @@ validate_generated_file() {
 update_symlink() {
   local -- target_tier=${1:-abstract}
   local -- symlink="$PROJECT_DIR/BASH-CODING-STANDARD.md"
-  local -- target="BASH-CODING-STANDARD.$target_tier.md"
+  local -- target="data/BASH-CODING-STANDARD.$target_tier.md"
 
   info "Updating symlink to $target_tier tier..."
 
@@ -365,12 +365,12 @@ main() {
     local -a files_to_validate=()
     if [[ "$TIER" == "all" ]]; then
       files_to_validate=(
-        "$PROJECT_DIR/BASH-CODING-STANDARD.complete.md"
-        "$PROJECT_DIR/BASH-CODING-STANDARD.summary.md"
-        "$PROJECT_DIR/BASH-CODING-STANDARD.abstract.md"
+        "$PROJECT_DIR/data/BASH-CODING-STANDARD.complete.md"
+        "$PROJECT_DIR/data/BASH-CODING-STANDARD.summary.md"
+        "$PROJECT_DIR/data/BASH-CODING-STANDARD.abstract.md"
       )
     else
-      files_to_validate=("$PROJECT_DIR/BASH-CODING-STANDARD.$TIER.md")
+      files_to_validate=("$PROJECT_DIR/data/BASH-CODING-STANDARD.$TIER.md")
     fi
 
     local -i validation_failed=0

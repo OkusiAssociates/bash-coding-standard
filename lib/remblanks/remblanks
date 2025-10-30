@@ -1,0 +1,21 @@
+#!/bin/bash
+# Remove #comment lines and blank lines from input or string argument
+
+# Works both as a pipe and with string arguments
+remblanks() {
+  if (($#)); then
+    # Arguments provided - process as string
+    echo "$*" | grep -v '^[[:blank:]]*#\|^[[:blank:]]*$'
+  else
+    # No arguments - read from stdin (pipe mode)
+    grep -v '^[[:blank:]]*#\|^[[:blank:]]*$'
+  fi
+}
+declare -fx remblanks
+
+# If script is executed directly (not sourced), run the function
+[[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0
+
+remblanks "$@"
+
+#fin

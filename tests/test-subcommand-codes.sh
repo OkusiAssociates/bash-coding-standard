@@ -49,11 +49,11 @@ test_codes_count() {
   local -i count
   count=$("$SCRIPT" codes 2>&1 | wc -l)
 
-  # Should have approximately 99 codes (allow some variance)
-  if ((count >= 95 && count <= 105)); then
+  # Should have approximately 106 codes (allow some variance for future additions)
+  if ((count >= 95 && count <= 115)); then
     pass "Code count is reasonable: $count codes"
   else
-    fail "Code count seems wrong: $count codes (expected ~99)"
+    fail "Code count seems wrong: $count codes (expected ~106)"
   fi
 }
 

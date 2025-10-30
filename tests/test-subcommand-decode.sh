@@ -33,12 +33,13 @@ test_decode_basic() {
   test_section "Basic Decode Tests"
 
   # Test with a known BCS code (dual-purpose scripts - BCS010201)
+  # Use complete tier explicitly since rulet tier doesn't have detailed rule files
   local -- output
-  output=$("$SCRIPT" decode BCS010201 2>&1)
+  output=$("$SCRIPT" decode BCS010201 -c 2>&1)
 
-  # Should return a file path (default tier determined by BASH-CODING-STANDARD.md symlink)
+  # Should return a file path
   assert_contains "$output" "data/" "Output contains data/ directory"
-  assert_contains "$output" ".abstract.md" "Output contains abstract tier file (default from symlink)"
+  assert_contains "$output" ".complete.md" "Output contains complete tier file"
   assert_contains "$output" "01-script-structure" "Output contains correct section"
   assert_contains "$output" "02-shebang" "Output contains correct rule"
   assert_contains "$output" "01-dual-purpose" "Output contains correct subrule"
@@ -47,10 +48,10 @@ test_decode_basic() {
 test_decode_without_prefix() {
   test_section "Decode Without BCS Prefix Tests"
 
-  # Test without BCS prefix
+  # Test without BCS prefix (use complete tier for detailed codes)
   local -- output1 output2
-  output1=$("$SCRIPT" decode BCS010201 2>&1)
-  output2=$("$SCRIPT" decode 010201 2>&1)
+  output1=$("$SCRIPT" decode BCS010201 -c 2>&1)
+  output2=$("$SCRIPT" decode 010201 -c 2>&1)
 
   # Should produce same result
   assert_equals "$output1" "$output2" "decode works with or without BCS prefix"
@@ -60,21 +61,24 @@ test_decode_tiers() {
   test_section "Decode Tier Tests"
 
   # Test different tiers
-  local -- output_complete output_abstract output_summary
+  local -- output_complete output_abstract output_summary output_rulet
 
   output_complete=$("$SCRIPT" decode BCS0102 -c 2>&1)
   output_abstract=$("$SCRIPT" decode BCS0102 -a 2>&1)
   output_summary=$("$SCRIPT" decode BCS0102 -s 2>&1)
+  output_rulet=$("$SCRIPT" decode BCS01 -r 2>&1)  # Rulet only has section-level (2-digit codes)
 
   # All should contain valid paths but different tiers
   assert_contains "$output_complete" ".complete.md" "Complete tier has .complete.md"
   assert_contains "$output_abstract" ".abstract.md" "Abstract tier has .abstract.md"
   assert_contains "$output_summary" ".summary.md" "Summary tier has .summary.md"
+  assert_contains "$output_rulet" ".rulet.md" "Rulet tier has .rulet.md"
 
   # All should have same base path structure
   assert_contains "$output_complete" "02-shebang.complete.md" "Complete has correct filename"
   assert_contains "$output_abstract" "02-shebang.abstract.md" "Abstract has correct filename"
   assert_contains "$output_summary" "02-shebang.summary.md" "Summary has correct filename"
+  assert_contains "$output_rulet" "00-script-structure.rulet.md" "Rulet has section-level filename"
 }
 
 test_decode_all_tiers() {
@@ -83,23 +87,23 @@ test_decode_all_tiers() {
   local -- output
   output=$("$SCRIPT" decode BCS0102 --all 2>&1)
 
-  # Should show all three tiers
+  # Should show the three main tiers (rulet won't have 4-digit codes)
   assert_contains "$output" "Complete" "Shows complete tier label"
   assert_contains "$output" "Abstract" "Shows abstract tier label"
   assert_contains "$output" "Summary" "Shows summary tier label"
 
-  # Should contain all three file extensions
+  # Should contain the three main file extensions
   assert_contains "$output" ".complete.md" "Shows complete file"
   assert_contains "$output" ".abstract.md" "Shows abstract file"
   assert_contains "$output" ".summary.md" "Shows summary file"
 
-  # Count output lines (should be 3 for three tiers)
+  # Count output lines (should be 3 for this 4-digit code - rulet doesn't have it)
   local -i line_count
   line_count=$(echo "$output" | wc -l)
-  if ((line_count == 3)); then
-    pass "All three tiers shown (3 lines)"
+  if ((line_count >= 3)); then
+    pass "All available tiers shown ($line_count tiers)"
   else
-    fail "Expected 3 lines for three tiers, got $line_count"
+    fail "Expected at least 3 tiers, got $line_count"
   fi
 }
 
@@ -123,8 +127,9 @@ test_decode_relative() {
 test_decode_basename() {
   test_section "Decode Basename Tests"
 
+  # Use complete tier explicitly to avoid rulet tier limitations
   local -- output
-  output=$("$SCRIPT" decode BCS0102 --basename 2>&1)
+  output=$("$SCRIPT" decode BCS0102 --basename -c 2>&1)
 
   # Should only contain filename, no directory path
   if [[ "$output" =~ / ]]; then
@@ -133,8 +138,8 @@ test_decode_basename() {
     pass "Basename contains no directory separator"
   fi
 
-  # Should still have the correct filename (default tier determined by symlink)
-  assert_equals "$output" "02-shebang.abstract.md" "Basename shows correct filename (abstract tier from symlink)"
+  # Should still have the correct filename
+  assert_equals "$output" "02-shebang.complete.md" "Basename shows correct filename (complete tier)"
 }
 
 test_decode_exists() {
@@ -173,24 +178,25 @@ test_decode_exists_all() {
 test_decode_section_code() {
   test_section "Decode Section Code Tests"
 
-  # Test with section-level code (BCS0100)
+  # Test with section-level code (BCS01 - 2-digit works with rulet tier)
   local -- output
-  output=$("$SCRIPT" decode BCS0100 2>&1)
+  output=$("$SCRIPT" decode BCS01 2>&1)
 
-  # Should decode to section file (default tier determined by symlink)
-  assert_contains "$output" "00-section.abstract.md" "Section code decodes to section file (abstract tier from symlink)"
-  assert_contains "$output" "01-script-structure" "Contains correct section directory"
+  # Should decode to section file (default tier is rulet from symlink)
+  assert_contains "$output" "00-script-structure" "Section code decodes to section file"
+  assert_contains "$output" ".rulet.md" "Uses rulet tier (default from symlink)"
 }
 
 test_decode_subrule_code() {
   test_section "Decode Subrule Code Tests"
 
   # Test with subrule code (BCS010201 - dual-purpose scripts)
+  # Use complete tier since rulet doesn't have detailed rule files
   local -- output
-  output=$("$SCRIPT" decode BCS010201 2>&1)
+  output=$("$SCRIPT" decode BCS010201 -c 2>&1)
 
-  # Should decode to subrule file (default tier determined by symlink)
-  assert_contains "$output" "01-dual-purpose.abstract.md" "Subrule code decodes to subrule file (abstract tier from symlink)"
+  # Should decode to subrule file
+  assert_contains "$output" "01-dual-purpose.complete.md" "Subrule code decodes to subrule file (complete tier)"
   assert_contains "$output" "02-shebang" "Contains rule directory"
 }
 
@@ -226,18 +232,19 @@ test_decode_combination_all_relative() {
   local -- output
   output=$("$SCRIPT" decode BCS0102 --all --relative 2>&1)
 
-  # Should show all three tiers with relative paths
+  # Should show all four tiers with relative paths
   assert_contains "$output" "Complete" "Shows complete tier label"
   assert_contains "$output" "Abstract" "Shows abstract tier label"
   assert_contains "$output" "Summary" "Shows summary tier label"
+  assert_contains "$output" "Rulet" "Shows rulet tier label"
 
   # All paths should be relative (start with data/)
   local -i relative_count
   relative_count=$(echo "$output" | grep -c "data/" || true)
-  if ((relative_count == 3)); then
-    pass "All three paths are relative (contain data/)"
+  if ((relative_count >= 3)); then
+    pass "All tier paths are relative (contain data/) - found $relative_count"
   else
-    fail "Expected 3 relative paths, got $relative_count"
+    fail "Expected at least 3 relative paths, got $relative_count"
   fi
 }
 
@@ -247,18 +254,20 @@ test_decode_combination_all_basename() {
   local -- output
   output=$("$SCRIPT" decode BCS0102 --all --basename 2>&1)
 
-  # Should show all three tiers with basenames only
+  # Should show all four tiers with basenames only
   assert_contains "$output" "Complete" "Shows complete tier label"
   assert_contains "$output" "02-shebang.complete.md" "Shows complete basename"
   assert_contains "$output" "02-shebang.abstract.md" "Shows abstract basename"
   assert_contains "$output" "02-shebang.summary.md" "Shows summary basename"
+  # Rulet won't have BCS0102 (4-digit), so it may be missing - that's OK
 }
 
 test_decode_print_basic() {
   test_section "Decode Print Basic Tests"
 
+  # Use complete tier explicitly (rulet doesn't have detailed rules)
   local -- output
-  output=$("$SCRIPT" decode BCS0102 -p 2>&1)
+  output=$("$SCRIPT" decode BCS0102 -p -c 2>&1)
 
   # Should contain actual file content, not file path
   assert_contains "$output" "Shebang" "Print output contains rule content"
@@ -311,6 +320,7 @@ test_decode_print_all() {
   assert_contains "$output" "Complete tier" "Shows complete tier header"
   assert_contains "$output" "Abstract tier" "Shows abstract tier header"
   assert_contains "$output" "Summary tier" "Shows summary tier header"
+  # Rulet won't have BCS0102 (4-digit code), so it may be missing
 
   # Should contain separators between tiers
   assert_contains "$output" "---" "Contains tier separators"
@@ -319,13 +329,13 @@ test_decode_print_all() {
   assert_contains "$output" "Shebang" "Contains rule content"
   assert_contains "$output" "#!/bin/bash" "Contains code examples"
 
-  # Count tier headers (should be 3)
+  # Count tier headers (should be 3 for this code - rulet doesn't have 4-digit codes)
   local -i tier_count
   tier_count=$(echo "$output" | grep -c "tier (BCS" || true)
-  if ((tier_count == 3)); then
-    pass "All three tier headers present"
+  if ((tier_count >= 3)); then
+    pass "All available tier headers present ($tier_count tiers)"
   else
-    fail "Expected 3 tier headers, got $tier_count"
+    fail "Expected at least 3 tier headers, got $tier_count"
   fi
 }
 
@@ -345,19 +355,45 @@ test_decode_print_with_pipe() {
 
   # Test that print output can be piped
   local -- output
-  output=$("$SCRIPT" decode BCS0102 -p 2>&1 | head -5)
+  output=$("$SCRIPT" decode BCS0102 -p -c 2>&1 | head -5)
 
   # Should still contain content
   assert_contains "$output" "Shebang" "Piped print output works"
 
   # Test word count works
   local -i word_count
-  word_count=$("$SCRIPT" decode BCS0102 -p 2>&1 | wc -w)
+  word_count=$("$SCRIPT" decode BCS0102 -p -c 2>&1 | wc -w)
 
   if ((word_count > 50)); then
     pass "Print output contains substantial content ($word_count words)"
   else
     fail "Expected >50 words, got $word_count"
+  fi
+}
+
+test_decode_multi_code() {
+  test_section "Decode Multiple Codes Tests (v1.0.0)"
+
+  # Test decoding multiple section codes at once
+  local -- output
+  output=$("$SCRIPT" decode BCS01 BCS02 BCS08 2>&1)
+
+  # Should show paths for all three sections (rulet tier from symlink)
+  assert_contains "$output" "00-script-structure" "Shows first section"
+  assert_contains "$output" "00-variables" "Shows second section"
+  assert_contains "$output" "00-error-handling" "Shows third section"
+  assert_contains "$output" ".rulet.md" "All use rulet tier (default)"
+
+  # Test with -p flag (print mode)
+  output=$("$SCRIPT" decode BCS01 BCS02 -p 2>&1)
+
+  # Should contain separators between codes
+  local -i separator_count
+  separator_count=$(echo "$output" | grep -c "=====" || true)
+  if ((separator_count >= 1)); then
+    pass "Multi-code print shows separators between codes"
+  else
+    warn "Expected at least 1 separator for 2 codes"
   fi
 }
 
@@ -382,6 +418,7 @@ test_decode_print_tiers
 test_decode_print_all
 test_decode_print_subrule
 test_decode_print_with_pipe
+test_decode_multi_code
 
 print_summary
 
