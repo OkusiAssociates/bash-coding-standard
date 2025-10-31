@@ -1,28 +1,31 @@
 # Bash Coding Standard
 
-**Comprehensive standard for Bash 5.2+** (not compatibility-focused)
+Comprehensive Bash coding standard for Bash 5.2+. Not a compatibility standard.
 
-**Philosophy:** Systems engineering applied to Bash. K.I.S.S. principle: simplicity without over-engineering.
+## Coding Principles
+- K.I.S.S.
+- "The best process is no process"
+- "Everything should be made as simple as possible, but not simpler."
 
-**Critical:** Remove unused functions/variables in production scripts.
+Remove unused functions/variables from production scripts.
 
-## 14 Sections
-1. Script Structure & Layout
-2. Variable Declarations & Constants
-3. Variable Expansion & Parameter Substitution
-4. Quoting & String Literals
-5. Arrays
-6. Functions
-7. Control Flow
-8. Error Handling
-9. Input/Output & Messaging
-10. Command-Line Arguments
-11. File Operations
-12. Security Considerations
-13. Code Style & Best Practices
-14. Advanced Patterns
+## Contents
+1. [Script Structure & Layout](#script-structure--layout)
+2. [Variable Declarations & Constants](#variable-declarations--constants)
+3. [Variable Expansion & Parameter Substitution](#variable-expansion--parameter-substitution)
+4. [Quoting & String Literals](#quoting--string-literals)
+5. [Arrays](#arrays)
+6. [Functions](#functions)
+7. [Control Flow](#control-flow)
+8. [Error Handling](#error-handling)
+9. [Input/Output & Messaging](#inputoutput--messaging)
+10. [Command-Line Arguments](#command-line-arguments)
+11. [File Operations](#file-operations)
+12. [Security Considerations](#security-considerations)
+13. [Code Style & Best Practices](#code-style--best-practices)
+14. [Advanced Patterns](#advanced-patterns)
 
-**Ref:** BCS00
+**Ref:** BSC00
 
 
 ---
@@ -575,59 +578,64 @@ readonly VERSION='1.0.0' AUTHOR='name'
 
 ## Type-Specific Declarations
 
-**Use explicit type declarations (`declare -i/-a/-A/--`) to document intent and enable type checking.**
+**Always use explicit type declarations (`declare -i`, `declare --`, `declare -a`, `declare -A`) to make variable intent clear and enable type-safe operations.**
 
-**Rationale:** Type safety prevents bugs, explicit types document usage, type-specific operations are faster.
+**Rationale:** Type declarations prevent bugs through automatic type checking, serve as inline documentation, and enable bash's built-in type enforcement.
 
-**Types:**
+**Declaration types:**
 
+**1. Integers (`declare -i`)** - Counters, exit codes, ports:
 ```bash
-declare -i count=0              # Integer (auto-arithmetic)
-declare -- path='/etc/app'      # String (-- prevents option injection)
-declare -a files=()             # Indexed array
-declare -A config=()            # Associative array (requires -A)
-readonly -- VERSION='1.0.0'     # Immutable
-local -- temp="$1"              # Function-scoped
+declare -i count=0
+count='5 + 3'  # Evaluates to 8
 ```
 
-**Integer auto-evaluation:**
+**2. Strings (`declare --`)** - Paths, text (use `--` to prevent option injection):
 ```bash
-declare -i num=0
-num=num+1          # No $(()) needed
-num='5 + 3'        # Evaluates to 8
+declare -- filename='data.txt'
 ```
 
-**Combine modifiers:** `local -i count=0`, `readonly -a LIST=(...)`, `local -A map=()`
+**3. Indexed arrays (`declare -a`)** - Ordered lists:
+```bash
+declare -a files=('one' 'two')
+for f in "${files[@]}"; do process "$f"; done
+```
+
+**4. Associative arrays (`declare -A`)** - Key-value maps:
+```bash
+declare -A config=([key]='value')
+```
+
+**5. Constants (`readonly --`)** - Immutable after init:
+```bash
+readonly -- VERSION='1.0.0'
+```
+
+**6. Function locals (`local`)** - Always use for ALL function variables:
+```bash
+func() {
+  local -i count=0
+  local -- text="$1"
+}
+```
 
 **Anti-patterns:**
 ```bash
-# ✗ No type
+# ✗ Wrong - no declaration
 count=0
-
-# ✓ Explicit
+# ✓ Correct
 declare -i count=0
 
-# ✗ Missing -A
-declare CONFIG
-CONFIG[key]='val'  # Creates indexed array!
+# ✗ Wrong - missing -A
+declare CONFIG; CONFIG[key]='val'  # Creates indexed array!
+# ✓ Correct
+declare -A CONFIG=(); CONFIG[key]='val'
 
-# ✓ Explicit -A
-declare -A CONFIG=()
-
-# ✗ Global leak
+# ✗ Wrong - global leak
 func() { temp="$1"; }
-
-# ✓ Local
+# ✓ Correct
 func() { local -- temp="$1"; }
-
-# ✗ No --
-declare var='-weird'  # Treated as option!
-
-# ✓ Use --
-declare -- var='-weird'
 ```
-
-**Use:** `-i` (counters/ports), `--` (paths/text), `-a` (lists), `-A` (key-value), `readonly` (constants), `local` (all function vars).
 
 **Ref:** BCS0201
 
@@ -1459,63 +1467,49 @@ printf 'Found %d files in %s\n' "$count" "$dir"
 
 ## Anti-Patterns (What NOT to Do)
 
-**Avoid common quoting mistakes that cause bugs, security issues, maintenance problems.**
+**Avoid quoting mistakes causing security flaws, word splitting bugs, and poor maintainability.**
 
-**Critical: Improper quoting enables injection attacks and word-splitting bugs.**
+**Critical rationale:**
+- **Security:** Improper quoting enables injection attacks
+- **Reliability:** Unquoted variables cause word splitting/glob expansion
 
-**Categories:**
+**Top anti-patterns:**
 
-1. **Double quotes for static** (most common)
+1. **Double quotes for static** �' `info 'text'` not `info "text"`
+2. **Unquoted variables** �' `[[ -f "$file" ]]` not `[[ -f $file ]]`
+3. **Unnecessary braces** �' `"$HOME/bin"` not `"${HOME}/bin"`
+4. **Unquoted arrays** �' `"${items[@]}"` not `${items[@]}`
+
+**Example:**
+
 ```bash
-# ✗ Wrong: info "Static text"
-# ✓ Correct: info 'Static text'
+# ✗ Wrong
+info "Starting..."          # Use single quotes
+[[ -f $file ]]              # Quote variable
+path="${HOME}/bin"          # Braces not needed
+for x in ${arr[@]}; do      # Quote array
+
+# ✓ Correct
+info 'Starting...'
+[[ -f "$file" ]]
+path="$HOME/bin"
+for x in "${arr[@]}"; do
 ```
 
-2. **Unquoted variables** (dangerous)
+**Quick check:**
+
 ```bash
-# ✗ Wrong: [[ -f $file ]]
-# ✓ Correct: [[ -f "$file" ]]
+'static'                 ✓
+"static"                 ✗
+"text $var"              ✓  # No braces
+"text ${var}"            ✗  # Unnecessary
+[[ -f "$file" ]]         ✓
+[[ -f $file ]]           ✗  # Dangerous
+"${array[@]}"            ✓  # Needs braces+quotes
+${array[@]}              ✗
 ```
 
-3. **Unnecessary braces**
-```bash
-# ✗ Wrong: echo "${HOME}/bin"
-# ✓ Correct: echo "$HOME/bin"
-```
-
-4. **Mixed styles**
-```bash
-# ✗ Wrong: Mix "static" and 'static'
-# ✓ Correct: All 'static'
-```
-
-5. **Glob expansion**
-```bash
-# ✗ Wrong: echo $pattern (expands!)
-# ✓ Correct: echo "$pattern"
-```
-
-6. **Command substitution**
-```bash
-# ✗ Wrong: $(cat "${file}")
-# ✓ Correct: $(cat "$file")
-```
-
-**Checklist:**
-```bash
-'literal'          ✓
-"literal"          ✗
-"text $var"        ✓
-"text ${var}"      ✗ (braces not needed)
-[[ -f "$file" ]]   ✓
-[[ -f $file ]]     ✗
-"${array[@]}"      ✓
-${array[@]}        ✗
-"${var##*/}"       ✓ (expansion needs braces)
-"${HOME}"          ✗ (braces not needed)
-```
-
-**Rule:** Quote variables, single-quote statics, no unnecessary braces. Prevents injection/word-splitting.
+**Key:** Quote variables always, single quotes for static text, avoid unnecessary braces.
 
 **Ref:** BCS0411
 
@@ -2046,53 +2040,67 @@ fi
 
 ## Case Statements
 
-**Use `case` for pattern-based multi-way branching. More readable/efficient than if/elif chains for testing single variable against multiple patterns.**
+**Use `case` for multi-way branching on single variable pattern matching; more readable than `if/elif` chains.**
 
-**Rationale:**
-- **Performance:** Single evaluation vs multiple if/elif tests
-- **Pattern Matching:** Native wildcards, alternation, extglob support
+**Rationale:** Pattern matching support, faster single evaluation, easier maintenance.
 
-**Use case when:** Single variable testing, pattern matching, argument parsing
-**Use if/elif when:** Different variables, complex conditionals, numeric ranges
+**Format options:**
 
-**Format styles:**
-
+**Compact** (single-line actions):
 ```bash
-# Compact: single-line with aligned ;;
 case $1 in
   -v|--verbose) VERBOSE=1 ;;
   -h|--help)    usage; exit 0 ;;
+  -o|--output)  noarg "$@"; shift; OUTPUT="$1" ;;
   --)           shift; break ;;
   -*)           die 22 "Invalid: $1" ;;
-  *)            FILES+=("$1") ;;
 esac
+```
 
-# Expanded: multi-line, ;; on separate line
+**Expanded** (multi-line actions):
+```bash
 case $1 in
   -p|--prefix)  noarg "$@"
                 shift
                 PREFIX="$1"
                 ;;
+  *)            die 22 "Invalid: $1"
+                ;;
 esac
 ```
 
-**Pattern types:**
+**Patterns:**
 - Literal: `start)` (unquoted)
-- Wildcards: `*.txt)` `*.@(md|rst))`
+- Wildcards: `*.txt)` `*.md|*.rst)`
 - Alternation: `-h|--help)`
-- Extglob: `+([0-9]))` (needs `shopt -s extglob`)
-
-**Critical rules:**
-- Quote test variable: `case "$var" in`
-- Don't quote patterns: `start)` not `"start")`
-- Always include default: `*) die 22 "Invalid" ;;`
-- Terminate with `;;`
-- Align consistently
+- Extglob: `+([0-9]))` `@(start|stop)` `!(*.tmp)`
+- Brackets: `[0-9])` `[a-z])` `[!a-zA-Z0-9])`
 
 **Anti-patterns:**
-- `case $var in` → unquoted test variable
-- Missing `*)` default case → silent failures
-- Mixing compact/expanded formats → inconsistent style
+```bash
+# ✗ Unquoted test variable
+case $file in
+
+# ✗ Quoted literal patterns
+case "$val" in "start")
+
+# ✗ Missing default case
+case "$act" in start) ;; stop) ;; esac
+
+# ✗ Inconsistent alignment
+-v) VERBOSE=1 ;;
+-o) shift; OUT="$1" ;;
+-h) usage; exit 0 ;;
+
+# ✓ Correct
+case "$file" in
+  *.txt) process ;;
+  *) die 22 "Unknown: $file" ;;
+esac
+```
+
+**Use case for:** Single variable patterns, file routing, CLI args
+**Use if/elif for:** Multiple variables, numeric ranges, complex conditions
 
 **Ref:** BCS0702
 
@@ -2218,66 +2226,54 @@ done
 
 ## Arithmetic Operations
 
-**Always declare integer variables with `declare -i` for automatic arithmetic context, type safety, and clarity.**
+**Always declare integers with `declare -i` (BCS0201).** Use `i+=1` or `((i+=1))` for increments. Never `((i++))` - returns old value, fails with `set -e` when i=0.
+
+**Rationale:**
+- **Type safety**: `declare -i` enables automatic arithmetic, catches non-numeric errors
+- **set -e safety**: `((i++))` returns 0 when i=0, causing exit
+- **Performance**: Eliminates repeated `$(())` overhead
+
+**Core patterns:**
 
 ```bash
-declare -i counter=0 max_retries=3
-```
+declare -i count=0 max=10
 
-**Increment operations:**
-
-```bash
-# ✓ Use these safe patterns
-i+=1              # Clearest
+# Safe increments
+i+=1              # Preferred
 ((i+=1))          # Always returns 0 (success)
-((++i))           # Pre-increment, safe
 
-# ✗ NEVER use post-increment
-((i++))           # Returns old value - exits if i=0 with set -e!
-```
-
-**Rationale:** With `set -e`, `((i++))` when `i=0` returns 0 (false), triggering script exit. Pre-increment `((++i))` returns new value (1), always safe.
-
-**Arithmetic expressions:**
-
-```bash
-# In (()) - no $ needed for variables
+# Expressions
 ((result = x * y + z))
-((total = sum / count))
+result=$((a + b))
 
-# With $(()), for assignments/commands
-result=$((x * y + z))
-echo "$((i * 2))"
+# Conditionals - use (()) not [[ ]]
+((count > 10)) && process
+if ((i < max)); then echo 'Continue'; fi
 ```
 
-**Arithmetic conditionals - use `(())` not `[[ ]]`:**
-
-```bash
-((count > 0)) && process_items
-((i >= max_retries)) && die 'Too many attempts'
-
-if ((i < j)); then
-  echo 'Less than'
-fi
-```
-
-**Operators:** `+` `-` `*` `/` (integer division), `%` (modulo), `**` (exponent), `+=` `-=`, comparisons: `<` `<=` `>` `>=` `==` `!=`
+**Operators:** `+ - * / % **` | **Comparisons:** `< <= > >= == !=` (native C-style in `(())`)
 
 **Anti-patterns:**
 
 ```bash
-# ✗ Old-style test
-[[ "$count" -gt 10 ]]  → ((count > 10))
+# ✗ Post-increment �' ✓ Use +=1
+((i++))              # Fails when i=0 with set -e
+i+=1
 
-# ✗ External expr
-result=$(expr $i + $j)  → result=$((i + j))
+# ✗ [[ ]] for integers �' ✓ Use (())
+[[ "$count" -gt 10 ]]
+((count > 10))       # No quotes needed
 
-# ✗ Unnecessary $ inside (())
-((result = $i + $j))  → ((result = i + j))
+# ✗ External expr �' ✓ Native arithmetic
+result=$(expr $i + $j)
+result=$((i + j))
 
-# ✗ Post-increment
-((i++))  → i+=1
+# ✗ $ inside (()) �' ✓ No $ needed
+((result = $i + $j))
+((result = i + j))
 ```
+
+**Gotcha:** Integer division truncates: `((result = 10 / 3))` �' 3. Use `bc`/`awk` for floating point.
 
 **Ref:** BCS0705
 

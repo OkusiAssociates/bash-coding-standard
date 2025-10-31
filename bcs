@@ -1046,7 +1046,7 @@ compress_process_all_rules() {
     else
       local -- file newtime
       for file in "${complete_files[@]}"; do
-        newtime=$(awk -v t="$(date +%s.%N -r "$file")" 'BEGIN {printf "%.9f", t + 0.001}')
+        newtime=$(awk -v t="$(date +%s.%N -r "$file")" 'BEGIN {printf "%.9f", t + 0.1}')
         touch -d "@$newtime" "$file" || warn "Failed to touch ${file@Q}"
       done
     fi
