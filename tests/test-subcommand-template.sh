@@ -183,7 +183,8 @@ test_template_executable() {
 test_template_force_overwrite() {
   test_section "Force Overwrite Tests"
   local -- test_file="/tmp/bcs-test-$$-force.sh"
-  local -- output exit_code
+  local -- output
+  local -i exit_code
 
   # Clean up any existing file
   rm -f "$test_file"
@@ -210,7 +211,8 @@ test_template_force_overwrite() {
 # Test error handling
 test_template_errors() {
   test_section "Error Handling Tests"
-  local -- output exit_code
+  local -- output
+  local -i exit_code
 
   # Invalid template type
   output=$("$SCRIPT" template -t invalid 2>&1) && exit_code=0 || exit_code=$?

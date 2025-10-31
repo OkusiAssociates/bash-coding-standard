@@ -94,10 +94,10 @@ All symlinks are **relative**, making the structure portable:
 The structure is rebuilt using:
 
 ```bash
-./rebuild-bcs-directory.sh
+bcs generate --canonical
 ```
 
-This script:
+This command:
 1. Removes existing `BCS/` directory
 2. Creates fresh numeric structure
 3. Generates relative symlinks for all files
@@ -243,9 +243,10 @@ find BCS -type l ! -exec test -e {} \; -print
 
 **Rebuild from scratch**:
 ```bash
-rm -rf BCS/
-./rebuild-bcs-directory.sh
+bcs generate --canonical
 ```
+
+Note: The `--canonical` flag automatically rebuilds the BCS/ index directory after generating all four tier files.
 
 ## Future Enhancements
 
@@ -258,9 +259,10 @@ Potential improvements:
 
 ## See Also
 
-- `rebuild-bcs-directory.sh` - Regeneration script
+- `bcs generate --canonical` - Regenerate standard and rebuild BCS/ index
 - `test-bcs-lookup.sh` - Lookup demonstration and testing
 - `BASH-CODING-STANDARD.md` - Primary documentation (symlink determines default tier)
 - `CLAUDE.md` - Repository documentation for AI assistants
+- `bcs help generate` - Full documentation for the generate subcommand
 
 #fin

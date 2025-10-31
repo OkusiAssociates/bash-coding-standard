@@ -47,8 +47,8 @@ _msg() {
   case "$level" in
     success) echo -e "${GREEN}✓${NC} [$func] $*" ;;
     info)    echo -e "${BLUE}◉${NC} [$func] $*" ;;
-    warn)    >&2 echo -e "${YELLOW}▲${NC} [$func] $*" ;;
-    error)   >&2 echo -e "${RED}✗${NC} [$func] $*" ;;
+    warn)    echo -e "${YELLOW}▲${NC} [$func] $*" >&2 ;;
+    error)   echo -e "${RED}✗${NC} [$func] $*" >&2 ;;
   esac
 }
 

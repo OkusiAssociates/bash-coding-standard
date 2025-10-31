@@ -117,10 +117,11 @@ test_shellcheck_compliance() {
   fi
 
   # Run shellcheck
-  local -- shellcheck_output exit_code=0
+  local -- shellcheck_output
+  local -i exit_code=0
   shellcheck_output=$(shellcheck -x "$BCS_SCRIPT" 2>&1) || exit_code=$?
 
-  if [[ "$exit_code" -eq 0 ]]; then
+  if ((exit_code == 0)); then
     pass "Passes shellcheck with no violations"
   else
     # Count only warnings and errors (not info messages)
@@ -165,7 +166,7 @@ test_command_substitution_style() {
   backtick_count=$(grep -c '`' "$BCS_SCRIPT" || true)
   dollar_count=$(grep -cE '\$\(' "$BCS_SCRIPT" || true)
 
-  if [[ "$backtick_count" -eq 0 ]]; then
+  if ((backtick_count == 0)); then
     pass "No backtick command substitutions (uses \$() style)"
   else
     warn "Found $backtick_count backtick substitutions (prefer \$())"
@@ -216,7 +217,8 @@ test_help_documentation() {
   test_section "Help Documentation Tests"
 
   # Test that --help works
-  local -- help_output exit_code=0
+  local -- help_output
+  local -i exit_code=0
   help_output=$("$BCS_SCRIPT" --help 2>&1) || exit_code=$?
 
   assert_zero "$exit_code" "--help returns exit code 0"
@@ -240,7 +242,8 @@ test_version_information() {
   test_section "Version Information Tests"
 
   # Test that --version works
-  local -- version_output exit_code=0
+  local -- version_output
+  local -i exit_code=0
   version_output=$("$BCS_SCRIPT" --version 2>&1) || exit_code=$?
 
   assert_zero "$exit_code" "--version returns exit code 0"

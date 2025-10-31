@@ -1,5 +1,7 @@
 ## Arithmetic Operations
 
+> **See Also:** BCS0201 for complete guidance on declaring integer variables with `declare -i`
+
 **Declare integer variables explicitly:**
 
 \`\`\`bash
@@ -16,6 +18,7 @@ declare -i max_retries=3
 - **Type safety**: Helps catch errors when non-numeric values assigned
 - **Performance**: Slightly faster for repeated arithmetic operations
 - **Clarity**: Signals to readers that variable holds numeric values
+- **Required for BCS compliance**: ALL integer variables must use `declare -i` (BCS0201)
 
 **Increment operations:**
 
@@ -140,6 +143,57 @@ fi
 \`\`\`
 
 **Anti-patterns to avoid:**
+
+### Using Test Command for Arithmetic Comparisons
+
+**The Problem:** Using `[[ ... -eq ... ]]` for integer comparisons is verbose and old-style.
+
+\`\`\`bash
+# ✗ WRONG - Using [[ ]] for integer comparison
+if [[ "$exit_code" -eq 0 ]]; then
+  echo 'Success'
+fi
+
+# ✗ WRONG - Requires quotes and verbose syntax
+[[ "$count" -gt 10 ]] && process_items
+
+# ✗ WRONG - Multiple integer comparisons with [[ ]]
+[[ "$exit_code" -eq 0 || "$exit_code" -eq 141 ]] && handle_success
+
+# ✓ CORRECT - Use (()) for integer comparison
+if ((exit_code == 0)); then
+  echo 'Success'
+fi
+
+# ✓ CORRECT - Clean arithmetic syntax, no quotes needed
+((count > 10)) && process_items
+
+# ✓ CORRECT - Multiple integer comparisons
+((exit_code == 0 || exit_code == 141)) && handle_success
+\`\`\`
+
+**Why `(())` is better:**
+- **No quoting required**: Variables don't need quotes in arithmetic context
+- **Native operators**: Use `>`, `<`, `==`, `!=` instead of `-gt`, `-lt`, `-eq`, `-ne`
+- **More readable**: Looks like arithmetic, not string comparison
+- **Faster**: No external test command, pure bash arithmetic
+- **Type-safe**: Works with integers declared using `declare -i`
+
+**Important:** Always declare integer variables with `declare -i` first (see BCS0201)
+
+\`\`\`bash
+# Complete pattern (BCS-compliant)
+declare -i exit_code=0
+some_command || exit_code=$?
+
+if ((exit_code == 0)); then
+  echo 'Command succeeded'
+else
+  echo "Command failed with exit code: $exit_code"
+fi
+\`\`\`
+
+### Other Common Anti-Patterns
 
 \`\`\`bash
 # ✗ Wrong - using [[ ]] for arithmetic

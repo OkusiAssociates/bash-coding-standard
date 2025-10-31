@@ -212,6 +212,9 @@ install:
 		echo ""; \
 	fi
 	@# Phase 0a: Group creation and user management
+	@# Security Model: Create 'bcs' group for shared write access to installed files
+	@# This enables multiple developers to maintain /usr/local/share/yatti/bash-coding-standard/
+	@# without requiring root access for every edit. No SUID/SGID used (secure by design).
 	@echo "Checking 'bcs' group membership..."
 	@if ! getent group bcs >/dev/null 2>&1; then \
 		echo "Creating 'bcs' group..."; \
@@ -224,6 +227,8 @@ install:
 	else \
 		echo "✓ Group 'bcs' exists"; \
 	fi
+	@# Detect the actual user who ran 'sudo make install' (not root)
+	@# Try SUDO_USER first (most common), then LOGNAME, finally whoami
 	@REAL_USER=""; \
 	if [ -n "$$SUDO_USER" ] && [ "$$SUDO_USER" != "root" ]; then \
 		REAL_USER="$$SUDO_USER"; \
@@ -237,6 +242,7 @@ install:
 	fi; \
 	if [ -n "$$REAL_USER" ]; then \
 		echo "Detected user: $$REAL_USER"; \
+		@# Check if user is already in 'bcs' group to avoid redundant usermod calls
 		if id -nG "$$REAL_USER" 2>/dev/null | grep -qw bcs; then \
 			echo "✓ User '$$REAL_USER' is already in 'bcs' group"; \
 		else \

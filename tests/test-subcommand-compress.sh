@@ -49,7 +49,8 @@ test_compress_report_only_mode() {
 test_compress_dry_run() {
   test_section "Compress Dry-Run Tests"
 
-  local -- output exit_code=0
+  local -- output
+  local -i exit_code=0
   output=$("$SCRIPT" compress --dry-run 2>&1) || exit_code=$?
 
   # Dry-run should succeed without requiring Claude
@@ -72,7 +73,7 @@ test_compress_tier_option() {
 
   # Test summary tier
   output=$("$SCRIPT" compress --tier summary --dry-run 2>&1) || exit_code=$?
-  if [[ "$exit_code" -eq 0 ]]; then
+  if ((exit_code == 0)); then
     pass "--tier summary accepted"
   else
     fail "--tier summary rejected (exit code: $exit_code)"
@@ -81,7 +82,7 @@ test_compress_tier_option() {
   # Test abstract tier
   exit_code=0
   output=$("$SCRIPT" compress --tier abstract --dry-run 2>&1) || exit_code=$?
-  if [[ "$exit_code" -eq 0 ]]; then
+  if ((exit_code == 0)); then
     pass "--tier abstract accepted"
   else
     fail "--tier abstract rejected (exit code: $exit_code)"
@@ -92,13 +93,14 @@ test_compress_context_levels() {
   test_section "Compress Context Level Tests"
 
   local -- context_levels=("none" "toc" "abstract" "summary" "complete")
-  local -- level exit_code
+  local -- level
+  local -i exit_code
 
   for level in "${context_levels[@]}"; do
     exit_code=0
-    "$SCRIPT" compress --context-level "$level" --dry-run 2>&1 >/dev/null || exit_code=$?
+    "$SCRIPT" compress --context-level "$level" --dry-run >/dev/null 2>&1 || exit_code=$?
 
-    if [[ "$exit_code" -eq 0 ]]; then
+    if ((exit_code == 0)); then
       pass "Context level '$level' accepted"
     else
       fail "Context level '$level' rejected (exit code: $exit_code)"
@@ -109,7 +111,8 @@ test_compress_context_levels() {
 test_compress_size_limits() {
   test_section "Compress Size Limit Tests"
 
-  local -- output exit_code=0
+  local -- output
+  local -i exit_code=0
 
   # Test custom summary limit
   output=$("$SCRIPT" compress --summary-limit 5000 --dry-run 2>&1) || exit_code=$?
@@ -142,7 +145,7 @@ test_compress_quiet_mode() {
   normal_lines=$(echo "$output_normal" | wc -l)
   quiet_lines=$(echo "$output_quiet" | wc -l)
 
-  if [[ "$quiet_lines" -le "$normal_lines" ]]; then
+  if ((quiet_lines <= normal_lines)); then
     pass "Quiet mode reduces output (normal: $normal_lines, quiet: $quiet_lines)"
   else
     warn "Quiet mode may not be reducing output as expected"
@@ -152,7 +155,8 @@ test_compress_quiet_mode() {
 test_compress_verbose_mode() {
   test_section "Compress Verbose Mode Tests"
 
-  local -- output exit_code=0
+  local -- output
+  local -i exit_code=0
 
   # Verbose is default, but test explicit flag
   output=$("$SCRIPT" compress --verbose --dry-run 2>&1) || exit_code=$?

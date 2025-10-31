@@ -360,6 +360,86 @@ sudo rm /usr/local/bin/bash-coding-standard
 sudo rm -rf /usr/local/share/yatti/bash-coding-standard
 ```
 
+### Installation and Permissions
+
+The BCS installation system uses a **group-based permissions model** for shared access to the installed files.
+
+#### The 'bcs' Group
+
+When you run `sudo make install`, the Makefile automatically:
+
+1. **Creates the 'bcs' group** (if it doesn't exist)
+2. **Adds the installing user** to the 'bcs' group
+3. **Sets group ownership** on installed files to 'bcs'
+4. **Configures permissions** to allow group write access
+
+**Purpose:**
+- Enables multiple developers to maintain and update the installed BCS files
+- Allows collaborative development without requiring root access for every edit
+- Provides shared write access to `/usr/local/share/yatti/bash-coding-standard/`
+
+**Security Design:**
+- No SUID/SGID bits used (secure by design)
+- Executables in `/usr/local/bin/` remain root-owned (standard practice)
+- Only the data directory uses group ownership
+- Group membership is explicit (no automatic additions)
+
+#### Multi-User Benefits
+
+On multi-user systems, any user in the 'bcs' group can:
+- Update BCS documentation files
+- Regenerate the standard with `bcs generate --canonical`
+- Modify templates and examples
+- Collaborate without permission conflicts
+
+#### Adding Additional Users
+
+To grant access to additional users:
+
+```bash
+# Add user to 'bcs' group
+sudo usermod -aG bcs <username>
+
+# User must logout and login for changes to take effect
+# Or start a new shell with:
+newgrp bcs
+```
+
+**Important:** Group membership changes require a logout/login cycle to take effect. The user's shell session must be restarted.
+
+#### Single-User Systems
+
+Even on single-user workstations, the group-based model provides benefits:
+- Consistent permissions across all installations
+- Future-proof for adding collaborators
+- Standard Unix security practices
+- No disadvantages for single-user scenarios
+
+#### Verifying Group Membership
+
+Check if you're in the 'bcs' group:
+
+```bash
+# List all your groups
+groups
+
+# Check specific group membership
+id -nG | grep -w bcs && echo "✓ You are in the 'bcs' group"
+```
+
+#### Opting Out
+
+If you prefer not to use group-based permissions:
+
+```bash
+# Install without group setup (not recommended)
+sudo make install GROUP=root
+
+# Or manually adjust permissions after installation
+sudo chown -R root:root /usr/local/share/yatti/bash-coding-standard
+sudo chmod -R 755 /usr/local/share/yatti/bash-coding-standard
+```
+
 ### Using the BCS Toolkit
 
 The `bcs` script provides a comprehensive toolkit with multiple subcommands:

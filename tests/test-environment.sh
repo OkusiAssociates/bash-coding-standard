@@ -45,7 +45,7 @@ test_md2ansi_availability() {
     # Note: SIGPIPE (141) is expected when piping to head, so we ignore it
     output=$("$SCRIPT" --md2ansi 2>&1 | head -20) || exit_code=$?
     # Exit codes 0 or 141 (SIGPIPE) are both acceptable
-    [[ "$exit_code" -eq 0 || "$exit_code" -eq 141 ]] && exit_code=0
+    ((exit_code == 0 || exit_code == 141)) && exit_code=0
     assert_success "$exit_code" "Script with --md2ansi succeeds when md2ansi available"
 
     # Test 3: --cat bypasses md2ansi
@@ -85,7 +85,8 @@ test_file_not_found() {
   chmod +x "$tmpdir"/bash-coding-standard
 
   # Running without BASH-CODING-STANDARD.md should fail
-  local -- output exit_code=0
+  local -- output
+  local -i exit_code=0
   output=$(cd "$tmpdir" && ./bash-coding-standard 2>&1) || exit_code=$?
 
   # Should either show error or find file via FHS paths

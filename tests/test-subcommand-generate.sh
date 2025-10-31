@@ -86,7 +86,7 @@ test_generate_output_file() {
   trap 'rm -f "$tmpfile"' RETURN
 
   # Generate to file
-  "$SCRIPT" generate -o "$tmpfile" 2>&1 >/dev/null
+  "$SCRIPT" generate -o "$tmpfile" >/dev/null 2>&1
 
   # File should exist and have content
   if [[ -f "$tmpfile" && -s "$tmpfile" ]]; then

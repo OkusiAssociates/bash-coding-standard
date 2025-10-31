@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #shellcheck disable=SC2015
 # Display the Bash Coding Standard document with optional markdown rendering
 # This script can be executed directly or sourced to provide display_BCS function
@@ -6,9 +6,9 @@
 # BCS Metadata
 #shellcheck disable=SC2155
 [[ -v BCS_VERSION ]] || {
-  declare -x VERSION='1.0.0'
   declare -rx BCS_VERSION='1.0.0'
-  declare -rx BCS_PATH=$(realpath -- "${BASH_SOURCE[0]}")
+  declare -n VERSION=BCS_VERSION
+  declare -rx BCS_PATH=$(realpath -e -- "${BASH_SOURCE[0]}")
   declare -rx BCS_DIR=${BCS_PATH%/*}
   declare -rx BCS_NAME=${BCS_PATH##*/}
 }
@@ -20,9 +20,9 @@ declare -i VERBOSE=1
 # Idempotent: only initialize if not already set (test-helpers.sh may have set them)
 if [[ ! -v RED ]]; then
   if [[ -t 1 && -t 2 ]]; then
-    declare -rx RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' NC=$'\033[0m'
+    declare -rx NC=$'\033[0m' RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m'
   else
-    declare -rx RED='' GREEN='' YELLOW='' CYAN='' NC=''
+    declare -rx NC='' RED='' GREEN='' YELLOW='' CYAN=''
   fi
 fi
 # _Core messaging function using FUNCNAME
@@ -67,6 +67,7 @@ s() { (( ${1:-1} == 1 )) || echo -n 's'; }
 # "director$(y "${#Dirs[@]")"
 y() { (( ${1:-1} == 1 )) && echo -n 'y' || echo -n 'ies'; }
 
+# Validate that $2 exists and is not an option, die with error if not
 arg2(){
   if ((${#@}-1<1)) || [[ "${2:0:1}" == '-' ]]; then
     die 2 "${1@Q} requires argument"
@@ -124,7 +125,7 @@ declare -fx 'head1'
 # Sanitize text to URL/identifier-safe slugs
 # See: https://github.com/Open-Technology-Foundation/post_slug
 post_slug() {
-  local input_str="${1:-}" sep_char="${2:--}"
+  local -- input_str="${1:-}" sep_char="${2:--}"
   local -i preserve_case=${3:-0} max_len=${4:-0}
   [[ -n "$sep_char" ]] || sep_char='-'
   sep_char=${sep_char:0:1}
@@ -195,7 +196,6 @@ find_agent() {
       return 0
     fi
   done
-
   return 1
 }
 declare -fx find_agent
@@ -203,10 +203,10 @@ declare -fx find_agent
 # Find md2ansi in vendored, system PATH, or development locations
 # Priority: lib/md2ansi/ (bundled) → system PATH
 find_md2ansi() {
-  local -- install_share="${BCS_DIR%/bin}/share/yatti/bash-coding-standard/lib/md2ansi"
+  local -- install_share="${BCS_DIR%/bin}"/share/yatti/bash-coding-standard/lib/md2ansi
   local -a search_paths=(
-    "$BCS_DIR/lib/md2ansi/md2ansi"                       # Same directory (development)
-    "$install_share/md2ansi"                             # Relative to script (installed)
+    "$BCS_DIR"/lib/md2ansi/md2ansi                       # Same directory (development)
+    "$install_share"/md2ansi                             # Relative to script (installed)
     /usr/local/share/yatti/bash-coding-standard/lib/md2ansi/md2ansi  # YaTTI local install
     /usr/share/yatti/bash-coding-standard/lib/md2ansi/md2ansi        # YaTTI system install
     "$(command -v md2ansi 2>/dev/null || true)"          # System PATH (fallback)
@@ -219,7 +219,6 @@ find_md2ansi() {
       return 0
     fi
   done
-
   return 1
 }
 declare -fx find_md2ansi
@@ -230,7 +229,7 @@ declare -fx find_md2ansi
 find_data_dir() {
   local -- install_share="${BCS_DIR%/bin}/share/yatti/bash-coding-standard/data"
   local -a search_paths=(
-    "$BCS_DIR/data"                                   # Same directory (development)
+    "$BCS_DIR"/data                                   # Same directory (development)
     "$install_share"                                  # Relative to script (custom PREFIX)
     /usr/local/share/yatti/bash-coding-standard/data  # YaTTI local install
     /usr/share/yatti/bash-coding-standard/data        # YaTTI system install
@@ -239,7 +238,6 @@ find_data_dir() {
   for path in "${search_paths[@]}"; do
     [[ -d "$path" ]] && { echo "$path"; return 0; }
   done
-
   return 1
 }
 declare -fx find_data_dir
@@ -313,16 +311,16 @@ rebuild_bcs_index() {
   data_dir=$(find_data_dir) || { error 'Data directory not found'; return 1; }
 
   # BCS index directory is parallel to data/ directory
-  local -- bcs_index_dir="${data_dir%/data}/BCS"
+  local -- bcs_index_dir="${data_dir%/data}"/BCS
 
   # Validate directories exist
-  [[ -d "$data_dir" ]] || { error "Data directory not found '$data_dir'"; return 1; }
+  [[ -d "$data_dir" ]] || { error "Data directory not found ${data_dir@Q}"; return 1; }
 
   info 'Starting BCS directory rebuild'
   >&2 echo
 
   # Clean BCS directory (preserve .claude directory)
-  info "Cleaning BCS directory '$bcs_index_dir'"
+  info "Cleaning BCS directory ${bcs_index_dir@Q}"
   local -a subdirs=()
   readarray -t subdirs < <(find "$bcs_index_dir" -mindepth 1 -maxdepth 1 -type d -not -name '.claude' 2>/dev/null)
 
@@ -396,7 +394,7 @@ rebuild_bcs_index() {
   >&2 echo
 
   local -a md_files=()
-  readarray -t md_files < <(find "$data_dir" -type f -name '[0-9][0-9]-*.md' ! -name 'README.md' ! -path '*/templates/*' | sort)
+  readarray -t md_files < <(find "$data_dir" -type f -name '[0-9][0-9]-*.md' ! -name 'README.md' ! -name '*.rulet.md' ! -path '*/templates/*' | sort)
 
   local -- file bcs_code link_dir link_name
   local -i symlink_count=0 skipped_count=0
@@ -414,7 +412,7 @@ rebuild_bcs_index() {
     local -- numeric_prefix
     if [[ "$basename" =~ ^([0-9][0-9])[-].*\.(complete|summary|abstract)\.md$ ]]; then
       numeric_prefix="${BASH_REMATCH[1]}"
-      local -- tier=".${BASH_REMATCH[2]}.md"
+      local -- tier=".${BASH_REMATCH[2]}".md
 
       # Create link name: just the number + tier (e.g., "01.complete.md")
       link_name="$link_dir/$numeric_prefix$tier"
@@ -423,7 +421,7 @@ rebuild_bcs_index() {
       ln -sf "$file" "$link_name"
       symlink_count+=1
     else
-      warn "Skipping file with unexpected naming '$file'"
+      warn "Skipping file with unexpected naming ${file@Q}"
       skipped_count+=1
     fi
   done
@@ -443,27 +441,27 @@ compress_validate_claude_cli() {
   local -- claude_cmd="${1:-claude}"
 
   command -v "$claude_cmd" >/dev/null 2>&1 || {
-    error "Claude CLI not found: $claude_cmd"
+    error "Claude CLI not found ${claude_cmd@Q}"
     info 'Install from: https://claude.ai/code'
     return 1
   }
 
   # Test Claude with required flags
   if ! "$claude_cmd" --help 2>&1 | grep -q 'dangerously-skip-permissions'; then
-    error "Claude CLI does not support --dangerously-skip-permissions flag"
+    error 'Claude CLI does not support --dangerously-skip-permissions flag'
     info 'Update Claude CLI to latest version'
     return 1
   fi
 
-  success "Claude CLI validated: $claude_cmd"
+  success "Claude CLI validated ${claude_cmd@Q}"
   return 0
 }
 declare -fx compress_validate_claude_cli
 
 # Sanitize UTF-8 encoding in a file by replacing control characters
 sanitize_utf8() {
-  local -- file="$1"
-  local -- temp_file="${file}.utf8tmp"
+  local -- file=$1
+  local -- temp_file="$file".utf8tmp
 
   # Replace control characters with UTF-8 symbols
   # Claude AI outputs valid UTF-8, so we only need to handle any stray control chars
@@ -535,7 +533,7 @@ declare -fx compress_build_system_prompt_summary
 
 # Build system prompt for abstract tier compression
 compress_build_system_prompt_abstract() {
-  local -- bcs_code="$1"
+  local -- bcs_code=$1
   cat <<PROMPT
 You are a technical documentation compressor specializing in Bash Coding Standard rules.
 
@@ -577,7 +575,7 @@ declare -fx compress_build_system_prompt_abstract
 # Build strict system prompt for abstract tier compression (retry)
 compress_build_system_prompt_abstract_strict() {
   local -i current_size=$1
-  local -- bcs_code="$2"
+  local -- bcs_code=$2
   cat <<PROMPT
 You are a technical documentation compressor specializing in Bash Coding Standard rules.
 
@@ -686,9 +684,9 @@ declare -fx compress_check_timestamps_match
 
 # Compress a single rule from .complete.md to specified tier
 compress_rule_to_tier() {
-  local -- complete_file="$1"
-  local -- tier="$2"
-  local -- claude_cmd="$3"
+  local -- complete_file=$1
+  local -- tier=$2
+  local -- claude_cmd=$3
   local -i dry_run="${4:-0}"
   local -i compress_verbose="${5:-1}"
   local -i target_size="${6:-1500}"  # Default for abstract
@@ -712,7 +710,7 @@ compress_rule_to_tier() {
   # Delete existing file if in regenerate mode (already handled by caller)
 
   if ((dry_run)); then
-    ((compress_verbose)) && info "  [DRY-RUN] Would generate: $target_file"
+    ((compress_verbose)) && info "  [DRY-RUN] Would generate ${target_file@Q}"
     return 0
   fi
 
@@ -728,9 +726,9 @@ compress_rule_to_tier() {
       }
       if [[ -n "$context_file_persistent" ]]; then
         if ! build_context_abstract_exclude "$bcs_code" "$context_file_persistent"; then
-          ((compress_verbose)) && warn "    Failed to build abstract context with exclusion, falling back to full context"
+          ((compress_verbose)) && warn '    Failed to build abstract context with exclusion, falling back to full context'
           if ! build_context_abstract > "$context_file_persistent"; then
-            ((compress_verbose)) && warn "    Failed to build abstract context, continuing without it"
+            ((compress_verbose)) && warn '    Failed to build abstract context, continuing without it'
             rm -f "$context_file_persistent"
             context_file_persistent=""
           fi
@@ -740,14 +738,14 @@ compress_rule_to_tier() {
     summary)
       ((compress_verbose)) && vecho "    Using summary context (excluding $bcs_code)"
       context_file_persistent=$(mktemp) || {
-        ((compress_verbose)) && warn "    Failed to create context temp file"
-        context_file_persistent=""
+        ((compress_verbose)) && warn '    Failed to create context temp file'
+        context_file_persistent=''
       }
       if [[ -n "$context_file_persistent" ]]; then
         if ! build_context_summary_exclude "$bcs_code" "$context_file_persistent"; then
-          ((compress_verbose)) && warn "    Failed to build summary context with exclusion, falling back to full context"
+          ((compress_verbose)) && warn '    Failed to build summary context with exclusion, falling back to full context'
           if ! build_context_summary > "$context_file_persistent"; then
-            ((compress_verbose)) && warn "    Failed to build summary context, continuing without it"
+            ((compress_verbose)) && warn '    Failed to build summary context, continuing without it'
             rm -f "$context_file_persistent"
             context_file_persistent=""
           fi
@@ -757,14 +755,14 @@ compress_rule_to_tier() {
     complete)
       ((compress_verbose)) && vecho "    Using complete context (excluding $bcs_code)"
       context_file_persistent=$(mktemp) || {
-        ((compress_verbose)) && warn "    Failed to create context temp file"
-        context_file_persistent=""
+        ((compress_verbose)) && warn '    Failed to create context temp file'
+        context_file_persistent=''
       }
       if [[ -n "$context_file_persistent" ]]; then
         if ! build_context_complete_exclude "$bcs_code" "$context_file_persistent"; then
-          ((compress_verbose)) && warn "    Failed to build complete context with exclusion, falling back to full context"
+          ((compress_verbose)) && warn '    Failed to build complete context with exclusion, falling back to full context'
           if ! build_context_complete > "$context_file_persistent"; then
-            ((compress_verbose)) && warn "    Failed to build complete context, continuing without it"
+            ((compress_verbose)) && warn '    Failed to build complete context, continuing without it'
             rm -f "$context_file_persistent"
             context_file_persistent=""
           fi
@@ -772,14 +770,14 @@ compress_rule_to_tier() {
       fi
       ;;
     toc)
-      ((compress_verbose)) && vecho "    Using TOC context for structure awareness"
+      ((compress_verbose)) && vecho '    Using TOC context for structure awareness'
       context_file_persistent=$(mktemp) || {
-        ((compress_verbose)) && warn "    Failed to create context temp file"
-        context_file_persistent=""
+        ((compress_verbose)) && warn '    Failed to create context temp file'
+        context_file_persistent=''
       }
       if [[ -n "$context_file_persistent" ]]; then
         if ! build_context_toc > "$context_file_persistent"; then
-          ((compress_verbose)) && warn "    Failed to build TOC context, continuing without it"
+          ((compress_verbose)) && warn '    Failed to build TOC context, continuing without it'
           rm -f "$context_file_persistent"
           context_file_persistent=""
         fi
@@ -789,7 +787,7 @@ compress_rule_to_tier() {
       context_file_persistent=""
       ;;
     *)
-      ((compress_verbose)) && warn "    Unknown context level '$context_level', using none"
+      ((compress_verbose)) && warn "    Unknown context level ${context_level@Q}, using none"
       context_file_persistent=""
       ;;
   esac
@@ -826,7 +824,7 @@ compress_rule_to_tier() {
     local -i claude_exit=0
 
     # Skip tee if stderr is not a terminal (non-interactive or piped)
-    local use_tee=0
+    local -i use_tee=0
     [[ -t 2 ]] && use_tee=1
 
     if [[ -n "$context_file_persistent" ]]; then
@@ -864,7 +862,7 @@ compress_rule_to_tier() {
     if ((claude_exit == 0)); then
       # Check if temp file was actually written to (size > 0)
       if [[ ! -s "$temp_file" ]]; then
-        ((compress_verbose)) && warn "  ⚠ Claude succeeded but wrote empty file (possible API error)"
+        ((compress_verbose)) && warn '  ⚠ Claude succeeded but wrote empty file (possible API error)'
         rm -f "$temp_file"
         sleep $((2 ** attempt))  # Exponential backoff: 2, 4, 8 seconds
         attempt+=1
@@ -872,7 +870,7 @@ compress_rule_to_tier() {
       fi
 
       # Sanitize UTF-8 encoding in Claude's output
-      sanitize_utf8 "$temp_file" || ((compress_verbose)) && warn "  ⚠ UTF-8 sanitization failed"
+      sanitize_utf8 "$temp_file" || ((compress_verbose)) && warn '  ⚠ UTF-8 sanitization failed'
 
       # Check file size
       file_size=$(wc -c < "$temp_file")
@@ -880,7 +878,7 @@ compress_rule_to_tier() {
       # Check if size is acceptable
       if ((file_size <= target_size)); then
         # Success - move temp file to target
-        mv "$temp_file" "$target_file" || { error "Failed to write: $target_file"; return 1; }
+        mv "$temp_file" "$target_file" || { error "Failed to write ${target_file@Q}"; return 1; }
 
         # Copy permissions, ownership, and timestamp from source .complete.md file
         # Use explicit values as fallback if --reference fails
@@ -901,11 +899,11 @@ compress_rule_to_tier() {
           # Fallback: get timestamp explicitly and apply it
           local -- timestamp
           timestamp=$(stat -c '%Y' "$complete_file" 2>/dev/null) && touch -d "@$timestamp" "$target_file" 2>/dev/null || {
-            ((compress_verbose)) && warn "  Failed to sync timestamp for: $target_file"
+            ((compress_verbose)) && warn "  Failed to sync timestamp for ${target_file@Q}"
           }
         fi
 
-        ((compress_verbose)) && success "  ✓ Generated ($file_size bytes): $target_file"
+        ((compress_verbose)) && success "  ✓ Generated ($file_size bytes) ${target_file@Q}"
         [[ -n "$context_file_persistent" ]] && rm -f "$context_file_persistent"
         return 0  # Success
       else
@@ -916,10 +914,10 @@ compress_rule_to_tier() {
           attempt+=1
         else
           # Max retries reached - keep the oversized file
-          mv "$temp_file" "$target_file" || { error "Failed to write: $target_file"; return 1; }
+          mv "$temp_file" "$target_file" || { error "Failed to write ${target_file@Q}"; return 1; }
 
           # Sanitize UTF-8 encoding in oversized file
-          sanitize_utf8 "$target_file" || ((compress_verbose)) && warn "  ⚠ UTF-8 sanitization failed"
+          sanitize_utf8 "$target_file" || ((compress_verbose)) && warn '  ⚠ UTF-8 sanitization failed'
 
           # Copy permissions with fallback
           if ! chmod --reference="$complete_file" "$target_file" 2>/dev/null; then
@@ -936,7 +934,7 @@ compress_rule_to_tier() {
           if ! touch -r "$complete_file" "$target_file" 2>/dev/null; then
             local -- timestamp
             timestamp=$(stat -c '%Y' "$complete_file" 2>/dev/null) && touch -d "@$timestamp" "$target_file" 2>/dev/null || {
-              ((compress_verbose)) && warn "  Failed to sync timestamp for: $target_file"
+              ((compress_verbose)) && warn "  Failed to sync timestamp for ${target_file@Q}"
             }
           fi
 
@@ -974,10 +972,10 @@ declare -fx compress_rule_to_tier
 
 # Process a single .complete.md file
 compress_process_complete_file() {
-  local -- complete_file="$1"
-  local -- data_dir="$2"
-  local -- tier="$3"
-  local -- claude_cmd="$4"
+  local -- complete_file=$1
+  local -- data_dir=$2
+  local -- tier=$3
+  local -- claude_cmd=$4
   local -i dry_run="${5:-0}"
   local -i compress_verbose="${6:-1}"
   local -i regenerate="${7:-0}"
@@ -1016,9 +1014,9 @@ declare -fx compress_process_complete_file
 
 # Process all .complete.md files in data directory
 compress_process_all_rules() {
-  local -- data_dir="$1"
-  local -- tier="$2"
-  local -- claude_cmd="$3"
+  local -- data_dir=$1
+  local -- tier=$2
+  local -- claude_cmd=$3
   local -i dry_run="${4:-0}"
   local -i compress_verbose="${5:-1}"
   local -i summary_limit="${6:-10000}"
@@ -1106,7 +1104,7 @@ declare -fx compress_show_statistics
 
 # Report oversized files in data directory
 compress_report_oversized_files() {
-  local -- data_dir="$1"
+  local -- data_dir=$1
   local -i complete_limit="${2:-20000}"
   local -i summary_limit="${3:-10000}"
   local -i abstract_limit="${4:-1500}"
@@ -1118,7 +1116,7 @@ compress_report_oversized_files() {
     [abstract]=$abstract_limit
   )
 
-  cd "$data_dir" || { error "Cannot access data directory: $data_dir"; return 2; }
+  cd "$data_dir" || { error "Cannot access data directory ${data_dir@Q}"; return 2; }
 
   local -- type
   for type in complete summary abstract; do
@@ -1276,7 +1274,7 @@ build_context_complete() {
 
   # Check if complete file exists
   if [[ ! -f "$complete_file" ]]; then
-    warn "Complete standard not found: $complete_file"
+    warn "Complete standard not found ${complete_file@Q}"
     return 1
   fi
 
@@ -1378,13 +1376,13 @@ build_context_abstract_exclude() {
   # Generate temporary file with excluded rule
   local -- temp_data
   temp_data=$(mktemp) || {
-    warn "Failed to create temp file for context generation"
+    warn 'Failed to create temp file for context generation'
     return 1
   }
 
   # Generate abstract standard excluding the current rule
   if ! cmd_generate -t abstract -x "$exclude_code" -o "$temp_data" 2>/dev/null; then
-    warn "Failed to generate abstract context excluding $exclude_code"
+    warn "Failed to generate abstract context excluding ${exclude_code@Q}"
     rm -f "$temp_data"
     return 1
   fi
@@ -1517,7 +1515,7 @@ EOF
   readarray -t files < <(find "$data_dir" -type f -name '[0-9]*.abstract.md' | sort)
 
   if ((${#files[@]} == 0)); then
-    error "No rule files found in '$data_dir'"
+    error "No rule files found in ${data_dir@Q}"
     return 1
   fi
 
@@ -1545,8 +1543,8 @@ declare -fx cmd_codes
 # Helper function to fix header level based on file depth
 # Args: filepath data_dir
 fix_header_level() {
-  local -- filepath="$1"
-  local -- data_dir="$2"
+  local -- filepath=$1
+  local -- data_dir=$2
   local -- relative_path="${filepath#"$data_dir"/}"
   local -i slash_count depth
   local -- first_line header_text header_marker
@@ -1596,8 +1594,8 @@ fix_header_level() {
 # Args: exclusion_string array_name
 # Returns: Populates named array with normalized BCS codes
 parse_exclusion_list() {
-  local -- exclusion_string="$1"
-  local -- array_name="$2"
+  local -- exclusion_string=$1
+  local -- array_name=$2
   local -a codes=()
   local -- code
 
@@ -1627,8 +1625,8 @@ declare -fx parse_exclusion_list
 # Args: bcs_code exclusion_array_name
 # Returns: 0 if excluded, 1 if not excluded
 is_excluded() {
-  local -- bcs_code="$1"
-  local -- array_name="$2"
+  local -- bcs_code=$1
+  local -- array_name=$2
   local -- pattern
 
   # Get array contents using nameref indirection
@@ -1653,8 +1651,8 @@ declare -fx is_excluded
 # Usage: readarray -t md_files < <(filter_excluded_files md_files exclusion_codes)
 # Returns: Outputs filtered file paths (one per line) and excluded count as last line prefixed with "EXCLUDED:"
 filter_excluded_files() {
-  local -- files_array_name="$1"
-  local -- exclusion_array_name="$2"
+  local -- files_array_name=$1
+  local -- exclusion_array_name=$2
 
   # Get current array contents
   #shellcheck disable=SC1087
@@ -1765,16 +1763,16 @@ EOF
         ;;
       -t|--type)
         arg2 "$@"; shift
-        file_type="$1"
+        file_type=$1
         ;;
       -o|--output)
         arg2 "$@"; shift
-        output_file="$1"
+        output_file=$1
         use_stdout=0
         ;;
       -x|--exclude)
         arg2 "$@"; shift
-        exclusion_string="$1"
+        exclusion_string=$1
         ;;
       --canonical)
         use_canonical=1
@@ -1881,19 +1879,19 @@ EOF
       echo '#fin'
     } > "$output_file"
 
-    success "Generated '$output_file'"
+    success "Generated ${output_file@Q}"
     info "Total lines: $(wc -l < "$output_file")"
 
     # Generate summary tier
     file_type='summary'
-    output_file="$output_dir/BASH-CODING-STANDARD.summary.md"
+    output_file="$output_dir"/BASH-CODING-STANDARD.summary.md
     suffix='.summary.md'
     md_files=()
 
     readarray -t md_files < <(find "$data_dir" -name "*$suffix" -type f ! -name "README.md" ! -name "BASH-CODING-STANDARD.*" | sort)
 
     if ((${#md_files[@]} == 0)); then
-      error "No summary files found in '$data_dir'"
+      error "No summary files found in ${data_dir@Q}"
       return 1
     fi
 
@@ -1942,14 +1940,14 @@ EOF
 
     # Generate abstract tier
     file_type='abstract'
-    output_file="$output_dir/BASH-CODING-STANDARD.abstract.md"
+    output_file="$output_dir"/BASH-CODING-STANDARD.abstract.md
     suffix='.abstract.md'
     md_files=()
 
     readarray -t md_files < <(find "$data_dir" -name "*$suffix" -type f ! -name "README.md" ! -name "BASH-CODING-STANDARD.*" | sort)
 
     if ((${#md_files[@]} == 0)); then
-      error "No abstract files found in '$data_dir'"
+      error "No abstract files found in ${data_dir@Q}"
       return 1
     fi
 
@@ -1993,19 +1991,19 @@ EOF
       echo '#fin'
     } > "$output_file"
 
-    success "Generated '$output_file'"
+    success "Generated ${output_file@Q}"
     info "Total lines: $(wc -l < "$output_file")"
 
     # Generate rulet tier
     file_type='rulet'
-    output_file="$output_dir/BASH-CODING-STANDARD.rulet.md"
+    output_file="$output_dir"/BASH-CODING-STANDARD.rulet.md
     suffix='.rulet.md'
     md_files=()
 
     readarray -t md_files < <(find "$data_dir" -name "*$suffix" -type f ! -name "README.md" ! -name "BASH-CODING-STANDARD.*" | sort)
 
     if ((${#md_files[@]} == 0)); then
-      error "No rulet files found in '$data_dir'"
+      error "No rulet files found in ${data_dir@Q}"
       return 1
     fi
 
@@ -2049,7 +2047,7 @@ EOF
       echo '#fin'
     } > "$output_file"
 
-    success "Generated '$output_file'"
+    success "Generated ${output_file@Q}"
     info "Total lines: $(wc -l < "$output_file")"
 
     success 'All four tiers generated'
@@ -2069,7 +2067,7 @@ EOF
   case "$file_type" in
     complete|abstract|summary|abstract-complete|rulet) ;;
     *)
-      error "Invalid file type '$file_type'"
+      error "Invalid file type ${file_type@Q}"
       info 'Must be one of: complete, abstract, summary, rulet, abstract-complete'
       return 2
       ;;
@@ -2202,7 +2200,7 @@ EOF
 
   # Success message
   if [[ "$output_file" != '/dev/stdout' ]]; then
-    success "Generated '$output_file'"
+    success "Generated ${output_file@Q}"
     info "Total lines: $(wc -l < "$output_file")"
   fi
 
@@ -2274,14 +2272,14 @@ EOF
         ;;
       --agent-cmd)
         arg2 "$@"; shift
-        agent_cmd="$1"
+        agent_cmd=$1
         ;;
       -*)
         error "Unknown option ${1@Q}"
         return 22
         ;;
       *)
-        category="$1"
+        category=$1
         ;;
     esac
     shift
@@ -2354,8 +2352,8 @@ declare -fx cmd_generate_rulets
 
 # Helper: Resolve category argument to directory path
 resolve_category_dir() {
-  local -- category="$1"
-  local -- data_dir="$2"
+  local -- category=$1
+  local -- data_dir=$2
 
   # Strip leading zeros and normalize
   category="${category#0}"  # Remove leading zero if present
@@ -2411,9 +2409,9 @@ declare -fx resolve_category_dir
 
 # Helper: Generate rulet file for a specific category directory
 generate_rulet_for_category() {
-  local -- category_dir="$1"
-  local -- agent_cmd="$2"
-  local -i force="$3"
+  local -- category_dir=$1
+  local -- agent_cmd=$2
+  local -i force=$3
 
   local -- category_num category_name
   category_num=$(basename "$category_dir" | grep -o '^[0-9][0-9]')
@@ -2513,7 +2511,7 @@ generate_rulet_for_category() {
 
       # Check for API errors in output (rate limit, etc.)
       if grep -q "rate_limit_error\|API Error.*429" "$output_file"; then
-        warn "API rate limit error detected in output"
+        warn 'API rate limit error detected in output'
         rm -f "$temp_output" "$stderr_file"
 
         if ((retry_count < max_retries)); then
@@ -2551,7 +2549,7 @@ generate_rulet_for_category() {
         fi
 
         # Empty output - different error
-        error "Output file is empty or contains no valid rulets"
+        error 'Output file is empty or contains no valid rulets'
         rm -f "$temp_input" "$temp_output" "$stderr_file" "$output_file"
         return 1
       fi
@@ -2632,14 +2630,14 @@ EOF
         ;;
       -C)
         arg2_num "$@"; shift
-        context_lines="$1"
+        context_lines=$1
         ;;
       -*)
         error "Unknown option ${1@Q}"
         return 22
         ;;
       *)
-        pattern="$1"
+        pattern=$1
         break
         ;;
     esac
@@ -2735,7 +2733,7 @@ find_bcs_file_by_code() {
         fi
       else
         # Look for 00-section.{tier}.md file
-        local -- section_file="$section_dir"/00-section$suffix
+        local -- section_file="$section_dir"/00-section"$suffix"
         if [[ -f "$section_file" ]]; then
           echo "$section_file"
           return 0
@@ -2766,7 +2764,7 @@ declare -fx find_bcs_file_by_code
 
 # Parse comma-separated BCS codes, validate, and return array
 parse_codes_option() {
-  local -- codes_str="$1"
+  local -- codes_str=$1
   local -a codes=()
   local -- code
 
@@ -2787,7 +2785,7 @@ parse_codes_option() {
     if find_bcs_file_by_code "${code#BCS}" 'abstract' &>/dev/null; then
       valid_codes+=("$code")
     else
-      error "Invalid BCS code '$code'"
+      error "Invalid BCS code ${code@Q}"
       info "Use 'bcs codes' to list all available codes"
       return 1
     fi
@@ -2801,7 +2799,7 @@ declare -fx parse_codes_option
 
 # Parse comma-separated section numbers, convert to BCS code prefixes
 parse_sections_option() {
-  local -- sections_str="$1"
+  local -- sections_str=$1
   local -a sections=()
   local -- section
 
@@ -3074,7 +3072,7 @@ declare -fx build_validation_prompt
 
 # Build Claude command with advanced options
 build_claude_command() {
-  local -- system_prompt_file="$1"
+  local -- system_prompt_file=$1
   local -- append_prompt="${2:-}"
   local -- allowed_tools="${3:-}"
   local -- add_dir="${4:-}"
@@ -3221,7 +3219,7 @@ EOF
 
   # Helper to format output based on format option
   format_output() {
-    local -- file="$1"
+    local -- file=$1
     case "$output_format" in
       absolute)
         echo "$file"
@@ -3346,7 +3344,7 @@ EOF
 
   # Check BCS_FILE exists
   if [[ ! -f "$BCS_FILE" ]]; then
-    error "Standard file not found '$BCS_FILE'"
+    error "Standard file not found ${BCS_FILE@Q}"
     return 1
   fi
 
@@ -3432,7 +3430,7 @@ EOF
   fi
 
   # Argument provided: set new default
-  local -- new_tier="$1"
+  local -- new_tier=$1
 
   # Validate tier argument
   case "$new_tier" in
@@ -3448,15 +3446,15 @@ EOF
 
   # Check write permissions
   if [[ ! -w "$BCS_DIR" ]]; then
-    error "Permission denied: Cannot write to $BCS_DIR"
+    error "Permission denied: Cannot write to ${BCS_DIR@Q}"
     info 'Try running with sudo or as the owner of the directory'
     return 1
   fi
 
   # Verify target file exists
-  local -- target_file="$BCS_DIR/data/BASH-CODING-STANDARD.${new_tier}.md"
+  local -- target_file="$BCS_DIR"/data/BASH-CODING-STANDARD."$new_tier".md
   if [[ ! -f "$target_file" ]]; then
-    error "Target file not found: $target_file"
+    error "Target file not found ${target_file@Q}"
     return 1
   fi
 
@@ -3471,8 +3469,8 @@ EOF
   fi
 
   # Create the symlink (relative path for portability)
-  local -- symlink_path="$BCS_DIR/data/BASH-CODING-STANDARD.md"
-  local -- relative_target="BASH-CODING-STANDARD.${new_tier}.md"
+  local -- symlink_path="$BCS_DIR"/data/BASH-CODING-STANDARD.md
+  local -- relative_target=BASH-CODING-STANDARD."$new_tier".md
 
   if ! ln -sf "$relative_target" "$symlink_path"; then
     error "Failed to create symlink"
@@ -3634,7 +3632,7 @@ Code Quality:
   ShellCheck:         All scripts pass validation
 
 Repository:
-  Main script:        bash-coding-standard (v$BCS_VERSION)
+  Main script:        bash-coding-standard ($BCS_VERSION)
   Subcommands:        11 (display, about, template, check, compress, codes, generate, search, decode, sections, help)
   License:            CC BY-SA 4.0
 
@@ -3674,7 +3672,7 @@ EOF
   # Default output (with verbose adding stats and links)
   cat <<EOF
 
-Bash Coding Standard (BCS) v$BCS_VERSION
+Bash Coding Standard (BCS) $BCS_VERSION
 
 A comprehensive coding standard for modern Bash 5.2+ scripts, designed for
 consistency, robustness, and maintainability.
@@ -3781,19 +3779,19 @@ EOF
         return 0
         ;;
       -t|--type)
-        arg2 "$@"; shift; template_type="$1"
+        arg2 "$@"; shift; template_type=$1
         ;;
       -n|--name)
-        arg2 "$@"; shift; script_name="$1"
+        arg2 "$@"; shift; script_name=$1
         ;;
       -d|--description)
-        arg2 "$@"; shift; description="$1"
+        arg2 "$@"; shift; description=$1
         ;;
       -v|--version)
-        arg2 "$@"; shift; version="$1"
+        arg2 "$@"; shift; version=$1
         ;;
       -o|--output)
-        arg2 "$@"; shift; output_file="$1"
+        arg2 "$@"; shift; output_file=$1
         ;;
       -x|--executable)
         make_executable=1
@@ -3813,7 +3811,7 @@ EOF
   case "$template_type" in
     minimal|basic|complete|library) ;;
     *)
-      error "Invalid template type '$template_type'"
+      error "Invalid template type ${template_type@Q}"
       error 'Must be one of: minimal, basic, complete, library'
       return 2
       ;;
@@ -3880,7 +3878,7 @@ EOF
     echo "$content"
   else
     echo "$content" > "$output_dest"
-    info "Generated $template_type template '$output_dest'"
+    info "Generated $template_type template ${output_dest@Q}"
 
     # Make executable if requested
     if ((make_executable)); then
@@ -4000,7 +3998,7 @@ EOF
 
       -f|--format)
         arg2 "$@"; shift
-        output_format="$1"
+        output_format=$1
         # Validate format
         case $output_format in
           text|json|markdown|bcs-json) ;;
@@ -4014,21 +4012,21 @@ EOF
 
       --codes)
         arg2 "$@"; shift
-        codes_option="$1"
+        codes_option=$1
         ;;
 
       --sections)
         arg2 "$@"; shift
-        sections_option="$1"
+        sections_option=$1
         ;;
 
       --tier)
         arg2 "$@"; shift
-        tier="$1"
+        tier=$1
         # Validate tier
         case $tier in
           abstract|complete|summary|rulet) ;;
-          *)  error "Invalid tier '$tier'"
+          *)  error "Invalid tier ${tier@Q}"
               info 'Must be one of: abstract, complete, summary, rulet'
               return 2
               ;;
@@ -4037,18 +4035,18 @@ EOF
 
       --append-prompt)
         arg2 "$@"; shift
-        append_prompt="$1"
+        append_prompt=$1
         ;;
 
       --allowed-tools)
         arg2 "$@"; shift
-        allowed_tools="$1"
+        allowed_tools=$1
         ;;
 
       --add-dir)
         arg2 "$@"; shift
-        add_dir="$1"
-        [[ -d "$add_dir" ]] || { error "Directory not found '$add_dir'"; return 1; }
+        add_dir=$1
+        [[ -d "$add_dir" ]] || { error "Directory not found ${add_dir@Q}"; return 1; }
         ;;
 
       --skip-permissions)
@@ -4057,11 +4055,11 @@ EOF
 
       --severity)
         arg2 "$@"; shift
-        severity="$1"
+        severity=$1
         case "$severity" in
           all|violations|warnings) ;;
           *)
-            error "Invalid severity '$severity'"
+            error "Invalid severity ${severity@Q}"
             info 'Must be one of: all, violations, warnings'
             return 2
             ;;
@@ -4070,7 +4068,7 @@ EOF
 
       --claude-cmd)
         arg2 "$@"; shift
-        claude_cmd="$1"
+        claude_cmd=$1
         ;;
 
       -v|--verbose)
@@ -4081,7 +4079,7 @@ EOF
 
       --)
         shift
-        (($#)) && script_file="$1"
+        (($#)) && script_file=$1
         break
         ;;
 
@@ -4095,7 +4093,7 @@ EOF
         ;;
 
       *)
-        script_file="$1"
+        script_file=$1
         ;;
     esac
     shift
@@ -4464,7 +4462,7 @@ EOF
 
       --tier)
         arg2 "$@"; shift
-        tier="$1"
+        tier=$1
         [[ "$tier" =~ ^(summary|abstract)$ ]] || {
           error "Invalid tier: $tier (must be 'summary' or 'abstract')"
           return 2
@@ -4473,22 +4471,22 @@ EOF
 
       --claude-cmd)
         arg2 "$@"; shift
-        claude_cmd="$1"
+        claude_cmd=$1
         ;;
 
       --summary-limit)
         arg2_num "$@"; shift
-        summary_limit="$1"
+        summary_limit=$1
         ;;
 
       --abstract-limit)
         arg2_num "$@"; shift
-        abstract_limit="$1"
+        abstract_limit=$1
         ;;
 
       --context-level)
         arg2 "$@"; shift
-        context_level="$1"
+        context_level=$1
         [[ "$context_level" =~ ^(none|toc|abstract|summary|complete)$ ]] || {
           error "Invalid context level: $context_level (must be 'none', 'toc', 'abstract', 'summary', or 'complete')"
           return 2
@@ -4530,7 +4528,7 @@ EOF
   data_dir=$(find_data_dir) || { error 'Data directory not found'; return 1; }
 
   # Verify data directory exists
-  [[ -d "$data_dir" ]] || { error "Data directory not found: $data_dir"; return 1; }
+  [[ -d "$data_dir" ]] || { error "Data directory not found ${data_dir@Q}"; return 1; }
 
   # Report-only mode
   if ((report_only)); then
@@ -4613,7 +4611,7 @@ cmd_help() {
         cmd_default --help
         ;;
       *)
-        error "Unknown command '$topic'"
+        error "Unknown command ${topic@Q}"
         info "Run 'bcs help' for list of commands"
         return 2
         ;;
@@ -4840,7 +4838,7 @@ if [[ "${BASH_SOURCE[0]}" != "$0" ]]; then
     BCS_MD="$(cat -- "$BCS_FILE")"
     true
   } || {
-    error "BASH-CODING-STANDARD.md not found when sourcing"
+    error 'BASH-CODING-STANDARD.md not found when sourcing'
     false
   }
   return
@@ -4859,7 +4857,7 @@ main() {
 if (($# == 0)); then
   subcommand='display'
 else
-  subcommand="$1"
+  subcommand=$1
   shift  # Remove subcommand from args
 fi
 
@@ -4954,7 +4952,7 @@ case "$subcommand" in
     cmd_help "$@"
     ;;
   *)
-    error "Unknown command '$subcommand'"
+    error "Unknown command ${subcommand@Q}"
     info "Try 'bcs help' for usage information"
     exit 2
     ;;

@@ -157,42 +157,6 @@ test_cat_output() {
   assert_equals "$output_short" "$output_long" "Short and long cat forms produce same output"
 }
 
-test_json_output() {
-  local -- script="$1"
-  local -- output
-
-  info "Testing -j/--json output for $(basename "$script")"
-
-  output=$("$script" -j 2>/dev/null)
-
-  # Validate JSON structure
-  assert_contains '"bcs"' "$output" "JSON contains key"
-  assert_contains '# Bash Coding Standard' "$output" "JSON contains content"
-
-  # Test with jq if available
-  if command -v jq &>/dev/null; then
-    if echo "$output" | jq -e . &>/dev/null; then
-      pass "JSON is valid (jq validation)"
-      TESTS_RUN+=1
-    else
-      fail "JSON is invalid (jq validation failed)"
-      TESTS_RUN+=1
-    fi
-  fi
-}
-
-test_bash_export() {
-  local -- script="$1"
-  local -- output
-
-  info "Testing -b/--bash export for $(basename "$script")"
-
-  output=$("$script" -b)
-  assert_contains 'declare' "$output" "Bash export contains declare statement"
-  assert_contains 'BCS_MD=' "$output" "Bash export contains BCS_MD variable"
-  assert_contains '# Bash Coding Standard' "$output" "Bash export contains content"
-}
-
 test_sourcing() {
   local -- script="$1"
   local -- test_name="Sourcing $(basename "$script")"
@@ -263,31 +227,6 @@ test_blank_line_preservation() {
     pass "Blank lines preserved (found $blank_count blank lines)"
   else
     fail "Blank lines may be squeezed (found only $blank_count blank lines)"
-  fi
-}
-
-test_squeeze_option() {
-  local -- script="$1"
-
-  info "Testing -s/--squeeze option for $(basename "$script")"
-
-  # Check if script supports --squeeze
-  if "$script" --help 2>&1 | grep -q -- '--squeeze'; then
-    # Create temp file with multiple consecutive blank lines
-    local -- tmpfile
-    tmpfile=$(mktemp)
-    trap 'rm -f "$tmpfile"' RETURN
-
-    printf 'Line 1\n\n\n\nLine 2\n' > "$tmpfile"
-
-    # Test that squeeze option works
-    local -- squeezed_count unsqueezed_count
-
-    # This test would need the script to accept a file argument, which it doesn't
-    # So we skip this test for now
-    info "  Skipping squeeze test (requires file input support)"
-  else
-    info "  Skipping --squeeze test (not supported in this version)"
   fi
 }
 
@@ -377,12 +316,9 @@ main() {
     test_help_output "$script" || true
     test_version_output "$script" || true
     test_cat_output "$script" || true
-    test_json_output "$script" || true
-    test_bash_export "$script" || true
     test_sourcing "$script" || true
     test_readonly_variables "$script" || true
     test_blank_line_preservation "$script" || true
-    test_squeeze_option "$script" || true
     test_short_option_expansion "$script" || true
     test_error_messages "$script" || true
     test_function_export "$script" || true

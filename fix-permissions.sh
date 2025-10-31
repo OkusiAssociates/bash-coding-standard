@@ -83,7 +83,6 @@ main() {
 
   # Set executable scripts
   chmod 775 "$REPO_DIR"/bcs
-  chmod 775 "$REPO_DIR"/rebuild-bcs-symlinks.sh
   [[ -f "$REPO_DIR/testcode" ]] && chmod 775 "$REPO_DIR/testcode"
   find "$REPO_DIR" -name "*.sh" -type f -exec chmod 775 {} +
 

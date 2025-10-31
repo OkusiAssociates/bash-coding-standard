@@ -1,15 +1,12 @@
 # Bash Coding Standard
 
-**Comprehensive Bash coding standard for Bash 5.2+** (not a compatibility standard).
+**Comprehensive standard for Bash 5.2+** (not compatibility-focused)
 
-## Coding Principles
-- K.I.S.S.
-- "The best process is no process"
-- "Everything should be made as simple as possible, but not any simpler."
+**Philosophy:** Systems engineering applied to Bash. K.I.S.S. principle: simplicity without over-engineering.
 
-**Critical**: Do not over-engineer scripts; remove unused functions/variables.
+**Critical:** Remove unused functions/variables in production scripts.
 
-## Contents
+## 14 Sections
 1. Script Structure & Layout
 2. Variable Declarations & Constants
 3. Variable Expansion & Parameter Substitution
@@ -457,28 +454,23 @@ shopt -s globstar   # Enables ** recursive matching (slow on deep trees)
 
 ## File Extensions
 
-**Executables use `.sh` or no extension; libraries require `.sh` and must not be executable; PATH-accessible commands use no extension.**
+**Executables: `.sh` or no extension; libraries: `.sh` required; global PATH tools: no extension.**
 
-**Rationale:** Extension-free executables in PATH appear as native commands (`deploy` vs `deploy.sh`). Libraries need `.sh` for immediate identification as sourceable code, preventing accidental execution.
+**Rationale:** No-extension executables appear as commands (`deploy` not `deploy.sh`). Libraries need `.sh` for identification and must be non-executable to prevent accidental execution.
 
 **Example:**
 ```bash
-# ✓ PATH executable (no extension)
-/usr/local/bin/backup
+# Executable (global)
+/usr/local/bin/backup          # No extension
 
-# ✓ Library (not executable)
--rw-r--r-- lib-auth.sh
+# Executable (local)
+./scripts/build.sh             # .sh extension
 
-# ✗ Library without extension
-lib-auth
-
-# ✗ PATH executable with extension
-/usr/local/bin/backup.sh
+# Library (non-executable)
+lib-common.sh                  # .sh extension, chmod 644
 ```
 
-**Anti-patterns:**
-- Libraries without `.sh` extension ’ ambiguous purpose
-- PATH executables with `.sh` ’ unprofessional appearance
+**Anti-patterns:** `chmod +x lib-*.sh` ' libraries must not be executable | `/usr/bin/tool.sh` ' omit extension for PATH executables.
 
 **Ref:** BCS0106
 

@@ -79,7 +79,8 @@ test_default_list_short_option() {
 test_default_invalid_tier() {
   test_section "Invalid Tier Tests"
 
-  local -- output exit_code
+  local -- output
+  local -i exit_code
   output=$("$SCRIPT" default invalid_tier 2>&1) && exit_code=$? || exit_code=$?
 
   # Should fail
@@ -108,7 +109,8 @@ test_default_set_complete() {
   fi
 
   # Set to complete
-  local -- output exit_code
+  local -- output
+  local -i exit_code
   output=$("$SCRIPT" default complete 2>&1) && exit_code=$? || exit_code=$?
 
   if ((exit_code == 0)); then
@@ -147,7 +149,8 @@ test_default_set_summary() {
   fi
 
   # Set to summary
-  local -- output exit_code
+  local -- output
+  local -i exit_code
   output=$("$SCRIPT" default summary 2>&1) && exit_code=$? || exit_code=$?
 
   if ((exit_code == 0)); then
@@ -186,7 +189,8 @@ test_default_set_abstract() {
   fi
 
   # Set to abstract
-  local -- output exit_code
+  local -- output
+  local -i exit_code
   output=$("$SCRIPT" default abstract 2>&1) && exit_code=$? || exit_code=$?
 
   if ((exit_code == 0)); then
@@ -225,7 +229,8 @@ test_default_set_rulet() {
   fi
 
   # Set to rulet
-  local -- output exit_code
+  local -- output
+  local -i exit_code
   output=$("$SCRIPT" default rulet 2>&1) && exit_code=$? || exit_code=$?
 
   if ((exit_code == 0)); then
@@ -383,7 +388,8 @@ test_default_tier_validation() {
   local -- invalid_tiers=("comp" "summ" "abs" "rule" "COMPLETE" "Summary" "test" "")
 
   for invalid in "${invalid_tiers[@]}"; do
-    local -- output exit_code
+    local -- output
+    local -i exit_code
     output=$("$SCRIPT" default "$invalid" 2>&1) && exit_code=$? || exit_code=$?
 
     if ((exit_code != 0)); then

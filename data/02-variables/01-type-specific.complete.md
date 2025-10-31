@@ -44,6 +44,8 @@ echo "$count"  # Output: 0
 - Type checking (non-numeric values become 0)
 - Clear intent that variable holds numbers
 
+> **See Also:** BCS0705 for using declared integers in arithmetic comparisons with `(())` instead of `[[ ... -eq ... ]]`
+
 **2. String variables (`declare --`)**
 
 **Purpose**: Variables that hold text strings. The `--` separator prevents option injection.

@@ -36,7 +36,7 @@ test_workflow_template_to_execution() {
         pass "Generated template executes without errors"
       else
         local -i exec_exit=$?
-        if [[ "$exec_exit" -eq 124 ]]; then
+        if ((exec_exit == 124)); then
           fail "Generated template timed out (may be waiting for input)"
         else
           # Non-zero exit is acceptable - template may need args
@@ -167,7 +167,7 @@ test_workflow_codes_decode_all() {
         fi
       done
 
-      if [[ "$success_count" -eq 5 ]]; then
+      if ((success_count == 5)); then
         pass "All sampled codes ($success_count/5) decode successfully in complete tier"
       else
         fail "Some codes failed to decode ($success_count/5 succeeded)"
@@ -226,7 +226,7 @@ test_workflow_about_consistency() {
     local -i actual_sections
     actual_sections=$("$SCRIPT" sections 2>&1 | grep -cE '^[0-9]+\.' || true)
 
-    if [[ "$actual_sections" -eq "$sections_count" ]]; then
+    if ((actual_sections == sections_count)); then
       pass "Section count matches between 'about' and 'sections' commands"
     else
       warn "Section count mismatch (about: $sections_count, sections: $actual_sections)"
@@ -321,7 +321,7 @@ test_workflow_multiple_commands_sequence() {
   out4=$("$SCRIPT" sections 2>&1 | wc -l)
 
   # First and last sections output should be identical
-  if [[ "$out1" -eq "$out4" ]]; then
+  if ((out1 == out4)); then
     pass "Multiple command executions produce consistent results"
   else
     fail "Command output changed between runs (state interference?)"
@@ -339,12 +339,13 @@ test_workflow_search_no_results() {
   test_section "Workflow: Search With No Results → Error Handling"
 
   # Workflow: Search for nonexistent pattern → Verify graceful handling
-  local -- search_output exit_code=0
+  local -- search_output
+  local -i exit_code=0
 
   search_output=$("$SCRIPT" search "xyzabc123nonexistent" 2>&1) || exit_code=$?
 
   # Should not crash (exit code should be defined)
-  if [[ "$exit_code" -eq 0 || "$exit_code" -eq 1 ]]; then
+  if ((exit_code == 0 || exit_code == 1)); then
     pass "Search with no results handles gracefully"
   else
     fail "Search crashed or returned unexpected exit code: $exit_code"

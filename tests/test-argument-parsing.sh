@@ -79,13 +79,13 @@ test_md2ansi_option() {
 
     # SIGPIPE (141) is expected when piping to head
     output=$("$SCRIPT" --md2ansi 2>&1 | head -20) || exit_code=$?
-    [[ "$exit_code" -eq 0 || "$exit_code" -eq 141 ]] && exit_code=0
+    ((exit_code == 0 || exit_code == 141)) && exit_code=0
     assert_success "$exit_code" "bcs --md2ansi succeeds when md2ansi available"
 
     # Test -a
     exit_code=0
     output=$("$SCRIPT" -a 2>&1 | head -20) || exit_code=$?
-    [[ "$exit_code" -eq 0 || "$exit_code" -eq 141 ]] && exit_code=0
+    ((exit_code == 0 || exit_code == 141)) && exit_code=0
     assert_success "$exit_code" "bcs -a succeeds when md2ansi available"
   else
     echo "Skipping --md2ansi tests (md2ansi not available)"
@@ -155,7 +155,7 @@ test_viewer_args_passthrough() {
   local -i exit_code=0
   output=$("$SCRIPT" -c -n 2>&1 | head -5) || exit_code=$?
   # SIGPIPE is acceptable
-  [[ "$exit_code" -eq 0 || "$exit_code" -eq 141 ]] && exit_code=0
+  ((exit_code == 0 || exit_code == 141)) && exit_code=0
   assert_success "$exit_code" "bcs -c -n succeeds"
   # -n should be passed to cat, so we should see line numbers
   assert_contains "$output" "^\s*[0-9]" "bcs -c -n passes -n to cat"
@@ -164,7 +164,7 @@ test_viewer_args_passthrough() {
   # Note: -b conflicts with --bash, so we use --number-nonblank instead
   exit_code=0
   output=$("$SCRIPT" --cat -n --number-nonblank 2>&1 | head -5 || true) || exit_code=$?
-  [[ "$exit_code" -eq 0 || "$exit_code" -eq 141 ]] && exit_code=0
+  ((exit_code == 0 || exit_code == 141)) && exit_code=0
   assert_success "$exit_code" "bcs --cat with multiple viewer args succeeds"
 }
 
