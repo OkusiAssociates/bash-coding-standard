@@ -38,26 +38,12 @@ This ensures that when sorted alphabetically, files concatenate in the correct s
 - `###` - Subsection headers (e.g., "### Shebang and Initial Setup")
 - `####` - Sub-subsection headers (rare, used in Code Style section)
 
-## Regenerating BASH-CODING-STANDARD.md
-
-To regenerate the complete standard from these files:
-
-```bash
-./regenerate-standard.sh
-```
-
-This script:
-1. Finds all `.md` files in `data/`
-2. Sorts them alphabetically (numeric prefixes ensure correct order)
-3. Concatenates them into `BASH-CODING-STANDARD.md`
-4. Adds `#fin` marker at the end
-
 ## Editing the Standard
 
 To modify the coding standard:
 
-1. Edit the relevant `.md` file(s) in the appropriate subdirectory
-2. Run `./regenerate-standard.sh` to rebuild `BASH-CODING-STANDARD.md`
+1. Edit the relevant `.complete.md` file in the appropriate subdirectory
+2. Run `bcs generate --canonical` to rebuild `BASH-CODING-STANDARD*.md`
 3. Review the regenerated file to ensure formatting is correct
 
 ## Benefits of This Structure
