@@ -242,7 +242,7 @@ install:
 	fi; \
 	if [ -n "$$REAL_USER" ]; then \
 		echo "Detected user: $$REAL_USER"; \
-		@# Check if user is already in 'bcs' group to avoid redundant usermod calls
+		# Check if user is already in 'bcs' group to avoid redundant usermod calls \
 		if id -nG "$$REAL_USER" 2>/dev/null | grep -qw bcs; then \
 			echo "✓ User '$$REAL_USER' is already in 'bcs' group"; \
 		else \
