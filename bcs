@@ -417,8 +417,8 @@ rebuild_bcs_index() {
       # Create link name: just the number + tier (e.g., "01.complete.md")
       link_name="$link_dir/$numeric_prefix$tier"
 
-      # Create symlink (absolute path)
-      ln -sf "$file" "$link_name"
+      # Create symlink (relative path)
+      ln -sf "$(realpath --relative-to="$link_dir" "$file")" "$link_name"
       symlink_count+=1
     else
       warn "Skipping file with unexpected naming ${file@Q}"

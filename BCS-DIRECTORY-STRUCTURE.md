@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `BCS/` directory provides a **numeric-indexed** parallel structure to the `data/` directory, making BCS code lookups fast and predictable. The structure combines descriptive directory names (mirroring `data/`) with numeric symlink shortcuts for convenience. Most file symlinks are **absolute paths** to their source files in `data/` (portability limitation), while directory shortcuts use relative symlinks.
+The `BCS/` directory provides a **numeric-indexed** parallel structure to the `data/` directory, making BCS code lookups fast and predictable. The structure combines descriptive directory names (mirroring `data/`) with numeric symlink shortcuts for convenience. All symlinks use **relative paths**, making the structure fully portable across different systems and repository locations.
 
 ## Purpose
 
@@ -77,25 +77,26 @@ To convert a BCS code to a path:
 
 ## Symlink Types
 
-The BCS/ directory uses **two types** of symlinks:
+All symlinks in BCS/ use **relative paths**, making the structure fully portable:
 
-### Absolute Symlinks (321 .md files)
+### File Symlinks (321 .md files)
 
-All `.md` file symlinks are **absolute paths** to source files:
+All `.md` file symlinks use **relative paths** to source files:
 
 ```bash
 # From BCS/01-script-structure/02.complete.md
-/ai/scripts/Okusi/bash-coding-standard/data/01-script-structure/02-shebang.complete.md
+../../data/01-script-structure/02-shebang.complete.md
 
-# From BCS/01-script-structure/02/01.complete.md
-/ai/scripts/Okusi/bash-coding-standard/data/01-script-structure/02-shebang/01-dual-purpose.complete.md
+# From BCS/01-script-structure/02-shebang/01.complete.md
+../../../data/01-script-structure/02-shebang/01-dual-purpose.complete.md
+
+# From BCS/00.complete.md
+../data/00-header.complete.md
 ```
 
-**Limitation**: Not portable - breaks if repository is moved to a different path.
+### Directory Shortcuts (16 numeric symlinks)
 
-### Relative Symlinks (16 directory shortcuts)
-
-Numeric directory shortcuts use **relative paths**:
+Numeric directory shortcuts also use **relative paths**:
 
 ```bash
 # From BCS/01
@@ -105,13 +106,17 @@ Numeric directory shortcuts use **relative paths**:
 02-shebang/
 ```
 
-**Benefits**: These numeric shortcuts (01, 02, etc.) enable the `BCS/01/02.md` path syntax while maintaining portability within the BCS/ structure
+**Benefits**:
+- ✓ Fully portable - works regardless of repository location
+- ✓ Git-friendly (no absolute paths)
+- ✓ Safe for moving, copying, or archiving the repository
+- ✓ Numeric shortcuts (01, 02, etc.) enable the `BCS/01/02.md` path syntax
 
 ## Statistics
 
-- **Total symlinks**: 337
-  - 321 absolute symlinks (.md files to data/)
-  - 16 relative symlinks (numeric directory shortcuts)
+- **Total symlinks**: 337 (all relative)
+  - 321 file symlinks (.md files to data/)
+  - 16 directory symlinks (numeric shortcuts)
 - **Total directories**: 17 (root + 14 sections + 2 subrule containers)
 - **Files per rule**: 3 (complete, summary, abstract)
 
@@ -126,7 +131,7 @@ bcs generate --canonical
 This command:
 1. Removes existing `BCS/` directory (preserves `.claude/` subdirectory if present)
 2. Creates fresh hybrid structure (descriptive directories + numeric shortcuts)
-3. Generates absolute symlinks for .md files and relative symlinks for directory shortcuts
+3. Generates relative symlinks for all files and directories
 4. Processes sections 00-14
 5. Handles nested subrule directories
 
@@ -138,21 +143,22 @@ This command:
 
 ## Implementation Details
 
-**Important**: The BCS/ directory currently uses absolute symlinks for .md files due to the `rebuild_bcs_index()` implementation. This design choice has trade-offs:
+The BCS/ directory uses **relative symlinks** for all files and directories, implemented in the `rebuild_bcs_index()` function using `realpath --relative-to` to calculate appropriate relative paths at each nesting level.
 
-**Advantages**:
-- ✓ Fast and reliable lookup in-place
-- ✓ Simple implementation
-- ✓ No broken symlinks within current installation
+**Benefits**:
+- ✓ Fully portable - works regardless of repository location
+- ✓ Fast and reliable lookup
+- ✓ Git-friendly - symlinks work immediately after cloning
+- ✓ Archive-friendly - tar/zip extracts work without rebuild
+- ✓ No broken symlinks when moving/copying repository
 
-**Limitations**:
-- ✗ Not portable across different installation paths
-- ✗ Breaks if repository root moves to a different location
-- ✗ Cannot copy/clone repository to different path and expect BCS/ to work immediately
+**Relative path calculation**:
+The script automatically computes the correct number of `../` prefixes based on directory depth:
+- Root level: `../data/...`
+- Section level: `../../data/...`
+- Subrule level: `../../../data/...`
 
-**Current behavior**: After cloning to a new path, you must run `bcs generate --canonical` to rebuild symlinks for the new location.
-
-**Future improvement**: Converting to relative symlinks would achieve true portability as originally documented.
+This ensures BCS/ can be copied anywhere and symlinks continue to work.
 
 ## Example Usage
 
@@ -267,16 +273,16 @@ After rebuilding, verify:
 find BCS -type l | wc -l     # Should be 337
 find BCS -type d | wc -l     # Should be 17
 
-# Count symlink types
-find BCS -type l -lname "/*" | wc -l      # Should be 321 (absolute .md file symlinks)
-find BCS -type l ! -lname "/*" | wc -l    # Should be 16 (relative directory shortcuts)
+# Verify all symlinks are relative (not absolute)
+find BCS -type l -lname "/*" | wc -l      # Should be 0 (no absolute paths)
+find BCS -type l ! -lname "/*" | wc -l    # Should be 337 (all relative)
 
 # Test symlinks
-file BCS/01-script-structure/02.complete.md   # Should show absolute path to data/
-cat BCS/01/02.complete.md                     # Should display content (via numeric shortcut)
+readlink BCS/01-script-structure/02.complete.md   # Should show ../../data/...
+cat BCS/01/02.complete.md                         # Should display content (via numeric shortcut)
 
 # Test lookups with bcs decode
-bcs decode BCS01 BCS0102 BCS010201 --all      # Verify all codes resolve
+bcs decode BCS01 BCS0102 BCS010201 --all          # Verify all codes resolve
 ```
 
 ## Troubleshooting
