@@ -159,7 +159,7 @@ code "$(bcs_to_path "$1")"
 
 ```bash
 # View complete tier
-cat "$(./test-bcs-lookup.sh BCS0102)"
+bcs decode BCS0102 -c -p
 
 # Compare tiers
 diff BCS/01/02/01.{abstract,complete}.md
@@ -225,8 +225,8 @@ find BCS -type d | wc -l     # Should be 17
 file BCS/01/02.complete.md   # Should show relative path
 cat BCS/01/02.complete.md    # Should display content
 
-# Test lookups
-./test-bcs-lookup.sh         # Should show all tests passing
+# Test lookups with bcs decode
+bcs decode BCS01 BCS0102 BCS010201 --all  # Verify all codes resolve
 ```
 
 ## Troubleshooting
@@ -238,7 +238,8 @@ find BCS -type l ! -exec test -e {} \; -print
 
 **Missing files**:
 ```bash
-./test-bcs-lookup.sh | grep "✗"
+# Test various codes to ensure files exist
+bcs decode BCS01 BCS02 BCS08 --all
 ```
 
 **Rebuild from scratch**:
@@ -260,9 +261,10 @@ Potential improvements:
 ## See Also
 
 - `bcs generate --canonical` - Regenerate standard and rebuild BCS/ index
-- `test-bcs-lookup.sh` - Lookup demonstration and testing
+- `bcs decode` - Look up and view BCS rules by code
 - `BASH-CODING-STANDARD.md` - Primary documentation (symlink determines default tier)
 - `CLAUDE.md` - Repository documentation for AI assistants
 - `bcs help generate` - Full documentation for the generate subcommand
+- `bcs help decode` - Full documentation for the decode subcommand
 
 #fin
