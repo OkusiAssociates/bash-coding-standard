@@ -1,0 +1,915 @@
+.TH BCS 1 "2025-02-11" "BCS 1.0.0" "Bash Coding Standard Manual"
+.SH NAME
+bcs, bash-coding-standard \- Bash Coding Standard toolkit for modern Bash 5.2+ scripts
+.SH SYNOPSIS
+.B bcs
+[\fIOPTIONS\fR]
+[\fISUBCOMMAND\fR]
+[\fISUBCOMMAND_OPTIONS\fR]
+[\fIARGUMENTS\fR]
+.br
+.B bash-coding-standard
+[\fIOPTIONS\fR]
+[\fISUBCOMMAND\fR]
+[\fISUBCOMMAND_OPTIONS\fR]
+[\fIARGUMENTS\fR]
+
+.SH DESCRIPTION
+.B Bash Coding Standard (BCS)
+is a comprehensive coding standard and toolkit for modern Bash 5.2+ scripts.
+It's a systems engineering philosophy applied to Bash, designed for consistency,
+robustness, and maintainability.
+
+The
+.B bcs
+command provides a multi-function CLI toolkit for viewing the standard, generating
+compliant templates, validating scripts with AI assistance, managing documentation
+tiers, and more.
+
+.SS Philosophy
+"This isn't just a coding standard \- it's a systems engineering philosophy applied to Bash."
+
+.SS Core Principles
+.IP \(bu 2
+K.I.S.S. (Keep It Simple, Stupid)
+.IP \(bu 2
+"The best process is no process"
+.IP \(bu 2
+"Everything should be made as simple as possible, but not any simpler"
+
+.SS Project Information
+.TP
+.B Version
+1.0.0
+.TP
+.B Author
+Biksu Okusi (Gary Dean) / Okusi Associates
+.TP
+.B Organization
+Indonesian Open Technology Foundation (YaTTI)
+.TP
+.B License
+CC BY-SA 4.0 (Creative Commons Attribution-ShareAlike 4.0)
+.TP
+.B Repository
+https://github.com/OkusiAssociates/bash-coding-standard
+
+.SS Project Structure
+.IP \(bu 2
+14 comprehensive sections covering all aspects of Bash scripting
+.IP \(bu 2
+Multi-tier documentation system (complete, summary, abstract, rulet)
+.IP \(bu 2
+600+ test cases with 74% pass rate
+.IP \(bu 2
+Dual-purpose design: executable script + sourceable library
+
+.SH SUBCOMMANDS
+.SS display (default)
+Display the Bash Coding Standard document with optional markdown rendering.
+
+.B Syntax:
+.RS
+bcs [display] [\fIOPTIONS\fR]
+.RE
+
+.B Options:
+.TP
+.BR \-h ", " \-\-help
+Show help message for display command
+.TP
+.BR \-c ", " \-\-cat
+Force output via cat (bypass md2ansi rendering)
+.TP
+.BR \-b ", " \-\-bash
+Output as bash variable declaration
+.TP
+.BR \-j ", " \-\-json
+Output standard as JSON
+.TP
+.BR \-a ", " \-\-ansi
+Force ANSI markdown rendering with less
+.TP
+.BR \-s ", " \-\-squeeze
+Squeeze multiple blank lines into one
+
+.B Description:
+.RS
+Auto-detects best viewer: md2ansi (if available) → less (default).
+Safe fallback to cat if configured viewers unavailable.
+Respects terminal detection (only uses less if output is TTY).
+.RE
+
+.B Examples:
+.RS
+.nf
+bcs                    # Display with auto-detected viewer
+bcs display            # Explicit display command
+bcs -c                 # Force cat output
+bcs -b                 # Output as bash variable
+.fi
+.RE
+
+.SS about
+Display project information and statistics.
+
+.B Syntax:
+.RS
+bcs about [\fIOPTIONS\fR]
+.RE
+
+.B Options:
+.TP
+.BR \-h ", " \-\-help
+Show help message
+.TP
+.BR \-s ", " \-\-stats
+Show statistics only (sections, rules, files, tests)
+.TP
+.BR \-l ", " \-\-links
+Show links and references only
+.TP
+.BR \-v ", " \-\-verbose
+Show all information (default + stats + links)
+.TP
+.BR \-q ", " \-\-quote
+Show philosophy quote and principles only
+.TP
+.B \-\-json
+Output as JSON for scripting
+
+.B Examples:
+.RS
+.nf
+bcs about              # Show general information
+bcs about --stats      # Show statistics only
+bcs about --json | jq  # Parse programmatically
+.fi
+.RE
+
+.SS template
+Generate BCS-compliant script templates.
+
+.B Syntax:
+.RS
+bcs template [\fIOPTIONS\fR]
+.RE
+
+.B Options:
+.TP
+.BR \-h ", " \-\-help
+Show help message
+.TP
+.BR \-t ", " \-\-type " " \fITYPE\fR
+Template type: \fIminimal\fR, \fIbasic\fR, \fIcomplete\fR, or \fIlibrary\fR (default: basic)
+.TP
+.BR \-n ", " \-\-name " " \fINAME\fR
+Script name
+.TP
+.BR \-d ", " \-\-description " " \fIDESC\fR
+Script description
+.TP
+.BR \-v ", " \-\-version " " \fIVERSION\fR
+Script version (default: 1.0.0)
+.TP
+.BR \-o ", " \-\-output " " \fIFILE\fR
+Output file (default: stdout)
+.TP
+.BR \-x ", " \-\-make-executable
+Make output file executable (chmod +x)
+.TP
+.BR \-f ", " \-\-force
+Overwrite existing output file
+
+.B Template Types:
+.RS
+.TP
+.I minimal
+~13 lines: Bare essentials for BCS compliance
+.TP
+.I basic
+~27 lines: Standard with metadata (default)
+.TP
+.I complete
+~104 lines: Full toolkit with all utilities
+.TP
+.I library
+~38 lines: Sourceable library pattern
+.RE
+
+.B Examples:
+.RS
+.nf
+bcs template -t minimal
+bcs template -t complete -n deploy -d "Deploy script" -v 1.5.0 -o deploy.sh -x
+bcs template -t library -n auth -o lib-auth.sh
+.fi
+.RE
+
+.SS check
+AI-powered script compliance validation using Claude AI.
+
+.B Syntax:
+.RS
+bcs check [\fIOPTIONS\fR] \fISCRIPT_FILE\fR
+.RE
+
+.B Core Options:
+.TP
+.BR \-h ", " \-\-help
+Show help message
+.TP
+.BR \-s ", " \-\-strict
+Strict mode (warnings become violations)
+.TP
+.BR \-f ", " \-\-format " " \fIFORMAT\fR
+Output format: \fItext\fR (default), \fIjson\fR, \fImarkdown\fR, \fIbcs-json\fR
+.TP
+.BR \-q ", " \-\-quiet
+Suppress non-error output
+
+.B Filtering Options:
+.TP
+.B \-\-codes " " \fICODE1,CODE2\fR
+Validate only specific BCS codes (comma-separated)
+.TP
+.B \-\-sections " " \fIN1,N2\fR
+Validate only specific sections (1-14, comma-separated)
+.TP
+.B \-\-tier " " \fITIER\fR
+Documentation tier: \fIabstract\fR (default), \fIcomplete\fR, \fIsummary\fR, \fIrulet\fR
+
+.B Advanced Options:
+.TP
+.B \-\-claude-cmd " " \fICMD\fR
+Custom Claude command (default: claude)
+.TP
+.B \-\-append-prompt " " \fITEXT\fR
+Additional system prompt context
+.TP
+.B \-\-allowed-tools " " \fITOOLS\fR
+Restrict Claude tools (comma-separated)
+.TP
+.B \-\-add-dir " " \fIPATH\fR
+Add directory for Claude context
+.TP
+.B \-\-skip-permissions
+Skip permission checks
+
+.B Output Control:
+.TP
+.B \-\-severity " " \fILEVEL\fR
+Filter by severity: \fIall\fR (default), \fIviolations\fR, \fIwarnings\fR
+
+.B Examples:
+.RS
+.nf
+bcs check myscript.sh                     # Quick validation
+bcs check --sections 1,8 myscript.sh      # Validate specific sections
+bcs check --strict --quiet deploy.sh      # CI/CD mode
+bcs check --format bcs-json myscript.sh > report.json
+bcs check --tier complete --strict myscript.sh
+.fi
+.RE
+
+.B Requirements:
+.RS
+Claude Code CLI (claude command) - https://claude.ai/code
+.RE
+
+.SS compress
+Compress BCS rules using Claude AI (Developer Mode).
+
+.B Syntax:
+.RS
+bcs compress [\fIOPTIONS\fR]
+.RE
+
+.B Modes:
+.TP
+.B \-\-report-only
+Show oversized files report only (default mode)
+.TP
+.B \-\-regenerate
+Delete and recreate all compressed files
+
+.B Options:
+.TP
+.BR \-h ", " \-\-help
+Show help message
+.TP
+.B \-\-tier " " \fITIER\fR
+Regenerate specific tier: \fIsummary\fR or \fIabstract\fR
+.TP
+.BR \-f ", " \-\-force
+Force regeneration ignoring timestamps
+.TP
+.B \-\-context-level " " \fILEVEL\fR
+Context awareness: \fInone\fR, \fItoc\fR, \fIabstract\fR (recommended), \fIsummary\fR, \fIcomplete\fR
+.TP
+.B \-\-claude-cmd " " \fICMD\fR
+Path to Claude command
+.TP
+.B \-\-summary-limit " " \fIBYTES\fR
+Max file size for summary tier (default: 10000)
+.TP
+.B \-\-abstract-limit " " \fIBYTES\fR
+Max file size for abstract tier (default: 1500)
+.TP
+.BR \-n ", " \-\-dry-run
+Show what would be done without making changes
+.TP
+.BR \-v ", " \-\-verbose
+Show detailed progress (default)
+.TP
+.BR \-q ", " \-\-quiet
+Suppress non-error output
+
+.B Examples:
+.RS
+.nf
+bcs compress                                    # Show oversized files
+bcs compress --regenerate --context-level abstract
+bcs compress --regenerate --tier summary --dry-run
+.fi
+.RE
+
+.SS codes
+List all BCS rule codes with titles.
+
+.B Syntax:
+.RS
+bcs codes
+.RE
+
+.B Output Format:
+.RS
+BCS{code}:{filename}:{title}
+.RE
+
+.B Example:
+.RS
+.nf
+bcs codes                                       # List all codes
+.fi
+.RE
+
+.SS generate
+Regenerate BASH-CODING-STANDARD.md from data/ directory tree.
+
+.B Syntax:
+.RS
+bcs generate [\fIOPTIONS\fR]
+.RE
+
+.B Options:
+.TP
+.BR \-h ", " \-\-help
+Show help message
+.TP
+.BR \-t ", " \-\-type " " \fITYPE\fR
+File type: \fIcomplete\fR, \fIabstract\fR, \fIsummary\fR, \fIrulet\fR, \fIabstract-complete\fR
+.TP
+.BR \-o ", " \-\-output " " \fIFILE\fR
+Output to specific file (default: stdout)
+.TP
+.BR \-x ", " \-\-exclude " " \fICODES\fR
+Exclude BCS codes (comma-separated)
+.TP
+.B \-\-canonical
+Generate all four tiers to BASH-CODING-STANDARD.{complete,summary,abstract,rulet}.md
+.TP
+.BR \-f ", " \-\-force
+Force regeneration ignoring timestamps
+
+.B Examples:
+.RS
+.nf
+bcs generate                                    # Generate to stdout
+bcs generate --canonical                        # Generate all tiers
+bcs generate -t complete -o /tmp/BCS.md
+bcs generate -x 0103,0201                       # Exclude codes
+.fi
+.RE
+
+.SS generate-rulets
+Generate rulet files from complete.md rule files.
+
+.B Syntax:
+.RS
+bcs generate-rulets [\fIOPTIONS\fR] [\fICATEGORY\fR]
+.RE
+
+.B Options:
+.TP
+.BR \-h ", " \-\-help
+Show help message
+.TP
+.BR \-a ", " \-\-all
+Generate rulets for all 14 categories
+.TP
+.BR \-f ", " \-\-force
+Force regeneration even if rulet file exists
+.TP
+.B \-\-agent-cmd " " \fICMD\fR
+Path to bcs-rulet-extractor agent
+
+.B Arguments:
+.TP
+.I CATEGORY
+Category number (01-14) or name (e.g., 'variables', '02-variables')
+
+.B Examples:
+.RS
+.nf
+bcs generate-rulets 02                          # Generate for category 02
+bcs generate-rulets variables                   # Same - by name
+bcs generate-rulets --all                       # Generate for all
+.fi
+.RE
+
+.SS search
+Search within the Bash Coding Standard.
+
+.B Syntax:
+.RS
+bcs search [\fIOPTIONS\fR] \fIPATTERN\fR
+.RE
+
+.B Options:
+.TP
+.BR \-h ", " \-\-help
+Show help message
+.TP
+.BR \-i ", " \-\-ignore-case
+Case-insensitive search
+.TP
+.BR \-C " " \fINUM\fR
+Show NUM lines of context (default: 3)
+
+.B Examples:
+.RS
+.nf
+bcs search readonly                             # Search for keyword
+bcs search -i "SET -E"                          # Case-insensitive
+bcs search -C 5 "declare -fx"                   # With context
+.fi
+.RE
+
+.SS decode
+Decode BCS code to file location or print contents.
+
+.B Syntax:
+.RS
+bcs decode [\fIOPTIONS\fR] \fICODE\fR [\fICODE\fR...]
+.RE
+
+.B Options:
+.TP
+.BR \-h ", " \-\-help
+Show help message
+.TP
+.BR \-a ", " \-\-abstract
+Show abstract tier file location (default)
+.TP
+.BR \-s ", " \-\-summary
+Show summary tier file location
+.TP
+.BR \-c ", " \-\-complete
+Show complete tier file location
+.TP
+.BR \-r ", " \-\-rulet
+Show rulet tier file location (section-level only)
+.TP
+.BR \-p ", " \-\-print
+Print file contents to stdout instead of path
+.TP
+.B \-\-all
+Show all tier file locations
+.TP
+.B \-\-relative
+Output path relative to repository root
+.TP
+.B \-\-basename
+Output only the filename
+.TP
+.B \-\-exists
+Exit 0 if code exists, 1 if not (no output)
+
+.B Examples:
+.RS
+.nf
+bcs decode BCS010201                            # Show file location
+bcs decode BCS010201 -p                         # Print contents
+bcs decode BCS010201 --all                      # Show all tiers
+bcs decode 0102 -c                              # Complete tier
+bcs decode BCS01 -r                             # Section rulet
+.fi
+.RE
+
+.SS sections
+List all 14 sections of the Bash Coding Standard.
+
+.B Syntax:
+.RS
+bcs sections
+.RE
+
+.B Example:
+.RS
+.nf
+bcs sections                                    # List all sections
+.fi
+.RE
+
+.SS default
+Set or show the default tier.
+
+.B Syntax:
+.RS
+bcs default [\fITIER\fR]
+.br
+bcs default [\fIOPTIONS\fR]
+.RE
+
+.B Arguments:
+.TP
+.I TIER
+Tier to set as default: \fIcomplete\fR, \fIsummary\fR, \fIabstract\fR, or \fIrulet\fR
+
+.B Options:
+.TP
+.BR \-h ", " \-\-help
+Show help message
+.TP
+.BR \-l ", " \-\-list
+List all available tiers with current default marked
+
+.B Examples:
+.RS
+.nf
+bcs default                                     # Show current default
+bcs default complete                            # Set to complete
+bcs default --list                              # List all tiers
+.fi
+.RE
+
+.SS help
+Show help for commands.
+
+.B Syntax:
+.RS
+bcs help [\fICOMMAND\fR]
+.RE
+
+.B Examples:
+.RS
+.nf
+bcs help                                        # List all commands
+bcs help check                                  # Help for check
+bcs help template                               # Help for template
+.fi
+.RE
+
+.SH OPTIONS
+.TP
+.BR \-h ", " \-\-help
+Show help message
+.TP
+.BR \-V ", " \-\-version
+Show version information
+
+.SH DOCUMENT ARCHITECTURE
+
+.SS BCS Code Format
+BCS codes follow the format:
+.B BCS{catNo}{ruleNo}{subruleNo}
+
+All numbers are zero-padded to 2 digits.
+
+.B Examples:
+.RS
+.TP
+.B BCS0101
+Section 1, Rule 1
+.TP
+.B BCS010201
+Section 1, Rule 2, Subrule 1
+.TP
+.B BCS02
+Section 2 header
+.RE
+
+.SS The 14 Sections
+.IP "1." 4
+Script Structure & Layout
+.IP "2." 4
+Variable Declarations & Constants
+.IP "3." 4
+Variable Expansion & Parameter Substitution
+.IP "4." 4
+Quoting & String Literals
+.IP "5." 4
+Arrays
+.IP "6." 4
+Functions
+.IP "7." 4
+Control Flow
+.IP "8." 4
+Error Handling
+.IP "9." 4
+Input/Output & Messaging
+.IP "10." 4
+Command-Line Arguments
+.IP "11." 4
+File Operations
+.IP "12." 4
+Security Considerations
+.IP "13." 4
+Code Style & Best Practices
+.IP "14." 4
+Advanced Patterns
+
+.SS Tier System
+.TP
+.B complete
+Full standard with all details (canonical source, manually edited)
+.TP
+.B summary
+Balanced version for general use (derived, ~10KB per file)
+.TP
+.B abstract
+Ultra-concise version for token optimization (derived, ~1.5KB per file, default tier)
+.TP
+.B rulet
+Highly concise actionable rules (section-level only)
+
+.SS File Structure
+.nf
+data/
+├── 00-header.{complete,summary,abstract}.md
+├── 01-script-structure/
+│   ├── 00-section.{tier}.md
+│   ├── 01-layout.{tier}.md
+│   ├── 02-shebang.{tier}.md
+│   └── ...
+├── 02-variables/
+│   ├── 01-declaration.{tier}.md
+│   └── ...
+└── ... (14 sections total)
+.fi
+
+.SH FILES
+.TP
+.B /usr/local/bin/bcs
+Main executable (default installation)
+.TP
+.B /usr/local/bin/bash-coding-standard
+Symlink to bcs
+.TP
+.B /usr/local/share/yatti/bash-coding-standard/
+Installation directory for data files
+.TP
+.B /usr/local/share/yatti/bash-coding-standard/data/
+BCS rule files and templates
+.TP
+.B /usr/local/share/yatti/bash-coding-standard/data/BASH-CODING-STANDARD.md
+Symlink to default tier
+.TP
+.B /usr/local/share/yatti/bash-coding-standard/data/templates/
+BCS-compliant script templates
+.TP
+.B /usr/share/bash-completion/completions/bcs
+Bash completion file
+.TP
+.B /usr/share/bash-completion/completions/bash-coding-standard
+Bash completion symlink
+
+.B Alternative Installation Paths:
+.RS
+When PREFIX=/usr is used, files are installed to /usr/bin, /usr/share, etc.
+.RE
+
+.SH ENVIRONMENT
+.SS Variables Set by BCS
+.TP
+.B BCS_VERSION
+Current version (1.0.0)
+.TP
+.B BCS_PATH
+Absolute path to bcs script
+.TP
+.B BCS_DIR
+Directory containing bcs script
+.TP
+.B BCS_NAME
+Script name (bcs or bash-coding-standard)
+.TP
+.B BCS_FILE
+Path to BASH-CODING-STANDARD.md document
+.TP
+.B BCS_MD
+Content of standard when sourced
+
+.SS Variables Used by BCS
+.TP
+.B VERBOSE
+Verbosity level (0 = quiet, 1+ = verbose)
+
+.SH EXIT STATUS
+.TP
+.B 0
+Success (no errors)
+.TP
+.B 1
+Error or warning detected
+.TP
+.B 2
+Invalid option/argument or violation (in strict mode)
+.TP
+.B 127
+Required command not found (e.g., claude CLI)
+
+.SS Command-Specific Exit Codes
+
+.B bcs check:
+.RS
+.TP
+.B 0
+Script is compliant
+.TP
+.B 1
+Warnings only (or violations in non-strict mode)
+.TP
+.B 2
+Violations (or warnings in strict mode)
+.RE
+
+.B bcs decode:
+.RS
+.TP
+.B 0
+Code found or exists
+.TP
+.B 1
+Code not found
+.RE
+
+.SH EXAMPLES
+.SS Viewing the Standard
+.nf
+bcs                             # Display with auto-detected viewer
+bcs -c                          # Force cat output
+bcs display -s                  # Squeeze blank lines
+.fi
+
+.SS Project Information
+.nf
+bcs about                       # General info
+bcs about --stats               # Statistics only
+bcs about --json | jq           # Parse programmatically
+.fi
+
+.SS Generating Templates
+.nf
+bcs template -t minimal         # Minimal template
+bcs template -t complete -n deploy -v 1.5.0 -o deploy.sh -x
+bcs template -t library -n auth -o lib-auth.sh
+.fi
+
+.SS Validation with AI
+.nf
+bcs check myscript.sh           # Quick validation
+bcs check --strict myscript.sh  # Strict mode
+bcs check --sections 1,8 myscript.sh
+bcs check --format json myscript.sh
+.fi
+
+.SS Managing Rules
+.nf
+bcs codes                       # List all codes
+bcs search readonly             # Search keyword
+bcs decode BCS0102 -p           # Show rule
+bcs sections                    # List sections
+.fi
+
+.SS Development Workflow
+.nf
+bcs compress --regenerate       # Regenerate compressed files
+bcs generate --canonical        # Generate all tiers
+bcs check --tier complete lib.sh
+.fi
+
+.SH DEPENDENCIES
+.SS Required
+.IP \(bu 2
+Bash 5.2+ (modern bash features)
+.IP \(bu 2
+realpath command (or builtin)
+.IP \(bu 2
+Standard Unix utilities: find, grep, sort, sed, awk
+
+.SS Optional
+.IP \(bu 2
+.B claude
+CLI (Claude Code) - for bcs check and bcs compress
+.br
+Get from: https://claude.ai/code
+.IP \(bu 2
+.B jq
+- for JSON output parsing
+.IP \(bu 2
+.B md2ansi
+- for formatted markdown display
+.IP \(bu 2
+.B less
+- for paging output
+
+.SH DUAL-PURPOSE DESIGN
+The
+.B bcs
+script can be both executed and sourced.
+
+.SS Execution Mode
+.nf
+bcs [COMMAND] [OPTIONS]         # Run as executable
+bash-coding-standard check myscript.sh
+.fi
+
+.SS Sourcing Mode
+.nf
+source bcs                      # Load functions and BCS_MD
+cmd_check "$script"
+echo "$BCS_MD" | grep "BCS01"
+.fi
+
+When sourced, the script skips strict mode and exports all functions for programmatic use.
+
+.SH SEE ALSO
+.BR shellcheck (1),
+.BR bash (1),
+.BR jq (1),
+.BR less (1),
+.BR grep (1),
+.BR awk (1),
+.BR sed (1)
+
+.B Online Resources:
+.RS
+.IP \(bu 2
+Google Shell Style Guide: https://google.github.io/styleguide/shellguide.html
+.IP \(bu 2
+ShellCheck: https://www.shellcheck.net/
+.IP \(bu 2
+Bash Manual: https://www.gnu.org/software/bash/manual/bash.html
+.IP \(bu 2
+BCS Repository: https://github.com/OkusiAssociates/bash-coding-standard
+.RE
+
+.SH AUTHORS
+.B Bash Coding Standard
+was created by
+.B Biksu Okusi
+(Gary Dean) /
+.B Okusi Associates
+and is maintained by the
+.B Indonesian Open Technology Foundation (YaTTI)\fR.
+
+.SH COPYRIGHT
+Copyright \(co Okusi Associates
+
+Licensed under CC BY-SA 4.0 (Creative Commons Attribution-ShareAlike 4.0)
+
+Full License: https://creativecommons.org/licenses/by-sa/4.0/
+
+You are free to share and adapt the material, provided you give appropriate credit,
+indicate if changes were made, and distribute contributions under the same license.
+
+.SH VERSION
+BCS version 1.0.0
+
+Recent changes in v1.0.0:
+.IP \(bu 2
+Symlink-based default tier detection
+.IP \(bu 2
+All command aliases removed for simplification
+.IP \(bu 2
+Enhanced BCS decode with section code support
+.IP \(bu 2
+Comprehensive test suite (19 files, 600+ tests, 74% pass rate)
+.IP \(bu 2
+Idempotent color variables
+.IP \(bu 2
+Complete shopt settings
+
+.SH BUGS
+Report bugs at: https://github.com/OkusiAssociates/bash-coding-standard/issues
+
+.SH NOTES
+This manpage corresponds to BCS version 1.0.0.
+
+The
+.B bcs
+script is designed to be both a powerful CLI tool and a comprehensive
+coding standard reference. It emphasizes modern Bash 5.2+ features and
+does not maintain backwards compatibility with older Bash versions.

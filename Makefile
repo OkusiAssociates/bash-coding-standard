@@ -11,6 +11,8 @@
 PREFIX ?= /usr/local
 BINDIR = $(PREFIX)/bin
 SHAREDIR = $(PREFIX)/share/yatti/bash-coding-standard
+COMPLETIONDIR = $(PREFIX)/share/bash-completion/completions
+MANDIR = $(PREFIX)/share/man/man1
 
 # Trim utility scripts to install
 TRIM_SCRIPTS = ltrim rtrim trim trimall trimv squeeze
@@ -340,6 +342,16 @@ install:
 	else \
 		echo "  - BCS index not found (run 'bcs generate --canonical' to create)"; \
 	fi
+	@echo "Installing bash completion..."
+	install -d $(COMPLETIONDIR)
+	install -m 644 bcs.bash_completion $(COMPLETIONDIR)/bcs
+	ln -sf bcs $(COMPLETIONDIR)/bash-coding-standard
+	@echo "  - Bash completion installed to $(COMPLETIONDIR)"
+	@echo "Installing manpage..."
+	install -d $(MANDIR)
+	install -m 644 bcs.1 $(MANDIR)/bcs.1
+	ln -sf bcs.1 $(MANDIR)/bash-coding-standard.1
+	@echo "  - Manpage installed to $(MANDIR)"
 	@echo ""
 	@echo "✓ Installed to $(PREFIX)"
 	@echo ""
@@ -360,6 +372,8 @@ install:
 	@echo "  - Data directory: $(SHAREDIR)/data/ (300+ rule files + templates)"
 	@echo "  - Vendored dependencies: $(SHAREDIR)/lib/ (~544KB)"
 	@echo "  - BCS index: $(SHAREDIR)/BCS/ (convenience symlinks, if available)"
+	@echo "  - Bash completion: $(COMPLETIONDIR)/bcs (and bash-coding-standard)"
+	@echo "  - Manpage: $(MANDIR)/bcs.1 (and bash-coding-standard.1)"
 	@echo ""
 	@echo "Usage examples:"
 	@echo "  bcs                                  # View BCS standard"
@@ -377,6 +391,10 @@ install:
 	@echo "  hr2int 10M                           # Human to integer (10000000)"
 	@echo "  int2hr 10000000                      # Integer to human (10.0M)"
 	@echo "  ltrim ' text '                       # Left trim"
+	@echo ""
+	@echo "View documentation:"
+	@echo "  man bcs                              # View manpage"
+	@echo "  man bash-coding-standard             # Same (symlink)"
 	@echo ""
 	@echo "Check dependencies:"
 	@echo "  make check-deps                      # Check optional tools"
@@ -405,5 +423,9 @@ uninstall:
 		rm -f $(BINDIR)/$$SCRIPT; \
 	done
 	rm -rf $(SHAREDIR)
+	rm -f $(COMPLETIONDIR)/bcs
+	rm -f $(COMPLETIONDIR)/bash-coding-standard
+	rm -f $(MANDIR)/bcs.1
+	rm -f $(MANDIR)/bash-coding-standard.1
 	@echo ""
 	@echo "✓ Uninstalled from $(PREFIX)"
