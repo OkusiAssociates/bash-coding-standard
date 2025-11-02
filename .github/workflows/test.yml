@@ -11,6 +11,7 @@ jobs:
   test:
     name: Run Test Suite
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - name: Checkout code
@@ -39,24 +40,19 @@ jobs:
           shellcheck -x tests/*.sh || true
 
       - name: Generate tier files
+        timeout-minutes: 5
         run: |
           echo "Regenerating tier files..."
-          ./bcs generate -o BASH-CODING-STANDARD.complete.md
-          ./bcs generate -t abstract -o BASH-CODING-STANDARD.abstract.md
-          ./bcs generate -t summary -o BASH-CODING-STANDARD.summary.md
+          ./bcs generate -o BASH-CODING-STANDARD.complete.md < /dev/null
+          ./bcs generate -t abstract -o BASH-CODING-STANDARD.abstract.md < /dev/null
+          ./bcs generate -t summary -o BASH-CODING-STANDARD.summary.md < /dev/null
 
       - name: Run full test suite
+        timeout-minutes: 20
         run: |
           echo "Running test suite..."
-          ./tests/run-all-tests.sh
+          ./tests/run-all-tests.sh < /dev/null
         continue-on-error: true
-
-      - name: Run new critical tests
-        run: |
-          echo "Running critical new tests..."
-          ./tests/test-subcommand-compress.sh
-          ./tests/test-data-structure.sh
-          ./tests/test-self-compliance.sh
 
       - name: Check for test failures
         run: |
@@ -67,7 +63,9 @@ jobs:
   compatibility:
     name: Bash Version Compatibility
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
+      fail-fast: false
       matrix:
         bash-version: ['5.0', '5.1', '5.2']
 
@@ -83,8 +81,9 @@ jobs:
           bash -n bcs
 
       - name: Run basic tests
+        timeout-minutes: 2
         run: |
-          ./bcs --help
-          ./bcs --version
-          ./bcs about
-          ./bcs codes | head -20
+          ./bcs --help < /dev/null
+          ./bcs --version < /dev/null
+          ./bcs about < /dev/null
+          ./bcs codes < /dev/null | head -20
