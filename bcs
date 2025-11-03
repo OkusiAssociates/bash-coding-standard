@@ -3444,15 +3444,19 @@ EOF
       ;;
   esac
 
-  # Check write permissions
-  if [[ ! -w "$BCS_DIR" ]]; then
-    error "Permission denied: Cannot write to ${BCS_DIR@Q}"
+  # Find data directory using FHS-compliant search
+  local -- data_dir
+  data_dir=$(find_data_dir) || { error 'Data directory not found'; return 1; }
+
+  # Check write permissions on data directory
+  if [[ ! -w "$data_dir" ]]; then
+    error "Permission denied: Cannot write to ${data_dir@Q}"
     info 'Try running with sudo or as the owner of the directory'
     return 1
   fi
 
   # Verify target file exists
-  local -- target_file="$BCS_DIR"/data/BASH-CODING-STANDARD."$new_tier".md
+  local -- target_file="$data_dir"/BASH-CODING-STANDARD."$new_tier".md
   if [[ ! -f "$target_file" ]]; then
     error "Target file not found ${target_file@Q}"
     return 1
@@ -3469,7 +3473,7 @@ EOF
   fi
 
   # Create the symlink (relative path for portability)
-  local -- symlink_path="$BCS_DIR"/data/BASH-CODING-STANDARD.md
+  local -- symlink_path="$data_dir"/BASH-CODING-STANDARD.md
   local -- relative_target=BASH-CODING-STANDARD."$new_tier".md
 
   if ! ln -sf "$relative_target" "$symlink_path"; then

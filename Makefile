@@ -333,7 +333,7 @@ install:
 	done
 	install -d -m 2775 -g bcs $(SHAREDIR)
 	cp -a data $(SHAREDIR)/ && chgrp -R bcs $(SHAREDIR)/data && find $(SHAREDIR)/data -type d -exec chmod 2775 {} + && find $(SHAREDIR)/data -type f -exec chmod 664 {} +
-	ln -sf BASH-CODING-STANDARD.abstract.md $(SHAREDIR)/data/BASH-CODING-STANDARD.md
+	ln -sf BASH-CODING-STANDARD.summary.md $(SHAREDIR)/data/BASH-CODING-STANDARD.md
 	cp -a lib $(SHAREDIR)/ && chgrp -R bcs $(SHAREDIR)/lib && find $(SHAREDIR)/lib -type d -exec chmod 2775 {} + && find $(SHAREDIR)/lib -type f -exec chmod 664 {} + && chmod 775 $(SHAREDIR)/lib/agents/* $(SHAREDIR)/lib/md2ansi/md2ansi $(SHAREDIR)/lib/md2ansi/md $(SHAREDIR)/lib/mdheaders/mdheaders $(SHAREDIR)/lib/mdheaders/libmdheaders.bash $(SHAREDIR)/lib/whichx/whichx $(SHAREDIR)/lib/dux/dir-sizes $(SHAREDIR)/lib/printline/printline $(SHAREDIR)/lib/bcx/bcx $(SHAREDIR)/lib/shlock/shlock $(SHAREDIR)/lib/trim/*.bash $(SHAREDIR)/lib/timer/timer $(SHAREDIR)/lib/post_slug/post_slug.bash $(SHAREDIR)/lib/hr2int/hr2int.bash $(SHAREDIR)/lib/remblanks/remblanks
 	@if [ -d BCS ]; then \
 		rm -rf $(SHAREDIR)/BCS && \
