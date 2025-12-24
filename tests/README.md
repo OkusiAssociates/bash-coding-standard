@@ -1,19 +1,63 @@
-# bash-coding-standard Test Suite
+# BCS Test Suite
 
-Comprehensive test suite for the `bash-coding-standard` script covering all execution paths, argument combinations, and environment conditions.
+Comprehensive test suite for the `bcs` toolkit covering all 13 subcommands, 8 workflow scripts, and core functionality.
+
+**Statistics:** 34 test files | 600+ tests | 21 assertion types
+
+---
 
 ## Test Structure
 
 ```
 tests/
-├── README.md                    # This file
-├── run-all-tests.sh            # Main test runner
-├── test-helpers.sh             # Assertion functions and test utilities
-├── test-find-bcs-file.sh       # Tests for find_bcs_file() function
-├── test-argument-parsing.sh    # Tests for all command-line arguments
-├── test-execution-modes.sh     # Tests for direct execution vs sourcing
-└── test-environment.sh         # Tests for environment conditions
+├── README.md                           # This file
+├── run-all-tests.sh                    # Main test runner
+├── test-helpers.sh                     # Assertion functions (21 types)
+├── coverage.sh                         # Test coverage analyzer
+│
+├── # Subcommand Tests (13)
+├── test-subcommand-about.sh            # bcs about
+├── test-subcommand-check.sh            # bcs check (AI-powered)
+├── test-subcommand-codes.sh            # bcs codes
+├── test-subcommand-compress.sh         # bcs compress (AI-powered)
+├── test-subcommand-decode.sh           # bcs decode
+├── test-subcommand-default.sh          # bcs default
+├── test-subcommand-dispatcher.sh       # Subcommand routing
+├── test-subcommand-display.sh          # bcs display
+├── test-subcommand-generate.sh         # bcs generate
+├── test-subcommand-generate-rulets.sh  # bcs generate-rulets
+├── test-subcommand-search.sh           # bcs search
+├── test-subcommand-sections.sh         # bcs sections
+├── test-subcommand-template.sh         # bcs template
+│
+├── # Workflow Tests (8)
+├── test-workflow-add.sh                # 01-add-rule.sh
+├── test-workflow-modify.sh             # 02-modify-rule.sh
+├── test-workflow-delete.sh             # 03-delete-rule.sh
+├── test-workflow-interrogate.sh        # 04-interrogate-rule.sh
+├── test-workflow-compress.sh           # 10-compress-rules.sh
+├── test-workflow-generate.sh           # 20-generate-canonical.sh
+├── test-workflow-validate.sh           # 30-validate-data.sh
+├── test-workflow-check-compliance.sh   # 40-check-compliance.sh
+│
+├── # Integration & System Tests (7)
+├── test-integration.sh                 # Cross-component integration
+├── test-execution-modes.sh             # Direct vs sourced execution
+├── test-environment.sh                 # Environment conditions
+├── test-tier-system.sh                 # Four-tier documentation
+├── test-data-structure.sh              # data/ directory validation
+├── test-self-compliance.sh             # BCS self-compliance
+├── test-get-default-tier.sh            # Default tier detection
+│
+├── # Core Function Tests (6)
+├── test-argument-parsing.sh            # CLI argument handling
+├── test-bash-coding-standard.sh        # Legacy compatibility
+├── test-bcs-check-alignment.sh         # AI check alignment
+├── test-error-handling.sh              # Error handling patterns
+└── test-find-bcs-file.sh               # File discovery
 ```
+
+---
 
 ## Running Tests
 
@@ -26,206 +70,242 @@ tests/
 ### Run Individual Test Suite
 
 ```bash
-./tests/test-argument-parsing.sh
-./tests/test-find-bcs-file.sh
-./tests/test-execution-modes.sh
-./tests/test-environment.sh
+# Subcommand tests
+./tests/test-subcommand-display.sh
+./tests/test-subcommand-template.sh
+
+# Workflow tests
+./tests/test-workflow-validate.sh
+
+# Integration tests
+./tests/test-data-structure.sh
 ```
 
-## Test Coverage
+### Run Test Categories
 
-### test-find-bcs-file.sh
-Tests the `find_bcs_file()` function:
-- Finding file in current directory
-- Finding file in standard FHS locations
-- Handling nonexistent paths
-- Search path order
-- Output format validation
-- Edge cases (empty paths)
+```bash
+# All subcommand tests
+for t in tests/test-subcommand-*.sh; do bash "$t"; done
 
-### test-argument-parsing.sh
-Tests all command-line argument combinations:
-- **Help options**: `-h`, `--help`
-- **Cat options**: `-c`, `--cat`, `-` (dash)
-- **Bash declare option**: `-b`, `--bash`
-- **md2ansi option**: `-a`, `--md2ansi`
-- **Short option bundling**: `-hc`, `-cb`, `-ba`, `-hcba`, etc.
-- **Viewer arguments passthrough**: Passing extra args to cat/md2ansi
-- **Invalid options**: Error handling for unknown options
-- **No arguments**: Default behavior
-- **Option order**: Priority of conflicting options
+# All workflow tests
+for t in tests/test-workflow-*.sh; do bash "$t"; done
+```
 
-### test-execution-modes.sh
-Tests both execution modes:
-- **Direct execution**:
-  - Script runs successfully
-  - `set -euo pipefail` is active
-  - `shopt` settings are enabled
-  - Error handling works correctly
-  - Script metadata is set (BCS_PATH, BCS_FILE)
+### Check Coverage
 
-- **Sourced mode**:
-  - Variables are set correctly (BCS_FILE, BCS_PATH, BCS_MD)
-  - BCS_MD is pre-loaded with content
-  - `display_BCS` function is available and exported
-  - `find_bcs_file` function is available
-  - Variables are global (`-gx` flag)
+```bash
+./tests/coverage.sh
+```
 
-- **Mode differences**:
-  - Direct execution uses `set -euo pipefail`
-  - Sourced mode doesn't affect parent shell
-  - Both modes can find files correctly
+---
 
-- **Error handling**:
-  - Direct execution exits on invalid args
-  - `display_BCS` function returns error codes
+## Test Categories
 
-### test-environment.sh
-Tests environment conditions and edge cases:
-- **Terminal detection**:
-  - Output to pipe
-  - Output redirection
-  - No terminal available
+### Subcommand Tests (13 files)
 
-- **md2ansi availability**:
-  - Script behavior with md2ansi installed
-  - Fallback to cat when md2ansi unavailable
-  - `--md2ansi` flag behavior
-  - `--cat` bypasses md2ansi
+Each of the 13 `bcs` subcommands has a dedicated test file:
 
-- **File not found**:
-  - Script in wrong location
-  - Error reporting
-  - Sourcing when file not found
+| Test File | Subcommand | Key Tests |
+|-----------|------------|-----------|
+| `test-subcommand-display.sh` | `display` | Output formats, viewer detection, legacy options |
+| `test-subcommand-about.sh` | `about` | Stats output, JSON format, links |
+| `test-subcommand-template.sh` | `template` | 4 template types, placeholders, executable flag |
+| `test-subcommand-check.sh` | `check` | AI compliance, formats, filtering (requires Claude) |
+| `test-subcommand-compress.sh` | `compress` | Tier generation, size limits (requires Claude) |
+| `test-subcommand-codes.sh` | `codes` | Code listing, count verification |
+| `test-subcommand-generate.sh` | `generate` | Tier generation, canonical rebuild |
+| `test-subcommand-generate-rulets.sh` | `generate-rulets` | Rulet extraction (requires Claude) |
+| `test-subcommand-search.sh` | `search` | Pattern matching, context lines |
+| `test-subcommand-decode.sh` | `decode` | Code resolution, tier selection, print mode |
+| `test-subcommand-sections.sh` | `sections` | Section listing, count verification |
+| `test-subcommand-default.sh` | `default` | Tier switching, symlink management |
+| `test-subcommand-dispatcher.sh` | (routing) | Command routing, unknown command handling |
 
-- **Variable initialization**:
-  - BCS_MD population
-  - BCS_PATH and BCS_FILE correctness
-  - Variable persistence
+### Workflow Tests (8 files)
 
-- **I/O handling**:
-  - STDIN doesn't interfere
-  - Errors go to STDERR
-  - Help goes to STDOUT
+Tests for the maintenance scripts in `workflows/`:
 
-- **Edge cases**:
-  - Spaces in file paths
-  - Special characters
-  - Empty stdin
+| Test File | Workflow Script | Purpose |
+|-----------|-----------------|---------|
+| `test-workflow-add.sh` | `01-add-rule.sh` | Adding new BCS rules |
+| `test-workflow-modify.sh` | `02-modify-rule.sh` | Modifying existing rules |
+| `test-workflow-delete.sh` | `03-delete-rule.sh` | Deleting rules safely |
+| `test-workflow-interrogate.sh` | `04-interrogate-rule.sh` | Rule inspection |
+| `test-workflow-compress.sh` | `10-compress-rules.sh` | AI compression |
+| `test-workflow-generate.sh` | `20-generate-canonical.sh` | Standard generation |
+| `test-workflow-validate.sh` | `30-validate-data.sh` | Data validation (11 checks) |
+| `test-workflow-check-compliance.sh` | `40-check-compliance.sh` | Batch compliance |
+
+### Integration Tests (7 files)
+
+Cross-component and system-level tests:
+
+| Test File | Focus |
+|-----------|-------|
+| `test-integration.sh` | End-to-end workflows |
+| `test-execution-modes.sh` | Direct execution vs sourcing |
+| `test-environment.sh` | Terminal, paths, I/O handling |
+| `test-tier-system.sh` | Four-tier documentation system |
+| `test-data-structure.sh` | data/ directory integrity |
+| `test-self-compliance.sh` | BCS scripts follow BCS |
+| `test-get-default-tier.sh` | Symlink-based tier detection |
+
+### Core Tests (6 files)
+
+Fundamental functionality:
+
+| Test File | Focus |
+|-----------|-------|
+| `test-argument-parsing.sh` | CLI option parsing, bundling |
+| `test-bash-coding-standard.sh` | Legacy symlink compatibility |
+| `test-bcs-check-alignment.sh` | AI check consistency |
+| `test-error-handling.sh` | Exit codes, error messages |
+| `test-find-bcs-file.sh` | FHS path resolution |
+
+---
 
 ## Test Helpers
 
-The `test-helpers.sh` library provides:
+The `test-helpers.sh` library provides 21 assertion functions:
 
-### Assertion Functions
-- `assert_equals expected actual [test_name]` - Assert two strings are equal
-- `assert_contains haystack needle [test_name]` - Assert string contains substring
-- `assert_not_contains haystack needle [test_name]` - Assert string doesn't contain substring
-- `assert_exit_code expected actual [test_name]` - Assert exit code matches
-- `assert_file_exists file [test_name]` - Assert file exists
-- `assert_success exit_code [test_name]` - Assert exit code is 0
-- `assert_failure exit_code [test_name]` - Assert exit code is non-zero
+### Basic Assertions
+```bash
+assert_equals expected actual [test_name]
+assert_not_empty value [test_name]
+assert_contains haystack needle [test_name]
+assert_not_contains haystack needle [test_name]
+```
 
-### Utility Functions
-- `test_section "Section Name"` - Print test section header
-- `print_summary` - Print test results summary
+### Exit Code Assertions
+```bash
+assert_exit_code expected actual [test_name]
+assert_success exit_code [test_name]
+assert_failure exit_code [test_name]
+```
+
+### File Assertions
+```bash
+assert_file_exists file [test_name]
+assert_dir_exists dir [test_name]
+assert_file_executable file [test_name]
+assert_file_contains file pattern [test_name]
+```
+
+### Numeric Assertions
+```bash
+assert_zero value [test_name]
+assert_not_zero value [test_name]
+assert_greater_than value threshold [test_name]
+assert_less_than value threshold [test_name]
+assert_lines_between output min max [test_name]
+```
+
+### Pattern Assertions
+```bash
+assert_regex_match string pattern [test_name]
+```
+
+### Organization
+```bash
+test_section "Section Name"    # Print section header
+test_summary                   # Print pass/fail counts
+```
 
 ### Test Counters
-- `TESTS_RUN` - Total number of tests run
-- `TESTS_PASSED` - Number of tests passed
-- `TESTS_FAILED` - Number of tests failed
-- `FAILED_TESTS` - Array of failed test names
+```bash
+TESTS_RUN      # Total tests executed
+TESTS_PASSED   # Successful tests
+TESTS_FAILED   # Failed tests
+FAILED_TESTS   # Array of failed test names
+```
+
+---
 
 ## Writing New Tests
 
-To add a new test file:
-
-1. Create `test-<name>.sh` in the `tests/` directory
-2. Follow this template:
+### Template
 
 ```bash
 #!/usr/bin/env bash
-# Description of test suite
-
+# Test description
 set -euo pipefail
 
-# Load test helpers
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 # shellcheck source=tests/test-helpers.sh
 source "$SCRIPT_DIR"/test-helpers.sh
 
-SCRIPT="$SCRIPT_DIR"/../bash-coding-standard
+BCS="$SCRIPT_DIR"/../bcs
 
 test_feature_one() {
   test_section "Feature One Tests"
 
-  # Your tests here
-  local -- output
-  output=$("$SCRIPT" --option 2>&1)
-  assert_contains "$output" "expected" "Test description"
+  local -- output exit_code
+  output=$("$BCS" subcommand --option 2>&1) || exit_code=$?
+
+  assert_success "${exit_code:-0}" "Command succeeds"
+  assert_contains "$output" "expected" "Output contains expected"
 }
 
 test_feature_two() {
   test_section "Feature Two Tests"
-
-  # More tests
+  # More tests...
 }
 
 # Run all tests
 test_feature_one
 test_feature_two
 
-print_summary
+test_summary
 
 #fin
 ```
 
-3. Make it executable: `chmod +x tests/test-<name>.sh`
-4. Run it individually or via `run-all-tests.sh`
+### Steps
 
-## Test Permutations Covered
+1. Create `test-<category>-<name>.sh` in `tests/`
+2. Source `test-helpers.sh`
+3. Organize tests into functions with `test_section`
+4. Use assertions to verify behavior
+5. Call `test_summary` at end
+6. Make executable: `chmod +x tests/test-<name>.sh`
 
-### Command-Line Options (All Combinations)
-- Single options: `-h`, `-c`, `-b`, `-a`
-- Long options: `--help`, `--cat`, `--bash`, `--md2ansi`
-- Short bundled options: All combinations of `-hcba`
-- With viewer args: `-c -n`, `--cat --number`, etc.
-- Invalid options: Unknown flags, non-option arguments
-
-### Execution Contexts
-- Direct execution (script mode)
-- Sourced mode (library mode)
-- With terminal (TTY)
-- Without terminal (pipe/redirect)
-- With md2ansi available
-- Without md2ansi available
-
-### File Locations
-- Same directory as script (development)
-- `/usr/local/share/yatti/bash-coding-standard/` (local install)
-- `/usr/share/yatti/bash-coding-standard/` (system install)
-- File not found (error condition)
-
-### Environment Variations
-- Standard paths
-- Paths with spaces
-- Empty stdin
-- Piped output
-- Redirected output
+---
 
 ## Exit Codes
 
-Tests follow standard exit codes:
-- `0` - All tests passed
-- `1` - One or more tests failed
-- `2` - Test suite error (e.g., missing dependencies)
+| Code | Meaning |
+|------|---------|
+| 0 | All tests passed |
+| 1 | One or more tests failed |
+| 2 | Test suite error (missing dependencies) |
+
+---
 
 ## Requirements
 
-- Bash 5.2+
-- Standard POSIX utilities (grep, find, head, etc.)
-- Optional: md2ansi (for md2ansi-related tests)
+- **Bash 5.2+**
+- **ShellCheck** (for self-compliance tests)
+- **Claude CLI** (optional, for AI-powered test suites)
+
+---
+
+## AI-Dependent Tests
+
+Some tests require the Claude CLI:
+
+- `test-subcommand-check.sh`
+- `test-subcommand-compress.sh`
+- `test-subcommand-generate-rulets.sh`
+- `test-bcs-check-alignment.sh`
+- `test-workflow-compress.sh`
+- `test-workflow-check-compliance.sh`
+
+These tests are skipped gracefully when Claude is unavailable.
+
+---
 
 ## License
 
-Same license as bash-coding-standard (CC BY-SA 4.0)
+Same license as BCS (CC BY-SA 4.0)
+
+#fin
