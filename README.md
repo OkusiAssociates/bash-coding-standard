@@ -2,7 +2,7 @@
 
 A comprehensive coding standard for modern Bash 5.2+ scripts, designed for consistency, robustness, and maintainability.
 
-**Version 1.0.0** | **14 Sections** | **107+ Rules** | **13 Subcommands**
+**Version 1.0.0** | **12 Sections** | **101 Rules** | **13 Subcommands**
 
 ---
 
@@ -19,7 +19,7 @@ Bash is a battle-tested, sophisticated programming language deployed on virtuall
 - Requires explicit variable declarations with type hints
 - Mandates **ShellCheck** compliance
 - Defines standard utility functions for consistent messaging
-- **14 comprehensive sections** covering all aspects of Bash scripting
+- **12 comprehensive sections** covering all aspects of Bash scripting
 - **AI-powered** compliance checking and rule compression via Claude
 
 ### Target Audience
@@ -122,7 +122,7 @@ bcs template -t complete -n myscript -o myscript.sh -x
 bcs check myscript.sh
 
 # Look up BCS rules
-bcs codes                        # List all 107+ rule codes
+bcs codes                        # List all 101 rule codes
 bcs decode BCS0102 -p            # View specific rule content
 bcs search "readonly"            # Search the standard
 ```
@@ -229,7 +229,7 @@ bcs check --format json script.sh        # JSON output
 | `-f, --format FORMAT` | Output: `text`, `json`, `markdown`, `bcs-json` |
 | `-q, --quiet` | Suppress non-error output |
 | `--codes CODE1,CODE2` | Validate only specific BCS codes |
-| `--sections N1,N2` | Validate only sections 1-14 |
+| `--sections N1,N2` | Validate only sections 1-12 |
 | `--tier TIER` | Documentation tier: `abstract` (fast), `complete` (thorough) |
 | `--severity LEVEL` | Filter: `all`, `violations`, `warnings` |
 | `--claude-cmd CMD` | Custom Claude command path |
@@ -284,7 +284,7 @@ List all BCS rule codes from the data/ directory.
 
 ```bash
 bcs codes                    # List all codes
-bcs codes | wc -l            # Count rules (107+)
+bcs codes | wc -l            # Count rules (101)
 bcs codes | grep variable    # Find variable-related rules
 ```
 
@@ -333,14 +333,14 @@ Extract concise rulets from complete.md files using AI.
 ```bash
 bcs generate-rulets 02                    # Generate for section 02
 bcs generate-rulets variables             # Same - by category name
-bcs generate-rulets --all                 # Generate for all 14 categories
+bcs generate-rulets --all                 # Generate for all 12 categories
 bcs generate-rulets --all --force         # Force regeneration
 ```
 
 **Options:**
 | Option | Description |
 |--------|-------------|
-| `-a, --all` | Generate rulets for all 14 categories |
+| `-a, --all` | Generate rulets for all 12 categories |
 | `-f, --force` | Force regeneration of existing files |
 | `--agent-cmd PATH` | Path to bcs-rulet-extractor agent |
 | `-h, --help` | Show help |
@@ -404,7 +404,7 @@ vim $(bcs decode BCS0205)       # Open in editor
 
 ### sections
 
-List all 14 sections of the standard.
+List all 12 sections of the standard.
 
 ```bash
 bcs sections                 # List all sections
@@ -413,10 +413,10 @@ bcs sections                 # List all sections
 **Output:**
 ```
 1. Script Structure & Layout
-2. Variable Declarations & Constants
-3. Variable Expansion & Parameter Substitution
+2. Variables & Data Types
+3. Strings & Quoting
 ...
-14. Advanced Patterns
+12. Style & Development
 ```
 
 ---
@@ -453,26 +453,24 @@ bcs check --help             # Same as above
 
 ---
 
-## The 14 Sections
+## The 12 Sections
 
-The Bash Coding Standard is organized into 14 comprehensive sections:
+The Bash Coding Standard is organized into 12 comprehensive sections:
 
 | # | Section | Key Topics |
 |---|---------|------------|
 | 1 | **Script Structure & Layout** | 13-step mandatory structure, shebang, metadata, function organization |
-| 2 | **Variable Declarations & Constants** | Type-specific declarations, scoping, naming, readonly patterns |
-| 3 | **Variable Expansion & Parameter Substitution** | When to use braces, default values, string manipulation |
-| 4 | **Quoting & String Literals** | Single vs double quotes, mixed quoting (16 rules) |
-| 5 | **Arrays** | Declaration, iteration, safe list handling |
-| 6 | **Functions** | Definition patterns, organization, export |
-| 7 | **Control Flow** | Conditionals, case statements, loops, arithmetic |
-| 8 | **Error Handling** | `set -e`, exit codes, traps, return value checking |
-| 9 | **Input/Output & Messaging** | Standard messaging functions, colors, stderr |
-| 10 | **Command-Line Arguments** | Parsing patterns, short/long options |
-| 11 | **File Operations** | Testing, wildcards, process substitution, here docs |
-| 12 | **Security Considerations** | SUID, PATH, eval, IFS, input sanitization |
-| 13 | **Code Style & Best Practices** | Formatting, naming, comments, ShellCheck |
-| 14 | **Advanced Patterns** | Dry-run, testing, progressive state management |
+| 2 | **Variables & Data Types** | Declarations, scoping, naming, readonly patterns, arrays, parameter expansion |
+| 3 | **Strings & Quoting** | Single vs double quotes, mixed quoting, here-docs |
+| 4 | **Functions & Libraries** | Definition patterns, organization, export, library patterns |
+| 5 | **Control Flow** | Conditionals, case statements, loops, arithmetic |
+| 6 | **Error Handling** | `set -e`, exit codes, traps, return value checking |
+| 7 | **I/O & Messaging** | Standard messaging functions, colors, TUI basics |
+| 8 | **Command-Line Arguments** | Parsing patterns, short option support |
+| 9 | **File Operations** | Testing, wildcards, process substitution |
+| 10 | **Security** | SUID, PATH, eval, IFS, input sanitization, temp files |
+| 11 | **Concurrency & Jobs** | Background jobs, parallel execution, timeouts |
+| 12 | **Style & Development** | Formatting, debugging, dry-run, testing |
 
 ### Mandatory Script Structure (13 Steps)
 
@@ -683,9 +681,9 @@ bash-coding-standard/
 │   ├── BASH-CODING-STANDARD.md        # Symlink → default tier
 │   ├── BASH-CODING-STANDARD.*.md      # Compiled standards (4 tiers)
 │   ├── 00-header.*.md                 # Header files (4 tiers)
-│   ├── 01-script-structure/           # Section 1 (8 rules + 4 subrules)
-│   ├── 02-variables/                  # Section 2 (9 rules)
-│   ├── ...                            # Sections 3-14
+│   ├── 01-script-structure/           # Section 1
+│   ├── 02-variables/                  # Section 2
+│   ├── ...                            # Sections 3-12
 │   └── templates/                     # Script templates (4 files)
 │
 ├── BCS/                      # Numeric-indexed symlinks
@@ -938,7 +936,7 @@ shellcheck -x bcs && ./tests/run-all-tests.sh
 bcs compress --regenerate && bcs generate --canonical
 
 # Verify BCS codes
-bcs codes | wc -l    # Should be 107+
+bcs codes | wc -l    # Should be 101
 ```
 
 ### CI/CD Workflows
@@ -1208,4 +1206,4 @@ See [LICENSE](LICENSE) for details.
 
 ---
 
-*Generated: 2025-12-24 | Version 1.0.0*
+*Updated: 2025-12-25 | Version 1.0.0*
