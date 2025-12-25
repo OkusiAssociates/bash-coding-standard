@@ -2944,21 +2944,19 @@ Output format based on severity:
   ⚠ WARNING: [BCS Code - Section/Rule] - Potential issue at line Y
   💡 SUGGESTION: [Best practice] - Improvement at line Z
 
-Focus areas (when applicable):
-  • BCS01 - Script Structure: shebang, set options, shopt, metadata, function organization
-  • BCS02 - Variables: declarations, scoping, naming, readonly usage
-  • BCS03 - Expansion: parameter expansion, brace usage
-  • BCS04 - Quoting: single vs double quotes, variable quoting in conditionals
-  • BCS05 - Arrays: declaration, iteration, safe list handling
-  • BCS06 - Functions: naming, main() pattern, organization
-  • BCS07 - Control Flow: [[ ]] usage, arithmetic, case statements
-  • BCS08 - Error Handling: set -e, exit codes, traps, return values
-  • BCS09 - I/O: STDERR vs STDOUT placement, messaging functions
-  • BCS10 - Arguments: parsing patterns, validation
-  • BCS11 - File Operations: wildcards, process substitution
-  • BCS12 - Security: PATH, SUID/SGID, eval, input sanitization
-  • BCS13 - Style: indentation, comments (WHY not WHAT), blank lines
-  • BCS14 - Advanced: dry-run patterns, state management, testing support
+Focus areas (12 sections):
+  • BCS01 - Script Structure & Layout: shebang, set options, shopt, metadata, function organization
+  • BCS02 - Variables & Data Types: declarations, scoping, naming, readonly, arrays, parameter expansion
+  • BCS03 - Strings & Quoting: single vs double quotes, here-docs, printf, @Q quoting
+  • BCS04 - Functions: definition pattern, naming, main(), export, library patterns
+  • BCS05 - Control Flow: conditionals, case statements, loops, arithmetic
+  • BCS06 - Error Handling: set -e, exit codes, traps, return values
+  • BCS07 - I/O & Messaging: color support, STDOUT/STDERR, core message functions
+  • BCS08 - Command-Line Arguments: parsing patterns, validation, version format
+  • BCS09 - File Operations: file testing, wildcards, process substitution, here-docs
+  • BCS10 - Security: SUID/SGID, PATH, IFS, eval, input sanitization, temp files
+  • BCS11 - Concurrency & Jobs: background jobs, parallel execution, timeouts
+  • BCS12 - Style & Development: formatting, comments, debugging, dry-run, testing
 
 PROMPT_HEADER
 
