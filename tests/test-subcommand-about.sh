@@ -34,7 +34,7 @@ test_about_basic() {
   # Should contain key elements
   assert_contains "$output" "Bash Coding Standard" "Output contains title"
   assert_contains "$output" "BCS" "Output contains abbreviation"
-  assert_contains "$output" "v1.0.0" "Output contains version"
+  assert_contains "$output" "1.0.0" "Output contains version"
   assert_contains "$output" "Biksu Okusi" "Output contains author"
   assert_contains "$output" "philosophy" "Output contains philosophy"
   assert_contains "$output" "K.I.S.S." "Output contains coding principles"

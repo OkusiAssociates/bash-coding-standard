@@ -178,13 +178,13 @@ test_decode_exists_all() {
 test_decode_section_code() {
   test_section "Decode Section Code Tests"
 
-  # Test with section-level code (BCS01 - 2-digit works with rulet tier)
+  # Test with section-level code (BCS01 - 2-digit)
   local -- output
   output=$("$SCRIPT" decode BCS01 2>&1)
 
-  # Should decode to section file (default tier is rulet from symlink)
-  assert_contains "$output" "00-script-structure" "Section code decodes to section file"
-  assert_contains "$output" ".rulet.md" "Uses rulet tier (default from symlink)"
+  # Should decode to section file (00-section in section directory)
+  assert_contains "$output" "01-script-structure" "Section code decodes to correct directory"
+  assert_contains "$output" "00-section" "Section code decodes to section file"
 }
 
 test_decode_subrule_code() {
@@ -232,11 +232,11 @@ test_decode_combination_all_relative() {
   local -- output
   output=$("$SCRIPT" decode BCS0102 --all --relative 2>&1)
 
-  # Should show all four tiers with relative paths
+  # Should show the three main tiers with relative paths (rulet doesn't have 4-digit codes)
   assert_contains "$output" "Complete" "Shows complete tier label"
   assert_contains "$output" "Abstract" "Shows abstract tier label"
   assert_contains "$output" "Summary" "Shows summary tier label"
-  assert_contains "$output" "Rulet" "Shows rulet tier label"
+  # Note: Rulet tier only exists at section level (2-digit codes), not for 4-digit codes like BCS0102
 
   # All paths should be relative (start with data/)
   local -i relative_count
@@ -376,13 +376,13 @@ test_decode_multi_code() {
 
   # Test decoding multiple section codes at once
   local -- output
-  output=$("$SCRIPT" decode BCS01 BCS02 BCS08 2>&1)
+  output=$("$SCRIPT" decode BCS01 BCS02 BCS06 2>&1)
 
-  # Should show paths for all three sections (rulet tier from symlink)
-  assert_contains "$output" "00-script-structure" "Shows first section"
-  assert_contains "$output" "00-variables" "Shows second section"
-  assert_contains "$output" "00-error-handling" "Shows third section"
-  assert_contains "$output" ".rulet.md" "All use rulet tier (default)"
+  # Should show paths for all three sections (v1.0.0 structure)
+  assert_contains "$output" "01-script-structure" "Shows first section"
+  assert_contains "$output" "02-variables" "Shows second section"
+  assert_contains "$output" "06-error-handling" "Shows third section"
+  assert_contains "$output" "00-section" "All use 00-section files"
 
   # Test with -p flag (print mode)
   output=$("$SCRIPT" decode BCS01 BCS02 -p 2>&1)

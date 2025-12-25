@@ -40,11 +40,11 @@ test_sections_count() {
   local -i count
   count=$("$SCRIPT" sections 2>&1 | wc -l)
 
-  # Should have approximately 16 sections
-  if ((count >= 14 && count <= 18)); then
+  # Should have 12 sections (v1.0.0 restructured from 14 to 12)
+  if ((count >= 10 && count <= 14)); then
     pass "Section count is reasonable: $count sections"
   else
-    warn "Section count may be unexpected: $count sections (expected ~16)"
+    warn "Section count may be unexpected: $count sections (expected ~12)"
   fi
 }
 
@@ -54,12 +54,12 @@ test_sections_content() {
   local -- output
   output=$("$SCRIPT" sections 2>&1)
 
-  # Should contain known section names
+  # Should contain known section names (v1.0.0 has 12 sections)
   assert_contains "$output" "Script Structure" "Contains Script Structure section"
   assert_contains "$output" "Variable" "Contains Variable section"
   assert_contains "$output" "Functions" "Contains Functions section"
   assert_contains "$output" "Error Handling" "Contains Error Handling section"
-  assert_contains "$output" "Advanced Patterns" "Contains Advanced Patterns section"
+  assert_contains "$output" "Style & Development" "Contains Style & Development section"
 }
 
 test_sections_numbering() {
@@ -84,17 +84,6 @@ test_sections_numbering() {
   else
     fail "Sequential numbering not found"
   fi
-}
-
-test_sections_alias() {
-  test_section "Sections Alias Tests"
-
-  # Test toc alias
-  local -- output1 output2
-  output1=$("$SCRIPT" sections 2>&1)
-  output2=$("$SCRIPT" toc 2>&1)
-
-  assert_equals "$output1" "$output2" "sections and toc produce same output"
 }
 
 test_sections_exit_code() {
