@@ -2867,7 +2867,7 @@ load_filtered_rules() {
         local -- data_dir
         data_dir=$(find_data_dir) || return 1
         local -a md_files=()
-        readarray -t md_files < <(find "$data_dir" -name "*$suffix" -type f ! -name 'README.md' | sort)
+        readarray -t md_files < <(find "$data_dir" -name "*$suffix" -type f ! -name 'README.md' ! -name 'BASH-CODING-STANDARD.*' | sort)
 
         for file in "${md_files[@]}"; do
           cat "$file"
