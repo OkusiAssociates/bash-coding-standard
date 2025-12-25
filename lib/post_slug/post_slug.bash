@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # post_slug - Convert strings into URL or filename-friendly slugs
 #
 # Performs multiple transformations:
@@ -52,13 +52,13 @@ post_slug() {
 
   # Replace all multiple occurrences of {sep_char} with a single {sep_char}.
   #input_str=$(echo "$input_str" | sed -e "s/$sep_char\{2,\}/$sep_char/g")
-  while [[ "$input_str" == *"$sep_char"$sep_char* ]]; do
+  while [[ "$input_str" == *"$sep_char$sep_char"* ]]; do
     input_str="${input_str//"$sep_char"$sep_char/$sep_char}"
   done
 
   # Remove leading and trailing {sep_char}.
-  input_str="${input_str#"${sep_char}"}"
-  input_str="${input_str%"${sep_char}"}"
+  input_str="${input_str#"$sep_char"}"
+  input_str="${input_str%"$sep_char"}"
 
   if ((max_len)); then
     if (( ${#input_str} > max_len )); then
@@ -73,8 +73,16 @@ declare -fx post_slug
 # Exit if script being executed directly (not sourced)
 [[ "${BASH_SOURCE[0]}" == "${0}" ]] || return 0
 
-#!/bin/bash #semantic ---------------------------------------------------------
+#!/usr/bin/env bash #semantic -------------------------------------------------
 set -euo pipefail
+shopt -s inherit_errexit shift_verbose
+
+VERSION='1.0.0'
+SCRIPT_PATH=$(realpath -- "$0")
+SCRIPT_DIR=${SCRIPT_PATH%/*}
+SCRIPT_NAME=${SCRIPT_PATH##*/}
+# shellcheck disable=SC2034  # Standard BCS metadata variables
+readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
 
 show_help() {
   cat <<-'EOT'
@@ -120,7 +128,10 @@ Examples:
 EOT
 }
 
-[[ "${1:-}" == '-h' || "${1:-}" == '--help' ]] && { show_help; exit 0; }
+main() {
+  [[ "${1:-}" == '-h' || "${1:-}" == '--help' ]] && { show_help; exit 0; }
+  post_slug "$@"
+}
 
-post_slug "$@"
+main "$@"
 #fin
