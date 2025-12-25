@@ -105,18 +105,18 @@ ls -l data/new-file.md
 
 ## Files Modified
 
-### 1. Makefile (lines 332-338)
-Updated `install:` target to:
+### 1. Makefile (install target)
+Updated `install:` target (line 144+) to:
 - Create SHAREDIR with mode 2775 and group `bcs`
 - Copy data/ with `cp -a` (preserve timestamps), then fix permissions and group
 - Copy lib/ with proper group ownership and permissions
 - Copy BCS/ index with proper group ownership
 
 **Key changes in install target:**
-- Line 332: `install -d -m 2775 -g bcs $(SHAREDIR)`
-- Line 333: Added `chgrp -R bcs` and permission fixes after `cp -a data`
-- Line 335: Added `chgrp -R bcs` and permission fixes after `cp -a lib`
-- Line 338: Added `chgrp -R bcs` and permission fixes for BCS index
+- `install -d -m 2775 -g bcs $(SHAREDIR)`
+- `chgrp -R bcs` and permission fixes after `cp -a data`
+- `chgrp -R bcs` and permission fixes after `cp -a lib`
+- `chgrp -R bcs` and permission fixes for BCS index
 
 **Note:** These changes ensure the installed location at `/usr/local/share/yatti/bash-coding-standard/` has correct group ownership, even though the source repository may not.
 
@@ -275,6 +275,6 @@ sudo make install
 ## References
 
 - BCS Standard: `BASH-CODING-STANDARD.md`
-- Makefile: Lines 332-338 (install target)
+- Makefile: install target (line 144+)
 - Helper script: `fix-permissions.sh`
 - Group info: `getent group bcs`
