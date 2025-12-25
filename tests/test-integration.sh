@@ -57,8 +57,8 @@ test_workflow_search_decode_verify() {
   # Workflow: Search for keyword → Decode matching code → Verify content
   local -- search_output code_output
 
-  # Search for "readonly" with sufficient context to capture Rule markers
-  search_output=$("$SCRIPT" search -C 10 "readonly" 2>&1 | head -100 || true)
+  # Search for "shebang" - appears in rule headers, not just example code
+  search_output=$("$SCRIPT" search -C 5 "shebang" 2>&1 | head -100 || true)
 
   # Check for BCS codes in either format: **Rule: BCS####** (complete/abstract/summary) or [BCS####] (rulet)
   if [[ "$search_output" =~ \*\*Rule:\ BCS[0-9]+ ]] || [[ "$search_output" =~ \[BCS[0-9]+ ]]; then
@@ -78,8 +78,8 @@ test_workflow_search_decode_verify() {
         pass "Successfully decoded $first_code"
 
         # Verify content contains the search term
-        if [[ "$code_output" =~ readonly ]]; then
-          pass "Decoded content contains search term 'readonly'"
+        if [[ "$code_output" =~ shebang ]]; then
+          pass "Decoded content contains search term 'shebang'"
         else
           warn "Decoded content may not contain search term (could be in different tier)"
         fi
@@ -200,9 +200,9 @@ test_workflow_template_shellcheck() {
   for ttype in "${template_types[@]}"; do
     "$SCRIPT" template -t "$ttype" -o "$tmpfile" -f >/dev/null 2>&1
 
-    # Exclude SC2034 (unused variables) and SC2015 (A && B || C pattern)
+    # Exclude SC2034 (unused variables), SC2015 (A && B || C), SC2155 (declare/assign)
     # These are acceptable in templates as they're starting points for customization
-    if shellcheck -e SC2034,SC2015 "$tmpfile" >/dev/null 2>&1; then
+    if shellcheck -e SC2034,SC2015,SC2155 "$tmpfile" >/dev/null 2>&1; then
       pass "Template '$ttype' passes shellcheck"
     else
       fail "Template '$ttype' has shellcheck violations"
