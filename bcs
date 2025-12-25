@@ -4875,11 +4875,11 @@ case "$subcommand" in
     ;;
 esac
 
-# Commands that require BCS_FILE to exist: display, search, sections
+# Commands that require BCS_FILE to exist: display, search, sections, check
 # Other commands work directly with data/ directory or don't need the standard file
 declare -- BCS_FILE='' install_share="${BCS_DIR%/bin}/share/yatti/bash-coding-standard"
 case "$subcommand" in
-  display|search|sections)
+  display|search|sections|check)
     # These commands require the standard file
     BCS_FILE=$(find_bcs_file "${BCS_PATH%/*}") || {
       error "BASH-CODING-STANDARD.md not found"
