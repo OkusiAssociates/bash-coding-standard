@@ -41,7 +41,7 @@ BCS/
 │   ├── 01.{tier}.md                # Rule 01 (BCS0201)
 │   ├── 05.{tier}.md                # Rule 05 (BCS0205)
 │   └── ...
-└── ...                             # Sections 03-14
+└── ...                             # Sections 03-12
 
 {tier} = complete | summary | abstract
 ```
@@ -51,12 +51,12 @@ BCS/
 ### Section Codes (2 digits)
 - **BCS01** → `BCS/01/00.{tier}.md`
 - **BCS02** → `BCS/02/00.{tier}.md`
-- **BCS14** → `BCS/14/00.{tier}.md`
+- **BCS12** → `BCS/12/00.{tier}.md`
 
 ### Rule Codes (4 digits)
 - **BCS0102** → `BCS/01/02.{tier}.md`
 - **BCS0205** → `BCS/02/05.{tier}.md`
-- **BCS1402** → `BCS/14/02.{tier}.md`
+- **BCS1202** → `BCS/12/02.{tier}.md`
 
 ### Subrule Codes (6 digits)
 - **BCS010201** → `BCS/01/02/01.{tier}.md`
@@ -114,10 +114,10 @@ Numeric directory shortcuts also use **relative paths**:
 
 ## Statistics
 
-- **Total symlinks**: 337 (all relative)
-  - 321 file symlinks (.md files to data/)
-  - 16 directory symlinks (numeric shortcuts)
-- **Total directories**: 17 (root + 14 sections + 2 subrule containers)
+- **Total symlinks**: ~319 (all relative)
+  - ~303 file symlinks (.md files to data/)
+  - ~14 directory symlinks (12 sections + subrule shortcuts)
+- **Total directories**: 15 (root + 12 sections + 2 subrule containers)
 - **Files per rule**: 3 (complete, summary, abstract)
 
 ## Rebuilding
@@ -132,7 +132,7 @@ This command:
 1. Removes existing `BCS/` directory (preserves `.claude/` subdirectory if present)
 2. Creates fresh hybrid structure (descriptive directories + numeric shortcuts)
 3. Generates relative symlinks for all files and directories
-4. Processes sections 00-14
+4. Processes sections 00-12
 5. Handles nested subrule directories
 
 **When to rebuild**:
@@ -270,12 +270,12 @@ After rebuilding, verify:
 
 ```bash
 # Count total symlinks and directories
-find BCS -type l | wc -l     # Should be 337
-find BCS -type d | wc -l     # Should be 17
+find BCS -type l | wc -l     # Should be ~319
+find BCS -type d | wc -l     # Should be 15
 
 # Verify all symlinks are relative (not absolute)
 find BCS -type l -lname "/*" | wc -l      # Should be 0 (no absolute paths)
-find BCS -type l ! -lname "/*" | wc -l    # Should be 337 (all relative)
+find BCS -type l ! -lname "/*" | wc -l    # Should be ~319 (all relative)
 
 # Test symlinks
 readlink BCS/01-script-structure/02.complete.md   # Should show ../../data/...
