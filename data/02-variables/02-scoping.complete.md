@@ -42,7 +42,7 @@ process_file() {
 count_files() {
   total=0  # ✗ Global! Each recursive call resets it
   for file in "$1"/*; do
-    ((total++))
+    total+=1
   done
   echo "$total"
 }
@@ -51,7 +51,7 @@ count_files() {
 count_files() {
   local -i total=0  # ✓ Each invocation gets its own total
   for file in "$1"/*; do
-    ((total++))
+    total+=1
   done
   echo "$total"
 }

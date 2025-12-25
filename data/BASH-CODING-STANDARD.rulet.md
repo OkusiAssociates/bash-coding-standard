@@ -117,6 +117,7 @@ This is the rulet tier: extracted rules in 1-2 sentence format with BCS code ref
 ## Variable Declarations & Constants - Rulets
 ## Type-Specific Declarations
 - [BCS0201] Always use explicit type declarations to make variable intent clear: `declare -i` for integers, `declare --` for strings, `declare -a` for indexed arrays, `declare -A` for associative arrays.
+- [BCS0201] Always use `--` separator with `local` declarations to prevent option injection: `local -- file="$1"` not `local file="$1"`.
 - [BCS0201] Declare integer variables with `declare -i count=0` to enable automatic arithmetic evaluation and type enforcement.
 - [BCS0201] Use `declare --` for string variables with `--` separator to prevent option injection when variable names start with `-`.
 - [BCS0201] Declare indexed arrays with `declare -a files=()` for ordered lists; never assign scalars to array variables.
@@ -165,33 +166,6 @@ This is the rulet tier: extracted rules in 1-2 sentence format with BCS code ref
 
 **Rule: BCS0300**
 
-## Variable Expansion & Parameter Substitution - Rulets
-## Default Form
-- [BCS0302] Always use `"$var"` without braces as the default form for standalone variables: `"$HOME"`, `"$SCRIPT_DIR"`, `"$1"`.
-- [BCS0302] Only use braces `"${var}"` when syntactically necessary; braces add visual noise and should make necessary cases stand out.
-## Required Brace Usage
-- [BCS0301,BCS0302] Use braces for parameter expansion operations: `"${var##*/}"` (remove prefix), `"${var%/*}"` (remove suffix), `"${var:-default}"` (default value), `"${var:0:5}"` (substring), `"${var//old/new}"` (substitution), `"${var,,}"` (case conversion).
-- [BCS0302] Use braces for variable concatenation without separators: `"${var1}${var2}${var3}"` or `"${prefix}suffix"` when variable immediately followed by alphanumeric.
-- [BCS0301,BCS0302] Use braces for array access: `"${array[index]}"`, `"${array[@]}"`, `"${#array[@]}"`.
-- [BCS0301,BCS0302] Use braces for special parameter expansion: `"${@:2}"` (positional parameters from 2nd), `"${10}"` (parameters beyond $9), `"${!var}"` (indirect expansion).
-## Path Concatenation
-- [BCS0302] Use simple form for path concatenation with separators: `"$PREFIX"/bin` or `"$PREFIX/bin"`, never `"${PREFIX}"/bin`.
-- [BCS0302] Mix quoted variables with unquoted literals/separators in assignments and commands: `"$path"/file.txt`, `"$HOME"/.config/"$APP"/settings`, `[[ -f "$dir"/subdir/file ]]`.
-## String Interpolation
-- [BCS0302] Use simple form in echo/info strings: `echo "Installing to $PREFIX/bin"`, `info "Found $count files"`, never `echo "Installing to ${PREFIX}/bin"`.
-- [BCS0302] Use simple form in conditionals: `[[ -d "$path" ]]`, `[[ -f "$SCRIPT_DIR"/file ]]`, never `[[ -d "${path}" ]]`.
-## Edge Cases
-- [BCS0302] Use braces when next character is alphanumeric with no separator: `"${var}_suffix"` (prevents `$var_suffix` interpretation), `"${prefix}123"` (prevents `$prefix123` interpretation).
-- [BCS0302] Omit braces when separator present: `"$var-suffix"` (dash), `"$var.suffix"` (dot), `"$var/path"` (slash).
-## Key Principle
-- [BCS0300,BCS0302] Default to `"$var"` for simplicity and readability; reserve `"${var}"` exclusively for cases where shell requires braces for correct parsing.
-
-
----
-
-
-**Rule: BCS0400**
-
 ## Quoting & String Literals - Rulets
 ## General Principles
 - [BCS0400] Use single quotes (`'...'`) for static string literals and double quotes (`"..."`) only when variable expansion, command substitution, or escape sequences are needed.
@@ -208,6 +182,8 @@ This is the rulet tier: extracted rules in 1-2 sentence format with BCS code ref
 ## Strings with Variables
 - [BCS0403] Use double quotes when strings contain variables that need expansion: `error "'$compiler' not found"`, `info "Installing to $PREFIX/bin"`.
 - [BCS0403] Do not use braces around variables unless required for parameter expansion, array access, or adjacent variables: `echo "$PREFIX/bin"` not `echo "${PREFIX}/bin"`.
+- [BCS0403] RECOMMENDED: Quote variable portions separately from literal path components for clarity: `"$PREFIX"/bin` and `"$SCRIPT_DIR"/data/"$filename"` rather than `"$PREFIX/bin"` and `"$SCRIPT_DIR/data/$filename"`.
+- [BCS0403] Use `${var@Q}` for safe display of user-provided values in error messages: `error "File not found: ${file@Q}"` properly quotes values with special characters.
 ## Mixed Quoting
 - [BCS0404] When a string contains both static text and variables, use double quotes with nested single quotes for literal protection: `die 2 "Unknown option '$1'"`, `warn "Cannot access '$file_path'"`.
 ## Command Substitution
@@ -244,59 +220,7 @@ This is the rulet tier: extracted rules in 1-2 sentence format with BCS code ref
 ---
 
 
-**Rule: BCS0500**
-
-## Arrays - Rulets
-## Array Declaration
-- [BCS0501] Always declare indexed arrays explicitly with `declare -a array=()` to signal array type, prevent scalar assignment, and enable type safety.
-- [BCS0501] Use `local -a` for array declarations inside functions to prevent global pollution and control scope.
-- [BCS0501] Initialize arrays with elements using parentheses syntax: `declare -a colors=('red' 'green' 'blue')`.
-## Array Expansion and Iteration
-- [BCS0501] Always quote array expansion with `"${array[@]}"` to preserve element boundaries and handle spaces safely; never use unquoted `${array[@]}`.
-- [BCS0501] Use `"${array[@]}"` for iteration where each element becomes a separate word; never use `"${array[*]}"` which creates a single string.
-- [BCS0501] Iterate over array values directly with `for item in "${array[@]}"` rather than iterating over indices with `"${!array[@]}"`.
-## Array Modification
-- [BCS0501] Append single elements with `array+=("value")` and multiple elements with `array+=("val1" "val2" "val3")`.
-- [BCS0501] Get array length with `${#array[@]}`; check for empty arrays with `((${#array[@]} == 0))` or `((${#array[@]})) || default_action`.
-- [BCS0501] Delete array elements with `unset 'array[i]'` (quoted to prevent glob expansion); clear entire array with `array=()`.
-- [BCS0501] Access last element with `${array[-1]}` (Bash 4.3+) and extract slices with `"${array[@]:start:length}"`.
-## Reading Into Arrays
-- [BCS0501] Use `readarray -t array < <(command)` to read command output into arrays; `-t` removes trailing newlines and `< <()` avoids subshells.
-- [BCS0501] Split delimited strings with `IFS=',' read -ra fields <<< "$csv_line"` but prefer arrays over IFS manipulation for list handling.
-- [BCS0501] Read files into arrays with `readarray -t lines < file.txt` where each line becomes one array element.
-## Safe List Handling with Arrays
-- [BCS0502] Always use arrays to store lists of files, arguments, or any elements that may contain spaces, special characters, or wildcards; never use space/newline-separated strings.
-- [BCS0502] Arrays preserve element boundaries without word splitting or glob expansion when expanded with `"${array[@]}"`, unlike string-based lists which break on spaces.
-- [BCS0502] Build command arguments in arrays and execute with `"${array[@]}"` to safely handle arguments containing spaces, quotes, or special characters.
-## Safe Command Construction
-- [BCS0502] Construct complex commands by building argument arrays and conditionally adding elements: `cmd_args+=('-flag')` if condition met, then execute with `"${cmd_args[@]}"`.
-- [BCS0502] Never concatenate strings for command arguments (`cmd="arg1 $arg2"`); use arrays (`cmd_args=('arg1' "$arg2")`) to avoid word splitting and eval dangers.
-- [BCS0502] For SSH, rsync, find, tar, or any command with dynamic arguments, build the full command in an array: `ssh_args+=('-i' "$keyfile")` then `ssh "${ssh_args[@]}"`.
-## File List Processing
-- [BCS0502] Collect glob results directly into arrays with `files=(*.txt)` using `nullglob` to handle no-matches safely, then iterate with `for file in "${files[@]}"`.
-- [BCS0502] Gather files from commands with null-delimited output: `while IFS= read -r -d '' file; do array+=("$file"); done < <(find ... -print0)`.
-- [BCS0502] Check if glob matched anything by testing array length: `((${#files[@]} > 0))` or `[[ ${#files[@]} -eq 0 ]]`.
-## Function Argument Passing
-- [BCS0502] Pass arrays to functions with `function_name "${array[@]}"` and receive with `local -a items=("$@")` to preserve all elements as separate arguments.
-- [BCS0502] Return arrays from functions by printing elements with `printf '%s\n' "${array[@]}"` and capturing with `readarray -t result < <(function_name)`.
-## Anti-Patterns to Avoid
-- [BCS0501,BCS0502] Never iterate with unquoted `${array[@]}` or use `for item in "$array"` (without `[@]`) which only processes the first element.
-- [BCS0501] Never assign scalars to array variables; use array syntax even for single elements: `files=('item')` not `files='item'`.
-- [BCS0502] Never use `eval` with constructed commands; build commands in arrays and execute directly with `"${array[@]}"`.
-- [BCS0502] Never parse `ls` output into strings (`files=$(ls *.txt)`); use globs directly into arrays (`files=(*.txt)`).
-- [BCS0502] Never manipulate IFS for iteration over lists; use arrays which handle element boundaries naturally without IFS changes.
-## Array Operators Summary
-- [BCS0501] Key array operators: `declare -a arr=()` (create), `arr+=("val")` (append), `${#arr[@]}` (length), `"${arr[@]}"` (all elements), `"${arr[i]}"` (single element), `"${arr[-1]}"` (last element), `"${arr[@]:start:len}"` (slice), `unset 'arr[i]'` (delete element), `"${!arr[@]}"` (indices).
-## Special Cases
-- [BCS0502] Empty arrays iterate safely (zero iterations) and can be passed to functions (zero arguments received); no special handling needed.
-- [BCS0502] Arrays safely preserve elements containing spaces, quotes, dollars, wildcards, and newlines when expanded with `"${array[@]}"`.
-- [BCS0502] Merge multiple arrays with `combined=("${arr1[@]}" "${arr2[@]}" "${arr3[@]}")` to concatenate all elements into a new array.
-
-
----
-
-
-**Rule: BCS0600**
+**Rule: BCS0400**
 
 ## Functions - Rulets
 ## Function Definition Pattern
@@ -340,7 +264,7 @@ This is the rulet tier: extracted rules in 1-2 sentence format with BCS code ref
 ---
 
 
-**Rule: BCS0700**
+**Rule: BCS0500**
 
 ## Control Flow - Rulets
 ## Conditionals
@@ -350,7 +274,8 @@ This is the rulet tier: extracted rules in 1-2 sentence format with BCS code ref
 - [BCS0701] Quote variables in `[[ ]]` conditionals for clarity even though not strictly required: `[[ "$var" == "value" ]]` not `[[ $var == "value" ]]`.
 ## Case Statements
 - [BCS0702] Use case statements for multi-way branching based on pattern matching of a single variable; they're more readable and efficient than long if/elif chains.
-- [BCS0702] Always quote the test variable but never quote literal patterns: `case "$filename" in` followed by `*.txt)` not `"*.txt")`.
+- [BCS0702] The case expression doesn't require quoting since word splitting doesn't apply: `case ${1:-} in` is correct; quotes are harmless but unnecessary: `case "${1:-}" in`.
+- [BCS0702] Never quote literal patterns in case statements: `*.txt)` not `"*.txt")` - quoting disables pattern matching.
 - [BCS0702] Use compact format (all on one line with aligned `;;`) for simple single-action cases like argument parsing: `-v|--verbose) VERBOSE=1 ;;`
 - [BCS0702] Use expanded format (action on next line, `;;` on separate line) for multi-line logic or complex operations requiring comments.
 - [BCS0702] Always include a default `*)` case to handle unexpected values explicitly: `*) die 22 "Invalid option: $1" ;;`
@@ -369,6 +294,7 @@ This is the rulet tier: extracted rules in 1-2 sentence format with BCS code ref
 - [BCS0703] Use `break` for early loop exit and `continue` for conditional skipping; specify break level for nested loops: `break 2` exits two levels.
 - [BCS0703] Enable `nullglob` to handle empty glob matches safely: `shopt -s nullglob` makes `for file in *.txt` execute zero iterations if no matches.
 - [BCS0703] Never iterate over unquoted strings with spaces; always use arrays: `files=('file 1.txt' 'file 2.txt')` then `for file in "${files[@]}"`.
+- [BCS0703] Declare local variables BEFORE loops, not inside: `local -- target; for link in "$dir"/*; do target=$(readlink "$link"); done` - local inside a loop is wasteful and misleading since it doesn't create per-iteration scope.
 ## Pipes to While Loops
 - [BCS0704] Never pipe commands to while loops; pipes create subshells where variable assignments don't persist outside the loop, causing silent failures.
 - [BCS0704] Always use process substitution instead of pipes: `while read -r line; do ((count+=1)); done < <(command)` keeps loop in current shell so variables persist.
@@ -378,18 +304,19 @@ This is the rulet tier: extracted rules in 1-2 sentence format with BCS code ref
 - [BCS0704] Remember pipe creates process tree: parent shell → subshell (while loop with modified variables) → subshell exits → changes discarded; process substitution avoids this.
 ## Arithmetic Operations
 - [BCS0705] Always declare integer variables with `declare -i` for automatic arithmetic context, type safety, and clarity: `declare -i count=0 total=0`.
-- [BCS0705] Use `i+=1` for increment (clearest and safest) or `((++i))` (pre-increment, safe); never use `((i++))` which returns old value and fails with `set -e` when i=0.
+- [BCS0705] Use `i+=1` for ALL increments (requires prior `declare -i` or `local -i`); NEVER use `((i++))`, `((++i))`, or `i++` - only `i+=1` is acceptable.
 - [BCS0705] Use `(())` for arithmetic operations without `$` on variables: `((result = x * y + z))` not `((result = $x * $y + $z))`.
 - [BCS0705] Use `$(())` for arithmetic in assignments or command arguments: `result=$((i * 2 + 5))` or `echo "$((count / total))".`
 - [BCS0705] Always use `(())` for arithmetic conditionals, never `[[ ]]` with `-gt`/`-lt`: `((count > 10))` not `[[ "$count" -gt 10 ]]`.
 - [BCS0705] Remember integer division truncates toward zero: `((result = 10 / 3))` gives 3 not 3.33; use `bc` or `awk` for floating point.
 - [BCS0705] Never use `expr` command for arithmetic; it's slow, external, and error-prone: use `$(())` or `(())` instead.
+- [BCS0705] Use arithmetic truthiness directly: `((count))` not `((count > 0))`, `((VERBOSE)) && echo 'Verbose'` not `((VERBOSE == 1))` - non-zero is truthy, making explicit comparisons redundant.
 
 
 ---
 
 
-**Rule: BCS0800**
+**Rule: BCS0600**
 
 ## Error Handling - Rulets
 ## Exit on Error
@@ -439,7 +366,7 @@ This is the rulet tier: extracted rules in 1-2 sentence format with BCS code ref
 ---
 
 
-**Rule: BCS0900**
+**Rule: BCS0700**
 
 ## Input/Output & Messaging - Rulets
 ## Color Support
@@ -487,7 +414,7 @@ This is the rulet tier: extracted rules in 1-2 sentence format with BCS code ref
 ---
 
 
-**Rule: BCS1000**
+**Rule: BCS0800**
 
 ## Command-Line Arguments - Rulets
 ## Standard Parsing Pattern
@@ -525,7 +452,7 @@ This is the rulet tier: extracted rules in 1-2 sentence format with BCS code ref
 ---
 
 
-**Rule: BCS1100**
+**Rule: BCS0900**
 
 ## File Operations - Rulets
 ## Safe File Testing
@@ -570,7 +497,7 @@ This is the rulet tier: extracted rules in 1-2 sentence format with BCS code ref
 ---
 
 
-**Rule: BCS1200**
+**Rule: BCS1000**
 
 ## Security Considerations - Rulets
 ## SUID/SGID Prohibition
@@ -616,7 +543,7 @@ This is the rulet tier: extracted rules in 1-2 sentence format with BCS code ref
 ---
 
 
-**Rule: BCS1300**
+**Rule: BCS1200**
 
 ## Code Style & Best Practices - Rulets
 ## Code Formatting
@@ -654,61 +581,4 @@ This is the rulet tier: extracted rules in 1-2 sentence format with BCS code ref
 - [BCS1307] Extended icons: `⚠` (caution/important), `☢` (fatal/critical), `↻` (redo/retry/update), `◆` (checkpoint), `●` (in progress), `○` (pending), `◐` (partial).
 - [BCS1307] Action icons: `▶` (start/execute), `■` (stop), `⏸` (pause), `⏹` (terminate), `⚙` (settings/config), `☰` (menu/list).
 - [BCS1307] Directional icons: `→` (forward/next), `←` (back/previous), `↑` (up/upgrade), `↓` (down/downgrade), `⇄` (swap), `⇅` (sync), `⟳` (processing/loading), `⏱` (timer/duration).
-
-
----
-
-
-**Rule: BCS1400**
-
-## Advanced Patterns - Rulets
-## Debugging & Development
-- [BCS1401] Enable debug mode with `declare -i DEBUG="${DEBUG:-0}"` and activate trace output using `((DEBUG)) && set -x` for troubleshooting.
-- [BCS1401] Customize trace output with `export PS4='+ ${BASH_SOURCE##*/}:${LINENO}:${FUNCNAME[0]:+${FUNCNAME[0]}():} '` to show filename, line number, and function name in debug traces.
-- [BCS1401] Implement conditional debug output with a `debug()` function that checks `((DEBUG))` before calling `_msg()` to stderr.
-## Dry-Run Pattern
-- [BCS1402] Implement dry-run mode by declaring `declare -i DRY_RUN=0` and checking `((DRY_RUN))` at the start of functions that modify state, displaying preview messages with `[DRY-RUN]` prefix and returning early without performing actual operations.
-- [BCS1402] Parse dry-run flags with `-n|--dry-run) DRY_RUN=1` and `-N|--not-dry-run) DRY_RUN=0` for toggling preview mode.
-- [BCS1402] Structure dry-run functions to maintain identical control flow whether in preview or execution mode, ensuring logic verification without side effects.
-## Temporary File Handling
-- [BCS1403] Always use `mktemp` to create temporary files and directories with secure permissions (0600 for files, 0700 for directories), never hard-code temp file paths like `/tmp/myapp.txt`.
-- [BCS1403] Set up cleanup traps immediately after creating temp resources: `temp_file=$(mktemp) || die 1 'Failed to create temp file'` followed by `trap 'rm -f "$temp_file"' EXIT`.
-- [BCS1403] Store temp file paths in variables and make them readonly when possible: `readonly -- temp_file` to prevent accidental modification.
-- [BCS1403] For multiple temp resources, use an array with a cleanup function: `declare -a TEMP_RESOURCES=()` and `cleanup() { for resource in "${TEMP_RESOURCES[@]}"; do rm -rf "$resource"; done }` with `trap cleanup EXIT`.
-- [BCS1403] Never use hard-coded paths, PIDs in filenames, or manual temp file creation - these create security vulnerabilities and race conditions.
-- [BCS1403] Use custom templates when helpful: `mktemp /tmp/"$SCRIPT_NAME".XXXXXX` (minimum 3 X's required for uniqueness).
-- [BCS1403] Verify temp file security by checking permissions (0600), ownership (current user), and file type (regular file) when handling sensitive data.
-- [BCS1403] Implement `--keep-temp` option for debugging by checking the flag in cleanup function before removing temp resources.
-## Environment Variables
-- [BCS1404] Validate required environment variables with `: "${REQUIRED_VAR:?Environment variable REQUIRED_VAR not set}"` to exit immediately if not set.
-- [BCS1404] Provide defaults for optional environment variables using `: "${OPTIONAL_VAR:=default_value}"` or `export VAR="${VAR:-default}"`.
-- [BCS1404] Check multiple required variables by iterating through an array and testing `[[ -n "${!var:-}" ]]` to ensure all are set before proceeding.
-## Regular Expressions
-- [BCS1405] Use POSIX character classes for portability: `[[:alnum:]]`, `[[:digit:]]`, `[[:space:]]`, `[[:xdigit:]]` instead of literal ranges.
-- [BCS1405] Store complex regex patterns in readonly variables: `readonly -- EMAIL_REGEX='^[[:alnum:]._%+-]+@[[:alnum:].-]+\.[[:alpha:]]{2,}$'` then use `[[ "$email" =~ $EMAIL_REGEX ]]`.
-- [BCS1405] Access regex capture groups through `BASH_REMATCH` array after successful match: `major="${BASH_REMATCH[1]}"`.
-## Background Job Management
-- [BCS1406] Track background process PIDs with `command &` followed by `PID=$!` to enable monitoring and control.
-- [BCS1406] Check if background process is still running using `kill -0 "$PID" 2>/dev/null` which returns 0 if process exists.
-- [BCS1406] Use `timeout` command with `wait` for timed background operations: `timeout 10 wait "$PID"` returns 124 on timeout.
-- [BCS1406] Manage multiple background jobs by storing PIDs in an array `PIDS+=($!)` and iterating with `for pid in "${PIDS[@]}"; do wait "$pid"; done`.
-## Logging
-- [BCS1407] Implement structured logging with ISO8601 timestamps, script name, log level, and message: `printf '[%s] [%s] [%-5s] %s\n' "$(date -Ins)" "$SCRIPT_NAME" "$level" "$message" >> "$LOG_FILE"`.
-- [BCS1407] Define log file location with defaults and create log directory if needed: `readonly LOG_FILE="${LOG_FILE:-/var/log/${SCRIPT_NAME}.log}"` followed by `mkdir -p "${LOG_FILE%/*}"`.
-- [BCS1407] Provide convenience logging functions (`log_debug`, `log_info`, `log_warn`, `log_error`) that wrap the main `log()` function.
-## Performance Profiling
-- [BCS1408] Use the `SECONDS` builtin for simple timing by resetting `SECONDS=0` before operation and reading elapsed time after completion.
-- [BCS1408] Use `EPOCHREALTIME` for high-precision timing: capture `start=$EPOCHREALTIME` before operation, `end=$EPOCHREALTIME` after, calculate with `awk "BEGIN {print $end - $start}"`.
-## Testing Support
-- [BCS1409] Implement dependency injection by declaring command wrappers as functions: `declare -f FIND_CMD >/dev/null || FIND_CMD() { find "$@"; }` allows test mocking.
-- [BCS1409] Use `declare -i TEST_MODE="${TEST_MODE:-0}"` flag to enable test-specific behavior like using test data directories or disabling destructive operations.
-- [BCS1409] Implement assert function for test validation: check expected vs actual values, output detailed failure message to stderr, return 1 on failure.
-- [BCS1409] Create test runner that discovers functions matching `test_*` pattern, executes each, tracks passed/failed counts, and returns 0 only if all pass.
-## Progressive State Management
-- [BCS1410] Declare boolean flags with initial values at script start: `declare -i INSTALL_BUILTIN=0`, `declare -i BUILTIN_REQUESTED=0`, `declare -i SKIP_BUILTIN=0`.
-- [BCS1410] Parse command-line arguments to set flags based on user input, tracking both user intent (e.g., `BUILTIN_REQUESTED`) and current state (e.g., `INSTALL_BUILTIN`).
-- [BCS1410] Progressively adjust flags based on runtime conditions in logical order: parse arguments → validate dependencies → check build success → execute actions.
-- [BCS1410] Separate decision logic from execution by modifying flags during validation phase, then executing actions based on final flag state: `((INSTALL_BUILTIN)) && install_builtin`.
-- [BCS1410] Disable features when prerequisites fail by resetting flags: `check_builtin_support || INSTALL_BUILTIN=0` ensures fail-safe behavior.
-- [BCS1410] Never modify flags during execution phase - only in setup and validation phases to maintain clear separation between decision-making and action.
 #fin

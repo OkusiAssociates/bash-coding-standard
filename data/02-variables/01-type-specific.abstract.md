@@ -1,62 +1,50 @@
 ## Type-Specific Declarations
 
-**Always use explicit type declarations (`declare -i`, `declare --`, `declare -a`, `declare -A`) to make variable intent clear and enable type-safe operations.**
+**Always use explicit type declarations to make intent clear and enable type-safe operations.**
 
-**Rationale:** Type declarations prevent bugs through automatic type checking, serve as inline documentation, and enable bash's built-in type enforcement.
+**Rationale:** Type safety catches errors early; intent documentation aids readability; `--` separator prevents option injection.
 
-**Declaration types:**
+### Declaration Types
 
-**1. Integers (`declare -i`)** - Counters, exit codes, ports:
+| Type | Syntax | Use Case |
+|------|--------|----------|
+| Integer | `declare -i` | Counters, ports, flags |
+| String | `declare --` | Paths, text, config |
+| Indexed array | `declare -a` | Lists, sequences |
+| Associative | `declare -A` | Key-value maps |
+| Constant | `readonly --` | Immutable values |
+| Function-local | `local --` | ALL function variables |
+
+### Example
+
 ```bash
-declare -i count=0
-count='5 + 3'  # Evaluates to 8
-```
-
-**2. Strings (`declare --`)** - Paths, text (use `--` to prevent option injection):
-```bash
+declare -i count=0 MAX=10
 declare -- filename='data.txt'
-```
-
-**3. Indexed arrays (`declare -a`)** - Ordered lists:
-```bash
-declare -a files=('one' 'two')
-for f in "${files[@]}"; do process "$f"; done
-```
-
-**4. Associative arrays (`declare -A`)** - Key-value maps:
-```bash
-declare -A config=([key]='value')
-```
-
-**5. Constants (`readonly --`)** - Immutable after init:
-```bash
+declare -a files=()
+declare -A config=([port]='8080')
 readonly -- VERSION='1.0.0'
-```
 
-**6. Function locals (`local`)** - Always use for ALL function variables:
-```bash
-func() {
-  local -i count=0
-  local -- text="$1"
+process() {
+  local -- input="$1"
+  local -i attempts=0
+  ((attempts < MAX)) && files+=("$input")
 }
 ```
 
-**Anti-patterns:**
+### Anti-Patterns
+
 ```bash
-# ✗ Wrong - no declaration
+# ✗ No type (intent unclear) �' ✓ declare -i count=0
 count=0
-# ✓ Correct
-declare -i count=0
 
-# ✗ Wrong - missing -A
-declare CONFIG; CONFIG[key]='val'  # Creates indexed array!
-# ✓ Correct
-declare -A CONFIG=(); CONFIG[key]='val'
+# ✗ Missing -- separator �' ✓ declare -- name='-val'
+declare name='-val'
 
-# ✗ Wrong - global leak
+# ✗ Missing -A (creates indexed!) �' ✓ declare -A cfg=()
+declare cfg; cfg[key]='val'
+
+# ✗ Global leak in function �' ✓ local -- temp="$1"
 func() { temp="$1"; }
-# ✓ Correct
-func() { local -- temp="$1"; }
 ```
 
 **Ref:** BCS0201

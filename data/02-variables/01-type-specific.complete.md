@@ -182,11 +182,14 @@ readonly -p | grep VERSION
 - Self-documenting (signals immutability)
 - Defensive programming
 
-**6. Local variables in functions (`local`)**
+**6. Local variables in functions (`local --`)**
 
 **Purpose**: Variables scoped to function, not visible outside.
 
+**MANDATORY: Always use `--` separator with `local` declarations**, just like with `declare` and `readonly`. This prevents option injection if variable name or value starts with `-`.
+
 \`\`\`bash
+# ✓ CORRECT - always use `--` separator
 process_file() {
   local -- filename="$1"
   local -i line_count
@@ -199,7 +202,11 @@ process_file() {
   echo "Processed $line_count lines"
 }
 
-# filename, line_count, lines don't exist here
+# ✗ WRONG - missing `--` separator
+process_file_bad() {
+  local filename="$1"    # If $1 is "-n", behavior changes!
+  local name value       # Should be: local -- name value
+}
 \`\`\`
 
 **When to use:**
@@ -211,6 +218,7 @@ process_file() {
 - Prevents global namespace pollution
 - Avoids variable collision between functions
 - Clear scoping (function-local vs global)
+- `--` separator prevents option injection bugs
 
 **Combining type and scope:**
 

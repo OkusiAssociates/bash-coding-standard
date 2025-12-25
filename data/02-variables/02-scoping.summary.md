@@ -1,4 +1,5 @@
 ## Variable Scoping
+
 Always declare function-specific variables as `local` to prevent namespace pollution and unexpected side effects.
 
 ```bash
@@ -16,37 +17,37 @@ main() {
 }
 ```
 
-**Rationale:** Without `local`, function variables become global, overwriting same-named globals, persisting after return, and breaking recursive calls.
+**Rationale:**
+- Without `local`, variables become global and can overwrite same-named globals
+- Variables persist after function returns, causing unexpected behavior
+- Recursive function calls interfere with each other
 
-**Anti-patterns:**
+**Anti-pattern:**
 ```bash
 # ✗ Wrong - no local declaration
 process_file() {
   file="$1"  # Overwrites any global $file variable!
-  # ...
 }
 
 # ✓ Correct - local declaration
 process_file() {
   local -- file="$1"  # Scoped to this function only
-  # ...
 }
+```
 
-# ✗ Wrong - recursive function breaks without local
+**Edge case - recursive functions:**
+```bash
+# ✗ Wrong - global breaks recursion
 count_files() {
-  total=0  # Global! Each recursive call resets it
-  for file in "$1"/*; do
-    ((total++))
-  done
+  total=0  # Each recursive call resets it
+  for file in "$1"/*; do total+=1; done
   echo "$total"
 }
 
-# ✓ Correct - local scope for recursion
+# ✓ Correct - each invocation gets its own total
 count_files() {
-  local -i total=0  # Each invocation gets its own total
-  for file in "$1"/*; do
-    ((total++))
-  done
+  local -i total=0
+  for file in "$1"/*; do total+=1; done
   echo "$total"
 }
 ```

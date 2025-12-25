@@ -1,6 +1,7 @@
 # Variable Declarations & Constants - Rulets
 ## Type-Specific Declarations
 - [BCS0201] Always use explicit type declarations to make variable intent clear: `declare -i` for integers, `declare --` for strings, `declare -a` for indexed arrays, `declare -A` for associative arrays.
+- [BCS0201] Always use `--` separator with `local` declarations to prevent option injection: `local -- file="$1"` not `local file="$1"`.
 - [BCS0201] Declare integer variables with `declare -i count=0` to enable automatic arithmetic evaluation and type enforcement.
 - [BCS0201] Use `declare --` for string variables with `--` separator to prevent option injection when variable names start with `-`.
 - [BCS0201] Declare indexed arrays with `declare -a files=()` for ordered lists; never assign scalars to array variables.
