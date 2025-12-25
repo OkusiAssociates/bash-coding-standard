@@ -286,3 +286,4 @@ test_template_name_inference
 
 # Print summary
 test_summary
+#fin

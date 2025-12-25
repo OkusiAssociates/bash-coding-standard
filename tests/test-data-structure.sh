@@ -276,7 +276,7 @@ test_bcs_code_decodability() {
   local -- code
 
   for code in "${sample_codes[@]}"; do
-    if ! "$PROJECT_DIR"/bash-coding-standard decode "$code" --exists 2>&1 >/dev/null; then
+    if ! "$PROJECT_DIR"/bash-coding-standard decode "$code" --exists >/dev/null 2>&1; then
       fail "BCS code $code cannot be decoded"
       ((failed_count+=1))
     fi

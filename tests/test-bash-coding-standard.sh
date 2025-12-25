@@ -159,7 +159,8 @@ test_cat_output() {
 
 test_sourcing() {
   local -- script="$1"
-  local -- test_name="Sourcing $(basename "$script")"
+  local -- test_name
+  test_name="Sourcing $(basename "$script")"
 
   info "Testing sourcing for $test_name"
 

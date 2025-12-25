@@ -105,7 +105,7 @@ test_workflow_generate_search_verify() {
   tmpfile=$(mktemp)
   trap 'rm -f "$tmpfile"' RETURN
 
-  "$SCRIPT" generate -o "$tmpfile" 2>&1 >/dev/null
+  "$SCRIPT" generate -o "$tmpfile" >/dev/null 2>&1
 
   if [[ -f "$tmpfile" && -s "$tmpfile" ]]; then
     pass "Generated standard file created"
@@ -162,7 +162,7 @@ test_workflow_codes_decode_all() {
 
       local -- code success_count=0
       for code in $sample_codes; do
-        if "$SCRIPT" decode "$code" --exists -c 2>&1 >/dev/null; then
+        if "$SCRIPT" decode "$code" --exists -c >/dev/null 2>&1; then
           ((success_count+=1))
         fi
       done
@@ -280,7 +280,7 @@ test_workflow_template_customization() {
   local -- test_desc="Test Application"
   local -- test_version="2.5.0"
 
-  "$SCRIPT" template -n "$test_name" -d "$test_desc" -v "$test_version" -o "$tmpfile" --force 2>&1 >/dev/null
+  "$SCRIPT" template -n "$test_name" -d "$test_desc" -v "$test_version" -o "$tmpfile" --force >/dev/null 2>&1
 
   if [[ -f "$tmpfile" ]]; then
     local -- content

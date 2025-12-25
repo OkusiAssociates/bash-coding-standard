@@ -81,7 +81,8 @@ validate_csv() {
 # Process single CSV file
 process_csv_file() {
   local -- input_file=$1
-  local -- output_file="$OUTPUT_DIR/$(basename "${input_file%.csv}")-processed.csv"
+  local -- output_file
+  output_file="$OUTPUT_DIR/$(basename "${input_file%.csv}")-processed.csv"
   local -i record_count=0
 
   info "Processing: $(basename "$input_file")"

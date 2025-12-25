@@ -356,7 +356,8 @@ setup_test_env() {
   local -- temp_dir
   temp_dir=$(mktemp -d "/tmp/bcs-test-${test_name}-XXXXXX")
 
-  # Set cleanup trap
+  # Set cleanup trap (single quotes to delay expansion until signal)
+  # shellcheck disable=SC2064  # temp_dir is local, must expand at definition
   trap "rm -rf '$temp_dir'" RETURN EXIT
 
   echo "$temp_dir"
