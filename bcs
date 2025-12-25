@@ -2238,12 +2238,12 @@ Usage: bcs generate-rulets [OPTIONS] [CATEGORY]
 
 Options:
   -h, --help              Show this help message
-  -a, --all               Generate rulets for all 14 categories (batch mode)
+  -a, --all               Generate rulets for all 12 categories (batch mode)
   -f, --force             Force regeneration even if rulet file exists
   --agent-cmd CMD         Path to bcs-rulet-extractor agent (default: auto-detect from lib/agents/ or /ai/scripts/claude/agents/)
 
 Arguments:
-  CATEGORY                Category number (01-14) or name (e.g., 'variables', '02-variables')
+  CATEGORY                Category number (01-12) or name (e.g., 'variables', '02-variables')
 
 Description:
   This command uses the bcs-rulet-extractor AI agent to read complete.md rulefiles
@@ -2256,7 +2256,7 @@ Examples:
   bcs generate-rulets 02                    # Generate rulets for category 02 (variables)
   bcs generate-rulets variables             # Same - by category name
   bcs generate-rulets 02-variables          # Same - by directory name
-  bcs generate-rulets --all                 # Generate for all 14 categories
+  bcs generate-rulets --all                 # Generate for all 12 categories
   bcs generate-rulets --all --force         # Force regeneration of all rulet files
 
 Output:
@@ -2312,7 +2312,7 @@ EOF
 
   # Batch mode: process all categories
   if ((batch_mode)); then
-    info 'Batch mode: Generating rulets for all 14 categories...'
+    info 'Batch mode: Generating rulets for all 12 categories...'
 
     local -a category_dirs=()
     readarray -t category_dirs < <(find "$data_dir" -maxdepth 1 -type d -name '[0-9][0-9]-*' | sort)
