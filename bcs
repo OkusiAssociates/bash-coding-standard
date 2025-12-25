@@ -1,7 +1,18 @@
 #!/usr/bin/env bash
 #shellcheck disable=SC2015
-# Display the Bash Coding Standard document with optional markdown rendering
-# This script can be executed directly or sourced to provide display_BCS function
+# ==============================================================================
+# bcs - Bash Coding Standard CLI Toolkit
+# ==============================================================================
+# Multi-purpose CLI for viewing, validating, and managing the Bash Coding
+# Standard (BCS). Dual-purpose: executable (strict mode) or sourceable (library).
+#
+# Subcommands: display, about, template, check, compress, codes, generate,
+#              generate-rulets, search, decode, sections, default, help
+#
+# Exit codes: 0=success, 1=error, 2=usage error, 22=invalid option, 127=missing dep
+#
+# Dependencies: bash 5.2+, realpath; Optional: claude (for check/compress), md2ansi
+# ==============================================================================
 
 # BCS Metadata
 #shellcheck disable=SC2155,SC2034
@@ -1186,7 +1197,7 @@ build_context_toc() {
   cat <<'TOC_HEADER'
 === CONTEXT: BCS Structure Overview ===
 
-The Bash Coding Standard consists of 14 sections. Use this overview to:
+The Bash Coding Standard consists of 12 sections. Use this overview to:
 1. Understand where concepts are covered
 2. Avoid duplicating content from other sections
 3. Reference related sections appropriately
@@ -3328,13 +3339,17 @@ bcs sections - List all sections of the Bash Coding Standard
 
 Usage: bcs sections
 
-Lists all 14 sections of the standard with their titles.
+Lists all 12 sections with their titles, extracted from the standard file.
 
-Example output:
+Output format:
   1. Script Structure & Layout
-  2. Variable Declarations & Constants
-  3. Variable Expansion & Parameter Substitution
+  2. Variables & Data Types
   ...
+  12. Style & Development
+
+Examples:
+  bcs sections              # List all sections
+  bcs sections | head -3    # Show first 3 sections
 
 EOF
     return 0
@@ -3635,7 +3650,7 @@ Code Quality:
 
 Repository:
   Main script:        bash-coding-standard ($BCS_VERSION)
-  Subcommands:        11 (display, about, template, check, compress, codes, generate, search, decode, sections, help)
+  Subcommands:        13 (display, about, template, check, compress, codes, generate, generate-rulets, search, decode, sections, default, help)
   License:            CC BY-SA 4.0
 
 EOF
@@ -4660,7 +4675,7 @@ Examples:
   bcs decode BCS010201                   # Show file location for BCS010201
   bcs generate --canonical               # Regenerate canonical standard
   bcs generate-rulets --all              # Generate rulets for all categories
-  bcs sections                           # List all 14 sections
+  bcs sections                           # List all 12 sections
   bcs default                            # Show current default tier
   bcs default complete                   # Set default to complete tier
   bcs default --list                     # List all available tiers
