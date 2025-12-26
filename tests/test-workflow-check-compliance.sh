@@ -87,7 +87,7 @@ test_json_format() {
   test_section "JSON Output Format"
   local -- output
   output=$("$CHECK_COMPLIANCE_SCRIPT" --format json --help 2>&1) || true
-  assert_contains "$output" "json\\|JSON" "JSON format mentioned in help"
+  assert_contains "$output" "json|JSON" "JSON format mentioned in help"
 }
 
 test_strict_mode() {

@@ -339,7 +339,11 @@ EOF
 # Main function
 main() {
   # Handle help early (before process substitution to avoid subshell exit issue)
-  [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]] && usage 0
+  # Must check ALL args since --help can appear after other options
+  local -- arg
+  for arg in "$@"; do
+    [[ "$arg" == "-h" || "$arg" == "--help" ]] && usage 0
+  done
 
   local -i batch_mode
   local -a scripts

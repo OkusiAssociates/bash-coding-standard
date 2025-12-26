@@ -56,7 +56,7 @@ test_interrogate_by_bcs_code() {
 
   if [[ $exit_code -eq 0 ]]; then
     pass "Successfully interrogated BCS0102"
-    assert_contains "$output" "BCS0102\\|0102" "Output contains BCS code"
+    assert_contains "$output" "BCS0102|0102" "Output contains BCS code"
   else
     warn "Failed to interrogate BCS0102 (code may not exist)"
   fi
@@ -99,7 +99,7 @@ test_json_output_format() {
 
   if [[ "$output" =~ \{.*\} ]]; then
     pass "JSON output format works"
-    assert_contains "$output" "\"bcs_code\"\\|bcs_code" "JSON contains bcs_code field"
+    assert_contains "$output" "\"bcs_code\"|bcs_code" "JSON contains bcs_code field"
   else
     warn "JSON output may not be implemented"
   fi

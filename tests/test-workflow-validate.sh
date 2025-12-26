@@ -70,7 +70,7 @@ test_validate_real_data() {
   # Should pass validation
   if [[ $exit_code -eq 0 ]]; then
     pass "Real BCS data validates successfully"
-    assert_contains "$output" "validation.*passed\\|passed.*validation" "Success message shown"
+    assert_contains "$output" "validation.*passed|passed.*validation" "Success message shown"
   else
     warn "Real BCS data validation failed (may have known issues)"
   fi
@@ -257,7 +257,7 @@ test_dry_run_mode() {
 
   output=$("$VALIDATE_SCRIPT" --dry-run 2>&1) || true
 
-  assert_contains "$output" "DRY-RUN\\|DRY RUN" "Dry-run mode indicated"
+  assert_contains "$output" "DRY-RUN|DRY RUN" "Dry-run mode indicated"
 }
 
 test_quiet_mode() {
