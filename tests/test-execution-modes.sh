@@ -155,7 +155,7 @@ EOF
   # We can't easily test this without affecting the parent shell
 
   # Test 3: Both modes can find the file
-  output=$("$SCRIPT" --cat 2>&1 | head -1 || true)
+  output=$("$SCRIPT" --cat 2>&1 | head -5 || true)
   assert_contains "$output" "Bash Coding Standard" "Direct execution finds file"
 
   cat >"$test_script" <<'EOF'
@@ -163,7 +163,7 @@ EOF
 set -euo pipefail
 # shellcheck source=../bash-coding-standard
 source "$1"
-cmd_display --cat 2>&1 | head -1 || true
+cmd_display --cat 2>&1 | head -5 || true
 EOF
 
   output=$(bash "$test_script" "$SCRIPT" 2>&1)
