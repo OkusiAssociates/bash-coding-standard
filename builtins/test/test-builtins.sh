@@ -289,7 +289,7 @@ test_performance() {
             fail "Performance gain expected but not seen"
         fi
     else
-        echo -e "  ${YELLOW}⚠${RESET} External basename not found, skipping comparison"
+        echo -e "  ${YELLOW}▲${RESET} External basename not found, skipping comparison"
         ((TESTS_RUN++))
     fi
 }

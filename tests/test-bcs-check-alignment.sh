@@ -209,7 +209,7 @@ ${YELLOW}Failed Scripts:${NC}"
     done
     report+="
 
-${YELLOW}⚠ Note:${NC} All tested scripts are canonically BCS-compliant.
+${YELLOW}▲ Note:${NC} All tested scripts are canonically BCS-compliant.
 Failures indicate potential false positives in the AI checker.
 "
   else

@@ -4772,7 +4772,7 @@ main "$@"
 
 \`\`\`bash
 # For script metadata (see BCS0103):
-# ⚠ Valid but not preferred - readonly-after-group for metadata
+# ▲ Valid but not preferred - readonly-after-group for metadata
 VERSION='1.0.0'
 SCRIPT_PATH=$(realpath -- "$0")
 SCRIPT_DIR=${SCRIPT_PATH%/*}
@@ -10468,7 +10468,7 @@ _msg() {
   local -- prefix="$SCRIPT_NAME:" msg
   case "${FUNCNAME[1]}" in
     info) prefix+=" ◉" ;;
-    warn) prefix+=" ⚠" ;;
+    warn) prefix+=" ▲" ;;
     error) prefix+=" ✗" ;;
     success) prefix+=" ✓" ;;
     *) ;;
@@ -20780,7 +20780,7 @@ _msg() {
   local -- prefix="$SCRIPT_NAME:" msg
   case "${FUNCNAME[1]}" in
     info) prefix+=" ◉" ;;
-    warn) prefix+=" ⚠" ;;
+    warn) prefix+=" ▲" ;;
     error) prefix+=" ✗" ;;
     success) prefix+=" ✓" ;;
     debug) prefix+=" ⋯" ;;
@@ -27687,7 +27687,7 @@ main "$@"
 
 \`\`\`bash
 # For script metadata (see BCS0103):
-# ⚠ Valid but not preferred - readonly-after-group for metadata
+# ▲ Valid but not preferred - readonly-after-group for metadata
 VERSION='1.0.0'
 SCRIPT_PATH=$(realpath -- "$0")
 SCRIPT_DIR=${SCRIPT_PATH%/*}
@@ -33383,7 +33383,7 @@ _msg() {
   local -- prefix="$SCRIPT_NAME:" msg
   case "${FUNCNAME[1]}" in
     info) prefix+=" ◉" ;;
-    warn) prefix+=" ⚠" ;;
+    warn) prefix+=" ▲" ;;
     error) prefix+=" ✗" ;;
     success) prefix+=" ✓" ;;
     *) ;;
@@ -43695,7 +43695,7 @@ _msg() {
   local -- prefix="$SCRIPT_NAME:" msg
   case "${FUNCNAME[1]}" in
     info) prefix+=" ◉" ;;
-    warn) prefix+=" ⚠" ;;
+    warn) prefix+=" ▲" ;;
     error) prefix+=" ✗" ;;
     success) prefix+=" ✓" ;;
     debug) prefix+=" ⋯" ;;

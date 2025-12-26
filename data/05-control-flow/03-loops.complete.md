@@ -944,7 +944,7 @@ _msg() {
   local -- prefix="$SCRIPT_NAME:" msg
   case "${FUNCNAME[1]}" in
     info) prefix+=" ◉" ;;
-    warn) prefix+=" ⚠" ;;
+    warn) prefix+=" ▲" ;;
     error) prefix+=" ✗" ;;
     success) prefix+=" ✓" ;;
     *) ;;

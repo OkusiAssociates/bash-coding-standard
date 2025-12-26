@@ -19,7 +19,7 @@ readonly -- GREEN YELLOW RED NC
 _msg() {
   local -- prefix="$SCRIPT_NAME:" msg
   [[ "${FUNCNAME[1]}" == success ]] && prefix+=" ${GREEN}✓${NC}"
-  [[ "${FUNCNAME[1]}" == warn ]] && prefix+=" ${YELLOW}⚠${NC}"
+  [[ "${FUNCNAME[1]}" == warn ]] && prefix+=" ${YELLOW}▲${NC}"
   [[ "${FUNCNAME[1]}" == error ]] && prefix+=" ${RED}✗${NC}"
   for msg in "$@"; do printf '%s %s\n' "$prefix" "$msg"; done
 }

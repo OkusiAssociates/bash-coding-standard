@@ -381,7 +381,7 @@ This directory contains vendored copies of external dependencies to ensure the B
 **Upstream:** Internal YaTTI utility (no public repository)
 **Last synced:** 2025-10-25 12:04:34 +0800
 
-**License:** ⚠️ No explicit license (internal YaTTI utility)
+**License:** ▲️ No explicit license (internal YaTTI utility)
 
 **Contents:**
 - `hr2int.bash` - Conversion functions for both directions
@@ -411,7 +411,7 @@ This directory contains vendored copies of external dependencies to ensure the B
 **Upstream:** Internal YaTTI utility (no public repository)
 **Last synced:** 2025-10-25 12:04:34 +0800
 
-**License:** ⚠️ No explicit license (internal YaTTI utility)
+**License:** ▲️ No explicit license (internal YaTTI utility)
 
 **Contents:**
 - `remblanks` - Simple grep-based comment/blank line remover
@@ -1125,15 +1125,15 @@ test_new_lib_availability() {
 - ✅ **printline** - Pure Bash, no subprocesses
 
 **Medium (1-10ms overhead):**
-- ⚠️ **trim** - Pure Bash string manipulation (no subshells)
-- ⚠️ **whichx** - PATH search with stat calls
-- ⚠️ **timer** - Uses EPOCHREALTIME (Bash 5.0+ feature)
+- ▲️ **trim** - Pure Bash string manipulation (no subshells)
+- ▲️ **whichx** - PATH search with stat calls
+- ▲️ **timer** - Uses EPOCHREALTIME (Bash 5.0+ feature)
 
 **Heavier (10-100ms overhead):**
-- ⚠️ **md2ansi** - Loads 5 library files (~60KB total)
-- ⚠️ **mdheaders** - Loads libmdheaders.bash (~20KB)
-- ⚠️ **post_slug** - Calls iconv, sed, tr subprocesses
-- ⚠️ **dux** - Spawns du subprocess (unavoidable)
+- ▲️ **md2ansi** - Loads 5 library files (~60KB total)
+- ▲️ **mdheaders** - Loads libmdheaders.bash (~20KB)
+- ▲️ **post_slug** - Calls iconv, sed, tr subprocesses
+- ▲️ **dux** - Spawns du subprocess (unavoidable)
 
 **Slow (> 100ms):**
 - ❌ **Claude agents** - Network calls to Claude API (seconds)
@@ -1166,7 +1166,7 @@ timer -f for i in {1..100}; do which ls >/dev/null; done
 
 ### SUID/SGID Restrictions
 
-**⚠️ Important:** Per BCS rules, **never** use SUID or SGID on Bash scripts.
+**▲️ Important:** Per BCS rules, **never** use SUID or SGID on Bash scripts.
 
 All vendored utilities follow this rule:
 ```bash

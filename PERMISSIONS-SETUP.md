@@ -58,7 +58,7 @@ Same permission structure as repository.
 
 ## Current Repository State
 
-⚠ **IMPORTANT**: The repository at `/ai/scripts/Okusi/bash-coding-standard/` may currently have group ownership `sysadmin:sysadmin` rather than the intended `bcs` group. This is expected behavior because:
+▲ **IMPORTANT**: The repository at `/ai/scripts/Okusi/bash-coding-standard/` may currently have group ownership `sysadmin:sysadmin` rather than the intended `bcs` group. This is expected behavior because:
 
 1. **Git does not track group ownership** - Only file permissions are tracked
 2. **The installed location DOES have correct ownership** - The Makefile install target correctly sets `bcs` group ownership when installing to `/usr/local/share/yatti/bash-coding-standard/`

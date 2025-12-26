@@ -167,7 +167,7 @@ warn() {
   local -- message="$*"
   TESTS_RUN+=1
   TESTS_PASSED+=1  # Count as passed with warning
-  echo "${YELLOW}⚠${NC} $message"
+  echo "${YELLOW}▲${NC} $message"
   return 0
 }
 

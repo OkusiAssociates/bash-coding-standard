@@ -221,7 +221,7 @@ main "$@"
 
 \`\`\`bash
 # For script metadata (see BCS0103):
-# ⚠ Valid but not preferred - readonly-after-group for metadata
+# ▲ Valid but not preferred - readonly-after-group for metadata
 VERSION='1.0.0'
 SCRIPT_PATH=$(realpath -- "$0")
 SCRIPT_DIR=${SCRIPT_PATH%/*}

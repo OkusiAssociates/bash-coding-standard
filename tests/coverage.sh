@@ -6,7 +6,7 @@ set -euo pipefail
 shopt -s inherit_errexit shift_verbose
 
 # Script metadata
-VERSION='1.0.0'
+VERSION=1.0.0
 SCRIPT_PATH=$(realpath -- "$0")
 SCRIPT_DIR=${SCRIPT_PATH%/*}
 PROJECT_DIR=${SCRIPT_DIR%/*}
@@ -195,9 +195,9 @@ generate_coverage_report() {
   if [[ "$overall_percentage" -ge 80 ]]; then
     echo "  Status:             ${GREEN}✓ EXCELLENT${NC}"
   elif [[ "$overall_percentage" -ge 60 ]]; then
-    echo "  Status:             ${YELLOW}⚠ GOOD${NC}"
+    echo "  Status:             ${YELLOW}▲ GOOD${NC}"
   elif [[ "$overall_percentage" -ge 40 ]]; then
-    echo "  Status:             ${YELLOW}⚠ NEEDS IMPROVEMENT${NC}"
+    echo "  Status:             ${YELLOW}▲ NEEDS IMPROVEMENT${NC}"
   else
     echo "  Status:             ${RED}✗ POOR${NC}"
   fi

@@ -304,7 +304,7 @@ main() {
 
   for script in "${TEST_SCRIPTS[@]}"; do
     if [[ ! -f "$script" ]]; then
-      echo "${YELLOW}⚠${NC} Skipping $(basename "$script") (not found)"
+      echo "${YELLOW}▲${NC} Skipping $(basename "$script") (not found)"
       continue
     fi
 

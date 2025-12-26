@@ -118,7 +118,7 @@ install-user: $(BUILTINS)
 		echo "fi" >> $(HOME)/.bashrc; \
 		echo "$(COLOR_GREEN)✓ Auto-loader added to ~/.bashrc$(COLOR_RESET)"; \
 	else \
-		echo "$(COLOR_YELLOW)⚠ Auto-loader already present in ~/.bashrc$(COLOR_RESET)"; \
+		echo "$(COLOR_YELLOW)▲ Auto-loader already present in ~/.bashrc$(COLOR_RESET)"; \
 	fi
 	install -m 0644 bash-builtins-loader.sh $(USER_PROFILE_DIR)/
 	@echo "$(COLOR_GREEN)✓ Installation complete!$(COLOR_RESET)"

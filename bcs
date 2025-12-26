@@ -17,7 +17,7 @@
 # BCS Metadata
 #shellcheck disable=SC2155,SC2034
 [[ -v BCS_VERSION ]] || {
-  declare -rx BCS_VERSION='1.0.0'
+  declare -rx BCS_VERSION=1.0.0
   declare -n VERSION=BCS_VERSION  # Alias for external use
   declare -rx BCS_PATH=$(realpath -e -- "${BASH_SOURCE[0]}")
   declare -rx BCS_DIR=${BCS_PATH%/*}
@@ -60,7 +60,7 @@ success() { ((VERBOSE)) || return 0; >&2 _msg "$@" || return 0; }
 # Error output (unconditional)
 error() { >&2 _msg "$@"; }
 # Exit with error
-die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
+die() { (($# > 1)) && error "${@:2}" ||:; exit "${1:-0}"; }
 # Yes/no prompt
 yn() {
   #((PROMPT)) || return 0
@@ -176,7 +176,7 @@ find_bcs_file() {
   )
   local -- path
   for path in "${search_paths[@]}"; do
-    [[ -f "$path"/data/BASH-CODING-STANDARD.md ]] && { echo "$path"/data/BASH-CODING-STANDARD.md; return 0; }
+    [[ -f "$path"/data/BASH-CODING-STANDARD.md ]] && { echo "$path"/data/BASH-CODING-STANDARD.md; return 0; } ||:
   done
 
   return 1
@@ -247,7 +247,7 @@ find_data_dir() {
   )
   local -- path
   for path in "${search_paths[@]}"; do
-    [[ -d "$path" ]] && { echo "$path"; return 0; }
+    [[ -d "$path" ]] && { echo "$path"; return 0; } ||:
   done
   return 1
 }
@@ -397,7 +397,7 @@ rebuild_bcs_index() {
     fi
   done
 
-  ((dir_symlink_count)) && success "Created $dir_symlink_count director$(y "$dir_symlink_count") symlink$(s $dir_symlink_count)"
+  ((dir_symlink_count)) && success "Created $dir_symlink_count director$(y "$dir_symlink_count") symlink$(s $dir_symlink_count)" ||:
   >&2 echo
 
   # Create BCS code symlinks
@@ -438,7 +438,7 @@ rebuild_bcs_index() {
   done
 
   success "Created $symlink_count symlink$(s $symlink_count)"
-  ((skipped_count)) && warn "Skipped $skipped_count file$(s $skipped_count)"
+  ((skipped_count)) && warn "Skipped $skipped_count file$(s $skipped_count)" ||:
   >&2 echo
 }
 declare -fx rebuild_bcs_index
@@ -689,7 +689,7 @@ compress_check_timestamps_match() {
   abstract_mtime=$(stat -c '%Y' "$abstract_file" 2>/dev/null) || return 1
 
   # Check if all three timestamps match
-  [[ "$complete_mtime" == "$summary_mtime" && "$summary_mtime" == "$abstract_mtime" ]]
+  [[ "$complete_mtime" == "$summary_mtime" && "$summary_mtime" == "$abstract_mtime" ]] ||:
 }
 declare -fx compress_check_timestamps_match
 
@@ -698,8 +698,8 @@ compress_rule_to_tier() {
   local -- complete_file=$1
   local -- tier=$2
   local -- claude_cmd=$3
-  local -i dry_run="${4:-0}"
-  local -i compress_verbose="${5:-1}"
+  local -i dry_run=${4:-0}
+  local -i compress_verbose=${5:-1}
   local -i target_size="${6:-1500}"  # Default for abstract
   local -- context_level="${7:-none}"  # Context level: none, toc, abstract, summary, complete
   local -i max_retries=3
@@ -710,96 +710,96 @@ compress_rule_to_tier() {
 
   # Generate target filename
   local -- target_dir=${complete_file%/*}
-  local -- target_file="$target_dir/$basename.$tier.md"
+  local -- target_file="$target_dir"/"$basename"."$tier".md
 
   # Calculate BCS code for this file
   local -- bcs_code
   bcs_code=$(get_bcs_code "$complete_file") || bcs_code='BCS????'
 
-  ((compress_verbose)) && vecho "  → Generating .$tier.md (BCS: $bcs_code)..."
+  ((compress_verbose)) && vecho "  → Generating .$tier.md (BCS: $bcs_code)..." ||:
 
   # Delete existing file if in regenerate mode (already handled by caller)
 
   if ((dry_run)); then
-    ((compress_verbose)) && info "  [DRY-RUN] Would generate ${target_file@Q}"
+    ((compress_verbose)) && info "  [DRY-RUN] Would generate ${target_file@Q}" ||:
     return 0
   fi
 
   # Build context file based on context_level (once, before retry loop)
   # Use temp file to avoid command substitution null byte issues with form feed chars
-  local -- context_file_persistent=""
+  local -- context_file_persistent=''
   case "$context_level" in
     abstract)
-      ((compress_verbose)) && vecho "    Using abstract context (excluding $bcs_code)"
+      ((compress_verbose)) && vecho "    Using abstract context (excluding $bcs_code)" ||:
       context_file_persistent=$(mktemp) || {
-        ((compress_verbose)) && warn "    Failed to create context temp file"
-        context_file_persistent=""
+        ((compress_verbose)) && warn "    Failed to create context temp file" ||:
+        context_file_persistent=''
       }
       if [[ -n "$context_file_persistent" ]]; then
         if ! build_context_abstract_exclude "$bcs_code" "$context_file_persistent"; then
-          ((compress_verbose)) && warn '    Failed to build abstract context with exclusion, falling back to full context'
+          ((compress_verbose)) && warn '    Failed to build abstract context with exclusion, falling back to full context' ||:
           if ! build_context_abstract > "$context_file_persistent"; then
-            ((compress_verbose)) && warn '    Failed to build abstract context, continuing without it'
+            ((compress_verbose)) && warn '    Failed to build abstract context, continuing without it' ||:
             rm -f "$context_file_persistent"
-            context_file_persistent=""
+            context_file_persistent=''
           fi
         fi
       fi
       ;;
     summary)
-      ((compress_verbose)) && vecho "    Using summary context (excluding $bcs_code)"
+      ((compress_verbose)) && vecho "    Using summary context (excluding $bcs_code)" ||:
       context_file_persistent=$(mktemp) || {
-        ((compress_verbose)) && warn '    Failed to create context temp file'
+        ((compress_verbose)) && warn '    Failed to create context temp file' ||:
         context_file_persistent=''
       }
       if [[ -n "$context_file_persistent" ]]; then
         if ! build_context_summary_exclude "$bcs_code" "$context_file_persistent"; then
-          ((compress_verbose)) && warn '    Failed to build summary context with exclusion, falling back to full context'
+          ((compress_verbose)) && warn '    Failed to build summary context with exclusion, falling back to full context' ||:
           if ! build_context_summary > "$context_file_persistent"; then
-            ((compress_verbose)) && warn '    Failed to build summary context, continuing without it'
+            ((compress_verbose)) && warn '    Failed to build summary context, continuing without it' ||:
             rm -f "$context_file_persistent"
-            context_file_persistent=""
+            context_file_persistent=''
           fi
         fi
       fi
       ;;
     complete)
-      ((compress_verbose)) && vecho "    Using complete context (excluding $bcs_code)"
+      ((compress_verbose)) && vecho "    Using complete context (excluding $bcs_code)" ||:
       context_file_persistent=$(mktemp) || {
-        ((compress_verbose)) && warn '    Failed to create context temp file'
+        ((compress_verbose)) && warn '    Failed to create context temp file' ||:
         context_file_persistent=''
       }
       if [[ -n "$context_file_persistent" ]]; then
         if ! build_context_complete_exclude "$bcs_code" "$context_file_persistent"; then
-          ((compress_verbose)) && warn '    Failed to build complete context with exclusion, falling back to full context'
+          ((compress_verbose)) && warn '    Failed to build complete context with exclusion, falling back to full context' ||:
           if ! build_context_complete > "$context_file_persistent"; then
-            ((compress_verbose)) && warn '    Failed to build complete context, continuing without it'
+            ((compress_verbose)) && warn '    Failed to build complete context, continuing without it' ||:
             rm -f "$context_file_persistent"
-            context_file_persistent=""
+            context_file_persistent=''
           fi
         fi
       fi
       ;;
     toc)
-      ((compress_verbose)) && vecho '    Using TOC context for structure awareness'
+      ((compress_verbose)) && vecho '    Using TOC context for structure awareness' ||:
       context_file_persistent=$(mktemp) || {
-        ((compress_verbose)) && warn '    Failed to create context temp file'
+        ((compress_verbose)) && warn '    Failed to create context temp file' ||:
         context_file_persistent=''
       }
       if [[ -n "$context_file_persistent" ]]; then
         if ! build_context_toc > "$context_file_persistent"; then
-          ((compress_verbose)) && warn '    Failed to build TOC context, continuing without it'
+          ((compress_verbose)) && warn '    Failed to build TOC context, continuing without it' ||:
           rm -f "$context_file_persistent"
-          context_file_persistent=""
+          context_file_persistent=''
         fi
       fi
       ;;
-    none|"")
-      context_file_persistent=""
+    none|'')
+      context_file_persistent=''
       ;;
     *)
-      ((compress_verbose)) && warn "    Unknown context level ${context_level@Q}, using none"
-      context_file_persistent=""
+      ((compress_verbose)) && warn "    Unknown context level ${context_level@Q}, using none" ||:
+      context_file_persistent=''
       ;;
   esac
 
@@ -812,19 +812,19 @@ compress_rule_to_tier() {
     # Build system prompt based on tier and attempt
     if ((attempt == 1)); then
       # First attempt - standard prompt
-      if [[ "$tier" == 'summary' ]]; then
+      if [[ "$tier" == summary ]]; then
         system_prompt=$(compress_build_system_prompt_summary)
       else
         system_prompt=$(compress_build_system_prompt_abstract "$bcs_code")
       fi
     else
       # Retry with stricter prompt
-      if [[ "$tier" == 'summary' ]]; then
+      if [[ "$tier" == summary ]]; then
         system_prompt=$(compress_build_system_prompt_summary_strict "$file_size")
       else
         system_prompt=$(compress_build_system_prompt_abstract_strict "$file_size" "$bcs_code")
       fi
-      ((compress_verbose)) && warn "  ↻ Retry attempt $attempt with stricter compression..."
+      ((compress_verbose)) && warn "  ↻ Retry attempt $attempt with stricter compression..." ||:
     fi
 
     # Create temporary file for atomic write
@@ -836,7 +836,7 @@ compress_rule_to_tier() {
 
     # Skip tee if stderr is not a terminal (non-interactive or piped)
     local -i use_tee=0
-    [[ -t 2 ]] && use_tee=1
+    [[ -t 2 ]] && use_tee=1 ||:
 
     if [[ -n "$context_file_persistent" ]]; then
       # Tell Claude to read context file first, then process the target file
@@ -873,7 +873,7 @@ compress_rule_to_tier() {
     if ((claude_exit == 0)); then
       # Check if temp file was actually written to (size > 0)
       if [[ ! -s "$temp_file" ]]; then
-        ((compress_verbose)) && warn '  ⚠ Claude succeeded but wrote empty file (possible API error)'
+        ((compress_verbose)) && warn '  ▲ Claude succeeded but wrote empty file (possible API error)' ||:
         rm -f "$temp_file"
         sleep $((2 ** attempt))  # Exponential backoff: 2, 4, 8 seconds
         attempt+=1
@@ -881,7 +881,7 @@ compress_rule_to_tier() {
       fi
 
       # Sanitize UTF-8 encoding in Claude's output
-      sanitize_utf8 "$temp_file" || ((compress_verbose)) && warn '  ⚠ UTF-8 sanitization failed'
+      sanitize_utf8 "$temp_file" || ((compress_verbose)) && warn '  ▲ UTF-8 sanitization failed' ||:
 
       # Check file size
       file_size=$(wc -c < "$temp_file")
@@ -910,17 +910,17 @@ compress_rule_to_tier() {
           # Fallback: get timestamp explicitly and apply it
           local -- timestamp
           timestamp=$(stat -c '%Y' "$complete_file" 2>/dev/null) && touch -d "@$timestamp" "$target_file" 2>/dev/null || {
-            ((compress_verbose)) && warn "  Failed to sync timestamp for ${target_file@Q}"
+            ((compress_verbose)) && warn "  Failed to sync timestamp for ${target_file@Q}" ||:
           }
         fi
 
-        ((compress_verbose)) && success "  ✓ Generated ($file_size bytes) ${target_file@Q}"
-        [[ -n "$context_file_persistent" ]] && rm -f "$context_file_persistent"
+        ((compress_verbose)) && success "  ✓ Generated ($file_size bytes) ${target_file@Q}" ||:
+        [[ -n "$context_file_persistent" ]] && rm -f "$context_file_persistent" ||:
         return 0  # Success
       else
         # Oversized - retry or give up
         if ((attempt < max_retries)); then
-          ((compress_verbose)) && warn "  ⚠ OVERSIZED ($file_size bytes > $target_size) - retrying..."
+          ((compress_verbose)) && warn "  ▲ OVERSIZED ($file_size bytes > $target_size) - retrying..." ||:
           rm -f "$temp_file"
           attempt+=1
         else
@@ -928,7 +928,7 @@ compress_rule_to_tier() {
           mv "$temp_file" "$target_file" || { error "Failed to write ${target_file@Q}"; return 1; }
 
           # Sanitize UTF-8 encoding in oversized file
-          sanitize_utf8 "$target_file" || ((compress_verbose)) && warn '  ⚠ UTF-8 sanitization failed'
+          sanitize_utf8 "$target_file" || ((compress_verbose)) && warn '  ▲ UTF-8 sanitization failed' ||:
 
           # Copy permissions with fallback
           if ! chmod --reference="$complete_file" "$target_file" 2>/dev/null; then
@@ -949,19 +949,19 @@ compress_rule_to_tier() {
             }
           fi
 
-          ((compress_verbose)) && warn "  ⚠ OVERSIZED ($file_size bytes > $target_size): $target_file"
-          [[ -n "$context_file_persistent" ]] && rm -f "$context_file_persistent"
+          ((compress_verbose)) && warn "  ▲ OVERSIZED ($file_size bytes > $target_size): $target_file" ||:
+          [[ -n "$context_file_persistent" ]] && rm -f "$context_file_persistent" ||:
           return 2  # Oversized
         fi
       fi
     else
       # Claude invocation failed - check if it's a connection error (retry) or other error
-      [[ -f "$temp_file" ]] && rm -f "$temp_file"
+      [[ ! -f "$temp_file" ]] || rm -f "$temp_file"
 
       # Check if it's an API connection error (transient, should retry)
       if ((claude_exit == 1)); then
         if ((attempt < max_retries)); then
-          ((compress_verbose)) && warn "  ↻ API connection error, retrying in $((2 ** attempt)) seconds (attempt $attempt/$max_retries)..."
+          ((compress_verbose)) && warn "  ↻ API connection error, retrying in $((2 ** attempt)) seconds (attempt $attempt/$max_retries)..." ||:
           sleep $((2 ** attempt))  # Exponential backoff: 2, 4, 8 seconds
           attempt+=1
           continue
@@ -970,13 +970,13 @@ compress_rule_to_tier() {
 
       # Not a retryable error or out of retries
       error "  ✗ FAILED: Claude invocation failed for $target_file (exit code: $claude_exit)"
-      [[ -n "$context_file_persistent" ]] && rm -f "$context_file_persistent"
+      [[ -z "$context_file_persistent" ]] || rm -f "$context_file_persistent"
       return 1  # Failed
     fi
   done
 
   # Should not reach here (all retries exhausted)
-  [[ -n "$context_file_persistent" ]] && rm -f "$context_file_persistent"
+  [[ -z "$context_file_persistent" ]] || rm -f "$context_file_persistent"
   return 1
 }
 declare -fx compress_rule_to_tier
@@ -1005,11 +1005,11 @@ compress_process_complete_file() {
 
   # Check if all three files have matching timestamps (indicating they're in sync)
   if ((regenerate)) && compress_check_timestamps_match "$complete_file" "$summary_file" "$abstract_file"; then
-    ((compress_verbose)) && vecho "⊙ SKIP (timestamps match): $relative_path"
+    ((compress_verbose)) && vecho "⊙ SKIP (timestamps match): $relative_path" ||:
     return 0
   fi
 
-  ((compress_verbose)) && info "Processing: $relative_path"
+  ((compress_verbose)) && info "Processing: $relative_path" ||:
 
   # Process summary tier
   if [[ -z "$tier" || "$tier" == 'summary' ]]; then
@@ -1043,17 +1043,17 @@ compress_process_all_rules() {
   local -i file_count=${#complete_files[@]}
 
   if ((file_count == 0)); then
-    ((compress_verbose)) && warn 'No .complete.md files found'
+    ((compress_verbose)) && warn 'No .complete.md files found' ||:
     return 0
   fi
 
-  ((compress_verbose)) && info "Found $file_count .complete.md files"
+  ((compress_verbose)) && info "Found $file_count .complete.md files" ||:
 
   # If force flag is set, touch all .complete.md files to trigger regeneration
   if ((force)); then
-    ((compress_verbose)) && info 'Force mode: touching all .complete.md files to bypass timestamp checks'
+    ((compress_verbose)) && info 'Force mode: touching all .complete.md files to bypass timestamp checks' ||:
     if ((dry_run)); then
-      ((compress_verbose)) && info '[DRY-RUN] Would touch all .complete.md files'
+      ((compress_verbose)) && info '[DRY-RUN] Would touch all .complete.md files' ||:
     else
       local -- file newtime
       for file in "${complete_files[@]}"; do
@@ -1063,7 +1063,7 @@ compress_process_all_rules() {
     fi
   fi
 
-  ((compress_verbose)) && >&2 echo
+  ((compress_verbose)) && >&2 echo ||:
 
   # Process each file
   local -- file
@@ -1093,12 +1093,12 @@ Files processed: $total_processed complete → compressed
 
 Summary files (.summary.md):
   ${GREEN}✓${NC} Within limit: $summary_success
-  ${YELLOW}⚠${NC} Oversized:    $summary_oversized
+  ${YELLOW}▲${NC} Oversized:    $summary_oversized
   ${RED}✗${NC} Failed:       $summary_failed
 
 Abstract files (.abstract.md):
   ${GREEN}✓${NC} Within limit: $abstract_success
-  ${YELLOW}⚠${NC} Oversized:    $abstract_oversized
+  ${YELLOW}▲${NC} Oversized:    $abstract_oversized
   ${RED}✗${NC} Failed:       $abstract_failed
 
 EOF
@@ -1619,7 +1619,7 @@ parse_exclusion_list() {
     code=$(trim <<<"$code")
 
     # Skip empty codes
-    [[ -z "$code" ]] && continue
+    [[ -n "$code" ]] || continue
 
     # Add BCS prefix if missing
     if [[ ! "$code" =~ ^BCS ]]; then
@@ -2670,7 +2670,7 @@ EOF
 
   # Build grep command
   local -a grep_args=(-C "$context_lines" --color=auto -n)
-  ((ignore_case)) && grep_args+=(-i)
+  ((ignore_case)) && grep_args+=(-i) ||:
 
   # Execute grep
   if grep "${grep_args[@]}" -- "$pattern" "$BCS_FILE"; then
@@ -2789,7 +2789,7 @@ parse_codes_option() {
     code=$(trim <<< "$code")
 
     # Normalize code (add BCS prefix if missing, uppercase)
-    [[ "$code" =~ ^[0-9] ]] && code="BCS$code"
+    [[ "$code" =~ ^[0-9] ]] && code="BCS$code" ||:
     code="${code^^}"
 
     # Validate code exists
@@ -2952,7 +2952,7 @@ Analysis requirements:
 Output format based on severity:
   ✓ COMPLIANT: [BCS Code - Section/Rule] - Brief explanation
   ✗ VIOLATION: [BCS Code - Section/Rule] - Critical issue at line X
-  ⚠ WARNING: [BCS Code - Section/Rule] - Potential issue at line Y
+  ▲ WARNING: [BCS Code - Section/Rule] - Potential issue at line Y
   💡 SUGGESTION: [Best practice] - Improvement at line Z
 
 Focus areas (12 sections):
@@ -3970,7 +3970,7 @@ Description:
   to validate specific rules only.
 
 Output Formats:
-  text      - Human-readable with symbols (✓ ✗ ⚠ 💡)
+  text      - Human-readable with symbols (✓ ✗ ▲ 💡)
   json      - Basic JSON structure
   markdown  - Formatted report with sections
   bcs-json  - Structured JSON with BCS code references
@@ -4096,7 +4096,7 @@ EOF
 
       --)
         shift
-        (($#)) && script_file=$1
+        (($#)) && script_file=$1 ||:
         break
         ;;
 
@@ -4231,7 +4231,7 @@ EOF
     *)
       # Count markers in text output
       violations=$(grep -c '^✗ VIOLATION:' <<< "$validation_output" 2>/dev/null) || violations=0
-      warnings=$(grep -c '^⚠ WARNING:' <<< "$validation_output" 2>/dev/null) || warnings=0
+      warnings=$(grep -c '^▲ WARNING:' <<< "$validation_output" 2>/dev/null) || warnings=0
       ;;
   esac
 
@@ -4258,7 +4258,7 @@ EOF
           grep -E '"severity"[[:space:]]*:[[:space:]]*"warning"' <<< "$validation_output" || echo "$validation_output"
         fi
       else
-        grep -E '^⚠ WARNING:' <<< "$validation_output" || true
+        grep -E '^▲ WARNING:' <<< "$validation_output" || true
       fi
       ;;
     all)
@@ -4549,14 +4549,14 @@ EOF
 
   # Report-only mode
   if ((report_only)); then
-    ((compress_verbose)) && info 'Report-only mode: listing oversized files'
+    ((compress_verbose)) && info 'Report-only mode: listing oversized files' ||:
     compress_report_oversized_files "$data_dir" 20000 "$summary_limit" "$abstract_limit"
     return 0
   fi
 
   # Regenerate mode
-  ((dry_run)) && ((compress_verbose)) && info 'DRY-RUN mode enabled - no changes will be made'
-  ((compress_verbose)) && info 'Regenerate mode: will delete and recreate compressed files'
+  ((dry_run)) && ((compress_verbose)) && info 'DRY-RUN mode enabled - no changes will be made' ||:
+  ((compress_verbose)) && info 'Regenerate mode: will delete and recreate compressed files' ||:
 
   # Validate Claude CLI
   compress_validate_claude_cli "$claude_cmd" || return 1
@@ -4567,17 +4567,19 @@ EOF
 
   # Show statistics (note: this is a simplified version - full stats tracking
   # would require modifying the helper functions to return statistics)
-  ((compress_verbose)) && >&2 echo
-  ((compress_verbose)) && success 'Compression processing complete'
+  if ((compress_verbose)); then
+    >&2 echo
+    success 'Compression processing complete'
+  fi
 
   if ((dry_run)); then
-    ((compress_verbose)) && info 'Dry-run complete - review output and run without --dry-run to execute'
+    ((compress_verbose)) && info 'Dry-run complete - review output and run without --dry-run to execute' ||:
   else
-    ((compress_verbose)) && >&2 echo
+    ((compress_verbose)) && >&2 echo ||:
     ((compress_verbose)) && info 'Next steps:' \
       '  1. Review any oversized files listed above' \
       '  2. Manually compress critical oversized files if needed' \
-      '  3. Run: bcs generate --canonical'
+      '  3. Run: bcs generate --canonical' ||:
   fi
 
   return 0
