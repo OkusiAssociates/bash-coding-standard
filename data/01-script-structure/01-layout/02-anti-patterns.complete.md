@@ -12,7 +12,7 @@
 #!/usr/bin/env bash
 
 # Script starts without error handling
-VERSION='1.0.0'
+VERSION=1.0.0
 
 # Commands can fail silently
 rm -rf /important/data
@@ -32,7 +32,7 @@ set -euo pipefail
 
 shopt -s inherit_errexit shift_verbose
 
-VERSION='1.0.0'
+VERSION=1.0.0
 # ... rest of script
 ```
 
@@ -46,7 +46,7 @@ set -euo pipefail
 
 main() {
   # Using VERBOSE before it's declared
-  ((VERBOSE)) && echo 'Starting...'
+  ((VERBOSE)) && echo 'Starting...' ||:
 
   process_files
 }
@@ -72,7 +72,7 @@ declare -i DRY_RUN=0
 
 main() {
   # Now safe to use
-  ((VERBOSE)) && echo 'Starting...'
+  ((VERBOSE)) && echo 'Starting...' ||:
 
   process_files
 }
@@ -94,13 +94,13 @@ process_files() {
   local -- file
   for file in *.txt; do
     # Calling die() which isn't defined yet!
-    [[ -f "$file" ]] || die 2 "Not a file '$file'"
-    echo "Processing '$file'"
+    [[ -f "$file" ]] || die 2 "Not a file ${file@Q}"
+    echo "Processing ${file@Q}"
   done
 }
 
 # Utilities defined after business logic
-die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
+die() { (($# > 1)) && error "${@:2}" ||:; exit "${1:-0}"; }
 
 main() {
   process_files
@@ -126,8 +126,8 @@ die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
 process_files() {
   local -- file
   for file in *.txt; do
-    [[ -f "$file" ]] || die 2 "Not a file '$file'"
-    echo "Processing '$file'"
+    [[ -f "$file" ]] || die 2 "Not a file ${file@Q}"
+    echo "Processing ${file@Q}"
   done
 }
 
@@ -149,7 +149,7 @@ main "$@"
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION='1.0.0'
+VERSION=1.0.0
 
 # ... 200 lines of functions ...
 
@@ -176,7 +176,7 @@ echo 'Done'
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION='1.0.0'
+VERSION=1.0.0
 
 # ... 200 lines of functions ...
 
@@ -185,7 +185,7 @@ main() {
   while (($#)); do
     case $1 in
       -h|--help) usage; exit 0 ;;
-      *) die 22 "Invalid argument '$1'" ;;
+      *) die 22 "Invalid argument ${1@Q}" ;;
     esac
     shift
   done
@@ -210,7 +210,7 @@ main "$@"
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION='1.0.0'
+VERSION=1.0.0
 
 main() {
   echo 'Hello, World!'
@@ -228,7 +228,7 @@ main "$@"
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION='1.0.0'
+VERSION=1.0.0
 
 main() {
   echo 'Hello, World!'
@@ -246,8 +246,8 @@ main "$@"
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION='1.0.0'
-PREFIX='/usr/local'
+VERSION=1.0.0
+PREFIX=/usr/local
 
 # Made readonly too early!
 readonly -- VERSION PREFIX
@@ -277,19 +277,19 @@ main "$@"
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION='1.0.0'
+VERSION=1.0.0
 SCRIPT_PATH=$(realpath -- "$0")
 SCRIPT_NAME=${SCRIPT_PATH##*/}
 readonly -- VERSION SCRIPT_PATH SCRIPT_NAME  # These never change
 
-declare -- PREFIX='/usr/local'  # Will be modified during parsing
+declare -- PREFIX=/usr/local  # Will be modified during parsing
 
 main() {
   while (($#)); do
     case $1 in
       --prefix)
         shift
-        PREFIX="$1"  # OK - not readonly yet
+        PREFIX=$1  # OK - not readonly yet
         ;;
     esac
     shift
@@ -313,7 +313,7 @@ main "$@"
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION='1.0.0'
+VERSION=1.0.0
 
 # Some globals
 declare -i VERBOSE=0
@@ -324,7 +324,7 @@ check_something() {
 }
 
 # More globals after function
-declare -- PREFIX='/usr/local'
+declare -- PREFIX=/usr/local
 declare -- CONFIG_FILE=''
 
 main() {
@@ -343,11 +343,11 @@ main "$@"
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION='1.0.0'
+VERSION=1.0.0
 
 # All globals in one place
 declare -i VERBOSE=0
-declare -- PREFIX='/usr/local'
+declare -- PREFIX=/usr/local
 declare -- CONFIG_FILE=''
 
 # All functions after globals
@@ -373,7 +373,7 @@ main "$@"
 
 set -euo pipefail  # Modifies caller's shell!
 
-die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
+die() { (($# > 1)) && error "${@:2}" ||:; exit "${1:-0}"; }
 
 # Runs automatically when sourced!
 main "$@"
@@ -390,7 +390,7 @@ main "$@"
 
 error() { >&2 echo "ERROR: $*"; }
 
-die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
+die() { (($# > 1)) && error "${@:2}" ||:; exit "${1:-0}"; }
 
 # Only run main when executed (not sourced)
 # Fast exit if sourced
@@ -399,7 +399,7 @@ die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
 # Now start main script
 set -euo pipefail
 
-VERSION='1.0.0'
+VERSION=1.0.0
 SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
 SCRIPT_NAME=${SCRIPT_PATH##*/}
 readonly -- VERSION SCRIPT_PATH SCRIPT_NAME  # These never change

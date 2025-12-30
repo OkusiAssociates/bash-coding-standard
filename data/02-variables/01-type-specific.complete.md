@@ -17,7 +17,7 @@
 
 **Purpose**: Variables that will hold only numeric values and participate in arithmetic operations.
 
-\`\`\`bash
+```bash
 # Declare integer variable
 declare -i count=0
 declare -i exit_code=1
@@ -30,7 +30,7 @@ count='5 + 3'  # Evaluates to 8, not string "5 + 3"
 # Type enforcement
 count='abc'  # Evaluates to 0 (non-numeric becomes 0)
 echo "$count"  # Output: 0
-\`\`\`
+```
 
 **When to use:**
 - Counters, loop indices
@@ -46,19 +46,19 @@ echo "$count"  # Output: 0
 
 > **See Also:** BCS0705 for using declared integers in arithmetic comparisons with `(())` instead of `[[ ... -eq ... ]]`
 
-**2. String variables (`declare --`)**
+**2. String variables (`declare --`, `local --`)**
 
 **Purpose**: Variables that hold text strings. The `--` separator prevents option injection.
 
-\`\`\`bash
+```bash
 # Declare string variables
-declare -- filename='data.txt'
+declare -- filename=data.txt
 declare -- user_input=''
-declare -- config_path="/etc/app/config.conf"
+declare -- config_path=/etc/app/config.conf
 
 # ` --` prevents option injection if variable name starts with -
 declare -- var_name='-weird'  # Without --, this would be interpreted as option
-\`\`\`
+```
 
 **When to use:**
 - File paths
@@ -76,10 +76,10 @@ declare -- var_name='-weird'  # Without --, this would be interpreted as option
 
 **Purpose**: Ordered lists indexed by integers (0, 1, 2, ...).
 
-\`\`\`bash
+```bash
 # Declare indexed array
 declare -a files=()
-declare -a args=('one' 'two' 'three')
+declare -a args=(one two three)
 declare -a paths
 
 # Add elements
@@ -95,7 +95,7 @@ echo "${#files[@]}"  # Count: 2
 for file in "${files[@]}"; do
   process "$file"
 done
-\`\`\`
+```
 
 **When to use:**
 - Lists of items (files, arguments, options)
@@ -112,18 +112,18 @@ done
 
 **Purpose**: Key-value maps (hash tables, dictionaries).
 
-\`\`\`bash
+```bash
 # Declare associative array
 declare -A config=(
-  [app_name]='myapp'
-  [app_port]='8080'
-  [app_host]='localhost'
+  [app_name]=myapp
+  [app_port]=8080
+  [app_host]=localhost
 )
 
 declare -A user_data=()
 
 # Add/modify elements
-user_data[name]='Alice'
+user_data[name]=Alice
 user_data[email]='alice@example.com'
 
 # Access elements
@@ -140,7 +140,7 @@ fi
 for key in "${!config[@]}"; do
   echo "$key = ${config[$key]}"
 done
-\`\`\`
+```
 
 **When to use:**
 - Configuration data (key-value pairs)
@@ -157,19 +157,19 @@ done
 
 **Purpose**: Variables that should never change after initialization.
 
-\`\`\`bash
+```bash
 # Declare constants
-readonly -- VERSION='1.0.0'
+readonly -- VERSION=1.0.0
 readonly -i MAX_RETRIES=3
-readonly -a ALLOWED_ACTIONS=('start' 'stop' 'restart' 'status')
+readonly -a ALLOWED_ACTIONS=(start stop restart status)
 
 # Attempt to modify (will fail)
-VERSION='2.0.0'  # bash: VERSION: readonly variable
+VERSION=2.0.0  # bash: VERSION: readonly variable
 
 # Verify readonly status
 readonly -p | grep VERSION
 # Output: declare -r VERSION="1.0.0"
-\`\`\`
+```
 
 **When to use:**
 - VERSION, SCRIPT_PATH, SCRIPT_DIR, SCRIPT_NAME
@@ -188,10 +188,10 @@ readonly -p | grep VERSION
 
 **MANDATORY: Always use `--` separator with `local` declarations**, just like with `declare` and `readonly`. This prevents option injection if variable name or value starts with `-`.
 
-\`\`\`bash
+```bash
 # ✓ CORRECT - always use `--` separator
 process_file() {
-  local -- filename="$1"
+  local -- filename=$1
   local -i line_count
   local -a lines
 
@@ -204,10 +204,10 @@ process_file() {
 
 # ✗ WRONG - missing `--` separator
 process_file_bad() {
-  local filename="$1"    # If $1 is "-n", behavior changes!
-  local name value       # Should be: local -- name value
+  local filename=$1    # If $1 is "-n", behavior changes!
+  local name value     # Should be: local -- name value
 }
-\`\`\`
+```
 
 **When to use:**
 - ALL function parameters
@@ -222,13 +222,13 @@ process_file_bad() {
 
 **Combining type and scope:**
 
-\`\`\`bash
+```bash
 # Global integer
 declare -i GLOBAL_COUNT=0
 
 function count_files() {
-  local -- dir="$1"
-  local -i file_count
+  local -- dir=$1
+  local -i file_count=0
   local -a files
 
   # Local integer variable
@@ -238,7 +238,7 @@ function count_files() {
   files=("$dir"/*)
 
   for file in "${files[@]}"; do
-    [[ -f "$file" ]] && ((file_count+=1))
+    [[ -f "$file" ]] && file_count+=1 ||:
   done
 
   echo "$file_count"
@@ -251,17 +251,17 @@ declare -a PROCESSED_FILES=()
 declare -A FILE_STATUS=()
 
 # Global readonly
-readonly -- CONFIG_FILE='config.conf'
-\`\`\`
+readonly -- CONFIG_FILE=config.conf
+```
 
 **Complete example showing all types:**
 
-\`\`\`bash
+```bash
 #!/bin/bash
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -272,8 +272,8 @@ declare -i ERROR_COUNT=0
 declare -i MAX_RETRIES=3
 
 # String variables
-declare -- LOG_FILE="/var/log/$SCRIPT_NAME.log"
-declare -- CONFIG_FILE="$SCRIPT_DIR/config.conf"
+declare -- LOG_FILE=/var/log/"$SCRIPT_NAME".log
+declare -- CONFIG_FILE="$SCRIPT_DIR"/config.conf
 
 # Indexed arrays
 declare -a FILES_TO_PROCESS=()
@@ -293,9 +293,9 @@ declare -A FILE_CHECKSUMS=()
 # ============================================================================
 
 if [[ -t 1 && -t 2 ]]; then
-  readonly -- RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' NC=$'\033[0m'
+  declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' NC=$'\033[0m'
 else
-  readonly -- RED='' GREEN='' YELLOW='' CYAN='' NC=''
+  declare -r RED='' GREEN='' YELLOW='' CYAN='' NC=''
 fi
 
 # ============================================================================
@@ -323,13 +323,13 @@ success() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 
 # Function with local typed variables
 process_file() {
-  local -- input_file="$1"
+  local -- input_file=$1
   local -i attempt=0
   local -i success=0
   local -- checksum
 
   while ((attempt < MAX_RETRIES && !success)); do
-    ((attempt+=1))
+    attempt+=1
 
     info "Processing $input_file (attempt $attempt)"
 
@@ -340,7 +340,7 @@ process_file() {
       info "Success: $input_file ($checksum)"
     else
       warn "Failed: $input_file (attempt $attempt/$MAX_RETRIES)"
-      ((ERROR_COUNT+=1))
+      ERROR_COUNT+=1
     fi
   done
 
@@ -379,11 +379,11 @@ main() {
 main "$@"
 
 #fin
-\`\`\`
+```
 
 **Anti-patterns to avoid:**
 
-\`\`\`bash
+```bash
 # ✗ Wrong - no type declaration (intent unclear)
 count=0
 files=()
@@ -412,13 +412,13 @@ CONFIG[key]='value'
 
 # ✗ Wrong - global variables in functions
 process_data() {
-  temp_var="$1"  # Global variable leak!
+  temp_var=$1  # Global variable leak!
   result=$(process "$temp_var")
 }
 
 # ✓ Correct - local variables in functions
 process_data() {
-  local -- temp_var="$1"
+  local -- temp_var=$1
   local -- result
   result=$(process "$temp_var")
 }
@@ -431,13 +431,13 @@ declare -- filename='-weird'
 
 # ✗ Wrong - scalar assignment to array variable
 declare -a files=()
-files='file.txt'  # Overwrites array with scalar!
+files=file.txt  # Overwrites array with scalar!
 
 # ✓ Correct - array assignment
 declare -a files=()
-files=('file.txt')  # Array with one element
+files=(file.txt)  # Array with one element
 # Or
-files+=('file.txt')  # Append to array
+files+=(file.txt)  # Append to array
 
 # ✗ Wrong - using readonly without type
 readonly VAR='value'  # Type unclear
@@ -445,37 +445,37 @@ readonly VAR='value'  # Type unclear
 # ✓ Correct - combine readonly with type
 readonly -- VAR='value'
 readonly -i COUNT=10
-readonly -a ACTIONS=('start' 'stop')
-\`\`\`
+readonly -a ACTIONS=(start stop)
+```
 
 **Edge cases:**
 
 **1. Integer overflow:**
 
-\`\`\`bash
+```bash
 declare -i big_number=9223372036854775807  # Max 64-bit signed int
-((big_number+=1))
+big_number+=1
 echo "$big_number"  # Wraps to negative!
 
 # For very large numbers, use string or bc
 declare -- big='99999999999999999999'
 result=$(bc <<< "$big + 1")
-\`\`\`
+```
 
 **2. Associative array requires Bash 4.0+:**
 
-\`\`\`bash
+```bash
 # Check bash version
 if ((BASH_VERSINFO[0] < 4)); then
   die 1 'Associative arrays require Bash 4.0+'
 fi
 
 declare -A config=()
-\`\`\`
+```
 
 **3. Array assignment syntax:**
 
-\`\`\`bash
+```bash
 # All of these create arrays correctly:
 declare -a arr1=()           # Empty array
 declare -a arr2=('a' 'b')    # Array with 2 elements
@@ -486,11 +486,11 @@ declare -a arr4='string'     # arr4 is string 'string', not array!
 
 # Correct array with single element:
 declare -a arr5=('string')   # Array with one element
-\`\`\`
+```
 
 **4. Local arrays in functions:**
 
-\`\`\`bash
+```bash
 process_list() {
   # Both type and scope modifiers
   local -a files=()
@@ -500,11 +500,11 @@ process_list() {
   files=("$@")
   status[total]="${#files[@]}"
 }
-\`\`\`
+```
 
 **5. Nameref variables (Bash 4.3+):**
 
-\`\`\`bash
+```bash
 # Pass array by reference
 modify_array() {
   local -n arr_ref=$1  # Nameref to array
@@ -515,7 +515,7 @@ modify_array() {
 declare -a my_array=('a' 'b')
 modify_array my_array  # Pass name, not value
 echo "${my_array[@]}"  # Output: a b new element
-\`\`\`
+```
 
 **Summary:**
 

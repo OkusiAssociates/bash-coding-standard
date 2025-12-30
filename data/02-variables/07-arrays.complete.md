@@ -21,7 +21,7 @@ Arrays provide:
 ```bash
 # Indexed arrays (explicit declaration)
 declare -a paths=()           # Empty array
-declare -a colors=('red' 'green' 'blue')
+declare -a colors=(red green blue)
 
 # Local arrays in functions
 local -a found_files=()
@@ -109,11 +109,11 @@ last=${array[-1]}           # Bash 4.3+
 
 ```bash
 # Build command with variable arguments
-local -a cmd=('myapp' '--config' "$config_file")
+local -a cmd=(myapp '--config' "$config_file")
 
 # Add conditional arguments
-((verbose)) && cmd+=('--verbose')
-[[ -n "$output" ]] && cmd+=('--output' "$output")
+((verbose)) && cmd+=('--verbose') ||:
+[[ -z "$output" ]] || cmd+=('--output' "$output")
 
 # Execute safely
 "${cmd[@]}"

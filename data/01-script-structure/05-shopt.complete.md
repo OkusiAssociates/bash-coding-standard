@@ -3,7 +3,7 @@
 **Recommended settings for most scripts:**
 
 ```bash
-# STRONGLY RECOMMENDED - apply to all scripts
+# RECOMMENDED - apply to all scripts
 shopt -s inherit_errexit  # Critical: makes set -e work in subshells,
                           # command substitutions
 shopt -s shift_verbose    # Catches shift errors when no arguments remain
@@ -57,7 +57,7 @@ rm !(*.txt)
 cp *.@(jpg|png|gif) /destination/
 
 # Match one or more digits
-[[ $input == +([0-9]) ]] && echo "Number"
+[[ $input == +([0-9]) ]] && echo 'Number'
 ```
 
 **`nullglob` vs `failglob` (Choose one):**

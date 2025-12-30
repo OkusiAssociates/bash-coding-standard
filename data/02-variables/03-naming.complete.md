@@ -14,12 +14,12 @@ Follow these naming conventions to maintain consistency and avoid conflicts with
 **Examples:**
 ```bash
 # Constants
-readonly -- SCRIPT_VERSION='1.0.0'
-readonly -- MAX_CONNECTIONS=100
+declare -r SCRIPT_VERSION=1.0.0
+declare -ir MAX_CONNECTIONS=100
 
 # Global variables
 declare -i VERBOSE=1
-declare -- ConfigFile='/etc/myapp.conf'
+declare -- ConfigFile=/etc/myapp.conf
 
 # Local variables
 process_data() {

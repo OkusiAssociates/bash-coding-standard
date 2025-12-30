@@ -38,13 +38,9 @@ echo "Found $count files"
 # Don't use set -e when sourced (would affect caller)
 # Don't make variables readonly (caller might need to modify)
 
-is_integer() {
-  [[ "$1" =~ ^-?[0-9]+$ ]]
-}
+is_integer() { [[ "$1" =~ ^-?[0-9]+$ ]]; }
 
-is_valid_email() {
-  [[ "$1" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]
-}
+is_valid_email() { [[ "$1" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; }
 
 # No main(), no execution
 # Just function definitions for other scripts to use
@@ -59,17 +55,17 @@ is_valid_email() {
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION='1.0.0'
+VERSION=1.0.0
 : ...
 
 # Default configuration
-declare -- CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/myapp/config.sh"
-declare -- DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/myapp"
+declare -- CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}"/myapp/config.sh
+declare -- DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}"/myapp
 
 # Source config file if it exists and can be read
 if [[ -r "$CONFIG_FILE" ]]; then
   #shellcheck source=/dev/null
-  source "$CONFIG_FILE" || die 1 "Failed to source config '$CONFIG_FILE'"
+  source "$CONFIG_FILE" || die 1 "Failed to source config ${CONFIG_FILE@Q}"
 fi
 
 # Now make readonly after sourcing config
@@ -86,30 +82,30 @@ readonly -- CONFIG_FILE DATA_DIR
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION='1.0.0'
+VERSION=1.0.0
 : ...
 
 # Detect platform
 declare -- PLATFORM
 case $(uname -s) in
-  Darwin) PLATFORM='macos' ;;
-  Linux)  PLATFORM='linux' ;;
-  *)      PLATFORM='unknown' ;;
+  Darwin) PLATFORM=macos ;;
+  Linux)  PLATFORM=linux ;;
+  *)      PLATFORM=unknown ;;
 esac
 readonly -- PLATFORM
 
 # Platform-specific global variables
 case $PLATFORM in
   macos)
-    declare -- PACKAGE_MANAGER='brew'
+    declare -- PACKAGE_MANAGER=brew
     declare -- INSTALL_CMD='brew install'
     ;;
   linux)
-    declare -- PACKAGE_MANAGER='apt'
+    declare -- PACKAGE_MANAGER=apt
     declare -- INSTALL_CMD='apt-get install'
     ;;
   *)
-    die 1 "Unsupported platform '$PLATFORM'"
+    die 1 "Unsupported platform ${PLATFORM@Q}"
     ;;
 esac
 
@@ -126,7 +122,7 @@ readonly -- PACKAGE_MANAGER INSTALL_CMD
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION='1.0.0'
+VERSION=1.0.0
 : ...
 
 # Temporary files array for cleanup
@@ -192,9 +188,9 @@ validate_input() { : ... }
 set -euo pipefail  # Too late!
 
 # Globals scattered
-VERSION='1.0.0'
+VERSION=1.0.0
 check_system() { : ... }
-declare -- PREFIX='/usr'
+declare -- PREFIX=/usr
 ```
 
 **Instead:**
@@ -203,8 +199,8 @@ declare -- PREFIX='/usr'
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION='1.0.0'
-declare -- PREFIX='/usr'
+VERSION=1.0.0
+declare -- PREFIX=/usr
 
 validate_input() { : ... }
 check_system() { : ... }

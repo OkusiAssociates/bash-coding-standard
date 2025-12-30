@@ -27,7 +27,7 @@ shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Metadata initialization with guard (allows re-sourcing safety)
 if [[ ! -v SCRIPT_VERSION ]]; then
-  declare -x SCRIPT_VERSION='1.0.0'
+  declare -x SCRIPT_VERSION=1.0.0
   declare -x SCRIPT_PATH=$(realpath -- "$0")
   declare -x SCRIPT_DIR=${SCRIPT_PATH%/*}
   declare -x SCRIPT_NAME=${SCRIPT_PATH##*/}

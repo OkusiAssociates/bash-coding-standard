@@ -31,18 +31,18 @@
 **Example pattern - searching for data files:**
 ```bash
 find_data_file() {
-  local -- script_dir="$1"
-  local -- filename="$2"
+  local -- script_dir=$1
+  local -- filename=$2
   local -a search_paths=(
     "$script_dir"/"$filename"  # Same directory (development)
     /usr/local/share/myapp/"$filename" # Local install
     /usr/share/myapp/"$filename" # System install
-    "${XDG_DATA_HOME:-$HOME/.local/share}/myapp/$filename"  # User install
+    "${XDG_DATA_HOME:-$HOME/.local/share}"/myapp/"$filename"  # User install
   )
 
   local -- path
   for path in "${search_paths[@]}"; do
-    [[ -f "$path" ]] && { echo "$path"; return 0; }
+    [[ -f "$path" ]] && { echo "$path"; return 0; } ||:
   done
 
   return 1
@@ -51,24 +51,24 @@ find_data_file() {
 
 **Complete installation example (Makefile pattern):**
 
-\`\`\`bash
+```bash
 #!/bin/bash
 # install.sh - FHS-compliant installation script
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Installation paths (customizable via PREFIX)
-declare -- PREFIX="${PREFIX:-/usr/local}"
-declare -- BIN_DIR="$PREFIX/bin"
-declare -- SHARE_DIR="$PREFIX/share/myapp"
-declare -- LIB_DIR="$PREFIX/lib/myapp"
-declare -- ETC_DIR="$PREFIX/etc/myapp"
-declare -- MAN_DIR="$PREFIX/share/man/man1"
+declare -- PREFIX=${PREFIX:-/usr/local}
+declare -- BIN_DIR="$PREFIX"/bin
+declare -- SHARE_DIR="$PREFIX"/share/myapp
+declare -- LIB_DIR="$PREFIX"/lib/myapp
+declare -- ETC_DIR="$PREFIX"/etc/myapp
+declare -- MAN_DIR="$PREFIX"/share/man/man1
 readonly -- PREFIX BIN_DIR SHARE_DIR LIB_DIR ETC_DIR MAN_DIR
 
 install_files() {
@@ -80,21 +80,21 @@ install_files() {
   install -d "$MAN_DIR"
 
   # Install executable
-  install -m 755 "$SCRIPT_DIR/myapp" "$BIN_DIR/myapp"
+  install -m 755 "$SCRIPT_DIR"/myapp "$BIN_DIR"/myapp
 
   # Install data files
-  install -m 644 "$SCRIPT_DIR/data/template.txt" "$SHARE_DIR/template.txt"
+  install -m 644 "$SCRIPT_DIR"/data/template.txt "$SHARE_DIR"/template.txt
 
   # Install libraries
-  install -m 644 "$SCRIPT_DIR/lib/common.sh" "$LIB_DIR/common.sh"
+  install -m 644 "$SCRIPT_DIR"/lib/common.sh "$LIB_DIR"/common.sh
 
   # Install configuration (preserve existing)
-  if [[ ! -f "$ETC_DIR/myapp.conf" ]]; then
+  if [[ ! -f "$ETC_DIR"/myapp.conf ]]; then
     install -m 644 "$SCRIPT_DIR/myapp.conf.example" "$ETC_DIR/myapp.conf"
   fi
 
   # Install man page
-  install -m 644 "$SCRIPT_DIR/docs/myapp.1" "$MAN_DIR/myapp.1"
+  install -m 644 "$SCRIPT_DIR"/docs/myapp.1 "$MAN_DIR"/myapp.1
 
   info "Installation complete to $PREFIX"
   info "Executable: $BIN_DIR/myapp"
@@ -102,17 +102,17 @@ install_files() {
 
 uninstall_files() {
   # Remove installed files
-  rm -f "$BIN_DIR/myapp"
-  rm -f "$SHARE_DIR/template.txt"
-  rm -f "$LIB_DIR/common.sh"
-  rm -f "$MAN_DIR/myapp.1"
+  rm -f "$BIN_DIR"/myapp
+  rm -f "$SHARE_DIR"/template.txt
+  rm -f "$LIB_DIR"/common.sh
+  rm -f "$MAN_DIR"/myapp.1
 
   # Remove directories if empty
   rmdir --ignore-fail-on-non-empty "$SHARE_DIR"
   rmdir --ignore-fail-on-non-empty "$LIB_DIR"
   rmdir --ignore-fail-on-non-empty "$ETC_DIR"
 
-  info "Uninstallation complete"
+  info 'Uninstallation complete'
 }
 
 main() {
@@ -126,23 +126,23 @@ main() {
 main "$@"
 
 #fin
-\`\`\`
+```
 
 **FHS-aware resource loading pattern:**
 
-\`\`\`bash
+```bash
 #!/bin/bash
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Find data file using FHS search pattern
 find_data_file() {
-  local -- filename="$1"
+  local -- filename=$1
   local -a search_paths=(
     # Development: same directory as script
     "$SCRIPT_DIR/$filename"
@@ -170,7 +170,7 @@ find_data_file() {
 
 # Find configuration file with XDG support
 find_config_file() {
-  local -- filename="$1"
+  local -- filename=$1
   local -a search_paths=(
     # User-specific config (highest priority)
     "${XDG_CONFIG_HOME:-$HOME/.config}/myapp/$filename"
@@ -199,7 +199,7 @@ find_config_file() {
 
 # Load library from FHS locations
 load_library() {
-  local -- lib_name="$1"
+  local -- lib_name=$1
   local -a search_paths=(
     # Development
     "$SCRIPT_DIR/lib/$lib_name"
@@ -224,16 +224,16 @@ load_library() {
 
 main() {
   # Load required library
-  load_library 'common.sh'
+  load_library common.sh
 
   # Find data file
   local -- template
-  template=$(find_data_file 'template.txt')
-  info "Using template: $template"
+  template=$(find_data_file template.txt)
+  info "Using template ${template@Q}"
 
   # Find config file (optional)
   local -- config
-  if config=$(find_config_file 'myapp.conf'); then
+  if config=$(find_config_file myapp.conf); then
     info "Loading config: $config"
     source "$config"
   else
@@ -246,11 +246,11 @@ main() {
 main "$@"
 
 #fin
-\`\`\`
+```
 
 **PREFIX customization (make install pattern):**
 
-\`\`\`bash
+```bash
 # Makefile example
 PREFIX ?= /usr/local
 BINDIR = $(PREFIX)/bin
@@ -274,31 +274,31 @@ uninstall:
 # make install                  # Installs to /usr/local
 # make PREFIX=/usr install      # Installs to /usr
 # make PREFIX=$HOME/.local install  # User install
-\`\`\`
+```
 
 **XDG Base Directory Specification:**
 
 For user-specific files, follow XDG Base Directory spec:
 
-\`\`\`bash
+```bash
 # XDG environment variables with fallbacks
-declare -- XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
-declare -- XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
-declare -- XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
-declare -- XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
+declare -- XDG_DATA_HOME=${XDG_DATA_HOME:-$HOME/.local/share}
+declare -- XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-$HOME/.config}
+declare -- XDG_CACHE_HOME=${XDG_CACHE_HOME:-$HOME/.cache}
+declare -- XDG_STATE_HOME=${XDG_STATE_HOME:-$HOME/.local/state}
 
 # User-specific paths
-declare -- USER_DATA_DIR="$XDG_DATA_HOME/myapp"
-declare -- USER_CONFIG_DIR="$XDG_CONFIG_HOME/myapp"
-declare -- USER_CACHE_DIR="$XDG_CACHE_HOME/myapp"
-declare -- USER_STATE_DIR="$XDG_STATE_HOME/myapp"
+declare -- USER_DATA_DIR="$XDG_DATA_HOME"/myapp
+declare -- USER_CONFIG_DIR="$XDG_CONFIG_HOME"/myapp
+declare -- USER_CACHE_DIR="$XDG_CACHE_HOME"/myapp
+declare -- USER_STATE_DIR="$XDG_STATE_HOME"/myapp
 
 # Create user directories if needed
 install -d "$USER_DATA_DIR"
 install -d "$USER_CONFIG_DIR"
 install -d "$USER_CACHE_DIR"
 install -d "$USER_STATE_DIR"
-\`\`\`
+```
 
 **Production-Ready Templates (Copy-Paste Ready):**
 
@@ -308,12 +308,12 @@ These templates are extracted from the `bcs` script itself and demonstrate produ
 
 This template searches for a specific file across all standard FHS locations, supporting development mode, custom PREFIX installs, system-local, and system-wide installations.
 
-\`\`\`bash
+```bash
 # Find specific file (e.g., BASH-CODING-STANDARD.md, config.yml, data.json)
 # Usage: bcs_file=$(find_bcs_file "$SCRIPT_DIR") || die 'File not found'
 find_bcs_file() {
   local -- script_dir=$1
-  local -- install_share="${script_dir%/bin}/share/yatti/bash-coding-standard"
+  local -- install_share="${script_dir%/bin}"/share/yatti/bash-coding-standard
   local -a search_paths=(
     "$script_dir"                                 # Development: same directory
     "$install_share"                              # Custom PREFIX: relative to bin/
@@ -331,7 +331,7 @@ declare -fx find_bcs_file
 
 # Usage example:
 BCS_FILE=$(find_bcs_file "$SCRIPT_DIR") || die 1 'BASH-CODING-STANDARD.md not found'
-\`\`\`
+```
 
 **Key features of this template:**
 - **`install_share` calculation**: Dynamically computes share directory from bin directory using `${script_dir%/bin}/share/...`
@@ -342,7 +342,7 @@ BCS_FILE=$(find_bcs_file "$SCRIPT_DIR") || die 1 'BASH-CODING-STANDARD.md not fo
 **Adaptation guide:**
 ```bash
 # Replace 'yatti/bash-coding-standard' with your org/project:
-install_share="${script_dir%/bin}/share/myorg/myproject"
+install_share="${script_dir%/bin}"/share/myorg/myproject
 /usr/local/share/myorg/myproject
 /usr/share/myorg/myproject
 
@@ -358,13 +358,13 @@ find_template_file() { ... }
 
 This template finds the data directory itself (rather than a specific file), useful for scripts that need to enumerate or access multiple files within the data directory.
 
-\`\`\`bash
+```bash
 # Find data directory in FHS locations
 # Usage: data_dir=$(find_data_dir) || die 'Data directory not found'
 find_data_dir() {
   local -- install_share="${BCS_DIR%/bin}/share/yatti/bash-coding-standard/data"
   local -a search_paths=(
-    "$BCS_DIR/data"                                   # Development mode
+    "$BCS_DIR"/data                                   # Development mode
     "$install_share"                                  # Custom PREFIX install
     /usr/local/share/yatti/bash-coding-standard/data  # System-local install
     /usr/share/yatti/bash-coding-standard/data        # System-wide install
@@ -380,7 +380,7 @@ declare -fx find_data_dir
 
 # Usage example:
 DATA_DIR=$(find_data_dir) || die 1 'Data directory not found'
-\`\`\`
+```
 
 **Differences from Template 1:**
 - **Directory check**: Uses `[[ -d "$path" ]]` instead of `[[ -f ... ]]`
@@ -388,7 +388,7 @@ DATA_DIR=$(find_data_dir) || die 1 'Data directory not found'
 - **Enables enumeration**: Caller can then use `find "$DATA_DIR" ...` or `for file in "$DATA_DIR"/*.md`
 
 **Usage patterns:**
-\`\`\`bash
+```bash
 # Pattern 1: Find and enumerate files
 DATA_DIR=$(find_data_dir) || die 1 'Data directory not found'
 readarray -t md_files < <(find "$DATA_DIR" -name '*.md' | sort)
@@ -402,20 +402,20 @@ DATA_DIR=$(find_data_dir) || die 1 'Data directory not found'
 for file in "$DATA_DIR"/*.json; do
   process_json "$file"
 done
-\`\`\`
+```
 
 **Combined Template: Universal FHS Resource Finder**
 
 For maximum flexibility, combine both patterns into a generic resource finder:
 
-\`\`\`bash
+```bash
 # Generic FHS resource finder
 # Usage: find_resource file "config.yml" || die 'Config not found'
 # Usage: find_resource dir "data" || die 'Data directory not found'
 find_resource() {
   local -- type=$1     # 'file' or 'dir'
   local -- name=$2     # Resource name
-  local -- install_base="${SCRIPT_DIR%/bin}/share/myorg/myproject"
+  local -- install_base="${SCRIPT_DIR%/bin}"/share/myorg/myproject
   local -a search_paths=(
     "$SCRIPT_DIR"                        # Development
     "$install_base"                      # Custom PREFIX
@@ -441,17 +441,17 @@ declare -fx find_resource
 CONFIG=$(find_resource file config.yml) || die 'Config not found'
 DATA_DIR=$(find_resource dir data) || die 'Data directory not found'
 TEMPLATE=$(find_resource file templates/basic.sh) || die 'Template not found'
-\`\`\`
+```
 
 **Real-world example from this repository:**
 
 The actual `bash-coding-standard` (bcs) script uses these exact patterns (lines 137-171 in bcs). Here's the simplified version showing the file search:
 
-\`\`\`bash
+```bash
 find_bcs_file() {
   local -a search_paths=(
     # Development: same directory as script
-    "$SCRIPT_DIR/BASH-CODING-STANDARD.md"
+    "$SCRIPT_DIR"/BASH-CODING-STANDARD.md
 
     # Local install: /usr/local/share
     '/usr/local/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md'
@@ -469,7 +469,7 @@ find_bcs_file() {
 }
 
 BCS_FILE=$(find_bcs_file)
-\`\`\`
+```
 
 This approach allows the script to work in:
 - Development mode (running from source directory)
@@ -479,37 +479,37 @@ This approach allows the script to work in:
 
 **Anti-patterns to avoid:**
 
-\`\`\`bash
+```bash
 # ✗ Wrong - hardcoded absolute path
-data_file='/home/user/projects/myapp/data/template.txt'
+data_file=/home/user/projects/myapp/data/template.txt
 
 # ✓ Correct - FHS search pattern
-data_file=$(find_data_file 'template.txt')
+data_file=$(find_data_file template.txt)
 
 # ✗ Wrong - assuming specific install location
 source /usr/local/lib/myapp/common.sh
 
 # ✓ Correct - search multiple FHS locations
-load_library 'common.sh'
+load_library common.sh
 
 # ✗ Wrong - using relative paths from CWD
 source ../lib/common.sh  # Breaks when run from different directory
 
 # ✓ Correct - paths relative to script location
-source "$SCRIPT_DIR/../lib/common.sh"
+source "$SCRIPT_DIR"/../lib/common.sh
 
 # ✗ Wrong - installing to non-standard location
 install myapp /opt/random/location/bin/
 
 # ✓ Correct - use PREFIX-based FHS paths
-install myapp "$PREFIX/bin/"
+install myapp "$PREFIX"/bin/
 
 # ✗ Wrong - not supporting PREFIX customization
 BIN_DIR=/usr/local/bin  # Hardcoded
 
 # ✓ Correct - respect PREFIX environment variable
-PREFIX="${PREFIX:-/usr/local}"
-BIN_DIR="$PREFIX/bin"
+PREFIX=${PREFIX:-/usr/local}
+BIN_DIR="$PREFIX"/bin"
 
 # ✗ Wrong - mixing executables and data in same directory
 install myapp /opt/myapp/
@@ -525,49 +525,49 @@ install myapp.conf "$PREFIX/etc/myapp/myapp.conf"
 # ✓ Correct - preserve existing config
 [[ -f "$PREFIX/etc/myapp/myapp.conf" ]] || \
   install myapp.conf.example "$PREFIX/etc/myapp/myapp.conf"
-\`\`\`
+```
 
 **Edge cases:**
 
 **1. PREFIX with trailing slash:**
 
-\`\`\`bash
+```bash
 # Handle PREFIX with or without trailing slash
-PREFIX="${PREFIX:-/usr/local}"
-PREFIX="${PREFIX%/}"  # Remove trailing slash if present
-BIN_DIR="$PREFIX/bin"
-\`\`\`
+PREFIX=${PREFIX:-/usr/local}
+PREFIX=${PREFIX%/}  # Remove trailing slash if present
+BIN_DIR="$PREFIX"/bin
+```
 
 **2. User install without sudo:**
 
-\`\`\`bash
+```bash
 # Detect if user has write permissions
 if [[ ! -w "$PREFIX" ]]; then
-  warn "No write permission to $PREFIX"
+  warn "No write permission to ${PREFIX@Q}"
   info "Try: PREFIX=\$HOME/.local make install"
   die 5 'Permission denied'
 fi
-\`\`\`
+```
 
 **3. Library path for runtime:**
 
-\`\`\`bash
+```bash
 # Some systems need LD_LIBRARY_PATH for custom locations
-if [[ -d "$PREFIX/lib/myapp" ]]; then
+if [[ -d "$PREFIX"/lib/myapp ]]; then
   export LD_LIBRARY_PATH="$PREFIX/lib/myapp${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 fi
-\`\`\`
+```
 
 **4. Symlink vs real path:**
 
-\`\`\`bash
+```bash
 # If script is symlinked to /usr/local/bin, SCRIPT_DIR resolves to actual location
 # This is correct - we want the real installation directory, not the symlink location
 SCRIPT_PATH=$(realpath -- "$0")  # Resolves symlinks
 SCRIPT_DIR=${SCRIPT_PATH%/*}
 
 # Now SCRIPT_DIR points to actual install location, not /usr/local/bin
-\`\`\`
+```
 
 **When NOT to use FHS:**
 

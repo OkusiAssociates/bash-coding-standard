@@ -131,7 +131,7 @@ shopt -s inherit_errexit shift_verbose extglob nullglob
 **Standard metadata variables - make readonly together after declaration.**
 
 ```bash
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -147,14 +147,14 @@ declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 **Acceptable alternative forms**
 ```bash
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 ```
 
 ```bash
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -163,7 +163,7 @@ declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 ```bash
 # parent program location locking, for a specific application with unique namespace
 [[ -v ALX_VERSION ]] || {
-  declare -xr ALX_VERSION='1.0.0'
+  declare -xr ALX_VERSION=1.0.0
   #shellcheck disable=SC2155
   declare -xr ALX_PATH=$(realpath -- "${BASH_SOURCE[0]}")
   declare -xr ALX_DIR=${ALX_PATH%/*} ALX_NAME=${ALX_PATH##*/}
@@ -180,7 +180,7 @@ Note:
 
 ```bash
 # Configuration variables
-declare -- PREFIX='/usr/local'
+declare -- PREFIX=/usr/local
 declare -- CONFIG_FILE=''
 declare -- LOG_FILE=''
 
@@ -209,23 +209,11 @@ Always:
 
 **Terminal detection and color code definitions.**
 
-Preferred:
-
 ```bash
 if [[ -t 1 && -t 2 ]]; then
-  readonly -- RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' NC=$'\033[0m'
+  declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' NC=$'\033[0m'
 else
-  readonly -- RED='' GREEN='' YELLOW='' CYAN='' NC=''
-fi
-```
-
-OR:
-
-```bash
-if [[ -t 2 ]]; then
-  declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' BOLD=$'\033[1m' NC=$'\033[0m'
-else
-  declare -r RED='' GREEN='' YELLOW='' CYAN='' BOLD='' NC=''
+  declare -r RED='' GREEN='' YELLOW='' CYAN='' NC=''
 fi
 ```
 
@@ -289,7 +277,7 @@ success() { ((VERBOSE)) || return 0; >&2 _msg "$@" || return 0; }
 # Error output (unconditional)
 error() { >&2 _msg "$@"; }
 # Exit with error
-die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
+die() { (($# > 1)) && error "${@:2}" ||:; exit "${1:-0}"; }
 # Yes/no prompt
 yn() {
   #((PROMPT)) || return 0
@@ -307,14 +295,14 @@ info() { >&2 echo "${FUNCNAME[0]}: $*"; }
 debug() { >&2 echo "${FUNCNAME[0]}: $*"; }
 success() { >&2 echo "${FUNCNAME[0]}: $*"; }
 error() { >&2 echo "${FUNCNAME[0]}: $*"; }
-die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
+die() { (($# > 1)) && error "${@:2}" ||:; exit "${1:-0}"; }
 ```
 
 User is strongly encouraged to use these function names for logging output, for both consistency, and for when that quick-and-dirty test script of yours evolves into a Magnum Opus, and now you need proper coloured and verbosity controlled message functions, like you should have used straight from the beginning. You're welcome.
 
 **Why these come first:** Business logic needs messaging, validation, and error handling. These utilities must exist before anything calls them.
 
-**Production optimization:** Remove unused functions after script is mature (see Section 6 of main standard).
+**Production optimization:** Important: Remove unused functions **after** script is mature (see Section 6 of main standard).
 
 ### Step 10: Business Logic Functions
 
@@ -329,7 +317,7 @@ check_prerequisites() {
 
   for cmd in git make gcc; do
     if ! command -v "$cmd" >/dev/null 2>&1; then
-      error "Required command not found '$cmd'"
+      error "Required command not found ${cmd@Q}"
       missing+=1
     fi
   done
@@ -342,7 +330,7 @@ check_prerequisites() {
 validate_config() {
   # This function requires global var PREFIX, and message functions die() and success()
   [[ -n "$PREFIX" ]] || die 22 'PREFIX cannot be empty'
-  [[ -d "$PREFIX" ]] || die 2 "PREFIX directory does not exist '$PREFIX'"
+  [[ -d "$PREFIX" ]] || die 2 "PREFIX directory does not exist ${PREFIX@Q}"
 
   success 'Configuration validated'
 }
@@ -354,15 +342,15 @@ install_files() {
   local -- target_dir=$2
 
   if ((DRY_RUN)); then
-    info "[DRY-RUN] Would install files from '$source_dir' to '$target_dir'"
+    info "[DRY-RUN] Would install files from ${source_dir@Q} to ${target_dir@Q}"
     return 0
   fi
 
-  [[ -d "$source_dir" ]] || die 2 "Source directory not found '$source_dir'"
-  mkdir -p "$target_dir" || die 1 "Failed to create target directory '$target_dir'"
+  [[ -d "$source_dir" ]] || die 2 "Source directory not found ${source_dir@Q}"
+  mkdir -p "$target_dir" || die 1 "Failed to create target directory ${target_dir@Q}"
 
   cp -r "$source_dir"/* "$target_dir"/ || die 1 'Installation failed'
-  success "Installed files to '$target_dir'"
+  success "Installed files to ${target_dir@Q}"
 }
 
 # Generate configuration file
@@ -371,7 +359,7 @@ generate_config() {
   local -- config_file=$1
 
   ((DRY_RUN==0)) || {
-    info "[DRY-RUN] Would generate config '$config_file'"
+    info "[DRY-RUN] Would generate config ${config_file@Q}"
     return 0
   }
 
@@ -382,7 +370,7 @@ VERSION=$VERSION
 INSTALL_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 EOF
 
-  success "Generated config '$config_file'"
+  success "Generated config ${config_file@Q}"
 }
 ```
 
@@ -401,19 +389,19 @@ main() {
   while (($#)); do
     case $1 in
       -p|--prefix)   noarg "$@"; shift
-                     PREFIX="$1" ;;
+                     PREFIX=$1 ;;
 
       -v|--verbose)  VERBOSE+=1 ;;
       -q|--quiet)    VERBOSE=0 ;;
       -n|--dry-run)  DRY_RUN=1 ;;
       -f|--force)    FORCE=1 ;;
 
-      -V|--version)  echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
-      -h|--help)     usage; exit 0 ;;
+      -V|--version)  echo "$SCRIPT_NAME $VERSION"; return 0 ;;
+      -h|--help)     usage; return 0 ;;
 
       -[pvqnfVh]*) #shellcheck disable=SC2046 #split up single options
                      set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;
-      -*)            die 22 "Invalid option: $1" ;;
+      -*)            die 22 "Invalid option ${1@Q}" ;;
       *)             INPUT_FILES+=("$1") ;;
     esac
     shift
@@ -424,7 +412,7 @@ main() {
   readonly -i VERBOSE DRY_RUN FORCE
 
   # Execute workflow
-  ((DRY_RUN==0)) || info 'DRY-RUN mode enabled'
+  ((DRY_RUN)) && info 'DRY-RUN mode enabled' ||:
 
   check_prerequisites
   validate_config

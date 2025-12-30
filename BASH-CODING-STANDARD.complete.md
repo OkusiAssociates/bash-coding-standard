@@ -68,7 +68,7 @@ shopt -s inherit_errexit shift_verbose extglob nullglob
 # Script Metadata
 # ============================================================================
 
-VERSION='2.1.420'
+VERSION=2.1.420
 SCRIPT_PATH=$(realpath -- "$0")
 SCRIPT_DIR=${SCRIPT_PATH%/*}
 SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -79,16 +79,16 @@ readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
 # ============================================================================
 
 # Configuration (can be modified by arguments)
-declare -- PREFIX='/usr/local'
-declare -- APP_NAME='myapp'
-declare -- SYSTEM_USER='myapp'
+declare -- PREFIX=/usr/local
+declare -- APP_NAME=myapp
+declare -- SYSTEM_USER=myapp
 
 # Derived paths (updated when PREFIX changes)
-declare -- BIN_DIR="$PREFIX/bin"
-declare -- LIB_DIR="$PREFIX/lib"
-declare -- SHARE_DIR="$PREFIX/share"
-declare -- CONFIG_DIR="/etc/$APP_NAME"
-declare -- LOG_DIR="/var/log/$APP_NAME"
+declare -- BIN_DIR="$PREFIX"/bin
+declare -- LIB_DIR="$PREFIX"/lib
+declare -- SHARE_DIR="$PREFIX"/share
+declare -- CONFIG_DIR=/etc/"$APP_NAME"
+declare -- LOG_DIR=/var/log/"$APP_NAME"
 
 # Runtime flags
 declare -i DRY_RUN=0
@@ -104,9 +104,9 @@ declare -a INSTALLED_FILES=()
 # ============================================================================
 
 if [[ -t 1 && -t 2 ]]; then
-  readonly -- RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' BOLD='\033[1m' NC=$'\033[0m'
+  declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' BOLD='\033[1m' NC=$'\033[0m'
 else
-  readonly -- RED='' GREEN='' YELLOW='' CYAN='' BOLD='' NC=''
+  declare -r RED='' GREEN='' YELLOW='' CYAN='' BOLD='' NC=''
 fi
 
 # ============================================================================
@@ -118,8 +118,8 @@ declare -i VERBOSE=1
 #declare -i DEBUG=0 PROMPT=1
 
 _msg() {
-  local -- status="${FUNCNAME[1]}" prefix="$SCRIPT_NAME:" msg
-  case "$status" in
+  local -- prefix="$SCRIPT_NAME:" msg
+  case ${FUNCNAME[1]} in
     vecho)   : ;;
     info)    prefix+=" ${CYAN}◉${NC}" ;;
     warn)    prefix+=" ${YELLOW}▲${NC}" ;;
@@ -137,7 +137,7 @@ warn() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 #debug() { ((DEBUG)) || return 0; >&2 _msg "$@"; }
 success() { ((VERBOSE)) || return 0; >&2 _msg "$@" || return 0; }
 error() { >&2 _msg "$@"; }
-die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
+die() { (($# > 1)) && error "${@:2}" ||:; exit "${1:-0}"; }
 # Yes/no prompt
 yn() {
   #((PROMPT)) || return 0
@@ -147,7 +147,7 @@ yn() {
   [[ ${REPLY,,} == y ]]
 }
 
-noarg() { (($# > 1)) || die 22 "Option '$1' requires an argument"; }
+noarg() { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
 
 # ============================================================================
 # Step 10: Business Logic Functions
@@ -198,7 +198,7 @@ check_prerequisites() {
 
   for cmd in install mkdir chmod chown; do
     if ! command -v "$cmd" >/dev/null 2>&1; then
-      error "Required command not found '$cmd'"
+      error "Required command not found ${cmd@Q}"
       missing=1
     fi
   done
@@ -228,7 +228,7 @@ validate_config() {
   # Check write permissions
   if [[ ! -d "$PREFIX" ]]; then
     if ((FORCE)) || yn "Create PREFIX directory '$PREFIX'?"; then
-      vecho "Will create '$PREFIX'"
+      vecho "Will create ${PREFIX@Q}"
     else
       die 1 'Installation cancelled'
     fi
@@ -242,27 +242,27 @@ create_directories() {
 
   for dir in "$BIN_DIR" "$LIB_DIR" "$SHARE_DIR" "$CONFIG_DIR" "$LOG_DIR"; do
     if ((DRY_RUN)); then
-      info "[DRY-RUN] Would create directory '$dir'"
+      info "[DRY-RUN] Would create directory ${dir@Q}"
       continue
     fi
 
     if [[ -d "$dir" ]]; then
       vecho "Directory exists '$dir'"
     else
-      mkdir -p "$dir" || die 1 "Failed to create directory '$dir'"
-      success "Created directory '$dir'"
+      mkdir -p "$dir" || die 1 "Failed to create directory ${dir@Q}"
+      success "Created directory ${dir@Q}"
     fi
   done
 }
 
 install_binaries() {
-  local -- source="$SCRIPT_DIR/bin"
+  local -- source="$SCRIPT_DIR"/bin
   local -- target="$BIN_DIR"
 
-  [[ -d "$source" ]] || die 2 "Source directory not found '$source'"
+  [[ -d "$source" ]] || die 2 "Source directory not found ${source@Q}"
 
   ((DRY_RUN==0)) || {
-    info "[DRY-RUN] Would install binaries from '$source' to '$target'"
+    info "[DRY-RUN] Would install binaries from ${source@Q} to ${target@Q}"
     return 0
   }
 
@@ -276,17 +276,17 @@ install_binaries() {
     local -- target_file="$target/$basename"
 
     if [[ -f "$target_file" ]] && ! ((FORCE)); then
-      warn "File exists (use --force to overwrite) '$target_file'"
+      warn "File exists (use --force to overwrite) ${target_file@Q}"
       continue
     fi
 
-    install -m 755 "$file" "$target_file" || die 1 "Failed to install '$basename'"
+    install -m 755 "$file" "$target_file" || die 1 "Failed to install ${basename@Q}"
     INSTALLED_FILES+=("$target_file")
     count+=1
-    vecho "Installed '$target_file'"
+    vecho "Installed ${target_file@Q}"
   done
 
-  success "Installed $count binaries to '$target'"
+  success "Installed $count binaries to ${target@Q}"
 }
 
 install_libraries() {
@@ -299,16 +299,16 @@ install_libraries() {
   }
 
   ((DRY_RUN==0)) || {
-    info "[DRY-RUN] Would install libraries from '$source' to '$target'"
+    info "[DRY-RUN] Would install libraries from ${source@Q} to ${target@Q}"
     return 0
   }
 
-  mkdir -p "$target" || die 1 "Failed to create library directory '$target'"
+  mkdir -p "$target" || die 1 "Failed to create library directory ${target@Q}"
 
   cp -r "$source"/* "$target"/ || die 1 'Library installation failed'
   chmod -R a+rX "$target"
 
-  success "Installed libraries to '$target'"
+  success "Installed libraries to ${target@Q}"
 }
 
 generate_config() {
@@ -22343,7 +22343,7 @@ In codebase documentation, internal and external, you may use any of these icons
      debug   ⦿
      warn    ▲
      success ✓
-     error   ✗ 
+     error   ✗
 
 Avoid use of any other icon/emoticon unless it can be justified.
 
@@ -45258,7 +45258,7 @@ In codebase documentation, internal and external, you may use any of these icons
      debug   ⦿
      warn    ▲
      success ✓
-     error   ✗ 
+     error   ✗
 
 Avoid use of any other icon/emoticon unless it can be justified.
 

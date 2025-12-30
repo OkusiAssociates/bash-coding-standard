@@ -23,7 +23,7 @@ success() { >&2 _msg "$@"; }
 warn() { >&2 _msg "$@"; }
 info() { >&2 _msg "$@"; }
 error() { >&2 _msg "$@"; }
-die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
+die() { (($# > 1)) && error "${@:2}" ||:; exit "${1:-0}"; }
 
 # 2. Documentation functions (no dependencies)
 show_help() { ... }
@@ -60,11 +60,11 @@ main() {
   fi
 
   build_standalone
-  ((INSTALL_BUILTIN)) && build_builtin
+  ((INSTALL_BUILTIN)) && build_builtin ||:
 
   install_standalone
   install_completions
-  ((INSTALL_BUILTIN)) && install_builtin
+  ((INSTALL_BUILTIN)) && install_builtin ||:
 
   update_man_database
   show_completion_message
@@ -78,7 +78,7 @@ main "$@"
 
 Each function can safely call functions defined ABOVE it (earlier in the file). Dependencies flow downward: higher functions call lower functions, never upward.
 
-\`\`\`
+```
 Top of file
      ↓
 [Layer 1: Messaging] ← Can call nothing (primitives)
@@ -97,7 +97,7 @@ Top of file
      ↓
 main "$@" invocation
 #fin
-\`\`\`
+```
 
 **Detailed layer descriptions:**
 
@@ -144,12 +144,12 @@ main "$@" invocation
 
 **Complete example showing full organization:**
 
-\`\`\`bash
+```bash
 #!/bin/bash
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -157,7 +157,7 @@ declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 # Global variables
 declare -i VERBOSE=0
 declare -i DRY_RUN=0
-declare -- BUILD_DIR='/tmp/build'
+declare -- BUILD_DIR=/tmp/build
 
 # ============================================================================
 # Layer 1: Messaging functions
@@ -232,7 +232,7 @@ yn() {
   [[ ${REPLY,,} == y ]]
 }
 
-noarg() { (($# < 2)) && die 2 "Option $1 requires an argument"; }
+noarg() { (($# < 2)) && die 2 "Option ${1@Q} requires an argument"; }
 
 # ============================================================================
 # Layer 4: Validation functions
@@ -251,7 +251,7 @@ check_prerequisites() {
 
   # Check build directory writable
   if [[ ! -w "${BUILD_DIR%/*}" ]]; then
-    die 5 "Cannot write to build directory: $BUILD_DIR"
+    die 5 "Cannot write to build directory ${BUILD_DIR@Q}"
   fi
 
   success 'Prerequisites check passed'
@@ -278,7 +278,7 @@ validate_config() {
 # ============================================================================
 
 clean_build_dir() {
-  info "Cleaning build directory: $BUILD_DIR"
+  info "Cleaning build directory ${BUILD_DIR@Q}"
 
   if ((DRY_RUN)); then
     info '[DRY-RUN] Would remove build directory'
@@ -364,19 +364,20 @@ run_package_phase() {
 main() {
   # Parse arguments (simplified for example)
   while (($#)); do case $1 in
-    -v|--verbose) VERBOSE=1 ;;
+    -v|--verbose) VERBOSE+=1 ;;
+    -q|--quiet)   VERBOSE=0 ;;
     -n|--dry-run) DRY_RUN=1 ;;
     -h|--help)    show_help; exit 0 ;;
     -V|--version) show_version; exit 0 ;;
-    -*)           die 22 "Invalid option: $1" ;;
-    *)            die 2 "Unexpected argument: $1" ;;
+    -*)           die 22 "Invalid option ${1@Q}" ;;
+    *)            die 2 "Unexpected argument ${1@Q}" ;;
   esac; shift; done
 
   # Set readonly after argument parsing
   readonly -- VERBOSE DRY_RUN
 
   info "Starting $SCRIPT_NAME $VERSION"
-  ((DRY_RUN)) && info 'DRY-RUN MODE ENABLED'
+  ((DRY_RUN)) && info 'DRY-RUN MODE ENABLED' ||:
 
   # Validate environment
   check_prerequisites
@@ -392,11 +393,11 @@ main() {
 main "$@"
 
 #fin
-\`\`\`
+```
 
 **Anti-patterns to avoid:**
 
-\`\`\`bash
+```bash
 # ✗ Wrong - main() at the top (forward references required)
 main() {
   build_project  # build_project not defined yet!
@@ -484,7 +485,7 @@ function_b() {
   common_logic
   # B-specific code
 }
-\`\`\`
+```
 
 **Guidelines for within-layer ordering:**
 
@@ -517,7 +518,7 @@ Order by logical workflow:
 
 **1. Circular dependencies:**
 
-\`\`\`bash
+```bash
 # Problem: Function A needs B, but B needs A
 
 # Solution 1: Extract common logic to lower layer
@@ -537,11 +538,11 @@ function_b() {
 
 # Solution 2: Restructure to eliminate circular dependency
 # Often indicates design issue - rethink function responsibilities
-\`\`\`
+```
 
 **2. Optional functions (sourced libraries):**
 
-\`\`\`bash
+```bash
 # When sourcing libraries, they may define functions
 # Place source statements after your messaging layer
 
@@ -557,11 +558,11 @@ source "$SCRIPT_DIR/lib/common.sh"
 # Your utilities
 # (Can now use both your messaging AND library functions)
 validate_email() { ... }
-\`\`\`
+```
 
 **3. Private functions:**
 
-\`\`\`bash
+```bash
 # Functions prefixed with _ are private/internal
 # Place in same layer as public functions that use them
 
@@ -572,7 +573,7 @@ info() { >&2 _msg "$@"; }  # Public wrapper
 # Layer 3: Utilities
 _internal_parser() { ... }  # Private helper
 parse_config() { _internal_parser "$@"; }  # Public interface
-\`\`\`
+```
 
 **Summary:**
 

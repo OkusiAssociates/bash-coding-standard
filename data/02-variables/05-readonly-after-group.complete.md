@@ -18,24 +18,24 @@ This is the standard pattern for variables that can only be finalized after argu
 **Step 1 - Declare with defaults:**
 ```bash
 declare -i VERBOSE=0 DRY_RUN=0
-declare -- OUTPUT_FILE='' PREFIX='/usr/local'
+declare -- OUTPUT_FILE='' PREFIX=/usr/local
 ```
 
 **Step 2 - Parse and modify in main():**
 ```bash
 main() {
   while (($#)); do case $1 in
-    -v) VERBOSE=1 ;;
+    -v) VERBOSE+=1 ;;
     -n) DRY_RUN=1 ;;
-    --output) noarg "$@"; shift; OUTPUT_FILE="$1" ;;
-    --prefix) noarg "$@"; shift; PREFIX="$1" ;;
+    --output) noarg "$@"; shift; OUTPUT_FILE=$1 ;;
+    --prefix) noarg "$@"; shift; PREFIX=$1 ;;
   esac; shift; done
 
   # Step 3 - Make readonly AFTER parsing complete
   readonly -- VERBOSE DRY_RUN OUTPUT_FILE PREFIX
 
   # Now safe to use - all readonly
-  ((VERBOSE)) && info "Using prefix: $PREFIX"
+  ((VERBOSE)) && info "Using prefix: $PREFIX" ||:
 }
 ```
 
@@ -55,7 +55,7 @@ The important principle is that script metadata variables must be readonly. The 
 
 ```bash
 # Script metadata (exception - uses declare -r, see BCS0103)
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -64,41 +64,41 @@ declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 declare -i VERBOSE=1 PROMPT=1 DEBUG=0
 # Standard color definitions (if terminal output)
 if [[ -t 1 && -t 2 ]]; then
-  readonly -- RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' NC=$'\033[0m'
+  declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' NC=$'\033[0m'
 else
-  readonly -- RED='' GREEN='' YELLOW='' CYAN='' NC=''
+  declare -r RED='' GREEN='' YELLOW='' CYAN='' NC=''
 fi
 ```
 
 **Why readonly-after-group pattern works:**
 
-\`\`\`bash
+```bash
 # For non-metadata variable groups (paths, colors, config):
 
 # Phase 1: Initialize all variables
-PREFIX="${PREFIX:-/usr/local}"
-BIN_DIR="$PREFIX/bin"
-SHARE_DIR="$PREFIX/share"
-LIB_DIR="$PREFIX/lib"
+PREFIX=${PREFIX:-/usr/local}
+BIN_DIR="$PREFIX"/bin
+SHARE_DIR="$PREFIX"/share
+LIB_DIR="$PREFIX"/lib
 
 # Phase 2: Protect entire group
 readonly -- PREFIX BIN_DIR SHARE_DIR LIB_DIR
 
 # Now all four variables are immutable
-\`\`\`
+```
 
 **What groups belong together:**
 
 **1. Script metadata group (exception - uses declare -r, see BCS0103):**
-\`\`\`bash
-declare -r VERSION='1.0.0'
+```bash
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
-\`\`\`
+```
 
 **2. Color definitions group:**
-\`\`\`bash
+```bash
 # Terminal colors (conditional)
 if [[ -t 1 && -t 2 ]]; then
   RED=$'\033[0;31m'
@@ -116,30 +116,30 @@ else
   NC=''
 fi
 readonly -- RED GREEN YELLOW CYAN BOLD NC
-\`\`\`
+```
 
 **3. Path constants group:**
-\`\`\`bash
-PREFIX="${PREFIX:-/usr/local}"
-BIN_DIR="$PREFIX/bin"
-SHARE_DIR="$PREFIX/share/myapp"
-LIB_DIR="$PREFIX/lib/myapp"
-ETC_DIR="$PREFIX/etc/myapp"
+```bash
+PREFIX=${PREFIX:-/usr/local}
+BIN_DIR="$PREFIX"/bin
+SHARE_DIR="$PREFIX"/share/myapp
+LIB_DIR="$PREFIX"/lib/myapp
+ETC_DIR="$PREFIX"/etc/myapp
 readonly -- PREFIX BIN_DIR SHARE_DIR LIB_DIR ETC_DIR
-\`\`\`
+```
 
 **4. Configuration defaults group:**
-\`\`\`bash
+```bash
 DEFAULT_TIMEOUT=30
 DEFAULT_RETRIES=3
-DEFAULT_LOG_LEVEL='info'
+DEFAULT_LOG_LEVEL=info
 DEFAULT_PORT=8080
 readonly -- DEFAULT_TIMEOUT DEFAULT_RETRIES DEFAULT_LOG_LEVEL DEFAULT_PORT
-\`\`\`
+```
 
 **Complete example:**
 
-\`\`\`bash
+```bash
 #!/bin/bash
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
@@ -148,7 +148,7 @@ shopt -s inherit_errexit shift_verbose extglob nullglob
 # Script Metadata (Group 1 - exception: uses declare -r, see BCS0103)
 # ============================================================================
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -158,17 +158,9 @@ declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 # ============================================================================
 
 if [[ -t 1 && -t 2 ]]; then
-  RED=$'\033[0;31m'
-  GREEN=$'\033[0;32m'
-  YELLOW=$'\033[0;33m'
-  CYAN=$'\033[0;36m'
-  NC=$'\033[0m'
+  RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' NC=$'\033[0m'
 else
-  RED=''
-  GREEN=''
-  YELLOW=''
-  CYAN=''
-  NC=''
+  RED='' GREEN='' YELLOW='' CYAN='' NC=''
 fi
 readonly -- RED GREEN YELLOW CYAN NC
 
@@ -176,9 +168,9 @@ readonly -- RED GREEN YELLOW CYAN NC
 # Installation Paths (Group 3)
 # ============================================================================
 
-PREFIX="${PREFIX:-/usr/local}"
-BIN_DIR="$PREFIX/bin"
-SHARE_DIR="$PREFIX/share/$SCRIPT_NAME"
+PREFIX=${PREFIX:-/usr/local}
+BIN_DIR="$PREFIX"/bin
+SHARE_DIR="$PREFIX"/share/"$SCRIPT_NAME"
 readonly -- PREFIX BIN_DIR SHARE_DIR
 
 # ============================================================================
@@ -206,8 +198,8 @@ declare -- CONFIG_FILE=''
 main() {
   # Parse arguments...
   # After parsing, make parsed values readonly
-  [[ -n "$LOG_FILE" ]] && readonly -- LOG_FILE
-  [[ -n "$CONFIG_FILE" ]] && readonly -- CONFIG_FILE
+  [[ -z "$LOG_FILE" ]] || readonly -- LOG_FILE
+  [[ -z "$CONFIG_FILE" ]] || readonly -- CONFIG_FILE
 
   info "Starting $SCRIPT_NAME $VERSION"
 }
@@ -215,21 +207,21 @@ main() {
 main "$@"
 
 #fin
-\`\`\`
+```
 
 **Anti-patterns to avoid:**
 
-\`\`\`bash
+```bash
 # For script metadata (see BCS0103):
 # ▲ Valid but not preferred - readonly-after-group for metadata
-VERSION='1.0.0'
+VERSION=1.0.0
 SCRIPT_PATH=$(realpath -- "$0")
 SCRIPT_DIR=${SCRIPT_PATH%/*}
 SCRIPT_NAME=${SCRIPT_PATH##*/}
 readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
 
 # ✓ Preferred - declare -r for script metadata (BCS0103)
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -239,18 +231,18 @@ declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # For non-metadata variable groups:
 # ✗ Wrong - making readonly before all values are set
-PREFIX='/usr/local'
+PREFIX=/usr/local
 readonly -- PREFIX  # Premature!
-BIN_DIR="$PREFIX/bin"
-SHARE_DIR="$PREFIX/share"
+BIN_DIR="$PREFIX"/bin
+SHARE_DIR="$PREFIX"/share
 
 # If BIN_DIR assignment fails, PREFIX is readonly but
 # SHARE_DIR is not, creating inconsistent protection
 
 # ✓ Correct - all values set, then all readonly
-PREFIX="${PREFIX:-/usr/local}"
-BIN_DIR="$PREFIX/bin"
-SHARE_DIR="$PREFIX/share"
+PREFIX=${PREFIX:-/usr/local}
+BIN_DIR="$PREFIX"/bin
+SHARE_DIR="$PREFIX"/share
 readonly -- PREFIX BIN_DIR SHARE_DIR
 
 # ✗ Wrong - forgetting -- separator
@@ -260,58 +252,58 @@ readonly PREFIX BIN_DIR  # Risky if variable name starts with -
 readonly -- PREFIX BIN_DIR
 
 # ✗ Wrong - mixing related and unrelated variables
-CONFIG_FILE='config.conf'
+CONFIG_FILE=config.conf
 VERBOSE=1
-PREFIX='/usr/local'
+PREFIX=/usr/local
 readonly -- CONFIG_FILE VERBOSE PREFIX
 # These don't form a logical group!
 
 # ✓ Correct - group logically related variables
-PREFIX="${PREFIX:-/usr/local}"
-BIN_DIR="$PREFIX/bin"
-SHARE_DIR="$PREFIX/share"
+PREFIX=${PREFIX:-/usr/local}
+BIN_DIR="$PREFIX"/bin
+SHARE_DIR="$PREFIX"/share
 readonly -- PREFIX BIN_DIR SHARE_DIR
 
-CONFIG_FILE='config.conf'
-LOG_FILE='app.log'
+CONFIG_FILE=config.conf
+LOG_FILE=app.log
 readonly -- CONFIG_FILE LOG_FILE
 
 # ✗ Wrong - readonly inside conditional (hard to verify)
 if [[ -f config.conf ]]; then
-  CONFIG_FILE='config.conf'
+  CONFIG_FILE=config.conf
   readonly -- CONFIG_FILE
 fi
 # CONFIG_FILE might not be readonly if condition is false!
 
 # ✓ Correct - initialize with default, then readonly
-CONFIG_FILE="${CONFIG_FILE:-config.conf}"
+CONFIG_FILE=${CONFIG_FILE:-config.conf}
 readonly -- CONFIG_FILE
 # Always readonly, value might vary
-\`\`\`
+```
 
 **Edge case: Derived variables:**
 
 When variables depend on each other, initialize in dependency order:
 
-\`\`\`bash
+```bash
 # Base configuration
-PREFIX="${PREFIX:-/usr/local}"
+PREFIX=${PREFIX:-/usr/local}
 
 # Derived paths (depend on PREFIX)
-BIN_DIR="$PREFIX/bin"
-SHARE_DIR="$PREFIX/share"
-LIB_DIR="$PREFIX/lib"
+BIN_DIR="$PREFIX"/bin
+SHARE_DIR="$PREFIX"/share
+LIB_DIR="$PREFIX"/lib
 
 # Make all readonly together
 readonly -- PREFIX BIN_DIR SHARE_DIR LIB_DIR
 
 # If you need to recalculate derived values:
 # Don't make them readonly until after all calculations
-\`\`\`
+```
 
 **Edge case: Conditional initialization:**
 
-\`\`\`bash
+```bash
 # Color constants depend on terminal detection
 if [[ -t 1 && -t 2 ]]; then
   RED=$'\033[0;31m'
@@ -326,31 +318,31 @@ fi
 # Either way, same variables are defined
 # Safe to make readonly after conditional
 readonly -- RED GREEN NC
-\`\`\`
+```
 
 **Edge case: Arrays in readonly groups:**
 
-\`\`\`bash
+```bash
 # Can make arrays readonly too
-declare -a REQUIRED_COMMANDS=('git' 'make' 'tar')
-declare -a OPTIONAL_COMMANDS=('md2ansi' 'pandoc')
+declare -a REQUIRED_COMMANDS=(git make tar)
+declare -a OPTIONAL_COMMANDS=(md2ansi pandoc)
 
 # Make both arrays readonly
 readonly -a REQUIRED_COMMANDS OPTIONAL_COMMANDS
 
 # Or use -- if not specifying type
 readonly -- REQUIRED_COMMANDS OPTIONAL_COMMANDS
-\`\`\`
+```
 
 **Edge case: Delayed readonly (after argument parsing):**
 
 Some variables can only be made readonly after argument parsing:
 
-\`\`\`bash
+```bash
 #!/bin/bash
 set -euo pipefail
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -366,66 +358,66 @@ declare -- LOG_FILE=''
 main() {
   # Parse arguments (modifies VERBOSE, DRY_RUN, etc.)
   while (($#)); do case $1 in
-    -v|--verbose) VERBOSE=1 ;;
+    -v|--verbose) VERBOSE+=1 ;;
     -n|--dry-run) DRY_RUN=1 ;;
-    -c|--config)  noarg "$@"; shift; CONFIG_FILE="$1" ;;
-    -l|--log)     noarg "$@"; shift; LOG_FILE="$1" ;;
-    *) die 22 "Invalid option: $1" ;;
+    -c|--config)  noarg "$@"; shift; CONFIG_FILE=$1 ;;
+    -l|--log)     noarg "$@"; shift; LOG_FILE=$1 ;;
+    *) die 22 "Invalid option ${1@Q}" ;;
   esac; shift; done
 
   # Now make parsed values readonly
   readonly -- VERBOSE DRY_RUN
 
   # Optional values: only readonly if set
-  [[ -n "$CONFIG_FILE" ]] && readonly -- CONFIG_FILE
-  [[ -n "$LOG_FILE" ]] && readonly -- LOG_FILE
+  [[ -z "$CONFIG_FILE" ]] || readonly -- CONFIG_FILE
+  [[ -z "$LOG_FILE" ]] || readonly -- LOG_FILE
 
   # Rest of script with readonly variables
-  ((VERBOSE)) && info 'Verbose mode enabled'
-  ((DRY_RUN)) && info 'Dry-run mode enabled'
+  ((VERBOSE)) && info 'Verbose mode enabled' ||:
+  ((DRY_RUN)) && info 'Dry-run mode enabled' ||:
 }
 
 main "$@"
 
 #fin
-\`\`\`
+```
 
 **Testing readonly status:**
 
-\`\`\`bash
+```bash
 # Check if variable is readonly
 if readonly -p 2>/dev/null | grep -q "VERSION"; then
-  echo "VERSION is readonly"
+  echo 'VERSION is readonly'
 else
-  echo "VERSION is not readonly"
+  echo 'VERSION is not readonly'
 fi
 
 # List all readonly variables
 readonly -p
 
 # Attempt to modify readonly variable (for testing)
-VERSION='2.0.0'  # Will fail: bash: VERSION: readonly variable
-\`\`\`
+VERSION=2.0.0  # Will fail: bash: VERSION: readonly variable
+```
 
 **When NOT to use readonly:**
 
-\`\`\`bash
+```bash
 # Don't make readonly if value will change during script execution
 declare -i count=0
 # count is modified in loops - don't make readonly
 
 # Don't make readonly if conditional assignment
 config_file=''
-if [[ -f 'custom.conf' ]]; then
-  config_file='custom.conf'
-elif [[ -f 'default.conf' ]]; then
-  config_file='default.conf'
+if [[ -f custom.conf ]]; then
+  config_file=custom.conf
+elif [[ -f default.conf ]]; then
+  config_file=default.conf
 fi
 # config_file might be modified - don't make readonly yet
 
 # Only make readonly when value is final
 [[ -n "$config_file" ]] && readonly -- config_file
-\`\`\`
+```
 
 **Summary:**
 

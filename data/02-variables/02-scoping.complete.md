@@ -25,13 +25,13 @@ main() {
 ```bash
 # ✗ Wrong - no local declaration
 process_file() {
-  file="$1"  # Overwrites any global $file variable!
+  file=$1  # Overwrites any global $file variable!
   # ...
 }
 
 # ✓ Correct - local declaration
 process_file() {
-  local -- file="$1"  # Scoped to this function only
+  local -- file=$1  # Scoped to this function only
   # ...
 }
 ```
