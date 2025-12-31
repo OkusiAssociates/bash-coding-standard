@@ -68,11 +68,11 @@ test_interrogate_by_file_path() {
   local -- output test_file
   local -i exit_code
 
-  # Find a test file
-  test_file=$(find "$PROJECT_DIR/data" -name "*.complete.md" -type f | head -1)
+  # Use a known file path (avoid find which can be slow)
+  test_file="$PROJECT_DIR/data/01-script-structure/02-shebang.complete.md"
 
   if [[ ! -f "$test_file" ]]; then
-    skip_test "No .complete.md files found"
+    skip_test "Test file not found: $test_file"
     return 0
   fi
 

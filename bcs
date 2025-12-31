@@ -4876,7 +4876,7 @@ main() {
 
   # Commands that require BCS_FILE to exist: display, search, sections, check, about
   # Other commands work directly with data/ directory or don't need the standard file
-  declare -- BCS_FILE
+  declare -- BCS_FILE=''
   declare -- install_share="${BCS_DIR%/bin}/share/yatti/bash-coding-standard"
   case "$subcommand" in
     display|search|sections|check|about)
