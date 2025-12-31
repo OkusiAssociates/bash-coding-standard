@@ -4855,109 +4855,110 @@ main() {
   # Command dispatcher
   # Default to display if no arguments, otherwise use first argument as subcommand
   declare -- subcommand
-if (($#)); then
-  subcommand=$1
-  shift  # Remove subcommand from args
-else
-  subcommand=display
-fi
+  if (($#)); then
+    subcommand=$1
+    shift  # Remove subcommand from args
+  else
+    subcommand=display
+  fi
 
-# Handle global options
-case "$subcommand" in
-  -h|--help)
-    cmd_help
-    exit 0
-    ;;
-  -V|--version)
-    echo "bcs $BCS_VERSION"
-    exit 0
-    ;;
-esac
+  # Handle global options
+  case "$subcommand" in
+    -h|--help)
+      cmd_help
+      return 0
+      ;;
+    -V|--version)
+      echo "bcs $BCS_VERSION"
+      return 0
+      ;;
+  esac
 
-# Commands that require BCS_FILE to exist: display, search, sections, check
-# Other commands work directly with data/ directory or don't need the standard file
-declare -- BCS_FILE='' install_share="${BCS_DIR%/bin}/share/yatti/bash-coding-standard"
-case "$subcommand" in
-  display|search|sections|check)
-    # These commands require the standard file
-    BCS_FILE=$(find_bcs_file "${BCS_PATH%/*}") || {
-      error 'BASH-CODING-STANDARD.md not found'
-      info  'Searched locations:' \
-            "  - $BCS_DIR/BASH-CODING-STANDARD.md" \
-            "  - $install_share/BASH-CODING-STANDARD.md" \
-            '  - /usr/local/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md' \
-            '  - /usr/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md'
-      exit 1
-    }
-    ;;
-  -*)
-    # Backward compatibility for display options (e.g., bcs -c)
-    BCS_FILE=$(find_bcs_file "${BCS_PATH%/*}") || {
-      error 'BASH-CODING-STANDARD.md not found'
-      info  'Searched locations:' \
-            "  - $BCS_DIR/BASH-CODING-STANDARD.md" \
-            "  - $install_share/BASH-CODING-STANDARD.md" \
-            '  - /usr/local/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md' \
-            '  - /usr/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md'
-      exit 1
-    }
-    ;;
-esac
+  # Commands that require BCS_FILE to exist: display, search, sections, check
+  # Other commands work directly with data/ directory or don't need the standard file
+  declare -- BCS_FILE
+  declare -- install_share="${BCS_DIR%/bin}/share/yatti/bash-coding-standard"
+  case "$subcommand" in
+    display|search|sections|check)
+      # These commands require the standard file
+      BCS_FILE=$(find_bcs_file "${BCS_PATH%/*}") || {
+        error 'BASH-CODING-STANDARD.md not found'
+        info  'Searched locations:' \
+              "  - $BCS_DIR/BASH-CODING-STANDARD.md" \
+              "  - $install_share/BASH-CODING-STANDARD.md" \
+              '  - /usr/local/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md' \
+              '  - /usr/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md'
+        return 1
+      }
+      ;;
+    -*)
+      # Backward compatibility for display options (e.g., bcs -c)
+      BCS_FILE=$(find_bcs_file "${BCS_PATH%/*}") || {
+        error 'BASH-CODING-STANDARD.md not found'
+        info  'Searched locations:' \
+              "  - $BCS_DIR/BASH-CODING-STANDARD.md" \
+              "  - $install_share/BASH-CODING-STANDARD.md" \
+              '  - /usr/local/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md' \
+              '  - /usr/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md'
+        return 1
+      }
+      ;;
+  esac
 
-# Backward compatibility: if starts with dash, treat as display option
-# Note: need to restore the argument for cmd_display
-if [[ "$subcommand" == -* ]]; then
-  cmd_display "$subcommand" "$@"
-  exit $?
-fi
+  # Backward compatibility: if starts with dash, treat as display option
+  # Note: need to restore the argument for cmd_display
+  if [[ "$subcommand" == -* ]]; then
+    cmd_display "$subcommand" "$@"
+    return $?
+  fi
 
-# Dispatch to subcommand
-case "$subcommand" in
-  display)
-    cmd_display "$@"
-    ;;
-  about)
-    cmd_about "$@"
-    ;;
-  template)
-    cmd_template "$@"
-    ;;
-  check)
-    cmd_check "$@"
-    ;;
-  compress)
-    cmd_compress "$@"
-    ;;
-  codes)
-    cmd_codes "$@"
-    ;;
-  generate)
-    cmd_generate "$@"
-    ;;
-  generate-rulets)
-    cmd_generate_rulets "$@"
-    ;;
-  search)
-    cmd_search "$@"
-    ;;
-  decode)
-    cmd_decode "$@"
-    ;;
-  sections)
-    cmd_sections "$@"
-    ;;
-  default)
-    cmd_default "$@"
-    ;;
-  help)
-    cmd_help "$@"
-    ;;
-  *)
-    error "Unknown command ${subcommand@Q}"
-    info "Try 'bcs help' for usage information"
-    exit 2
-    ;;
-esac
+  # Dispatch to subcommand
+  case "$subcommand" in
+    display)
+      cmd_display "$@"
+      ;;
+    about)
+      cmd_about "$@"
+      ;;
+    template)
+      cmd_template "$@"
+      ;;
+    check)
+      cmd_check "$@"
+      ;;
+    compress)
+      cmd_compress "$@"
+      ;;
+    codes)
+      cmd_codes "$@"
+      ;;
+    generate)
+      cmd_generate "$@"
+      ;;
+    generate-rulets)
+      cmd_generate_rulets "$@"
+      ;;
+    search)
+      cmd_search "$@"
+      ;;
+    decode)
+      cmd_decode "$@"
+      ;;
+    sections)
+      cmd_sections "$@"
+      ;;
+    default)
+      cmd_default "$@"
+      ;;
+    help)
+      cmd_help "$@"
+      ;;
+    *)
+      error "Unknown command ${subcommand@Q}"
+      info "Try 'bcs help' for usage information"
+      return 2
+      ;;
+  esac
 }
 
 main "$@"

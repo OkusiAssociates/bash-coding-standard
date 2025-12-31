@@ -1,37 +1,68 @@
-# Functions - Rulets
+# Functions & Libraries - Rulets
+
 ## Function Definition Pattern
-- [BCS0601] Use single-line functions for simple operations: `vecho() { ((VERBOSE)) || return 0; _msg "$@"; }`
-- [BCS0601] Use multi-line functions with local variables for complex operations, always declaring locals at the top of the function body.
-- [BCS0601] Always return explicit exit codes from functions: `return "$exitcode"` not implicit returns.
+
+- [BCS0401] Use single-line format for simple functions: `vecho() { ((VERBOSE)) || return 0; _msg "$@"; }`
+- [BCS0401] Multi-line functions must declare local variables with type at function start: `local -i exitcode=0` for integers, `local -- variable` for strings.
+- [BCS0401] Always return explicit exit codes: `return "$exitcode"` or `return 0`.
+
 ## Function Naming
-- [BCS0602] Always use lowercase_with_underscores for function names to match shell conventions and avoid conflicts with built-in commands.
-- [BCS0602] Prefix private/internal functions with underscore: `_my_private_function()`, `_validate_input()`.
-- [BCS0602] Never use CamelCase or UPPER_CASE for function names; avoid special characters like dashes.
-- [BCS0602] Never override built-in commands unless absolutely necessary; if you must wrap built-ins, use a different name: `change_dir()` not `cd()`.
+
+- [BCS0402] Use lowercase with underscores for function names: `process_log_file()` not `ProcessLogFile()`.
+- [BCS0402] Prefix private/internal functions with underscore: `_validate_input()`.
+- [BCS0402] Never override built-in commands; use alternative names: `change_dir()` not `cd()`.
+- [BCS0402] Avoid dashes in function names: `my_function()` not `my-function()`.
+
 ## Main Function
-- [BCS0603] Always include a `main()` function for scripts longer than approximately 200 lines; place `main "$@"` at the bottom just before `#fin`.
-- [BCS0603] Use `main()` as the single entry point to orchestrate script logic: parsing arguments, validating input, calling helper functions in the right order, and returning appropriate exit codes.
-- [BCS0603] Parse command-line arguments inside `main()`, not in global scope; make parsed option variables readonly after validation.
-- [BCS0603] Place `main()` function definition at the end of the script after all helper functions are defined; this ensures bottom-up function organization.
-- [BCS0603] For testable scripts, use conditional invocation: `if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then main "$@"; fi` to prevent execution when sourced.
-- [BCS0603] Skip `main()` function only for trivial scripts (<200 lines) with no functions, linear flow, or simple wrappers.
-## Function Organization
-- [BCS0603,BCS0107] Organize functions bottom-up: messaging functions first (lowest level), then documentation/helpers, then validation, then business logic, then orchestration, with `main()` last (highest level).
-- [BCS0603] Separate script into clear sections with comment dividers: messaging functions, documentation functions, helper functions, business logic functions, main function.
+
+- [BCS0403] Always include `main()` function for scripts exceeding ~200 lines.
+- [BCS0403] Place `main "$@"` at script bottom, just before `#fin` marker.
+- [BCS0403] Parse all arguments inside `main()`, not at global scope.
+- [BCS0403] Declare option variables as local in main: `local -i verbose=0; local -- output_file=''`
+- [BCS0403] Make parsed options readonly after parsing: `readonly -- verbose dry_run output_file`
+- [BCS0403] Use `[[ "${BASH_SOURCE[0]}" == "${0}" ]] && main "$@"` pattern for testable scripts.
+- [BCS0403] Main orchestrates; heavy lifting belongs in helper functions called by main.
+- [BCS0403] Track errors using counters: `local -i errors=0` then `((errors+=1))` on failures.
+- [BCS0403] Use `trap cleanup EXIT` at main start for guaranteed cleanup.
+- [BCS0403] Never define functions after `main "$@"` call; never parse arguments in global scope.
+- [BCS0403] Never call main without `"$@"`: use `main "$@"` not `main`.
+
 ## Function Export
-- [BCS0604] Export functions with `declare -fx` when they need to be available in subshells or when creating sourceable libraries.
-- [BCS0604] Batch export related functions together: `declare -fx grep find` after defining wrapper functions.
+
+- [BCS0404] Export functions for subshell access with `declare -fx`: `grep() { /usr/bin/grep "$@"; }; declare -fx grep`
+- [BCS0404] Group related function exports: `declare -fx func1 func2 func3`
+
 ## Production Optimization
-- [BCS0605] Remove unused utility functions from mature production scripts: if `yn()`, `decp()`, `trim()`, `s()` are not called, delete them.
-- [BCS0605] Remove unused global variables from production scripts: if `PROMPT`, `DEBUG` are not referenced, delete them.
-- [BCS0605] Remove unused messaging functions your script doesn't call; keep only what your script actually needs to reduce size and improve clarity.
-- [BCS0605] Simple scripts may only need `error()` and `die()`, not the full messaging suite; optimize accordingly.
-## Error Handling in Main
-- [BCS0603] Track errors in `main()` using counters: `local -i errors=0` then `((errors+=1))` on failures; return non-zero if `((errors > 0))`.
-- [BCS0603] Use trap for cleanup in `main()`: `trap cleanup EXIT` at the start ensures cleanup happens on any exit path.
-- [BCS0603] Make `main()` return 0 for success and non-zero for errors to enable `main "$@"` invocation at script level with `set -e`.
-## Main Function Anti-Patterns
-- [BCS0603] Never define functions after calling `main "$@"`; all functions must be defined before the main invocation.
-- [BCS0603] Never parse arguments outside `main()` in global scope; this consumes `"$@"` before main receives it.
-- [BCS0603] Never call main without passing arguments: use `main "$@"` not `main` to preserve all command-line arguments.
-- [BCS0603] Never mix global and local state unnecessarily; prefer all logic and variables local to `main()` for clean scope.
+
+- [BCS0405] Remove unused utility functions from mature production scripts.
+- [BCS0405] Remove unused global variables and messaging functions not called by script.
+- [BCS0405] Keep only functions and variables the script actually needs; a simple script may only need `error()` and `die()`.
+
+## Dual-Purpose Scripts
+
+- [BCS0406] Define all functions BEFORE `set -euo pipefail` in dual-purpose scripts.
+- [BCS0406] Use source-mode exit after function definitions: `[[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0`
+- [BCS0406] Place `set -euo pipefail` AFTER the source check, never before.
+- [BCS0406] Export all library functions: `my_func() { :; }; declare -fx my_func`
+- [BCS0406] Use idempotent initialization to prevent double-loading: `[[ -v MY_LIB_VERSION ]] || declare -rx MY_LIB_VERSION='1.0.0'`
+
+## Library Patterns
+
+- [BCS0407] Pure libraries should reject execution: `[[ "${BASH_SOURCE[0]}" != "$0" ]] || { echo "Must be sourced" >&2; exit 1; }`
+- [BCS0407] Declare library version: `declare -rx LIB_VALIDATION_VERSION='1.0.0'`
+- [BCS0407] Use namespace prefixes for all functions: `myapp_init()`, `myapp_cleanup()`, `myapp_process()`
+- [BCS0407] Libraries should only define functions on source; explicit init call for side effects: `source lib.sh; lib_init`
+- [BCS0407] Source libraries with existence check: `[[ -f "$lib_path" ]] && source "$lib_path" || die 1 "Missing: $lib_path"`
+
+## Dependency Management
+
+- [BCS0408] Check dependencies with `command -v`, never `which`: `command -v curl >/dev/null || die 1 'curl required'`
+- [BCS0408] Collect missing dependencies for helpful error messages: `local -a missing=(); for cmd in curl jq; do command -v "$cmd" >/dev/null || missing+=("$cmd"); done`
+- [BCS0408] Check Bash version when using modern features: `((BASH_VERSINFO[0] >= 5)) || die 1 "Requires Bash 5+"`
+- [BCS0408] Use availability flags for optional features: `declare -i HAS_JQ=0; command -v jq >/dev/null && HAS_JQ=1`
+- [BCS0408] Lazy-load expensive resources only when needed.
+
+## Function Organization
+
+- [BCS0400] Organize functions bottom-up: messaging first, then helpers, then business logic, with `main()` last.
+- [BCS0400] Each function should safely call only previously-defined functions above it.
