@@ -732,7 +732,7 @@ compress_rule_to_tier() {
     abstract)
       ((compress_verbose)) && vecho "    Using abstract context (excluding $bcs_code)" ||:
       context_file_persistent=$(mktemp) || {
-        ((compress_verbose)) && warn "    Failed to create context temp file" ||:
+        ((compress_verbose)) && warn '    Failed to create context temp file' ||:
         context_file_persistent=''
       }
       if [[ -n "$context_file_persistent" ]]; then
@@ -1329,7 +1329,7 @@ build_context_summary_exclude() {
   # Generate temporary file with excluded rule
   local -- temp_data
   temp_data=$(mktemp) || {
-    warn "Failed to create temp file for context generation"
+    warn 'Failed to create temp file for context generation'
     return 1
   }
 
@@ -1445,7 +1445,7 @@ build_context_complete_exclude() {
   # Generate temporary file with excluded rule
   local -- temp_data
   temp_data=$(mktemp) || {
-    warn "Failed to create temp file for context generation"
+    warn 'Failed to create temp file for context generation'
     return 1
   }
 
@@ -2410,7 +2410,7 @@ resolve_category_dir() {
   fi
 
   error "Category not found: $category"
-  info "Available categories (use number or name):"
+  info 'Available categories (use number or name):'
   find "$data_dir" -maxdepth 1 -type d -name '[0-9][0-9]-*' | sort | while IFS= read -r dir; do
     printf '  %s\n' "$(basename "$dir")" >&2
   done
@@ -2499,7 +2499,7 @@ generate_rulet_for_category() {
   } > "$temp_input"
 
   # Invoke agent with retry logic for rate limit errors
-  info "Invoking bcs-rulet-extractor agent..."
+  info 'Invoking bcs-rulet-extractor agent...'
 
   local -i max_retries=3
   local -i retry_count=0
@@ -3490,7 +3490,7 @@ EOF
   local -- relative_target=BASH-CODING-STANDARD."$new_tier".md
 
   if ! ln -sf "$relative_target" "$symlink_path"; then
-    error "Failed to create symlink"
+    error 'Failed to create symlink'
     return 1
   fi
 
@@ -4899,7 +4899,7 @@ case "$subcommand" in
   display|search|sections|check)
     # These commands require the standard file
     BCS_FILE=$(find_bcs_file "${BCS_PATH%/*}") || {
-      error "BASH-CODING-STANDARD.md not found"
+      error 'BASH-CODING-STANDARD.md not found'
       info  'Searched locations:' \
             "  - $BCS_DIR/BASH-CODING-STANDARD.md" \
             "  - $install_share/BASH-CODING-STANDARD.md" \
@@ -4911,7 +4911,7 @@ case "$subcommand" in
   -*)
     # Backward compatibility for display options (e.g., bcs -c)
     BCS_FILE=$(find_bcs_file "${BCS_PATH%/*}") || {
-      error "BASH-CODING-STANDARD.md not found"
+      error 'BASH-CODING-STANDARD.md not found'
       info  'Searched locations:' \
             "  - $BCS_DIR/BASH-CODING-STANDARD.md" \
             "  - $install_share/BASH-CODING-STANDARD.md" \
