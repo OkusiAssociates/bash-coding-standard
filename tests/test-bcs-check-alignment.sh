@@ -5,6 +5,12 @@
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
+# Skip in CI environment - this test requires Claude CLI and is slow
+if [[ -n "${CI:-}" ]]; then
+  echo 'Skipping test-bcs-check-alignment in CI (requires Claude CLI)'
+  exit 77
+fi
+
 # Script metadata
 VERSION='1.0.0'
 SCRIPT_PATH=$(realpath -- "$0")

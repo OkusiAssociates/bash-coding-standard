@@ -4,6 +4,12 @@
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose
 
+# Skip in CI environment - this test requires Claude CLI
+if [[ -n "${CI:-}" ]]; then
+  echo 'Skipping test-subcommand-compress in CI (requires Claude CLI)'
+  exit 77
+fi
+
 # Load test helpers
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 # shellcheck source=tests/test-helpers.sh

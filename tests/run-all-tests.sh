@@ -19,13 +19,14 @@ else
 fi
 
 # Test suite counters
-declare -gi SUITES_RUN=0 SUITES_PASSED=0 SUITES_FAILED=0
-declare -a FAILED_SUITES=()
+declare -gi SUITES_RUN=0 SUITES_PASSED=0 SUITES_FAILED=0 SUITES_SKIPPED=0
+declare -a FAILED_SUITES=() SKIPPED_SUITES=()
 
 # Run a single test suite
 run_test_suite() {
   local -- test_file="$1"
   local -- test_name
+  local -i exit_code
   test_name=$(basename "$test_file" .sh)
 
   echo
@@ -35,10 +36,22 @@ run_test_suite() {
 
   SUITES_RUN+=1
 
-  if bash "$test_file"; then
+  # Run test and capture exit code
+  set +e
+  bash "$test_file"
+  exit_code=$?
+  set -e
+
+  # Handle exit codes: 0=pass, 77=skip, other=fail
+  if ((exit_code == 0)); then
     SUITES_PASSED+=1
     echo "${GREEN}✓ $test_name PASSED${NC}"
     return 0
+  elif ((exit_code == 77)); then
+    SUITES_SKIPPED+=1
+    SKIPPED_SUITES+=("$test_name")
+    echo "${YELLOW}○ $test_name SKIPPED${NC}"
+    return 0  # Skipped tests don't fail the suite
   else
     SUITES_FAILED+=1
     FAILED_SUITES+=("$test_name")
@@ -86,7 +99,18 @@ main() {
   echo "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
   echo "  Total Suites:  $SUITES_RUN"
   echo "  ${GREEN}Passed:        $SUITES_PASSED${NC}"
+  echo "  ${YELLOW}Skipped:       $SUITES_SKIPPED${NC}"
   echo "  ${RED}Failed:        $SUITES_FAILED${NC}"
+
+  # Show skipped suites
+  if ((SUITES_SKIPPED > 0)); then
+    echo
+    echo "${YELLOW}Skipped Test Suites:${NC}"
+    local -- suite
+    for suite in "${SKIPPED_SUITES[@]}"; do
+      echo "  ${YELLOW}○${NC} $suite"
+    done
+  fi
 
   if ((SUITES_FAILED > 0)); then
     echo
