@@ -2317,9 +2317,9 @@ EOF
       info "Processing category $category_num: $category_name"
 
       if generate_rulet_for_category "$dir" "$agent_cmd" "$force"; then
-        ((success_count+=1))
+        success_count+=1
       else
-        ((fail_count+=1))
+        fail_count+=1
         warn "Failed to generate rulets for category $category_num"
       fi
     done
@@ -2510,7 +2510,7 @@ generate_rulet_for_category() {
         rm -f "$temp_output" "$stderr_file"
 
         if ((retry_count < max_retries)); then
-          ((retry_count+=1))
+          retry_count+=1
           warn "Retry $retry_count/$max_retries after ${wait_time}s delay..."
           sleep "$wait_time"
           ((wait_time*=2))  # Exponential backoff
@@ -2567,7 +2567,7 @@ generate_rulet_for_category() {
         cat "$stderr_file" >&2
 
         if ((retry_count < max_retries)); then
-          ((retry_count+=1))
+          retry_count+=1
           warn "Retry $retry_count/$max_retries after ${wait_time}s delay..."
           sleep "$wait_time"
           ((wait_time*=2))
