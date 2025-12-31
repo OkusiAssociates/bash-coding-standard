@@ -1,6 +1,6 @@
 ### TUI Basics
 
-**Rule: BCS0907** (New)
+**Rule: BCS0907**
 
 Creating text-based user interface elements in terminal scripts.
 
@@ -96,7 +96,7 @@ select_option() {
   hide_cursor
   trap 'show_cursor' RETURN
 
-  while :; do
+  while ((1)); do
     # Display menu
     local -i i
     for ((i=0; i<${#options[@]}; i+=1)); do
@@ -109,7 +109,7 @@ select_option() {
 
     # Read keypress
     IFS= read -rsn1 key
-    case "$key" in
+    case $key in
       $'\x1b')  # Escape sequence
         read -rsn2 key
         case "$key" in
@@ -129,7 +129,7 @@ select_option() {
 }
 
 # Usage
-select_option "Option 1" "Option 2" "Option 3"
+select_option 'Option 1' 'Option 2' 'Option 3'
 selected=$?
 ```
 
@@ -145,7 +145,7 @@ progress_bar 50 100  # Garbage if not a terminal
 if [[ -t 1 ]]; then
   progress_bar 50 100
 else
-  echo "50% complete"
+  echo '50% complete'
 fi
 ```
 

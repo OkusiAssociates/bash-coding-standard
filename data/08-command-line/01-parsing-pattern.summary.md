@@ -2,25 +2,27 @@
 
 **Complete pattern with short option support:**
 
+NOTE: Short-option splitting should be implemented in *all* scripts that have more than 2 short options.
+
 ```bash
 while (($#)); do case $1 in
+  -V|--version)   echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
+  -h|--help)      show_help; exit 0 ;;
+
   -a|--add)       noarg "$@"; shift
                   process_argument "$1" ;;
   -m|--depth)     noarg "$@"; shift
-                  max_depth="$1" ;;
+                  max_depth=$1 ;;
   -L|--follow-symbolic)
                   symbolic='-L' ;;
 
   -p|--prompt)    PROMPT=1; VERBOSE=1 ;;
   -v|--verbose)   VERBOSE+=1 ;;
-
   -q|--quiet)     VERBOSE=0 ;;
-  -V|--version)   echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
 
-  -h|--help)      show_help; exit 0 ;;
-  -[amLpvqVh]*) #shellcheck disable=SC2046 #split up single options
-                  set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;
-  -*)             die 22 "Invalid option '$1'" ;;
+  -[VhamLpvq]*) #shellcheck disable=SC2046 #split up single options
+                  set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+  -*)             die 22 "Invalid option ${1@Q}" ;;
   *)              Paths+=("$1") ;;
 esac; shift; done
 ```
@@ -32,7 +34,7 @@ esac; shift; done
 **Options with arguments:**
 ```bash
 -m|--depth)     noarg "$@"; shift
-                max_depth="$1" ;;
+                max_depth=$1 ;;
 ```
 - `noarg "$@"` validates argument exists
 - First `shift` moves to value, second shift (loop end) moves past it
@@ -53,13 +55,13 @@ esac; shift; done
 **Short option bundling:**
 ```bash
 -[amLpvqVh]*) #shellcheck disable=SC2046 #split up single options
-              set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+              set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
 ```
 - Allows `-vpL` instead of `-v -p -L`
-- `${1:1}` removes dash, `grep -o .` splits characters, `printf -- "-%c "` adds dash to each
+- `${1:1}` removes dash, `grep -o .` splits characters, `printf -- '-%c '` adds dash to each
 - `set --` replaces argument list with expanded options
 
-**Invalid option:** `die 22 "Invalid option '$1'"` catches unrecognized options (exit code 22 = EINVAL).
+**Invalid option:** `die 22 "Invalid option ${1@Q}"` catches unrecognized options (exit code 22 = EINVAL).
 
 **Positional arguments:** `*)` case appends to array for later processing.
 
@@ -69,7 +71,7 @@ esac; shift; done
 
 ```bash
 noarg() {
-  (($# > 1)) || die 2 "Option '$1' requires an argument"
+  (($# > 1)) || die 2 "Option ${1@Q} requires an argument"
 }
 ```
 
@@ -82,7 +84,7 @@ Validates option has argument before shifting. Check `(($# > 1))` ensures at lea
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -98,7 +100,7 @@ declare -a files=()
 # ============================================================================
 
 error() {
-  >&2 echo "[$SCRIPT_NAME] ERROR: $*"
+  >&2 echo "$SCRIPT_NAME: error: $*"
 }
 
 die() {
@@ -109,7 +111,7 @@ die() {
 }
 
 noarg() {
-  (($# > 1)) || die 2 "Option '$1' requires an argument"
+  (($# > 1)) || die 2 "Option ${1@Q} requires an argument"
 }
 
 show_help() {
@@ -142,13 +144,13 @@ main() {
                     output_file=$1 ;;
     -v|--verbose)   VERBOSE+=1 ;;
     -n|--dry-run)   DRY_RUN=1 ;;
-    -V|--version)   echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
-    -h|--help)      show_help; exit 0 ;;
+    -V|--version)   echo "$SCRIPT_NAME $VERSION"; return 0 ;;
+    -h|--help)      show_help; return 0 ;;
 
     # Short option bundling support
     -[ovnVh]*)    #shellcheck disable=SC2046
                     set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;
-    -*)             die 22 "Invalid option '$1'" ;;
+    -*)             die 22 "Invalid option ${1@Q}'" ;;
     *)              files+=("$1") ;;
   esac; shift; done
 
@@ -161,17 +163,17 @@ main() {
   [[ -n "$output_file" ]] || die 2 'Output file required (use -o)'
 
   # Use parsed arguments
-  ((VERBOSE)) && echo "Processing ${#files[@]} files"
-  ((DRY_RUN)) && echo '[DRY RUN] Would write to:' "$output_file"
+  ((VERBOSE)) && echo "Processing ${#files[@]} files" ||:
+  ((DRY_RUN)) && echo '[DRY RUN] Would write to:' "$output_file" ||:
 
   # Process files (example logic)
   local -- file
   for file in "${files[@]}"; do
-    ((VERBOSE)) && echo "Processing: $file"
+    ((VERBOSE)) && echo "Processing ${file@Q}" ||:
     # Processing logic here
   done
 
-  ((VERBOSE)) && echo "Would write results to: $output_file"
+  ((VERBOSE)) && echo "Would write results to: $output_file" ||:
 }
 
 main "$@"

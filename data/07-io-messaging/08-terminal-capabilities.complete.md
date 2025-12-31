@@ -1,6 +1,6 @@
 ### Terminal Capabilities
 
-**Rule: BCS0908** (New)
+**Rule: BCS0908**
 
 Detecting and utilizing terminal features safely.
 
@@ -30,9 +30,9 @@ fi
 
 # Check both stdout and stderr
 if [[ -t 1 && -t 2 ]]; then
-  declare -- RED=$'\033[0;31m' NC=$'\033[0m'
+  declare -r RED=$'\033[0;31m' NC=$'\033[0m'
 else
-  declare -- RED='' NC=''
+  declare -r RED='' NC=''
 fi
 ```
 
@@ -161,5 +161,3 @@ printf '%-*s\n' "${TERM_COLS:-80}" "$text"
 ---
 
 **See Also:** BCS0907 (TUI Basics), BCS0906 (Color Management)
-
-#fin

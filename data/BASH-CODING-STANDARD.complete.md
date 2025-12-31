@@ -15269,7 +15269,7 @@ See `/usr/local/lib/color-set` or https://github.com/Open-Technology-Foundation/
 
 ## TUI Basics
 
-**Rule: BCS0907** (New)
+**Rule: BCS0907**
 
 Creating text-based user interface elements in terminal scripts.
 
@@ -15365,7 +15365,7 @@ select_option() {
   hide_cursor
   trap 'show_cursor' RETURN
 
-  while :; do
+  while ((1)); do
     # Display menu
     local -i i
     for ((i=0; i<${#options[@]}; i+=1)); do
@@ -15378,7 +15378,7 @@ select_option() {
 
     # Read keypress
     IFS= read -rsn1 key
-    case "$key" in
+    case $key in
       $'\x1b')  # Escape sequence
         read -rsn2 key
         case "$key" in
@@ -15398,7 +15398,7 @@ select_option() {
 }
 
 # Usage
-select_option "Option 1" "Option 2" "Option 3"
+select_option 'Option 1' 'Option 2' 'Option 3'
 selected=$?
 ```
 
@@ -15414,7 +15414,7 @@ progress_bar 50 100  # Garbage if not a terminal
 if [[ -t 1 ]]; then
   progress_bar 50 100
 else
-  echo "50% complete"
+  echo '50% complete'
 fi
 ```
 
@@ -15432,7 +15432,7 @@ fi
 
 ## Terminal Capabilities
 
-**Rule: BCS0908** (New)
+**Rule: BCS0908**
 
 Detecting and utilizing terminal features safely.
 
@@ -15462,9 +15462,9 @@ fi
 
 # Check both stdout and stderr
 if [[ -t 1 && -t 2 ]]; then
-  declare -- RED=$'\033[0;31m' NC=$'\033[0m'
+  declare -r RED=$'\033[0;31m' NC=$'\033[0m'
 else
-  declare -- RED='' NC=''
+  declare -r RED='' NC=''
 fi
 ```
 
@@ -15593,8 +15593,6 @@ printf '%-*s\n' "${TERM_COLS:-80}" "$text"
 ---
 
 **See Also:** BCS0907 (TUI Basics), BCS0906 (Color Management)
-
-#fin
 
 
 ---
