@@ -31,11 +31,11 @@ Instead of passing a parameter (`_msg "INFO" "$message"`), we inspect `FUNCNAME[
 **Call stack example:**
 ```bash
 main() {
-  process_file "test.txt"
+  process_file test.txt
 }
 
 process_file() {
-  info "Processing $1"
+  info "Processing ${1@Q}"
   # When info() calls _msg():
   #   FUNCNAME[0] = "_msg"     (current function)
   #   FUNCNAME[1] = "info"     (caller - this determines formatting!)
@@ -46,14 +46,14 @@ process_file() {
 
 **Implementation:**
 
-\`\`\`bash
+```bash
 # Private core messaging function
 _msg() {
   local -- prefix="$SCRIPT_NAME:" msg
 
   # Inspect FUNCNAME[1] to detect calling function
   # This determines which color/symbol to use
-  case "${FUNCNAME[1]}" in
+  case ${FUNCNAME[1]} in
     vecho)   ;;  # No special prefix
     success) prefix+=" ${GREEN}✓${NC}" ;;
     warn)    prefix+=" ${YELLOW}▲${NC}" ;;
@@ -68,7 +68,7 @@ _msg() {
     printf '%s %s\n' "$prefix" "$msg"
   done
 }
-\`\`\`
+```
 
 **Benefits of FUNCNAME inspection:**
 1. **DRY**: Single `_msg()` function, no duplication
@@ -79,7 +79,7 @@ _msg() {
 
 **Public wrapper functions:**
 
-\`\`\`bash
+```bash
 # Conditional output functions (respect VERBOSE flag)
 vecho()   { ((VERBOSE)) || return 0; _msg "$@"; }
 success() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
@@ -93,17 +93,12 @@ debug()   { ((DEBUG)) || return 0; >&2 _msg "$@"; }
 error()   { >&2 _msg "$@"; }
 
 # Error and exit
-die() {
-  local -i exit_code=${1:-1}
-  shift
-  (($#)) && error "$@"
-  exit "$exit_code"
-}
-\`\`\`
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+```
 
 **Usage examples:**
 
-\`\`\`bash
+```bash
 # Information (only shown if VERBOSE=1)
 info 'Starting processing...'
 info "Processing $count files"
@@ -126,16 +121,16 @@ debug 'Entering cleanup phase'
 
 # Exit with error message
 die 1 'Critical error occurred'
-die 2 "Invalid argument: $arg"
-die 22 "File not found: $file"
+die 2 "Invalid argument ${arg@Q}"
+die 22 "File not found ${file@Q}"
 
 # Exit without message (just return code)
 die 1
-\`\`\`
+```
 
 **Why stdout vs stderr matters:**
 
-\`\`\`bash
+```bash
 # info/warn/error go to stderr (>&2)
 # This allows:
 
@@ -147,46 +142,37 @@ data=$(./script.sh)  # Gets only data, not info messages
 
 # 3. Piping data while seeing messages
 ./script.sh | process_data  # Messages visible, data piped
-\`\`\`
+```
 
 **Color definitions:**
 
-\`\`\`bash
+```bash
 # Standard colors (conditional on terminal output)
 if [[ -t 1 && -t 2 ]]; then
-  RED=$'\033[0;31m'
-  GREEN=$'\033[0;32m'
-  YELLOW=$'\033[0;33m'
-  CYAN=$'\033[0;36m'
-  NC=$'\033[0m'  # No Color (reset)
+  declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' NC=$'\033[0m'  # No Color (reset)
 else
   # Not a terminal - disable colors
-  RED=''
-  GREEN=''
-  YELLOW=''
-  CYAN=''
-  NC=''
+  declare -r RED='' GREEN='' YELLOW='' CYAN='' NC=''
 fi
-readonly -- RED GREEN YELLOW CYAN NC
-\`\`\`
+```
 
 **Flag variables:**
 
-\`\`\`bash
+```bash
 # Global flags controlling output
 declare -i VERBOSE=0  # Set to 1 for info/warn/success messages
 declare -i DEBUG=0    # Set to 1 for debug messages
 declare -i PROMPT=1   # Set to 0 to disable prompts (for automation)
-\`\`\`
+```
 
 **Complete messaging function set:**
 
-\`\`\`bash
+```bash
 #!/bin/bash
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -198,19 +184,11 @@ declare -i PROMPT=1
 
 # Colors (conditional on terminal)
 if [[ -t 1 && -t 2 ]]; then
-  RED=$'\033[0;31m'
-  GREEN=$'\033[0;32m'
-  YELLOW=$'\033[0;33m'
-  CYAN=$'\033[0;36m'
-  NC=$'\033[0m'
+  declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' NC=$'\033[0m'  # No Color (reset)
 else
-  RED=''
-  GREEN=''
-  YELLOW=''
-  CYAN=''
-  NC=''
+  # Not a terminal - disable colors
+  declare -r RED='' GREEN='' YELLOW='' CYAN='' NC=''
 fi
-readonly -- RED GREEN YELLOW CYAN NC
 
 # ============================================================================
 # Messaging Functions
@@ -247,16 +225,11 @@ debug()   { ((DEBUG)) || return 0; >&2 _msg "$@"; }
 error()   { >&2 _msg "$@"; }
 
 # Error and exit
-die() {
-  local -i exit_code=${1:-1}
-  shift
-  (($#)) && error "$@"
-  exit "$exit_code"
-}
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 # Yes/no prompt
 yn() {
-  #((PROMPT)) || return 0
+  ((PROMPT)) || return 0
   local -- REPLY
   >&2 read -r -n 1 -p "$(2>&1 warn "${1:-'Continue?'}") y/n "
   >&2 echo
@@ -270,16 +243,16 @@ yn() {
 main() {
   # Parse arguments
   while (($#)); do case $1 in
-    -v|--verbose) VERBOSE=1 ;;
+    -v|--verbose) VERBOSE+=1 ;;
     -d|--debug)   DEBUG=1 ;;
     -y|--yes)     PROMPT=0 ;;
-    *) die 22 "Invalid option: $1" ;;
+    *)            die 22 "Invalid option ${1@Q}" ;;
   esac; shift; done
 
   readonly -- VERBOSE DEBUG PROMPT
 
   info "Starting $SCRIPT_NAME $VERSION"
-  debug "Debug mode enabled"
+  debug 'Debug mode enabled'
 
   # Example operations
   info 'Processing files...'
@@ -294,15 +267,14 @@ main() {
 }
 
 main "$@"
-
 #fin
-\`\`\`
+```
 
 **Alternative: Simplified _msg without colors:**
 
 For scripts that don't need colors:
 
-\`\`\`bash
+```bash
 _msg() {
   local -- level="${FUNCNAME[1]}"
   printf '[%s] %s: %s\n' "$SCRIPT_NAME" "${level^^}" "$*"
@@ -310,13 +282,13 @@ _msg() {
 
 info()    { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 error()   { >&2 _msg "$@"; }
-die()     { local -i code=$1; shift; (($#)) && error "$@"; exit "$code"; }
-\`\`\`
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+```
 
 **Variation: Log to file:**
 
-\`\`\`bash
-LOG_FILE="/var/log/$SCRIPT_NAME.log"
+```bash
+LOG_FILE=/var/log/"$SCRIPT_NAME".log
 
 _msg() {
   local -- prefix="$SCRIPT_NAME:" msg timestamp
@@ -339,11 +311,11 @@ _msg() {
     printf '[%s] %s: %s\n' "$timestamp" "${FUNCNAME[1]^^}" "$msg" >> "$LOG_FILE"
   done
 }
-\`\`\`
+```
 
 **Anti-patterns to avoid:**
 
-\`\`\`bash
+```bash
 # ✗ Wrong - using echo directly
 echo "Error: file not found"
 # Problems:
@@ -409,7 +381,7 @@ die() {
   exit 1  # Always exit 1, can't customize
 }
 
-# ✓ Correct - die with exit code parameter
+# ✗ Wrong - inefficient
 die() {
   local -i exit_code=${1:-1}
   shift
@@ -417,7 +389,10 @@ die() {
   exit "$exit_code"
 }
 
-# ✗ Wrong - checking PROMPT inside yn()
+# ✓ Correct - die with exit code parameter
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+
+# ✗ Acceptable only if prompting is unconditional
 yn() {
   local reply
   read -r -n 1 -p "$1 y/n " reply
@@ -433,27 +408,36 @@ yn() {
   >&2 echo
   [[ ${reply,,} == y ]]
 }
-\`\`\`
+
+# ✓ Correct - if warn() defined in script
+yn() {
+  ((PROMPT)) || return 0
+  local -- REPLY
+  >&2 read -r -n 1 -p "$(2>&1 warn "${1:-'Continue?'}") y/n "
+  >&2 echo
+  [[ ${REPLY,,} == y ]]
+}
+```
 
 **Function variants for different needs:**
 
 **Minimal set (no colors, no flags):**
 
-\`\`\`bash
-info()  { >&2 echo "[$SCRIPT_NAME] $*"; }
-error() { >&2 echo "[$SCRIPT_NAME] ERROR: $*"; }
-die()   { error "$*"; exit "${1:-1}"; }
-\`\`\`
+```bash
+info()  { >&2 echo "$SCRIPT_NAME: $*"; }
+error() { >&2 echo "$SCRIPT_NAME: error: $*"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+```
 
 **Medium set (with VERBOSE, no colors):**
 
-\`\`\`bash
+```bash
 declare -i VERBOSE=0
 
-info()  { ((VERBOSE)) && >&2 echo "[$SCRIPT_NAME] $*"; return 0; }
-error() { >&2 echo "[$SCRIPT_NAME] ERROR: $*"; }
-die()   { local -i code=$1; shift; (($#)) && error "$@"; exit "$code"; }
-\`\`\`
+info()  { ((VERBOSE)) && >&2 echo "$SCRIPT_NAME: $*"; return 0; }
+error() { >&2 echo "$SCRIPT_NAME: error: $*"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+```
 
 **Full set (with colors, flags, _msg core):**
 

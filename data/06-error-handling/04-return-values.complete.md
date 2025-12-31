@@ -13,7 +13,7 @@
 
 **When `set -e` is not enough:**
 
-\`\`\`bash
+```bash
 # set -e doesn't catch these failures:
 
 # 1. Commands in pipelines (except last)
@@ -21,11 +21,11 @@ cat missing_file.txt | grep pattern  # Doesn't exit if cat fails!
 
 # 2. Commands in conditionals
 if command_that_fails; then
-  echo "This runs even though command failed"
+  echo 'This runs even though command failed'
 fi
 
 # 3. Commands with || (already handled)
-failing_command || echo "Failed but continuing"
+failing_command || echo 'Failed but continuing'
 
 # 4. Command substitution in assignments
 output=$(failing_command)  # Doesn't exit!
@@ -38,39 +38,39 @@ my_function() {
 my_function  # Exits with set -e
 # But if used in conditional, doesn't exit:
 if my_function; then
-  echo "Never reached"
+  echo 'Never reached'
 fi
-\`\`\`
+```
 
 **Basic return value checking patterns:**
 
 **Pattern 1: Explicit if check (most informative)**
 
-\`\`\`bash
+```bash
 # ✓ Best for critical operations needing context
 if ! mv "$source_file" "$dest_dir/"; then
-  error "Failed to move $source_file to $dest_dir"
-  error "Check permissions and disk space"
+  error "Failed to move ${source_file@Q} to ${dest_dir@Q}"
+  error 'Check permissions and disk space'
   exit 1
 fi
-\`\`\`
+```
 
 **Pattern 2: || with die (concise)**
 
-\`\`\`bash
+```bash
 # ✓ Good for simple cases with one-line error
-mv "$source_file" "$dest_dir/" || die 1 "Failed to move $source_file"
+mv "$source_file" "$dest_dir/" || die 1 "Failed to move ${source_file@Q}"
 
 # ✓ Can include variable context
-cp "$config" "$backup" || die 1 "Failed to backup $config to $backup"
-\`\`\`
+cp "$config" "$backup" || die 1 "Failed to backup ${config@Q} to ${backup@Q}"
+```
 
 **Pattern 3: || with command group (for cleanup)**
 
-\`\`\`bash
+```bash
 # ✓ Good when failure requires cleanup
 mv "$temp_file" "$final_location" || {
-  error "Failed to move $temp_file to $final_location"
+  error "Failed to move ${temp_file@Q} to ${final_location@Q}"
   rm -f "$temp_file"
   exit 1
 }
@@ -82,11 +82,11 @@ process_file "$input" || {
   cleanup_temp_files
   return 1
 }
-\`\`\`
+```
 
 **Pattern 4: Capture and check return code**
 
-\`\`\`bash
+```bash
 # ✓ When you need the return code value
 local -i exit_code
 command_that_might_fail
@@ -107,14 +107,14 @@ case $? in
   4) die 4 "Network failure" ;;
   *) die 1 "Unknown error code: $?" ;;
 esac
-\`\`\`
+```
 
 **Pattern 5: Function return value checking**
 
-\`\`\`bash
+```bash
 # Define function with meaningful return codes
 validate_file() {
-  local -- file="$1"
+  local -- file=$1
 
   [[ -f "$file" ]] || return 2  # Not found
   [[ -r "$file" ]] || return 5  # Permission denied
@@ -128,17 +128,17 @@ if validate_file "$config_file"; then
   source "$config_file"
 else
   case $? in
-    2)  die 2 "Config file not found: $config_file" ;;
-    5)  die 5 "Cannot read config file: $config_file" ;;
-    22) die 22 "Config file is empty: $config_file" ;;
-    *)  die 1 "Config validation failed: $config_file" ;;
+    2)  die 2 "Config file not found ${config_file@Q}" ;;
+    5)  die 5 "Cannot read config file ${config_file@Q}" ;;
+    22) die 22 "Config file is empty ${config_file@Q}" ;;
+    *)  die 1 "Config validation failed ${config_file@Q}" ;;
   esac
 fi
-\`\`\`
+```
 
 **Edge case: Pipelines**
 
-\`\`\`bash
+```bash
 # Problem: set -e only checks last command in pipeline
 cat missing_file | grep pattern  # Continues even if cat fails!
 
@@ -149,97 +149,95 @@ cat missing_file | grep pattern  # Exits if cat fails
 # ✓ Solution 2: Check PIPESTATUS array
 cat file1 | grep pattern | sort
 if ((PIPESTATUS[0] != 0)); then
-  die 1 "cat failed"
+  die 1 'cat failed'
 elif ((PIPESTATUS[1] != 0)); then
-  info "No matches found (grep returned non-zero)"
+  info 'No matches found (grep returned non-zero)'
 elif ((PIPESTATUS[2] != 0)); then
-  die 1 "sort failed"
+  die 1 'sort failed'
 fi
 
 # ✓ Solution 3: Avoid pipeline, use process substitution
 grep pattern < <(cat file1)
-\`\`\`
+```
 
 **Edge case: Command substitution**
 
-\`\`\`bash
+```bash
 # Problem: Command substitution failure not caught
 declare -- output
 output=$(failing_command)  # Doesn't exit even with set -e!
 echo "Output: $output"  # Empty
 
 # ✓ Solution 1: Check after assignment
-output=$(command_that_might_fail) || die 1 "Command failed"
+output=$(command_that_might_fail) || die 1 'Command failed'
 
 # ✓ Solution 2: Explicit check in separate step
 declare -- result
 if ! result=$(complex_command arg1 arg2); then
-  die 1 "complex_command failed"
+  die 1 'complex_command failed'
 fi
 
 # ✓ Solution 3: Use set -e with inherit_errexit (Bash 4.4+)
 shopt -s inherit_errexit  # Command substitution inherits set -e
 output=$(failing_command)  # NOW exits with set -e
-\`\`\`
+```
 
 **Edge case: Conditional contexts**
 
-\`\`\`bash
+```bash
 # Commands in if/while/until don't trigger set -e
 
 # Problem: This doesn't exit even with set -e
 if some_command; then
-  echo "Command succeeded"
+  echo 'Command succeeded'
 else
-  echo "Command failed but script continues"
+  echo 'Command failed but script continues'
 fi
 
 # ✓ Solution: Explicit check after conditional
 if some_command; then
   process_result
 else
-  die 1 "some_command failed"
+  die 1 'some_command failed'
 fi
 
 # Or check return code
 some_command
-if (($? != 0)); then
-  die 1 "some_command failed"
+if (($?)); then
+  die 1 'some_command failed'
 fi
-\`\`\`
+```
 
 **Complete example with comprehensive error checking:**
 
-\`\`\`bash
+```bash
 #!/bin/bash
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Messaging functions
 error() {
-  >&2 echo "[$SCRIPT_NAME] ERROR: $*"
+  >&2 echo "$SCRIPT_NAME: error: $*"
 }
 
 die() {
-  local -i exit_code=$1
-  shift
-  (($#)) && error "$@"
-  exit "$exit_code"
+  (($# > 1)) && error "${@:2}" ||:
+  exit "${1:-0}"
 }
 
 info() {
-  echo "[$SCRIPT_NAME] $*"
+  echo "$SCRIPT_NAME: $*"
 }
 
 # Validate prerequisites
 check_prerequisites() {
   local -- cmd
-  local -a required_commands=('tar' 'gzip' 'sha256sum')
+  local -a required_commands=(tar gzip sha256sum)
 
   info 'Checking prerequisites...'
 
@@ -254,8 +252,8 @@ check_prerequisites() {
 
 # Create backup with error checking
 create_backup() {
-  local -- source_dir="$1"
-  local -- backup_file="$2"
+  local -- source_dir=$1
+  local -- backup_file=$2
   local -- temp_file
   local -i exit_code
 
@@ -263,7 +261,7 @@ create_backup() {
 
   # Check source exists
   if [[ ! -d "$source_dir" ]]; then
-    error "Source directory not found: $source_dir"
+    error "Source directory not found ${source_dir@Q}"
     return 2
   fi
 
@@ -278,28 +276,28 @@ create_backup() {
 
   # Create tar archive
   if ! tar -czf "$temp_file" -C "${source_dir%/*}" "${source_dir##*/}"; then
-    error "Failed to create tar archive"
+    error 'Failed to create tar archive'
     rm -f "$temp_file"
     return 1
   fi
 
   # Verify archive
   if ! tar -tzf "$temp_file" >/dev/null; then
-    error "Backup verification failed"
+    error 'Backup verification failed'
     rm -f "$temp_file"
     return 1
   fi
 
   # Move to final location
   if ! mv "$temp_file" "$backup_file"; then
-    error "Failed to move backup to final location"
+    error 'Failed to move backup to final location'
     rm -f "$temp_file"
     return 1
   fi
 
   # Create checksum
-  if ! sha256sum "$backup_file" > "${backup_file}.sha256"; then
-    error "Failed to create checksum"
+  if ! sha256sum "$backup_file" > "$backup_file".sha256; then
+    error 'Failed to create checksum'
     # Non-fatal - backup is still valid
     return 0
   fi
@@ -316,11 +314,11 @@ process_files() {
   local -i fail_count=0
 
   for file in "${files[@]}"; do
-    if create_backup "$file" "/backup/${file##*/}.tar.gz"; then
-      ((success_count+=1))
+    if create_backup "$file" /backup/"${file##*/}".tar.gz; then
+      success_count+=1
       info "Success: $file"
     else
-      ((fail_count+=1))
+      fail_count+=1
       error "Failed: $file (return code: $?)"
     fi
   done
@@ -334,55 +332,54 @@ process_files() {
 main() {
   check_prerequisites
 
-  local -a source_dirs=('/etc' '/var/log')
+  local -a source_dirs=(/etc /var/log)
 
   if ! process_files "${source_dirs[@]}"; then
-    die 1 "Some backups failed"
+    die 1 'Some backups failed'
   fi
 
-  info "All backups completed successfully"
+  info 'All backups completed successfully'
 }
 
 main "$@"
-
 #fin
-\`\`\`
+```
 
 **Anti-patterns to avoid:**
 
-\`\`\`bash
+```bash
 # ✗ Wrong - ignoring return values
 mv "$file" "$dest"
 # No check! If mv fails, script continues
 
 # ✓ Correct - check return value
-mv "$file" "$dest" || die 1 "Failed to move $file to $dest"
+mv "$file" "$dest" || die 1 "Failed to move ${file@Q} to ${dest@Q}"
 
 # ✗ Wrong - checking $? too late
 command1
 command2
-if (($? != 0)); then  # Checks command2, not command1!
+if (($?)); then  # Checks command2, not command1!
 
 # ✓ Correct - check immediately
 command1
-if (($? != 0)); then
-  die 1 "command1 failed"
+if (($?)); then
+  die 1 'command1 failed'
 fi
 command2
 
 # ✗ Wrong - generic error message
-mv "$file" "$dest" || die 1 "Move failed"
+mv "$file" "$dest" || die 1 'Move failed'
 # User has no idea what file or where!
 
 # ✓ Correct - specific error message
-mv "$file" "$dest" || die 1 "Failed to move $file to $dest"
+mv "$file" "$dest" || die 1 "Failed to move ${file@Q} to ${dest@Q}"
 
 # ✗ Wrong - not checking command substitution
 checksum=$(sha256sum "$file")
 # If sha256sum fails, checksum is empty but script continues!
 
 # ✓ Correct - check command substitution
-checksum=$(sha256sum "$file") || die 1 "Failed to compute checksum for $file"
+checksum=$(sha256sum "$file") || die 1 "Failed to compute checksum for ${file@Q}"
 
 # ✗ Wrong - not cleaning up after failure
 cp "$source" "$dest" || exit 1
@@ -391,7 +388,7 @@ cp "$source" "$dest" || exit 1
 # ✓ Correct - cleanup on failure
 cp "$source" "$dest" || {
   rm -f "$dest"
-  die 1 "Failed to copy $source to $dest"
+  die 1 "Failed to copy ${source@Q} to ${dest@Q}"
 }
 
 # ✗ Wrong - assuming set -e catches everything
@@ -402,13 +399,13 @@ cat missing_file | grep pattern  # Doesn't exit if cat fails!
 # ✓ Correct - explicit checks even with set -e
 set -euo pipefail
 shopt -s inherit_errexit
-output=$(failing_command) || die 1 "Command failed"
+output=$(failing_command) || die 1 'Command failed'
 cat file | grep pattern  # Now exits if cat fails (pipefail)
-\`\`\`
+```
 
 **Testing return value handling:**
 
-\`\`\`bash
+```bash
 # Test function return values
 test_function_returns() {
   # Should return 0 for valid input
@@ -417,7 +414,7 @@ test_function_returns() {
   ((result == 0)) || die 1 "Expected return 0, got $result"
 
   # Should return 2 for missing file
-  validate_file "missing_file.txt"
+  validate_file missing_file.txt
   result=$?
   ((result == 2)) || die 1 "Expected return 2, got $result"
 
@@ -428,12 +425,12 @@ test_function_returns() {
 test_error_handling() {
   # Should exit with error on failure
   if failing_operation; then
-    die 1 "Expected failure but succeeded"
+    die 1 'Expected failure but succeeded'
   fi
 
-  info "Error handling tests passed"
+  info 'Error handling tests passed'
 }
-\`\`\`
+```
 
 **Summary:**
 

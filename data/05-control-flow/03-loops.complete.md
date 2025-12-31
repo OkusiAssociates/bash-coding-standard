@@ -21,7 +21,7 @@ The most common and safest loop pattern in Bash.
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -29,7 +29,7 @@ declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 # ✓ CORRECT - Iterate over array elements
 process_files() {
   local -a files=(
-    'document.txt'
+    document.txt
     'file with spaces.pdf'
     'report (final).doc'
   )
@@ -37,10 +37,10 @@ process_files() {
   local -- file
   for file in "${files[@]}"; do
     if [[ -f "$file" ]]; then
-      info "Processing: $file"
+      info "Processing ${file@Q}"
       # Process file
     else
-      warn "File not found: $file"
+      warn "File not found ${file@Q}"
     fi
   done
 }
@@ -84,7 +84,7 @@ main "$@"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -95,7 +95,7 @@ process_text_files() {
 
   # nullglob ensures empty loop if no matches
   for file in "$SCRIPT_DIR"/*.txt; do
-    info "Processing text file: $file"
+    info "Processing text file ${file@Q}"
     # Process file
   done
 }
@@ -106,7 +106,7 @@ process_documents() {
 
   for file in "$SCRIPT_DIR"/*.{txt,md,rst}; do
     if [[ -f "$file" ]]; then
-      info "Processing document: $file"
+      info "Processing document ${file@Q}"
       # Process file
     fi
   done
@@ -120,7 +120,7 @@ process_all_scripts() {
 
   for script in "$SCRIPT_DIR"/**/*.sh; do
     if [[ -f "$script" ]]; then
-      info "Found script: $script"
+      info "Found script ${script@Q}"
       shellcheck "$script"
     fi
   done
@@ -137,7 +137,7 @@ process_with_check() {
 
   local -- file
   for file in "${matches[@]}"; do
-    info "Processing log: $file"
+    info "Processing log ${file@Q}"
   done
 }
 
@@ -149,7 +149,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -162,7 +161,7 @@ Use for numeric iteration with known range.
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -216,7 +215,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -256,19 +254,19 @@ done
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # ✓ CORRECT - Read file line by line
 read_file() {
-  local -- file="$1"
+  local -- file=$1
   local -- line
   local -i line_count=0
 
   while IFS= read -r line; do
-    ((line_count+=1))
+    line_count+=1
     echo "Line $line_count: $line"
   done < "$file"
 
@@ -281,7 +279,7 @@ process_command_output() {
   local -i count=0
 
   while IFS= read -r line; do
-    ((count+=1))
+    count+=1
     info "Processing: $line"
   done < <(find "$SCRIPT_DIR" -name '*.txt' -type f)
 
@@ -333,7 +331,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -344,7 +341,7 @@ main "$@"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -356,7 +353,7 @@ declare -a INPUT_FILES=()
 
 noarg() {
   if (($# < 2)) || [[ "$2" =~ ^- ]]; then
-    die 22 "Option $1 requires an argument"
+    die 22 "Option ${1@Q} requires an argument"
   fi
 }
 
@@ -365,7 +362,7 @@ main() {
   while (($#)); do
     case $1 in
       -v|--verbose)
-        VERBOSE=1
+        VERBOSE+=1
         ;;
 
       -n|--dry-run)
@@ -375,7 +372,7 @@ main() {
       -o|--output)
         noarg "$@"
         shift
-        OUTPUT_DIR="$1"
+        OUTPUT_DIR=$1
         ;;
 
       -h|--help)
@@ -389,7 +386,7 @@ main() {
         ;;
 
       -*)
-        die 22 "Invalid option: $1"
+        die 22 "Invalid option ${1@Q}"
         ;;
 
       *)
@@ -406,15 +403,13 @@ main() {
   readonly -a INPUT_FILES
 
   # Validate
-  if [[ ${#INPUT_FILES[@]} -eq 0 ]]; then
-    die 22 'No input files specified'
-  fi
+  ((${#INPUT_FILES[@]})) || die 22 'No input files specified'
 
   # Process files
   local -- file
   for file in "${INPUT_FILES[@]}"; do
-    ((DRY_RUN)) && info "[DRY-RUN] Would process: $file"
-    ((DRY_RUN)) || info "Processing: $file"
+    ((DRY_RUN)) && info "[DRY-RUN] Would process ${file@Q}" ||:
+    ((DRY_RUN)) || info "Processing ${file@Q}"
   done
 }
 
@@ -430,27 +425,27 @@ main "$@"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # ✓ CORRECT - Wait for condition
 wait_for_file() {
-  local -- file="$1"
-  local -i timeout="${2:-30}"
+  local -- file=$1
+  local -i timeout=${2:-30}
   local -i elapsed=0
 
-  info "Waiting for file: $file"
+  info "Waiting for file ${file@Q}"
 
   while [[ ! -f "$file" ]]; do
     if ((elapsed >= timeout)); then
-      error "Timeout waiting for file: $file"
+      error "Timeout waiting for file ${file@Q}"
       return 1
     fi
 
     sleep 1
-    ((elapsed+=1))
+    elapsed+=1
   done
 
   success "File appeared after $elapsed seconds"
@@ -476,7 +471,7 @@ retry_command() {
       wait_time=$((wait_time * 2))  # Exponential backoff
     fi
 
-    ((attempt+=1))
+    attempt+=1
   done
 
   error 'All retry attempts failed'
@@ -495,7 +490,7 @@ process_queue() {
     fi
 
     process_item
-    ((processed+=1))
+    processed+=1
   done
 
   info "Processed $processed items"
@@ -508,7 +503,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -521,15 +515,15 @@ Until loops are less common but useful when the logic reads better as "until con
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # ✓ CORRECT - Until loop (opposite of while)
 wait_for_service() {
-  local -- service="$1"
-  local -i timeout="${2:-60}"
+  local -- service=$1
+  local -i timeout=${2:-60}
   local -i elapsed=0
 
   info "Waiting for service: $service"
@@ -542,7 +536,7 @@ wait_for_service() {
     fi
 
     sleep 1
-    ((elapsed+=1))
+    elapsed+=1
   done
 
   success "Service started after $elapsed seconds"
@@ -550,7 +544,7 @@ wait_for_service() {
 
 # ✓ CORRECT - Until condition met
 wait_until_ready() {
-  local -- status_file="$1"
+  local -- status_file=$1
   local -i max_wait=30
   local -i waited=0
 
@@ -561,7 +555,7 @@ wait_until_ready() {
     fi
 
     sleep 1
-    ((waited+=1))
+    waited+=1
   done
 
   info 'System ready'
@@ -584,7 +578,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -595,14 +588,14 @@ main "$@"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # ✓ CORRECT - Early exit with break
 find_first_match() {
-  local -- pattern="$1"
+  local -- pattern=$1
   local -a files=("$SCRIPT_DIR"/*)
   local -- file
   local -- found=''
@@ -615,12 +608,10 @@ find_first_match() {
     fi
   done
 
-  if [[ -n "$found" ]]; then
-    echo "$found"
-    return 0
-  else
-    return 1
-  fi
+  [[ -n "$found" ]] || return 1
+
+  echo "$found"
+  return 0
 }
 
 # ✓ CORRECT - Skip items with continue
@@ -633,29 +624,29 @@ process_valid_files() {
   for file in "${files[@]}"; do
     # Skip non-existent files
     if [[ ! -f "$file" ]]; then
-      warn "File not found: $file"
-      ((skipped+=1))
+      warn "File not found ${file@Q}"
+      skipped+=1
       continue
     fi
 
     # Skip files we can't read
     if [[ ! -r "$file" ]]; then
-      warn "File not readable: $file"
-      ((skipped+=1))
+      warn "File not readable ${file@Q}"
+      skipped+=1
       continue
     fi
 
     # Skip empty files
     if [[ ! -s "$file" ]]; then
-      warn "File is empty: $file"
-      ((skipped+=1))
+      warn "File is empty ${file@Q}"
+      skipped+=1
       continue
     fi
 
     # Process file
-    info "Processing: $file"
+    info "Processing ${file@Q}"
     # ... processing logic ...
-    ((processed+=1))
+    processed+=1
   done
 
   info "Processed: $processed, Skipped: $skipped"
@@ -687,21 +678,21 @@ find_in_matrix() {
 
 # ✓ CORRECT - Continue in while loop
 process_log_file() {
-  local -- log_file="$1"
+  local -- log_file=$1
   local -- line
   local -i errors=0
 
   while IFS= read -r line; do
     # Skip empty lines
-    [[ -z "$line" ]] && continue
+    [[ -n "$line" ]] || continue
 
     # Skip comments
-    [[ "$line" =~ ^# ]] && continue
+    [[ "$line" =~ ^# ]] && continue ||:
 
     # Process error lines
     if [[ "$line" =~ ERROR ]]; then
-      error "Error found: $line"
-      ((errors+=1))
+      error "Error found ${line@Q}"
+      errors+=1
     fi
   done < "$log_file"
 
@@ -717,7 +708,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -740,15 +730,15 @@ main "$@"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # ✓ RECOMMENDED - Infinite loop with break condition (fastest option)
 monitor_service() {
-  local -- service="$1"
-  local -i interval="${2:-5}"
+  local -- service=$1
+  local -i interval=${2:-5}
 
   info "Monitoring service: $service (interval: ${interval}s)"
 
@@ -766,7 +756,7 @@ monitor_service() {
 
 # ✓ RECOMMENDED - Infinite loop with exit condition
 daemon_loop() {
-  local -- pid_file='/var/run/daemon.pid'
+  local -- pid_file=/var/run/daemon.pid
 
   # Create PID file
   echo "$$" > "$pid_file"
@@ -808,11 +798,11 @@ interactive_menu() {
     read -r -p 'Choice: ' choice
 
     case "$choice" in
-      1) start_service ;;
-      2) stop_service ;;
-      3) check_status ;;
-      q|Q) info 'Goodbye!'; break ;;
-      *) warn 'Invalid choice' ;;
+      1)    start_service ;;
+      2)    stop_service ;;
+      3)    check_status ;;
+      q|Q)  info 'Goodbye!'; break ;;
+      *)    warn "Invalid choice ${choice@Q}" ;;
     esac
   done
 }
@@ -841,7 +831,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -852,7 +841,7 @@ main "$@"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -886,18 +875,18 @@ test_combinations() {
 
 # ✓ CORRECT - Process directory tree
 process_tree() {
-  local -- base_dir="$1"
+  local -- base_dir=$1
   local -a dirs=("$base_dir"/*)
   local -- dir file
 
   for dir in "${dirs[@]}"; do
     [[ -d "$dir" ]] || continue
 
-    info "Processing directory: $dir"
+    info "Processing directory ${dir@Q}"
 
     for file in "$dir"/*; do
       if [[ -f "$file" ]]; then
-        info "  Processing file: $file"
+        info "  Processing file ${file@Q}"
       fi
     done
   done
@@ -910,7 +899,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -921,7 +909,7 @@ main "$@"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -960,7 +948,7 @@ error() { >&2 _msg "$@"; }
 success() { >&2 _msg "$@"; }
 
 die() {
-  (($# > 2)) && error "${@:2}"
+  (($# > 2)) && error "${@:2}" ||:
   exit "${1:-1}"
 }
 
@@ -978,7 +966,7 @@ retry_with_backoff() {
   local -i wait_time=1
 
   while ((attempt <= MAX_RETRIES)); do
-    ((VERBOSE)) && info "Attempt $attempt of $MAX_RETRIES"
+    ((VERBOSE)) && info "Attempt $attempt of $MAX_RETRIES" ||:
 
     if "$@"; then
       return 0
@@ -990,7 +978,7 @@ retry_with_backoff() {
       wait_time=$((wait_time * 2))
     fi
 
-    ((attempt+=1))
+    attempt+=1
   done
 
   error "All $MAX_RETRIES attempts failed"
@@ -1003,7 +991,7 @@ retry_with_backoff() {
 
 # Process single file with retry logic
 process_file() {
-  local -- file="$1"
+  local -- file=$1
 
   # Validate file
   if [[ ! -f "$file" ]]; then
@@ -1039,7 +1027,7 @@ process_file() {
     # Skip comments
     [[ ! "$line" =~ ^# ]] || continue
 
-    ((line_count+=1))
+    line_count+=1
     ((VERBOSE)) && info "  Line $line_count: $line" || :
 
     # Process line (with retry)
@@ -1049,12 +1037,12 @@ process_file() {
     }
   done < "$file"
 
-  success "Processed $line_count lines from: $file"
+  success "Processed $line_count lines from ${file@Q}"
   return 0
 }
 
 process_line() {
-  local -- line="$1"
+  local -- line=$1
   # Line processing logic here
   sleep 0.1  # Simulate work
 }
@@ -1072,7 +1060,7 @@ collect_files() {
     for file in $pattern; do
       # Check if glob matched anything
       if [[ ! -e "$file" ]]; then
-        ((VERBOSE)) && warn "No matches for pattern: $pattern"
+        ((VERBOSE)) && warn "No matches for pattern: $pattern" ||:
         continue
       fi
 
@@ -1083,7 +1071,7 @@ collect_files() {
   done
 
   # Check if we found any files
-  if [[ ${#files[@]} -eq 0 ]]; then
+  if ((${#files[@]} == 0)); then
     error 'No files found matching patterns'
     return 1
   fi
@@ -1101,7 +1089,7 @@ main() {
   while (($#)); do
     case $1 in
       -v|--verbose)
-        VERBOSE=1
+        VERBOSE+=1
         ;;
 
       -n|--dry-run)
@@ -1111,13 +1099,13 @@ main() {
       -r|--retries)
         noarg "$@"
         shift
-        MAX_RETRIES="$1"
+        MAX_RETRIES=$1
         ;;
 
       -o|--output)
         noarg "$@"
         shift
-        OUTPUT_DIR="$1"
+        OUTPUT_DIR=$1
         ;;
 
       -h|--help)
@@ -1137,7 +1125,7 @@ main() {
         ;;
 
       -*)
-        die 22 "Invalid option: $1"
+        die 22 "Invalid option ${1@Q}"
         ;;
 
       *)
@@ -1155,7 +1143,7 @@ main() {
   readonly -a INPUT_PATTERNS
 
   # Validate
-  if [[ ${#INPUT_PATTERNS[@]} -eq 0 ]]; then
+  if ((${#INPUT_PATTERNS[@]} == 0)); then
     die 22 'No file patterns specified'
   fi
 
@@ -1164,7 +1152,7 @@ main() {
     info "$SCRIPT_NAME $VERSION"
     info "Patterns: ${INPUT_PATTERNS[*]}"
     info "Max retries: $MAX_RETRIES"
-    ((DRY_RUN)) && info '[DRY-RUN] Mode enabled'
+    ((DRY_RUN)) && info '[DRY-RUN] Mode enabled' ||:
   fi
 
   # Collect matching files
@@ -1182,9 +1170,9 @@ main() {
 
   for file in "${files[@]}"; do
     if process_file "$file"; then
-      ((success_count+=1))
+      success_count+=1
     else
-      ((error_count+=1))
+      error_count+=1
     fi
   done
 
@@ -1200,7 +1188,6 @@ main() {
 # ============================================================================
 
 main "$@"
-
 #fin
 ```
 
@@ -1230,16 +1217,16 @@ for file in *.txt; do
 done
 
 # ✗ Wrong - pipe to while (subshell issue)
-count=0
+declare -i count=0
 cat file.txt | while read -r line; do
-  ((count+=1))
+  count+=1
 done
 echo "$count"  # Still 0!
 
 # ✓ Correct - process substitution
-count=0
+declare -i count=0
 while read -r line; do
-  ((count+=1))
+  count+=1
 done < <(cat file.txt)
 echo "$count"  # Correct value
 
@@ -1338,12 +1325,12 @@ while ((1)); do
 done
 
 # ✓ Correct - infinite loop with exit condition (using fastest construct)
-iteration=0
-max_iterations=1000
+declare -i iteration=0
+declare -i max_iterations=1000
 while ((1)); do
   process_item
 
-  ((iteration+=1))
+  iteration+=1
   if ((iteration >= max_iterations)); then
     warn 'Max iterations reached'
     break

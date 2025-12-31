@@ -45,7 +45,8 @@ Variable quoting in test expressions.
 [[ -n "$result" ]]
 
 # Numeric comparisons
-[[ "$count" -gt 10 ]]
+declare -i count=0
+((count > 10))
 
 # Pattern matching (pattern unquoted for globbing)
 [[ "$filename" == *.txt ]]        # Glob match

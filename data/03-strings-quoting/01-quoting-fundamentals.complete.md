@@ -18,7 +18,7 @@ error 'Failed to connect'
 
 # ✓ Correct - double quotes for variables
 info "Found $count files"
-die 1 "Unknown option '$1'"
+die 1 "File '$SCRIPT_DIR/testfile' not found"
 echo "$SCRIPT_NAME $VERSION"
 ```
 
@@ -113,7 +113,7 @@ cat "$dir"/"$file"
 [[ -f "$CONFIG_DIR"/hosts.conf ]]
 install -m 755 "$TEMP_DIR"/"$file" "$INSTALL_DIR"/"$file"
 
-# ✗ NOT RECOMMENDED - variable and literal combined
+# ACCEPTABLE, BUT NOT RECOMMENDED - variable and literal combined
 "$PREFIX/bin"
 "$SCRIPT_DIR/data/$filename"
 cat "$dir/$file"

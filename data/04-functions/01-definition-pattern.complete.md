@@ -1,5 +1,6 @@
 ## Function Definition Pattern
-\`\`\`bash
+
+```bash
 # Single-line functions for simple operations
 vecho() { ((VERBOSE)) || return 0; _msg "$@"; }
 
@@ -10,4 +11,4 @@ main() {
   # Function body
   return "$exitcode"
 }
-\`\`\`
+```

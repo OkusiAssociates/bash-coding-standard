@@ -1,5 +1,3 @@
-**Rule: BCS00**
-
 # Bash Coding Standard
 
 Comprehensive Bash coding standard for Bash 5.2+ (not a compatibility standard).
@@ -3184,7 +3182,7 @@ readonly -- SCRIPT_PATH="$(realpath -- "$0")"
 
 **Rule: BCS0207**
 
-### Arrays
+## Arrays
 
 **Rule: BCS0207** (Merged from BCS0501 + BCS0502)
 
@@ -3339,7 +3337,7 @@ for item in "${array[@]}"; do
 
 **Rule: BCS0208**
 
-### Reserved for Future Use
+## Reserved for Future Use
 
 **Rule: BCS0208**
 
@@ -3706,7 +3704,7 @@ update_all_derived() {
 
 **Rule: BCS0210**
 
-### Parameter Expansion & Braces Usage
+## Parameter Expansion & Braces Usage
 
 **Rule: BCS0210**
 
@@ -3869,7 +3867,7 @@ Quoting rules prevent word-splitting errors and clarify code intent. **Single qu
 
 **Rule: BCS0301**
 
-### Quoting Fundamentals
+## Quoting Fundamentals
 
 **Rule: BCS0301** (Merged from BCS0401 + BCS0402 + BCS0403 + BCS0404)
 
@@ -3999,7 +3997,7 @@ Quote variable portions separately from literals for clarity:
 
 **Rule: BCS0302**
 
-### Command Substitution
+## Command Substitution
 
 **Rule: BCS0302**
 
@@ -4027,7 +4025,7 @@ echo $result    # Word splitting occurs!
 
 **Rule: BCS0303**
 
-### Quoting in Conditionals
+## Quoting in Conditionals
 
 **Rule: BCS0303** (From BCS0406)
 
@@ -4115,7 +4113,7 @@ pattern='^[0-9]+$'
 
 **Rule: BCS0304**
 
-### Here Documents
+## Here Documents
 
 **Rule: BCS0304** (Merged from BCS0408 + BCS1104)
 
@@ -4184,7 +4182,7 @@ EOF
 
 **Rule: BCS0305**
 
-### printf Patterns
+## printf Patterns
 
 **Rule: BCS0305**
 
@@ -4238,7 +4236,7 @@ echo $'Line1\nLine2'
 
 **Rule: BCS0306**
 
-### Parameter Quoting with @Q
+## Parameter Quoting with @Q
 
 **Rule: BCS0306**
 
@@ -4319,7 +4317,7 @@ run_command() {
 
 **Rule: BCS0307**
 
-### Quoting Anti-Patterns
+## Quoting Anti-Patterns
 
 **Rule: BCS0307** (From BCS0411)
 
@@ -4836,7 +4834,7 @@ Example: Simple script may only need `error()` and `die()`, not full messaging s
 
 **Rule: BCS0406**
 
-### Dual-Purpose Scripts
+## Dual-Purpose Scripts
 
 **Rule: BCS0606** (Elevated from BCS010201)
 
@@ -4970,7 +4968,7 @@ declare -fx my_func
 
 **Rule: BCS0407**
 
-### Library Patterns
+## Library Patterns
 
 **Rule: BCS0607**
 
@@ -5112,7 +5110,7 @@ lib_init       # Explicit initialization call
 
 **Rule: BCS0408**
 
-### Dependency Management
+## Dependency Management
 
 **Rule: BCS0608**
 
@@ -6506,7 +6504,7 @@ echo "Progress: $percentage%"
 
 **Rule: BCS0506**
 
-### Floating-Point Operations
+## Floating-Point Operations
 
 **Rule: BCS0706**
 
@@ -8909,7 +8907,7 @@ L **Testing only stdout:**
 
 **Rule: BCS0707**
 
-### TUI Basics
+## TUI Basics
 
 **Rule: BCS0907**
 
@@ -9068,7 +9066,7 @@ fi
 
 **Rule: BCS0708**
 
-### Terminal Capabilities
+## Terminal Capabilities
 
 **Rule: BCS0908**
 
@@ -9779,7 +9777,7 @@ esac; shift; done
 
 **Rule: BCS0805**
 
-# Short-Option Disaggregation in Command-Line Processing Loops
+## Short-Option Disaggregation in Command-Line Processing Loops
 
 ## Overview
 
@@ -12692,7 +12690,7 @@ Parallel execution patterns, background job management, and robust waiting strat
 
 **Rule: BCS1101**
 
-### Background Job Management
+## Background Job Management
 
 **Rule: BCS1406**
 
@@ -12805,7 +12803,7 @@ echo "Started $!"
 
 **Rule: BCS1102**
 
-### Parallel Execution Patterns
+## Parallel Execution Patterns
 
 **Rule: BCS1407**
 
@@ -12919,7 +12917,7 @@ count=$(wc -l < "$temp_dir/count")
 
 **Rule: BCS1103**
 
-### Wait Patterns
+## Wait Patterns
 
 **Rule: BCS1408**
 
@@ -13032,7 +13030,7 @@ wait $! || die 1 'Command failed'
 
 **Rule: BCS1104**
 
-### Timeout Handling
+## Timeout Handling
 
 **Rule: BCS1409**
 
@@ -13144,7 +13142,7 @@ timeout 300 ssh -o ConnectTimeout=10 "$server" 'long_command'
 
 **Rule: BCS1105**
 
-### Exponential Backoff
+## Exponential Backoff
 
 **Rule: BCS1410**
 
@@ -13864,10 +13862,4 @@ fi
 - Never modify flags during execution phase (only in setup/validation)
 
 **Rationale:** Allows scripts to adapt to runtime conditions while maintaining clarity about why decisions were made. Especially useful for installation scripts where features may need to be disabled based on system capabilities or build failures.
-
-
----
-
-
-**Rule: BCS????**
-
+#fin

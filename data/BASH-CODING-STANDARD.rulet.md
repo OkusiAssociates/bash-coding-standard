@@ -222,43 +222,74 @@ This is the rulet tier: extracted rules in 1-2 sentence format with BCS code ref
 
 **Rule: BCS0400**
 
-## Functions - Rulets
+## Functions & Libraries - Rulets
+
 ## Function Definition Pattern
-- [BCS0601] Use single-line functions for simple operations: `vecho() { ((VERBOSE)) || return 0; _msg "$@"; }`
-- [BCS0601] Use multi-line functions with local variables for complex operations, always declaring locals at the top of the function body.
-- [BCS0601] Always return explicit exit codes from functions: `return "$exitcode"` not implicit returns.
+
+- [BCS0401] Use single-line format for simple functions: `vecho() { ((VERBOSE)) || return 0; _msg "$@"; }`
+- [BCS0401] Multi-line functions must declare local variables with type at function start: `local -i exitcode=0` for integers, `local -- variable` for strings.
+- [BCS0401] Always return explicit exit codes: `return "$exitcode"` or `return 0`.
+
 ## Function Naming
-- [BCS0602] Always use lowercase_with_underscores for function names to match shell conventions and avoid conflicts with built-in commands.
-- [BCS0602] Prefix private/internal functions with underscore: `_my_private_function()`, `_validate_input()`.
-- [BCS0602] Never use CamelCase or UPPER_CASE for function names; avoid special characters like dashes.
-- [BCS0602] Never override built-in commands unless absolutely necessary; if you must wrap built-ins, use a different name: `change_dir()` not `cd()`.
+
+- [BCS0402] Use lowercase with underscores for function names: `process_log_file()` not `ProcessLogFile()`.
+- [BCS0402] Prefix private/internal functions with underscore: `_validate_input()`.
+- [BCS0402] Never override built-in commands; use alternative names: `change_dir()` not `cd()`.
+- [BCS0402] Avoid dashes in function names: `my_function()` not `my-function()`.
+
 ## Main Function
-- [BCS0603] Always include a `main()` function for scripts longer than approximately 200 lines; place `main "$@"` at the bottom just before `#fin`.
-- [BCS0603] Use `main()` as the single entry point to orchestrate script logic: parsing arguments, validating input, calling helper functions in the right order, and returning appropriate exit codes.
-- [BCS0603] Parse command-line arguments inside `main()`, not in global scope; make parsed option variables readonly after validation.
-- [BCS0603] Place `main()` function definition at the end of the script after all helper functions are defined; this ensures bottom-up function organization.
-- [BCS0603] For testable scripts, use conditional invocation: `if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then main "$@"; fi` to prevent execution when sourced.
-- [BCS0603] Skip `main()` function only for trivial scripts (<200 lines) with no functions, linear flow, or simple wrappers.
-## Function Organization
-- [BCS0603,BCS0107] Organize functions bottom-up: messaging functions first (lowest level), then documentation/helpers, then validation, then business logic, then orchestration, with `main()` last (highest level).
-- [BCS0603] Separate script into clear sections with comment dividers: messaging functions, documentation functions, helper functions, business logic functions, main function.
+
+- [BCS0403] Always include `main()` function for scripts exceeding ~200 lines.
+- [BCS0403] Place `main "$@"` at script bottom, just before `#fin` marker.
+- [BCS0403] Parse all arguments inside `main()`, not at global scope.
+- [BCS0403] Declare option variables as local in main: `local -i verbose=0; local -- output_file=''`
+- [BCS0403] Make parsed options readonly after parsing: `readonly -- verbose dry_run output_file`
+- [BCS0403] Use `[[ "${BASH_SOURCE[0]}" == "${0}" ]] && main "$@"` pattern for testable scripts.
+- [BCS0403] Main orchestrates; heavy lifting belongs in helper functions called by main.
+- [BCS0403] Track errors using counters: `local -i errors=0` then `((errors+=1))` on failures.
+- [BCS0403] Use `trap cleanup EXIT` at main start for guaranteed cleanup.
+- [BCS0403] Never define functions after `main "$@"` call; never parse arguments in global scope.
+- [BCS0403] Never call main without `"$@"`: use `main "$@"` not `main`.
+
 ## Function Export
-- [BCS0604] Export functions with `declare -fx` when they need to be available in subshells or when creating sourceable libraries.
-- [BCS0604] Batch export related functions together: `declare -fx grep find` after defining wrapper functions.
+
+- [BCS0404] Export functions for subshell access with `declare -fx`: `grep() { /usr/bin/grep "$@"; }; declare -fx grep`
+- [BCS0404] Group related function exports: `declare -fx func1 func2 func3`
+
 ## Production Optimization
-- [BCS0605] Remove unused utility functions from mature production scripts: if `yn()`, `decp()`, `trim()`, `s()` are not called, delete them.
-- [BCS0605] Remove unused global variables from production scripts: if `PROMPT`, `DEBUG` are not referenced, delete them.
-- [BCS0605] Remove unused messaging functions your script doesn't call; keep only what your script actually needs to reduce size and improve clarity.
-- [BCS0605] Simple scripts may only need `error()` and `die()`, not the full messaging suite; optimize accordingly.
-## Error Handling in Main
-- [BCS0603] Track errors in `main()` using counters: `local -i errors=0` then `((errors+=1))` on failures; return non-zero if `((errors > 0))`.
-- [BCS0603] Use trap for cleanup in `main()`: `trap cleanup EXIT` at the start ensures cleanup happens on any exit path.
-- [BCS0603] Make `main()` return 0 for success and non-zero for errors to enable `main "$@"` invocation at script level with `set -e`.
-## Main Function Anti-Patterns
-- [BCS0603] Never define functions after calling `main "$@"`; all functions must be defined before the main invocation.
-- [BCS0603] Never parse arguments outside `main()` in global scope; this consumes `"$@"` before main receives it.
-- [BCS0603] Never call main without passing arguments: use `main "$@"` not `main` to preserve all command-line arguments.
-- [BCS0603] Never mix global and local state unnecessarily; prefer all logic and variables local to `main()` for clean scope.
+
+- [BCS0405] Remove unused utility functions from mature production scripts.
+- [BCS0405] Remove unused global variables and messaging functions not called by script.
+- [BCS0405] Keep only functions and variables the script actually needs; a simple script may only need `error()` and `die()`.
+
+## Dual-Purpose Scripts
+
+- [BCS0406] Define all functions BEFORE `set -euo pipefail` in dual-purpose scripts.
+- [BCS0406] Use source-mode exit after function definitions: `[[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0`
+- [BCS0406] Place `set -euo pipefail` AFTER the source check, never before.
+- [BCS0406] Export all library functions: `my_func() { :; }; declare -fx my_func`
+- [BCS0406] Use idempotent initialization to prevent double-loading: `[[ -v MY_LIB_VERSION ]] || declare -rx MY_LIB_VERSION='1.0.0'`
+
+## Library Patterns
+
+- [BCS0407] Pure libraries should reject execution: `[[ "${BASH_SOURCE[0]}" != "$0" ]] || { echo "Must be sourced" >&2; exit 1; }`
+- [BCS0407] Declare library version: `declare -rx LIB_VALIDATION_VERSION='1.0.0'`
+- [BCS0407] Use namespace prefixes for all functions: `myapp_init()`, `myapp_cleanup()`, `myapp_process()`
+- [BCS0407] Libraries should only define functions on source; explicit init call for side effects: `source lib.sh; lib_init`
+- [BCS0407] Source libraries with existence check: `[[ -f "$lib_path" ]] && source "$lib_path" || die 1 "Missing: $lib_path"`
+
+## Dependency Management
+
+- [BCS0408] Check dependencies with `command -v`, never `which`: `command -v curl >/dev/null || die 1 'curl required'`
+- [BCS0408] Collect missing dependencies for helpful error messages: `local -a missing=(); for cmd in curl jq; do command -v "$cmd" >/dev/null || missing+=("$cmd"); done`
+- [BCS0408] Check Bash version when using modern features: `((BASH_VERSINFO[0] >= 5)) || die 1 "Requires Bash 5+"`
+- [BCS0408] Use availability flags for optional features: `declare -i HAS_JQ=0; command -v jq >/dev/null && HAS_JQ=1`
+- [BCS0408] Lazy-load expensive resources only when needed.
+
+## Function Organization
+
+- [BCS0400] Organize functions bottom-up: messaging first, then helpers, then business logic, with `main()` last.
+- [BCS0400] Each function should safely call only previously-defined functions above it.
 
 
 ---
@@ -319,48 +350,57 @@ This is the rulet tier: extracted rules in 1-2 sentence format with BCS code ref
 **Rule: BCS0600**
 
 ## Error Handling - Rulets
-## Exit on Error
-- [BCS0801] Always use `set -euo pipefail` at line 5 (after script description) to enable strict error detection: `-e` exits on command failure, `-u` exits on undefined variables, `-o pipefail` exits if any command in a pipeline fails.
-- [BCS0801] Add `shopt -s inherit_errexit` to make command substitution inherit `set -e` behavior, ensuring `output=$(failing_command)` exits on failure.
-- [BCS0801] Allow specific commands to fail using `command_that_might_fail || true` or wrap in conditional: `if command_that_might_fail; then ... else ... fi`.
-- [BCS0801] Check if optional variables exist before using with: `[[ -n "${OPTIONAL_VAR:-}" ]]` to prevent exit on undefined variable with `set -u`.
-- [BCS0801] Never capture command substitution in assignment without checking: `result=$(failing_command)` doesn't exit with `set -e`; use `result=$(cmd) || die 1` or enable `shopt -s inherit_errexit`.
+
+## Exit on Error Configuration
+
+- [BCS0601] Always use `set -euo pipefail` at script start: `-e` exits on command failure, `-u` exits on undefined variables, `-o pipefail` fails pipeline if any command fails.
+- [BCS0601] Add `shopt -s inherit_errexit` to make command substitutions inherit `set -e` behavior.
+- [BCS0601] Allow specific commands to fail using `command || true` pattern; never disable `set -e` globally.
+- [BCS0601] When capturing output from commands that may fail, use `if result=$(command); then` or `result=$(command) || die 1 "Failed"`.
+- [BCS0601] With `set -e`, checking `$?` after assignment like `result=$(failing_command)` is unreachable—the script already exited.
+
 ## Exit Codes
-- [BCS0802] Implement standard `die()` function: `die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }` for consistent error handling with exit codes and messages.
-- [BCS0802] Use standard exit codes: `0` for success, `1` for general error, `2` for misuse/missing argument, `22` for invalid argument (EINVAL), `5` for I/O error.
-- [BCS0802] Never use exit codes above 125 for custom errors; codes 126-127 are reserved for shell errors, 128+n for fatal signals, and 255 is out of range.
-- [BCS0802] Define exit code constants as readonly integers for readability: `readonly -i SUCCESS=0 ERR_GENERAL=1 ERR_USAGE=2 ERR_CONFIG=3`.
-- [BCS0802] Check exit codes in case statements to handle different failure modes: `case $? in 1) ... ;; 2) ... ;; *) ... ;; esac`.
+
+- [BCS0602] Use standard exit codes: `0` (success), `1` (general error), `2` (misuse/usage error), `22` (invalid argument/EINVAL), `5` (permission denied).
+- [BCS0602] Implement `die()` function: `die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }` for consistent error exits.
+- [BCS0602] Define exit codes as readonly constants for readability: `readonly -i ERR_GENERAL=1 ERR_USAGE=2 ERR_CONFIG=3`.
+- [BCS0602] Avoid exit codes 126-255 for custom errors; these conflict with shell-reserved codes and signal numbers (128+n).
+
 ## Trap Handling
-- [BCS0803] Implement standard cleanup function pattern: capture exit code with `cleanup() { local -i exitcode=${1:-0}; trap - SIGINT SIGTERM EXIT; ... ; exit "$exitcode"; }`.
-- [BCS0803] Install trap early before creating resources: `trap 'cleanup $?' SIGINT SIGTERM EXIT` ensures cleanup runs on normal exit, errors, Ctrl+C, and kill signals.
-- [BCS0803] Always disable trap at start of cleanup function with `trap - SIGINT SIGTERM EXIT` to prevent recursion if cleanup itself fails.
-- [BCS0803] Preserve exit code by capturing immediately: `trap 'cleanup $?' EXIT` passes original exit status; never use `trap 'cleanup' EXIT` as `$?` may change.
-- [BCS0803] Use single quotes in trap commands to delay variable expansion: `trap 'rm -f "$temp_file"' EXIT` evaluates variables when trap fires, not when set.
-- [BCS0803] Create temp files and directories before trap installation risks resource leaks; always use: `temp_file=$(mktemp) || die 1 'Failed'; trap 'rm -f "$temp_file"' EXIT`.
-## Checking Return Values
-- [BCS0804] Always check return values of critical operations with explicit conditionals: `if ! mv "$source" "$dest"; then die 1 "Failed to move $source to $dest"; fi`.
-- [BCS0804] Provide informative error messages including context: `die 1 "Failed to move $source to $dest"` not just `die 1 "Move failed"`.
-- [BCS0804] Check command substitution results explicitly: `output=$(command) || die 1 "command failed"` or enable `shopt -s inherit_errexit` to inherit `set -e` in subshells.
-- [BCS0804] Use `set -o pipefail` to catch pipeline failures: without it, `cat missing_file | grep pattern` continues even if cat fails; with it, entire pipeline fails.
-- [BCS0804] Check `PIPESTATUS` array for individual pipeline command exit codes: `if ((PIPESTATUS[0] != 0)); then die 1 "First command failed"; fi`.
-- [BCS0804] Use cleanup on failure pattern: `operation || { error "Failed"; cleanup_resources; die 1; }` ensures partial state is cleaned up.
-- [BCS0804,BCS0802] Capture and check exit codes when different codes require different actions: `cmd; exit_code=$?; case $exit_code in 0) ... ;; 1) ... ;; esac`.
+
+- [BCS0603] Install traps early, before creating resources: `trap 'cleanup $?' SIGINT SIGTERM EXIT`.
+- [BCS0603] Always disable traps inside cleanup function to prevent recursion: `trap - SIGINT SIGTERM EXIT`.
+- [BCS0603] Preserve exit code by capturing `$?` in trap command: `trap 'cleanup $?' EXIT` not `trap 'cleanup' EXIT`.
+- [BCS0603] Use single quotes in trap commands to delay variable expansion: `trap 'rm -f "$temp_file"' EXIT`.
+- [BCS0603] Create cleanup function for non-trivial cleanup; avoid complex inline trap commands.
+- [BCS0603] Handle cleanup failures gracefully: `rm -rf "$temp_dir" || warn "Failed to remove temp directory"`.
+
+## Return Value Checking
+
+- [BCS0604] Always check return values of critical operations; `set -e` doesn't catch all failures (pipelines, conditionals, command substitution).
+- [BCS0604] Provide context in error messages: `mv "$file" "$dest" || die 1 "Failed to move $file to $dest"` not just `"Move failed"`.
+- [BCS0604] Check command substitution results explicitly: `output=$(command) || die 1 "Command failed"`.
+- [BCS0604] Use `PIPESTATUS` array to check individual pipeline command results: `((PIPESTATUS[0] != 0)) && die 1 "First command failed"`.
+- [BCS0604] Capture exit code immediately after command if needed: `command; exit_code=$?` before any other operations.
+- [BCS0604] Clean up on failure using command groups: `cp "$src" "$dest" || { rm -f "$dest"; die 1 "Copy failed"; }`.
+
 ## Error Suppression
-- [BCS0805] Only suppress errors when failure is expected, non-critical, and explicitly documented: add comment explaining WHY suppression is safe before every `2>/dev/null` or `|| true`.
-- [BCS0805] Never suppress critical operations like file copies, data processing, system configuration, security operations, or dependency checks; these must fail explicitly.
-- [BCS0805] Use `2>/dev/null` to suppress only error messages while still checking return code: `if ! command 2>/dev/null; then error "command failed"; fi`.
-- [BCS0805] Use `|| true` to ignore return code while keeping error messages visible for debugging.
-- [BCS0805] Use combined suppression `2>/dev/null || true` only when both error messages and return code are completely irrelevant: `rmdir /tmp/maybe_exists 2>/dev/null || true`.
-- [BCS0805] Appropriate suppression cases: checking if optional commands exist (`command -v tool >/dev/null 2>&1`), cleanup operations (`rm -f /tmp/files 2>/dev/null || true`), idempotent operations (`install -d "$dir" 2>/dev/null || true`).
-- [BCS0805] Verify system state after suppressed operations when possible: after `install -d "$dir" 2>/dev/null || true`, check `[[ -d "$dir" ]] || die 1 "Failed to create $dir"`.
-## Conditional Declarations
-- [BCS0806] Append `|| :` after `((condition)) && action` to prevent false conditions from triggering `set -e` exit: `((complete)) && declare -g BLUE=$'\033[0;34m' || :`.
-- [BCS0806] Use colon `:` instead of `true` as no-op fallback; it's the traditional Unix idiom, built-in, and more concise.
-- [BCS0806] Arithmetic conditionals `(())` return 0 (success) when true, 1 (failure) when false; under `set -e`, false conditions without `|| :` will exit the script.
-- [BCS0806] Use `|| :` pattern only for optional operations like feature-gated variable declarations; never suppress critical operations that must succeed.
-- [BCS0806] Prefer explicit `if` statements over `((condition)) && action || :` for complex logic with multiple statements or when clarity is more important than conciseness.
-- [BCS0806,BCS0805] Never use `|| :` to suppress critical operation failures; use explicit error handling: `if ((flag)); then critical_op || die 1 "Failed"; fi`.
+
+- [BCS0605] Only suppress errors when failure is expected, non-critical, and safe to ignore; always document WHY with a comment.
+- [BCS0605] Use `|| true` to ignore return code while keeping stderr visible; use `2>/dev/null` to suppress messages while checking return code.
+- [BCS0605] Use `2>/dev/null || true` only when both error messages and return code are irrelevant.
+- [BCS0605] Safe to suppress: optional tool checks (`command -v optional_tool >/dev/null 2>&1`), cleanup operations (`rm -f /tmp/myapp_* 2>/dev/null || true`), idempotent operations (`install -d "$dir" 2>/dev/null || true`).
+- [BCS0605] Never suppress: critical file operations, data processing, security operations, required dependency checks.
+- [BCS0605] Verify system state after suppressed operations when possible: `install -d "$dir" 2>/dev/null || true; [[ -d "$dir" ]] || die 1 "Failed"`.
+
+## Conditional Declarations with Exit Code Handling
+
+- [BCS0606] Append `|| :` to `((condition)) && action` patterns under `set -e` to prevent false conditions from exiting: `((verbose)) && echo "Debug" || :`.
+- [BCS0606] Prefer colon `:` over `true` for no-op fallback (traditional shell idiom, single character, no PATH lookup).
+- [BCS0606] Use for optional variable declarations: `((complete)) && declare -g EXTRA_VAR=value || :`.
+- [BCS0606] Use for feature-gated actions: `((DRY_RUN)) && echo "Would execute: $cmd" || :`.
+- [BCS0606] Never use `|| :` for critical operations that must succeed—use explicit `if` statement with error handling instead.
+- [BCS0606] For complex conditional logic, prefer explicit `if ((condition)); then action; fi` over `((condition)) && action || :`.
 
 
 ---
@@ -538,6 +578,61 @@ This is the rulet tier: extracted rules in 1-2 sentence format with BCS code ref
 - [BCS1205] Always use `--` separator in commands to prevent option injection: `rm -- "$user_file"` not `rm "$user_file"` (prevents `--delete-all` attacks).
 - [BCS1205] Never pass user input directly to shell commands or use eval with user input; use case statements to whitelist allowed commands.
 - [BCS1205] Validate input type, format, range, and length; check for leading zeros in numbers, credentials in URLs, dangerous characters in filenames.
+
+
+---
+
+
+**Rule: BCS1100**
+
+## Concurrency & Jobs - Rulets
+
+## Background Job Management
+
+- [BCS1101] Always track PIDs when starting background jobs: `command &; pid=$!` - never start jobs without capturing the PID for later management.
+- [BCS1101] Use `kill -0 "$pid" 2>/dev/null` to check if a process is still running (signal 0 = existence check only).
+- [BCS1101] Never use `$$` to reference background job PID; use `$!` which captures the last background process PID.
+- [BCS1101] Implement cleanup traps for background jobs: `trap 'cleanup $?' SIGINT SIGTERM EXIT` and kill all tracked PIDs in the cleanup function.
+- [BCS1101] Store background PIDs in an array for batch management: `declare -a pids=(); command &; pids+=($!)`.
+- [BCS1101] Reset trap handlers inside cleanup to prevent recursion: `trap - SIGINT SIGTERM EXIT`.
+
+## Parallel Execution
+
+- [BCS1102] Capture parallel output to temp files for ordered display: write each job's output to `"$temp_dir/$id.out"`, wait for all, then cat in original order.
+- [BCS1102] Limit concurrent jobs by checking array size before starting new ones: `while ((${#pids[@]} >= max_jobs)); do wait -n; done`.
+- [BCS1102] Never modify variables inside background subshells expecting parent visibility; use temp files to aggregate results: `echo 1 >> "$temp_dir/count"`.
+- [BCS1102] Remove completed PIDs from tracking array by testing each with `kill -0 "$pid" 2>/dev/null`.
+
+## Wait Patterns
+
+- [BCS1103] Always capture wait exit code: `wait "$pid"; exit_code=$?` - never ignore the return value.
+- [BCS1103] Track failures when waiting for multiple jobs: `for pid in "${pids[@]}"; do wait "$pid" || ((errors+=1)); done`.
+- [BCS1103] Use `wait -n` (Bash 4.3+) to process jobs as they complete rather than waiting for all in sequence.
+- [BCS1103] Store exit codes in associative array keyed by task identifier for detailed failure reporting: `declare -A exit_codes=()`.
+- [BCS1103] Handle wait errors gracefully: `wait "$pid" || die 1 'Command failed'`.
+
+## Timeout Handling
+
+- [BCS1104] Always use `timeout` for network operations: `timeout 300 ssh -o ConnectTimeout=10 "$server" 'command'`.
+- [BCS1104] Check for timeout exit code 124 specifically: `if ((exit_code == 124)); then warn 'Command timed out'; fi`.
+- [BCS1104] Use `--kill-after` for stubborn processes: `timeout --signal=TERM --kill-after=10 60 command`.
+- [BCS1104] Know timeout exit codes: 124=timed out, 125=timeout failed, 126=not executable, 127=not found, 137=SIGKILL.
+- [BCS1104] Use `read -t` for user input timeouts: `read -r -t 10 -p 'Enter value: ' value || value='default'`.
+- [BCS1104] Set SSH connection timeouts explicitly: `ssh -o ConnectTimeout=10 -o BatchMode=yes "$server"`.
+
+## Exponential Backoff
+
+- [BCS1105] Use exponential backoff for retries: `delay=$((2 ** attempt))` - never use fixed delays that can flood services.
+- [BCS1105] Cap maximum delay to prevent excessive waits: `((delay > max_delay)) && delay=$max_delay`.
+- [BCS1105] Add jitter to prevent thundering herd: `jitter=$((RANDOM % base_delay)); delay=$((base_delay + jitter))`.
+- [BCS1105] Set a maximum attempt limit and fail explicitly: `((attempt > max_attempts)) && die 1 'Max retries exceeded'`.
+- [BCS1105] Validate success conditions beyond exit code when appropriate: check for non-empty output with `[[ -s "$temp_file" ]]`.
+
+## General Concurrency Principles
+
+- [BCS1100] Always clean up background jobs and handle partial failures gracefully.
+- [BCS1101,BCS1103] Combine PID tracking with proper wait handling: track all PIDs at start, wait for each with error capture at end.
+- [BCS1104,BCS1105] Combine timeouts with backoff for robust network operations: timeout prevents hangs, backoff handles transient failures.
 
 
 ---

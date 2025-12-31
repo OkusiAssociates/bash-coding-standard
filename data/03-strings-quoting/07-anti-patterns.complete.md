@@ -16,6 +16,10 @@ info "Checking prerequisites..."
 # ✓ Correct
 info 'Checking prerequisites...'
 [[ "$status" == 'active' ]]
+
+# ✓ Acceptable
+info 'Checking prerequisites...'
+[[ "$status" == active ]]
 ```
 
 ---
@@ -44,6 +48,10 @@ echo "${HOME}/bin"
 path="${CONFIG_DIR}/app.conf"
 
 # ✓ Correct
+echo "$HOME"/bin
+path="$CONFIG_DIR"/app.conf
+
+# ✓ Acceptable
 echo "$HOME/bin"
 path="$CONFIG_DIR/app.conf"
 
@@ -71,8 +79,9 @@ for item in "${items[@]}"; do
 #### Category 5: Glob Expansion Danger
 
 ```bash
-# ✗ Wrong
 pattern='*.txt'
+
+# ✗ Wrong
 echo $pattern       # Expands to all .txt files!
 
 # ✓ Correct
@@ -103,7 +112,7 @@ EOF
 |---------|---------|-------|
 | Static string | `'literal'` | `"literal"` |
 | Variable | `"$var"` | `$var` |
-| Path with var | `"$HOME/bin"` | `"${HOME}/bin"` |
+| Path with var | `"$HOME"/bin` | `"${HOME}/bin"` |
 | Conditional | `[[ -f "$file" ]]` | `[[ -f $file ]]` |
 | Array | `"${arr[@]}"` | `${arr[@]}` |
 | Static literal | `== 'value'` | `== "value"` |

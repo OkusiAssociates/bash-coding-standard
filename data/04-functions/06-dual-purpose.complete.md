@@ -25,7 +25,7 @@ Dual-purpose scripts provide:
 # Define functions first (before any set -e)
 my_function() {
   local -- arg=$1
-  echo "Processing: $arg"
+  echo "Processing ${arg@Q}"
 }
 declare -fx my_function
 
@@ -37,16 +37,14 @@ set -euo pipefail
 shopt -s inherit_errexit shift_verbose
 
 # Script metadata
-SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- SCRIPT_PATH SCRIPT_NAME
+declare -r SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
+declare -r SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 main() {
   my_function "$@"
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -57,7 +55,7 @@ main "$@"
 # Prevent double-initialization when sourced
 
 [[ -v MY_LIB_VERSION ]] || {
-  declare -rx MY_LIB_VERSION='1.0.0'
+  declare -rx MY_LIB_VERSION=1.0.0
   declare -rx MY_LIB_PATH=$(realpath -e -- "${BASH_SOURCE[0]}")
 }
 
@@ -72,7 +70,6 @@ declare -fx my_func
 set -euo pipefail
 main() { my_func "$@"; }
 main "$@"
-
 #fin
 ```
 

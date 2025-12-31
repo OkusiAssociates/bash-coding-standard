@@ -1,5 +1,5 @@
 ## Usage Documentation
-\`\`\`bash
+```bash
 show_help() {
   cat <<EOT
 $SCRIPT_NAME $VERSION - Brief description
@@ -22,4 +22,4 @@ Examples:
   $SCRIPT_NAME -v file.txt
 EOT
 }
-\`\`\`
+```

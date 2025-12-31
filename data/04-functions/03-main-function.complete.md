@@ -35,7 +35,7 @@
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -55,7 +55,7 @@ main() {
   while (($#)); do case $1 in
     -h|--help) usage; return 0 ;;
     # short options...
-    *) die 22 "Invalid option: $1" ;;
+    *) die 22 "Invalid option ${1@Q}" ;;
   esac; shift; done
   # Argument validation
   : ...
@@ -94,7 +94,7 @@ main() {
     -o|--output)
       noarg "$@"
       shift
-      output_file="$1"
+      output_file=$1
       ;;
     -h|--help)
       usage
@@ -105,7 +105,7 @@ main() {
       break
       ;;
     -*)
-      die 22 "Invalid option: $1"
+      die 22 "Invalid option ${1@Q}"
       ;;
     *)
       input_files+=("$1")
@@ -120,7 +120,7 @@ main() {
   readonly -a input_files
 
   # Validate arguments
-  if [[ ${#input_files[@]} -eq 0 ]]; then
+  if ((${#input_files[@]} == 0)); then
     error 'No input files specified'
     usage
     return 22
@@ -147,7 +147,7 @@ main() {
 ```bash
 # Cleanup function
 cleanup() {
-  local -i exit_code=$?
+  local -i exit_code=${1:-$?}
 
   # Cleanup operations
   if [[ -n "${TEMP_DIR:-}" && -d "$TEMP_DIR" ]]; then
@@ -166,7 +166,7 @@ main() {
   readonly -- TEMP_DIR
 
   # Main logic
-  info "Using temp directory: $TEMP_DIR"
+  info "Using temp directory ${TEMP_DIR@Q}"
 
   # ... processing ...
 
@@ -193,12 +193,12 @@ main() {
   for item in "${items[@]}"; do
     if ! process_item "$item"; then
       error "Failed to process: $item"
-      ((errors+=1))
+      errors+=1
     fi
   done
 
   # Report results
-  if ((errors > 0)); then
+  if ((errors)); then
     error "Completed with $errors errors"
     return 1
   else
@@ -212,16 +212,18 @@ main() {
 
 ```bash
 # Script can be sourced for testing
+# Only execute main if script is run directly (not sourced)
+[[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0
+
+# Do set here
+set -euo pipefail
+
 main() {
   # ... script logic ...
   return 0
 }
 
-# Only execute main if script is run directly (not sourced)
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  main "$@"
-fi
-
+main "$@"
 #fin
 ```
 
@@ -232,7 +234,7 @@ fi
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -254,7 +256,7 @@ fi
 _msg() {
   local -- prefix="$SCRIPT_NAME:" msg
 
-  case "${FUNCNAME[1]}" in
+  case ${FUNCNAME[1]} in
     info) prefix+=" ${CYAN}◉${NC}" ;;
     error) prefix+=" ${RED}✗${NC}" ;;
     *) ;;
@@ -267,13 +269,7 @@ _msg() {
 
 info() { >&2 _msg "$@"; }
 error() { >&2 _msg "$@"; }
-
-die() {
-  local -i exit_code=${1:-1}
-  shift
-  (($#)) && error "$@"
-  exit "$exit_code"
-}
+die() { (($# > 1)) && error "${@:2}" ||:; exit "${1:-0}"; }
 
 # ============================================================================
 # Documentation Functions
@@ -317,11 +313,11 @@ process_file() {
 
   # Validate file
   if [[ ! -f "$file" ]]; then
-    error "File not found: $file"
+    error "File not found ${file@Q}"
     return 2
   fi
 
-  info "Processing: $file"
+  info "Processing ${file@Q}"
 
   # Process file logic
   # ...
@@ -347,7 +343,7 @@ main() {
     -o|--output)
       noarg "$@"
       shift
-      output_dir="$1"
+      output_dir=$1
       ;;
     -h|--help)
       usage
@@ -358,7 +354,7 @@ main() {
       break
       ;;
     -*)
-      die 22 "Invalid option: $1"
+      die 22 "Invalid option ${1@Q}"
       ;;
     *)
       input_files+=("$1")
@@ -380,7 +376,7 @@ main() {
   fi
 
   if [[ -n "$output_dir" && ! -d "$output_dir" ]]; then
-    error "Output directory not found: $output_dir"
+    error "Output directory not found ${output_dir@Q}"
     return 2
   fi
 
@@ -389,7 +385,7 @@ main() {
     info "$SCRIPT_NAME $VERSION"
     info "Input files: ${#input_files[@]}"
     [[ -n "$output_dir" ]] && info "Output: $output_dir"
-    ((dry_run)) && info '[DRY-RUN] Mode enabled'
+    ((dry_run)) && info '[DRY-RUN] Mode enabled' ||:
   fi
 
   # Process each file
@@ -399,19 +395,19 @@ main() {
 
   for file in "${input_files[@]}"; do
     if ((dry_run)); then
-      info "[DRY-RUN] Would process: $file"
-      ((success_count+=1))
+      info "[DRY-RUN] Would process ${file@Q}"
+      success_count+=1
     elif process_file "$file"; then
-      ((success_count+=1))
+      success_count+=1
     else
-      ((error_count+=1))
+      error_count+=1
     fi
   done
 
   # Report results
   if ((verbose)); then
     info "Processed: $success_count files"
-    ((error_count > 0)) && info "Errors: $error_count"
+    ((error_count)) && info "Errors: $error_count" ||:
   fi
 
   # Return appropriate exit code
@@ -521,7 +517,7 @@ total=0  # Global
 main() {
   local -i count=0
   # Mixes global and local state
-  ((total+=count))
+  ((total+=count)) # note: total not defined as int, thus (()) required
 }
 
 # ✓ Correct - all logic in main
@@ -529,7 +525,7 @@ main() {
   local -i total=0
   local -i count=0
   # All local, clean scope
-  ((total+=count))
+  total+=count
 }
 ```
 
@@ -547,7 +543,7 @@ main() {
   while (($#)); do case $1 in
     -v|--verbose) VERBOSE=1 ;;
     -n|--dry-run) DRY_RUN=1 ;;
-    *) die 22 "Invalid option: $1" ;;
+    *) die 22 "Invalid option ${1@Q}" ;;
   esac; shift; done
 
   # Make globals readonly
@@ -595,10 +591,9 @@ main() {
 }
 
 # Only run main if executed (not sourced)
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  main "$@"
-fi
+[[ "${BASH_SOURCE[0]}" == "${0}" ]] || return
 
+main "$@"
 #fin
 ```
 
@@ -638,9 +633,8 @@ main() {
 }
 
 # Only execute if run directly
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  main "$@"
-fi
+[[ "${BASH_SOURCE[0]}" == "${0}" ]] || return
+main "$@"
 
 # Test file: test_myapp.sh
 #!/bin/bash
@@ -652,7 +646,7 @@ result=$(main 5)
 if [[ "$result" == "10" ]]; then
   echo "PASS"
 else
-  echo "FAIL: Expected 10, got $result"
+  echo "FAIL: Expected 10, got ${result@Q}"
 fi
 ```
 

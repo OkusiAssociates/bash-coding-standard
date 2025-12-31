@@ -1,6 +1,6 @@
 ## Boolean Flags Pattern
 
-For boolean state tracking, use integer variables with `declare -i`:
+For boolean state tracking, use integer variables with `declare -i` or `local -i`:
 
 ```bash
 # Boolean flags - declare as integers with explicit initialization

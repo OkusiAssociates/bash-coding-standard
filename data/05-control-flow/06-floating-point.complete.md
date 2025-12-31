@@ -23,8 +23,8 @@ Bash only supports integer arithmetic natively. For floating-point:
 result=$(echo '3.14 * 2.5' | bc -l)
 
 # With variables
-width='10.5'
-height='7.25'
+declare -- width='10.5'
+declare -- height='7.25'
 area=$(echo "$width * $height" | bc -l)
 
 # Set precision (scale)

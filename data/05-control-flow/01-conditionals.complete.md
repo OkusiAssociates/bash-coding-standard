@@ -2,11 +2,11 @@
 
 **Use `[[ ]]` for string/file tests, `(())` for arithmetic:**
 
-\`\`\`bash
+```bash
 # String and file tests - use [[ ]]
-[[ -d "$path" ]] && echo 'Directory exists'
-[[ -f "$file" ]] || die 1 "File not found: $file"
-[[ "$status" == 'success' ]] && continue
+[[ -d "$path" ]] && echo 'Directory exists' ||:
+[[ -f "$file" ]] || die 1 "File not found ${file@Q}"
+[[ "$status" == success ]] && continue
 
 # Arithmetic tests - use (())
 ((VERBOSE==0)) || echo 'Verbose mode'
@@ -14,14 +14,14 @@
 ((count >= MAX_RETRIES)) && die 1 'Too many retries'
 
 # Complex conditionals - combine both
-if [[ -n "$var" ]] && ((count > 0)); then
+if [[ -n "$var" ]] && ((count)); then
   process_data
 fi
 
 # Short-circuit evaluation
-[[ -f "$file" ]] && source "$file"
+[[ -f "$file" ]] && source "$file" ||:
 ((VERBOSE)) || return 0
-\`\`\`
+```
 
 **Rationale for `[[ ]]` over `[ ]`:**
 
@@ -33,33 +33,36 @@ fi
 
 **Comparison of `[[ ]]` vs `[ ]`:**
 
-\`\`\`bash
-var="two words"
+```bash
+var='two words'
 
 # ✗ [ ] requires quotes or fails
-[ $var = "two words" ]  # ERROR: too many arguments
-[ "$var" = "two words" ]  # Works but fragile
+[ $var = 'two words' ]  # ERROR: too many arguments
+[ "$var" = 'two words' ]  # Works but fragile
 
 # ✓ [[ ]] handles unquoted variables (but quote anyway)
-[[ $var == "two words" ]]  # Works even without quotes
-[[ "$var" == "two words" ]]  # Recommended - quote anyway
+[[ $var == 'two words' ]]  # Works even without quotes
+[[ "$var" == 'two words' ]]  # Recommended - quote anyway
 
 # Pattern matching (only works in [[ ]])
 [[ "$file" == *.txt ]] && echo "Text file"
 [[ "$input" =~ ^[0-9]+$ ]] && echo "Number"
 
 # Logical operators inside [[ ]]
-[[ -f "$file" && -r "$file" ]] && cat "$file"
+[[ -f "$file" && -r "$file" ]] && cat "$file" ||:
 
 # vs [ ] requires separate tests
-[ -f "$file" ] && [ -r "$file" ] && cat "$file"
-\`\`\`
+[ -f "$file" ] && [ -r "$file" ] && cat "$file" ||:
+```
 
 **Arithmetic conditionals - use `(())`:**
 
-\`\`\`bash
+```bash
+declare -i count=0
+: ...
+
 # ✓ Correct - natural C-style syntax
-if ((count > 0)); then
+if ((count)); then
   echo "Count: $count"
 fi
 
@@ -77,48 +80,48 @@ fi
 ((a <= b))  # Less or equal
 ((a == b))  # Equal
 ((a != b))  # Not equal
-\`\`\`
+```
 
 **Pattern matching examples:**
 
-\`\`\`bash
+```bash
 # Glob pattern matching
 [[ "$filename" == *.@(jpg|png|gif) ]] && process_image "$filename"
 
 # Regular expression matching
 if [[ "$email" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
-  echo "Valid email"
+  echo 'Valid email'
 else
-  die 22 "Invalid email: $email"
+  die 22 "Invalid email ${email@Q}"
 fi
 
 # Case-insensitive matching (bash 3.2+)
 shopt -s nocasematch
-[[ "$input" == "yes" ]] && echo "Affirmative"  # Matches YES, Yes, yes
+[[ "$input" == yes ]] && echo "Affirmative"  # Matches YES, Yes, yes
 shopt -u nocasematch
-\`\`\`
+```
 
 **Short-circuit evaluation:**
 
-\`\`\`bash
+```bash
 # Execute second command only if first succeeds
-[[ -f "$config" ]] && source "$config"
-((DEBUG)) && set -x
+[[ -f "$config" ]] && source "$config" ||:
+((DEBUG)) && set -x ||:
 
 # Execute second command only if first fails
 [[ -d "$dir" ]] || mkdir -p "$dir"
-((count > 0)) || die 1 'No items to process'
+((count)) || die 1 'No items to process'
 
 # Chaining multiple conditions
 [[ -f "$file" ]] && [[ -r "$file" ]] && cat "$file"
-\`\`\`
+```
 
 **Anti-patterns to avoid:**
 
-\`\`\`bash
+```bash
 # ✗ Wrong - using old [ ] syntax
 if [ -f "$file" ]; then  # Use [[ ]] instead
-  echo "Found"
+  echo 'Found'
 fi
 
 # ✗ Wrong - using -a and -o in [ ]
@@ -128,7 +131,7 @@ fi
 [[ -f "$file" && -r "$file" ]]
 
 # ✗ Wrong - string comparison with [ ] unquoted
-[ $var = "value" ]  # Breaks if var contains spaces
+[ $var = 'value' ]  # Breaks if var contains spaces
 
 # ✓ Correct - use [[ ]] (still quote for clarity)
 [[ "$var" == "value" ]]
@@ -138,7 +141,7 @@ fi
 
 # ✓ Correct - use (()) for arithmetic
 ((count > 10))
-\`\`\`
+```
 
 **Common file test operators (use with `[[ ]]`):**
 

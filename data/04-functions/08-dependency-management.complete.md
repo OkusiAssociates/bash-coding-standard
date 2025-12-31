@@ -24,7 +24,7 @@ command -v curl >/dev/null || die 1 'curl is required but not installed'
 
 # Check multiple commands
 for cmd in curl jq awk; do
-  command -v "$cmd" >/dev/null || die 1 "Required: $cmd"
+  command -v "$cmd" >/dev/null || die 1 "Required ${cmd@Q}"
 done
 ```
 
@@ -39,7 +39,7 @@ check_dependencies() {
     command -v "$cmd" >/dev/null || missing+=("$cmd")
   done
 
-  if ((${#missing[@]} > 0)); then
+  if ((${#missing[@]})); then
     error "Missing dependencies: ${missing[*]}"
     info 'Install with: sudo apt install ...'
     return 1
@@ -55,7 +55,7 @@ check_dependencies curl jq sqlite3 || exit 1
 ```bash
 # Check and set availability flag
 declare -i HAS_JQ=0
-command -v jq >/dev/null && HAS_JQ=1
+command -v jq >/dev/null && HAS_JQ=1 ||:
 
 # Use with fallback
 if ((HAS_JQ)); then

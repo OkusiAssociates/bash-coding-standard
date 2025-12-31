@@ -35,7 +35,7 @@ debug "Variable state: count=$count, total=$total"
 debug 'Entering validation phase'
 
 # Configuration feedback
-info "Using configuration file: $config_file"
+info "Using configuration file ${config_file@Q}"
 info "Timeout set to $timeout seconds"
 ```
 
@@ -69,7 +69,7 @@ info 'Tests running...'          # Cyan info icon
 ```bash
 # Function returns data
 get_user_email() {
-  local -- username="$1"
+  local -- username=$1
   local -- email
 
   email=$(grep "^$username:" /etc/passwd | cut -d: -f5)
@@ -84,21 +84,27 @@ user_email=$(get_user_email 'alice')
 **2. Help text and documentation:**
 
 ```bash
-usage() {
-  cat <<'EOF'
-Usage: script.sh [OPTIONS] FILE...
+show_help() {
+  cat <<EOT
+$SCRIPT_NAME $VERSION - Brief description
 
-Process files with various options.
+Detailed description.
+
+Usage: $SCRIPT_NAME [Options] [arguments]
 
 Options:
-  -v, --verbose     Enable verbose output
-  -h, --help        Show this help message
-  -o, --output DIR  Output directory
+  -n|--num NUM      Set num to NUM
+
+  -v|--verbose      Increase verbose output
+  -q|--quiet        No verbosity
+
+  -V|--version      Print version ('$SCRIPT_NAME $VERSION')
+  -h|--help         This help message
 
 Examples:
-  script.sh file.txt
-  script.sh -v -o /tmp file1.txt file2.txt
-EOF
+  # Example 1
+  $SCRIPT_NAME -v file.txt
+EOT
 }
 ```
 
@@ -107,16 +113,16 @@ EOF
 ```bash
 # Report generation
 generate_report() {
-  echo "System Report"
-  echo "============="
-  echo ""
-  echo "Disk Usage:"
+  echo 'System Report'
+  echo '============='
+  echo
+  echo 'Disk Usage:'
   df -h
-  echo ""
-  echo "Memory Usage:"
+  echo
+  echo 'Memory Usage:'
   free -h
-  echo ""
-  echo "Load Average:"
+  echo
+  echo 'Load Average:'
   uptime
 }
 ```
@@ -181,60 +187,47 @@ echo "Failed: $fail_count files"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
-
-declare -i VERBOSE=0
-
-# Colors (conditional on terminal)
-if [[ -t 1 && -t 2 ]]; then
-  RED=$'\033[0;31m'
-  GREEN=$'\033[0;32m'
-  YELLOW=$'\033[0;33m'
-  CYAN=$'\033[0;36m'
-  NC=$'\033[0m'
-else
-  RED=''
-  GREEN=''
-  YELLOW=''
-  CYAN=''
-  NC=''
-fi
-readonly -- RED GREEN YELLOW CYAN NC
 
 # ============================================================================
 # Messaging Functions (stderr, with verbosity control)
 # ============================================================================
 
+declare -i VERBOSE=1 DEBUG=0
+
+# Colors (conditional on terminal)
+if [[ -t 1 && -t 2 ]]; then
+  declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' NC=$'\033[0m'  # No Color (reset)
+else
+  # Not a terminal - disable colors
+  declare -r RED='' GREEN='' YELLOW='' CYAN='' NC=''
+fi
+
 _msg() {
   local -- prefix="$SCRIPT_NAME:" msg
-
-  case "${FUNCNAME[1]}" in
+  case ${FUNCNAME[1]} in
     success) prefix+=" ${GREEN}✓${NC}" ;;
     warn)    prefix+=" ${YELLOW}▲${NC}" ;;
     info)    prefix+=" ${CYAN}◉${NC}" ;;
     error)   prefix+=" ${RED}✗${NC}" ;;
     *)       ;;
   esac
-
-  for msg in "$@"; do
-    printf '%s %s\n' "$prefix" "$msg"
-  done
+  for msg in "$@"; do printf '%s %s\n' "$prefix" "$msg"; done
 }
-
-info()    { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
+# Conditional output based on verbosity
+vecho()   { ((VERBOSE)) || return 0; _msg "$@"; }
 success() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 warn()    { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
+info()    { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
+# Debug output
+debug()   { ((DEBUG)) || return 0; >&2 _msg "$@"; }
+# Unconditional error output
 error()   { >&2 _msg "$@"; }
-
-die() {
-  local -i exit_code=${1:-1}
-  shift
-  (($#)) && error "$@"
-  exit "$exit_code"
-}
+# Error and exit
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 # ============================================================================
 # Data Functions (stdout, always output)
@@ -247,23 +240,21 @@ get_user_home() {
 
   home_dir=$(getent passwd "$username" | cut -d: -f6)
 
-  if [[ -z "$home_dir" ]]; then
-    return 1
-  fi
+  [[ -n "$home_dir" ]] || return 1
 
   echo "$home_dir"  # Data to stdout
 }
 
 # Generate structured report (data output)
 show_report() {
-  echo "User Report"
-  echo "==========="
-  echo ""
+  echo 'User Report'
+  echo '==========='
+  echo
   echo "Username: $USER"
   echo "Home: $HOME"
   echo "Shell: $SHELL"
-  echo ""
-  echo "Disk Usage:"
+  echo
+  echo 'Disk Usage:'
   df -h "$HOME" | tail -n 1
 }
 
@@ -271,20 +262,27 @@ show_report() {
 # Documentation Functions (stdout, always output)
 # ============================================================================
 
-usage() {
-  cat <<'EOF'
-Usage: script.sh [OPTIONS] USERNAME
+show_help() {
+  cat <<EOT
+$SCRIPT_NAME $VERSION - Brief description
 
-Get information about a user.
+Detailed description.
+
+Usage: $SCRIPT_NAME [Options] [arguments]
 
 Options:
-  -v, --verbose    Show detailed progress
-  -h, --help       Show this help
+  -n|--num NUM      Set num to NUM
+
+  -v|--verbose      Increase verbose output
+  -q|--quiet        No verbosity
+
+  -V|--version      Print version ('$SCRIPT_NAME $VERSION')
+  -h|--help         This help message
 
 Examples:
-  script.sh alice
-  script.sh -v bob
-EOF
+  # Example 1
+  $SCRIPT_NAME -v file.txt
+EOT
 }
 
 # ============================================================================
@@ -294,17 +292,38 @@ EOF
 main() {
   local -- username
   local -- user_home
+  local -i num=420
 
   # Parse arguments (messaging functions for progress)
   while (($#)); do case $1 in
-    -v|--verbose) VERBOSE=1 ;;
-    -h|--help)    usage; return 0 ;;
-    --)           shift; break ;;
-    -*)           die 22 "Invalid option: $1" ;;
-    *)            break ;;
+    -V|--version) echo "$SCRIPT_NAME $VERSION"
+                  return 0
+                  ;;
+    -h|--help)    show_help
+                  return 0
+                  ;;
+    -n|--num)     shift
+                  num=${1:-$num}
+                  ;;
+    -D|--debug)   DEBUG=1
+                  ;;
+    -v|--verbose) VERBOSE+=1
+                  ;;
+    -q|--quiet)   VERBOSE=0
+                  ;;
+    --)           shift; break
+                  ;;
+    -[VhnDvq]*) #shellcheck disable=SC2046 #split up single options
+                  set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"
+                  ;;
+    -*)           error "Invalid option ${1@Q}"
+                  return 22
+                  ;;
+    *)            break
+                  ;;
   esac; shift; done
 
-  readonly -- VERBOSE
+  readonly -- VERBOSE DEBUG
 
   # Validate arguments (error message)
   if (($# != 1)); then
@@ -316,16 +335,16 @@ main() {
   username="$1"
 
   # Operational status (messaging functions to stderr)
-  info "Looking up user: $username"
+  info "Looking up user ${username@Q}"
 
   # Get data (echo to stdout)
   if ! user_home=$(get_user_home "$username"); then
-    error "User not found: $username"
+    error "User not found ${username@Q}"
     return 1
   fi
 
   # Operational status (messaging function)
-  success "Found user: $username"
+  success "Found user ${username@Q}"
 
   # Data output (echo to stdout) - always displays
   show_report
@@ -335,7 +354,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -343,7 +361,7 @@ main "$@"
 
 ```bash
 # Without verbose - only data output and errors
-$ ./script.sh alice
+$ ./script.sh -q alice
 User Report
 ===========
 
@@ -393,30 +411,30 @@ User Report
 ```bash
 # ✗ Wrong - using info() for data output
 get_user_email() {
-  local -- email="$1"
+  local -- email=$1
   info "$email"  # Goes to stderr! Can't be captured!
 }
-email=$(get_user_email 'alice')  # $email is empty!
+email=$(get_user_email alice)  # $email is empty!
 
 # ✓ Correct - use echo for data output
 get_user_email() {
-  local -- email="$1"
+  local -- email=$1
   echo "$email"  # Goes to stdout, can be captured
 }
-email=$(get_user_email 'alice')  # $email contains value
+email=$(get_user_email alice)  # $email contains value
 
 # ✗ Wrong - using echo for operational status
 process_file() {
-  local -- file="$1"
-  echo "Processing $file..."  # Goes to stdout - mixes with data!
+  local -- file=$1
+  echo "Processing ${file@Q}..."  # Goes to stdout - mixes with data!
   cat "$file"
 }
 
 # ✓ Correct - use messaging function for status
 process_file() {
-  local -- file="$1"
-  info "Processing $file..."  # Goes to stderr - separated from data
-  cat "$file"                  # Data to stdout
+  local -- file=$1
+  info "Processing ${file@Q}..."  # Goes to stderr - separated from data
+  cat "$file"                     # Data to stdout
 }
 
 # ✗ Wrong - help text using info()
@@ -438,7 +456,7 @@ EOF
 
 # ✗ Wrong - mixing data and status on same stream
 list_files() {
-  echo "Listing files..."  # Status to stdout
+  echo 'Listing files...'  # Status to stdout
   ls                       # Data to stdout
 }
 # Can't parse output cleanly!
@@ -452,7 +470,7 @@ list_files() {
 # ✗ Wrong - error messages to stdout
 validate_input() {
   if [[ ! -f "$1" ]]; then
-    echo "File not found: $1"  # To stdout - wrong stream!
+    echo "File not found ${1@Q}"  # To stdout - wrong stream!
     return 1
   fi
 }
@@ -460,7 +478,7 @@ validate_input() {
 # ✓ Correct - error messages to stderr
 validate_input() {
   if [[ ! -f "$1" ]]; then
-    error "File not found: $1"  # To stderr - correct stream
+    error "File not found ${1@Q}"  # To stderr - correct stream
     return 1
   fi
 }
@@ -468,7 +486,7 @@ validate_input() {
 # ✗ Wrong - data output respecting VERBOSE
 get_count() {
   local -i count=10
-  ((VERBOSE)) && echo "$count"  # Data not shown if VERBOSE=0!
+  ((VERBOSE)) && echo "$count" ||:  # Data not shown if VERBOSE=0!
 }
 
 # ✓ Correct - data always outputs
@@ -557,15 +575,15 @@ show_result() {
 ```bash
 # Function can use messaging for context, return code for status
 validate_config() {
-  local -- config_file="$1"
+  local -- config_file=$1
 
   if [[ ! -f "$config_file" ]]; then
-    error "Config file not found: $config_file"
+    error "Config file not found ${config_file@Q}"
     return 2
   fi
 
   if [[ ! -r "$config_file" ]]; then
-    error "Config file not readable: $config_file"
+    error "Config file not readable ${config_file@Q}"
     return 5
   fi
 
@@ -584,7 +602,7 @@ fi
 ```bash
 # Log to file (echo), message to user (messaging function)
 process_item() {
-  local -- item="$1"
+  local -- item=$1
 
   # Log entry (data to stdout, redirected to file)
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] Processing: $item"
@@ -604,10 +622,10 @@ process_item "$item" >> "$log_file"
 test_data_output() {
   local -- output
 
-  output=$(get_user_home 'alice')
+  output=$(get_user_home alice)
 
   [[ -n "$output" ]] || die 1 'Expected output from get_user_home'
-  info "Test passed: Data captured correctly"
+  info 'Test passed: Data captured correctly'
 }
 
 # Test that messages don't interfere with data capture
@@ -621,7 +639,7 @@ test_message_separation() {
     success 'Process complete'   # To stderr - not captured
   )
 
-  [[ "$output" == 'data' ]] || die 1 "Expected 'data', got '$output'"
+  [[ "$output" == 'data' ]] || die 1 "Expected 'data', got ${output@Q}"
   info 'Test passed: Messages separate from data'
 }
 ```

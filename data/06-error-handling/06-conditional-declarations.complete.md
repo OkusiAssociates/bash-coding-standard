@@ -27,7 +27,7 @@ declare -i complete=0
 #   3. Overall exit code is 1 (from the arithmetic test)
 #   4. set -e sees exit code 1 and terminates the script!
 
-echo "This line never executes"
+echo 'This line never executes'
 ```
 
 **The solution:**
@@ -47,7 +47,7 @@ declare -i complete=0
 #   4. Overall exit code is 0 (success)
 #   5. Script continues normally
 
-echo "This line executes correctly"
+echo 'This line executes correctly'
 ```
 
 **Why `:` (colon) over `true`:**
@@ -235,7 +235,7 @@ This script demonstrates:
 
    # ✓ Correct - check explicitly
    if ((required_flag)); then
-     critical_operation || die 1 "Critical operation failed"
+     critical_operation || die 1 'Critical operation failed'
    fi
    ```
 
@@ -246,7 +246,7 @@ This script demonstrates:
 
    # ✓ Correct - handle failure
    if ((condition)) && ! risky_operation; then
-     error "risky_operation failed"
+     error 'risky_operation failed'
      return 1
    fi
    ```
@@ -254,11 +254,11 @@ This script demonstrates:
 3. **The condition itself is the operation** - use if statement
    ```bash
    # ✗ Awkward - condition is the operation
-   ((count+=1)) && echo "Incremented" || :
+   ((count+=1)) && echo 'Incremented' || :
 
    # ✓ Clearer - just do the operation
    count+=1
-   echo "Incremented"
+   echo 'Incremented'
    ```
 
 **Anti-patterns to avoid:**
@@ -286,7 +286,7 @@ This script demonstrates:
 
 # ✓ CORRECT: Check critical operations explicitly
 if ((user_confirmed)); then
-  delete_all_files || die 1 "Failed to delete files"
+  delete_all_files || die 1 'Failed to delete files'
 fi
 ```
 
@@ -324,7 +324,6 @@ fi
 
 # Pros: No || : needed (fails when complete≠0, which is fine)
 # Cons: Double negative is confusing
-# Use when: Never - prefer positive logic with || :
 ```
 
 **Alternative 4: Temporarily disable errexit**
@@ -351,7 +350,7 @@ test_false_condition() {
   local -i flag=0
 
   # Without || :, this would exit the script
-  ((flag)) && echo "This won't print" || :
+  ((flag)) && echo "This won't print" ||:
 
   # Script continues
   echo "Test 1 passed: false condition didn't exit"
@@ -370,7 +369,7 @@ test_true_condition() {
     return 1
   }
 
-  echo "Test 2 passed: true condition executed action"
+  echo 'Test 2 passed: true condition executed action'
 }
 
 # Test 3: Verify nested conditionals
@@ -388,7 +387,7 @@ test_nested_conditionals() {
     return 1
   }
 
-  echo "Test 3 passed: nested conditionals work correctly"
+  echo 'Test 3 passed: nested conditionals work correctly'
 }
 
 # Test 4: Verify set -e still catches real errors
@@ -397,11 +396,11 @@ test_error_detection() {
 
   # Real error should still exit
   if ((flag)) && false; then
-    echo "Test 4 failed: error not detected"
+    echo 'Test 4 failed: error not detected'
     return 1
   fi
 
-  echo "Test 4 passed: real errors still caught"
+  echo 'Test 4 passed: real errors still caught'
 }
 
 # Run tests
@@ -410,8 +409,7 @@ test_true_condition
 test_nested_conditionals
 test_error_detection
 
-echo "All tests passed!"
-
+echo 'All tests passed!'
 #fin
 ```
 

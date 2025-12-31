@@ -25,6 +25,7 @@ echo "${name@Q}"      # Output: '$(rm -rf /)' (safe, literal)
 ```bash
 # ✗ Wrong - injection risk
 die 2 "Unknown option $1"
+die 2 "Unknown option '$1'"
 
 # ✓ Correct - safe display
 die 2 "Unknown option ${1@Q}"

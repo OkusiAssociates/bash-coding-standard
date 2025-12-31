@@ -25,9 +25,9 @@ command_that_might_fail || true
 
 # Pattern 2: Capture exit code
 if command_that_might_fail; then
-  echo "Success"
+  echo 'Success'
 else
-  echo "Expected failure occurred"
+  echo 'Expected failure occurred'
 fi
 
 # Pattern 3: Temporarily disable errexit
@@ -47,7 +47,7 @@ fi
 # ✗ This will exit even though you check the result
 result=$(failing_command)  # Script exits here with set -e
 if [[ -n "$result" ]]; then  # Never reached
-  echo "Never gets here"
+  echo 'Never gets here'
 fi
 
 # ✓ Correct - disable errexit for this command
@@ -55,14 +55,14 @@ set +e
 result=$(failing_command)
 set -e
 if [[ -n "$result" ]]; then
-  echo "Now this works"
+  echo 'Now this works'
 fi
 
 # ✓ Alternative - check in conditional
 if result=$(failing_command); then
   echo "Command succeeded: $result"
 else
-  echo "Command failed, that's okay"
+  echo 'Command failed, that's okay'
 fi
 ```
 

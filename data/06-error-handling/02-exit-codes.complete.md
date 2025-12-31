@@ -2,7 +2,7 @@
 
 **Standard implementation:**
 ```bash
-die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
+die() { (($# > 1)) && error "${@:2}" ||:; exit "${1:-0}"; }
 die 0                    # Success (or use `exit 0`)
 die 1                    # Exit 1 with no error message
 die 1 'General error'    # General error
@@ -31,7 +31,7 @@ die 2 'Missing required file'   # Usage error
 die 3 'Configuration error'     # Config file issue
 die 4 'Network error'           # Connection failed
 die 5 'Permission denied'       # Insufficient permissions
-die 22 "Invalid option '$1'"    # Bad argument (EINVAL)
+die 22 "Invalid option ${1@Q}"  # Bad argument (EINVAL)
 ```
 
 **Rationale:**
@@ -56,12 +56,12 @@ die "$ERR_CONFIG" 'Failed to load configuration file'
 **Checking exit codes:**
 ```bash
 if command; then
-  echo "Success"
+  echo 'Success'
 else
   exit_code=$?
   case $exit_code in
-    1) echo "General failure" ;;
-    2) echo "Usage error" ;;
+    1) echo 'General failure' ;;
+    2) echo 'Usage error' ;;
     *) echo "Unknown error: $exit_code" ;;
   esac
 fi

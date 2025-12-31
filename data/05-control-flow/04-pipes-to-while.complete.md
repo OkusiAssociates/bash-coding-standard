@@ -21,7 +21,7 @@ declare -i count=0
 
 echo -e "line1\nline2\nline3" | while IFS= read -r line; do
   echo "$line"
-  ((count+=1))
+  count+=1
 done
 
 echo "Count: $count"  # Output: Count: 0 (NOT 3!)
@@ -51,7 +51,7 @@ declare -i count=0
 
 while IFS= read -r line; do
   echo "$line"
-  ((count+=1))
+  count+=1
 done < <(echo -e "line1\nline2\nline3")
 
 echo "Count: $count"  # Output: Count: 3 (correct!)
@@ -85,7 +85,7 @@ declare -i count=0
 
 while IFS= read -r line; do
   echo "$line"
-  ((count+=1))
+  count+=1
 done <<< "$input"
 
 echo "Count: $count"  # Output: Count: 3 (correct!)
@@ -100,20 +100,20 @@ echo "Count: $count"  # Output: Count: 3 (correct!)
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # ✗ WRONG - Counter stays 0
 count_errors_wrong() {
-  local -- log_file="$1"
+  local -- log_file=$1
   local -i error_count=0
 
   # Pipe creates subshell!
   grep 'ERROR' "$log_file" | while IFS= read -r line; do
     echo "Found: $line"
-    ((error_count+=1))
+    error_count+=1
   done
 
   echo "Errors: $error_count"  # Always 0!
@@ -122,13 +122,13 @@ count_errors_wrong() {
 
 # ✓ CORRECT - Process substitution
 count_errors_correct() {
-  local -- log_file="$1"
+  local -- log_file=$1
   local -i error_count=0
 
   # Process substitution keeps loop in current shell
   while IFS= read -r line; do
     echo "Found: $line"
-    ((error_count+=1))
+    error_count+=1
   done < <(grep 'ERROR' "$log_file")
 
   echo "Errors: $error_count"  # Correct count!
@@ -137,7 +137,7 @@ count_errors_correct() {
 
 # ✓ ALSO CORRECT - Using wc (when only count matters)
 count_errors_simple() {
-  local -- log_file="$1"
+  local -- log_file=$1
   local -i error_count
 
   error_count=$(grep -c 'ERROR' "$log_file")
@@ -146,13 +146,12 @@ count_errors_simple() {
 }
 
 main() {
-  local -- test_log='/var/log/app.log'
+  local -- test_log=/var/log/app.log
 
   count_errors_correct "$test_log"
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -208,8 +207,8 @@ process_files_wrong() {
   find /data -type f | while IFS= read -r file; do
     local -- size
     size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null)
-    ((total_size+=size))
-    ((file_count+=1))
+    total_size+=size
+    file_count+=1
   done
 
   echo "Files: $file_count, Total: $total_size"
@@ -221,11 +220,11 @@ process_files_correct() {
   local -i total_size=0
   local -i file_count=0
 
+  local -- size
   while IFS= read -r file; do
-    local -- size
     size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null)
-    ((total_size+=size))
-    ((file_count+=1))
+    total_size+=size
+    file_count+=1
   done < <(find /data -type f)
 
   echo "Files: $file_count, Total: $total_size"
@@ -256,7 +255,7 @@ parse_config_correct() {
   while IFS='=' read -r key value; do
     # Skip comments and empty lines
     [[ "$key" =~ ^[[:space:]]*# ]] && continue
-    [[ -z "$key" ]] && continue
+    [[ -n "$key" ]] || continue
 
     config[$key]="$value"
   done < <(cat config.conf)
@@ -284,7 +283,7 @@ readarray -t log_lines < <(tail -n 100 /var/log/app.log)
 # Process array
 local -- line
 for line in "${log_lines[@]}"; do
-  [[ "$line" =~ ERROR ]] && echo "Error: $line"
+  [[ "$line" =~ ERROR ]] && echo "Error: ${line@Q}" ||:
 done
 
 # ✓ BEST - readarray with null-delimited input
@@ -305,14 +304,14 @@ done
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Analyze log file with process substitution
 analyze_log() {
-  local -- log_file="$1"
+  local -- log_file=$1
 
   local -i error_count=0
   local -i warn_count=0
@@ -321,13 +320,13 @@ analyze_log() {
 
   # Process substitution - variables persist
   while IFS= read -r line; do
-    ((total_lines+=1))
+    total_lines+=1
 
     if [[ "$line" =~ ERROR ]]; then
-      ((error_count+=1))
+      error_count+=1
       error_lines+=("$line")
     elif [[ "$line" =~ WARN ]]; then
-      ((warn_count+=1))
+      warn_count+=1
     fi
   done < <(cat "$log_file")
 
@@ -346,7 +345,7 @@ analyze_log() {
 
 # Collect configuration with readarray
 load_config() {
-  local -- config_file="$1"
+  local -- config_file=$1
   local -a config_lines
   local -A config=()
 
@@ -370,7 +369,7 @@ load_config() {
 
 # Process files safely
 process_directory() {
-  local -- dir="$1"
+  local -- dir=$1
   local -a files
 
   # Collect files with readarray
@@ -382,7 +381,7 @@ process_directory() {
   for file in "${files[@]}"; do
     echo "Processing: $file"
     # Process file
-    ((processed+=1))
+    processed+=1
   done
 
   echo "Processed $processed files"
@@ -395,22 +394,22 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
 **Anti-patterns to avoid:**
 
 ```bash
+declare -i count=0
 # ✗ WRONG - Pipe to while with counter
 cat file.txt | while read -r line; do
-  ((count+=1))
+  count+=1
 done
 echo "$count"  # Still 0!
 
 # ✓ CORRECT - Process substitution
 while read -r line; do
-  ((count+=1))
+  count+=1
 done < <(cat file.txt)
 echo "$count"  # Correct!
 
@@ -454,14 +453,14 @@ done < <(grep ERROR log)
 
 # ✗ WRONG - Complex pipeline with state
 cat file | grep pattern | sort | while read -r line; do
-  ((count+=1))
+  count+=1
   data+=("$line")
 done
 # count=0, data=() - both lost!
 
 # ✓ CORRECT - Process substitution with pipeline
 while read -r line; do
-  ((count+=1))
+  count+=1
   data+=("$line")
 done < <(cat file | grep pattern | sort)
 # Variables persist!
@@ -476,7 +475,7 @@ done < <(cat file | grep pattern | sort)
 declare -i count=0
 
 while read -r line; do
-  ((count+=1))
+  count+=1
 done < <(echo -n "")  # No output
 
 echo "Count: $count"  # 0 - correct (no lines)
@@ -541,12 +540,12 @@ test_process_substitution() {
   # This works
   while read -r line; do
     count=1
-  done < <(echo "test")
+  done < <(echo 'test')
 
   if ((count == 1)); then
-    echo "PASS: Process substitution kept variables"
+    echo 'PASS: Process substitution kept variables'
   else
-    echo "FAIL: Count not updated"
+    echo 'FAIL: Count not updated'
   fi
 }
 

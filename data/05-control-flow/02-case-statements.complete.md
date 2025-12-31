@@ -17,36 +17,36 @@
 ```bash
 # ✓ Use case when - testing single variable against multiple values
 case "$action" in
-  start) start_service ;;
-  stop) stop_service ;;
+  start)   start_service ;;
+  stop)    stop_service ;;
   restart) restart_service ;;
-  status) show_status ;;
-  *) die 22 "Invalid action: $action" ;;
+  status)  show_status ;;
+  *)       die 22 "Invalid action ${action@Q}" ;;
 esac
 
 # ✓ Use case when - pattern matching needed
 case "$filename" in
   *.txt) process_text_file ;;
   *.pdf) process_pdf_file ;;
-  *.md) process_markdown_file ;;
-  *) die 22 "Unsupported file type" ;;
+  *.md)  process_markdown_file ;;
+  *)     die 22 'Unsupported file type' ;;
 esac
 
 # ✓ Use case when - parsing command-line arguments
 case $1 in
   -v|--verbose) VERBOSE=1 ;;
-  -h|--help) usage; exit 0 ;;
-  -*) die 22 "Invalid option: $1" ;;
-  *) FILENAME="$1" ;;
+  -h|--help)    usage; exit 0 ;;
+  -*)           die 22 "Invalid option ${1@Q}" ;;
+  *)            FILENAME=$1 ;;
 esac
 
 # ✗ Use if/elif when - testing different variables
 if [[ ! -f "$file" ]]; then
-  die 2 "File not found: $file"
+  die 2 "File not found ${file@Q}"
 elif [[ ! -r "$file" ]]; then
-  die 1 "File not readable: $file"
+  die 1 "File not readable ${file@Q}"
 elif [[ -z "$output" ]]; then
-  die 22 "Output path required"
+  die 22 'Output path required'
 fi
 
 # ✗ Use if/elif when - complex conditional logic
@@ -114,7 +114,7 @@ Use compact format when each case performs a single action or simple command.
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -136,7 +136,7 @@ while (($#)); do
     -V|--version) echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
     -o|--output)  noarg "$@"; shift; OUTPUT_FILE="$1" ;;
     --)           shift; break ;;
-    -*)           die 22 "Invalid option: $1" ;;
+    -*)           die 22 "Invalid option ${1@Q}" ;;
     *)            INPUT_FILES+=("$1") ;;
   esac
   shift
@@ -168,14 +168,14 @@ Use expanded format when cases have multi-line actions, require comments, or per
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 declare -i INSTALL_BUILTIN=0
 declare -i VERBOSE=0
-declare -- PREFIX='/usr/local'
+declare -- PREFIX=/usr/local
 declare -- BIN_DIR=''
 declare -- LIB_DIR=''
 
@@ -183,15 +183,15 @@ declare -- LIB_DIR=''
 while (($#)); do
   case $1 in
     -b|--builtin)     INSTALL_BUILTIN=1
-                      ((VERBOSE)) && info 'Builtin installation enabled'
+                      ((VERBOSE)) && info 'Builtin installation enabled' ||:
                       ;;
 
     -p|--prefix)      noarg "$@"
                       shift
-                      PREFIX="$1"
-                      BIN_DIR="$PREFIX/bin"
-                      LIB_DIR="$PREFIX/lib/bash"
-                      ((VERBOSE)) && info "Prefix set to: $PREFIX"
+                      PREFIX=$1
+                      BIN_DIR="$PREFIX"/bin
+                      LIB_DIR="$PREFIX"/lib/bash
+                      ((VERBOSE)) && info "Prefix set to: $PREFIX" ||:
                       ;;
 
     -v|--verbose)     VERBOSE=1
@@ -210,14 +210,14 @@ while (($#)); do
                       break
                       ;;
 
-    -*)               error "Invalid option: $1"
+    -*)               error "Invalid option ${1@Q}"
                       usage
                       exit 22
                       ;;
 
-    *)                error "Unexpected argument: $1"
+    *)                error "Unexpected argument ${1@Q}"
                       usage
-                      exit 22
+                      exit 2
                       ;;
   esac
   shift
@@ -255,22 +255,22 @@ case "$filename" in
   *.txt) echo 'Text file' ;;
   *.pdf) echo 'PDF file' ;;
   *.log) echo 'Log file' ;;
-  *) echo 'Unknown file type' ;;
+  *)     echo 'Unknown file type' ;;
 esac
 
 # Question mark wildcard - matches single character
 case "$code" in
-  ??) echo 'Two-character code' ;;
-  ???) echo 'Three-character code' ;;
-  *) echo 'Other length' ;;
+  ??)   echo 'Two-character code' ;;
+  ???)  echo 'Three-character code' ;;
+  *)    echo 'Other length' ;;
 esac
 
 # Prefix/suffix matching
 case "$path" in
-  /usr/*) echo 'System path' ;;
+  /usr/*)  echo 'System path' ;;
   /home/*) echo 'Home directory' ;;
-  /tmp/*) echo 'Temporary path' ;;
-  *) echo 'Other path' ;;
+  /tmp/*)  echo 'Temporary path' ;;
+  *)       echo 'Other path' ;;
 esac
 ```
 
@@ -280,7 +280,7 @@ esac
 # Multiple patterns with |
 case "$option" in
   -h|--help|help) usage; exit 0 ;;
-  -v|--verbose|verbose) VERBOSE=1 ;;
+  -v|--verbose|verbose) VERBOSE+=1 ;;
   -q|--quiet|quiet) VERBOSE=0 ;;
 esac
 
@@ -331,7 +331,7 @@ esac
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -344,7 +344,7 @@ declare -i VERBOSE=0
 declare -i DRY_RUN=0
 declare -i FORCE=0
 declare -- OUTPUT_DIR=''
-declare -- CONFIG_FILE="$SCRIPT_DIR/config.conf"
+declare -- CONFIG_FILE="$SCRIPT_DIR"/config.conf
 declare -a INPUT_FILES=()
 
 # ============================================================================
@@ -353,7 +353,7 @@ declare -a INPUT_FILES=()
 
 _msg() {
   local -- prefix="$SCRIPT_NAME:" msg
-  case "${FUNCNAME[1]}" in
+  case ${FUNCNAME[1]} in
     info) prefix+=" ◉" ;;
     warn) prefix+=" ▲" ;;
     error) prefix+=" ✗" ;;
@@ -413,7 +413,7 @@ EOF
 
 noarg() {
   if (($# < 2)) || [[ "$2" =~ ^- ]]; then
-    die 22 "Option $1 requires an argument"
+    die 22 "Option ${1@Q} requires an argument"
   fi
 }
 
@@ -422,17 +422,17 @@ noarg() {
 # ============================================================================
 
 process_file() {
-  local -- file="$1"
+  local -- file=$1
 
   if [[ ! -f "$file" ]]; then
-    error "File not found: $file"
+    error "File not found ${file@Q}"
     return 2
   fi
 
   if ((DRY_RUN)); then
-    info "[DRY-RUN] Would process: $file"
+    info "[DRY-RUN] Would process ${file@Q}"
   else
-    info "Processing: $file"
+    info "Processing ${file@Q}"
     # Process file logic here
   fi
 
@@ -447,7 +447,7 @@ main() {
   # Parse command-line arguments
   while (($#)); do
     case $1 in
-      -v|--verbose)     VERBOSE=1
+      -v|--verbose)     VERBOSE+=1
                         info 'Verbose mode enabled'
                         ;;
 
@@ -462,12 +462,12 @@ main() {
 
       -o|--output)      noarg "$@"
                         shift
-                        OUTPUT_DIR="$1"
+                        OUTPUT_DIR=$1
                         ;;
 
       -c|--config)      noarg "$@"
                         shift
-                        CONFIG_FILE="$1"
+                        CONFIG_FILE=$1
                         ;;
 
       -V|--version)     echo "$SCRIPT_NAME $VERSION"
@@ -482,7 +482,7 @@ main() {
                         break
                         ;;
 
-      -*)               die 22 "Invalid option: $1"
+      -*)               die 22 "Invalid option ${1@Q}"
                         ;;
 
       *)                INPUT_FILES+=("$1")
@@ -502,28 +502,28 @@ main() {
   if [[ ${#INPUT_FILES[@]} -eq 0 ]]; then
     error 'No input files specified'
     usage
-    return 22
+    return 2
   fi
 
   if [[ -n "$OUTPUT_DIR" && ! -d "$OUTPUT_DIR" ]]; then
     if ((FORCE)); then
-      info "Creating output directory: $OUTPUT_DIR"
+      info "Creating output directory ${OUTPUT_DIR@Q}"
       mkdir -p "$OUTPUT_DIR"
     else
-      die 2 "Output directory not found: $OUTPUT_DIR (use -f to create)"
+      die 2 "Output directory not found: ${OUTPUT_DIR@Q} (use -f to create)"
     fi
   fi
 
   if [[ ! -f "$CONFIG_FILE" ]]; then
-    warn "Config file not found: $CONFIG_FILE (using defaults)"
+    warn "Config file not found ${CONFIG_FILE@Q} (using defaults)"
   fi
 
   # Display configuration
   if ((VERBOSE)); then
     info "$SCRIPT_NAME $VERSION"
     info "Input files: ${#INPUT_FILES[@]}"
-    [[ -n "$OUTPUT_DIR" ]] && info "Output: $OUTPUT_DIR"
-    ((DRY_RUN)) && info '[DRY-RUN] Mode enabled'
+    [[ -z "$OUTPUT_DIR" ]] || info "Output: $OUTPUT_DIR"
+    ((DRY_RUN==0)) || info '[DRY-RUN] Mode enabled'
   fi
 
   # Process files
@@ -533,16 +533,16 @@ main() {
 
   for file in "${INPUT_FILES[@]}"; do
     if process_file "$file"; then
-      ((success_count+=1))
+      success_count+=1
     else
-      ((error_count+=1))
+      error_count+=1
     fi
   done
 
   # Report results
   if ((VERBOSE)); then
     success "Processed: $success_count files"
-    ((error_count > 0)) && warn "Errors: $error_count"
+    ((error_count)) && warn "Errors: $error_count" ||:
   fi
 
   # Return appropriate exit code
@@ -565,100 +565,98 @@ main "$@"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Route files based on extension
 process_file_by_type() {
-  local -- file="$1"
-  local -- filename="${file##*/}"
+  local -- file=$1
+  local -- filename=${file##*/}
 
   case "$filename" in
     *.txt|*.md|*.rst)
-      info "Processing text document: $file"
+      info "Processing text document ${file@Q}"
       process_text "$file"
       ;;
 
     *.jpg|*.jpeg|*.png|*.gif)
-      info "Processing image: $file"
+      info "Processing image ${file@Q}"
       process_image "$file"
       ;;
 
     *.pdf)
-      info "Processing PDF: $file"
+      info "Processing PDF ${file@Q}"
       process_pdf "$file"
       ;;
 
     *.sh|*.bash)
-      info "Processing shell script: $file"
+      info "Processing shell script ${file@Q}"
       validate_script "$file"
       ;;
 
     *.json)
-      info "Processing JSON: $file"
+      info "Processing JSON ${file@Q}"
       validate_json "$file"
       ;;
 
     *.xml)
-      info "Processing XML: $file"
+      info "Processing XML ${file@Q}"
       validate_xml "$file"
       ;;
 
     .*)
-      warn "Skipping hidden file: $file"
+      warn "Skipping hidden file ${file@Q}"
       return 0
       ;;
 
     *.tmp|*.bak|*~)
-      warn "Skipping temporary file: $file"
+      warn "Skipping temporary file ${file@Q}"
       return 0
       ;;
 
     *)
-      error "Unknown file type: $file"
+      error "Unknown file type ${file@Q}"
       return 1
       ;;
   esac
 }
 
 process_text() {
-  local -- file="$1"
+  local -- file=$1
   # Text processing logic
 }
 
 process_image() {
-  local -- file="$1"
+  local -- file=$1
   # Image processing logic
 }
 
 process_pdf() {
-  local -- file="$1"
+  local -- file=$1
   # PDF processing logic
 }
 
 validate_script() {
-  local -- file="$1"
+  local -- file=$1
   shellcheck "$file"
 }
 
 validate_json() {
-  local -- file="$1"
+  local -- file=$1
   jq empty "$file"
 }
 
 validate_xml() {
-  local -- file="$1"
+  local -- file=$1
   xmllint --noout "$file"
 }
 
 main() {
   local -a files=("$@")
 
-  if [[ ${#files[@]} -eq 0 ]]; then
-    die 22 'No files specified'
-  fi
+  ((${#files[@]})) || die 22 'No files specified'
 
   local -- file
   for file in "${files[@]}"; do
@@ -678,14 +676,14 @@ main "$@"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Service control script
-SERVICE_NAME='myapp'
-PID_FILE="/var/run/$SERVICE_NAME.pid"
+SERVICE_NAME=myapp
+PID_FILE=/var/run/"$SERVICE_NAME".pid
 
 start_service() {
   if [[ -f "$PID_FILE" ]]; then
@@ -700,7 +698,7 @@ start_service() {
 
 stop_service() {
   if [[ ! -f "$PID_FILE" ]]; then
-    warn "Service not running"
+    warn 'Service not running'
     return 0
   fi
 
@@ -737,9 +735,7 @@ status_service() {
 }
 
 reload_service() {
-  if [[ ! -f "$PID_FILE" ]]; then
-    die 1 'Service not running'
-  fi
+  [[ -f "$PID_FILE" ]] || die 1 'Service not running'
 
   local -i pid
   pid=$(cat "$PID_FILE")
@@ -751,9 +747,7 @@ reload_service() {
 main() {
   local -- action="${1:-}"
 
-  if [[ -z "$action" ]]; then
-    die 22 'No action specified (start|stop|restart|status|reload)'
-  fi
+  [[ -n "$action" ]] || die 22 'No action specified (start|stop|restart|status|reload)'
 
   # Route to appropriate handler
   case "$action" in
@@ -788,7 +782,7 @@ main() {
 
     # Reject unknown actions
     *)
-      die 22 "Invalid action: $action (use: start|stop|restart|status|reload)"
+      die 22 "Invalid action ${action@Q} (use: start|stop|restart|status|reload)"
       ;;
   esac
 }
@@ -854,14 +848,14 @@ case "$action" in
   start) start_service ;;
   stop) stop_service ;;
   restart) restart_service ;;
-  *) die 22 "Invalid action: $action" ;;
+  *) die 22 "Invalid action ${action@Q}" ;;
 esac
 
 # ✗ Wrong - inconsistent format mixing
 case "$opt" in
   -v) VERBOSE=1 ;;
   -o) shift
-      OUTPUT="$1"
+      OUTPUT=$1
       ;;                 # Inconsistent - mixing compact and expanded
   -h) usage; exit 0 ;;
 esac
@@ -869,13 +863,13 @@ esac
 # ✓ Correct - consistent compact format
 case "$opt" in
   -v) VERBOSE=1 ;;
-  -o) shift; OUTPUT="$1" ;;
+  -o) shift; OUTPUT=$1 ;;
   -h) usage; exit 0 ;;
 esac
 
 # ✗ Wrong - poor column alignment
 case $1 in
-  -v|--verbose) VERBOSE=1 ;;
+  -v|--verbose) VERBOSE+=1 ;;
   -n|--dry-run) DRY_RUN=1 ;;
   -f|--force) FORCE=1 ;;        # Alignment is inconsistent
   -h|--help) usage; exit 0 ;;
@@ -883,7 +877,7 @@ esac
 
 # ✓ Correct - consistent column alignment
 case $1 in
-  -v|--verbose) VERBOSE=1 ;;
+  -v|--verbose) VERBOSE+=1 ;;
   -n|--dry-run) DRY_RUN=1 ;;
   -f|--force)   FORCE=1 ;;
   -h|--help)    usage; exit 0 ;;
@@ -961,14 +955,15 @@ fi
 ```bash
 # Empty string is a valid case
 case "$value" in
-  '') echo 'Empty string' ;;
-  *) echo "Value: $value" ;;
+  '')  echo 'Empty string' ;;
+  *)   echo "Value: $value" ;;
 esac
 
 # Multiple empty possibilities
 case "$input" in
-  ''|' '|$'\t') echo 'Blank or whitespace' ;;
-  *) echo 'Has content' ;;
+  ''|' '|$'\t')
+       echo 'Blank or whitespace' ;;
+  *)   echo 'Has content' ;;
 esac
 ```
 
@@ -977,16 +972,16 @@ esac
 ```bash
 # Quote patterns with special characters
 case "$filename" in
-  'file (1).txt') echo 'Match parentheses' ;;
+  'file (1).txt')      echo 'Match parentheses' ;;
   'file [backup].txt') echo 'Match brackets' ;;
-  'file$special.txt') echo 'Match dollar sign' ;;
-  *) echo 'Other' ;;
+  'file$special.txt')  echo 'Match dollar sign' ;;
+  *)                   echo 'Other' ;;
 esac
 
 # Wildcards in middle of pattern
 case "$path" in
-  /usr/*/bin) echo 'Binary path under /usr' ;;
-  /home/*/Documents) echo 'User documents folder' ;;
+  /usr/*/bin)         echo 'Binary path under /usr' ;;
+  /home/*/Documents)  echo 'User documents folder' ;;
 esac
 ```
 
@@ -995,10 +990,11 @@ esac
 ```bash
 # Case treats everything as strings
 case "$port" in
-  80|443) echo 'Standard web port' ;;
-  22) echo 'SSH port' ;;
-  [0-9][0-9][0-9][0-9]) echo 'Four-digit port' ;;
-  *) echo 'Other port' ;;
+  80|443)  echo 'Standard web port' ;;
+  22)      echo 'SSH port' ;;
+  [0-9][0-9][0-9][0-9])
+           echo 'Four-digit port' ;;
+  *)       echo 'Other port' ;;
 esac
 
 # For numeric comparison, use (()) instead
@@ -1049,7 +1045,7 @@ esac
 ```bash
 # Return different values based on case
 validate_input() {
-  local -- input="$1"
+  local -- input=$1
 
   case "$input" in
     [a-z]*)
@@ -1090,7 +1086,7 @@ fi
 ```bash
 # First level: action
 main() {
-  local -- action="$1"
+  local -- action=$1
   shift
 
   case "$action" in
@@ -1107,33 +1103,33 @@ main() {
       ;;
 
     *)
-      die 22 "Invalid action: $action"
+      die 22 "Invalid action ${action@Q}"
       ;;
   esac
 }
 
 # Second level: subcommand
 handle_user_commands() {
-  local -- subcommand="$1"
+  local -- subcommand=$1
   shift
 
   case "$subcommand" in
-    add) add_user "$@" ;;
+    add)    add_user "$@" ;;
     delete) delete_user "$@" ;;
-    list) list_users ;;
-    *) die 22 "Invalid user subcommand: $subcommand" ;;
+    list)   list_users ;;
+    *)      die 22 "Invalid user subcommand ${subcommand@Q}" ;;
   esac
 }
 
 handle_group_commands() {
-  local -- subcommand="$1"
+  local -- subcommand=$1
   shift
 
   case "$subcommand" in
-    add) add_group "$@" ;;
+    add)    add_group "$@" ;;
     delete) delete_group "$@" ;;
-    list) list_groups ;;
-    *) die 22 "Invalid group subcommand: $subcommand" ;;
+    list)   list_groups ;;
+    *)      die 22 "Invalid group subcommand ${subcommand@Q}" ;;
   esac
 }
 ```
