@@ -685,8 +685,8 @@ compress_check_timestamps_match() {
   summary_mtime=$(stat -c '%Y' "$summary_file" 2>/dev/null) || return 1
   abstract_mtime=$(stat -c '%Y' "$abstract_file" 2>/dev/null) || return 1
 
-  # Check if all three timestamps match
-  [[ "$complete_mtime" == "$summary_mtime" && "$summary_mtime" == "$abstract_mtime" ]] ||:
+  # Check if all three timestamps match (return 0 if match, 1 if not)
+  [[ "$complete_mtime" == "$summary_mtime" && "$summary_mtime" == "$abstract_mtime" ]]
 }
 declare -fx compress_check_timestamps_match
 
@@ -1054,7 +1054,7 @@ compress_process_all_rules() {
     else
       local -- file newtime
       for file in "${complete_files[@]}"; do
-        newtime=$(awk -v t="$(date +%s.%N -r "$file")" 'BEGIN {printf "%.9f", t + 0.1}')
+        newtime=$(awk -v t="$(date +%s.%N -r "$file")" 'BEGIN {printf "%.9f", t + 1}')
         touch -d "@$newtime" "$file" || warn "Failed to touch ${file@Q}"
       done
     fi
