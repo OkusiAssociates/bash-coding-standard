@@ -193,11 +193,11 @@ find_agent() {
   local -- agent_name=$1
   local -- install_share="${BCS_DIR%/bin}/share/yatti/bash-coding-standard/lib/agents"
   local -a search_paths=(
-    "$BCS_DIR/lib/agents/$agent_name"                       # Same directory (development)
-    "$install_share/$agent_name"                            # Relative to script (installed)
+    "$BCS_DIR"/lib/agents/"$agent_name"                     # Same directory (development)
+    "$install_share"/"$agent_name"                          # Relative to script (installed)
     /usr/local/share/yatti/bash-coding-standard/lib/agents/"$agent_name"  # YaTTI local install
     /usr/share/yatti/bash-coding-standard/lib/agents/"$agent_name"        # YaTTI system install
-    "/ai/scripts/claude/agents/$agent_name"                 # Development fallback
+    /ai/scripts/claude/agents/"$agent_name"                 # Development fallback
   )
 
   local -- path
@@ -366,19 +366,17 @@ rebuild_bcs_index() {
   >&2 echo
 
   local -i dir_symlink_count=0
+  local -- dir_basename num parent_dir link_path target_path
   for dir in "${dirs[@]}"; do
     # Extract the basename of the directory
-    local -- dir_basename
     dir_basename=$(basename "$dir")
 
     # Check if basename starts with ##- pattern
     if [[ "$dir_basename" =~ ^([0-9][0-9])- ]]; then
-      local -- num="${BASH_REMATCH[1]}"
-      local -- parent_dir
+      num="${BASH_REMATCH[1]}"
       parent_dir=$(dirname "$dir")
 
       # Determine link location and target
-      local -- link_path target_path
       if [[ "$parent_dir" == "." ]]; then
         # Top-level directory: create symlink in BCS root
         link_path="$bcs_index_dir/$num"
@@ -409,21 +407,20 @@ rebuild_bcs_index() {
 
   local -- file bcs_code link_dir link_name
   local -i symlink_count=0 skipped_count=0
-
+  local -- basename tier
   for file in "${md_files[@]}"; do
     # Determine link directory (same subdirectory structure as file, relative to data/)
     link_dir="$bcs_index_dir/${file#"$data_dir"/}"
     link_dir="${link_dir%/*}"  # Remove filename
 
     # Extract basename and numeric prefix
-    local -- basename
     basename=$(basename "$file")
 
     # Extract the ##- prefix (e.g., "01-", "02-", "10-")
     local -- numeric_prefix
     if [[ "$basename" =~ ^([0-9][0-9])[-].*\.(complete|summary|abstract)\.md$ ]]; then
       numeric_prefix="${BASH_REMATCH[1]}"
-      local -- tier=".${BASH_REMATCH[2]}".md
+      tier=".${BASH_REMATCH[2]}".md
 
       # Create link name: just the number + tier (e.g., "01.complete.md")
       link_name="$link_dir/$numeric_prefix$tier"
@@ -449,7 +446,7 @@ declare -fx rebuild_bcs_index
 
 # Validate Claude CLI availability and capabilities
 compress_validate_claude_cli() {
-  local -- claude_cmd="${1:-claude}"
+  local -- claude_cmd=${1:-claude}
 
   command -v "$claude_cmd" >/dev/null 2>&1 || {
     error "Claude CLI not found ${claude_cmd@Q}"
@@ -987,12 +984,12 @@ compress_process_complete_file() {
   local -- data_dir=$2
   local -- tier=$3
   local -- claude_cmd=$4
-  local -i dry_run="${5:-0}"
-  local -i compress_verbose="${6:-1}"
-  local -i regenerate="${7:-0}"
-  local -i summary_limit="${8:-10000}"
-  local -i abstract_limit="${9:-1500}"
-  local -- context_level="${10:-none}"  # Context level parameter
+  local -i dry_run=${5:-0}
+  local -i compress_verbose=${6:-1}
+  local -i regenerate=${7:-0}
+  local -i summary_limit=${8:-10000}
+  local -i abstract_limit=${9:-1500}
+  local -- context_level=${10:-none}  # Context level parameter
 
   local -- relative_path=${complete_file#"$data_dir/"}
 
@@ -1000,8 +997,8 @@ compress_process_complete_file() {
   local -- basename=${complete_file##*/}
   basename=${basename%.complete.md}
   local -- target_dir=${complete_file%/*}
-  local -- summary_file="$target_dir/$basename.summary.md"
-  local -- abstract_file="$target_dir/$basename.abstract.md"
+  local -- summary_file="$target_dir"/"$basename".summary.md
+  local -- abstract_file="$target_dir"/"$basename".abstract.md
 
   # Check if all three files have matching timestamps (indicating they're in sync)
   if ((regenerate)) && compress_check_timestamps_match "$complete_file" "$summary_file" "$abstract_file"; then
@@ -1028,12 +1025,12 @@ compress_process_all_rules() {
   local -- data_dir=$1
   local -- tier=$2
   local -- claude_cmd=$3
-  local -i dry_run="${4:-0}"
-  local -i compress_verbose="${5:-1}"
-  local -i summary_limit="${6:-10000}"
-  local -i abstract_limit="${7:-1500}"
-  local -- context_level="${8:-none}"  # Context level parameter
-  local -i force="${9:-0}"  # Force regeneration parameter
+  local -i dry_run=${4:-0}
+  local -i compress_verbose=${5:-1}
+  local -i summary_limit=${6:-10000}
+  local -i abstract_limit=${7:-1500}
+  local -- context_level=${8:-none}  # Context level parameter
+  local -i force=${9:-0}  # Force regeneration parameter
   local -i regenerate=1  # Always regenerate when called
 
   # Find all complete files
@@ -1076,13 +1073,13 @@ declare -fx compress_process_all_rules
 
 # Show compression statistics (placeholder - actual stats tracked in cmd_compress)
 compress_show_statistics() {
-  local -i total_processed="${1:-0}"
-  local -i summary_success="${2:-0}"
-  local -i summary_oversized="${3:-0}"
-  local -i summary_failed="${4:-0}"
-  local -i abstract_success="${5:-0}"
-  local -i abstract_oversized="${6:-0}"
-  local -i abstract_failed="${7:-0}"
+  local -i total_processed=${1:-0}
+  local -i summary_success=${2:-0}
+  local -i summary_oversized=${3:-0}
+  local -i summary_failed=${4:-0}
+  local -i abstract_success=${5:-0}
+  local -i abstract_oversized=${6:-0}
+  local -i abstract_failed=${7:-0}
 
   cat <<EOF
 
@@ -1116,9 +1113,9 @@ declare -fx compress_show_statistics
 # Report oversized files in data directory
 compress_report_oversized_files() {
   local -- data_dir=$1
-  local -i complete_limit="${2:-20000}"
-  local -i summary_limit="${3:-10000}"
-  local -i abstract_limit="${4:-1500}"
+  local -i complete_limit=${2:-20000}
+  local -i summary_limit=${3:-10000}
+  local -i abstract_limit=${4:-1500}
 
   # Create associative array with limits
   local -A data_size_limit=(
@@ -1130,8 +1127,9 @@ compress_report_oversized_files() {
   cd "$data_dir" || { error "Cannot access data directory ${data_dir@Q}"; return 2; }
 
   local -- type
+  local -a files
   for type in complete summary abstract; do
-    local -a files=()
+    files=()
     readarray -t files < <(find "$data_dir" -type f -name "*.${type}.md")
     echo "$type: ${#files[@]}"
     echo "Over ${data_size_limit[$type]} bytes:"
@@ -1152,7 +1150,7 @@ declare -fx compress_report_oversized_files
 build_context_abstract() {
   local -- data_dir
   data_dir=$(find_data_dir) || return 1
-  local -- abstract_file="$data_dir/BASH-CODING-STANDARD.abstract.md"
+  local -- abstract_file="$data_dir"/BASH-CODING-STANDARD.abstract.md
 
   # Check if abstract file exists
   if [[ ! -f "$abstract_file" ]]; then
@@ -1211,14 +1209,14 @@ TOC_HEADER
   readarray -t section_dirs < <(find "$data_dir" -maxdepth 1 -type d -name '[0-9][0-9]-*' | sort)
 
   local -- dir section_num section_name
+  local -- description section_file
   for dir in "${section_dirs[@]}"; do
     section_num=$(basename "$dir" | grep -o '^[0-9][0-9]')
     section_name=$(basename "$dir" | sed 's/^[0-9][0-9]-//' | tr '-' ' ' | sed 's/\b\(.\)/\u\1/g')
 
     # Read first few lines of section file to get description
-    local -- section_file="$dir"/00-section.abstract.md
+    section_file="$dir"/00-section.abstract.md
     if [[ -f "$section_file" ]]; then
-      local -- description
       description=$(head -n 5 "$section_file" | grep -v '^#\|^$' | head1 | sed 's/^\*\*//;s/\*\*$//')
       printf '%s. %s - %s\n' "$section_num" "$section_name" "$description"
     else
@@ -1381,8 +1379,8 @@ declare -fx build_context_summary_exclude
 # Returns: 0 on success, 1 on failure
 # Note: Caller is responsible for cleaning up the output file
 build_context_abstract_exclude() {
-  local -- exclude_code="${1:?'build_context_abstract_exclude: BCS code required'}"
-  local -- output_file="${2:?'build_context_abstract_exclude: output file required'}"
+  local -- exclude_code=${1:?'build_context_abstract_exclude: BCS code required'}
+  local -- output_file=${2:?'build_context_abstract_exclude: output file required'}
 
   # Generate temporary file with excluded rule
   local -- temp_data
@@ -1556,7 +1554,7 @@ declare -fx cmd_codes
 fix_header_level() {
   local -- filepath=$1
   local -- data_dir=$2
-  local -- relative_path="${filepath#"$data_dir"/}"
+  local -- relative_path=${filepath#"$data_dir"/}
   local -i slash_count depth
   local -- first_line header_text header_marker
 
@@ -1606,7 +1604,7 @@ fix_header_level() {
 # Returns: Populates named array with normalized BCS codes
 parse_exclusion_list() {
   local -- exclusion_string=$1
-  local -- array_name=$2
+  local -n _target_arr=$2
   local -a codes=()
   local -- code
 
@@ -1626,8 +1624,8 @@ parse_exclusion_list() {
       code="BCS$code"
     fi
 
-    # Store in named array using nameref
-    eval "$array_name+=(\"$code\")"
+    # Store in target array via nameref
+    _target_arr+=("$code")
   done
 }
 declare -fx parse_exclusion_list
@@ -1637,15 +1635,10 @@ declare -fx parse_exclusion_list
 # Returns: 0 if excluded, 1 if not excluded
 is_excluded() {
   local -- bcs_code=$1
-  local -- array_name=$2
+  local -n _patterns_ref=$2
   local -- pattern
 
-  # Get array contents using nameref indirection
-  #shellcheck disable=SC1087
-  eval "local -a patterns=(\"\${$array_name[@]}\")"
-
-  #shellcheck disable=SC2154 # patterns defined via eval
-  for pattern in "${patterns[@]}"; do
+  for pattern in "${_patterns_ref[@]}"; do
     # Exact match or prefix match
     # BCS01 excludes BCS0101, BCS0102, etc.
     # BCS0102 excludes BCS0102, BCS010201, etc.
@@ -1662,19 +1655,13 @@ declare -fx is_excluded
 # Usage: readarray -t md_files < <(filter_excluded_files md_files exclusion_codes)
 # Returns: Outputs filtered file paths (one per line) and excluded count as last line prefixed with "EXCLUDED:"
 filter_excluded_files() {
-  local -- files_array_name=$1
+  local -n _files_ref=$1
   local -- exclusion_array_name=$2
-
-  # Get current array contents
-  #shellcheck disable=SC1087
-  eval "local -a files=(\"\${$files_array_name[@]}\")"
-  #shellcheck disable=SC1087
-  eval "local -a exclusions=(\"\${$exclusion_array_name[@]}\")"
+  local -n _exclusions_ref=$exclusion_array_name
 
   # If no exclusions, output all files
-  #shellcheck disable=SC2154 # patterns defined via eval
-  if (( ${#exclusions[@]} == 0 )); then
-    printf '%s\n' "${files[@]}"
+  if (( ${#_exclusions_ref[@]} == 0 )); then
+    printf '%s\n' "${_files_ref[@]}"
     echo "EXCLUDED:0"
     return 0
   fi
@@ -1684,7 +1671,7 @@ filter_excluded_files() {
   local -- file bcs_code basename_file
   local -i excluded_count=0
 
-  for file in "${files[@]}"; do
+  for file in "${_files_ref[@]}"; do
     # Skip header files (never exclude these)
     basename_file=$(basename "$file")
     if [[ "$basename_file" =~ ^00-header\. ]]; then
@@ -1894,7 +1881,7 @@ EOF
     info "Total lines: $(wc -l < "$output_file")"
 
     # Generate summary tier
-    file_type='summary'
+    file_type=summary
     output_file="$output_dir"/BASH-CODING-STANDARD.summary.md
     suffix='.summary.md'
     md_files=()
@@ -1920,8 +1907,7 @@ EOF
 
     info "Generating summary standard from ${#md_files[@]} files..."
 
-    {
-      local -- file bcs_code basename_file
+    { local -- file bcs_code basename_file
       local -i first_iteration=1
       for file in "${md_files[@]}"; do
         if [[ $first_iteration -eq 1 ]]; then
@@ -1950,7 +1936,7 @@ EOF
     info "Total lines: $(wc -l < "$output_file")"
 
     # Generate abstract tier
-    file_type='abstract'
+    file_type=abstract
     output_file="$output_dir"/BASH-CODING-STANDARD.abstract.md
     suffix='.abstract.md'
     md_files=()
@@ -1976,8 +1962,7 @@ EOF
 
     info "Generating abstract standard from ${#md_files[@]} files..."
 
-    {
-      local -- file bcs_code basename_file
+    { local -- file bcs_code basename_file
       local -i first_iteration=1
       for file in "${md_files[@]}"; do
         if [[ $first_iteration -eq 1 ]]; then
@@ -2006,7 +1991,7 @@ EOF
     info "Total lines: $(wc -l < "$output_file")"
 
     # Generate rulet tier
-    file_type='rulet'
+    file_type=rulet
     output_file="$output_dir"/BASH-CODING-STANDARD.rulet.md
     suffix='.rulet.md'
     md_files=()
@@ -2086,10 +2071,10 @@ EOF
 
   # Determine output file for non-canonical mode
   if ((use_stdout)); then
-    output_file='/dev/stdout'
+    output_file=/dev/stdout
   elif [[ -z "$output_file" ]]; then
     # This shouldn't happen given logic above, but safety fallback
-    output_file='/dev/stdout'
+    output_file=/dev/stdout
   fi
 
   # Determine file suffix
@@ -2186,8 +2171,7 @@ EOF
     } > "$output_file"
   else
     # Standard handling for complete/abstract/summary types with rule separation
-    {
-      local -- file bcs_code
+    { local -- file bcs_code
       local -i first_iteration=1
       for file in "${md_files[@]}"; do
         # Output formfeed separator before each rule (except first)
@@ -2367,10 +2351,10 @@ resolve_category_dir() {
   local -- data_dir=$2
 
   # Strip leading zeros and normalize
-  category="${category#0}"  # Remove leading zero if present
+  category=${category#0}  # Remove leading zero if present
 
   # Try exact match: NN-name
-  if [[ -d "$data_dir/$category" ]]; then
+  if [[ -d "$data_dir"/"$category" ]]; then
     echo "$data_dir/$category"
     return 0
   fi
@@ -2453,13 +2437,14 @@ generate_rulet_for_category() {
   # Build BCS code mapping for this category
   local -a bcs_codes=()
   local -- file file_base code
+  local -- rel_path
   for file in "${complete_files[@]}"; do
     # Extract BCS code from file path
     # data/02-variables/05-readonly-after-group.complete.md → BCS0205
     # data/02-variables/01-type-specific/01-integers.complete.md → BCS020101
 
     # Get relative path from data/
-    local -- rel_path="${file#*/data/}"
+    rel_path="${file#*/data/}"
 
     # Extract all numeric parts and concatenate
     code=$(echo "$rel_path" | grep -o '[0-9][0-9]' | tr -d '\n')
@@ -2473,8 +2458,7 @@ generate_rulet_for_category() {
   local -- temp_input
   temp_input=$(mktemp) || { error 'Failed to create temp file'; return 1; }
 
-  {
-    echo "# BCS Category $category_num: $category_name"
+  { echo "# BCS Category $category_num: $category_name"
     echo
     echo 'Extract rulets from the following complete.md files:'
     echo
@@ -2506,13 +2490,13 @@ generate_rulet_for_category() {
   local -i wait_time=5
   local -i success_flag=0
 
+  local -- temp_output
+  local -- stderr_file
   while ((retry_count <= max_retries)); do
     # Create temp output file for this attempt
-    local -- temp_output
     temp_output=$(mktemp)
 
     # Invoke agent (stderr redirected to capture error messages)
-    local -- stderr_file
     stderr_file=$(mktemp)
 
     if "$agent_cmd" < "$temp_input" > "$temp_output" 2>"$stderr_file"; then
@@ -2686,7 +2670,7 @@ declare -fx cmd_search
 # Returns absolute path to matching file, or empty string if not found
 find_bcs_file_by_code() {
   local -- code=$1
-  local -- tier="${2:-abstract}"
+  local -- tier=${2:-abstract}
   local -- data_dir
   data_dir=$(find_data_dir) || return 1
 
@@ -2695,8 +2679,8 @@ find_bcs_file_by_code() {
   [[ -d "$data_dir" ]] || return 1
 
   # Normalize code (remove BCS prefix if present, ensure uppercase)
-  code="${code^^}"
-  code="${code#BCS}"
+  code=${code^^}
+  code=${code#BCS}
 
   # Determine file suffix
   local -- suffix
@@ -2842,7 +2826,7 @@ declare -fx parse_sections_option
 
 # Load BCS rules filtered by codes or sections
 load_filtered_rules() {
-  local -- tier="${1:-abstract}"
+  local -- tier=${1:-abstract}
   shift
   local -a filters=("$@")
 
@@ -2930,8 +2914,8 @@ declare -fx load_filtered_rules
 
 # Build validation system prompt with optional filtering and tier selection
 build_validation_prompt() {
-  local -- tier="${1:-abstract}"
-  local -- output_format="${2:-text}"
+  local -- tier=${1:-abstract}
+  local -- output_format=${2:-text}
   shift 2
   local -a filters=("$@")
 
@@ -3082,11 +3066,11 @@ declare -fx build_validation_prompt
 # Build Claude command with advanced options
 build_claude_command() {
   local -- system_prompt_file=$1
-  local -- append_prompt="${2:-}"
-  local -- allowed_tools="${3:-}"
-  local -- add_dir="${4:-}"
-  local -i skip_permissions="${5:-0}"
-  local -- claude_cmd="${6:-claude}"
+  local -- append_prompt=${2:-}
+  local -- allowed_tools=${3:-}
+  local -- add_dir=${4:-}
+  local -i skip_permissions=${5:-0}
+  local -- claude_cmd=${6:-claude}
 
   # Base command
   local -a claude_args=("$claude_cmd" --print --dangerously-skip-permissions)
@@ -3379,7 +3363,7 @@ EOF
   done < "$BCS_FILE"
 
   if ((count == 0)); then
-    error "No sections found in $BCS_FILE"
+    error "No sections found in ${BCS_FILE@Q}"
     return 1
   fi
 
@@ -3436,9 +3420,7 @@ EOF
 
   # No argument: show current default
   if (($# == 0)); then
-    local -- current_tier
-    current_tier=$(get_default_tier)
-    echo "$current_tier"
+    get_default_tier
     return 0
   fi
 
@@ -3569,7 +3551,7 @@ EOF
     lines_count=$(wc -l < "$BCS_FILE")
   fi
 
-  if [[ -d "$BCS_DIR/tests" ]]; then
+  if [[ -d "$BCS_DIR"/tests ]]; then
     test_files_count=$(find "$BCS_DIR/tests" -type f -name 'test-*.sh' 2>/dev/null | wc -l)
   fi
 
@@ -4533,7 +4515,7 @@ EOF
         ;;
 
       *)
-        error "Unexpected argument: $1"
+        error "Unexpected argument ${1@Q}"
         return 2
         ;;
     esac
@@ -4854,7 +4836,7 @@ if [[ "${BASH_SOURCE[0]}" != "$0" ]]; then
   #shellcheck disable=SC2015  # Intentional: handle find success/failure differently
   BCS_FILE=$(find_bcs_file "${BCS_PATH%/*}") && {
     # Auto-initialize BCS_MD if file was found
-    BCS_MD="$(cat -- "$BCS_FILE")"
+    BCS_MD=$(<"$BCS_FILE")
     true
   } || {
     error 'BASH-CODING-STANDARD.md not found when sourcing'
@@ -4873,11 +4855,11 @@ main() {
   # Command dispatcher
   # Default to display if no arguments, otherwise use first argument as subcommand
   declare -- subcommand
-if (($# == 0)); then
-  subcommand='display'
-else
+if (($#)); then
   subcommand=$1
   shift  # Remove subcommand from args
+else
+  subcommand=display
 fi
 
 # Handle global options
