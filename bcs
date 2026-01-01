@@ -878,7 +878,7 @@ compress_rule_to_tier() {
       fi
 
       # Sanitize UTF-8 encoding in Claude's output
-      sanitize_utf8 "$temp_file" || ((compress_verbose)) && warn '  ▲ UTF-8 sanitization failed' ||:
+      sanitize_utf8 "$temp_file" || { ((compress_verbose)) && warn '  ▲ UTF-8 sanitization failed'; }
 
       # Check file size
       file_size=$(wc -c < "$temp_file")
@@ -925,7 +925,7 @@ compress_rule_to_tier() {
           mv "$temp_file" "$target_file" || { error "Failed to write ${target_file@Q}"; return 1; }
 
           # Sanitize UTF-8 encoding in oversized file
-          sanitize_utf8 "$target_file" || ((compress_verbose)) && warn '  ▲ UTF-8 sanitization failed' ||:
+          sanitize_utf8 "$target_file" || { ((compress_verbose)) && warn '  ▲ UTF-8 sanitization failed'; }
 
           # Copy permissions with fallback
           if ! chmod --reference="$complete_file" "$target_file" 2>/dev/null; then
