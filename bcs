@@ -841,13 +841,13 @@ compress_rule_to_tier() {
         "$claude_cmd" --print --dangerously-skip-permissions \
            --allowedTools "Read" "Write" \
            --system-prompt "$system_prompt" \
-           "Read context: $context_file_persistent | Read source: $complete_file | Write compressed to: $temp_file" \
+           -- "Read context: $context_file_persistent | Read source: $complete_file | Write compressed to: $temp_file" \
            2>&1 | tee /dev/stderr || claude_exit=$?
       else
         "$claude_cmd" --print --dangerously-skip-permissions \
            --allowedTools "Read" "Write" \
            --system-prompt "$system_prompt" \
-           "Read context: $context_file_persistent | Read source: $complete_file | Write compressed to: $temp_file" \
+           -- "Read context: $context_file_persistent | Read source: $complete_file | Write compressed to: $temp_file" \
            2>&1 || claude_exit=$?
       fi
     else
@@ -855,13 +855,13 @@ compress_rule_to_tier() {
         "$claude_cmd" --print --dangerously-skip-permissions \
            --allowedTools "Read" "Write" \
            --system-prompt "$system_prompt" \
-           "Read file: $complete_file | Write compressed output to: $temp_file" \
+           -- "Read file: $complete_file | Write compressed output to: $temp_file" \
            2>&1 | tee /dev/stderr || claude_exit=$?
       else
         "$claude_cmd" --print --dangerously-skip-permissions \
            --allowedTools "Read" "Write" \
            --system-prompt "$system_prompt" \
-           "Read file: $complete_file | Write compressed output to: $temp_file" \
+           -- "Read file: $complete_file | Write compressed output to: $temp_file" \
            2>&1 || claude_exit=$?
       fi
     fi
