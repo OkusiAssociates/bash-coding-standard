@@ -1,42 +1,39 @@
-## Filesystem Hierarchy Standard (FHS) Preference
+## FHS Compliance
 
-**Scripts installing files or searching resources should follow FHS for predictable locations, multi-environment support, and package manager compatibility.**
+**Follow Filesystem Hierarchy Standard for scripts that install files or search for resources—enables predictable locations, multi-environment support, and package manager compatibility.**
 
-**Rationale:** Predictable paths users/package managers expect; works across dev/local/system/user installs; eliminates hardcoded paths.
+**Key rationale:** Eliminates hardcoded paths; scripts work across dev/local/system installs without modification.
 
-**Locations:**
-- `/usr/local/{bin,share}` - User-installed system-wide
-- `/usr/{bin,share}` - System (package manager)
-- `$HOME/.local/{bin,share}` - User-specific
-- `${XDG_CONFIG_HOME:-$HOME/.config}` - User config
+**Standard locations:** `/usr/local/bin/` (executables), `/usr/local/share/` (data), `/usr/local/lib/` (libraries), `/usr/local/etc/` (config), `${XDG_DATA_HOME:-$HOME/.local/share}/` (user data)
 
-**Search pattern:**
+**FHS search pattern:**
 ```bash
-find_data() {
-  local -a paths=(
-    "$SCRIPT_DIR/$1"                                      # Dev
-    /usr/local/share/myapp/"$1"                           # Local
-    /usr/share/myapp/"$1"                                 # System
-    "${XDG_DATA_HOME:-$HOME/.local/share}/myapp/$1"       # User
+find_data_file() {
+  local -- filename=$1
+  local -a search_paths=(
+    "$SCRIPT_DIR"/"$filename"                              # Development
+    /usr/local/share/myapp/"$filename"                     # Local install
+    /usr/share/myapp/"$filename"                           # System install
+    "${XDG_DATA_HOME:-$HOME/.local/share}"/myapp/"$filename"  # User
   )
-  local -- p
-  for p in "${paths[@]}"; do
-    [[ -f "$p" ]] && { echo "$p"; return 0; }
+  local -- path
+  for path in "${search_paths[@]}"; do
+    [[ -f "$path" ]] && { echo "$path"; return 0; }
   done
   return 1
 }
 ```
 
-**PREFIX customization:**
+**PREFIX pattern:**
 ```bash
-PREFIX="${PREFIX:-/usr/local}"
-BIN_DIR="$PREFIX/bin"
-SHARE_DIR="$PREFIX/share/myapp"
-readonly -- PREFIX BIN_DIR SHARE_DIR
+PREFIX=${PREFIX:-/usr/local}
+BIN_DIR="$PREFIX"/bin
 ```
 
-**Anti-patterns:** Hardcoded paths → FHS search; Fixed install location → `PREFIX="$PREFIX/bin"`; Relative `source ../lib/` → Breaks from different CWD; Overwrite config → Check first `[[ -f "$cfg" ]] || install`
+**Anti-patterns:**
+- `source /usr/local/lib/myapp/common.sh` �' hardcoded path breaks portability
+- `BIN_DIR=/usr/local/bin` �' use `PREFIX=${PREFIX:-/usr/local}; BIN_DIR="$PREFIX"/bin`
 
-**Skip when:** Single-user scripts, project-specific tools, containers, embedded systems.
+**Skip FHS:** Single-user scripts, project-specific tools, containers
 
 **Ref:** BCS0104

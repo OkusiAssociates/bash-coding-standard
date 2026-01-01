@@ -1,38 +1,38 @@
 # File Operations - Rulets
-## Safe File Testing
-- [BCS1101] Always quote variables in file tests with `[[ ]]`: `[[ -f "$file" ]]` not `[[ -f $file ]]`.
-- [BCS1101] Use `[[ ]]` for file tests, never `[ ]` or `test` command.
-- [BCS1101] Test file existence and readability before sourcing or processing: `[[ -f "$file" && -r "$file" ]] || die 3 "Cannot read: $file"`.
-- [BCS1101] Use `-e` for any file type, `-f` for regular files only, `-d` for directories only.
-- [BCS1101] Test file permissions before operations: `-r` for readable, `-w` for writable, `-x` for executable.
-- [BCS1101] Use `-s` to test if file is non-empty (size > 0).
-- [BCS1101] Compare file timestamps with `-nt` (newer than) or `-ot` (older than): `[[ "$source" -nt "$dest" ]] && cp "$source" "$dest"`.
-- [BCS1101] Check multiple conditions with `&&` or `||`: `[[ -f "$config" && -r "$config" ]] || die 3 "Config not found"`.
-- [BCS1101] Always include filename in error messages for debugging: `die 2 "File not found: $file"`.
+## Section Overview
+- [BCS0900] File operations require safe handling practices including proper file testing operators (`-e`, `-f`, `-d`, `-r`, `-w`, `-x`), explicit path wildcards (`rm ./*` not `rm *`), process substitution (`< <(command)`) for avoiding subshell issues, and here documents for multi-line input.
+## File Testing
+- [BCS0901] Always quote variables and use `[[ ]]` for file tests: `[[ -f "$file" ]] && source "$file"`.
+- [BCS0901] Test file existence before use and fail fast: `[[ -f "$config" ]] || die 3 "Config not found ${config@Q}"`.
+- [BCS0901] Combine readable and existence checks before sourcing: `[[ -f "$config" && -r "$config" ]] || die 3 "Config not found or not readable"`.
+- [BCS0901] Use `-s` to check for non-empty files: `[[ -s "$logfile" ]] || warn 'Log file is empty'`.
+- [BCS0901] Use `-nt` and `-ot` for file timestamp comparisons: `[[ "$source" -nt "$destination" ]] && cp "$source" "$destination"`.
+- [BCS0901] Use `-ef` to check if two paths reference the same file (same device and inode).
+- [BCS0901] Never use `[ ]` or `test` command; always use `[[ ]]` for robust file testing.
+- [BCS0901] Always catch mkdir failures: `[[ -d "$dir" ]] || mkdir "$dir" || die 1 "Cannot create directory: ${dir@Q}"`.
+- [BCS0901] Include filename in error messages using `${var@Q}` for proper quoting in output.
 ## Wildcard Expansion
-- [BCS1102] Always use explicit path prefix with wildcards to prevent filenames starting with `-` being interpreted as flags: `rm ./*` not `rm *`.
-- [BCS1102] Use explicit path in loops: `for file in ./*.txt; do` not `for file in *.txt; do`.
+- [BCS0902] Always use explicit path with wildcards to prevent flag interpretation: `rm -v ./*` not `rm -v *`.
+- [BCS0902] Use explicit path in for loops: `for file in ./*.txt; do process "$file"; done`.
 ## Process Substitution
-- [BCS1103] Use process substitution `<(command)` to provide command output as file-like input, eliminating temporary files and avoiding subshell issues.
-- [BCS1103] Use input process substitution to compare command outputs: `diff <(sort file1) <(sort file2)`.
-- [BCS1103] Use output process substitution `>(command)` to send data to commands as if writing to files: `tee >(wc -l) >(grep ERROR)`.
-- [BCS1103] Avoid subshell variable scope issues in while loops with process substitution: `while read -r line; do ((count+=1)); done < <(cat file)` not `cat file | while read; do`.
-- [BCS1103] Use `readarray` with process substitution to populate arrays from command output: `readarray -t users < <(getent passwd | cut -d: -f1)`.
-- [BCS1103] Process files in parallel with tee and multiple output substitutions: `cat log | tee >(grep ERROR > errors.txt) >(grep WARN > warn.txt) >/dev/null`.
-- [BCS1103] Quote variables inside process substitution like normal: `diff <(sort "$file1") <(sort "$file2")`.
-- [BCS1103] Never use process substitution for simple command output; use command substitution instead: `result=$(command)` not `result=$(cat <(command))`.
-- [BCS1103] Never use process substitution for single file input; use direct redirection: `grep pattern < file` not `grep pattern < <(cat file)`.
-- [BCS1103] Use here-string for variable expansion, not process substitution: `command <<< "$var"` not `command < <(echo "$var")`.
-- [BCS1103] Assign process substitution to file descriptors for delayed reading: `exec 3< <(long_command)` then `read -r line <&3`.
+- [BCS0903] Use `<(command)` to treat command output as a file-like input: `diff <(sort file1) <(sort file2)`.
+- [BCS0903] Use `>(command)` to send output to a command as if writing to a file: `tee >(wc -l) >(grep ERROR)`.
+- [BCS0903] Prefer process substitution over temp files to eliminate file management overhead.
+- [BCS0903] Use `< <(command)` with while loops to avoid subshell variable scope issues: `while read -r line; do count+=1; done < <(cat file)`.
+- [BCS0903] Use `readarray -t array < <(command)` to populate arrays from command output without subshell issues.
+- [BCS0903] Handle special characters with null-delimited process substitution: `readarray -d '' -t files < <(find /data -type f -print0)`.
+- [BCS0903] Never pipe to while loop when you need variable modifications preserved; use process substitution instead.
+- [BCS0903] Use parallel processing with tee and multiple process substitutions: `cat log | tee >(grep ERROR > errors.txt) >(grep WARN > warnings.txt) > /dev/null`.
+- [BCS0903] Always quote variables inside process substitution: `diff <(sort "$file1") <(sort "$file2")`.
+- [BCS0903] For simple variable input, prefer here-strings over process substitution: `command <<< "$variable"` not `command < <(echo "$variable")`.
+- [BCS0903] For simple command output to variable, use command substitution: `result=$(command)` not `result=$(cat <(command))`.
 ## Here Documents
-- [BCS1104] Use here documents for multi-line strings: `cat <<'EOF' ... EOF` for literal text, `cat <<EOF ... EOF` for variable expansion.
-- [BCS1104] Quote the delimiter with single quotes to prevent variable expansion: `cat <<'EOF'` preserves `$var` literally.
-- [BCS1104] Omit quotes on delimiter to enable variable expansion: `cat <<EOF` expands `$USER` to actual value.
+- [BCS0904] Use `<<'EOF'` (single-quoted delimiter) to prevent variable expansion in here-documents.
+- [BCS0904] Use `<<EOF` (unquoted delimiter) when variable expansion is needed in here-documents.
 ## Input Redirection Performance
-- [BCS1105] Use `$(< file)` instead of `$(cat file)` in command substitution for 100x+ speedup by eliminating process fork overhead.
-- [BCS1105] Use `command < file` instead of `cat file | command` for 3-4x speedup in single-file operations.
-- [BCS1105] Replace `cat` with `<` redirection in loops to eliminate cumulative fork overhead: `for f in *.txt; do data=$(< "$f"); done`.
-- [BCS1105] Never use `< file` alone without a consuming command; it opens stdin but produces no output.
-- [BCS1105] Use `cat` when concatenating multiple files; `< file1 file2` is invalid syntax.
-- [BCS1105] Use `cat` when needing options like `-n` (line numbers), `-A` (show all), `-b` (number non-blank), `-s` (squeeze blank).
-- [BCS1105] Process creation overhead dominates I/O time even for large files, making `< file` consistently faster regardless of file size.
+- [BCS0905] Use `$(< file)` instead of `$(cat file)` for command substitution (100x+ speedup): `content=$(< file.txt)`.
+- [BCS0905] Use `cmd < file` instead of `cat file | cmd` for single file input (3-4x speedup): `grep pattern < file.txt`.
+- [BCS0905] In loops, prefer `$(< "$file")` over `$(cat "$file")` to avoid fork overhead multiplying per iteration.
+- [BCS0905] Use `cat` when concatenating multiple files, using cat options (`-n`, `-b`, `-A`), or when `< file` alone produces no output.
+- [BCS0905] Remember `< filename` alone does nothing; it only opens stdin without a command to consume it.
+- [BCS0905] The exception is command substitution where bash reads file directly: `content=$(< file)` works standalone.

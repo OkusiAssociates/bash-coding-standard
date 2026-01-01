@@ -88,9 +88,10 @@ for file in *.json; do
     process "$data"
 done
 
+declare -i errors=0
 for logfile in /var/log/app/*.log; do
     errors=$(grep -c ERROR < "$logfile")
-    if [ "$errors" -gt 0 ]; then
+    if ((errors)); then
         alert=$(< "$logfile")
         send_alert "$alert"
     fi
@@ -102,9 +103,10 @@ for file in *.json; do
     process "$data"
 done
 
+declare -i errors=0
 for logfile in /var/log/app/*.log; do
     errors=$(cat "$logfile" | grep -c ERROR)
-    if [ "$errors" -gt 0 ]; then
+    if ((errors)); then
         alert=$(cat "$logfile")
         send_alert "$alert"
     fi
@@ -117,13 +119,13 @@ done
 
 ```bash
 # RECOMMENDED
-if grep -q "ERROR" < /var/log/app.log; then
+if grep -q 'ERROR' < /var/log/app.log; then
     alert=$(< /var/log/app.log)
     notify "$alert"
 fi
 
 # AVOID
-if cat /var/log/app.log | grep -q "ERROR"; then
+if cat /var/log/app.log | grep -q 'ERROR'; then
     alert=$(cat /var/log/app.log)
     notify "$alert"
 fi
@@ -215,6 +217,7 @@ The benchmarks show:
 #!/bin/bash
 
 # Process all log files
+declare -i errors=0
 for logfile in /var/log/app/*.log; do
     # Read entire file
     content=$(cat "$logfile")
@@ -226,7 +229,7 @@ for logfile in /var/log/app/*.log; do
     warnings=$(cat "$logfile" | grep WARNING)
 
     # Process if errors found
-    if [ "$errors" -gt 0 ]; then
+    if ((errors)); then
         cat "$logfile" error.log > combined.log
     fi
 done
@@ -243,6 +246,7 @@ done
 #!/bin/bash
 
 # Process all log files
+declare -i errors=0
 for logfile in /var/log/app/*.log; do
     # Read entire file - 100x faster
     content=$(< "$logfile")
@@ -254,7 +258,7 @@ for logfile in /var/log/app/*.log; do
     warnings=$(grep WARNING < "$logfile")
 
     # Process if errors found
-    if [ "$errors" -gt 0 ]; then
+    if ((errors)); then
         # Multiple files - must use cat
         cat "$logfile" error.log > combined.log
     fi

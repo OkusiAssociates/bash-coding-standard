@@ -4,7 +4,8 @@
 
 ```bash
 readonly -a REQUIRED=(pandoc git md2ansi)
-readonly -- SCRIPT_PATH="$(realpath -- "$0")"
+#shellcheck disable=SC2155
+readonly -- SCRIPT_PATH=$(realpath -- "$0")
 ```
 
 **Ref:** BCS0206

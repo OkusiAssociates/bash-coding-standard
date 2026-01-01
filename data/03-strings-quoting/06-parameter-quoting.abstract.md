@@ -1,24 +1,35 @@
 ### Parameter Quoting with @Q
 
-**Use `${parameter@Q}` for safe display of user input in error messages and logging.**
+**Use `${parameter@Q}` for safe display of untrusted input in error messages and logs.**
 
-`${parameter@Q}` expands to shell-quoted value preventing injection attacks.
+#### Why
+- Prevents command injection via `$(...)` or glob expansion in displayed strings
+- Shows exact literal value without execution risk
 
-**When to use:** Error messages, logging, dry-run output.
-**Not for:** Normal expansion, comparisons.
-
+#### Pattern
 ```bash
-# âœ— Injection risk â†' âœ“ Safe display
-die 2 "Unknown option $1"      # dangerous
-die 2 "Unknown option ${1@Q}"  # safe
+# Error messages - always @Q for user input
+die 2 "Unknown option ${1@Q}"
 
-# Dry-run: display command safely
+# Dry-run display
 printf -v quoted '%s ' "${cmd[@]@Q}"
-info "[DRY-RUN] Would execute: $quoted"
+info "[DRY-RUN] $quoted"
 ```
 
-**Behavior comparison:**
-- `$var` on `$(date)` â†' executes command
-- `${var@Q}` on `$(date)` â†' outputs `'$(date)'` (literal)
+#### When to Use
+- **Yes:** Error messages, logging user input, dry-run output
+- **No:** Normal expansion `"$var"`, comparisons `[[ "$a" == "$b" ]]`
+
+#### Anti-Pattern
+```bash
+# âœ— Injection risk - user controls displayed value
+die 2 "Unknown option $1"
+# âœ“ Safe literal display
+die 2 "Unknown option ${1@Q}"
+```
+
+| Input | `"$var"` | `${var@Q}` |
+|-------|----------|------------|
+| `$(rm -rf /)` | executes | `'$(rm -rf /)'` |
 
 **Ref:** BCS0306

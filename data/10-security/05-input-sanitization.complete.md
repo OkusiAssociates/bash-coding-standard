@@ -11,10 +11,10 @@
 
 **1. Filename validation:**
 
-\`\`\`bash
+```bash
 # Validate filename - no directory traversal, no special chars
 sanitize_filename() {
-  local -- name="$1"
+  local -- name=$1
 
   # Reject empty input
   [[ -n "$name" ]] || die 22 'Filename cannot be empty'
@@ -24,15 +24,13 @@ sanitize_filename() {
   name="${name//\//}"    # Remove all /
 
   # Allow only safe characters: alphanumeric, dot, underscore, hyphen
-  if [[ ! "$name" =~ ^[a-zA-Z0-9._-]+$ ]]; then
-    die 22 "Invalid filename '$name': contains unsafe characters"
-  fi
+  [[ "$name" =~ ^[a-zA-Z0-9._-]+$ ]] || die 22 "Invalid filename ${name@Q}: contains unsafe characters"
 
   # Reject hidden files (starting with .)
-  [[ "$name" =~ ^\\. ]] && die 22 "Filename cannot start with dot: $name"
+  [[ "$name" =~ ^\\. ]] && die 22 "Filename cannot start with dot ${name@Q}"
 
   # Reject names that are too long
-  ((${#name} > 255)) && die 22 "Filename too long (max 255 chars): $name"
+  ((${#name} > 255)) && die 22 "Filename too long (max 255 chars) ${name@Q}"
 
   echo "$name"
 }
@@ -40,14 +38,14 @@ sanitize_filename() {
 # Usage
 user_filename=$(sanitize_filename "$user_input")
 safe_path="$SAFE_DIR/$user_filename"
-\`\`\`
+```
 
 **2. Numeric input validation:**
 
-\`\`\`bash
+```bash
 # Validate integer (positive or negative)
 validate_integer() {
-  local -- input="$1"
+  local -- input=$1
   [[ -n "$input" ]] || die 22 'Number cannot be empty'
 
   if [[ ! "$input" =~ ^-?[0-9]+$ ]]; then
@@ -58,7 +56,7 @@ validate_integer() {
 
 # Validate positive integer
 validate_positive_integer() {
-  local -- input="$1"
+  local -- input=$1
   [[ -n "$input" ]] || die 22 'Number cannot be empty'
 
   if [[ ! "$input" =~ ^[0-9]+$ ]]; then
@@ -79,23 +77,23 @@ validate_port() {
   ((port >= 1 && port <= 65535)) || die 22 "Port must be 1-65535: $port"
   echo "$port"
 }
-\`\`\`
+```
 
 **3. Path validation:**
 
-\`\`\`bash
+```bash
 # Validate path is within allowed directory
 validate_path() {
-  local -- input_path="$1"
-  local -- allowed_dir="$2"
+  local -- input_path=$1
+  local -- allowed_dir=$2
 
   # Resolve to absolute path
   local -- real_path
-  real_path=$(realpath -e -- "$input_path") || die 22 "Invalid path: $input_path"
+  real_path=$(realpath -e -- "$input_path") || die 22 "Invalid path ${input_path@Q}"
 
   # Ensure path is within allowed directory
   if [[ "$real_path" != "$allowed_dir"* ]]; then
-    die 5 "Path outside allowed directory: $real_path"
+    die 5 "Path outside allowed directory ${real_path@Q}"
   fi
 
   echo "$real_path"
@@ -103,13 +101,13 @@ validate_path() {
 
 # Usage
 safe_path=$(validate_path "$user_path" "/var/app/data")
-\`\`\`
+```
 
 **4. Email validation:**
 
-\`\`\`bash
+```bash
 validate_email() {
-  local -- email="$1"
+  local -- email=$1
   [[ -n "$email" ]] || die 22 'Email cannot be empty'
 
   # Basic email regex (not RFC-compliant but sufficient for most cases)
@@ -124,18 +122,18 @@ validate_email() {
 
   echo "$email"
 }
-\`\`\`
+```
 
 **5. URL validation:**
 
-\`\`\`bash
+```bash
 validate_url() {
-  local -- url="$1"
+  local -- url=$1
   [[ -n "$url" ]] || die 22 'URL cannot be empty'
 
   # Only allow http and https schemes
   if [[ ! "$url" =~ ^https?:// ]]; then
-    die 22 "URL must start with http:// or https://: $url"
+    die 22 "URL must start with http:// or https://: ${url@Q}"
   fi
 
   # Reject URLs with credentials (security risk)
@@ -145,14 +143,14 @@ validate_url() {
 
   echo "$url"
 }
-\`\`\`
+```
 
 **6. Whitelist validation:**
 
-\`\`\`bash
+```bash
 # Validate input against whitelist
 validate_choice() {
-  local -- input="$1"
+  local -- input=$1
   shift
   local -a valid_choices=("$@")
 
@@ -161,37 +159,37 @@ validate_choice() {
     [[ "$input" == "$choice" ]] && return 0
   done
 
-  die 22 "Invalid choice '$input'. Valid: ${valid_choices[*]}"
+  die 22 "Invalid choice ${input@Q}. Valid: ${valid_choices[*]}"
 }
 
 # Usage
 declare -a valid_actions=('start' 'stop' 'restart' 'status')
 validate_choice "$user_action" "${valid_actions[@]}"
-\`\`\`
+```
 
 **7. Username validation:**
 
-\`\`\`bash
+```bash
 validate_username() {
   local -- username="$1"
   [[ -n "$username" ]] || die 22 'Username cannot be empty'
 
   # Standard Unix username rules
   if [[ ! "$username" =~ ^[a-z_][a-z0-9_-]*$ ]]; then
-    die 22 "Invalid username: $username"
+    die 22 "Invalid username ${username@Q}"
   fi
 
   # Check length (typically max 32 chars on Unix)
   ((${#username} >= 1 && ${#username} <= 32)) || \
-    die 22 "Username must be 1-32 characters: $username"
+    die 22 "Username must be 1-32 characters ${username@Q}"
 
   echo "$username"
 }
-\`\`\`
+```
 
 **8. Command injection prevention:**
 
-\`\`\`bash
+```bash
 # NEVER pass user input directly to shell
 # ✗ DANGEROUS - command injection vulnerability
 user_file="$1"
@@ -209,13 +207,13 @@ case "$user_command" in
   start|stop|restart) systemctl "$user_command" myapp ;;
   *) die 22 "Invalid command: $user_command" ;;
 esac
-\`\`\`
+```
 
 **9. Option injection prevention:**
 
-\`\`\`bash
+```bash
 # User input could be malicious option like "--delete-all"
-user_file="$1"
+user_file=$1
 
 # ✗ Dangerous - if user_file="--delete-all", disaster!
 rm "$user_file"
@@ -229,13 +227,13 @@ ls "$user_file"  # If user_file="-la", becomes: ls -la
 # ✓ Safe - use -- or prepend ./
 ls -- "$user_file"
 ls ./"$user_file"
-\`\`\`
+```
 
 **10. SQL injection prevention (if generating SQL):**
 
-\`\`\`bash
+```bash
 # ✗ DANGEROUS - SQL injection vulnerability
-user_id="$1"
+user_id=$1
 query="SELECT * FROM users WHERE id=$user_id"  # user_id="1 OR 1=1"
 
 # ✓ Safe - validate input type first
@@ -244,28 +242,28 @@ query="SELECT * FROM users WHERE id=$user_id"
 
 # ✓ Better - use parameterized queries (with proper DB tools)
 # This is just bash demo - use proper DB library in production
-\`\`\`
+```
 
 **Complete validation example:**
 
-\`\`\`bash
+```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
 # Validation functions
 validate_positive_integer() {
-  local input="$1"
+  local input=$1
   [[ -n "$input" && "$input" =~ ^[0-9]+$ ]] || \
     die 22 "Invalid positive integer: $input"
   echo "$input"
 }
 
 sanitize_filename() {
-  local name="$1"
+  local name=$1
   name="${name//\.\./}"
   name="${name//\//}"
   [[ "$name" =~ ^[a-zA-Z0-9._-]+$ ]] || \
-    die 22 "Invalid filename: $name"
+    die 22 "Invalid filename ${name@Q}"
   echo "$name"
 }
 
@@ -275,8 +273,8 @@ while (($#)); do case $1 in
                   count=$(validate_positive_integer "$1") ;;
   -f|--file)      noarg "$@"; shift
                   filename=$(sanitize_filename "$1") ;;
-  -*)             die 22 "Invalid option: $1" ;;
-  *)              die 2 "Unexpected argument: $1" ;;
+  -*)             die 22 "Invalid option ${1@Q}" ;;
+  *)              die 2 "Unexpected argument ${1@Q}" ;;
 esac; shift; done
 
 # Validate required arguments provided
@@ -287,11 +285,11 @@ esac; shift; done
 for ((i=0; i<count; i+=1)); do
   echo "Processing iteration $i" >> "$filename"
 done
-\`\`\`
+```
 
 **Anti-patterns to avoid:**
 
-\`\`\`bash
+```bash
 # ✗ WRONG - trusting user input
 rm -rf "$user_dir"  # user_dir="/" = disaster!
 
@@ -311,7 +309,7 @@ process "$filename"
 
 # ✓ Correct - whitelist approach
 [[ "$input" =~ ^[a-zA-Z0-9]+$ ]] || die 1 'Invalid input'
-\`\`\`
+```
 
 **Security principles:**
 

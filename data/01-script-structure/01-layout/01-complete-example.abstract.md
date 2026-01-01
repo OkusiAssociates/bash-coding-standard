@@ -1,28 +1,43 @@
 ### Complete Working Example
 
-**Production-quality installation script demonstrating all 13 mandatory BCS0101 steps in ~450 lines.**
+**Production-quality installation script demonstrating all 13 mandatory BCS0101 layout steps.**
 
-**Key elements:**
-- Shebang + shellcheck + description ’ `set -euo pipefail` + shopt
-- Metadata: `VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME` (readonly after group)
-- Globals: config vars (`PREFIX='/usr/local'`), runtime flags (`DRY_RUN=0`), arrays (`WARNINGS=()`)
-- Terminal-aware colors: `if [[ -t 1 && -t 2 ]]` conditional assignment
-- Standard messaging: `_msg()` + helpers (vecho, info, warn, error, die, yn)
-- Business logic: validation ’ creation ’ installation ’ summary (bottom-up)
-- Argument parsing: Short/long options (`-p|--prefix`), `noarg()` validation
-- Progressive readonly: Variables locked after parsing
-- `main()` orchestrates workflow
-- Invocation: `main "$@"`
-- End: `#fin`
+---
 
-**Patterns demonstrated:**
+## Key Elements
+
+- **Initialization:** Shebang â†' shellcheck â†' description â†' `set -euo pipefail` â†' shopt
+- **Metadata block:** `VERSION`, `SCRIPT_PATH`, `SCRIPT_DIR`, `SCRIPT_NAME` â†' `readonly --`
+- **Globals:** Configuration vars â†' derived paths â†' runtime flags (`declare -i`) â†' arrays
+- **Colors:** TTY-conditional: `if [[ -t 1 && -t 2 ]]; then ... fi`
+- **Messaging:** `_msg()` + `vecho/info/warn/success/error/die/yn/noarg`
+- **Business logic:** Validation â†' operations â†' summary (bottom-up organization)
+- **Argument parsing:** `while (($#)); case $1 in` with `noarg` validation
+- **Progressive readonly:** Config immutable after parsing
+
+## Core Pattern
+
+```bash
+#!/bin/bash
+set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
+
+VERSION=1.0.0
+SCRIPT_PATH=$(realpath -- "$0")
+readonly -- VERSION SCRIPT_PATH
+
+declare -i DRY_RUN=0
+# ... business functions ...
+main() { while (($#)); do case $1 in ...; esac; shift; done; }
+main "$@"
+#fin
+```
+
+## Critical Patterns
+
 - **Dry-run:** `((DRY_RUN)) && { info '[DRY-RUN] Would...'; return 0; }`
-- **Derived paths:** `update_derived_paths()` recomputes when `PREFIX` changes
-- **Force mode:** Overwrite control with `((FORCE))` checks
-- **Error accumulation:** `WARNINGS+=()` array for summary
-- **Validation first:** `check_prerequisites` ’ `validate_config` before action
-- **Conditional features:** `((INSTALL_SYSTEMD))` guards systemd operations
+- **Derived paths:** Update via function when PREFIX changes
+- **Validation:** Check prerequisites before filesystem operations
+- **Force mode:** `[[ -f "$file" ]] && ! ((FORCE)) && warn ...`
 
-**Production features:** help text, version info, verbose/quiet modes, config generation, permission management, comprehensive summary report.
-
-**Ref:** BCS01010101
+**Ref:** BCS010101

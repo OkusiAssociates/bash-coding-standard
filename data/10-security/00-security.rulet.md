@@ -1,39 +1,53 @@
 # Security Considerations - Rulets
+## Overview
+- [BCS1000] This section establishes security-first practices covering SUID/SGID prohibition, PATH security, IFS safety, eval avoidance, input sanitization, and temporary file handling to prevent privilege escalation, command injection, and other attack vectors.
 ## SUID/SGID Prohibition
-- [BCS1201] Never use SUID (Set User ID) or SGID (Set Group ID) bits on Bash scripts under any circumstances; this is a critical security prohibition with no exceptions.
-- [BCS1201] Use `sudo` with configured permissions instead of SUID bits: configure `/etc/sudoers` for specific commands and users.
-- [BCS1201] SUID/SGID on shell scripts enables multiple attack vectors: IFS exploitation, PATH manipulation via interpreter resolution, library injection through `LD_PRELOAD`, shell expansion exploits, and TOCTOU race conditions.
-- [BCS1201] The kernel executes the interpreter with SUID privileges before the script's security measures take effect, allowing attackers to inject malicious code during this window.
-- [BCS1201] Find and audit all SUID/SGID scripts on your system: `find / -type f \( -perm -4000 -o -perm -2000 \) -exec file {} \; | grep -i script` should return nothing.
-- [BCS1201] Use compiled C wrapper programs with SUID if elevated privileges are absolutely required, never SUID shell scripts.
+- [BCS1001] Never use SUID (`chmod u+s`) or SGID (`chmod g+s`) bits on Bash scripts; this is a critical security prohibition with no exceptions.
+- [BCS1001] SUID/SGID shell scripts are vulnerable to IFS exploitation, PATH manipulation, library injection (`LD_PRELOAD`), shell expansion attacks, and race conditions.
+- [BCS1001] Use `sudo` with configured `/etc/sudoers.d/` permissions instead of SUID: `username ALL=(root) NOPASSWD: /usr/local/bin/myscript.sh`.
+- [BCS1001] For compiled programs requiring specific privileges, use capabilities: `setcap cap_net_bind_service=+ep /usr/local/bin/myserver`.
+- [BCS1001] When elevated script execution is absolutely required, use a compiled C setuid wrapper that sanitizes environment (`unsetenv("LD_PRELOAD"); unsetenv("IFS"); setenv("PATH", "/usr/bin:/bin", 1)`) before calling the script.
+- [BCS1001] Audit systems regularly for SUID/SGID scripts: `find / -type f \( -perm -4000 -o -perm -2000 \) -exec file {} \; | grep -i script`.
 ## PATH Security
-- [BCS1202] Lock down PATH immediately at script start to prevent command substitution attacks: `readonly PATH='/usr/local/bin:/usr/bin:/bin'; export PATH`.
-- [BCS1202] Never include current directory (`.`), empty elements (`::` or leading/trailing `:`), `/tmp`, or user home directories in PATH.
-- [BCS1202] Validate inherited PATH if you cannot set it: reject paths containing `.`, empty elements, `/tmp`, or starting with `/home`.
-- [BCS1202] Use absolute command paths for maximum security and defense in depth: `/bin/tar`, `/usr/bin/systemctl`, `/bin/rm`.
-- [BCS1202] Place PATH setting in first few lines after `set -euo pipefail`, before any commands execute.
-- [BCS1202] Verify critical commands are from expected locations: `[[ "$(command -v tar)" == "/bin/tar" ]] || die 1 "Security: tar not from expected location"`.
+- [BCS1002] Always set PATH explicitly at script start using `readonly PATH='/usr/local/bin:/usr/bin:/bin'; export PATH`.
+- [BCS1002] Never include current directory (`.`), empty elements (`::`, leading `:`, trailing `:`), `/tmp`, or user home directories in PATH.
+- [BCS1002] Validate PATH before use if you must accept inherited environment: `[[ "$PATH" =~ \. ]] && die 1 'PATH contains current directory'`.
+- [BCS1002] For maximum security in critical scripts, use absolute paths for commands: `/bin/tar`, `/bin/rm`, `/usr/bin/systemctl`.
+- [BCS1002] Verify critical commands resolve to expected locations: `command -v tar | grep -q '^/bin/tar$' || die 1 'Security: tar not from /bin/tar'`.
+- [BCS1002] Check that no directories in PATH are world-writable: `find $(echo "$PATH" | tr ':' ' ') -maxdepth 0 -type d -writable 2>/dev/null`.
 ## IFS Safety
-- [BCS1203] Set IFS to known-safe value at script start and make it readonly to prevent field splitting attacks: `IFS=$' \t\n'; readonly IFS; export IFS`.
-- [BCS1203] Use one-line IFS assignment for single commands to automatically restore IFS: `IFS=',' read -ra fields <<< "$csv_data"`.
-- [BCS1203] Isolate IFS changes with subshells to prevent global side effects: `( IFS=','; read -ra fields <<< "$data"; process "${fields[@]}" )`.
-- [BCS1203] Use `local -- IFS` in functions to scope IFS changes to function lifetime only.
-- [BCS1203] Always save and restore IFS when modifying globally: `saved_ifs="$IFS"; IFS=','; ...; IFS="$saved_ifs"`.
-- [BCS1203] Never trust inherited IFS values; attackers can manipulate IFS in the calling environment to exploit field splitting.
-## Eval Command Prohibition
-- [BCS1204] Never use `eval` with untrusted input; avoid `eval` entirely unless absolutely necessary, and seek alternatives first.
-- [BCS1204] Use arrays for dynamic command construction instead of eval: `cmd=(find "$path" -name "*.txt"); "${cmd[@]}"`.
-- [BCS1204] Use indirect expansion for variable references instead of eval: `echo "${!var_name}"` not `eval "echo \\$$var_name"`.
-- [BCS1204] Use associative arrays for dynamic data instead of eval: `declare -A data; data[$key]=$value` not `eval "${key}=$value"`.
-- [BCS1204] Use case statements or array lookups for function dispatch instead of eval: `case "$action" in start) start_func ;; esac`.
-- [BCS1204] `eval` executes arbitrary code with full script privileges and performs expansion twice, enabling complete system compromise through code injection.
-- [BCS1204] Use `printf -v "$var_name" '%s' "$value"` for safe variable assignment instead of `eval "$var_name='$value'"`.
+- [BCS1003] Never trust inherited IFS; set explicitly at script start: `IFS=$' \t\n'; readonly IFS; export IFS`.
+- [BCS1003] Use subshell isolation for IFS changes: `( IFS=','; read -ra fields <<< "$data" )`.
+- [BCS1003] Use one-line IFS assignment for single commands where IFS applies only to that command: `IFS=',' read -ra fields <<< "$csv_data"`.
+- [BCS1003] Use `local -- IFS` in functions to scope IFS changes to that function: `local -- IFS; IFS=','`.
+- [BCS1003] When manually saving/restoring IFS, always restore even on error: `saved_ifs="$IFS"; IFS=','; ...; IFS="$saved_ifs"`.
+- [BCS1003] For reading files while preserving content exactly, use: `while IFS= read -r line; do ...; done < file.txt`.
+- [BCS1003] For null-delimited input (e.g., `find -print0`), use: `while IFS= read -r -d '' file; do ...; done < <(find . -print0)`.
+## Eval Command Avoidance
+- [BCS1004] Never use `eval` with untrusted input; avoid `eval` entirely unless absolutely necessary.
+- [BCS1004] Use arrays for dynamic command construction: `declare -a cmd=(find "$path" -type f); "${cmd[@]}"`.
+- [BCS1004] Use indirect expansion instead of eval for variable references: `echo "${!var_name}"`.
+- [BCS1004] Use `printf -v` for dynamic variable assignment: `printf -v "$var_name" '%s' "$value"`.
+- [BCS1004] Use associative arrays for dynamic data: `declare -A data; data["$key"]="$value"; echo "${data[$key]}"`.
+- [BCS1004] Use case statements or associative arrays for function dispatch instead of eval: `case "$action" in start) start_function ;; esac`.
+- [BCS1004] For arithmetic with user input, validate strictly first: `[[ "$expr" =~ ^[0-9+\-*/\ ()]+$ ]] && result=$((expr))`.
 ## Input Sanitization
-- [BCS1205] Always validate and sanitize user input to prevent injection attacks, directory traversal, and security vulnerabilities; fail early by rejecting invalid input before processing.
-- [BCS1205] Sanitize filenames by removing directory traversal attempts (`..`, `/`) and allowing only safe characters: `[[ "$name" =~ ^[a-zA-Z0-9._-]+$ ]] || die 22 "Invalid filename"`.
-- [BCS1205] Validate numeric input with regex before use: `[[ "$input" =~ ^[0-9]+$ ]] || die 22 "Invalid positive integer"` and check ranges where applicable.
-- [BCS1205] Validate paths are within allowed directories using realpath: `real_path=$(realpath -e -- "$input"); [[ "$real_path" == "$allowed_dir"* ]] || die 5 "Path outside allowed directory"`.
-- [BCS1205] Use whitelist validation (define what IS allowed) over blacklist validation (define what isn't allowed); blacklists are always incomplete and bypassable.
-- [BCS1205] Always use `--` separator in commands to prevent option injection: `rm -- "$user_file"` not `rm "$user_file"` (prevents `--delete-all` attacks).
-- [BCS1205] Never pass user input directly to shell commands or use eval with user input; use case statements to whitelist allowed commands.
-- [BCS1205] Validate input type, format, range, and length; check for leading zeros in numbers, credentials in URLs, dangerous characters in filenames.
+- [BCS1005] Always validate and sanitize user input before use; fail early with clear error messages.
+- [BCS1005] Use whitelist validation (define what IS allowed) rather than blacklist (what isn't): `[[ "$name" =~ ^[a-zA-Z0-9._-]+$ ]] || die 22 'Invalid filename'`.
+- [BCS1005] Sanitize filenames by removing directory traversal and restricting characters: `name="${name//\.\./}"; name="${name//\//}"; [[ "$name" =~ ^[a-zA-Z0-9._-]+$ ]]`.
+- [BCS1005] Validate paths are within allowed directories using realpath: `real_path=$(realpath -e -- "$input"); [[ "$real_path" == "$allowed_dir"* ]] || die 5 'Path outside allowed directory'`.
+- [BCS1005] Validate integers with regex: `[[ "$input" =~ ^-?[0-9]+$ ]] || die 22 "Invalid integer: $input"`.
+- [BCS1005] Validate against whitelists using array lookup: `for choice in "${valid_choices[@]}"; do [[ "$input" == "$choice" ]] && return 0; done; die 22 'Invalid choice'`.
+- [BCS1005] Always use `--` separator before file arguments to prevent option injection: `rm -- "$user_file"`.
+- [BCS1005] Never pass user input directly to shell commands without validation; use case statements for command selection.
+## Temporary File Handling
+- [BCS1006] Always use `mktemp` to create temporary files and directories; never hard-code temp file paths like `/tmp/myapp.txt`.
+- [BCS1006] Always set up cleanup trap immediately after creating temp files: `temp_file=$(mktemp) || die 1 'Failed to create temp file'; trap 'rm -f "$temp_file"' EXIT`.
+- [BCS1006] For temp directories, use `mktemp -d` and `rm -rf` in cleanup: `temp_dir=$(mktemp -d); trap 'rm -rf "$temp_dir"' EXIT`.
+- [BCS1006] Check mktemp success before using temp file: `temp_file=$(mktemp) || die 1 'Failed to create temp file'`.
+- [BCS1006] Use custom templates for recognizable temp files: `temp_file=$(mktemp /tmp/"$SCRIPT_NAME".XXXXXX)`.
+- [BCS1006] For multiple temp files, use array and cleanup function: `declare -a TEMP_FILES=(); cleanup() { for f in "${TEMP_FILES[@]}"; do rm -f "$f"; done }; trap cleanup EXIT`.
+- [BCS1006] Make temp file variables readonly after assignment to prevent accidental modification: `readonly -- temp_file`.
+- [BCS1006] Default mktemp permissions are secure (0600 for files, 0700 for directories); don't weaken them.
+- [BCS1006] Add `--keep-temp` option for debugging: `((KEEP_TEMP)) && info "Keeping temp files" && return` in cleanup function.
+- [BCS1006] Handle signals for cleanup: `trap cleanup EXIT SIGINT SIGTERM`.

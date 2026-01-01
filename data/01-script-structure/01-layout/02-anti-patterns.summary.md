@@ -1,416 +1,196 @@
 ### Common Layout Anti-Patterns
 
-**Common violations of BCS0101's 13-step layout pattern with corrections.**
+Common violations of BCS0101 13-step layout with corrections.
 
 ---
 
 ## Anti-Patterns
 
-###  Wrong: Missing `set -euo pipefail`
+### ✗ Missing `set -euo pipefail`
 
 ```bash
 #!/usr/bin/env bash
-
-# Script starts without error handling
-VERSION='1.0.0'
-
-# Commands can fail silently
-rm -rf /important/data
-cp config.txt /etc/
+VERSION=1.0.0
+rm -rf /important/data  # Fails silently
 ```
 
-**Problem:** Errors not caught, script continues after failures causing silent corruption.
+**Problem:** Errors not caught, script continues after failures.
 
-###  Correct: Error Handling First
+### ✓ Correct
 
 ```bash
 #!/usr/bin/env bash
-
-# Installation script with proper safeguards
-
 set -euo pipefail
-
 shopt -s inherit_errexit shift_verbose
-
-VERSION='1.0.0'
-# ... rest of script
+VERSION=1.0.0
 ```
 
 ---
 
-###  Wrong: Declaring Variables After Use
+### ✗ Variables After Use
 
 ```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
 main() {
-  # Using VERBOSE before it's declared
-  ((VERBOSE)) && echo 'Starting...'
-
-  process_files
+  ((VERBOSE)) && echo 'Starting...' ||:  # VERBOSE undefined!
 }
-
-# Variables declared after main()
-declare -i VERBOSE=0
-
-main "$@"
-#fin
+declare -i VERBOSE=0  # Too late
 ```
 
-**Problem:** Variables referenced before declaration cause "unbound variable" errors with `set -u`.
+**Problem:** "Unbound variable" errors with `set -u`.
 
-###  Correct: Declare Before Use
+### ✓ Correct
 
 ```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-# Declare all globals up front
 declare -i VERBOSE=0
 declare -i DRY_RUN=0
 
 main() {
-  # Now safe to use
-  ((VERBOSE)) && echo 'Starting...'
-
-  process_files
+  ((VERBOSE)) && echo 'Starting...' ||:
 }
-
-main "$@"
-#fin
 ```
 
 ---
 
-###  Wrong: Business Logic Before Utilities
+### ✗ Business Logic Before Utilities
 
 ```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-# Business logic defined first
 process_files() {
-  local -- file
-  for file in *.txt; do
-    # Calling die() which isn't defined yet!
-    [[ -f "$file" ]] || die 2 "Not a file '$file'"
-    echo "Processing '$file'"
-  done
+  [[ -f "$file" ]] || die 2 "Not a file"  # die() not defined yet!
 }
-
-# Utilities defined after business logic
-die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
-
-main() {
-  process_files
-  : ...
-}
-
-main "$@"
-#fin
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 ```
 
-**Problem:** `process_files()` calls undefined `die()`. While bash resolves functions at runtime, this violates bottom-up organization and reduces readability.
+**Problem:** Violates bottom-up organization; harder to understand.
 
-###  Correct: Utilities Before Business Logic
+### ✓ Correct
 
 ```bash
-#!/usr/bin/env bash
-set -euo pipefail
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
-# Utilities first
-die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
-
-# Business logic can safely call utilities
 process_files() {
-  local -- file
-  for file in *.txt; do
-    [[ -f "$file" ]] || die 2 "Not a file '$file'"
-    echo "Processing '$file'"
-  done
+  [[ -f "$file" ]] || die 2 "Not a file"
 }
-
-main() {
-  process_files
-}
-
-main "$@"
-#fin
 ```
 
 ---
 
-###  Wrong: No `main()` Function in Large Script
+### ✗ No `main()` in Large Script
 
 ```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-VERSION='1.0.0'
-
 # ... 200 lines of functions ...
-
-# Argument parsing scattered throughout
-if [[ "$1" == '--help' ]]; then
-  echo 'Usage: ...'
-  exit 0
-fi
-
-# Business logic runs directly
+if [[ "$1" == '--help' ]]; then echo 'Usage: ...'; exit 0; fi
 check_prerequisites
-validate_config
 install_files
-
-echo 'Done'
-#fin
 ```
 
-**Problem:** No clear entry point, scattered argument parsing, can't test script or source individual functions.
+**Problem:** No clear entry point, scattered parsing, can't source for testing.
 
-###  Correct: Use `main()` for Scripts Over 40 Lines
+### ✓ Correct
 
 ```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-VERSION='1.0.0'
-
-# ... 200 lines of functions ...
-
 main() {
-  # Centralized argument parsing
   while (($#)); do
     case $1 in
       -h|--help) usage; exit 0 ;;
-      *) die 22 "Invalid argument '$1'" ;;
+      *) die 22 "Invalid argument ${1@Q}" ;;
     esac
     shift
   done
-
-  # Clear execution flow
   check_prerequisites
-  validate_config
   install_files
-
-  success 'Installation complete'
 }
-
 main "$@"
 #fin
 ```
 
 ---
 
-###  Wrong: Missing End Marker
+### ✗ Missing End Marker
 
 ```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-VERSION='1.0.0'
-
-main() {
-  echo 'Hello, World!'
-}
-
 main "$@"
-# File ends without #fin or #end
+# File ends without #fin
 ```
 
-**Problem:** No confirmation file is complete, harder to detect truncation.
+**Problem:** No confirmation file is complete; truncation harder to detect.
 
-###  Correct: Always End With `#fin`
+### ✓ Correct
 
 ```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-VERSION='1.0.0'
-
-main() {
-  echo 'Hello, World!'
-}
-
 main "$@"
 #fin
 ```
 
 ---
 
-###  Wrong: Readonly Before Parsing Arguments
+### ✗ Readonly Before Parsing
 
 ```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-VERSION='1.0.0'
-PREFIX='/usr/local'
-
-# Made readonly too early!
-readonly -- VERSION PREFIX
+PREFIX=/usr/local
+readonly -- PREFIX
 
 main() {
-  while (($#)); do
-    case $1 in
-      --prefix)
-        shift
-        # This will fail - PREFIX is readonly!
-        PREFIX="$1"
-        ;;
-    esac
-    shift
-  done
+  case $1 in
+    --prefix) PREFIX="$1" ;;  # Fails - readonly!
+  esac
 }
-
-main "$@"
-#fin
 ```
 
-**Problem:** Variables needing modification during argument parsing are readonly too early.
-
-###  Correct: Readonly After Argument Parsing
+### ✓ Correct
 
 ```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-VERSION='1.0.0'
-SCRIPT_PATH=$(realpath -- "$0")
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- VERSION SCRIPT_PATH SCRIPT_NAME  # These never change
-
-declare -- PREFIX='/usr/local'  # Will be modified during parsing
+declare -- PREFIX=/usr/local
 
 main() {
-  while (($#)); do
-    case $1 in
-      --prefix)
-        shift
-        PREFIX="$1"  # OK - not readonly yet
-        ;;
-    esac
-    shift
-  done
-
-  # Now make readonly after parsing complete
-  readonly -- PREFIX
-
-  # Rest of logic...
+  case $1 in --prefix) PREFIX=$1 ;; esac
+  readonly -- PREFIX  # After parsing
 }
-
-main "$@"
-#fin
 ```
 
 ---
 
-###  Wrong: Mixing Declaration and Logic
+### ✗ Scattered Declarations
 
 ```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-VERSION='1.0.0'
-
-# Some globals
 declare -i VERBOSE=0
-
-# Function in the middle
-check_something() {
-  echo 'Checking...'
-}
-
-# More globals after function
-declare -- PREFIX='/usr/local'
-declare -- CONFIG_FILE=''
-
-main() {
-  check_something
-}
-
-main "$@"
-#fin
+check_something() { echo 'Checking...'; }
+declare -- PREFIX=/usr/local  # More globals after function
 ```
 
-**Problem:** Scattered globals make it hard to see all state variables at once.
+**Problem:** Hard to see all state variables at once.
 
-###  Correct: All Globals Together
+### ✓ Correct
 
 ```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-VERSION='1.0.0'
-
-# All globals in one place
 declare -i VERBOSE=0
-declare -- PREFIX='/usr/local'
-declare -- CONFIG_FILE=''
+declare -- PREFIX=/usr/local
 
-# All functions after globals
-check_something() {
-  echo 'Checking...'
-}
-
-main() {
-  check_something
-}
-
-main "$@"
-#fin
+check_something() { echo 'Checking...'; }
 ```
 
 ---
 
-###  Wrong: Sourcing Without Protecting Execution
+### ✗ Unprotected Sourcing
 
 ```bash
 #!/usr/bin/env bash
-# This file is meant to be sourced, but...
-
 set -euo pipefail  # Modifies caller's shell!
-
-die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
-
-# Runs automatically when sourced!
-main "$@"
-#fin
+main "$@"          # Runs when sourced!
 ```
 
-**Problem:** When sourced, modifies caller's shell settings and runs `main` automatically.
-
-###  Correct: Dual-Purpose Script
+### ✓ Dual-Purpose Script
 
 ```bash
 #!/usr/bin/env bash
-# Only set strict mode when executed (not sourced)
-
 error() { >&2 echo "ERROR: $*"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
-die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
-
-# Only run main when executed (not sourced)
-# Fast exit if sourced
 [[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0
 
-# Now start main script
 set -euo pipefail
-
-VERSION='1.0.0'
-SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- VERSION SCRIPT_PATH SCRIPT_NAME  # These never change
-
-: ...
-
-main() {
-  echo 'Running main'
-  : ...
-}
-
+VERSION=1.0.0
+main() { echo 'Running main'; }
 main "$@"
-
 #fin
 ```
 
@@ -418,15 +198,13 @@ main "$@"
 
 ## Summary
 
-Eight most common BCS0101 violations:
-
-1. **Missing strict mode** - Scripts without `set -euo pipefail` fail silently
-2. **Declaration order** - Variables must be declared before use
-3. **Function organization** - Utilities must precede business logic
-4. **Missing main()** - Scripts >40 lines need structured entry point
-5. **Missing end marker** - Scripts must end with `#fin` or `#end`
-6. **Premature readonly** - Variables that change must not be readonly until after parsing
-7. **Scattered declarations** - All globals must be grouped together
-8. **Unprotected sourcing** - Dual-purpose scripts must protect execution code
-
-Proper structure prevents entire classes of bugs through predictable organization.
+| Anti-Pattern | Consequence |
+|--------------|-------------|
+| Missing strict mode | Silent failures |
+| Declaration order | Unbound variable errors |
+| Function organization | Code harder to understand |
+| Missing main() | Can't test or source script |
+| Missing #fin | Truncation undetectable |
+| Premature readonly | Assignment errors |
+| Scattered declarations | State hard to audit |
+| Unprotected sourcing | Caller's shell modified |

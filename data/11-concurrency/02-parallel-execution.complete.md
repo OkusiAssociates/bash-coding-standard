@@ -57,7 +57,7 @@ done
 
 # Output results in original order
 for server in "${servers[@]}"; do
-  [[ -f "$temp_dir/$server.out" ]] && cat "$temp_dir/$server.out"
+  [[ -f "$temp_dir"/"$server".out ]] && cat "$temp_dir"/"$server".out
 done
 ```
 
@@ -95,17 +95,17 @@ wait
 # ✗ Wrong - variable lost in subshell
 count=0
 for task in "${tasks[@]}"; do
-  { process "$task"; ((count+=1)); } &
+  { process "$task"; count+=1; } &
 done
 wait
 echo "$count"  # Always 0!
 
 # ✓ Correct - use temp files for results
 for task in "${tasks[@]}"; do
-  { process "$task" && echo 1 >> "$temp_dir/count"; } &
+  { process "$task" && echo 1 >> "$temp_dir"/count; } &
 done
 wait
-count=$(wc -l < "$temp_dir/count")
+count=$(wc -l < "$temp_dir"/count)
 ```
 
 ---
@@ -113,5 +113,3 @@ count=$(wc -l < "$temp_dir/count")
 **See Also:** BCS1406 (Background Jobs), BCS1408 (Wait Patterns)
 
 **Full implementation:** See `examples/exemplar-code/oknav/oknav` lines 465-530
-
-#fin

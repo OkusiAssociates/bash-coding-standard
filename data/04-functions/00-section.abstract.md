@@ -1,36 +1,23 @@
 # Functions
 
-**Use lowercase_with_underscores naming; require `main()` for scripts >200 lines; organize bottom-up (messaging’helpers’business logic’main).**
+**Function definition patterns, naming (`lowercase_with_underscores`), organization, export (`declare -fx`), and production optimization.**
 
-**Rationale:** Bottom-up organization ensures dependencies exist before use; `main()` enables testing/sourcing without execution; consistent naming improves readability.
+## Core Requirements
 
-**Pattern:**
+- `main()` required for scripts >200 lines â†' improves testability
+- Bottom-up organization: messaging â†' helpers â†' business logic â†' `main()`
+- Remove unused utility functions in production scripts
+
+## Export Pattern
+
 ```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-_msg() { local lvl=$1; shift; >&2 echo "[$lvl] $*"; }
-error() { _msg ERROR "$@"; }
-die() { error "$@"; exit 1; }
-
-process_file() {
-  local file=$1
-  [[ -f "$file" ]] || die "File not found: $file"
-  # business logic
-}
-
-main() {
-  process_file "$1"
-}
-
-main "$@"
-#fin
+my_lib_func() { :; }
+declare -fx my_lib_func
 ```
 
-**Export for libraries:** `declare -fx function_name` after definition.
+## Anti-patterns
 
-**Production optimization:** Remove unused utility functions once scripts mature.
+- `main()` missing in large scripts â†' poor structure, untestable
+- Top-down organization â†' forward reference issues
 
-**Anti-patterns:** `function` keyword (omit it); top-down organization; missing `main()` in large scripts.
-
-**Ref:** BCS0600
+**Ref:** BCS0400

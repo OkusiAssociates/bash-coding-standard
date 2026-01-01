@@ -1,22 +1,18 @@
 ## Shebang and Initial Setup
 
-**All scripts must start with shebang, optional shellcheck directives, brief description, then `set -euo pipefail` as first command.**
+**First lines must include shebang, optional shellcheck directives, description comment, then `set -euo pipefail` as first command.**
 
-**Allowable shebangs:**
-- `#!/bin/bash` → Most portable (standard Linux)
-- `#!/usr/bin/bash` → FreeBSD/BSD systems
-- `#!/usr/bin/env bash` → Maximum portability (searches PATH)
+**Shebangs:** `#!/bin/bash` (Linux) | `#!/usr/bin/bash` (BSD) | `#!/usr/bin/env bash` (max portability)
 
-**Rationale:** Strict error handling must activate before any commands execute.
-
-**Example:**
 ```bash
 #!/bin/bash
 #shellcheck disable=SC1090,SC1091
-# Get directory sizes and report usage statistics
+# Brief script description
 set -euo pipefail
 ```
 
-**Anti-pattern:** `set -euo pipefail` after variable declarations → errors undetected during initialization.
+**Rationale:** Strict mode (`set -euo pipefail`) must execute before any other commands to catch errors immediately.
+
+**Anti-patterns:** Missing `set -euo pipefail` �' silent failures; shebang without path (`#!bash`) �' won't execute.
 
 **Ref:** BCS0102

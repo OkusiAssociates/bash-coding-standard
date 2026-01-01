@@ -1,31 +1,15 @@
-## Boolean Flags Pattern
+## Boolean Flags
 
-**Use `declare -i` for boolean state flags, test with `(())`.**
+**Use `declare -i` integers with `(())` for boolean state; 0=false, non-zero=true.**
 
 ```bash
-declare -i DRY_RUN=0
-declare -i VERBOSE=0
-
-# Test in conditionals
-((DRY_RUN)) && info 'Dry-run enabled'
-
-if ((VERBOSE)); then
-  debug "Details here"
-fi
-
-# Set from arguments
---dry-run) DRY_RUN=1 ;;
+declare -i DRY_RUN=0 VERBOSE=0
+((DRY_RUN)) && info 'Dry-run mode'
+case $1 in --dry-run) DRY_RUN=1 ;; esac
 ```
 
-**Rules:**
-- `declare -i FLAG=0` â†’ explicit integer declaration
-- ALL_CAPS naming (DRY_RUN, SKIP_BUILD)
-- Initialize to `0` (false) or `1` (true)
-- Test: `((FLAG))` â†’ true if non-zero
-- Toggle: `((FLAG)) && FLAG=0 || FLAG=1`
+**Rules:** ALL_CAPS naming â†' initialize explicitly â†' test with `((FLAG))` â†' don't mix with counters
 
-**Anti-patterns:**
-- `if [[ $FLAG -eq 1 ]]` â†’ use `((FLAG))`
-- `declare FLAG=false` â†’ strings not testable with `(())`
+**Anti-pattern:** `[[ "$FLAG" == "true" ]]` â†' use `((FLAG))`
 
-**Ref:** BCS0207
+**Ref:** BCS0211

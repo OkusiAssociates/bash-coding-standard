@@ -23,7 +23,7 @@ success() { >&2 _msg "$@"; }
 warn() { >&2 _msg "$@"; }
 info() { >&2 _msg "$@"; }
 error() { >&2 _msg "$@"; }
-die() { (($# > 1)) && error "${@:2}" ||:; exit "${1:-0}"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 # 2. Documentation functions (no dependencies)
 show_help() { ... }
@@ -173,19 +173,14 @@ info() {
 }
 
 warn() {
-  >&2 _msg "WARNING: $*"
+  >&2 _msg "warning: $*"
 }
 
 error() {
-  >&2 _msg "ERROR: $*"
+  >&2 _msg "error: $*"
 }
 
-die() {
-  local -i exit_code=$1
-  shift
-  (($#)) && error "$@"
-  exit "$exit_code"
-}
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 success() {
   >&2 _msg "SUCCESS: $*"

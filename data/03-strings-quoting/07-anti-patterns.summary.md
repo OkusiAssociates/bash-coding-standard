@@ -1,8 +1,10 @@
 ### Quoting Anti-Patterns
 
-**Rule: BCS0307** (From BCS0411)
+**Rule: BCS0307**
 
 Common quoting mistakes to avoid.
+
+---
 
 #### Category 1: Double Quotes for Static Strings
 
@@ -16,30 +18,30 @@ info 'Checking prerequisites...'
 [[ "$status" == 'active' ]]
 ```
 
+---
+
 #### Category 2: Unquoted Variables
 
 ```bash
 # ✗ Wrong - word splitting/glob expansion
 [[ -f $file ]]
 echo $result
-rm $temp_file
 
 # ✓ Correct
 [[ -f "$file" ]]
 echo "$result"
-rm "$temp_file"
 ```
+
+---
 
 #### Category 3: Unnecessary Braces
 
 ```bash
 # ✗ Wrong - braces not needed
 echo "${HOME}/bin"
-path="${CONFIG_DIR}/app.conf"
 
 # ✓ Correct
-echo "$HOME/bin"
-path="$CONFIG_DIR/app.conf"
+echo "$HOME"/bin
 
 # Braces ARE needed for:
 "${var:-default}"     # Default value
@@ -47,6 +49,8 @@ path="$CONFIG_DIR/app.conf"
 "${array[@]}"         # Array expansion
 "${var1}${var2}"      # Adjacent variables
 ```
+
+---
 
 #### Category 4: Unquoted Arrays
 
@@ -58,16 +62,19 @@ for item in ${items[@]}; do
 for item in "${items[@]}"; do
 ```
 
+---
+
 #### Category 5: Glob Expansion Danger
 
 ```bash
-# ✗ Wrong
 pattern='*.txt'
+# ✗ Wrong
 echo $pattern       # Expands to all .txt files!
-
 # ✓ Correct
 echo "$pattern"     # Outputs literal: *.txt
 ```
+
+---
 
 #### Category 6: Here-doc Delimiter
 
@@ -83,16 +90,17 @@ SELECT * FROM users WHERE name = ?
 EOF
 ```
 
+---
+
 #### Quick Reference
 
 | Context | Correct | Wrong |
 |---------|---------|-------|
 | Static string | `'literal'` | `"literal"` |
 | Variable | `"$var"` | `$var` |
-| Path with var | `"$HOME/bin"` | `"${HOME}/bin"` |
+| Path with var | `"$HOME"/bin` | `"${HOME}/bin"` |
 | Conditional | `[[ -f "$file" ]]` | `[[ -f $file ]]` |
 | Array | `"${arr[@]}"` | `${arr[@]}` |
-| Static literal | `== 'value'` | `== "value"` |
 
 **Key principle:** Single quotes for static text, double quotes for variables, avoid unnecessary braces, always quote variables.
 

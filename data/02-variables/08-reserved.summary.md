@@ -8,7 +8,7 @@ Reserved placeholder for Variables & Data Types section expansion.
 
 #### Purpose
 
-- Maintains numerical sequence integrity for BCS codes
+- Maintains numerical sequence integrity (two-digit BCS codes)
 - Allows future additions without code renumbering
 - Protects external references to BCS0208
 
@@ -17,7 +17,8 @@ Reserved placeholder for Variables & Data Types section expansion.
 - Nameref variables (`declare -n`)
 - Indirect variable expansion (`${!var}`)
 - Variable attributes and introspection
+- Typed variable best practices
 
-**Status:** Reserved | **Version:** 1.0.0
+**Status:** Reserved | Do not use in documentation or compliance checking.
 
 #fin

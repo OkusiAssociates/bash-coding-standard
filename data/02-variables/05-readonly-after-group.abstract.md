@@ -1,72 +1,55 @@
 ## Readonly After Group
 
-**Declare variables first, then make readonly in single statement.**
+**Declare variables first, then make all readonly in single statement. Exception: script metadata uses `declare -r` (BCS0103).**
 
-**Rationale:** Prevents assignment errors; visual grouping; clear immutability contract.
+### Why
+- Prevents assignment to already-readonly variable
+- Groups related constants visually
+- Separates initialization from protection phase
 
-**Three-step progressive workflow:**
-
+### Three-Step Pattern (for arg-parsed values)
 ```bash
-# Step 1 - Declare with defaults
+# 1. Declare with defaults
 declare -i VERBOSE=0 DRY_RUN=0
-declare -- PREFIX='/usr/local'
 
-# Step 2 - Parse/modify in main()
-main() {
-  while (($#)); do case $1 in
-    -v) VERBOSE=1 ;;
-    --prefix) shift; PREFIX="$1" ;;
-  esac; shift; done
+# 2. Parse in main()
+while (($#)); do case $1 in -v) VERBOSE+=1 ;; esac; shift; done
 
-  # Step 3 - Readonly after parsing
-  readonly -- VERBOSE DRY_RUN PREFIX
-}
+# 3. Make readonly AFTER parsing
+readonly -- VERBOSE DRY_RUN
 ```
 
-Variables mutable during parsing → readonly after.
-
-**Exception:** Script metadata prefers `declare -r` (see BCS0103). Readonly-after-group valid but `declare -r` now recommended.
-
-**Standard groups:**
-
+### Standard Groups
 ```bash
-# Metadata (exception: uses declare -r)
-declare -r VERSION='1.0.0'
-#shellcheck disable=SC2155
-declare -r SCRIPT_PATH=$(realpath -- "$0")
+# Colors (conditional init, then readonly)
+if [[ -t 1 ]]; then RED=$'\033[31m'; else RED=''; fi
+readonly -- RED
 
-# Colors (conditional)
-if [[ -t 1 && -t 2 ]]; then
-  RED=$'\033[0;31m' NC=$'\033[0m'
-else
-  RED='' NC=''
-fi
-readonly -- RED NC
-
-# Paths
-PREFIX="${PREFIX:-/usr/local}"
-BIN_DIR="$PREFIX/bin"
+# Paths (derive all, then readonly together)
+PREFIX=${PREFIX:-/usr/local}
+BIN_DIR="$PREFIX"/bin
 readonly -- PREFIX BIN_DIR
 ```
 
-**Anti-patterns:**
-
+### Anti-Patterns
 ```bash
-# ✗ Wrong - readonly before all values set
-PREFIX='/usr'
-readonly -- PREFIX
-BIN_DIR="$PREFIX/bin"  # Not protected
+# ✗ Premature readonly
+PREFIX=/usr/local
+readonly -- PREFIX  # Too early!
+BIN_DIR="$PREFIX"/bin  # PREFIX locked before group complete
 
 # ✓ Correct
-PREFIX='/usr'
-BIN_DIR="$PREFIX/bin"
+PREFIX=/usr/local
+BIN_DIR="$PREFIX"/bin
 readonly -- PREFIX BIN_DIR
 
-# ✗ Wrong - missing --
-readonly PREFIX  # Risky
+# ✗ Missing -- separator
+readonly PREFIX  # Risky if var starts with -
 
-# ✓ Correct
-readonly -- PREFIX
+# ✗ Readonly inside conditional
+if [[ -f x ]]; then readonly -- VAR; fi  # May not be readonly!
 ```
+
+**Key:** Always use `--` separator. Group logically related variables. Make readonly only when values are final.
 
 **Ref:** BCS0205

@@ -2,17 +2,19 @@
 
 **Single quotes for static strings; double quotes only when variable expansion needed.**
 
-#### Core Rules
+#### Core Pattern
 
-- **Single quotes**: Static text, no expansion â†' `info 'Processing...'`
-- **Double quotes**: Variables needed â†' `info "Found $count files"`
-- **Mixed**: Literal quotes around values â†' `die 1 "Unknown option '$1'"`
+```bash
+info 'Static message'              # Single - no expansion
+info "Found $count files"          # Double - needs $count
+die 1 "Unknown option '$1'"        # Mixed - literal quotes around var
+```
 
 #### Why Single Quotes Default
 
-1. **Safety**: Prevents accidental `$`, `` ` ``, `\` expansion
-2. **Clarity**: Signals "no substitution here"
-3. **Performance**: No parsing overhead
+- **Performance**: No parsing overhead
+- **Safety**: Prevents accidental `$`, `` ` ``, `\` expansion
+- **Clarity**: Signals "literal text"
 
 #### Path Concatenation
 
@@ -20,27 +22,25 @@
 # âœ“ Recommended - separate quoting
 "$PREFIX"/bin
 "$SCRIPT_DIR"/data/"$filename"
-
-# âœ— Avoid - combined quoting
-"$PREFIX/bin"
 ```
-
-#### One-Word Exception
-
-Simple alphanumeric (`a-zA-Z0-9_-./`) may be unquoted: `STATUS=success`
-
-**Mandatory quotes for:** spaces, `@`, `*`, `$`, empty strings `''`
 
 #### Anti-Patterns
 
 ```bash
-# âœ— Double quotes for static
-info "Checking prerequisites..."
-â†' info 'Checking prerequisites...'
+# âœ— Double quotes for static â†' info "Processing..."
+# âœ“ Single quotes            â†' info 'Processing...'
 
-# âœ— Special chars unquoted
-EMAIL=user@domain.com
-â†' EMAIL='user@domain.com'
+# âœ— Unquoted special chars   â†' EMAIL=user@domain.com
+# âœ“ Quoted                   â†' EMAIL='user@domain.com'
 ```
+
+#### Quick Rules
+
+| Content | Quote | Example |
+|---------|-------|---------|
+| Static | Single | `'text'` |
+| With var | Double | `"$var"` |
+| Special chars | Single | `'@*.txt'` |
+| Empty | Single | `''` |
 
 **Ref:** BCS0301

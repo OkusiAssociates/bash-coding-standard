@@ -1,16 +1,18 @@
 ## Function Export
 
-**Export functions with `declare -fx` when they must be available to subshells or child processes.**
+**Use `declare -fx` to export functions for subshell access.**
 
+### Rationale
+- Subshells don't inherit functions by default
+- Essential for `xargs -P`, `find -exec`, parallel jobs
+
+### Pattern
 ```bash
-# Export wrapper functions
 grep() { /usr/bin/grep "$@"; }
-find() { /usr/bin/find "$@"; }
-declare -fx grep find
+declare -fx grep
 ```
 
-**Rationale:** Functions are not inherited by subshells unless explicitly exported; `-fx` makes them available to child processes.
+### Anti-Pattern
+`export -f func` â†' Use `declare -fx` for consistency with variable exports.
 
-**Anti-pattern:** Defining functions without export when subshells need them ’ function not found errors.
-
-**Ref:** BCS0604
+**Ref:** BCS0404

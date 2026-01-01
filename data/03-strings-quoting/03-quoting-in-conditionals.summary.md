@@ -1,14 +1,8 @@
 ### Quoting in Conditionals
 
-**Rule: BCS0303** (From BCS0406)
+**Rule: BCS0303**
 
-Variable quoting in test expressions.
-
----
-
-#### The Rule
-
-**Always quote variables** in conditionals. Static comparison values follow normal rules (single quotes for literals).
+**Always quote variables** in conditionals. Static literals use single quotes.
 
 ```bash
 # ✓ Correct - variable quoted
@@ -45,7 +39,8 @@ Variable quoting in test expressions.
 [[ -n "$result" ]]
 
 # Numeric comparisons
-[[ "$count" -gt 10 ]]
+declare -i count=0
+((count > 10))
 
 # Pattern matching (pattern unquoted for globbing)
 [[ "$filename" == *.txt ]]        # Glob match

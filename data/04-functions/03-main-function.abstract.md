@@ -1,59 +1,42 @@
 ## Main Function
 
-**Include `main()` for scripts >200 lines as single entry point; place `main "$@"` before `#fin`.**
+**Include `main()` for scripts >200 lines; place `main "$@"` before `#fin`. Single entry point for testability, organization, and scope control.**
 
-**Rationale:** Enables testability (source without executing), organization, and scope control.
+**Rationale:** Testability (source without executing), scope control (locals prevent global pollution), centralized exit code handling.
 
 **Structure:**
 ```bash
 main() {
   local -i verbose=0
-  local -- output_dir=''
+  local -- output=''
   local -a files=()
 
-  # Parse args
   while (($#)); do case $1 in
-    -v|--verbose) verbose=1 ;;
-    -o|--output) shift; output_dir="$1" ;;
-    -h|--help) usage; return 0 ;;
-    -*) die 22 "Invalid: $1" ;;
+    -v) verbose=1 ;;
+    -o) shift; output=$1 ;;
+    --) shift; break ;;
+    -*) die 22 "Invalid: ${1@Q}" ;;
     *) files+=("$1") ;;
   esac; shift; done
+  files+=("$@")
+  readonly -- verbose output; readonly -a files
 
-  readonly -- verbose output_dir
-  readonly -a files
-
-  # Validation & logic
-  [[ ${#files[@]} -eq 0 ]] && die 22 'No files'
-
+  # Business logic...
   return 0
 }
-
 main "$@"
 #fin
 ```
 
-**Testable pattern:**
+**Sourceable pattern:**
 ```bash
-main() { : ; }
-
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  main "$@"
-fi
-#fin
-```
-
-**Anti-pattern:**
-```bash
-# âœ— Args parsed outside main
-while (($#)); do : ; done
-main "$@"  # Args already consumed!
-
-# âœ“ Parse in main
-main() {
-  while (($#)); do : ; done
-}
+[[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0
 main "$@"
 ```
 
-**Ref:** BCS0603
+**Anti-patterns:**
+- `main` without `"$@"` â†' arguments lost
+- Functions defined after `main "$@"` â†' not available
+- Argument parsing outside main â†' globals, consumed before main
+
+**Ref:** BCS0403

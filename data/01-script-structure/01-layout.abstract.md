@@ -1,25 +1,42 @@
-## General Layouts for Standard Script
+## Script Structure Layout
 
-**Mandatory 13-step structural layout for all Bash scripts.**
+**All scripts follow 13-step bottom-up layout: infrastructure â†' implementation â†' orchestration.**
 
 ### The 13 Steps
 
-1. **Shebang**: `#!/bin/bash` (or `#!/usr/bin/bash`, `#!/usr/bin/env bash`)
-2. **ShellCheck directives** (if needed): `#shellcheck disable=SCxxxx` with comments
-3. **Brief description**: One-line purpose comment
-4. **Error handling**: `set -euo pipefail` (MANDATORY before commands)
-5. **Shell options**: `shopt -s inherit_errexit shift_verbose extglob nullglob`
-6. **Metadata**: `declare -r VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME` (readonly together)
-7. **Global variables**: Explicit types - `declare -i`, `declare --`, `declare -a`, `declare -A`
-8. **Color definitions** (if terminal output): Conditional with readonly
-9. **Utility functions**: `_msg()`, `vecho()`, `info()`, `warn()`, `error()`, `die()` - lowest level
-10. **Business logic**: Core functions organized bottom-up
-11. **main()**: Required >100 lines; includes argument parsing; readonly after parsing
-12. **Invocation**: `main "$@"` (always quote)
-13. **End marker**: `#fin` or `#end` (MANDATORY)
+1. `#!/bin/bash` (or `#!/usr/bin/env bash`)
+2. `#shellcheck` directives (if needed, with comments)
+3. Brief description comment
+4. `set -euo pipefail` â€” **MANDATORY before any commands**
+5. `shopt -s inherit_errexit shift_verbose extglob nullglob`
+6. Metadata: `VERSION`, `SCRIPT_PATH`, `SCRIPT_DIR`, `SCRIPT_NAME` â†' `declare -r`
+7. Global declarations with types (`declare -i`, `declare --`, `declare -a`)
+8. Color definitions (if terminal output)
+9. Utility functions (messaging: `info`, `warn`, `error`, `die`)
+10. Business logic functions
+11. `main()` with argument parsing
+12. `main "$@"`
+13. `#fin` or `#end`
 
-**Rationale**: Guarantees safe initialization, prevents undefined references, enables testing.
+### Core Rationale
+- Error handling before any code runs
+- Bottom-up: utilities before business logic before `main()`
+- Testable: source script to test individual functions
 
-**Anti-pattern**: Missing `set -euo pipefail`, variables before declaration, logic before utilities, no `main()` in large scripts.
+### Minimal Example
+```bash
+#!/bin/bash
+set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
+declare -r VERSION=1.0.0
+main() { echo "Hello $VERSION"; }
+main "$@"
+#fin
+```
+
+### Anti-patterns
+- `set -euo pipefail` after commands â†' **breaks safety**
+- Business logic before utility functions â†' **undefined calls**
+- No `main()` in scripts >100 lines â†' **untestable**
 
 **Ref:** BCS0101

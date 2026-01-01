@@ -221,18 +221,9 @@ declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Messaging functions
-error() {
-  >&2 echo "$SCRIPT_NAME: error: $*"
-}
-
-die() {
-  (($# > 1)) && error "${@:2}" ||:
-  exit "${1:-0}"
-}
-
-info() {
-  echo "$SCRIPT_NAME: $*"
-}
+error() { >&2 echo "$SCRIPT_NAME: error: $*"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+info() { echo "$SCRIPT_NAME: $*"; }
 
 # Validate prerequisites
 check_prerequisites() {

@@ -15,7 +15,7 @@
 
 IFS (Internal Field Separator) controls how Bash splits words during expansion. Default is `$' \t\n'` (space, tab, newline).
 
-\`\`\`bash
+```bash
 # Default IFS behavior
 IFS=$' \t\n'  # Space, tab, newline (default)
 data="one two three"
@@ -27,18 +27,18 @@ IFS=','
 data="apple,banana,orange"
 read -ra fruits <<< "$data"
 # Result: fruits=("apple" "banana" "orange")
-\`\`\`
+```
 
 **Attack Example 1: Field Splitting Exploitation**
 
-\`\`\`bash
+```bash
 # Vulnerable script - doesn't protect IFS
 #!/bin/bash
 set -euo pipefail
 
 # Script expects space-separated list
 process_files() {
-  local -- file_list="$1"
+  local -- file_list=$1
   local -a files
 
   # Vulnerable: IFS could be manipulated
@@ -52,10 +52,10 @@ process_files() {
 # Normal usage
 process_files "temp1.txt temp2.txt temp3.txt"
 # Deletes: temp1.txt, temp2.txt, temp3.txt
-\`\`\`
+```
 
 **Attack:**
-\`\`\`bash
+```bash
 # Attacker sets IFS to slash
 export IFS='/'
 ./vulnerable-script.sh
@@ -69,26 +69,26 @@ export IFS=$'\n'
 ./vulnerable-script.sh "/etc/passwd
 /root/.ssh/authorized_keys"
 # Now the script processes these filenames as if they were in the list
-\`\`\`
+```
 
 **Attack Example 2: Command Injection via IFS**
 
-\`\`\`bash
+```bash
 # Vulnerable script
 #!/bin/bash
 set -euo pipefail
 
 # Process user-provided command with arguments
-user_input="$1"
+user_input=$1
 # Split on spaces to get command and arguments
 read -ra cmd_parts <<< "$user_input"
 
 # Execute command
 "${cmd_parts[@]}"
-\`\`\`
+```
 
 **Attack:**
-\`\`\`bash
+```bash
 # Attacker manipulates IFS before calling script
 export IFS='X'
 ./vulnerable-script.sh "lsX-laX/etc/shadow"
@@ -97,34 +97,34 @@ export IFS='X'
 # cmd_parts=("ls" "-la" "/etc/shadow")
 # Script executes: ls -la /etc/shadow
 # Attacker bypassed any input validation that checked for spaces!
-\`\`\`
+```
 
 **Attack Example 3: Privilege Escalation via SUID Script**
 
-\`\`\`bash
+```bash
 # Vulnerable SUID script (should never exist, but illustrative)
 #!/bin/bash
 # /usr/local/bin/backup.sh (SUID root - NEVER DO THIS!)
 
 # Supposed to back up only allowed directories
-allowed_dirs="home var opt"
+allowed_dirs='home var opt'
 
 # Check if user-provided directory is allowed
-user_dir="$1"
+user_dir=$1
 is_allowed=0
 
 for dir in $allowed_dirs; do  # Unquoted expansion uses IFS!
-  [[ "$user_dir" == "$dir" ]] && is_allowed=1
+  [[ "$user_dir" == "$dir" ]] && is_allowed=1 ||:
 done
 
 ((is_allowed)) || die 5 "Directory not allowed: $user_dir"
 
 # Back up the directory with root privileges
 tar -czf "/backup/${user_dir}.tar.gz" "/$user_dir"
-\`\`\`
+```
 
 **Attack:**
-\`\`\`bash
+```bash
 # Attacker sets IFS to 'e'
 export IFS='e'
 /usr/local/bin/backup.sh "etc"
@@ -137,14 +137,14 @@ export IFS='e'
 export IFS=' e'
 # Now "home" splits to "hom " "
 # The attacker can craft IFS to make "etc" appear in the allowed list
-\`\`\`
+```
 
 **Safe Pattern 1: Save and Restore IFS (Explicit)**
 
-\`\`\`bash
+```bash
 # ✓ Correct - save, modify, restore
 parse_csv() {
-  local -- csv_data="$1"
+  local -- csv_data=$1
   local -a fields
   local -- saved_ifs
 
@@ -163,14 +163,14 @@ parse_csv() {
     info "Field: $field"
   done
 }
-\`\`\`
+```
 
 **Safe Pattern 2: Subshell Isolation (Preferred)**
 
-\`\`\`bash
+```bash
 # ✓ Correct - IFS change isolated to subshell
 parse_csv() {
-  local -- csv_data="$1"
+  local -- csv_data=$1
   local -a fields
 
   # Use subshell - IFS change automatically reverts when subshell exits
@@ -188,14 +188,14 @@ parse_csv() {
     info "Field: $field"
   done
 }
-\`\`\`
+```
 
 **Safe Pattern 3: Local IFS in Function**
 
-\`\`\`bash
+```bash
 # ✓ Correct - use local to scope IFS change
 parse_csv() {
-  local -- csv_data="$1"
+  local -- csv_data=$1
   local -a fields
   local -- IFS  # Make IFS local to this function
 
@@ -210,11 +210,11 @@ parse_csv() {
 }
 
 # After function returns, IFS is unchanged in caller
-\`\`\`
+```
 
 **Safe Pattern 4: One-Line IFS Assignment**
 
-\`\`\`bash
+```bash
 # ✓ Correct - IFS change applies only to single command
 # This is a bash feature: VAR=value command applies VAR only to that command
 
@@ -227,11 +227,11 @@ IFS=':' read -ra path_dirs <<< "$PATH"
 # IFS is automatically reset after the read command
 
 # This is the most concise and safe pattern for single operations
-\`\`\`
+```
 
 **Safe Pattern 5: Explicitly Set IFS at Script Start**
 
-\`\`\`bash
+```bash
 #!/bin/bash
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
@@ -244,11 +244,11 @@ export IFS
 
 # Rest of script operates with trusted IFS
 # Any attempt to modify IFS will fail due to readonly
-\`\`\`
+```
 
 **Edge case: IFS with read -d (delimiter)**
 
-\`\`\`bash
+```bash
 # When using read -d, IFS still matters for field splitting
 # The delimiter (-d) determines where to stop reading
 # IFS determines how to split what was read
@@ -261,11 +261,11 @@ while IFS= read -r -d '' file; do
 done < <(find . -type f -print0)
 
 # This is the safe pattern for filenames with spaces
-\`\`\`
+```
 
 **Edge case: IFS and globbing**
 
-\`\`\`bash
+```bash
 # IFS affects word splitting, NOT pathname expansion (globbing)
 IFS=':'
 files=*.txt  # Glob expands normally
@@ -275,11 +275,11 @@ echo $files  # Splits on ':' - WRONG!
 
 # Always quote to prevent IFS-based splitting
 echo "$files"  # Safe - no splitting
-\`\`\`
+```
 
 **Edge case: Empty IFS**
 
-\`\`\`bash
+```bash
 # Setting IFS='' (empty) disables field splitting entirely
 IFS=''
 data="one two three"
@@ -288,11 +288,11 @@ read -ra words <<< "$data"
 
 # This can be useful to preserve exact input
 IFS= read -r line < file.txt  # Preserves leading/trailing whitespace
-\`\`\`
+```
 
 **Anti-patterns to avoid:**
 
-\`\`\`bash
+```bash
 # ✗ Wrong - modifying IFS without save/restore
 IFS=','
 read -ra fields <<< "$csv_data"
@@ -348,11 +348,11 @@ IFS=':' read -r user pass uid gid name home shell <<< "$passwd_line"
 # ✓ Correct - use cut or awk for structured data
 user=$(cut -d: -f1 <<< "$passwd_line")
 uid=$(cut -d: -f3 <<< "$passwd_line")
-\`\`\`
+```
 
 **Complete safe example:**
 
-\`\`\`bash
+```bash
 #!/bin/bash
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
@@ -362,20 +362,20 @@ IFS=$' \t\n'
 readonly IFS
 export IFS
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Parse CSV data safely
 parse_csv_file() {
-  local -- csv_file="$1"
+  local -- csv_file=$1
   local -a records
 
   # Read file line by line
+  local -a fields
   while IFS= read -r line; do
     # Parse CSV fields using subshell-isolated IFS
-    local -a fields
     (
       IFS=','
       read -ra fields <<< "$line"
@@ -390,7 +390,7 @@ parse_csv_file() {
 
 # Alternative: One-line IFS for each read
 parse_csv_line() {
-  local -- csv_line="$1"
+  local -- csv_line=$1
   local -a fields
 
   # IFS applies only to this read command
@@ -409,11 +409,11 @@ main() {
 main "$@"
 
 #fin
-\`\`\`
+```
 
 **Testing IFS safety:**
 
-\`\`\`bash
+```bash
 # Test script behavior with malicious IFS
 test_ifs_safety() {
   # Save original IFS
@@ -433,11 +433,11 @@ test_ifs_safety() {
     return 1
   fi
 }
-\`\`\`
+```
 
 **Checking current IFS:**
 
-\`\`\`bash
+```bash
 # Display current IFS (non-printable characters shown)
 debug() {
   local -- ifs_visual
@@ -457,7 +457,7 @@ verify_default_ifs() {
     debug
   fi
 }
-\`\`\`
+```
 
 **Summary:**
 

@@ -100,7 +100,7 @@ process_files() {
 }
 
 # Utilities defined after business logic
-die() { (($# > 1)) && error "${@:2}" ||:; exit "${1:-0}"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 main() {
   process_files
@@ -120,7 +120,7 @@ main "$@"
 set -euo pipefail
 
 # Utilities first
-die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 # Business logic can safely call utilities
 process_files() {
@@ -373,7 +373,7 @@ main "$@"
 
 set -euo pipefail  # Modifies caller's shell!
 
-die() { (($# > 1)) && error "${@:2}" ||:; exit "${1:-0}"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 # Runs automatically when sourced!
 main "$@"
@@ -390,7 +390,7 @@ main "$@"
 
 error() { >&2 echo "ERROR: $*"; }
 
-die() { (($# > 1)) && error "${@:2}" ||:; exit "${1:-0}"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 # Only run main when executed (not sourced)
 # Fast exit if sourced

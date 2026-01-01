@@ -103,12 +103,7 @@ SCRIPT_NAME=${SCRIPT_PATH##*/}
 # Then SCRIPT_NAME=deploy.sh
 
 # Use in error messages
-die() {
-  local -i exit_code=$1
-  shift
-  >&2 echo "$SCRIPT_NAME: error: $*"
-  exit "$exit_code"
-}
+die() { (($# < 2)) || >&2 echo "$SCRIPT_NAME: error: ${*:2}"; exit "${1:-0}"; }
 
 # Use in help text
 show_help() {
@@ -338,12 +333,7 @@ error() {
   >&2 echo "[$SCRIPT_NAME] ERROR: $*" | tee -a "$LOG_FILE"
 }
 
-die() {
-  local -i exit_code=$1
-  shift
-  error "$*"
-  exit "$exit_code"
-}
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 # Show version
 show_version() {

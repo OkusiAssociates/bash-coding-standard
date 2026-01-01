@@ -1,15 +1,16 @@
 ### printf Patterns
 
-**Rule: BCS0305**
+**Rule: BCS0305** (From BCS0409)
 
-Single quotes for format strings, double quotes for variable arguments.
+Quoting rules for printf and echo.
 
 ---
 
 #### Basic Pattern
 
 ```bash
-# Format string: single quotes; variables: double-quoted arguments
+# Format string: single quotes (static)
+# Variables: double-quoted as arguments
 printf '%s: %d files found\n' "$name" "$count"
 
 # Static strings - single quotes
@@ -21,27 +22,29 @@ echo "$SCRIPT_NAME $VERSION"
 printf 'Found %d files in %s\n' "$count" "$dir"
 ```
 
+---
+
 #### Format Specifiers
 
-```bash
-printf '%s\n' "$string"    # String
-printf '%d\n' "$integer"   # Decimal
-printf '%f\n' "$float"     # Float
-printf '%x\n' "$hex"       # Hexadecimal
-printf '%%\n'              # Literal %
-```
+`%s` string | `%d` decimal | `%f` float | `%x` hex | `%%` literal %
+
+---
 
 #### Prefer printf Over echo -e
 
 ```bash
-# ✗ echo -e behavior varies across systems
+# ✗ Avoid - echo -e behavior varies
 echo -e "Line1\nLine2"
 
-# ✓ printf is consistent
+# ✓ Prefer - printf is consistent
 printf 'Line1\nLine2\n'
 
-# ✓ Or $'...' for escape sequences
+# Or use $'...' for escape sequences
 echo $'Line1\nLine2'
 ```
+
+---
+
+**Key principle:** Single quotes for format strings, double quotes for variable arguments.
 
 #fin

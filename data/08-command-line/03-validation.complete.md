@@ -11,9 +11,7 @@
 Validates that an option has an argument following it.
 
 ```bash
-noarg() {
-  (($# > 1)) && [[ ${2:0:1} != '-' ]] || die 2 "Missing argument for option '$1'"
-}
+noarg() { (($# > 1)) && [[ ${2:0:1} != '-' ]] || die 2 "Missing argument for option ${1@Q}"; }
 ```
 
 **Usage:**
@@ -22,7 +20,7 @@ while (($#)); do case $1 in
   -o|--output)
     noarg "$@"      # Validate argument exists
     shift
-    OUTPUT="$1"     # Now safe to use $1
+    OUTPUT=$1       # Now safe to use $1
     ;;
 esac; shift; done
 ```
@@ -49,7 +47,7 @@ while (($#)); do case $1 in
   -p|--prefix)
     arg2 "$@"       # Enhanced validation
     shift
-    PREFIX="$1"
+    PREFIX=$1
     ;;
 esac; shift; done
 ```
@@ -64,28 +62,24 @@ esac; shift; done
 - **Prevents:** Using next option as value
 - **Safe quoting:** `${1@Q}` escapes special characters in error output
 
-**3. `arg2_num()` - Numeric Argument Validation**
+**3. `arg_num()` - Numeric Argument Validation**
 
 Validates that an option's argument is a valid integer.
 
 ```bash
-arg2_num() {
-  if ((${#@}-1<1)) || [[ ! "$2" =~ ^[0-9]+$ ]]; then
-    die 2 "${1@Q} requires a numeric argument"
-  fi
-}
+arg_num() { ((${#@}-1<1)) || [[ ! "$2" =~ ^[0-9]+$ ]] && die 2 "${1@Q} requires a numeric argument" ||:; }
 ```
 
 **Usage:**
 ```bash
 while (($#)); do case $1 in
   -d|--depth)
-    arg2_num "$@"   # Validate numeric
+    arg_num "$@"   # Validate numeric
     shift
     MAX_DEPTH="$1"  # Guaranteed to be integer
     ;;
   -C|--context)
-    arg2_num "$@"
+    arg_num "$@"
     shift
     CONTEXT_LINES="$1"
     ;;
@@ -122,13 +116,13 @@ main() {
     -o|--output)
       arg2 "$@"                 # String validation
       shift
-      OUTPUT_FILE="$1"
+      OUTPUT_FILE=$1
       ;;
 
     -d|--depth)
-      arg2_num "$@"             # Numeric validation
+      arg_num "$@"              # Numeric validation
       shift
-      MAX_DEPTH="$1"
+      MAX_DEPTH=$1
       ;;
 
     -v|--verbose)
@@ -138,7 +132,7 @@ main() {
     -h|--help)
       noarg "$@"                # Basic check (also valid)
       shift
-      HELP_TOPIC="$1"
+      HELP_TOPIC=$1
       ;;
 
     -*)
@@ -156,21 +150,11 @@ main() {
 }
 
 # Validation helpers
-arg2() {
-  if ((${#@}-1<1)) || [[ "${2:0:1}" == '-' ]]; then
-    die 2 "${1@Q} requires argument"
-  fi
-}
+arg2() { ((${#@}-1<1)) || [[ "${2:0:1}" == '-' ]] && die 2 "${1@Q} requires argument" ||:; }
 
-arg2_num() {
-  if ((${#@}-1<1)) || [[ ! "$2" =~ ^[0-9]+$ ]]; then
-    die 2 "${1@Q} requires a numeric argument"
-  fi
-}
+arg_num() { ((${#@}-1<1)) || [[ ! "$2" =~ ^[0-9]+$ ]] && die 2 "${1@Q} requires a numeric argument" ||:; }
 
-noarg() {
-  (($# > 1)) && [[ ${2:0:1} != '-' ]] || die 2 "Missing argument for option '$1'"
-}
+noarg() { (($# > 1)) && [[ ${2:0:1} != '-' ]] || die 2 "Missing argument for option ${1@Q}"; }
 
 main "$@"
 ```
@@ -181,7 +165,7 @@ main "$@"
 |-----------|----------|----------------|
 | `noarg()` | Simple existence check | `-o FILE`, `-m MSG` |
 | `arg2()` | String args, prevent `-` prefix | `--prefix PATH`, `--output FILE` |
-| `arg2_num()` | Numeric args requiring integers | `--depth NUM`, `--retries COUNT`, `-C NUM` |
+| `arg_num()` | Numeric args requiring integers | `--depth NUM`, `--retries COUNT`, `-C NUM` |
 
 ### Anti-Patterns
 
@@ -200,12 +184,12 @@ main "$@"
     die 2 "Option '-p' requires an argument"
   fi
   shift
-  PREFIX="$1"
+  PREFIX=$1
   ;;
 # Problem: Repetitive, verbose, inconsistent error messages
 
 # ✓ Use helpers
--p|--prefix) arg2 "$@"; shift; PREFIX="$1" ;;
+-p|--prefix) arg2 "$@"; shift; PREFIX=$1 ;;
 ```
 
 ### Error Message Quality
@@ -226,10 +210,10 @@ These validators work seamlessly with the standard argument parsing pattern (BCS
 
 ```bash
 while (($#)); do case $1 in
-  -d|--depth)     arg2_num "$@"; shift; MAX_DEPTH="$1" ;;
+  -d|--depth)     arg_num "$@"; shift; MAX_DEPTH=$1 ;;
   -v|--verbose)   VERBOSE=1 ;;
   -h|--help)      show_help; exit 0 ;;
-  -[dvh]*)        set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+  -[dvh]*)        set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
   -*)             die 22 "Invalid option ${1@Q}" ;;
   *)              FILES+=("$1") ;;
 esac; shift; done

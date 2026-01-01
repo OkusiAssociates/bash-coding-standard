@@ -1,41 +1,31 @@
 ## Constants and Environment Variables
 
-**Use `readonly` for immutable values; `declare -x`/`export` for child process variables.**
+**Use `readonly` for immutable constants, `declare -x`/`export` for child process inheritance.**
 
+| Feature | `readonly` | `declare -x` |
+|---------|-----------|--------------|
+| Prevents modification | ✓ | ✗ |
+| Available to children | ✗ | ✓ |
+
+**Rationale:**
+- `readonly` signals intent and prevents accidental modification
+- `export` makes variables available to subprocess environment only when needed
+
+**Pattern:**
 ```bash
-# Constants (readonly)
-readonly -- VERSION='1.0.0' MAX_RETRIES=3 CONFIG_DIR='/etc/myapp'
+# Constants (not exported)
+readonly -- VERSION=1.0.0 CONFIG_DIR=/etc/app
 
-# Environment variables (export)
-declare -x DATABASE_URL='postgresql://localhost/db' LOG_LEVEL='DEBUG'
+# Environment for children
+declare -x LOG_LEVEL=${LOG_LEVEL:-INFO}
 
-# Combined (readonly + export)
-declare -rx BUILD_ENV='production'
+# Combined: readonly + exported
+declare -rx BUILD_ENV=production
 ```
-
-**When to use:**
-- `readonly`: Script metadata, config paths, calculated constants (prevents modification)
-- `declare -x`/`export`: Values needed by subprocesses, tool config, inherited settings
-
-**Key difference:** readonly prevents changes; export passes to subprocesses.
 
 **Anti-patterns:**
-```bash
-# ✗ Exporting unnecessary constants
-export MAX_RETRIES=3  # Child processes don't need this
-# ✓ Only readonly
-readonly -- MAX_RETRIES=3
-
-# ✗ Not protecting true constants
-CONFIG_FILE='/etc/app.conf'  # Could be modified
-# ✓ Make readonly
-readonly -- CONFIG_FILE='/etc/app.conf'
-
-# ✗ Making user-configurable readonly too early
-readonly -- OUTPUT_DIR="$HOME/output"  # Can't override!
-# ✓ Allow override first
-OUTPUT_DIR="${OUTPUT_DIR:-$HOME/output}"
-readonly -- OUTPUT_DIR
-```
+- `export MAX_RETRIES=3` �' Use `readonly` unless children need it
+- Unprotected constants �' `CONFIG=/etc/app.conf` can be modified; use `readonly --`
+- Early readonly on user-configurable �' `readonly -- DIR="$HOME/out"` prevents override; allow default first: `DIR=${DIR:-default}; readonly -- DIR`
 
 **Ref:** BCS0204

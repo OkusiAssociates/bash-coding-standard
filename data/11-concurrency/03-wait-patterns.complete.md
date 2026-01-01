@@ -106,5 +106,3 @@ wait $! || die 1 'Command failed'
 ---
 
 **See Also:** BCS1406 (Background Jobs), BCS1407 (Parallel Execution)
-
-#fin

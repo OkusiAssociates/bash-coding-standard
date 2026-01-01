@@ -277,7 +277,7 @@ success() { ((VERBOSE)) || return 0; >&2 _msg "$@" || return 0; }
 # Error output (unconditional)
 error() { >&2 _msg "$@"; }
 # Exit with error
-die() { (($# > 1)) && error "${@:2}" ||:; exit "${1:-0}"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 # Yes/no prompt
 yn() {
   #((PROMPT)) || return 0
@@ -295,7 +295,7 @@ info() { >&2 echo "${FUNCNAME[0]}: $*"; }
 debug() { >&2 echo "${FUNCNAME[0]}: $*"; }
 success() { >&2 echo "${FUNCNAME[0]}: $*"; }
 error() { >&2 echo "${FUNCNAME[0]}: $*"; }
-die() { (($# > 1)) && error "${@:2}" ||:; exit "${1:-0}"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 ```
 
 User is strongly encouraged to use these function names for logging output, for both consistency, and for when that quick-and-dirty test script of yours evolves into a Magnum Opus, and now you need proper coloured and verbosity controlled message functions, like you should have used straight from the beginning. You're welcome.

@@ -2,7 +2,7 @@
 
 Implement preview mode for operations that modify system state, allowing users to see what would happen without making actual changes.
 
-\`\`\`bash
+```bash
 # Declare dry-run flag
 declare -i DRY_RUN=0
 
@@ -45,11 +45,11 @@ update_man_database() {
   # Actual man database update
   mandb -q 2>/dev/null || true
 }
-\`\`\`
+```
 
 **Pattern structure:**
-1. Check \`((DRY_RUN))\` at the start of functions that modify state
-2. Display preview message with \`[DRY-RUN]\` prefix using \`info\`
+1. Check `((DRY_RUN))` at the start of functions that modify state
+2. Display preview message with `[DRY-RUN]` prefix using `info`
 3. Return early (exit code 0) without performing actual operations
 4. Proceed with real operations only when dry-run is disabled
 

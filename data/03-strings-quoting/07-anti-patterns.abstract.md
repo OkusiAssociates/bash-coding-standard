@@ -1,32 +1,39 @@
 ### Quoting Anti-Patterns
 
-**Avoid common quoting mistakes: staticâ†'single, varsâ†'double-quoted, minimal braces.**
+**Avoid quoting mistakes that cause word splitting, glob expansion, or unnecessary verbosity.**
 
-#### Critical Anti-Patterns
+---
 
-**Static strings:** `info "text"` â†' `info 'text'`
+#### Critical Categories
 
-**Unquoted vars:** `[[ -f $file ]]` â†' `[[ -f "$file" ]]` (word-split/glob risk)
+**1. Static strings** â†' Use single quotes: `'literal'` not `"literal"`
 
-**Unnecessary braces:** `"${HOME}/bin"` â†' `"$HOME/bin"` (braces only for: `${var:-}`, `${var##}`, `${arr[@]}`, `${v1}${v2}`)
+**2. Variables** â†' Always quote: `"$var"` not `$var`
 
-**Arrays:** `${arr[@]}` â†' `"${arr[@]}"`
+**3. Braces** â†' Omit unless needed: `"$HOME"/bin` not `"${HOME}/bin"`
+- Braces required: `${var:-default}`, `${file##*/}`, `"${array[@]}"`
 
-**Here-docs:** Unquoted delimiter expands vars; use `<<'EOF'` for literals
+**4. Arrays** â†' Always quote: `"${items[@]}"` not `${items[@]}`
 
-#### Example
+---
+
+#### Minimal Example
 
 ```bash
 # âœ— Anti-patterns
-info "Starting..."
+info "Static message"
 [[ -f $file ]]
 echo "${HOME}/bin"
 
 # âœ“ Correct
-info 'Starting...'
+info 'Static message'
 [[ -f "$file" ]]
-echo "$HOME/bin"
+echo "$HOME"/bin
 ```
+
+---
+
+#### Quick Reference
 
 | Context | Correct | Wrong |
 |---------|---------|-------|

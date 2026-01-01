@@ -1,26 +1,26 @@
 ### Here Documents
 
-**Delimiter quoting controls variable expansion: `<<EOF` expands, `<<'EOF'` literal.**
+**Quote delimiter (`<<'EOF'`) for literal content; unquoted (`<<EOF`) for variable expansion.**
 
-| Delimiter | Expansion | Use |
-|-----------|-----------|-----|
+| Delimiter | Expansion | Use Case |
+|-----------|-----------|----------|
 | `<<EOF` | Yes | Dynamic content |
-| `<<'EOF'` | No | Literal (JSON/SQL) |
+| `<<'EOF'` | No | Literal (JSON, SQL) |
 
-**Indented:** `<<-EOF` strips leading tabs (not spaces).
+Use `<<-EOF` to strip leading tabs for indented blocks.
 
 ```bash
-# Dynamic - variables expand
+# Dynamic
 cat <<EOF
 User: $USER
 EOF
 
-# Literal - no expansion (use for JSON/SQL)
+# Literal (prevents injection)
 cat <<'EOF'
-{"key": "$VALUE"}
+SELECT * FROM users WHERE name = ?
 EOF
 ```
 
-**Anti-pattern:** `<<EOF` with untrusted data â†' SQL injection. Use `<<'EOF'` for literal content.
+**Anti-pattern:** `<<EOF` with untrusted `$var` â†' injection risk. Use `<<'EOF'` + parameterized queries.
 
 **Ref:** BCS0304

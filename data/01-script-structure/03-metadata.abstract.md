@@ -1,36 +1,29 @@
 ## Script Metadata
 
-**Declare VERSION, SCRIPT_PATH, SCRIPT_DIR, SCRIPT_NAME immediately after `shopt` using `declare -r` for immutability.**
+**Declare VERSION, SCRIPT_PATH, SCRIPT_DIR, SCRIPT_NAME immediately after `shopt`, using `declare -r` for immutability.**
 
-**Rationale:** Reliable path resolution (realpath resolves symlinks/fails early), VERSION for tracking, SCRIPT_DIR for resource location, SCRIPT_NAME for logging, readonly prevents modification.
+**Rationale:** Enables reliable resource loading from any invocation directory; `realpath` fails early if script missing; readonly prevents accidental modification.
 
 **Pattern:**
 
 ```bash
-set -euo pipefail
-shopt -s inherit_errexit shift_verbose extglob nullglob
-
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
+
+# Load resources relative to script
+source "$SCRIPT_DIR"/lib/common.sh
 ```
 
-**Variables:**
-- **VERSION**: Semantic version (Major.Minor.Patch)
-- **SCRIPT_PATH**: Absolute path via `realpath -- "$0"` (fails if missing)
-- **SCRIPT_DIR**: Directory via `${SCRIPT_PATH%/*}` (parameter expansion)
-- **SCRIPT_NAME**: Filename via `${SCRIPT_PATH##*/}`
-
-**Use realpath not readlink:** Simpler, builtin available, POSIX-compliant, fails early.
-
-**SC2155 acceptable:** realpath failure should terminate; concise pattern preferred.
+**Variables:** VERSION (semver) â†' SCRIPT_PATH (`realpath -- "$0"`) â†' SCRIPT_DIR (`${SCRIPT_PATH%/*}`) â†' SCRIPT_NAME (`${SCRIPT_PATH##*/}`)
 
 **Anti-patterns:**
-- `$0` directly without realpath â†’ relative/symlink issues
-- `dirname`/`basename` â†’ slower external commands
-- `$PWD` for SCRIPT_DIR â†’ wrong (current directory not script location)
-- `readonly` individually â†’ `readonly SCRIPT_DIR=${SCRIPT_PATH%/*}` fails
-- Late declaration â†’ must follow shopt immediately
+
+- `SCRIPT_PATH="$0"` â†' use `realpath -- "$0"` (resolves symlinks/relative paths)
+- `SCRIPT_DIR=$(dirname "$0")` â†' use `${SCRIPT_PATH%/*}` (faster, no external command)
+- `SCRIPT_DIR=$PWD` â†' wrong! PWD is current directory, not script location
+
+**Edge cases:** Root directory (`SCRIPT_DIR` empty) â†' add `[[ -n "$SCRIPT_DIR" ]] || SCRIPT_DIR='/'`; Sourced scripts â†' use `${BASH_SOURCE[0]}` instead of `$0`
 
 **Ref:** BCS0103

@@ -2,7 +2,7 @@
 
 Manage script state by modifying boolean flags based on runtime conditions, separating decision logic from execution.
 
-\`\`\`bash
+```bash
 # Initial flag declarations
 declare -i INSTALL_BUILTIN=0
 declare -i BUILTIN_REQUESTED=0
@@ -58,7 +58,7 @@ main() {
 
   show_completion_message
 }
-\`\`\`
+```
 
 **Pattern structure:**
 1. Declare all boolean flags at the top with initial values
@@ -70,7 +70,7 @@ main() {
 4. Execute actions based on final flag state
 
 **Real-world example - conditional builtin installation:**
-\`\`\`bash
+```bash
 # Initial state (defaults)
 declare -i INSTALL_BUILTIN=0
 declare -i BUILTIN_REQUESTED=0
@@ -83,7 +83,7 @@ INSTALL_BUILTIN=1
 BUILTIN_REQUESTED=1
 
 # 2. Override check (--no-builtin takes precedence)
-((SKIP_BUILTIN)) && INSTALL_BUILTIN=0
+((SKIP_BUILTIN)) && INSTALL_BUILTIN=0 ||:
 
 # 3. Dependency check (no bash-builtins package)
 if ! check_builtin_support; then
@@ -101,17 +101,17 @@ fi
 
 # 5. Final execution (only runs if INSTALL_BUILTIN=1)
 ((INSTALL_BUILTIN)) && install_builtin
-\`\`\`
+```
 
 **Benefits:**
 - Clean separation between decision logic and action
 - Easy to trace how flags change throughout execution
 - Fail-safe behavior (disable features when prerequisites fail)
-- User intent preserved (\`BUILTIN_REQUESTED\` tracks original request)
+- User intent preserved (`BUILTIN_REQUESTED` tracks original request)
 - Idempotent (same input → same state → same output)
 
 **Guidelines:**
-- Group related flags together (e.g., \`INSTALL_*\`, \`SKIP_*\`)
+- Group related flags together (e.g., `INSTALL_*`, `SKIP_*`)
 - Use separate flags for user intent vs. runtime state
 - Document state transitions with comments
 - Apply state changes in logical order (parse → validate → execute)

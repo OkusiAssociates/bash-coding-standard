@@ -1,58 +1,44 @@
 ### Edge Cases and Variations
 
-**Special scenarios where BCS0101's 13-step layout is modified for specific use cases.**
+**Standard 13-step layout allows specific deviations for tiny scripts, libraries, external config, platform detection, and cleanup traps.**
 
-#### Small Scripts (<200 lines)
-Skip `main()` and run directly. **Rationale:** Overhead unjustified for trivial scripts.
+---
 
+## Legitimate Simplifications
+
+**Tiny scripts (<200 lines):** Skip `main()`, run directly after `set -euo pipefail`
+
+**Library files:** Skip `set -e` (affects caller), skip `main()`, skip execution—define functions only:
 ```bash
 #!/usr/bin/env bash
-set -euo pipefail
-declare -i count=0
-for file in "$@"; do
-  [[ ! -f "$file" ]] || count+=1
-done
-echo "Found $count files"
-#fin
-```
-
-#### Sourced Libraries
-Skip `set -e`, `main()`, execution—no environment modification. Export functions only.
-
-```bash
-#!/usr/bin/env bash
+# Library - sourced only
 is_integer() { [[ "$1" =~ ^-?[0-9]+$ ]]; }
 #fin
 ```
 
-#### External Configuration
-Source config after metadata, **then** make variables readonly.
+## Legitimate Extensions
 
+**Config sourcing:** Source between metadata and business logic, `readonly` after:
 ```bash
-declare -- CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/myapp/config.sh"
 [[ -r "$CONFIG_FILE" ]] && source "$CONFIG_FILE"
 readonly -- CONFIG_FILE
 ```
 
-#### Platform Detection
-Add platform-specific globals after standard globals using case statements.
-
-#### Cleanup Traps
-Set trap **after** cleanup function defined, **before** temp file creation.
-
+**Cleanup traps:** Define cleanup function first, set trap before temp file creation:
 ```bash
 cleanup() { rm -f "${TEMP_FILES[@]}"; }
-trap 'cleanup' EXIT SIGINT SIGTERM
+trap 'cleanup $?' EXIT
 ```
 
-**Anti-patterns:**
-- `→` Functions before `set -e` (unsafe)
-- `→` Globals scattered arbitrarily
-- `→` Deviation without documented reason
+**Platform detection:** Add platform-specific globals after standard globals
 
-**Key principles when deviating:**
-1. Safety first (`set -e` comes first unless library)
-2. Dependencies before usage (bottom-up)
-3. Deviate only when necessary
+## Key Principles (Even When Deviating)
+
+1. `set -euo pipefail` first (unless library)
+2. Bottom-up organization maintained
+3. Dependencies before usage
+4. Document deviation reasons
+
+**Anti-pattern:** Functions before `set -e` �' `set -euo pipefail` too late, errors not caught
 
 **Ref:** BCS010103

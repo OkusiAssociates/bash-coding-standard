@@ -32,7 +32,7 @@ Without disaggregation support, your script would treat `-lha` as a single unkno
 case $1 in
   # ...
   -[amLpvqVh]*) #shellcheck disable=SC2046 #split up aggregated short options
-    set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}"
+    set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"
     ;;
   # ...
 esac
@@ -66,7 +66,7 @@ esac
 case $1 in
   # ...
   -[amLpvqVh]*) #split up aggregated short options
-    set -- '' $(printf -- "-%c " $(fold -w1 <<<"${1:1}")) "${@:2}"
+    set -- '' $(printf -- '-%c ' $(fold -w1 <<<"${1:1}")) "${@:2}"
     ;;
   # ...
 esac
@@ -170,8 +170,7 @@ declare -a files=()
 # ============================================================================
 
 error() { >&2 echo "$SCRIPT_NAME: error: $*"; }
-die() { (($#>1)) && error "$@"; exit ${1:-0}; }
-
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 noarg() { (($# > 1)) || die 2 "Option '$1' requires an argument"; }
 
 show_help() {
@@ -211,8 +210,8 @@ main() {
 
     # Short option bundling support (grep method)
     -[onvqVh]*) #shellcheck disable=SC2046
-                    set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;
-    -*)             die 22 "Invalid option '$1'" ;;
+                    set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+    -*)             die 22 "Invalid option ${1@Q}" ;;
     *)              files+=("$1") ;;
   esac; shift; done
 
@@ -225,17 +224,17 @@ main() {
   [[ -n "$output_file" ]] || die 2 'Output file required (use -o)'
 
   # Use parsed arguments
-  ((VERBOSE)) && echo "Processing ${#files[@]} files"
-  ((DRY_RUN)) && echo "[DRY RUN] Would write to ${output_file@Q}"
+  ((VERBOSE)) && echo "Processing ${#files[@]} files" ||:
+  ((DRY_RUN)) && echo "[DRY RUN] Would write to ${output_file@Q}" ||:
 
   # Process files
   local -- file
   for file in "${files[@]}"; do
-    ((VERBOSE > 1)) && echo "Processing: $file"
+    ((VERBOSE > 1)) && echo "Processing ${file@Q}"
     # Processing logic here
   done
 
-  ((VERBOSE)) && echo "Results would be written to ${output_file@Q}"
+  ((VERBOSE)) && echo "Results would be written to ${output_file@Q}" ||:
 }
 
 main "$@"
@@ -266,8 +265,7 @@ declare -- config_file=''
 # ============================================================================
 
 error() { >&2 echo "$SCRIPT_NAME: error: $*"; }
-die() { (($#>1)) && error "$@"; exit ${1:-0}; }
-
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 noarg() { (($# > 1)) || die 2 "Option ${1@Q} requires an argument"; }
 
 show_help() {
@@ -292,7 +290,7 @@ EOF
 main() {
   # Parse arguments
   while (($#)); do case $1 in
-    -c|--config)    (($#>0)) || die 22 "Option '$1' requires argument"
+    -c|--config)    (($#>0)) || die 22 "Option ${1@Q} requires argument"
                     shift
                     config_file=$1 ;;
     -f|--force)     FORCE=1 ;;
@@ -305,9 +303,9 @@ main() {
 
     # Short option bundling support (fold method)
     -[cfvqVh]*) #shellcheck disable=SC2046
-                    set -- '' $(printf -- "-%c " $(fold -w1 <<<"${1:1}")) "${@:2}" ;;
-    -*)             die 22 "Invalid option '$1'" ;;
-    *)              die 2 "Unexpected argument '$1'" ;;
+                    set -- '' $(printf -- '-%c ' $(fold -w1 <<<"${1:1}")) "${@:2}" ;;
+    -*)             die 22 "Invalid option ${1@Q}" ;;
+    *)              die 2 "Unexpected argument ${1@Q}" ;;
   esac; shift; done
 
   # Make variables readonly after parsing
@@ -316,8 +314,8 @@ main() {
   # Validate required arguments
   [[ -n "$config_file" ]] || die 2 'Configuration file required (use -c)'
 
-  ((VERBOSE)) && echo "Using config ${config_file@Q}"
-  ((FORCE)) && echo '[FORCE MODE] Ignoring safety checks'
+  ((VERBOSE)) && echo "Using config ${config_file@Q}" ||:
+  ((FORCE)) && echo '[FORCE MODE] Ignoring safety checks' ||:
 
   # Main logic here
 }
@@ -351,7 +349,7 @@ declare -a targets=()
 # ============================================================================
 
 error() { >&2 echo "$SCRIPT_NAME: error: $*"; }
-die() { (($#>1)) && error "$@"; exit ${1:-0}; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 noarg() { (($# > 1)) || die 2 "Option '$1' requires an argument"; }
 

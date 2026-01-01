@@ -2,7 +2,7 @@
 
 Focus comments on explaining **WHY** (rationale, business logic, non-obvious decisions) rather than **WHAT** (which the code already shows):
 
-\`\`\`bash
+```bash
 # Section separator (80 dashes)
 # --------------------------------------------------------------------------------
 
@@ -31,7 +31,7 @@ if ((BUILTIN_REQUESTED)); then
   # Print warning message
   warn 'bash-builtins package not found, attempting to install...'
 fi
-\`\`\`
+```
 
 **Good comment patterns:**
 - Explain non-obvious business rules or edge cases

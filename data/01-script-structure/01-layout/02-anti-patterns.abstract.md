@@ -1,43 +1,40 @@
-### Common Layout Anti-Patterns
+### Layout Anti-Patterns
 
-**Eight critical BCS0101 violations causing silent failures and runtime errors.**
+**Critical violations of BCS0101 13-step layout that cause silent failures and structural bugs.**
 
-1. **Missing `set -euo pipefail`** → Silent corruption. Place at line 4.
+---
 
-2. **Variables after use** → Unbound variable errors. Declare globals in Step 7 before functions.
+#### Critical Anti-Patterns
 
-3. **Business logic before utilities** → Calls undefined helpers. Order: messaging → helpers → business → main().
+| Anti-Pattern | Problem | Fix |
+|--------------|---------|-----|
+| Missing `set -euo pipefail` | Silent failures, script continues after errors | Add immediately after shebang |
+| Variables after use | "Unbound variable" with `set -u` | Declare all globals before `main()` |
+| Business logic before utilities | Functions call undefined helpers | Bottom-up: utilities �' business �' main |
+| No `main()` (>40 lines) | Can't test, can't source, scattered parsing | Wrap execution in `main()` |
+| Missing `#fin` | Can't detect truncated files | Always end with `#fin` |
+| Premature `readonly` | Can't modify during arg parsing | `readonly` after parsing complete |
+| Scattered globals | Hard to audit state | Group all declarations together |
 
-4. **No `main()` in large scripts** → Scattered execution, untestable. Required for scripts >40 lines.
+---
 
-5. **Missing `#fin`** → No completion proof. Always end with `#fin`.
+#### Dual-Purpose Pattern
 
-6. **Readonly before parsing** → Cannot modify during argument parsing. Make readonly after values finalized.
-
-7. **Scattered declarations** → Hard to track state. Group all globals in Step 7.
-
-8. **Unprotected sourcing** → Modifies caller's shell. Use `[[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0` before `set -e`.
-
-**Wrong:**
 ```bash
 #!/usr/bin/env bash
-VERSION='1.0.0'  # No set -e!
-readonly -- PREFIX  # Too early
-process_files()  # Calls undefined die()
-main "$@"  # No wrapper
-```
+# Functions available when sourced
+die() { >&2 echo "ERROR: ${*:2}"; exit "${1:-1}"; }
 
-**Correct:**
-```bash
-#!/usr/bin/env bash
+# Exit early if sourced
+[[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0
+
+# Execution starts here
 set -euo pipefail
-VERSION='1.0.0'
-declare -- PREFIX='/usr'
-die() { error "$*"; exit 1; }
-process_files() { die "error"; }
-main() { process_files; readonly -- PREFIX; }
+main() { : ...; }
 main "$@"
 #fin
 ```
+
+**Key:** `set -euo pipefail` and `main "$@"` only run when executed, not sourced.
 
 **Ref:** BCS010102

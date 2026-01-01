@@ -88,7 +88,7 @@ warn() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 #debug() { ((DEBUG)) || return 0; >&2 _msg "$@"; }
 success() { ((VERBOSE)) || return 0; >&2 _msg "$@" || return 0; }
 error() { >&2 _msg "$@"; }
-die() { (($# > 1)) && error "${@:2}" ||:; exit "${1:-0}"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 # Yes/no prompt
 yn() {
   #((PROMPT)) || return 0

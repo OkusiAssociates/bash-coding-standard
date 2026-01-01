@@ -2,28 +2,28 @@
 
 **Complete pattern with short option support:**
 
-\`\`\`bash
+```bash
 while (($#)); do case $1 in
+  -V|--version)   echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
+  -h|--help)      show_help; exit 0 ;;
+
   -a|--add)       noarg "$@"; shift
                   process_argument "$1" ;;
   -m|--depth)     noarg "$@"; shift
-                  max_depth="$1" ;;
+                  max_depth=$1 ;;
   -L|--follow-symbolic)
                   symbolic='-L' ;;
 
-  -p|--prompt)    PROMPT=1; VERBOSE=1 ;;
+  -p|--prompt)    PROMPT=1; ((VERBOSE)) || VERBOSE=1 ;;
   -v|--verbose)   VERBOSE+=1 ;;
-
   -q|--quiet)     VERBOSE=0 ;;
-  -V|--version)   echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
 
-  -h|--help)      show_help; exit 0 ;;
-  -[amLpvqVh]*) #shellcheck disable=SC2046 #split up single options
-                  set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;
-  -*)             die 22 "Invalid option '$1'" ;;
+  -[VhamLpvq]*) #shellcheck disable=SC2046 #split up single options
+                  set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+  -*)             die 22 "Invalid option ${1@Q}" ;;
   *)              Paths+=("$1") ;;
 esac; shift; done
-\`\`\`
+```
 
 **Pattern breakdown and rationale:**
 
@@ -38,38 +38,41 @@ esac; shift; done
 - More readable than nested if/elif chains
 
 **3. Options with arguments:**
-\`\`\`bash
+```bash
 -m|--depth)     noarg "$@"; shift
-                max_depth="$1" ;;
-\`\`\`
+                max_depth=$1 ;;
+```
 - `noarg "$@"` - Validates argument exists (prevents "missing argument" errors)
 - `shift` - Moves to next argument (the value)
 - `max_depth="$1"` - Captures the value
 - Second `shift` at end of loop moves past the value
 
 **4. Options without arguments (flags):**
-\`\`\`bash
--p|--prompt)    PROMPT=1; VERBOSE=1 ;;
+```bash
+-p|--prompt)    PROMPT=1; ((VERBOSE)) || VERBOSE=1 ;;
 -v|--verbose)   VERBOSE+=1 ;;
-\`\`\`
+```
 - Just set variables, no shift needed (handled at loop end)
 - Can set multiple variables per option
 - `VERBOSE+=1` allows stacking: `-vvv` = `VERBOSE=3`
 
 **5. Options that exit immediately:**
-\`\`\`bash
+```bash
 -V|--version)   echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
 -h|--help)      show_help; exit 0 ;;
-\`\`\`
+```
 - Print information and exit
 - No shift needed (script exits)
 - Use `exit 0` (success exit code)
+- If within a function, use `return 0`
 
 **6. Short option bundling:**
-\`\`\`bash
--[amLpvqVh]*) #shellcheck disable=SC2046 #split up single options
-              set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;
-\`\`\`
+In command argument processing loops, short option splitting should *always* be included.
+
+```bash
+-[VhamLpvq]*) #shellcheck disable=SC2046 #split up single options
+              set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+```
 - **Purpose**: Allows `-vpL` instead of `-v -p -L`
 - **Pattern**: `-[amLpvqVh]*` matches any short option combination
 - **Mechanism**: Splits bundled options into separate arguments
@@ -81,36 +84,34 @@ esac; shift; done
   4. `set --` - Replace argument list with expanded options
 
 **7. Invalid option handling:**
-\`\`\`bash
--*)             die 22 "Invalid option '$1'" ;;
-\`\`\`
+```bash
+-*)             die 22 "Invalid option ${1@Q}" ;;
+```
 - Catches any unrecognized option starting with `-`
 - Uses exit code 22 (EINVAL - invalid argument)
 - Shows which option was invalid
 
 **8. Positional arguments:**
-\`\`\`bash
+```bash
 *)              Paths+=("$1") ;;
-\`\`\`
+```
 - Default case: Not an option, must be positional argument
 - Append to array for later processing
 - Allows unlimited positional arguments
 
 **9. Mandatory shift at end:**
-\`\`\`bash
+```bash
 esac; shift; done
-\`\`\`
+```
 - `shift` after every iteration moves to next argument
 - Critical: Without this, infinite loop!
 - Placed after `esac` to handle all branches uniformly
 
 **The `noarg` helper function:**
 
-\`\`\`bash
-noarg() {
-  (($# > 1)) || die 2 "Option '$1' requires an argument"
-}
-\`\`\`
+```bash
+noarg() { (($# > 1)) || die 2 "Option ${1@Q} requires an argument"; }
+```
 
 - **Purpose**: Validates that option requiring an argument has one
 - **Check**: `(($# > 1))` - At least 2 args (option + value)
@@ -119,12 +120,12 @@ noarg() {
 
 **Complete example with all features:**
 
-\`\`\`bash
+```bash
 #!/usr/bin/env bash
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -139,20 +140,9 @@ declare -a files=()
 # Utility Functions
 # ============================================================================
 
-error() {
-  >&2 echo "[$SCRIPT_NAME] ERROR: $*"
-}
-
-die() {
-  local -i exit_code=$1
-  shift
-  (($#)) && error "$@"
-  exit "$exit_code"
-}
-
-noarg() {
-  (($# > 1)) || die 2 "Option '$1' requires an argument"
-}
+error() { >&2 echo "$SCRIPT_NAME: error: $*"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+noarg() { (($# > 1)) || die 2 "Option ${1@Q} requires an argument"; }
 
 show_help() {
   cat <<EOF
@@ -190,7 +180,7 @@ main() {
     # Short option bundling support
     -[ovnVh]*)    #shellcheck disable=SC2046
                     set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;
-    -*)             die 22 "Invalid option '$1'" ;;
+    -*)             die 22 "Invalid option ${1@Q}" ;;
     *)              files+=("$1") ;;
   esac; shift; done
 
@@ -203,27 +193,27 @@ main() {
   [[ -n "$output_file" ]] || die 2 'Output file required (use -o)'
 
   # Use parsed arguments
-  ((VERBOSE)) && echo "Processing ${#files[@]} files"
-  ((DRY_RUN)) && echo '[DRY RUN] Would write to:' "$output_file"
+  ((VERBOSE)) && echo "Processing ${#files[@]} files" ||:
+  ((DRY_RUN)) && echo '[DRY RUN] Would write to:' "$output_file" ||:
 
   # Process files (example logic)
   local -- file
   for file in "${files[@]}"; do
-    ((VERBOSE)) && echo "Processing: $file"
+    ((VERBOSE)) && echo "Processing ${file@Q}" ||:
     # Processing logic here
   done
 
-  ((VERBOSE)) && echo "Would write results to: $output_file"
+  ((VERBOSE)) && echo "Would write results to ${output_file@Q}" ||:
 }
 
 main "$@"
 
 #fin
-\`\`\`
+```
 
 **Short option bundling examples:**
 
-\`\`\`bash
+```bash
 # These are equivalent:
 ./script -v -n -o output.txt file.txt
 ./script -vno output.txt file.txt
@@ -234,11 +224,11 @@ main "$@"
 
 # Mixed long and short:
 ./script --verbose -no output.txt --dry-run file.txt
-\`\`\`
+```
 
 **Anti-patterns to avoid:**
 
-\`\`\`bash
+```bash
 # ✗ Wrong - using while [[ ]] instead of (())
 while [[ $# -gt 0 ]]; do  # Verbose, less efficient
 
@@ -277,7 +267,7 @@ case $1 in
   -h|--help)    show_help; exit 0 ;;
   ...
 esac
-\`\`\`
+```
 
 **Rationale for this pattern:**
 

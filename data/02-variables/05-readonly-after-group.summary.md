@@ -1,240 +1,202 @@
 ## Readonly After Group
 
-**Declare variables with values first, then make them readonly together in a single statement. This prevents assignment errors, groups related constants visually, and makes immutability explicit.**
+**Declare multiple readonly variables first with values, then make them all readonly in a single statement. This improves readability, prevents assignment errors, and makes immutability explicit.**
 
 **Rationale:**
-- Cannot assign to already-readonly variables
-- Related constants visually grouped as logical unit
-- Single readonly statement makes intent obvious
-- Easy to maintain, separates initialization from protection
+- Prevents assignment errors (can't assign to already-readonly variable)
+- Visual grouping of related constants as logical unit
+- Clear immutability contract; easy to add/remove variables
+- Explicit failure if variable uninitialized before readonly
 
-**Three-Step Progressive Readonly (runtime configuration/arguments):**
+**Three-Step Progressive Readonly Workflow:**
 
+Standard pattern for variables finalized after argument parsing:
+
+**Step 1 - Declare with defaults:**
 ```bash
-# Step 1 - Declare with defaults
 declare -i VERBOSE=0 DRY_RUN=0
-declare -- OUTPUT_FILE='' PREFIX='/usr/local'
+declare -- OUTPUT_FILE='' PREFIX=/usr/local
+```
 
-# Step 2 - Parse and modify in main()
+**Step 2 - Parse and modify in main():**
+```bash
 main() {
   while (($#)); do case $1 in
-    -v) VERBOSE=1 ;;
-    --prefix) noarg "$@"; shift; PREFIX="$1" ;;
+    -v) VERBOSE+=1 ;;
+    -n) DRY_RUN=1 ;;
+    --output) noarg "$@"; shift; OUTPUT_FILE=$1 ;;
+    --prefix) noarg "$@"; shift; PREFIX=$1 ;;
   esac; shift; done
 
-  # Step 3 - Make readonly AFTER parsing
+  # Step 3 - Make readonly AFTER parsing complete
   readonly -- VERBOSE DRY_RUN OUTPUT_FILE PREFIX
 
-  ((VERBOSE)) && info "Using prefix: $PREFIX"
+  ((VERBOSE)) && info "Using prefix: $PREFIX" ||:
 }
 ```
 
-Variables must be mutable during parsing; making readonly too early prevents modification. Lock values after parsing completes.
+**Exception - Script Metadata:** Prefer `declare -r` for immediate readonly (VERSION, SCRIPT_PATH, SCRIPT_DIR, SCRIPT_NAME) per BCS0103. Other variable groups use readonly-after-group.
 
-**Script Metadata Exception:**
-
-As of BCS v1.0.1, script metadata (VERSION, SCRIPT_PATH, SCRIPT_DIR, SCRIPT_NAME) prefers `declare -r` for immediate readonly declaration. Readonly-after-group remains valid but `declare -r` is recommended (see BCS0103). All other groups (colors, paths, config) use readonly-after-group.
+**Standard pattern (non-metadata):**
 
 ```bash
-# Metadata - uses declare -r (see BCS0103)
-declare -r VERSION='1.0.0'
+# Script metadata (uses declare -r, see BCS0103)
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
-# Colors - readonly-after-group
+# Message flags
+declare -i VERBOSE=1 PROMPT=1 DEBUG=0
+
+# Color definitions (conditional)
 if [[ -t 1 && -t 2 ]]; then
-  RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' NC=$'\033[0m'
+  declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' NC=$'\033[0m'
 else
-  RED='' GREEN='' YELLOW='' NC=''
+  declare -r RED='' GREEN='' YELLOW='' CYAN='' NC=''
 fi
-readonly -- RED GREEN YELLOW NC
 ```
 
-**Standard Groups:**
+**Variable groups:**
 
+**1. Color definitions:**
 ```bash
-# Group 1: Script metadata (exception - uses declare -r)
-declare -r VERSION='1.0.0'
-#shellcheck disable=SC2155
-declare -r SCRIPT_PATH=$(realpath -- "$0")
-declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
-
-# Group 2: Colors (conditional)
 if [[ -t 1 && -t 2 ]]; then
-  RED=$'\033[0;31m' GREEN=$'\033[0;32m' CYAN=$'\033[0;36m' NC=$'\033[0m'
+  RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' BOLD=$'\033[1m' NC=$'\033[0m'
 else
-  RED='' GREEN='' CYAN='' NC=''
+  RED='' GREEN='' YELLOW='' CYAN='' BOLD='' NC=''
 fi
-readonly -- RED GREEN CYAN NC
+readonly -- RED GREEN YELLOW CYAN BOLD NC
+```
 
-# Group 3: Path constants
-PREFIX="${PREFIX:-/usr/local}"
-BIN_DIR="$PREFIX/bin"
-SHARE_DIR="$PREFIX/share/myapp"
-readonly -- PREFIX BIN_DIR SHARE_DIR
+**2. Path constants:**
+```bash
+PREFIX=${PREFIX:-/usr/local}
+BIN_DIR="$PREFIX"/bin
+SHARE_DIR="$PREFIX"/share/myapp
+LIB_DIR="$PREFIX"/lib/myapp
+readonly -- PREFIX BIN_DIR SHARE_DIR LIB_DIR
+```
 
-# Group 4: Configuration defaults
+**3. Configuration defaults:**
+```bash
 DEFAULT_TIMEOUT=30
 DEFAULT_RETRIES=3
-readonly -- DEFAULT_TIMEOUT DEFAULT_RETRIES
-```
-
-**Complete Example:**
-
-```bash
-#!/bin/bash
-set -euo pipefail
-shopt -s inherit_errexit shift_verbose extglob nullglob
-
-# Script Metadata
-declare -r VERSION='1.0.0'
-#shellcheck disable=SC2155
-declare -r SCRIPT_PATH=$(realpath -- "$0")
-declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
-
-# Colors
-if [[ -t 1 && -t 2 ]]; then
-  RED=$'\033[0;31m' GREEN=$'\033[0;32m' NC=$'\033[0m'
-else
-  RED='' GREEN='' NC=''
-fi
-readonly -- RED GREEN NC
-
-# Paths
-PREFIX="${PREFIX:-/usr/local}"
-BIN_DIR="$PREFIX/bin"
-readonly -- PREFIX BIN_DIR
-
-# Configuration
-DEFAULT_TIMEOUT=30
-readonly -- DEFAULT_TIMEOUT
-
-# Mutable globals
-declare -i VERBOSE=0 DRY_RUN=0
-declare -- LOG_FILE=''
-
-main() {
-  # Parse arguments...
-  [[ -n "$LOG_FILE" ]] && readonly -- LOG_FILE
-  info "Starting $SCRIPT_NAME $VERSION"
-}
-
-main "$@"
-#fin
+DEFAULT_LOG_LEVEL=info
+readonly -- DEFAULT_TIMEOUT DEFAULT_RETRIES DEFAULT_LOG_LEVEL
 ```
 
 **Anti-patterns:**
 
 ```bash
-# � Valid but not preferred for metadata (use declare -r instead)
-VERSION='1.0.0'
-SCRIPT_PATH=$(realpath -- "$0")
-readonly -- VERSION SCRIPT_PATH
-
-#  Preferred for metadata
-declare -r VERSION='1.0.0'
-
-#  Wrong - readonly before all values set
-PREFIX='/usr/local'
+# ✗ Wrong - readonly before all values set
+PREFIX=/usr/local
 readonly -- PREFIX  # Premature!
-BIN_DIR="$PREFIX/bin"  # BIN_DIR not readonly
+BIN_DIR="$PREFIX"/bin
+# If BIN_DIR fails, inconsistent protection
 
-#  Correct - all values first, then readonly
-PREFIX='/usr/local'
-BIN_DIR="$PREFIX/bin"
+# ✓ Correct - all values set, then all readonly
+PREFIX=${PREFIX:-/usr/local}
+BIN_DIR="$PREFIX"/bin
+SHARE_DIR="$PREFIX"/share
+readonly -- PREFIX BIN_DIR SHARE_DIR
+
+# ✗ Wrong - forgetting -- separator
+readonly PREFIX BIN_DIR  # Risky if name starts with -
+
+# ✓ Correct - always use -- separator
 readonly -- PREFIX BIN_DIR
 
-#  Wrong - missing -- separator
-readonly PREFIX  # Risky if name starts with -
-
-#  Correct - always use --
-readonly -- PREFIX
-
-#  Wrong - unrelated variables grouped
-CONFIG_FILE='config.conf'
+# ✗ Wrong - mixing unrelated variables
+CONFIG_FILE=config.conf
 VERBOSE=1
-readonly -- CONFIG_FILE VERBOSE  # Not logical group
+PREFIX=/usr/local
+readonly -- CONFIG_FILE VERBOSE PREFIX  # Not a logical group!
 
-#  Correct - group related variables
-CONFIG_FILE='config.conf'
-LOG_FILE='app.log'
-readonly -- CONFIG_FILE LOG_FILE
+# ✓ Correct - group logically related variables
+PREFIX=${PREFIX:-/usr/local}
+BIN_DIR="$PREFIX"/bin
+readonly -- PREFIX BIN_DIR
 
-#  Wrong - readonly inside conditional
+# ✗ Wrong - readonly inside conditional
 if [[ -f config.conf ]]; then
-  CONFIG_FILE='config.conf'
-  readonly -- CONFIG_FILE  # Might not execute
+  CONFIG_FILE=config.conf
+  readonly -- CONFIG_FILE
 fi
+# CONFIG_FILE might not be readonly if condition false!
 
-#  Correct - initialize with default, then readonly
-CONFIG_FILE="${CONFIG_FILE:-config.conf}"
+# ✓ Correct - initialize with default, then readonly
+CONFIG_FILE=${CONFIG_FILE:-config.conf}
 readonly -- CONFIG_FILE
 ```
 
-**Derived Variables:**
+**Edge cases:**
 
-Initialize in dependency order:
-
+**Derived variables** - initialize in dependency order:
 ```bash
-PREFIX="${PREFIX:-/usr/local}"
-BIN_DIR="$PREFIX/bin"
-SHARE_DIR="$PREFIX/share"
+PREFIX=${PREFIX:-/usr/local}
+BIN_DIR="$PREFIX"/bin
+SHARE_DIR="$PREFIX"/share
 readonly -- PREFIX BIN_DIR SHARE_DIR
 ```
 
-**Arrays:**
-
+**Conditional initialization** - same variables defined either way:
 ```bash
-declare -a REQUIRED_COMMANDS=('git' 'make' 'tar')
-declare -a OPTIONAL_COMMANDS=('md2ansi' 'pandoc')
-readonly -a REQUIRED_COMMANDS OPTIONAL_COMMANDS
-# Or: readonly -- REQUIRED_COMMANDS OPTIONAL_COMMANDS
+if [[ -t 1 && -t 2 ]]; then
+  RED=$'\033[0;31m'; GREEN=$'\033[0;32m'; NC=$'\033[0m'
+else
+  RED=''; GREEN=''; NC=''
+fi
+readonly -- RED GREEN NC
 ```
 
-**Delayed Readonly (after argument parsing):**
+**Arrays:**
+```bash
+declare -a REQUIRED_COMMANDS=(git make tar)
+declare -a OPTIONAL_COMMANDS=(md2ansi pandoc)
+readonly -a REQUIRED_COMMANDS OPTIONAL_COMMANDS
+```
 
+**Delayed readonly (after argument parsing):**
 ```bash
 declare -i VERBOSE=0 DRY_RUN=0
 declare -- CONFIG_FILE='' LOG_FILE=''
 
 main() {
   while (($#)); do case $1 in
-    -v) VERBOSE=1 ;;
-    -c) noarg "$@"; shift; CONFIG_FILE="$1" ;;
+    -v|--verbose) VERBOSE+=1 ;;
+    -n|--dry-run) DRY_RUN=1 ;;
+    -c|--config)  noarg "$@"; shift; CONFIG_FILE=$1 ;;
+    -l|--log)     noarg "$@"; shift; LOG_FILE=$1 ;;
+    *) die 22 "Invalid option ${1@Q}" ;;
   esac; shift; done
 
-  # Make readonly after parsing
   readonly -- VERBOSE DRY_RUN
-  [[ -n "$CONFIG_FILE" ]] && readonly -- CONFIG_FILE
-  [[ -n "$LOG_FILE" ]] && readonly -- LOG_FILE
+  [[ -z "$CONFIG_FILE" ]] || readonly -- CONFIG_FILE
+  [[ -z "$LOG_FILE" ]] || readonly -- LOG_FILE
+
+  ((VERBOSE)) && info 'Verbose mode enabled' ||:
 }
 ```
 
-**Testing Readonly Status:**
-
+**Testing readonly status:**
 ```bash
-readonly -p | grep -q "VERSION" && echo "VERSION is readonly"
+readonly -p 2>/dev/null | grep -q "VERSION" && echo 'VERSION is readonly'
 readonly -p  # List all readonly variables
-VERSION='2.0.0'  # Fails: bash: VERSION: readonly variable
 ```
 
-**When NOT to Use Readonly:**
-
+**When NOT to use readonly:**
 ```bash
 # Don't make readonly if value changes during execution
-declare -i count=0  # Modified in loops
+declare -i count=0  # Modified in loops - don't make readonly
 
 # Only make readonly when value is final
-config_file=''
-# ...assignment logic...
 [[ -n "$config_file" ]] && readonly -- config_file
 ```
 
-**Summary:**
+**Key principles:**
 - Initialize first, readonly second
 - Group related variables together
 - Always use `--` separator
 - Make readonly as soon as values are final
-- Delayed readonly for arguments (after parsing)
-- Makes immutability explicit and prevents accidental modification
+- Delayed readonly for parsed arguments

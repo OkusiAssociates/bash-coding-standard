@@ -1,27 +1,21 @@
 ## Function Names
 
-**Use lowercase_with_underscores; prefix private functions with underscore.**
+**Use `lowercase_with_underscores`; prefix private functions with `_`.**
 
-**Rationale:** Matches Unix/shell conventions, avoids conflicts with built-ins, clear visibility distinction.
-
-**Example:**
+### Pattern
 ```bash
-#  Public function
-process_log_file() {
-  &
-}
-
-#  Private function
-_validate_input() {
-  &
-}
-
-#  Avoid
-MyFunction() { & }      # CamelCase confusing
-cd() { & }              # Overrides built-in
-my-function() { & }     # Dashes problematic
+process_file() { â€¦ }      # Public
+_validate() { â€¦ }         # Private (internal use)
 ```
 
-**Anti-patterns:** Overriding built-ins without prefix/suffix (`cd()` ’ use `change_dir()`), CamelCase, special characters.
+### Key Points
+- Matches Unix conventions (`grep`, `sed`)
+- Avoids conflict with builtins and variables
+- CamelCase/UPPER_CASE reserved for other purposes
 
-**Ref:** BCS0602
+### Anti-Patterns
+- `MyFunction()` â†' confuses with variables
+- `cd() { â€¦ }` â†' overriding builtins dangerous; use `change_dir()` instead
+- `my-function()` â†' dashes cause issues
+
+**Ref:** BCS0402

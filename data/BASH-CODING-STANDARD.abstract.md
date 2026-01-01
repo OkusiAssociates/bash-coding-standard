@@ -1,31 +1,29 @@
 # Bash Coding Standard
 
-Comprehensive Bash coding standard for Bash 5.2+. Not a compatibility standard.
+**Bash 5.2+ systems engineering philosophy for shell scripting.**
 
-## Coding Principles
-- K.I.S.S.
+## Principles
+- K.I.S.S. ‚Äî Keep It Simple, Stupid
 - "The best process is no process"
-- "Everything should be made as simple as possible, but not simpler."
-
-Remove unused functions/variables from production scripts.
+- Remove unused functions/variables
 
 ## Contents
-1. [Script Structure & Layout](#script-structure--layout)
-2. [Variable Declarations & Constants](#variable-declarations--constants)
-3. [Variable Expansion & Parameter Substitution](#variable-expansion--parameter-substitution)
-4. [Quoting & String Literals](#quoting--string-literals)
-5. [Arrays](#arrays)
-6. [Functions](#functions)
-7. [Control Flow](#control-flow)
-8. [Error Handling](#error-handling)
-9. [Input/Output & Messaging](#inputoutput--messaging)
-10. [Command-Line Arguments](#command-line-arguments)
-11. [File Operations](#file-operations)
-12. [Security Considerations](#security-considerations)
-13. [Code Style & Best Practices](#code-style--best-practices)
-14. [Advanced Patterns](#advanced-patterns)
+1. Script Structure & Layout
+2. Variable Declarations & Constants
+3. Variable Expansion & Parameter Substitution
+4. Quoting & String Literals
+5. Arrays
+6. Functions
+7. Control Flow
+8. Error Handling
+9. Input/Output & Messaging
+10. Command-Line Arguments
+11. File Operations
+12. Security Considerations
+13. Code Style & Best Practices
+14. Advanced Patterns
 
-**Ref:** BSC00
+**Ref:** BCS00
 
 
 ---
@@ -35,19 +33,11 @@ Remove unused functions/variables from production scripts.
 
 # Script Structure & Layout
 
-**Scripts must follow mandatory 13-step layout for consistency and safe initialization.**
+**Mandatory 13-step layout from shebang to `#fin` marker.**
 
-Steps: (1) Shebang `#!/usr/bin/env bash`, (2) ShellCheck directives if needed, (3) Brief description comment, (4) `set -euo pipefail`, (5) `shopt -s inherit_errexit shift_verbose extglob nullglob`, (6) Metadata (`VERSION`, `SCRIPT_PATH`, `SCRIPT_DIR`, `SCRIPT_NAME` made `readonly`), (7) Global variables, (8) Colors if terminal output, (9) Utility functions (messaging, helpers), (10) Business logic functions, (11) `main()` for scripts >40 lines, (12) Script invocation `main "$@"`, (13) End marker `#fin`.
+Covers: script metadata, shopt settings, dual-purpose patterns, FHS compliance, file extensions, bottom-up function organization (low-level utilities before high-level orchestration).
 
-**Function organization: bottom-up.** Define messaging functions first (lowest level), then helpers, validators, business logic, with `main()` last (highest orchestration level). Each function safely calls functions defined above it.
-
-**Dual-purpose scripts** (executable and sourceable): Check `[[ ${BASH_SOURCE[0]} != "$0" ]] && return 0` early. When sourced, skip `set -e` to avoid modifying caller's shell.
-
-**FHS compliance:** Install to `/usr/local/share/{org}/{project}/` (local) or `/usr/share/{org}/{project}/` (system). Support uninstalled mode (script directory) for development.
-
-**File extensions:** Omit `.sh` for user-facing commands; use `.sh` for libraries and internal tools.
-
-**Ref:** BCS01
+**Ref:** BCS0100
 
 
 ---
@@ -57,32 +47,47 @@ Steps: (1) Shebang `#!/usr/bin/env bash`, (2) ShellCheck directives if needed, (
 
 ### Complete Working Example
 
-**Production-quality installation script demonstrating all 13 mandatory BCS0101 steps in ~450 lines.**
+**Production-quality installation script demonstrating all 13 mandatory BCS0101 layout steps.**
 
-**Key elements:**
-- Shebang + shellcheck + description í `set -euo pipefail` + shopt
-- Metadata: `VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME` (readonly after group)
-- Globals: config vars (`PREFIX='/usr/local'`), runtime flags (`DRY_RUN=0`), arrays (`WARNINGS=()`)
-- Terminal-aware colors: `if [[ -t 1 && -t 2 ]]` conditional assignment
-- Standard messaging: `_msg()` + helpers (vecho, info, warn, error, die, yn)
-- Business logic: validation í creation í installation í summary (bottom-up)
-- Argument parsing: Short/long options (`-p|--prefix`), `noarg()` validation
-- Progressive readonly: Variables locked after parsing
-- `main()` orchestrates workflow
-- Invocation: `main "$@"`
-- End: `#fin`
+---
 
-**Patterns demonstrated:**
+## Key Elements
+
+- **Initialization:** Shebang ‚Ü' shellcheck ‚Ü' description ‚Ü' `set -euo pipefail` ‚Ü' shopt
+- **Metadata block:** `VERSION`, `SCRIPT_PATH`, `SCRIPT_DIR`, `SCRIPT_NAME` ‚Ü' `readonly --`
+- **Globals:** Configuration vars ‚Ü' derived paths ‚Ü' runtime flags (`declare -i`) ‚Ü' arrays
+- **Colors:** TTY-conditional: `if [[ -t 1 && -t 2 ]]; then ... fi`
+- **Messaging:** `_msg()` + `vecho/info/warn/success/error/die/yn/noarg`
+- **Business logic:** Validation ‚Ü' operations ‚Ü' summary (bottom-up organization)
+- **Argument parsing:** `while (($#)); case $1 in` with `noarg` validation
+- **Progressive readonly:** Config immutable after parsing
+
+## Core Pattern
+
+```bash
+#!/bin/bash
+set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
+
+VERSION=1.0.0
+SCRIPT_PATH=$(realpath -- "$0")
+readonly -- VERSION SCRIPT_PATH
+
+declare -i DRY_RUN=0
+# ... business functions ...
+main() { while (($#)); do case $1 in ...; esac; shift; done; }
+main "$@"
+#fin
+```
+
+## Critical Patterns
+
 - **Dry-run:** `((DRY_RUN)) && { info '[DRY-RUN] Would...'; return 0; }`
-- **Derived paths:** `update_derived_paths()` recomputes when `PREFIX` changes
-- **Force mode:** Overwrite control with `((FORCE))` checks
-- **Error accumulation:** `WARNINGS+=()` array for summary
-- **Validation first:** `check_prerequisites` í `validate_config` before action
-- **Conditional features:** `((INSTALL_SYSTEMD))` guards systemd operations
+- **Derived paths:** Update via function when PREFIX changes
+- **Validation:** Check prerequisites before filesystem operations
+- **Force mode:** `[[ -f "$file" ]] && ! ((FORCE)) && warn ...`
 
-**Production features:** help text, version info, verbose/quiet modes, config generation, permission management, comprehensive summary report.
-
-**Ref:** BCS01010101
+**Ref:** BCS010101
 
 
 ---
@@ -90,47 +95,44 @@ Steps: (1) Shebang `#!/usr/bin/env bash`, (2) ShellCheck directives if needed, (
 
 **Rule: BCS010102**
 
-### Common Layout Anti-Patterns
+### Layout Anti-Patterns
 
-**Eight critical BCS0101 violations causing silent failures and runtime errors.**
+**Critical violations of BCS0101 13-step layout that cause silent failures and structural bugs.**
 
-1. **Missing `set -euo pipefail`** ‚Üí Silent corruption. Place at line 4.
+---
 
-2. **Variables after use** ‚Üí Unbound variable errors. Declare globals in Step 7 before functions.
+#### Critical Anti-Patterns
 
-3. **Business logic before utilities** ‚Üí Calls undefined helpers. Order: messaging ‚Üí helpers ‚Üí business ‚Üí main().
+| Anti-Pattern | Problem | Fix |
+|--------------|---------|-----|
+| Missing `set -euo pipefail` | Silent failures, script continues after errors | Add immediately after shebang |
+| Variables after use | "Unbound variable" with `set -u` | Declare all globals before `main()` |
+| Business logic before utilities | Functions call undefined helpers | Bottom-up: utilities ‚Ü' business ‚Ü' main |
+| No `main()` (>40 lines) | Can't test, can't source, scattered parsing | Wrap execution in `main()` |
+| Missing `#fin` | Can't detect truncated files | Always end with `#fin` |
+| Premature `readonly` | Can't modify during arg parsing | `readonly` after parsing complete |
+| Scattered globals | Hard to audit state | Group all declarations together |
 
-4. **No `main()` in large scripts** ‚Üí Scattered execution, untestable. Required for scripts >40 lines.
+---
 
-5. **Missing `#fin`** ‚Üí No completion proof. Always end with `#fin`.
+#### Dual-Purpose Pattern
 
-6. **Readonly before parsing** ‚Üí Cannot modify during argument parsing. Make readonly after values finalized.
-
-7. **Scattered declarations** ‚Üí Hard to track state. Group all globals in Step 7.
-
-8. **Unprotected sourcing** ‚Üí Modifies caller's shell. Use `[[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0` before `set -e`.
-
-**Wrong:**
 ```bash
 #!/usr/bin/env bash
-VERSION='1.0.0'  # No set -e!
-readonly -- PREFIX  # Too early
-process_files()  # Calls undefined die()
-main "$@"  # No wrapper
-```
+# Functions available when sourced
+die() { >&2 echo "ERROR: ${*:2}"; exit "${1:-1}"; }
 
-**Correct:**
-```bash
-#!/usr/bin/env bash
+# Exit early if sourced
+[[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0
+
+# Execution starts here
 set -euo pipefail
-VERSION='1.0.0'
-declare -- PREFIX='/usr'
-die() { error "$*"; exit 1; }
-process_files() { die "error"; }
-main() { process_files; readonly -- PREFIX; }
+main() { : ...; }
 main "$@"
 #fin
 ```
+
+**Key:** `set -euo pipefail` and `main "$@"` only run when executed, not sourced.
 
 **Ref:** BCS010102
 
@@ -142,60 +144,46 @@ main "$@"
 
 ### Edge Cases and Variations
 
-**Special scenarios where BCS0101's 13-step layout is modified for specific use cases.**
+**Standard 13-step layout allows specific deviations for tiny scripts, libraries, external config, platform detection, and cleanup traps.**
 
-#### Small Scripts (<200 lines)
-Skip `main()` and run directly. **Rationale:** Overhead unjustified for trivial scripts.
+---
 
+## Legitimate Simplifications
+
+**Tiny scripts (<200 lines):** Skip `main()`, run directly after `set -euo pipefail`
+
+**Library files:** Skip `set -e` (affects caller), skip `main()`, skip execution‚Äîdefine functions only:
 ```bash
 #!/usr/bin/env bash
-set -euo pipefail
-declare -i count=0
-for file in "$@"; do
-  [[ ! -f "$file" ]] || count+=1
-done
-echo "Found $count files"
-#fin
-```
-
-#### Sourced Libraries
-Skip `set -e`, `main()`, execution‚Äîno environment modification. Export functions only.
-
-```bash
-#!/usr/bin/env bash
+# Library - sourced only
 is_integer() { [[ "$1" =~ ^-?[0-9]+$ ]]; }
 #fin
 ```
 
-#### External Configuration
-Source config after metadata, **then** make variables readonly.
+## Legitimate Extensions
 
+**Config sourcing:** Source between metadata and business logic, `readonly` after:
 ```bash
-declare -- CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/myapp/config.sh"
 [[ -r "$CONFIG_FILE" ]] && source "$CONFIG_FILE"
 readonly -- CONFIG_FILE
 ```
 
-#### Platform Detection
-Add platform-specific globals after standard globals using case statements.
-
-#### Cleanup Traps
-Set trap **after** cleanup function defined, **before** temp file creation.
-
+**Cleanup traps:** Define cleanup function first, set trap before temp file creation:
 ```bash
 cleanup() { rm -f "${TEMP_FILES[@]}"; }
-trap 'cleanup' EXIT SIGINT SIGTERM
+trap 'cleanup $?' EXIT
 ```
 
-**Anti-patterns:**
-- `‚Üí` Functions before `set -e` (unsafe)
-- `‚Üí` Globals scattered arbitrarily
-- `‚Üí` Deviation without documented reason
+**Platform detection:** Add platform-specific globals after standard globals
 
-**Key principles when deviating:**
-1. Safety first (`set -e` comes first unless library)
-2. Dependencies before usage (bottom-up)
-3. Deviate only when necessary
+## Key Principles (Even When Deviating)
+
+1. `set -euo pipefail` first (unless library)
+2. Bottom-up organization maintained
+3. Dependencies before usage
+4. Document deviation reasons
+
+**Anti-pattern:** Functions before `set -e` ‚Ü' `set -euo pipefail` too late, errors not caught
 
 **Ref:** BCS010103
 
@@ -205,29 +193,46 @@ trap 'cleanup' EXIT SIGINT SIGTERM
 
 **Rule: BCS0101**
 
-## General Layouts for Standard Script
+## Script Structure Layout
 
-**Mandatory 13-step structural layout for all Bash scripts.**
+**All scripts follow 13-step bottom-up layout: infrastructure ‚Ü' implementation ‚Ü' orchestration.**
 
 ### The 13 Steps
 
-1. **Shebang**: `#!/bin/bash` (or `#!/usr/bin/bash`, `#!/usr/bin/env bash`)
-2. **ShellCheck directives** (if needed): `#shellcheck disable=SCxxxx` with comments
-3. **Brief description**: One-line purpose comment
-4. **Error handling**: `set -euo pipefail` (MANDATORY before commands)
-5. **Shell options**: `shopt -s inherit_errexit shift_verbose extglob nullglob`
-6. **Metadata**: `declare -r VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME` (readonly together)
-7. **Global variables**: Explicit types - `declare -i`, `declare --`, `declare -a`, `declare -A`
-8. **Color definitions** (if terminal output): Conditional with readonly
-9. **Utility functions**: `_msg()`, `vecho()`, `info()`, `warn()`, `error()`, `die()` - lowest level
-10. **Business logic**: Core functions organized bottom-up
-11. **main()**: Required >100 lines; includes argument parsing; readonly after parsing
-12. **Invocation**: `main "$@"` (always quote)
-13. **End marker**: `#fin` or `#end` (MANDATORY)
+1. `#!/bin/bash` (or `#!/usr/bin/env bash`)
+2. `#shellcheck` directives (if needed, with comments)
+3. Brief description comment
+4. `set -euo pipefail` ‚Äî **MANDATORY before any commands**
+5. `shopt -s inherit_errexit shift_verbose extglob nullglob`
+6. Metadata: `VERSION`, `SCRIPT_PATH`, `SCRIPT_DIR`, `SCRIPT_NAME` ‚Ü' `declare -r`
+7. Global declarations with types (`declare -i`, `declare --`, `declare -a`)
+8. Color definitions (if terminal output)
+9. Utility functions (messaging: `info`, `warn`, `error`, `die`)
+10. Business logic functions
+11. `main()` with argument parsing
+12. `main "$@"`
+13. `#fin` or `#end`
 
-**Rationale**: Guarantees safe initialization, prevents undefined references, enables testing.
+### Core Rationale
+- Error handling before any code runs
+- Bottom-up: utilities before business logic before `main()`
+- Testable: source script to test individual functions
 
-**Anti-pattern**: Missing `set -euo pipefail`, variables before declaration, logic before utilities, no `main()` in large scripts.
+### Minimal Example
+```bash
+#!/bin/bash
+set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
+declare -r VERSION=1.0.0
+main() { echo "Hello $VERSION"; }
+main "$@"
+#fin
+```
+
+### Anti-patterns
+- `set -euo pipefail` after commands ‚Ü' **breaks safety**
+- Business logic before utility functions ‚Ü' **undefined calls**
+- No `main()` in scripts >100 lines ‚Ü' **untestable**
 
 **Ref:** BCS0101
 
@@ -237,52 +242,39 @@ trap 'cleanup' EXIT SIGINT SIGTERM
 
 **Rule: BCS010201**
 
-### Dual-Purpose Scripts (Executable and Sourceable)
+### Dual-Purpose Scripts
 
-**Dual-purpose scripts work as executables AND source libraries. Apply `set -euo pipefail` and `shopt` ONLY when executed, NOT when sourced (prevents modifying caller's shell state).**
+**Scripts working as both executables and sourceable libraries must apply `set -euo pipefail` and `shopt` ONLY when executed directly, never when sourced.**
 
-**Pattern (early return - recommended):**
+Sourcing a script with `set -e` alters the caller's shell state, breaking error handling.
+
+**Pattern (early return):**
 ```bash
 #!/bin/bash
-# Functions first
-my_function() {
-  local -- arg="$1"
-  echo "Processing: $arg"
-}
-declare -fx my_function
+my_func() { local -- arg="$1"; echo "$arg"; }
+declare -fx my_func
 
-# Early return when sourced
 [[ ${BASH_SOURCE[0]} != "$0" ]] && return 0
-
-# Executable section (only runs when executed)
+# --- Executable section ---
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-my_function "$@"
+if [[ ! -v SCRIPT_VERSION ]]; then
+  declare -x SCRIPT_VERSION=1.0.0
+  readonly -- SCRIPT_VERSION
+fi
+
+my_func "$@"
 #fin
 ```
 
-**Key rules:**
-- Functions before sourced/executed check
-- Early return: `[[ ${BASH_SOURCE[0]} != "$0" ]] && return 0`
-- `set`/`shopt` after early return (executable section only)
-- Metadata guard: `[[ ! -v SCRIPT_VERSION ]]` for idempotence
-- Use `return` (not `exit`) for errors when sourced
-- Test both: `./script.sh` (execute), `source script.sh` (source)
+**Structure:** Functions first ‚Ü' early return for sourced mode ‚Ü' `set`/`shopt` ‚Ü' guarded metadata ‚Ü' main logic.
 
-**Alternative (if/else):**
-```bash
-if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
-  set -euo pipefail  # Executed mode
-  process_data
-else
-  return 0  # Sourced mode
-fi
-```
+**Anti-patterns:**
+- `set -euo pipefail` before source detection ‚Ü' pollutes caller's shell
+- Using `exit` instead of `return` when sourced ‚Ü' kills caller's shell
 
-**Rationale:** Sourcing must not alter caller's error handling or glob behavior.
-
-**Anti-pattern:** Applying `set -e` at script top (breaks sourced mode).
+**Key:** Use `[[ ! -v VAR ]]` guard for idempotent re-sourcing; use `return` (not `exit`) for sourced errors.
 
 **Ref:** BCS010201
 
@@ -294,24 +286,20 @@ fi
 
 ## Shebang and Initial Setup
 
-**All scripts must start with shebang, optional shellcheck directives, brief description, then `set -euo pipefail` as first command.**
+**First lines must include shebang, optional shellcheck directives, description comment, then `set -euo pipefail` as first command.**
 
-**Allowable shebangs:**
-- `#!/bin/bash` ‚Üí Most portable (standard Linux)
-- `#!/usr/bin/bash` ‚Üí FreeBSD/BSD systems
-- `#!/usr/bin/env bash` ‚Üí Maximum portability (searches PATH)
+**Shebangs:** `#!/bin/bash` (Linux) | `#!/usr/bin/bash` (BSD) | `#!/usr/bin/env bash` (max portability)
 
-**Rationale:** Strict error handling must activate before any commands execute.
-
-**Example:**
 ```bash
 #!/bin/bash
 #shellcheck disable=SC1090,SC1091
-# Get directory sizes and report usage statistics
+# Brief script description
 set -euo pipefail
 ```
 
-**Anti-pattern:** `set -euo pipefail` after variable declarations ‚Üí errors undetected during initialization.
+**Rationale:** Strict mode (`set -euo pipefail`) must execute before any other commands to catch errors immediately.
+
+**Anti-patterns:** Missing `set -euo pipefail` ‚Ü' silent failures; shebang without path (`#!bash`) ‚Ü' won't execute.
 
 **Ref:** BCS0102
 
@@ -323,38 +311,31 @@ set -euo pipefail
 
 ## Script Metadata
 
-**Declare VERSION, SCRIPT_PATH, SCRIPT_DIR, SCRIPT_NAME immediately after `shopt` using `declare -r` for immutability.**
+**Declare VERSION, SCRIPT_PATH, SCRIPT_DIR, SCRIPT_NAME immediately after `shopt`, using `declare -r` for immutability.**
 
-**Rationale:** Reliable path resolution (realpath resolves symlinks/fails early), VERSION for tracking, SCRIPT_DIR for resource location, SCRIPT_NAME for logging, readonly prevents modification.
+**Rationale:** Enables reliable resource loading from any invocation directory; `realpath` fails early if script missing; readonly prevents accidental modification.
 
 **Pattern:**
 
 ```bash
-set -euo pipefail
-shopt -s inherit_errexit shift_verbose extglob nullglob
-
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
+
+# Load resources relative to script
+source "$SCRIPT_DIR"/lib/common.sh
 ```
 
-**Variables:**
-- **VERSION**: Semantic version (Major.Minor.Patch)
-- **SCRIPT_PATH**: Absolute path via `realpath -- "$0"` (fails if missing)
-- **SCRIPT_DIR**: Directory via `${SCRIPT_PATH%/*}` (parameter expansion)
-- **SCRIPT_NAME**: Filename via `${SCRIPT_PATH##*/}`
-
-**Use realpath not readlink:** Simpler, builtin available, POSIX-compliant, fails early.
-
-**SC2155 acceptable:** realpath failure should terminate; concise pattern preferred.
+**Variables:** VERSION (semver) ‚Ü' SCRIPT_PATH (`realpath -- "$0"`) ‚Ü' SCRIPT_DIR (`${SCRIPT_PATH%/*}`) ‚Ü' SCRIPT_NAME (`${SCRIPT_PATH##*/}`)
 
 **Anti-patterns:**
-- `$0` directly without realpath ‚Üí relative/symlink issues
-- `dirname`/`basename` ‚Üí slower external commands
-- `$PWD` for SCRIPT_DIR ‚Üí wrong (current directory not script location)
-- `readonly` individually ‚Üí `readonly SCRIPT_DIR=${SCRIPT_PATH%/*}` fails
-- Late declaration ‚Üí must follow shopt immediately
+
+- `SCRIPT_PATH="$0"` ‚Ü' use `realpath -- "$0"` (resolves symlinks/relative paths)
+- `SCRIPT_DIR=$(dirname "$0")` ‚Ü' use `${SCRIPT_PATH%/*}` (faster, no external command)
+- `SCRIPT_DIR=$PWD` ‚Ü' wrong! PWD is current directory, not script location
+
+**Edge cases:** Root directory (`SCRIPT_DIR` empty) ‚Ü' add `[[ -n "$SCRIPT_DIR" ]] || SCRIPT_DIR='/'`; Sourced scripts ‚Ü' use `${BASH_SOURCE[0]}` instead of `$0`
 
 **Ref:** BCS0103
 
@@ -364,46 +345,43 @@ declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 **Rule: BCS0104**
 
-## Filesystem Hierarchy Standard (FHS) Preference
+## FHS Compliance
 
-**Scripts installing files or searching resources should follow FHS for predictable locations, multi-environment support, and package manager compatibility.**
+**Follow Filesystem Hierarchy Standard for scripts that install files or search for resources‚Äîenables predictable locations, multi-environment support, and package manager compatibility.**
 
-**Rationale:** Predictable paths users/package managers expect; works across dev/local/system/user installs; eliminates hardcoded paths.
+**Key rationale:** Eliminates hardcoded paths; scripts work across dev/local/system installs without modification.
 
-**Locations:**
-- `/usr/local/{bin,share}` - User-installed system-wide
-- `/usr/{bin,share}` - System (package manager)
-- `$HOME/.local/{bin,share}` - User-specific
-- `${XDG_CONFIG_HOME:-$HOME/.config}` - User config
+**Standard locations:** `/usr/local/bin/` (executables), `/usr/local/share/` (data), `/usr/local/lib/` (libraries), `/usr/local/etc/` (config), `${XDG_DATA_HOME:-$HOME/.local/share}/` (user data)
 
-**Search pattern:**
+**FHS search pattern:**
 ```bash
-find_data() {
-  local -a paths=(
-    "$SCRIPT_DIR/$1"                                      # Dev
-    /usr/local/share/myapp/"$1"                           # Local
-    /usr/share/myapp/"$1"                                 # System
-    "${XDG_DATA_HOME:-$HOME/.local/share}/myapp/$1"       # User
+find_data_file() {
+  local -- filename=$1
+  local -a search_paths=(
+    "$SCRIPT_DIR"/"$filename"                              # Development
+    /usr/local/share/myapp/"$filename"                     # Local install
+    /usr/share/myapp/"$filename"                           # System install
+    "${XDG_DATA_HOME:-$HOME/.local/share}"/myapp/"$filename"  # User
   )
-  local -- p
-  for p in "${paths[@]}"; do
-    [[ -f "$p" ]] && { echo "$p"; return 0; }
+  local -- path
+  for path in "${search_paths[@]}"; do
+    [[ -f "$path" ]] && { echo "$path"; return 0; }
   done
   return 1
 }
 ```
 
-**PREFIX customization:**
+**PREFIX pattern:**
 ```bash
-PREFIX="${PREFIX:-/usr/local}"
-BIN_DIR="$PREFIX/bin"
-SHARE_DIR="$PREFIX/share/myapp"
-readonly -- PREFIX BIN_DIR SHARE_DIR
+PREFIX=${PREFIX:-/usr/local}
+BIN_DIR="$PREFIX"/bin
 ```
 
-**Anti-patterns:** Hardcoded paths ‚Üí FHS search; Fixed install location ‚Üí `PREFIX="$PREFIX/bin"`; Relative `source ../lib/` ‚Üí Breaks from different CWD; Overwrite config ‚Üí Check first `[[ -f "$cfg" ]] || install`
+**Anti-patterns:**
+- `source /usr/local/lib/myapp/common.sh` ‚Ü' hardcoded path breaks portability
+- `BIN_DIR=/usr/local/bin` ‚Ü' use `PREFIX=${PREFIX:-/usr/local}; BIN_DIR="$PREFIX"/bin`
 
-**Skip when:** Single-user scripts, project-specific tools, containers, embedded systems.
+**Skip FHS:** Single-user scripts, project-specific tools, containers
 
 **Ref:** BCS0104
 
@@ -415,37 +393,38 @@ readonly -- PREFIX BIN_DIR SHARE_DIR
 
 ## shopt
 
-**Apply these `shopt` settings immediately after `set -euo pipefail` in every script.**
+**Configure shell options for robust error handling and glob behavior.**
 
-**Critical settings:**
+**Recommended settings:**
 ```bash
-shopt -s inherit_errexit  # Makes set -e work in $(...) and (...)
-shopt -s shift_verbose    # Errors when shift has no args
-shopt -s extglob          # Enables !(pattern), +(pattern), *(pattern)
+shopt -s inherit_errexit shift_verbose extglob nullglob
 ```
 
-**Choose one glob behavior:**
+### Critical Options
+
+| Option | Purpose |
+|--------|---------|
+| `inherit_errexit` | Makes `set -e` work in `$(...)` subshells (CRITICAL) |
+| `shift_verbose` | Error on `shift` when no args remain |
+| `extglob` | Extended patterns: `!(*.txt)`, `+([0-9])`, `@(jpg|png)` |
+| `nullglob` | Unmatched globs ‚Ü' empty (for loops/arrays) |
+| `failglob` | Unmatched globs ‚Ü' error (strict scripts) |
+| `globstar` | Enable `**` recursive matching (optional, slow) |
+
+### Key Anti-Patterns
+
 ```bash
-shopt -s nullglob   # Unmatched globs í empty (safe for loops/arrays)
-# OR
-shopt -s failglob   # Unmatched globs í error (strict mode)
+# ‚úó Without inherit_errexit - error silently ignored
+result=$(false); echo 'Still running'
+
+# ‚úó Default glob behavior - literal string if no match
+for f in *.txt; do rm "$f"; done  # Deletes file named "*.txt"!
 ```
 
-**Optional:**
-```bash
-shopt -s globstar   # Enables ** recursive matching (slow on deep trees)
-```
+### Rationale
 
-**Rationale:**
-- `inherit_errexit`: Without this, `result=$(false)` does NOT exit script despite `set -e` í errors in command substitutions silently ignored
-- `shift_verbose`: Prevents silent failures when `shift` called with no args
-- `extglob`: Enables `rm !(*.txt)`, `[[ $x == +([0-9]) ]]`, `*.@(jpg|png)`
-- `nullglob`: `for f in *.txt` í loop skips if no matches (default behavior: `f="*.txt"` literal string causes bugs)
-- `failglob`: Strict alternative where unmatched glob exits script
-
-**Anti-patterns:**
-- Omitting `inherit_errexit` í `set -e` ineffective in subshells
-- No glob option í `for f in *.txt` executes with literal `"*.txt"` when no matches
+1. **`inherit_errexit`**: Without it, `set -e` doesn't apply inside command substitutions‚Äîerrors silently continue
+2. **`nullglob`/`failglob`**: Default bash passes literal glob string when no match, causing dangerous behavior
 
 **Ref:** BCS0105
 
@@ -457,23 +436,15 @@ shopt -s globstar   # Enables ** recursive matching (slow on deep trees)
 
 ## File Extensions
 
-**Executables: `.sh` or no extension; libraries: `.sh` required; global PATH tools: no extension.**
+**Use `.sh` for libraries, no extension for PATH executables.**
 
-**Rationale:** No-extension executables appear as commands (`deploy` not `deploy.sh`). Libraries need `.sh` for identification and must be non-executable to prevent accidental execution.
+| Type | Extension | Executable bit |
+|------|-----------|----------------|
+| Library | `.sh` | No |
+| Script (local) | `.sh` or none | Yes |
+| Script (PATH) | None | Yes |
 
-**Example:**
-```bash
-# Executable (global)
-/usr/local/bin/backup          # No extension
-
-# Executable (local)
-./scripts/build.sh             # .sh extension
-
-# Library (non-executable)
-lib-common.sh                  # .sh extension, chmod 644
-```
-
-**Anti-patterns:** `chmod +x lib-*.sh` ' libraries must not be executable | `/usr/bin/tool.sh` ' omit extension for PATH executables.
+`‚Ü'` Adding `.sh` to PATH commands creates awkward invocations (`myscript.sh` vs `myscript`)
 
 **Ref:** BCS0106
 
@@ -485,63 +456,55 @@ lib-common.sh                  # .sh extension, chmod 644
 
 ## Function Organization
 
-**Organize bottom-up: primitives first, `main()` last. Each layer calls only functions defined above.**
+**Organize functions bottom-up: primitives first, `main()` last. Dependencies flow downward‚Äîhigher functions call lower functions.**
 
-**Rationale:** No forward references; primitives understood before compositions; clear dependency flow.
+### 7-Layer Pattern
 
-**7-layer pattern:**
+1. **Messaging** ‚Äî `_msg()`, `info()`, `warn()`, `error()`, `die()`
+2. **Documentation** ‚Äî `show_help()`, `show_version()`
+3. **Utilities** ‚Äî `yn()`, `noarg()`, generic helpers
+4. **Validation** ‚Äî `check_prerequisites()`, input validation
+5. **Business logic** ‚Äî Domain-specific operations
+6. **Orchestration** ‚Äî Coordinate multiple operations
+7. **main()** ‚Äî Top-level script flow
+
+### Rationale
+
+- **No forward references** ‚Äî Bash reads top-to-bottom; called functions must exist
+- **Debuggability** ‚Äî Read top-down to understand dependencies
+- **Testability** ‚Äî Test lower layers independently
+
+### Example
 
 ```bash
-# 1. Messaging (lowest)
-_msg() { echo "[$FUNCNAME[1]] $*"; }
+# Layer 1: Messaging
+_msg() { echo "[${FUNCNAME[1]}] $*"; }
 info() { >&2 _msg "$@"; }
-die() { error "$@"; exit "${1:-1}"; }
+die() { (($# < 2)) || >&2 _msg "${@:2}"; exit "${1:-0}"; }
 
-# 2. Documentation
-show_help() { ... }
+# Layer 4: Validation
+check_deps() { command -v git >/dev/null || die 1 'git required'; }
 
-# 3. Helpers
-noarg() { (($# < 2)) && die "Option $1 needs arg"; }
+# Layer 5: Business logic
+build() { info 'Building...'; make all; }
 
-# 4. Validation
-check_prerequisites() { ... }
-
-# 5. Business logic
-build_project() { ... }
-
-# 6. Orchestration
-run_build() { build_project; test_project; }
-
-# 7. Main (highest)
-main() {
-  check_prerequisites
-  run_build
-}
+# Layer 7: main()
+main() { check_deps; build; }
 main "$@"
+#fin
 ```
 
-**Layer definitions:**
-1. Messaging - `_msg()`, `info()`, `warn()`, `error()`, `die()`
-2. Documentation - `show_help()`, `show_version()`
-3. Helpers - `yn()`, `noarg()`, utilities
-4. Validation - `check_*()`, `validate_*()`
-5. Business logic - domain operations
-6. Orchestration - coordinate business logic
-7. `main()` - top orchestrator
+### Anti-Patterns
 
-**Anti-patterns:**
 ```bash
-# ‚úó main() at top ‚Üí forward references
-main() { build(); }  # Not defined!
+# ‚úó main() at top (forward references)
+main() { build; }  # build not defined!
+build() { ... }
 
-# ‚úó Circular deps (A‚ÜíB, B‚ÜíA)
-# ‚úì Extract common logic to lower layer
-
-# ‚úó Random ordering
-# ‚úì Dependency-ordered
+# ‚úó Circular dependencies
+func_a() { func_b; }
+func_b() { func_a; }  # Extract common logic instead
 ```
-
-**Within-layer:** Order by severity (messaging) or logical sequence.
 
 **Ref:** BCS0107
 
@@ -553,22 +516,11 @@ main() { build(); }  # Not defined!
 
 # Variable Declarations & Constants
 
-**Use explicit type declarations (`declare -i`, `declare --`, `declare -a`, `declare -A`) for clarity and safety.** Apply proper scoping (global vs local), naming conventions (UPPER_CASE for constants/environment, lower_case for variables), readonly patterns (individual or group), boolean flags as integers, and derived variables computed from other variables.
+**Explicit declaration with type hints for safety and clarity.**
 
-**Rationale:** Type hints prevent errors, explicit declarations make intent clear, proper scoping avoids conflicts.
+Core practices: `declare -i` (integers), `declare --` (strings), `declare -a` (arrays), `declare -A` (associative). Scoping: globals at script level, `local --` in functions. Naming: `UPPER_CASE` constants, `lower_case` variables. Use `readonly --` for immutables. Boolean flags as integers (`declare -i FLAG=0`). Derived variables compute from others.
 
-**Example:**
-```bash
-declare -i count=0                    # Integer
-declare -- name="example"             # String
-declare -a files=()                   # Indexed array
-declare -A config=([key]="value")     # Associative array
-readonly VERSION='1.0.0' AUTHOR='name'
-```
-
-**Anti-patterns:** Untyped variables `count=0`, missing `readonly` for constants, using strings for booleans.
-
-**Ref:** BCS02
+**Ref:** BCS0200
 
 
 ---
@@ -578,51 +530,51 @@ readonly VERSION='1.0.0' AUTHOR='name'
 
 ## Type-Specific Declarations
 
-**Always use explicit type declarations to make intent clear and enable type-safe operations.**
-
-**Rationale:** Type safety catches errors early; intent documentation aids readability; `--` separator prevents option injection.
+**Use explicit type declarations (`declare -i`, `declare --`, `declare -a`, `declare -A`) for type safety and intent documentation.**
 
 ### Declaration Types
 
-| Type | Syntax | Use Case |
-|------|--------|----------|
-| Integer | `declare -i` | Counters, ports, flags |
-| String | `declare --` | Paths, text, config |
+| Type | Syntax | Use For |
+|------|--------|---------|
+| Integer | `declare -i` | Counters, exit codes, ports |
+| String | `declare --` | Paths, text, user input |
 | Indexed array | `declare -a` | Lists, sequences |
 | Associative | `declare -A` | Key-value maps |
 | Constant | `readonly --` | Immutable values |
-| Function-local | `local --` | ALL function variables |
+| Local | `local --` | Function-scoped vars |
 
-### Example
+**Rationale:** Type enforcement catches bugs early; integers auto-evaluate arithmetic; `--` prevents option injection.
+
+### Core Pattern
 
 ```bash
-declare -i count=0 MAX=10
-declare -- filename='data.txt'
-declare -a files=()
-declare -A config=([port]='8080')
-readonly -- VERSION='1.0.0'
+declare -i count=0           # Integer
+declare -- filename=''       # String (-- prevents option injection)
+declare -a files=()          # Indexed array
+declare -A config=()         # Associative array
+readonly -- VERSION=1.0.0    # Immutable
 
 process() {
-  local -- input="$1"
+  local -- input=$1          # Always use -- with local
   local -i attempts=0
-  ((attempts < MAX)) && files+=("$input")
+  local -a results=()
 }
 ```
 
 ### Anti-Patterns
 
 ```bash
-# ‚úó No type (intent unclear) ‚Ü' ‚úì declare -i count=0
-count=0
+# ‚úó No type ‚Ü' intent unclear
+count=0; files=()
 
-# ‚úó Missing -- separator ‚Ü' ‚úì declare -- name='-val'
-declare name='-val'
+# ‚úó Missing -- ‚Ü' option injection risk
+declare filename='-weird'
 
-# ‚úó Missing -A (creates indexed!) ‚Ü' ‚úì declare -A cfg=()
-declare cfg; cfg[key]='val'
+# ‚úó Missing -A ‚Ü' creates indexed, not associative
+declare CONFIG; CONFIG[key]='value'
 
-# ‚úó Global leak in function ‚Ü' ‚úì local -- temp="$1"
-func() { temp="$1"; }
+# ‚úó Global leak in function
+process() { temp=$1; }       # ‚Ü' local -- temp=$1
 ```
 
 **Ref:** BCS0201
@@ -635,20 +587,21 @@ func() { temp="$1"; }
 
 ## Variable Scoping
 
-**Always declare function variables with `local` to prevent namespace pollution and recursion failures.**
-
-Globals at top with `declare`; function vars with `local -a|-i|--`.
+**Always declare function variables with `local` to prevent namespace pollution.**
 
 ```bash
 main() {
-  local -i count=0     # Local integer
-  local -- file="$1"   # Local string (-- separator)
+  local -a specs=()      # Local array
+  local -i depth=3       # Local integer
+  local -- file="$1"     # Local string
 }
 ```
 
+**Why:** Without `local`, variables become global ‚Ü' overwrite globals, persist after return, break recursion.
+
 **Anti-patterns:**
-- `file="$1"` in function ‚Ü' overwrites globals, breaks recursion
-- Missing `local` in recursive functions ‚Ü' each call resets shared var
+- `file=$1` ‚Ü' overwrites global `$file`
+- Recursive functions without `local` share state across calls
 
 **Ref:** BCS0202
 
@@ -660,42 +613,32 @@ main() {
 
 ## Naming Conventions
 
-**Use consistent naming to prevent conflicts and clarify scope.**
+**Use case-based naming to distinguish scope and prevent conflicts with shell built-ins.**
 
 | Type | Convention | Example |
 |------|------------|---------|
 | Constants | UPPER_CASE | `readonly MAX_RETRIES=3` |
-| Globals | UPPER_CASE | `VERBOSE=1` |
+| Globals | UPPER_CASE or CamelCase | `VERBOSE=1` |
 | Locals | lower_case | `local file_count=0` |
-| Private functions | prefix _ | `_validate_input()` |
-| Environment | UPPER_CASE | `export DATABASE_URL` |
+| Private funcs | `_` prefix | `_validate_input()` |
+| Env vars | UPPER_CASE | `export DATABASE_URL` |
 
-**Example:**
 ```bash
-# Constants/globals
-readonly -- SCRIPT_VERSION='1.0.0'
+declare -r SCRIPT_VERSION=1.0.0
 declare -i VERBOSE=1
-
-# Locals in functions
 process_data() {
   local -i line_count=0
   local -- temp_file
 }
-
-# Private functions
-_internal_helper() {
-  # Internal use only
-}
+_internal_helper() { :; }
 ```
 
 **Rationale:**
-- UPPER_CASE for globals/constants: visible scope, shell conventions
-- lower_case for locals: prevents shadowing globals
-- Underscore prefix: signals internal use, prevents conflicts
+- UPPER_CASE globals visible as script-wide; lower_case locals prevent shadowing
+- Underscore prefix signals internal use, prevents namespace conflicts
+- Avoid shell reserved names (`PATH`, `HOME`, `a`, `b`, `n`)
 
-**Anti-patterns:**
-- Lowercase single letters (`a`, `b`, `n`) í shell reserved
-- Shell variable names (`PATH`, `HOME`, `USER`) í causes conflicts
+**Anti-patterns:** `path=...` ‚Ü' shadows PATH; `local VERBOSE` ‚Ü' confuses scope
 
 **Ref:** BCS0203
 
@@ -707,43 +650,33 @@ _internal_helper() {
 
 ## Constants and Environment Variables
 
-**Use `readonly` for immutable values; `declare -x`/`export` for child process variables.**
+**Use `readonly` for immutable constants, `declare -x`/`export` for child process inheritance.**
 
+| Feature | `readonly` | `declare -x` |
+|---------|-----------|--------------|
+| Prevents modification | ‚úì | ‚úó |
+| Available to children | ‚úó | ‚úì |
+
+**Rationale:**
+- `readonly` signals intent and prevents accidental modification
+- `export` makes variables available to subprocess environment only when needed
+
+**Pattern:**
 ```bash
-# Constants (readonly)
-readonly -- VERSION='1.0.0' MAX_RETRIES=3 CONFIG_DIR='/etc/myapp'
+# Constants (not exported)
+readonly -- VERSION=1.0.0 CONFIG_DIR=/etc/app
 
-# Environment variables (export)
-declare -x DATABASE_URL='postgresql://localhost/db' LOG_LEVEL='DEBUG'
+# Environment for children
+declare -x LOG_LEVEL=${LOG_LEVEL:-INFO}
 
-# Combined (readonly + export)
-declare -rx BUILD_ENV='production'
+# Combined: readonly + exported
+declare -rx BUILD_ENV=production
 ```
-
-**When to use:**
-- `readonly`: Script metadata, config paths, calculated constants (prevents modification)
-- `declare -x`/`export`: Values needed by subprocesses, tool config, inherited settings
-
-**Key difference:** readonly prevents changes; export passes to subprocesses.
 
 **Anti-patterns:**
-```bash
-# ‚úó Exporting unnecessary constants
-export MAX_RETRIES=3  # Child processes don't need this
-# ‚úì Only readonly
-readonly -- MAX_RETRIES=3
-
-# ‚úó Not protecting true constants
-CONFIG_FILE='/etc/app.conf'  # Could be modified
-# ‚úì Make readonly
-readonly -- CONFIG_FILE='/etc/app.conf'
-
-# ‚úó Making user-configurable readonly too early
-readonly -- OUTPUT_DIR="$HOME/output"  # Can't override!
-# ‚úì Allow override first
-OUTPUT_DIR="${OUTPUT_DIR:-$HOME/output}"
-readonly -- OUTPUT_DIR
-```
+- `export MAX_RETRIES=3` ‚Ü' Use `readonly` unless children need it
+- Unprotected constants ‚Ü' `CONFIG=/etc/app.conf` can be modified; use `readonly --`
+- Early readonly on user-configurable ‚Ü' `readonly -- DIR="$HOME/out"` prevents override; allow default first: `DIR=${DIR:-default}; readonly -- DIR`
 
 **Ref:** BCS0204
 
@@ -755,74 +688,57 @@ readonly -- OUTPUT_DIR
 
 ## Readonly After Group
 
-**Declare variables first, then make readonly in single statement.**
+**Declare variables first, then make all readonly in single statement. Exception: script metadata uses `declare -r` (BCS0103).**
 
-**Rationale:** Prevents assignment errors; visual grouping; clear immutability contract.
+### Why
+- Prevents assignment to already-readonly variable
+- Groups related constants visually
+- Separates initialization from protection phase
 
-**Three-step progressive workflow:**
-
+### Three-Step Pattern (for arg-parsed values)
 ```bash
-# Step 1 - Declare with defaults
+# 1. Declare with defaults
 declare -i VERBOSE=0 DRY_RUN=0
-declare -- PREFIX='/usr/local'
 
-# Step 2 - Parse/modify in main()
-main() {
-  while (($#)); do case $1 in
-    -v) VERBOSE=1 ;;
-    --prefix) shift; PREFIX="$1" ;;
-  esac; shift; done
+# 2. Parse in main()
+while (($#)); do case $1 in -v) VERBOSE+=1 ;; esac; shift; done
 
-  # Step 3 - Readonly after parsing
-  readonly -- VERBOSE DRY_RUN PREFIX
-}
+# 3. Make readonly AFTER parsing
+readonly -- VERBOSE DRY_RUN
 ```
 
-Variables mutable during parsing ‚Üí readonly after.
-
-**Exception:** Script metadata prefers `declare -r` (see BCS0103). Readonly-after-group valid but `declare -r` now recommended.
-
-**Standard groups:**
-
+### Standard Groups
 ```bash
-# Metadata (exception: uses declare -r)
-declare -r VERSION='1.0.0'
-#shellcheck disable=SC2155
-declare -r SCRIPT_PATH=$(realpath -- "$0")
+# Colors (conditional init, then readonly)
+if [[ -t 1 ]]; then RED=$'\033[31m'; else RED=''; fi
+readonly -- RED
 
-# Colors (conditional)
-if [[ -t 1 && -t 2 ]]; then
-  RED=$'\033[0;31m' NC=$'\033[0m'
-else
-  RED='' NC=''
-fi
-readonly -- RED NC
-
-# Paths
-PREFIX="${PREFIX:-/usr/local}"
-BIN_DIR="$PREFIX/bin"
+# Paths (derive all, then readonly together)
+PREFIX=${PREFIX:-/usr/local}
+BIN_DIR="$PREFIX"/bin
 readonly -- PREFIX BIN_DIR
 ```
 
-**Anti-patterns:**
-
+### Anti-Patterns
 ```bash
-# ‚úó Wrong - readonly before all values set
-PREFIX='/usr'
-readonly -- PREFIX
-BIN_DIR="$PREFIX/bin"  # Not protected
+# ‚úó Premature readonly
+PREFIX=/usr/local
+readonly -- PREFIX  # Too early!
+BIN_DIR="$PREFIX"/bin  # PREFIX locked before group complete
 
 # ‚úì Correct
-PREFIX='/usr'
-BIN_DIR="$PREFIX/bin"
+PREFIX=/usr/local
+BIN_DIR="$PREFIX"/bin
 readonly -- PREFIX BIN_DIR
 
-# ‚úó Wrong - missing --
-readonly PREFIX  # Risky
+# ‚úó Missing -- separator
+readonly PREFIX  # Risky if var starts with -
 
-# ‚úì Correct
-readonly -- PREFIX
+# ‚úó Readonly inside conditional
+if [[ -f x ]]; then readonly -- VAR; fi  # May not be readonly!
 ```
+
+**Key:** Always use `--` separator. Group logically related variables. Make readonly only when values are final.
 
 **Ref:** BCS0205
 
@@ -838,7 +754,8 @@ readonly -- PREFIX
 
 ```bash
 readonly -a REQUIRED=(pandoc git md2ansi)
-readonly -- SCRIPT_PATH="$(realpath -- "$0")"
+#shellcheck disable=SC2155
+readonly -- SCRIPT_PATH=$(realpath -- "$0")
 ```
 
 **Ref:** BCS0206
@@ -851,40 +768,32 @@ readonly -- SCRIPT_PATH="$(realpath -- "$0")"
 
 ## Arrays
 
-**Always quote array expansions `"${array[@]}"` to preserve elements and prevent word splitting.**
+**Always quote array expansions `"${array[@]}"` to preserve element boundaries and prevent word splitting.**
 
-#### Declaration & Usage
+#### Why Arrays
+- Element boundaries preserved regardless of content (spaces, globs)
+- Safe command construction with arbitrary arguments
+
+#### Core Patterns
+
 ```bash
-declare -a paths=()                    # Empty indexed array
-declare -A config=()                   # Associative (Bash 4.0+)
-paths+=("$file")                       # Append element
-count=${#paths[@]}                     # Length
-first=${paths[0]}  last=${paths[-1]}   # Access ([-1] Bash 4.3+)
+declare -a paths=()              # Empty indexed array
+declare -A config=()             # Associative (Bash 4.0+)
+paths+=("$file")                 # Append element
+for p in "${paths[@]}"; do       # Iterate (MUST quote)
+readarray -t lines < <(cmd)      # From command output
+"${cmd[@]}"                      # Execute safely
 ```
-
-#### Iteration & Reading
-```bash
-for path in "${paths[@]}"; do process "$path"; done
-readarray -t lines < <(grep pattern file)
-IFS=',' read -ra fields <<< "$csv"
-```
-
-#### Safe Command Construction
-```bash
-local -a cmd=('app' '--config' "$cfg")
-((verbose)) && cmd+=('--verbose')
-"${cmd[@]}"
-```
-
-#### Anti-Patterns
-- `${arr[@]}` ‚Ü' `"${arr[@]}"` (unquoted breaks on spaces)
-- `array=($string)` ‚Ü' `readarray -t array <<< "$string"` (word splitting)
-- `for x in "${arr[*]}"` ‚Ü' `"${arr[@]}"` (`[*]` joins into single word)
 
 #### Quick Reference
-| `declare -a arr=()` | Create | `"${arr[@]}"` | All elements |
-| `arr+=("val")` | Append | `${#arr[@]}` | Length |
-| `"${arr[i]}"` | Index i | `"${arr[@]:1:3}"` | Slice |
+| `${#arr[@]}` | Length | `${arr[-1]}` | Last element |
+|--------------|--------|--------------|--------------|
+| `"${arr[@]}"` | All (separate) | `${arr[@]:1:3}` | Slice |
+
+#### Anti-Patterns
+- `${files[@]}` ‚Ü' `"${files[@]}"` (unquoted breaks on spaces)
+- `array=($string)` ‚Ü' `readarray -t array <<< "$string"` (word splitting)
+- `for x in "${arr[*]}"` ‚Ü' `"${arr[@]}"` (single vs separate words)
 
 **Ref:** BCS0207
 
@@ -896,14 +805,17 @@ local -a cmd=('app' '--config' "$cfg")
 
 ## Reserved for Future Use
 
-**BCS0208 reserved** ‚Äî Placeholder maintaining sequence integrity for future variable topics.
+**BCS0208 is a placeholder** preserving numerical sequence for future variable topics.
 
-#### Reserved Topics
+#### Reserved For
+
 - Nameref variables (`declare -n`)
 - Indirect expansion (`${!var}`)
 - Variable attributes/introspection
 
-**Status:** Reserved ‚Äî do not reference in compliance checking.
+#### Status
+
+**Reserved** ‚Äî Do not reference in compliance checking until content added.
 
 **Ref:** BCS0208
 
@@ -915,56 +827,45 @@ local -a cmd=('app' '--config' "$cfg")
 
 ## Derived Variables
 
-**Derive variables from base values rather than duplicating. Group with section comments. Update all derived variables when base values change (especially during argument parsing).**
+**Compute variables from base values; update all derivations when base changes during argument parsing.**
 
-**Rationale:**
-- DRY principle - single source of truth, automatic updates when base changes
-- Prevents inconsistency bugs when base values change but derived don't update
-- Section comments make dependencies explicit for maintainability
+**Rationale:** DRY principle‚Äîsingle source of truth; automatic path updates when PREFIX changes; prevents subtle bugs from stale values.
 
-**Example:**
+**Core pattern:**
 
 ```bash
-#!/bin/bash
-set -euo pipefail
-shopt -s inherit_errexit shift_verbose extglob nullglob
+declare -- PREFIX=/usr/local
+declare -- BIN_DIR="$PREFIX"/bin
+declare -- LIB_DIR="$PREFIX"/lib
 
-# Base values
-declare -- PREFIX='/usr/local'
-declare -- APP_NAME='myapp'
-
-# Derived paths
-declare -- BIN_DIR="$PREFIX/bin"
-declare -- LIB_DIR="$PREFIX/lib"
-declare -- CONFIG_DIR="/etc/$APP_NAME"
-declare -- CONFIG_FILE="$CONFIG_DIR/config.conf"
-
-# Update function for argument parsing
 update_derived_paths() {
-  BIN_DIR="$PREFIX/bin"
-  LIB_DIR="$PREFIX/lib"
-  CONFIG_DIR="/etc/$APP_NAME"
-  CONFIG_FILE="$CONFIG_DIR/config.conf"
+  BIN_DIR="$PREFIX"/bin
+  LIB_DIR="$PREFIX"/lib
 }
 
-main() {
-  while (($#)); do
-    case $1 in
-      --prefix) shift; PREFIX="$1"; update_derived_paths ;;
-      *) break ;;
-    esac
-    shift
-  done
-  readonly -- PREFIX BIN_DIR LIB_DIR CONFIG_DIR CONFIG_FILE
-}
-main "$@"
-#fin
+# Call after --prefix changes PREFIX
 ```
 
+**XDG fallbacks:** `CONFIG_BASE=${XDG_CONFIG_HOME:-$HOME/.config}`
+
 **Anti-patterns:**
-- `BIN_DIR='/usr/local/bin'` í Duplicates `PREFIX`, won't update if `PREFIX` changes
-- Changing `PREFIX` without updating `BIN_DIR="$PREFIX/bin"` í Inconsistent state
-- Making derived variables `readonly` before base values finalized í Can't update
+
+```bash
+# ‚úó Duplicating values
+BIN_DIR=/usr/local/bin     # Hardcoded, not derived!
+
+# ‚úó Not updating after base changes
+PREFIX=$1                  # Changed but BIN_DIR still has old value!
+
+# ‚úì Always update derived variables
+PREFIX=$1; update_derived_paths
+```
+
+**Rules:**
+- Group with section comments explaining dependencies
+- Make `readonly` only after all parsing complete
+- Document hardcoded exceptions (e.g., `/etc/profile.d`)
+- Consistent derivation‚Äîif one derives from APP_NAME, all should
 
 **Ref:** BCS0209
 
@@ -974,33 +875,45 @@ main "$@"
 
 **Rule: BCS0210**
 
-## Parameter Expansion & Braces
+## Parameter Expansion & Braces Usage
 
-**Use `"$var"` by default; braces `"${var}"` only when syntactically required.**
+**Use `"$var"` by default; braces only when syntactically required.**
 
-#### When Braces REQUIRED
+---
 
-- **Expansion ops:** `${var##*/}` `${var:-default}` `${var:0:5}` `${var//old/new}` `${var,,}`
-- **No separator concat:** `"${var1}${var2}"` `"${prefix}suffix"`
+#### Braces REQUIRED
+
+- **Operations:** `${var##*/}` `${var:-default}` `${var:0:5}` `${var//old/new}` `${var,,}`
+- **Concatenation:** `"${var1}${var2}"` `"${prefix}suffix"`
 - **Arrays:** `"${array[@]}"` `"${#array[@]}"`
 - **Special:** `"${@:2}"` `"${10}"` `"${!var}"`
 
-#### When Braces NOT Required
-
-Standalone or separator-delimited: `"$var"` `"$HOME"` `"$PREFIX"/bin` `"$var-suffix"`
+#### Braces NOT Required
 
 ```bash
 # ‚úì Correct
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-echo "Installing to $PREFIX/bin"
-"$SCRIPT_DIR"/build/lib
+"$var"  "$PREFIX"/bin  "Found $count files"
 
 # ‚úó Wrong - unnecessary braces
-echo "${PREFIX}/bin"
-info "Found ${count} files"
+"${var}"  "${PREFIX}"/bin  "Found ${count} files"
 ```
 
-**Rationale:** Braces add noise; reserving them for required cases makes special operations stand out.
+#### Edge Cases
+
+```bash
+"${var}_suffix"   # Required - no separator
+"$var-suffix"     # OK - dash separates
+```
+
+#### Summary
+
+| Situation | Form |
+|-----------|------|
+| Standalone | `"$var"` |
+| Path with `/` | `"$var"/path` |
+| Expansion op | `"${var%/*}"` |
+| Concatenation | `"${a}${b}"` |
+| Array | `"${arr[@]}"` |
 
 **Ref:** BCS0210
 
@@ -1010,37 +923,21 @@ info "Found ${count} files"
 
 **Rule: BCS0211**
 
-## Boolean Flags Pattern
+## Boolean Flags
 
-**Use `declare -i` for boolean state flags, test with `(())`.**
+**Use `declare -i` integers with `(())` for boolean state; 0=false, non-zero=true.**
 
 ```bash
-declare -i DRY_RUN=0
-declare -i VERBOSE=0
-
-# Test in conditionals
-((DRY_RUN)) && info 'Dry-run enabled'
-
-if ((VERBOSE)); then
-  debug "Details here"
-fi
-
-# Set from arguments
---dry-run) DRY_RUN=1 ;;
+declare -i DRY_RUN=0 VERBOSE=0
+((DRY_RUN)) && info 'Dry-run mode'
+case $1 in --dry-run) DRY_RUN=1 ;; esac
 ```
 
-**Rules:**
-- `declare -i FLAG=0` ‚Üí explicit integer declaration
-- ALL_CAPS naming (DRY_RUN, SKIP_BUILD)
-- Initialize to `0` (false) or `1` (true)
-- Test: `((FLAG))` ‚Üí true if non-zero
-- Toggle: `((FLAG)) && FLAG=0 || FLAG=1`
+**Rules:** ALL_CAPS naming ‚Ü' initialize explicitly ‚Ü' test with `((FLAG))` ‚Ü' don't mix with counters
 
-**Anti-patterns:**
-- `if [[ $FLAG -eq 1 ]]` ‚Üí use `((FLAG))`
-- `declare FLAG=false` ‚Üí strings not testable with `(())`
+**Anti-pattern:** `[[ "$FLAG" == "true" ]]` ‚Ü' use `((FLAG))`
 
-**Ref:** BCS0207
+**Ref:** BCS0211
 
 
 ---
@@ -1052,12 +949,30 @@ fi
 
 **Single quotes for static strings; double quotes when variable expansion needed.**
 
-**7 Rules:** Quoting Fundamentals (BCS0301) | Command Substitution (BCS0302) | Conditionals (BCS0303) | Here Documents (BCS0304) | printf Patterns (BCS0305) | Parameter Quoting (BCS0306) | Anti-Patterns (BCS0307)
+## 7 Rules
+
+| Code | Rule |
+|------|------|
+| BCS0301 | Quoting Fundamentals - static vs dynamic |
+| BCS0302 | Command Substitution - quote `$(...)` |
+| BCS0303 | Conditionals - quote vars in `[[ ]]` |
+| BCS0304 | Here Documents - delimiter quoting |
+| BCS0305 | printf - format string quoting |
+| BCS0306 | Parameter Quoting - `${param@Q}` |
+| BCS0307 | Anti-Patterns - common mistakes |
+
+## Core Pattern
 
 ```bash
-info 'Static message'           # Single quotes - no variables
-info "Processing $file"         # Double quotes - expansion needed
+info 'Static message'           # Single quotes
+info "Processing $file"         # Double quotes for vars
+[[ -f "$path" ]]               # Always quote in conditionals
 ```
+
+## Anti-Patterns
+
+`echo $var` ‚Ü' `echo "$var"` (unquoted expansion)
+`info "Literal text"` ‚Ü' `info 'Literal text'` (wrong quote type)
 
 **Ref:** BCS0300
 
@@ -1071,17 +986,19 @@ info "Processing $file"         # Double quotes - expansion needed
 
 **Single quotes for static strings; double quotes only when variable expansion needed.**
 
-#### Core Rules
+#### Core Pattern
 
-- **Single quotes**: Static text, no expansion ‚Ü' `info 'Processing...'`
-- **Double quotes**: Variables needed ‚Ü' `info "Found $count files"`
-- **Mixed**: Literal quotes around values ‚Ü' `die 1 "Unknown option '$1'"`
+```bash
+info 'Static message'              # Single - no expansion
+info "Found $count files"          # Double - needs $count
+die 1 "Unknown option '$1'"        # Mixed - literal quotes around var
+```
 
 #### Why Single Quotes Default
 
-1. **Safety**: Prevents accidental `$`, `` ` ``, `\` expansion
-2. **Clarity**: Signals "no substitution here"
-3. **Performance**: No parsing overhead
+- **Performance**: No parsing overhead
+- **Safety**: Prevents accidental `$`, `` ` ``, `\` expansion
+- **Clarity**: Signals "literal text"
 
 #### Path Concatenation
 
@@ -1089,28 +1006,26 @@ info "Processing $file"         # Double quotes - expansion needed
 # ‚úì Recommended - separate quoting
 "$PREFIX"/bin
 "$SCRIPT_DIR"/data/"$filename"
-
-# ‚úó Avoid - combined quoting
-"$PREFIX/bin"
 ```
-
-#### One-Word Exception
-
-Simple alphanumeric (`a-zA-Z0-9_-./`) may be unquoted: `STATUS=success`
-
-**Mandatory quotes for:** spaces, `@`, `*`, `$`, empty strings `''`
 
 #### Anti-Patterns
 
 ```bash
-# ‚úó Double quotes for static
-info "Checking prerequisites..."
-‚Ü' info 'Checking prerequisites...'
+# ‚úó Double quotes for static ‚Ü' info "Processing..."
+# ‚úì Single quotes            ‚Ü' info 'Processing...'
 
-# ‚úó Special chars unquoted
-EMAIL=user@domain.com
-‚Ü' EMAIL='user@domain.com'
+# ‚úó Unquoted special chars   ‚Ü' EMAIL=user@domain.com
+# ‚úì Quoted                   ‚Ü' EMAIL='user@domain.com'
 ```
+
+#### Quick Rules
+
+| Content | Quote | Example |
+|---------|-------|---------|
+| Static | Single | `'text'` |
+| With var | Double | `"$var"` |
+| Special chars | Single | `'@*.txt'` |
+| Empty | Single | `''` |
 
 **Ref:** BCS0301
 
@@ -1122,22 +1037,15 @@ EMAIL=user@domain.com
 
 ## Command Substitution
 
-**Always double-quote command substitutions to prevent word splitting and preserve whitespace.**
-
-#### Core Pattern
+**Use double quotes when strings include `$(...)`; always quote results to prevent word splitting.**
 
 ```bash
-# ‚úì Quoted substitution and result usage
+info "Found $(wc -l < "$file") lines"
 VERSION="$(git describe --tags 2>/dev/null || echo 'unknown')"
-echo "Found $(wc -l < "$file") lines"
-result=$(cmd); echo "$result"
+result=$(cmd); echo "$result"  # ‚úì Quoted
 ```
 
-#### Anti-Pattern
-
-```bash
-echo $result  # ‚úó Word splitting on whitespace/globs
-```
+`echo $result` ‚Ü' word splitting breaks multi-word output.
 
 **Ref:** BCS0302
 
@@ -1149,22 +1057,20 @@ echo $result  # ‚úó Word splitting on whitespace/globs
 
 ## Quoting in Conditionals
 
-**Always quote variables in `[[ ]]` conditionals.** Static literals use single quotes.
-
-**Why:** Unquoted variables break with spaces/globs, empty values cause syntax errors, security risk.
+**Always quote variables in conditionals** ‚Äî prevents word splitting, glob expansion, empty-value errors, and injection.
 
 ```bash
-# ‚úì Correct
-[[ -f "$file" ]]
-[[ "$action" == 'start' ]]
-[[ "$input" =~ $pattern ]]    # Regex pattern unquoted
-
-# ‚úó Wrong
-[[ -f $file ]]                # ‚Ü' breaks with spaces
-[[ "$mode" == "production" ]] # ‚Ü' double quotes for literal
+[[ -f "$file" ]]                    # ‚úì Variable quoted
+[[ "$action" == 'start' ]]          # ‚úì Literal single-quoted
+[[ "$filename" == *.txt ]]          # ‚úì Glob unquoted (pattern match)
+[[ "$input" =~ $pattern ]]          # ‚úì Regex pattern unquoted
 ```
 
-**Exception:** Regex patterns (`=~`) and glob patterns must be unquoted to match.
+**Why:** `$file` with spaces/globs breaks; empty vars cause syntax errors.
+
+**Anti-patterns:** `[[ -f $file ]]` ‚Ü' breaks with spaces | `[[ "$x" == "literal" ]]` ‚Ü' use single quotes for static strings
+
+**Exception:** Regex `=~` right-hand side must be unquoted for pattern matching.
 
 **Ref:** BCS0303
 
@@ -1176,28 +1082,28 @@ echo $result  # ‚úó Word splitting on whitespace/globs
 
 ## Here Documents
 
-**Delimiter quoting controls variable expansion: `<<EOF` expands, `<<'EOF'` literal.**
+**Quote delimiter (`<<'EOF'`) for literal content; unquoted (`<<EOF`) for variable expansion.**
 
-| Delimiter | Expansion | Use |
-|-----------|-----------|-----|
+| Delimiter | Expansion | Use Case |
+|-----------|-----------|----------|
 | `<<EOF` | Yes | Dynamic content |
-| `<<'EOF'` | No | Literal (JSON/SQL) |
+| `<<'EOF'` | No | Literal (JSON, SQL) |
 
-**Indented:** `<<-EOF` strips leading tabs (not spaces).
+Use `<<-EOF` to strip leading tabs for indented blocks.
 
 ```bash
-# Dynamic - variables expand
+# Dynamic
 cat <<EOF
 User: $USER
 EOF
 
-# Literal - no expansion (use for JSON/SQL)
+# Literal (prevents injection)
 cat <<'EOF'
-{"key": "$VALUE"}
+SELECT * FROM users WHERE name = ?
 EOF
 ```
 
-**Anti-pattern:** `<<EOF` with untrusted data ‚Ü' SQL injection. Use `<<'EOF'` for literal content.
+**Anti-pattern:** `<<EOF` with untrusted `$var` ‚Ü' injection risk. Use `<<'EOF'` + parameterized queries.
 
 **Ref:** BCS0304
 
@@ -1209,20 +1115,23 @@ EOF
 
 ## printf Patterns
 
-**Single-quote format strings; double-quote variable arguments. Prefer printf over echo -e.**
+**Single-quote format strings; double-quote variable arguments. Prefer `printf` over `echo -e`.**
 
 #### Core Pattern
 
 ```bash
-printf '%s: %d files\n' "$name" "$count"  # Format static, args quoted
-echo 'Static message'                      # No vars: single quotes
-echo "$SCRIPT_NAME $VERSION"               # With vars: double quotes
+printf '%s: %d files\n' "$name" "$count"
+echo 'Static message'  # No variables ‚Ü' single quotes
 ```
+
+#### Specifiers
+
+`%s` string | `%d` decimal | `%f` float | `%x` hex | `%%` literal %
 
 #### Anti-Patterns
 
-- `echo -e "Line1\nLine2"` ‚Ü' `printf 'Line1\nLine2\n'` (echo -e varies by system)
-- Unquoted variables in printf args ‚Ü' Always double-quote: `"$var"`
+- `echo -e "...\n..."` ‚Ü' `printf '...\n...\n'` (portable)
+- Double-quoted format: `printf "%s"` ‚Ü' `printf '%s'`
 
 **Ref:** BCS0305
 
@@ -1234,26 +1143,37 @@ echo "$SCRIPT_NAME $VERSION"               # With vars: double quotes
 
 ## Parameter Quoting with @Q
 
-**Use `${parameter@Q}` for safe display of user input in error messages and logging.**
+**Use `${parameter@Q}` for safe display of untrusted input in error messages and logs.**
 
-`${parameter@Q}` expands to shell-quoted value preventing injection attacks.
+#### Why
+- Prevents command injection via `$(...)` or glob expansion in displayed strings
+- Shows exact literal value without execution risk
 
-**When to use:** Error messages, logging, dry-run output.
-**Not for:** Normal expansion, comparisons.
-
+#### Pattern
 ```bash
-# ‚úó Injection risk ‚Ü' ‚úì Safe display
-die 2 "Unknown option $1"      # dangerous
-die 2 "Unknown option ${1@Q}"  # safe
+# Error messages - always @Q for user input
+die 2 "Unknown option ${1@Q}"
 
-# Dry-run: display command safely
+# Dry-run display
 printf -v quoted '%s ' "${cmd[@]@Q}"
-info "[DRY-RUN] Would execute: $quoted"
+info "[DRY-RUN] $quoted"
 ```
 
-**Behavior comparison:**
-- `$var` on `$(date)` ‚Ü' executes command
-- `${var@Q}` on `$(date)` ‚Ü' outputs `'$(date)'` (literal)
+#### When to Use
+- **Yes:** Error messages, logging user input, dry-run output
+- **No:** Normal expansion `"$var"`, comparisons `[[ "$a" == "$b" ]]`
+
+#### Anti-Pattern
+```bash
+# ‚úó Injection risk - user controls displayed value
+die 2 "Unknown option $1"
+# ‚úì Safe literal display
+die 2 "Unknown option ${1@Q}"
+```
+
+| Input | `"$var"` | `${var@Q}` |
+|-------|----------|------------|
+| `$(rm -rf /)` | executes | `'$(rm -rf /)'` |
 
 **Ref:** BCS0306
 
@@ -1265,33 +1185,40 @@ info "[DRY-RUN] Would execute: $quoted"
 
 ## Quoting Anti-Patterns
 
-**Avoid common quoting mistakes: static‚Ü'single, vars‚Ü'double-quoted, minimal braces.**
+**Avoid quoting mistakes that cause word splitting, glob expansion, or unnecessary verbosity.**
 
-#### Critical Anti-Patterns
+---
 
-**Static strings:** `info "text"` ‚Ü' `info 'text'`
+#### Critical Categories
 
-**Unquoted vars:** `[[ -f $file ]]` ‚Ü' `[[ -f "$file" ]]` (word-split/glob risk)
+**1. Static strings** ‚Ü' Use single quotes: `'literal'` not `"literal"`
 
-**Unnecessary braces:** `"${HOME}/bin"` ‚Ü' `"$HOME/bin"` (braces only for: `${var:-}`, `${var##}`, `${arr[@]}`, `${v1}${v2}`)
+**2. Variables** ‚Ü' Always quote: `"$var"` not `$var`
 
-**Arrays:** `${arr[@]}` ‚Ü' `"${arr[@]}"`
+**3. Braces** ‚Ü' Omit unless needed: `"$HOME"/bin` not `"${HOME}/bin"`
+- Braces required: `${var:-default}`, `${file##*/}`, `"${array[@]}"`
 
-**Here-docs:** Unquoted delimiter expands vars; use `<<'EOF'` for literals
+**4. Arrays** ‚Ü' Always quote: `"${items[@]}"` not `${items[@]}`
 
-#### Example
+---
+
+#### Minimal Example
 
 ```bash
 # ‚úó Anti-patterns
-info "Starting..."
+info "Static message"
 [[ -f $file ]]
 echo "${HOME}/bin"
 
 # ‚úì Correct
-info 'Starting...'
+info 'Static message'
 [[ -f "$file" ]]
-echo "$HOME/bin"
+echo "$HOME"/bin
 ```
+
+---
+
+#### Quick Reference
 
 | Context | Correct | Wrong |
 |---------|---------|-------|
@@ -1309,40 +1236,27 @@ echo "$HOME/bin"
 
 # Functions
 
-**Use lowercase_with_underscores naming; require `main()` for scripts >200 lines; organize bottom-up (messagingíhelpersíbusiness logicímain).**
+**Function definition patterns, naming (`lowercase_with_underscores`), organization, export (`declare -fx`), and production optimization.**
 
-**Rationale:** Bottom-up organization ensures dependencies exist before use; `main()` enables testing/sourcing without execution; consistent naming improves readability.
+## Core Requirements
 
-**Pattern:**
+- `main()` required for scripts >200 lines ‚Ü' improves testability
+- Bottom-up organization: messaging ‚Ü' helpers ‚Ü' business logic ‚Ü' `main()`
+- Remove unused utility functions in production scripts
+
+## Export Pattern
+
 ```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-_msg() { local lvl=$1; shift; >&2 echo "[$lvl] $*"; }
-error() { _msg ERROR "$@"; }
-die() { error "$@"; exit 1; }
-
-process_file() {
-  local file=$1
-  [[ -f "$file" ]] || die "File not found: $file"
-  # business logic
-}
-
-main() {
-  process_file "$1"
-}
-
-main "$@"
-#fin
+my_lib_func() { :; }
+declare -fx my_lib_func
 ```
 
-**Export for libraries:** `declare -fx function_name` after definition.
+## Anti-patterns
 
-**Production optimization:** Remove unused utility functions once scripts mature.
+- `main()` missing in large scripts ‚Ü' poor structure, untestable
+- Top-down organization ‚Ü' forward reference issues
 
-**Anti-patterns:** `function` keyword (omit it); top-down organization; missing `main()` in large scripts.
-
-**Ref:** BCS0600
+**Ref:** BCS0400
 
 
 ---
@@ -1352,27 +1266,21 @@ main "$@"
 
 ## Function Definition Pattern
 
-**Use single-line format for simple operations; multi-line with `local` declarations for complex functions.**
+**Use `name() { }` syntax; single-line for simple ops, multi-line with `local` declarations for complex functions.**
 
-**Syntax:**
 ```bash
-# Single-line: no local vars, simple logic
 vecho() { ((VERBOSE)) || return 0; _msg "$@"; }
-
-# Multi-line: local vars, complex logic
 main() {
   local -i exitcode=0
   local -- variable
-  # body
   return "$exitcode"
 }
 ```
 
-**Rationale:** Single-line saves space for trivial functions; multi-line improves readability and enables proper variable scoping for complex logic.
+- `local -i` for integers, `local --` for strings
+- `function` keyword ‚Ü' non-portable, avoid
 
-**Anti-patterns:** `í` Mixing formats inconsistently; omitting `local` for function-scope variables.
-
-**Ref:** BCS0601
+**Ref:** BCS0401
 
 
 ---
@@ -1382,31 +1290,25 @@ main() {
 
 ## Function Names
 
-**Use lowercase_with_underscores; prefix private functions with underscore.**
+**Use `lowercase_with_underscores`; prefix private functions with `_`.**
 
-**Rationale:** Matches Unix/shell conventions, avoids conflicts with built-ins, clear visibility distinction.
-
-**Example:**
+### Pattern
 ```bash
-#  Public function
-process_log_file() {
-  &
-}
-
-#  Private function
-_validate_input() {
-  &
-}
-
-#  Avoid
-MyFunction() { & }      # CamelCase confusing
-cd() { & }              # Overrides built-in
-my-function() { & }     # Dashes problematic
+process_file() { ‚Ä¶ }      # Public
+_validate() { ‚Ä¶ }         # Private (internal use)
 ```
 
-**Anti-patterns:** Overriding built-ins without prefix/suffix (`cd()` í use `change_dir()`), CamelCase, special characters.
+### Key Points
+- Matches Unix conventions (`grep`, `sed`)
+- Avoids conflict with builtins and variables
+- CamelCase/UPPER_CASE reserved for other purposes
 
-**Ref:** BCS0602
+### Anti-Patterns
+- `MyFunction()` ‚Ü' confuses with variables
+- `cd() { ‚Ä¶ }` ‚Ü' overriding builtins dangerous; use `change_dir()` instead
+- `my-function()` ‚Ü' dashes cause issues
+
+**Ref:** BCS0402
 
 
 ---
@@ -1416,63 +1318,46 @@ my-function() { & }     # Dashes problematic
 
 ## Main Function
 
-**Include `main()` for scripts >200 lines as single entry point; place `main "$@"` before `#fin`.**
+**Include `main()` for scripts >200 lines; place `main "$@"` before `#fin`. Single entry point for testability, organization, and scope control.**
 
-**Rationale:** Enables testability (source without executing), organization, and scope control.
+**Rationale:** Testability (source without executing), scope control (locals prevent global pollution), centralized exit code handling.
 
 **Structure:**
 ```bash
 main() {
   local -i verbose=0
-  local -- output_dir=''
+  local -- output=''
   local -a files=()
 
-  # Parse args
   while (($#)); do case $1 in
-    -v|--verbose) verbose=1 ;;
-    -o|--output) shift; output_dir="$1" ;;
-    -h|--help) usage; return 0 ;;
-    -*) die 22 "Invalid: $1" ;;
+    -v) verbose=1 ;;
+    -o) shift; output=$1 ;;
+    --) shift; break ;;
+    -*) die 22 "Invalid: ${1@Q}" ;;
     *) files+=("$1") ;;
   esac; shift; done
+  files+=("$@")
+  readonly -- verbose output; readonly -a files
 
-  readonly -- verbose output_dir
-  readonly -a files
-
-  # Validation & logic
-  [[ ${#files[@]} -eq 0 ]] && die 22 'No files'
-
+  # Business logic...
   return 0
 }
-
 main "$@"
 #fin
 ```
 
-**Testable pattern:**
+**Sourceable pattern:**
 ```bash
-main() { : ; }
-
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  main "$@"
-fi
-#fin
-```
-
-**Anti-pattern:**
-```bash
-# ‚úó Args parsed outside main
-while (($#)); do : ; done
-main "$@"  # Args already consumed!
-
-# ‚úì Parse in main
-main() {
-  while (($#)); do : ; done
-}
+[[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0
 main "$@"
 ```
 
-**Ref:** BCS0603
+**Anti-patterns:**
+- `main` without `"$@"` ‚Ü' arguments lost
+- Functions defined after `main "$@"` ‚Ü' not available
+- Argument parsing outside main ‚Ü' globals, consumed before main
+
+**Ref:** BCS0403
 
 
 ---
@@ -1482,20 +1367,22 @@ main "$@"
 
 ## Function Export
 
-**Export functions with `declare -fx` when they must be available to subshells or child processes.**
+**Use `declare -fx` to export functions for subshell access.**
 
+### Rationale
+- Subshells don't inherit functions by default
+- Essential for `xargs -P`, `find -exec`, parallel jobs
+
+### Pattern
 ```bash
-# Export wrapper functions
 grep() { /usr/bin/grep "$@"; }
-find() { /usr/bin/find "$@"; }
-declare -fx grep find
+declare -fx grep
 ```
 
-**Rationale:** Functions are not inherited by subshells unless explicitly exported; `-fx` makes them available to child processes.
+### Anti-Pattern
+`export -f func` ‚Ü' Use `declare -fx` for consistency with variable exports.
 
-**Anti-pattern:** Defining functions without export when subshells need them í function not found errors.
-
-**Ref:** BCS0604
+**Ref:** BCS0404
 
 
 ---
@@ -1505,26 +1392,27 @@ declare -fx grep find
 
 ## Production Script Optimization
 
-**Remove unused utilities/variables once script is production-ready** - reduces size, improves clarity, eliminates maintenance burden.
+**Remove unused functions/variables from mature scripts to reduce size and maintenance.**
 
-### Core Principle
-Strip functions/variables not called in your script. Simple script needing only `error()` and `die()` shouldn't carry full messaging suite (`vecho()`, `yn()`, `decp()`, `trim()`, `s()`, etc.).
+### Requirements
+- Delete unused utilities (`yn()`, `trim()`, `s()`, etc.)
+- Delete unused globals (`SCRIPT_DIR`, `DEBUG`, `PROMPT` if unreferenced)
+- Keep only what script actually calls
 
 ### Example
 ```bash
-# ‚úó Development - carries unused functions
-vecho() { ... }; yn() { ... }; decp() { ... }
-error() { ... }; die() { ... }  # Only these used
-
-# ‚úì Production - stripped to essentials
-error() { >&2 _msg ERROR "$@"; }
-die() { error "$@"; exit "${2:-1}"; }
+# Full template has: _msg, vecho, success, warn, info, debug, error, die, yn
+# Production script using only error handling:
+error() { >&2 printf '%s\n' "Error: $*"; }
+die()   { error "$@"; exit 1; }
 ```
 
 ### Anti-Pattern
-**Keeping dead code** ‚Üí Bloated scripts, confusing maintenance, false dependencies.
+```bash
+# ‚úó Keeping full messaging suite when only die() is used
+```
 
-**Ref:** BCS0605
+**Ref:** BCS0405
 
 
 ---
@@ -2624,10 +2512,10 @@ Test **both** streams: `[[ -t 1 && -t 2 ]] && color=1 || color=0`
 
 ### Anti-Patterns
 
-- ‚ùå Scattered inline declarations ‚Ü' use library
-- ‚ùå `complete` when only need basic ‚Ü' namespace pollution
-- ‚ùå `[[ -t 1 ]]` only ‚Ü' fails when stderr redirected
-- ‚ùå Hardcoded `always` ‚Ü' respect `${COLOR_MODE:-auto}`
+- ‚ùå Scattered inline declarations ‚Üí use library
+- ‚ùå `complete` when only need basic ‚Üí namespace pollution
+- ‚ùå `[[ -t 1 ]]` only ‚Üí fails when stderr redirected
+- ‚ùå Hardcoded `always` ‚Üí respect `${COLOR_MODE:-auto}`
 
 **Ref:** BCS0706
 

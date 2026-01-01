@@ -2,7 +2,7 @@
 
 Patterns for making scripts testable.
 
-\`\`\`bash
+```bash
 # Dependency injection for testing
 declare -f FIND_CMD >/dev/null || FIND_CMD() { find "$@"; }
 declare -f DATE_CMD >/dev/null || DATE_CMD() { date "$@"; }
@@ -22,19 +22,19 @@ declare -i TEST_MODE="${TEST_MODE:-0}"
 # Conditional behavior for testing
 if ((TEST_MODE)); then
   # Use test data directory
-  DATA_DIR='./test_data'
+  DATA_DIR=./test_data
   # Disable destructive operations
   RM_CMD() { echo "TEST: Would remove $*"; }
 else
-  DATA_DIR='/var/lib/app'
+  DATA_DIR=/var/lib/app
   RM_CMD() { rm "$@"; }
 fi
 
 # Assert function for tests
 assert() {
-  local -- expected="$1"
-  local -- actual="$2"
-  local -- message="${3:-Assertion failed}"
+  local -- expected=$1
+  local -- actual=$2
+  local -- message=${3:-Assertion failed}
 
   if [[ "$expected" != "$actual" ]]; then
     >&2 echo "ASSERT FAIL: $message"
@@ -64,4 +64,4 @@ run_tests() {
   echo "Tests: $passed passed, $failed failed"
   ((failed == 0))
 }
-\`\`\`
+```

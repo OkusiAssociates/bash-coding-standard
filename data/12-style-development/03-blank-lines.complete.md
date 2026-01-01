@@ -2,12 +2,12 @@
 
 Use blank lines strategically to improve readability by creating visual separation between logical blocks:
 
-\`\`\`bash
+```bash
 #!/bin/bash
 set -euo pipefail
 
 # Script metadata
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*}
@@ -40,7 +40,7 @@ main() {
 
 main "$@"
 #fin
-\`\`\`
+```
 
 **Guidelines:**
 - One blank line between functions

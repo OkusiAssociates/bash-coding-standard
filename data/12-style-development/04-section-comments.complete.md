@@ -2,7 +2,7 @@
 
 Use lightweight section comments to organize code into logical groups. These are simpler than full 80-dash separators and provide just enough context:
 
-\`\`\`bash
+```bash
 # Default values
 declare -- PREFIX=/usr/local
 declare -i VERBOSE=1
@@ -26,8 +26,8 @@ info() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 
 # Unconditional messaging functions
 error() { >&2 _msg "$@"; }
-die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
-\`\`\`
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+```
 
 **Guidelines:**
 - Use simple \`# Description\` format (no dashes, no box drawing)

@@ -370,12 +370,7 @@ warn() { >&2 _msg "$@"; }
 error() { >&2 _msg "$@"; }
 success() { >&2 _msg "$@"; }
 
-die() {
-  local -i exit_code=${1:-1}
-  shift
-  (($#)) && error "$@"
-  exit "$exit_code"
-}
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 # ============================================================================
 # Documentation Functions

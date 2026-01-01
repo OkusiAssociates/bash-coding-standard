@@ -19,7 +19,7 @@
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -37,7 +37,7 @@ create_temp_file() {
   # Make variable readonly
   readonly -- temp_file
 
-  info "Created temp file: $temp_file"
+  info "Created temp file ${temp_file@Q}"
 
   # Use temp file
   echo 'Test data' > "$temp_file"
@@ -51,7 +51,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -62,7 +61,7 @@ main "$@"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -80,11 +79,11 @@ create_temp_dir() {
   # Make variable readonly
   readonly -- temp_dir
 
-  info "Created temp directory: $temp_dir"
+  info "Created temp directory ${temp_dir@Q}"
 
   # Use temp directory
-  echo 'file1' > "$temp_dir/file1.txt"
-  echo 'file2' > "$temp_dir/file2.txt"
+  echo 'file1' > "$temp_dir"/file1.txt
+  echo 'file2' > "$temp_dir"/file2.txt
 
   ls -la "$temp_dir"
 
@@ -107,7 +106,7 @@ main "$@"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -123,7 +122,7 @@ create_custom_temp() {
   trap 'rm -f "$temp_file"' EXIT
   readonly -- temp_file
 
-  info "Created temp file: $temp_file"
+  info "Created temp file ${temp_file@Q}"
   # Output example: /tmp/myscript.Ab3X9z
 
   # Use temp file
@@ -141,7 +140,7 @@ create_custom_temp_dir() {
   trap 'rm -rf "$temp_dir"' EXIT
   readonly -- temp_dir
 
-  info "Created temp directory: $temp_dir"
+  info "Created temp directory ${temp_dir@Q}"
   # Output example: /tmp/myscript-work.Xy7Pm2
 }
 
@@ -151,13 +150,13 @@ create_temp_with_extension() {
 
   # mktemp doesn't support extensions directly, so add it
   temp_file=$(mktemp /tmp/"$SCRIPT_NAME".XXXXXX)
-  mv "$temp_file" "$temp_file.json"
-  temp_file="$temp_file.json"
+  mv "$temp_file" "$temp_file".json
+  temp_file="$temp_file".json
 
   trap 'rm -f "$temp_file"' EXIT
   readonly -- temp_file
 
-  info "Created temp file: $temp_file"
+  info "Created temp file: ${temp_file@Q}"
 
   # Use temp file
   echo '{"key": "value"}' > "$temp_file"
@@ -181,7 +180,7 @@ main "$@"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -242,9 +241,9 @@ main() {
 
   readonly -- temp1 temp2 temp_dir
 
-  info "Temp file 1: $temp1"
-  info "Temp file 2: $temp2"
-  info "Temp directory: $temp_dir"
+  info "Temp file 1: ${temp1@Q}"
+  info "Temp file 2: ${temp2@Q}"
+  info "Temp directory: ${temp_dir@Q}"
 
   # Use temp files
   echo 'Data 1' > "$temp1"
@@ -266,7 +265,7 @@ main "$@"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -277,12 +276,12 @@ create_temp_robust() {
 
   # Create temp file
   if ! temp_file=$(mktemp 2>&1); then
-    die 1 "Failed to create temporary file: $temp_file"
+    die 1 "Failed to create temporary file ${temp_file@Q}"
   fi
 
   # Validate temp file was created
   if [[ ! -f "$temp_file" ]]; then
-    die 1 "Temp file does not exist: $temp_file"
+    die 1 "Temp file does not exist ${temp_file@Q}"
   fi
 
   # Check permissions (should be 0600)
@@ -297,7 +296,7 @@ create_temp_robust() {
   trap 'rm -f "$temp_file"' EXIT
   readonly -- temp_file
 
-  info "Created secure temp file: $temp_file (permissions: $perms)"
+  info "Created secure temp file ${temp_file@Q} (permissions $perms)"
 
   echo "$temp_file"
 }
@@ -322,7 +321,7 @@ main "$@"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -360,13 +359,7 @@ warn() { >&2 _msg "$@"; }
 error() { >&2 _msg "$@"; }
 success() { >&2 _msg "$@"; }
 debug() { ((VERBOSE >= 2)) || return 0; >&2 _msg "$@"; }
-
-die() {
-  local -i exit_code=${1:-1}
-  shift
-  (($#)) && error "$@"
-  exit "$exit_code"
-}
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 # ============================================================================
 # Cleanup Functions
@@ -377,7 +370,7 @@ cleanup() {
   local -- resource
 
   if ((KEEP_TEMP)); then
-    if [[ ${#TEMP_RESOURCES[@]} -gt 0 ]]; then
+    if ((${#TEMP_RESOURCES[@]})); then
       info 'Keeping temporary files (--keep-temp specified):'
       for resource in "${TEMP_RESOURCES[@]}"; do
         info "  $resource"
@@ -386,15 +379,15 @@ cleanup() {
     return "$exit_code"
   fi
 
-  if [[ ${#TEMP_RESOURCES[@]} -gt 0 ]]; then
+  if ((${#TEMP_RESOURCES[@]})); then
     debug "Cleaning up ${#TEMP_RESOURCES[@]} temporary resources"
 
     for resource in "${TEMP_RESOURCES[@]}"; do
       if [[ -f "$resource" ]]; then
-        debug "Removing temp file: $resource"
+        debug "Removing temp file ${resource@Q}"
         rm -f "$resource"
       elif [[ -d "$resource" ]]; then
-        debug "Removing temp directory: $resource"
+        debug "Removing temp directory ${resource@Q}"
         rm -rf "$resource"
       fi
     done
@@ -412,12 +405,12 @@ trap cleanup EXIT
 
 # Create temp file and register for cleanup
 make_temp_file() {
-  local -- template="${1:-}"
+  local -- template=${1:-}
   local -- temp_file
 
   if [[ -n "$template" ]]; then
-    temp_file=$(mktemp "/tmp/$template.XXXXXX") ||
-      die 1 "Failed to create temp file with template: $template"
+    temp_file=$(mktemp /tmp/"$template".XXXXXX) ||
+      die 1 "Failed to create temp file with template ${template@Q}"
   else
     temp_file=$(mktemp) ||
       die 1 'Failed to create temp file'
@@ -426,18 +419,18 @@ make_temp_file() {
   # Register for cleanup
   TEMP_RESOURCES+=("$temp_file")
 
-  debug "Created temp file: $temp_file"
+  debug "Created temp file ${temp_file@Q}"
   echo "$temp_file"
 }
 
 # Create temp directory and register for cleanup
 make_temp_dir() {
-  local -- template="${1:-}"
+  local -- template=${1:-}
   local -- temp_dir
 
   if [[ -n "$template" ]]; then
-    temp_dir=$(mktemp -d "/tmp/$template.XXXXXX") ||
-      die 1 "Failed to create temp directory with template: $template"
+    temp_dir=$(mktemp -d /tmp/"$template".XXXXXX) ||
+      die 1 "Failed to create temp directory with template ${template@Q}"
   else
     temp_dir=$(mktemp -d) ||
       die 1 'Failed to create temp directory'
@@ -446,7 +439,7 @@ make_temp_dir() {
   # Register for cleanup
   TEMP_RESOURCES+=("$temp_dir")
 
-  debug "Created temp directory: $temp_dir"
+  debug "Created temp directory ${temp_dir@Q}"
   echo "$temp_dir"
 }
 
@@ -456,7 +449,7 @@ make_temp_dir() {
 
 noarg() {
   if (($# < 2)) || [[ "$2" =~ ^- ]]; then
-    die 22 "Option $1 requires an argument"
+    die 22 "Option ${1@Q} requires an argument"
   fi
 }
 
@@ -466,17 +459,17 @@ noarg() {
 
 # Process file with multiple temp files
 process_file() {
-  local -- input_file="$1"
-  local -- output_file="$2"
+  local -- input_file=$1
+  local -- output_file=$2
 
   # Validate input
   if [[ ! -f "$input_file" ]]; then
-    error "Input file not found: $input_file"
+    error "Input file not found ${input_file@Q}"
     return 2
   fi
 
   if [[ ! -r "$input_file" ]]; then
-    error "Input file not readable: $input_file"
+    error "Input file not readable ${input_file@Q}"
     return 1
   fi
 
@@ -530,12 +523,12 @@ batch_process() {
 
   # Create temp directory for outputs
   local -- temp_output_dir
-  temp_output_dir=$(make_temp_dir "$SCRIPT_NAME-output")
+  temp_output_dir=$(make_temp_dir "$SCRIPT_NAME"-output)
 
   info "Processing ${#input_files[@]} files"
 
   for input_file in "${input_files[@]}"; do
-    output_file="$temp_output_dir/${input_file##*/}.processed"
+    output_file="$temp_output_dir"/"${input_file##*/}".processed
 
     if process_file "$input_file" "$output_file"; then
       ((success_count+=1))
@@ -622,7 +615,7 @@ main() {
         ;;
 
       -*)
-        die 22 "Invalid option: $1"
+        die 22 "Invalid option ${1@Q}"
         ;;
 
       *)
@@ -640,7 +633,7 @@ main() {
   readonly -a input_files
 
   # Validate
-  if [[ ${#input_files[@]} -eq 0 ]]; then
+  if ((${#input_files[@]} == 0)); then
     error 'No input files specified'
     usage
     return 22
@@ -674,7 +667,7 @@ main "$@"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -688,7 +681,7 @@ secure_temp_file() {
 
   # Verify it's a regular file
   if [[ ! -f "$temp_file" ]]; then
-    die 1 "Temp file is not a regular file: $temp_file"
+    die 1 "Temp file is not a regular file ${temp_file@Q}"
   fi
 
   # Verify ownership (should be current user)
@@ -711,7 +704,7 @@ secure_temp_file() {
   trap 'rm -f "$temp_file"' EXIT
   readonly -- temp_file
 
-  info "Created secure temp file: $temp_file"
+  info "Created secure temp file: ${temp_file@Q}"
   info "  Owner: $owner"
   info "  Permissions: $perms"
 
@@ -727,7 +720,7 @@ secure_temp_dir() {
 
   # Verify it's a directory
   if [[ ! -d "$temp_dir" ]]; then
-    die 1 "Temp path is not a directory: $temp_dir"
+    die 1 "Temp path is not a directory ${temp_dir@Q}"
   fi
 
   # Verify permissions (0700)
@@ -742,7 +735,7 @@ secure_temp_dir() {
   trap 'rm -rf "$temp_dir"' EXIT
   readonly -- temp_dir
 
-  info "Created secure temp directory: $temp_dir (permissions: $perms)"
+  info "Created secure temp directory ${temp_dir@Q} permissions $perms)"
 
   echo "$temp_dir"
 }
@@ -767,7 +760,7 @@ main "$@"
 
 ```bash
 # ✗ WRONG - Hard-coded temp file path
-temp_file="/tmp/myapp_temp.txt"
+temp_file=/tmp/myapp_temp.txt
 echo 'data' > "$temp_file"
 # Problems:
 # - Not unique (collisions with other instances)
@@ -780,7 +773,7 @@ trap 'rm -f "$temp_file"' EXIT
 echo 'data' > "$temp_file"
 
 # ✗ WRONG - Using PID in filename
-temp_file="/tmp/myapp_$$.txt"
+temp_file=/tmp/myapp_"$$".txt
 echo 'data' > "$temp_file"
 # Problems:
 # - Still predictable
@@ -873,7 +866,7 @@ temp2=$(mktemp)
 TEMP_FILES+=("$temp2")
 
 # ✗ WRONG - Using /tmp directly in script directory
-temp_file="$SCRIPT_DIR/temp.txt"
+temp_file="$SCRIPT_DIR"/temp.txt
 # Problem: pollutes script directory
 
 # ✓ CORRECT - Use system temp directory
@@ -898,7 +891,7 @@ trap 'rm -rf "$temp_dir"' EXIT
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -926,7 +919,7 @@ main() {
   TEMP_FILE=$(mktemp) || die 1 'Failed to create temp file'
   readonly -- TEMP_FILE
 
-  info "Using temp file: $TEMP_FILE"
+  info "Using temp file ${TEMP_FILE@Q}"
 
   # Do work...
 
@@ -946,7 +939,7 @@ main "$@"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -959,7 +952,7 @@ cleanup() {
   local -- file
 
   if ((KEEP_TEMP)); then
-    if [[ ${#TEMP_FILES[@]} -gt 0 ]]; then
+    if ((${#TEMP_FILES[@]})); then
       info 'Keeping temp files for debugging:'
       for file in "${TEMP_FILES[@]}"; do
         info "  $file"
@@ -967,8 +960,8 @@ cleanup() {
     fi
   else
     for file in "${TEMP_FILES[@]}"; do
-      [[ -f "$file" ]] && rm -f "$file"
-      [[ -d "$file" ]] && rm -rf "$file"
+      [[ -f "$file" ]] && rm -f "$file" ||:
+      [[ -d "$file" ]] && rm -rf "$file" ||:
     done
   fi
 
@@ -1007,13 +1000,13 @@ main "$@"
 
 ```bash
 # Create temp file in specific directory
-temp_file=$(mktemp "$SCRIPT_DIR/temp.XXXXXX") ||
+temp_file=$(mktemp "$SCRIPT_DIR"/temp.XXXXXX) ||
   die 1 'Failed to create temp file in script directory'
 
 trap 'rm -f "$temp_file"' EXIT
 
 # Create temp directory in specific location
-temp_dir=$(mktemp -d "$HOME/work/temp.XXXXXX") ||
+temp_dir=$(mktemp -d "$HOME"/work/temp.XXXXXX) ||
   die 1 'Failed to create temp directory'
 
 trap 'rm -rf "$temp_dir"' EXIT
@@ -1026,7 +1019,7 @@ trap 'rm -rf "$temp_dir"' EXIT
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -1080,7 +1073,7 @@ main "$@"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -1104,7 +1097,7 @@ main() {
   TEMP_FILE=$(mktemp) || die 1 'Failed to create temp file'
   readonly -- TEMP_FILE
 
-  info "Press Ctrl-C to test signal handling"
+  info 'Press Ctrl-C to test signal handling'
 
   # Simulate long-running operation
   local -i i

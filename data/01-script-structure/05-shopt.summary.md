@@ -3,66 +3,79 @@
 **Recommended settings:**
 
 ```bash
-# STRONGLY RECOMMENDED - apply to all scripts
-shopt -s inherit_errexit  # Makes set -e work in subshells/command substitutions
-shopt -s shift_verbose    # Error on shift with no arguments
-shopt -s extglob          # Extended glob patterns like !(*.txt)
+shopt -s inherit_errexit  # Critical: makes set -e work in subshells
+shopt -s shift_verbose    # Catches shift errors when no arguments remain
+shopt -s extglob          # Enables extended glob patterns like !(*.txt)
 
-# CHOOSE ONE:
-shopt -s nullglob   # Unmatched globs ’ empty (for loops/arrays)
-    # OR
-shopt -s failglob   # Unmatched globs ’ error (for strict scripts)
+# CHOOSE ONE based on use case:
+shopt -s nullglob   # For arrays/loops: unmatched globs â†' empty (no error)
+shopt -s failglob   # For strict scripts: unmatched globs â†' error
 
 # OPTIONAL:
 shopt -s globstar   # Enable ** for recursive matching (slow on deep trees)
 ```
 
-**Rationale:**
+### Rationale
 
-**`inherit_errexit` (CRITICAL)** - Without it, `set -e` does NOT apply inside `$(...)` or `(...)`. Errors in command substitutions will not exit the script:
+**`inherit_errexit` (CRITICAL):** Without it, `set -e` does NOT apply inside command substitutions or subshells. Errors in `$(...)` and `(...)` won't propagate.
+
 ```bash
 set -e  # Without inherit_errexit
-result=$(false)  # Does NOT exit the script!
+result=$(false)  # This does NOT exit the script!
+echo "Still running"  # This executes
 
 # With inherit_errexit
 shopt -s inherit_errexit
 result=$(false)  # Script exits here as expected
 ```
 
-**`shift_verbose`** - Without it, `shift` silently fails when no arguments remain. With it, prints error and respects `set -e`.
+**`shift_verbose`:** Without it, `shift` silently fails when no arguments remain.
 
-**`extglob`** - Enables advanced patterns: `?(pattern)`, `*(pattern)`, `+(pattern)`, `@(pattern)`, `!(pattern)`:
 ```bash
-rm !(*.txt)                        # Delete everything EXCEPT .txt files
-cp *.@(jpg|png|gif) /dest/         # Multiple extensions
-[[ $input == +([0-9]) ]] && ...    # Match one or more digits
+shopt -s shift_verbose
+shift  # If no arguments: "bash: shift: shift count must be <= $#"
+```
+
+**`extglob`:** Enables advanced patterns: `?(pattern)`, `*(pattern)`, `+(pattern)`, `@(pattern)`, `!(pattern)`
+
+```bash
+shopt -s extglob
+rm !(*.txt)                       # Delete everything EXCEPT .txt files
+cp *.@(jpg|png|gif) /destination/ # Match multiple extensions
+[[ $input == +([0-9]) ]] && echo 'Number'
 ```
 
 **`nullglob` vs `failglob`:**
 
-**`nullglob`** (for loops/arrays) - Unmatched glob expands to empty:
+`nullglob` - Best for loops/arrays where empty result is valid:
 ```bash
+shopt -s nullglob
 for file in *.txt; do  # If no .txt files, loop body never executes
   echo "$file"
 done
 files=(*.log)  # If no .log files: files=() (empty array)
 ```
 
-**`failglob`** (strict scripts) - Unmatched glob causes error:
+`failglob` - Best for strict scripts where unmatched glob is an error:
 ```bash
-cat *.conf  # If no .conf files: error and exits with set -e
+shopt -s failglob
+cat *.conf  # If no .conf files: "bash: no match: *.conf" (exits with set -e)
 ```
 
-**Without either (dangerous default):**
+### Anti-Pattern: Default Bash Behavior
+
 ```bash
-for file in *.txt; do  # If no .txt files, $file = literal "*.txt"
-  rm "$file"           # Tries to delete file named "*.txt"!
+# âœ— Dangerous default behavior
+for file in *.txt; do  # If no .txt files, $file = literal string "*.txt"
+  rm "$file"  # Tries to delete file named "*.txt"!
 done
 ```
 
-**`globstar` (OPTIONAL)** - Enables `**` for recursive matching (can be slow):
+**`globstar` (OPTIONAL):** Enables `**` for recursive matching. Warning: slow on deep trees.
+
 ```bash
-for script in **/*.sh; do  # Recursively find all .sh files
+shopt -s globstar
+for script in **/*.sh; do
   shellcheck "$script"
 done
 ```
@@ -74,7 +87,8 @@ set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 ```
 
-**When NOT to use:**
-- Interactive scripts (need lenient behavior)
-- Legacy compatibility (older bash versions)
-- Performance-critical loops (`globstar` slow on large trees)
+### Edge Cases
+
+- **Interactive scripts**: May want more lenient behavior
+- **Legacy compatibility**: Older bash versions may not support all options
+- **Performance-critical**: `globstar` can be slow on large directory trees

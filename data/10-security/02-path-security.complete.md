@@ -13,7 +13,7 @@
 
 **Lock down PATH at script start:**
 
-\`\`\`bash
+```bash
 #!/bin/bash
 set -euo pipefail
 
@@ -23,11 +23,11 @@ export PATH
 
 # Rest of script uses locked-down PATH
 command=$(which ls)  # Searches only trusted directories
-\`\`\`
+```
 
 **Alternative: Validate existing PATH:**
 
-\`\`\`bash
+```bash
 #!/bin/bash
 set -euo pipefail
 
@@ -40,11 +40,11 @@ set -euo pipefail
 # Additional checks for suspicious paths
 [[ "$PATH" =~ /tmp ]] && die 1 'PATH contains /tmp'
 [[ "$PATH" =~ ^/home ]] && die 1 'PATH starts with user home directory'
-\`\`\`
+```
 
 **Attack Example 1: Current Directory in PATH**
 
-\`\`\`bash
+```bash
 # Vulnerable script (doesn't set PATH)
 #!/bin/bash
 # /usr/local/bin/backup.sh
@@ -52,10 +52,10 @@ set -euo pipefail
 
 # Script intends to use system ls
 ls -la /etc > /tmp/backup_list.txt
-\`\`\`
+```
 
 **Attack:**
-\`\`\`bash
+```bash
 # Attacker creates malicious 'ls' in /tmp
 cat > /tmp/ls << 'EOF'
 #!/bin/bash
@@ -76,20 +76,20 @@ cd /tmp
 
 # Script executes /tmp/ls instead of /bin/ls
 # Attacker's code runs with script's privileges
-\`\`\`
+```
 
 **Attack Example 2: Empty PATH Element**
 
-\`\`\`bash
+```bash
 # PATH with empty element (double colon)
 PATH=/usr/local/bin::/usr/bin:/bin
 
 # Empty element is interpreted as current directory
 # Same risk as PATH=.:/usr/local/bin:/usr/bin:/bin
-\`\`\`
+```
 
 **Attack:**
-\`\`\`bash
+```bash
 # Attacker creates malicious command in accessible directory
 cat > ~/tar << 'EOF'
 #!/bin/bash
@@ -104,17 +104,17 @@ chmod +x ~/tar
 cd ~
 # With :: in PATH, searches current directory (~/tar found!)
 tar -czf backup.tar.gz data/
-\`\`\`
+```
 
 **Attack Example 3: Writable Directory in PATH**
 
-\`\`\`bash
+```bash
 # PATH includes /opt/local/bin which is world-writable (misconfigured)
 PATH=/opt/local/bin:/usr/local/bin:/usr/bin:/bin
-\`\`\`
+```
 
 **Attack:**
-\`\`\`bash
+```bash
 # Attacker creates trojan in writable PATH directory
 cat > /opt/local/bin/ps << 'EOF'
 #!/bin/bash
@@ -127,13 +127,13 @@ EOF
 chmod +x /opt/local/bin/ps
 
 # When ANY script runs 'ps', attacker gains root access
-\`\`\`
+```
 
 **Secure PATH patterns:**
 
 **Pattern 1: Complete lockdown (recommended for security-critical scripts):**
 
-\`\`\`bash
+```bash
 #!/bin/bash
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
@@ -145,11 +145,11 @@ export PATH
 # Use commands with confidence
 tar -czf /backup/data.tar.gz /var/data
 systemctl restart nginx
-\`\`\`
+```
 
 **Pattern 2: Full command paths (maximum security):**
 
-\`\`\`bash
+```bash
 #!/bin/bash
 set -euo pipefail
 
@@ -161,11 +161,11 @@ set -euo pipefail
 # Especially critical for common commands that might be trojaned
 /bin/rm -rf /tmp/workdir
 /bin/cat /etc/passwd | /bin/grep root
-\`\`\`
+```
 
 **Pattern 3: PATH validation with fallback:**
 
-\`\`\`bash
+```bash
 #!/bin/bash
 set -euo pipefail
 
@@ -186,11 +186,11 @@ validate_path() {
 validate_path
 
 # Rest of script
-\`\`\`
+```
 
 **Pattern 4: Command verification:**
 
-\`\`\`bash
+```bash
 #!/bin/bash
 set -euo pipefail
 
@@ -214,11 +214,11 @@ verify_command systemctl /usr/bin/systemctl
 
 # Now safe to use
 tar -czf backup.tar.gz data/
-\`\`\`
+```
 
 **Anti-patterns to avoid:**
 
-\`\`\`bash
+```bash
 # ✗ Wrong - trusting inherited PATH
 #!/bin/bash
 set -euo pipefail
@@ -257,11 +257,11 @@ set -euo pipefail
 readonly PATH='/usr/local/bin:/usr/bin:/bin'
 export PATH
 # Now all commands use secure PATH
-\`\`\`
+```
 
 **Edge case: Scripts that need custom paths:**
 
-\`\`\`bash
+```bash
 #!/bin/bash
 set -euo pipefail
 
@@ -276,16 +276,16 @@ export PATH="$BASE_PATH:$APP_PATH"
 readonly PATH
 
 # Validate application path exists and is not world-writable
-[[ -d "$APP_PATH" ]] || die 1 "Application path does not exist: $APP_PATH"
-[[ -w "$APP_PATH" ]] && die 1 "Application path is writable: $APP_PATH"
+[[ -d "$APP_PATH" ]] || die 1 "Application path does not exist ${APP_PATH@Q}"
+[[ -w "$APP_PATH" ]] && die 1 "Application path is writable ${APP_PATH@Q}"
 
 # Use commands from combined PATH
 myapp-command --option
-\`\`\`
+```
 
 **Special consideration: Sudo and PATH:**
 
-\`\`\`bash
+```bash
 # When using sudo, PATH is reset by default
 # /etc/sudoers typically includes:
 # Defaults secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
@@ -300,11 +300,11 @@ sudo /usr/local/bin/backup.sh
 sudo /usr/local/bin/backup.sh
 # Even if sudo preserves PATH, script overwrites it:
 #   readonly PATH='/usr/local/bin:/usr/bin:/bin'
-\`\`\`
+```
 
 **Checking PATH from within script:**
 
-\`\`\`bash
+```bash
 # Debug: Show PATH being used
 debug() {
   >&2 echo "DEBUG: Current PATH=$PATH"
@@ -338,11 +338,11 @@ check_path_security() {
 }
 
 check_path_security || die 1 'PATH security validation failed'
-\`\`\`
+```
 
 **System-wide PATH security:**
 
-\`\`\`bash
+```bash
 # Check system default PATH in /etc/environment
 cat /etc/environment
 # Should be: PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
@@ -351,17 +351,17 @@ cat /etc/environment
 IFS=':' read -ra path_dirs <<< "$PATH"
 for dir in "${path_dirs[@]}"; do
   if [[ -d "$dir" && -w "$dir" ]]; then
-    warn "World-writable directory in PATH: $dir"
+    warn "World-writable directory in PATH ${dir@Q}"
   fi
 done
 
 # Find world-writable directories in PATH
 find $(echo "$PATH" | tr ':' ' ') -maxdepth 0 -type d -writable 2>/dev/null
-\`\`\`
+```
 
 **Real-world example: Distribution installer script:**
 
-\`\`\`bash
+```bash
 #!/bin/bash
 # Secure installer script for system-wide deployment
 set -euo pipefail
@@ -371,7 +371,7 @@ shopt -s inherit_errexit shift_verbose extglob nullglob
 readonly PATH='/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin'
 export PATH
 
-VERSION='1.0.0'
+VERSION=1.0.0
 SCRIPT_NAME=$(basename "$0")
 
 # Script metadata
@@ -384,7 +384,7 @@ command -v tar | grep -q '^/bin/tar$' || \
   die 1 'Security: tar command not from /bin/tar'
 
 # Rest of secure installation logic
-\`\`\`
+```
 
 **Summary:**
 

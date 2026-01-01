@@ -47,7 +47,7 @@ This multi-step process creates numerous attack vectors that don't exist for com
 set -euo pipefail
 
 # Intended: Check if service is running
-service_name="$1"
+service_name=$1
 status=$(systemctl status "$service_name")
 echo "$status"
 ```
@@ -141,7 +141,7 @@ LD_PRELOAD=/tmp/evil.so /usr/local/bin/report.sh
 #!/bin/bash
 # /usr/local/bin/cleaner.sh (SUID root)
 
-directory="$1"
+directory=$1
 # Intended to clean old files
 find "$directory" -type f -mtime +30 -delete
 ```
@@ -164,11 +164,11 @@ find "$directory" -type f -mtime +30 -delete
 # /usr/local/bin/secure_write.sh (SUID root)
 set -euo pipefail
 
-output_file="$1"
+output_file=$1
 
 # Check if file is safe to write
 if [[ -f "$output_file" ]]; then
-  die 1 'File already exists'
+  die 1 "File ${output_file@Q} already exists'
 fi
 
 # Race condition window here!

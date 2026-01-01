@@ -1,45 +1,48 @@
 # Control Flow - Rulets
-## Conditionals
-- [BCS0701] Always use `[[ ]]` for string and file tests, `(())` for arithmetic comparisons: `[[ -f "$file" ]]` for files, `((count > 0))` for numbers.
-- [BCS0701] Never use `[ ]` for conditionals; use `[[ ]]` which handles unquoted variables safely, supports pattern matching with `==` and `=~`, and allows `&&`/`||` operators inside brackets.
-- [BCS0701] Use short-circuit evaluation for concise conditionals: `[[ -f "$file" ]] && source "$file"` executes second command only if first succeeds, `((VERBOSE)) || return 0` executes second only if first fails.
-- [BCS0701] Quote variables in `[[ ]]` conditionals for clarity even though not strictly required: `[[ "$var" == "value" ]]` not `[[ $var == "value" ]]`.
+## Conditional Tests
+- [BCS0501] Always use `[[ ]]` for string and file tests; use `(())` for arithmetic comparisons: `[[ -f "$file" ]]`, `((count > 5))`.
+- [BCS0501] Use `[[ ]]` advantages over `[ ]`: no word splitting on variables, pattern matching with `==` and `=~`, logical operators `&&`/`||` work inside.
+- [BCS0501] Quote variables in `[[ ]]` conditionals for clarity even though word splitting doesn't occur: `[[ "$var" == 'value' ]]`.
+- [BCS0501] Use arithmetic truthiness directly instead of explicit comparisons: `((count))` not `((count > 0))`, `((VERBOSE))` not `((VERBOSE == 1))`.
+- [BCS0501] Use short-circuit evaluation for concise conditionals: `[[ -f "$config" ]] && source "$config" ||:`, `((DEBUG)) && set -x ||:`.
+- [BCS0501] Never use `[ ]` with `-a`/`-o` operators; use `[[ ]]` with `&&`/`||` instead.
+- [BCS0501] Use `=~` for regex matching: `[[ "$email" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]`.
 ## Case Statements
-- [BCS0702] Use case statements for multi-way branching based on pattern matching of a single variable; they're more readable and efficient than long if/elif chains.
-- [BCS0702] The case expression doesn't require quoting since word splitting doesn't apply: `case ${1:-} in` is correct; quotes are harmless but unnecessary: `case "${1:-}" in`.
-- [BCS0702] Never quote literal patterns in case statements: `*.txt)` not `"*.txt")` - quoting disables pattern matching.
-- [BCS0702] Use compact format (all on one line with aligned `;;`) for simple single-action cases like argument parsing: `-v|--verbose) VERBOSE=1 ;;`
-- [BCS0702] Use expanded format (action on next line, `;;` on separate line) for multi-line logic or complex operations requiring comments.
-- [BCS0702] Always include a default `*)` case to handle unexpected values explicitly: `*) die 22 "Invalid option: $1" ;;`
-- [BCS0702] Use alternation with `|` for multiple patterns: `-h|--help|help)` matches any of the three forms.
-- [BCS0702] Enable extglob for advanced patterns: `shopt -s extglob` allows `@(pattern)` (exactly one), `+(pattern)` (one or more), `*(pattern)` (zero or more), `?(pattern)` (zero or one), `!(pattern)` (anything except).
-- [BCS0702] Align actions at consistent column (14-18 characters) for visual clarity in compact format.
-- [BCS0702] Never use case for testing multiple variables or complex conditional logic; use if/elif with `[[ ]]` instead.
+- [BCS0502] Use `case` statements for multi-way branching on a single variable against multiple patterns; use `if/elif` for multiple variable tests or complex conditions.
+- [BCS0502] Do not quote the case expression: `case ${1:-} in` not `case "${1:-}" in`.
+- [BCS0502] Do not quote literal patterns: `start)` not `"start)"`.
+- [BCS0502] Always include a default `*)` case to handle unexpected values explicitly.
+- [BCS0502] Use compact format (single-line actions, aligned `;;`) for simple flag setting in argument parsing.
+- [BCS0502] Use expanded format (action on next line, `;;` on separate line) for multi-line logic or complex operations.
+- [BCS0502] Align actions consistently at column 14-18 for visual clarity.
+- [BCS0502] Use alternation for multiple patterns: `-h|--help|help)` for OR matching.
+- [BCS0502] Enable `extglob` for advanced patterns: `@(start|stop)`, `!(*.tmp)`, `+(pattern)`.
 ## Loops
-- [BCS0703] Use for loops for arrays, globs, and known ranges; while loops for reading input, argument parsing, and condition-based iteration; avoid until loops (prefer while with opposite condition).
-- [BCS0703] Always quote array expansion in for loops: `for file in "${files[@]}"` preserves element boundaries including spaces.
-- [BCS0703] Use C-style for loops for numeric iteration: `for ((i=0; i<10; i+=1))` with explicit increment `i+=1` never `i++`.
-- [BCS0703] Never parse `ls` output; use glob patterns directly: `for file in *.txt` not `for file in $(ls *.txt)`.
-- [BCS0703] Use `while IFS= read -r line; do` for line-by-line file processing; always include `IFS=` and `-r` flags.
-- [BCS0703] Use `while (($#))` not `while (($# > 0))` for argument parsing loops; non-zero values are truthy in arithmetic context, making the comparison redundant.
-- [BCS0703] Use `while ((1))` for infinite loops (fastest, recommended), `while :` for POSIX compatibility, never `while true` (15-22% slower due to command execution overhead).
-- [BCS0703] Use `break` for early loop exit and `continue` for conditional skipping; specify break level for nested loops: `break 2` exits two levels.
-- [BCS0703] Enable `nullglob` to handle empty glob matches safely: `shopt -s nullglob` makes `for file in *.txt` execute zero iterations if no matches.
-- [BCS0703] Never iterate over unquoted strings with spaces; always use arrays: `files=('file 1.txt' 'file 2.txt')` then `for file in "${files[@]}"`.
-- [BCS0703] Declare local variables BEFORE loops, not inside: `local -- target; for link in "$dir"/*; do target=$(readlink "$link"); done` - local inside a loop is wasteful and misleading since it doesn't create per-iteration scope.
-## Pipes to While Loops
-- [BCS0704] Never pipe commands to while loops; pipes create subshells where variable assignments don't persist outside the loop, causing silent failures.
-- [BCS0704] Always use process substitution instead of pipes: `while read -r line; do ((count+=1)); done < <(command)` keeps loop in current shell so variables persist.
-- [BCS0704] Use `readarray -t array < <(command)` when collecting lines into an array; it's cleaner and faster than manual while loop appending.
-- [BCS0704] Use here-string `while read -r line; done <<< "$var"` when input is already in a variable.
-- [BCS0704] For null-delimited input (filenames with newlines), use `while IFS= read -r -d '' file; done < <(find . -print0)` or `readarray -d '' -t files < <(find . -print0)`.
-- [BCS0704] Remember pipe creates process tree: parent shell → subshell (while loop with modified variables) → subshell exits → changes discarded; process substitution avoids this.
-## Arithmetic Operations
-- [BCS0705] Always declare integer variables with `declare -i` for automatic arithmetic context, type safety, and clarity: `declare -i count=0 total=0`.
-- [BCS0705] Use `i+=1` for ALL increments (requires prior `declare -i` or `local -i`); NEVER use `((i++))`, `((++i))`, or `i++` - only `i+=1` is acceptable.
-- [BCS0705] Use `(())` for arithmetic operations without `$` on variables: `((result = x * y + z))` not `((result = $x * $y + $z))`.
-- [BCS0705] Use `$(())` for arithmetic in assignments or command arguments: `result=$((i * 2 + 5))` or `echo "$((count / total))".`
-- [BCS0705] Always use `(())` for arithmetic conditionals, never `[[ ]]` with `-gt`/`-lt`: `((count > 10))` not `[[ "$count" -gt 10 ]]`.
-- [BCS0705] Remember integer division truncates toward zero: `((result = 10 / 3))` gives 3 not 3.33; use `bc` or `awk` for floating point.
-- [BCS0705] Never use `expr` command for arithmetic; it's slow, external, and error-prone: use `$(())` or `(())` instead.
-- [BCS0705] Use arithmetic truthiness directly: `((count))` not `((count > 0))`, `((VERBOSE)) && echo 'Verbose'` not `((VERBOSE == 1))` - non-zero is truthy, making explicit comparisons redundant.
+- [BCS0503] Always quote array expansion in for loops: `for item in "${array[@]}"` not `for item in ${array[@]}`.
+- [BCS0503] Use `for` loops for arrays, globs, and known ranges; use `while` loops for reading input and condition-based iteration.
+- [BCS0503] Use `i+=1` for loop increments, never `i++` or `((i++))`: `for ((i=0; i<10; i+=1))`.
+- [BCS0503] Use arithmetic truthiness in while conditions: `while (($#))` not `while (($# > 0))`.
+- [BCS0503] Use `while ((1))` for infinite loops (fastest); use `while :` only for POSIX compatibility; avoid `while true` (15-22% slower).
+- [BCS0503] Declare loop variables with `local` BEFORE the loop, not inside: `local -- file; for file in *.txt; do`.
+- [BCS0503] Specify break level for nested loops: `break 2` to exit both loops.
+- [BCS0503] Always use `IFS= read -r` when reading input in while loops.
+- [BCS0503] Never parse `ls` output; use glob patterns directly: `for file in *.txt` not `for file in $(ls *.txt)`.
+## Process Substitution
+- [BCS0504] Never pipe to while loops; use process substitution instead: `while read -r line; done < <(command)` not `command | while read -r line; done`.
+- [BCS0504] Piping to while creates a subshell where variable modifications are lost when the pipe ends.
+- [BCS0504] Use `readarray -t array < <(command)` to collect lines into an array without subshell issues.
+- [BCS0504] Use here-strings for single variables: `while read -r line; done <<< "$input"`.
+- [BCS0504] Use `readarray -d '' -t files < <(find ... -print0)` for null-delimited input to handle filenames with newlines.
+## Integer Arithmetic
+- [BCS0505] Declare all integer variables with `declare -i` or `local -i` before use.
+- [BCS0505] Use `i+=1` as the ONLY acceptable increment form; never use `((i++))`, `((++i))`, or `((i+=1))`.
+- [BCS0505] The `((i++))` form returns the original value and fails with `set -e` when `i=0`.
+- [BCS0505] Use `(())` for arithmetic conditionals, not `[[ ... -eq ... ]]`: `((exit_code == 0))` not `[[ "$exit_code" -eq 0 ]]`.
+- [BCS0505] No `$` prefix needed for variables inside `(())`: `((result = a + b))` not `((result = $a + $b))`.
+- [BCS0505] Use `$(())` for arithmetic in assignments or command arguments: `result=$((x * y))`.
+- [BCS0505] Integer division truncates toward zero: `((10 / 3))` equals 3, not 3.333.
+## Floating-Point Operations
+- [BCS0506] Bash only supports integer arithmetic natively; use `bc` or `awk` for floating-point calculations.
+- [BCS0506] Use `bc -l` for arbitrary precision: `result=$(echo '3.14 * 2.5' | bc -l)`.
+- [BCS0506] Use `awk` for inline floating-point with formatting: `result=$(awk -v w="$width" -v h="$height" 'BEGIN {printf "%.2f", w * h}')`.
+- [BCS0506] Compare floats with bc or awk, never string comparison: `if (($(echo "$a > $b" | bc -l)))` not `[[ "$a" > "$b" ]]`.

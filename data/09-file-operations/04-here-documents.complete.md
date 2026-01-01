@@ -1,7 +1,8 @@
-## Here Documents
+## 
+Here Documents
 Use for multi-line strings or input.
 
-\`\`\`bash
+```bash
 # No variable expansion (note single quotes)
 cat <<'EOF'
 This is a multi-line
@@ -14,4 +15,4 @@ cat <<EOF
 User: $USER
 Home: $HOME
 EOF
-\`\`\`
+```

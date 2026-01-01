@@ -1,6 +1,6 @@
 # Strings & Quoting
 
-Quoting rules prevent word-splitting errors and clarify code intent. **Single quotes** for static strings, **double quotes** when variable expansion is needed.
+Core quoting rules preventing word-splitting errors: **single quotes** for static strings, **double quotes** for variable expansion.
 
 **7 Rules:**
 
@@ -9,7 +9,7 @@ Quoting rules prevent word-splitting errors and clarify code intent. **Single qu
 3. **Quoting in Conditionals** (BCS0303) - Variable quoting in `[[ ]]`
 4. **Here Documents** (BCS0304) - Delimiter quoting for heredocs
 5. **printf Patterns** (BCS0305) - Format string and argument quoting
-6. **Parameter Quoting** (BCS0306) - Using `${param@Q}` for safe display
-7. **Anti-Patterns** (BCS0307) - Common quoting mistakes to avoid
+6. **Parameter Quoting** (BCS0306) - `${param@Q}` for safe display
+7. **Anti-Patterns** (BCS0307) - Common quoting mistakes
 
-**Key principle:** Single quotes = literal text; double quotes = variable expansion needed.
+**Key principle:** Single quotes = "literal text"; double quotes = "expansion needed."

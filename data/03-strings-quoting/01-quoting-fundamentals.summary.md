@@ -1,6 +1,6 @@
 ### Quoting Fundamentals
 
-**Rule: BCS0301** (Merged from BCS0401 + BCS0402 + BCS0403 + BCS0404)
+**Rule: BCS0301**
 
 Core quoting rules for strings, variables, and literals.
 
@@ -17,15 +17,15 @@ info 'Checking prerequisites...'
 
 # ✓ Double quotes for variables
 info "Found $count files"
-die 1 "Unknown option '$1'"
+die 1 "File '$SCRIPT_DIR/testfile' not found"
 ```
 
 ---
 
 #### Why Single Quotes for Static Strings
 
-1. **Performance**: No variable/escape parsing overhead
-2. **Clarity**: Signals "literal, no substitution"
+1. **Performance**: No variable/escape parsing
+2. **Clarity**: Signals literal content
 3. **Safety**: Prevents accidental expansion
 4. **No escaping**: `$`, `` ` ``, `\` are literal
 
@@ -56,12 +56,12 @@ Simple alphanumeric values (`a-zA-Z0-9_-./`) may be unquoted:
 STATUS=success
 [[ "$level" == INFO ]]
 
-# ✓ Better - quote for consistency
+# ✓ Recommended - quote for consistency
 STATUS='success'
 [[ "$level" == 'INFO' ]]
 ```
 
-**Mandatory quoting:** spaces, special characters (`@`, `*`), empty strings `''`, values with `$`, quotes, backslashes.
+**Mandatory quoting:** Spaces, special characters (`@`, `*`), empty strings (`''`), values with `$`/quotes/backslashes.
 
 ---
 
@@ -76,12 +76,12 @@ info "Checking prerequisites..."
 info 'Checking prerequisites...'
 [[ "$status" == 'active' ]]
 
-# ✗ Wrong - special characters unquoted
+# ✗ Wrong - special chars unquoted
 EMAIL=user@domain.com
 PATTERN=*.log
 
 # ✓ Correct
-EMAIL='user@example.com'
+EMAIL='user@domain.com'
 PATTERN='*.log'
 ```
 
@@ -89,7 +89,7 @@ PATTERN='*.log'
 
 #### Path Concatenation Quoting
 
-Quote variable portions separately from literals for clarity:
+Quote variable portions separately from literals:
 
 ```bash
 # ✓ RECOMMENDED - separate quoting
@@ -97,12 +97,12 @@ Quote variable portions separately from literals for clarity:
 "$SCRIPT_DIR"/data/"$filename"
 [[ -f "$CONFIG_DIR"/hosts.conf ]]
 
-# ✗ NOT RECOMMENDED - combined
+# ACCEPTABLE - combined
 "$PREFIX/bin"
 "$SCRIPT_DIR/data/$filename"
 ```
 
-**Rationale:** Makes variable boundaries explicit, improves readability with multiple variables.
+**Rationale:** Makes variable boundaries explicit, improves readability in complex paths.
 
 ---
 

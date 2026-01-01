@@ -1,48 +1,35 @@
-### Dual-Purpose Scripts (Executable and Sourceable)
+### Dual-Purpose Scripts
 
-**Dual-purpose scripts work as executables AND source libraries. Apply `set -euo pipefail` and `shopt` ONLY when executed, NOT when sourced (prevents modifying caller's shell state).**
+**Scripts working as both executables and sourceable libraries must apply `set -euo pipefail` and `shopt` ONLY when executed directly, never when sourced.**
 
-**Pattern (early return - recommended):**
+Sourcing a script with `set -e` alters the caller's shell state, breaking error handling.
+
+**Pattern (early return):**
 ```bash
 #!/bin/bash
-# Functions first
-my_function() {
-  local -- arg="$1"
-  echo "Processing: $arg"
-}
-declare -fx my_function
+my_func() { local -- arg="$1"; echo "$arg"; }
+declare -fx my_func
 
-# Early return when sourced
 [[ ${BASH_SOURCE[0]} != "$0" ]] && return 0
-
-# Executable section (only runs when executed)
+# --- Executable section ---
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-my_function "$@"
+if [[ ! -v SCRIPT_VERSION ]]; then
+  declare -x SCRIPT_VERSION=1.0.0
+  readonly -- SCRIPT_VERSION
+fi
+
+my_func "$@"
 #fin
 ```
 
-**Key rules:**
-- Functions before sourced/executed check
-- Early return: `[[ ${BASH_SOURCE[0]} != "$0" ]] && return 0`
-- `set`/`shopt` after early return (executable section only)
-- Metadata guard: `[[ ! -v SCRIPT_VERSION ]]` for idempotence
-- Use `return` (not `exit`) for errors when sourced
-- Test both: `./script.sh` (execute), `source script.sh` (source)
+**Structure:** Functions first â†' early return for sourced mode â†' `set`/`shopt` â†' guarded metadata â†' main logic.
 
-**Alternative (if/else):**
-```bash
-if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
-  set -euo pipefail  # Executed mode
-  process_data
-else
-  return 0  # Sourced mode
-fi
-```
+**Anti-patterns:**
+- `set -euo pipefail` before source detection â†' pollutes caller's shell
+- Using `exit` instead of `return` when sourced â†' kills caller's shell
 
-**Rationale:** Sourcing must not alter caller's error handling or glob behavior.
-
-**Anti-pattern:** Applying `set -e` at script top (breaks sourced mode).
+**Key:** Use `[[ ! -v VAR ]]` guard for idempotent re-sourcing; use `return` (not `exit`) for sourced errors.
 
 **Ref:** BCS010201

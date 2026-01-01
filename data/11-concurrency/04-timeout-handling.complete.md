@@ -107,5 +107,3 @@ timeout 300 ssh -o ConnectTimeout=10 "$server" 'long_command'
 **See Also:** BCS1410 (Exponential Backoff)
 
 **Full implementation:** See `examples/exemplar-code/oknav/oknav` line 676
-
-#fin

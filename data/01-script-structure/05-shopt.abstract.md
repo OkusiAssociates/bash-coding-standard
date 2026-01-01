@@ -1,35 +1,36 @@
 ## shopt
 
-**Apply these `shopt` settings immediately after `set -euo pipefail` in every script.**
+**Configure shell options for robust error handling and glob behavior.**
 
-**Critical settings:**
+**Recommended settings:**
 ```bash
-shopt -s inherit_errexit  # Makes set -e work in $(...) and (...)
-shopt -s shift_verbose    # Errors when shift has no args
-shopt -s extglob          # Enables !(pattern), +(pattern), *(pattern)
+shopt -s inherit_errexit shift_verbose extglob nullglob
 ```
 
-**Choose one glob behavior:**
+### Critical Options
+
+| Option | Purpose |
+|--------|---------|
+| `inherit_errexit` | Makes `set -e` work in `$(...)` subshells (CRITICAL) |
+| `shift_verbose` | Error on `shift` when no args remain |
+| `extglob` | Extended patterns: `!(*.txt)`, `+([0-9])`, `@(jpg|png)` |
+| `nullglob` | Unmatched globs â†' empty (for loops/arrays) |
+| `failglob` | Unmatched globs â†' error (strict scripts) |
+| `globstar` | Enable `**` recursive matching (optional, slow) |
+
+### Key Anti-Patterns
+
 ```bash
-shopt -s nullglob   # Unmatched globs ’ empty (safe for loops/arrays)
-# OR
-shopt -s failglob   # Unmatched globs ’ error (strict mode)
+# âœ— Without inherit_errexit - error silently ignored
+result=$(false); echo 'Still running'
+
+# âœ— Default glob behavior - literal string if no match
+for f in *.txt; do rm "$f"; done  # Deletes file named "*.txt"!
 ```
 
-**Optional:**
-```bash
-shopt -s globstar   # Enables ** recursive matching (slow on deep trees)
-```
+### Rationale
 
-**Rationale:**
-- `inherit_errexit`: Without this, `result=$(false)` does NOT exit script despite `set -e` ’ errors in command substitutions silently ignored
-- `shift_verbose`: Prevents silent failures when `shift` called with no args
-- `extglob`: Enables `rm !(*.txt)`, `[[ $x == +([0-9]) ]]`, `*.@(jpg|png)`
-- `nullglob`: `for f in *.txt` ’ loop skips if no matches (default behavior: `f="*.txt"` literal string causes bugs)
-- `failglob`: Strict alternative where unmatched glob exits script
-
-**Anti-patterns:**
-- Omitting `inherit_errexit` ’ `set -e` ineffective in subshells
-- No glob option ’ `for f in *.txt` executes with literal `"*.txt"` when no matches
+1. **`inherit_errexit`**: Without it, `set -e` doesn't apply inside command substitutionsâ€”errors silently continue
+2. **`nullglob`/`failglob`**: Default bash passes literal glob string when no match, causing dangerous behavior
 
 **Ref:** BCS0105

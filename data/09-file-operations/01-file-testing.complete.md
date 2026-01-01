@@ -2,18 +2,18 @@
 
 **Always quote variables and use `[[ ]]` for file tests:**
 
-\`\`\`bash
+```bash
 # Basic file testing
 [[ -f "$file" ]] && source "$file"
-[[ -d "$path" ]] || die 1 "Not a directory: $path"
-[[ -r "$file" ]] || warn "Cannot read: $file"
-[[ -x "$script" ]] || die 1 "Not executable: $script"
+[[ -d "$path" ]] || die 1 "Not a directory ${path@Q}"
+[[ -r "$file" ]] || warn "Cannot read ${file@Q}"
+[[ -x "$script" ]] || die 1 "Not executable ${script@Q}"
 
 # Check multiple conditions
 if [[ -f "$config" && -r "$config" ]]; then
   source "$config"
 else
-  die 3 "Config file not found or not readable: $config"
+  die 3 "Config file not found or not readable ${config@Q}"
 fi
 
 # Check file emptiness
@@ -24,7 +24,7 @@ if [[ "$source" -nt "$destination" ]]; then
   cp "$source" "$destination"
   info "Updated $destination"
 fi
-\`\`\`
+```
 
 **Complete file test operators:**
 
@@ -72,19 +72,19 @@ fi
 
 **Common patterns:**
 
-\`\`\`bash
+```bash
 # Validate required file exists and is readable
 validate_file() {
   local file=$1
-  [[ -f "$file" ]] || die 2 "File not found: $file"
-  [[ -r "$file" ]] || die 5 "Cannot read file: $file"
+  [[ -f "$file" ]] || die 2 "File not found ${file@Q}"
+  [[ -r "$file" ]] || die 5 "Cannot read file ${file@Q}"
 }
 
 # Check if directory is writable
 ensure_writable_dir() {
   local dir=$1
-  [[ -d "$dir" ]] || mkdir -p "$dir" || die 1 "Cannot create directory: $dir"
-  [[ -w "$dir" ]] || die 5 "Directory not writable: $dir"
+  [[ -d "$dir" ]] || mkdir -p "$dir" || die 1 "Cannot create directory ${dir@Q}"
+  [[ -w "$dir" ]] || die 5 "Directory not writable ${dir@Q}"
 }
 
 # Only process if file was modified
@@ -96,7 +96,7 @@ process_if_modified() {
     process_file "$source"
     touch "$marker"
   else
-    info "File $source not modified, skipping"
+    info "File ${source@Q} not modified, skipping"
   fi
 }
 
@@ -113,19 +113,19 @@ safe_source() {
     if [[ -r "$file" ]]; then
       source "$file"
     else
-      warn "Cannot read file: $file"
+      warn "Cannot read file ${file@Q}"
       return 1
     fi
   else
-    debug "File not found: $file (optional)"
+    debug "File not found ${file@Q} (optional)"
     return 0
   fi
 }
-\`\`\`
+```
 
 **Anti-patterns to avoid:**
 
-\`\`\`bash
+```bash
 # ✗ Wrong - unquoted variable
 [[ -f $file ]]  # Breaks with spaces or special chars
 
@@ -146,23 +146,23 @@ fi
 source "$config"  # Error if file doesn't exist
 
 # ✓ Correct - validate first
-[[ -f "$config" ]] || die 3 "Config not found: $config"
-[[ -r "$config" ]] || die 5 "Cannot read config: $config"
+[[ -f "$config" ]] || die 3 "Config not found ${config@Q}"
+[[ -r "$config" ]] || die 5 "Cannot read config: ${config@Q}"
 source "$config"
 
 # ✗ Wrong - silent failure
 [[ -d "$dir" ]] || mkdir "$dir"  # mkdir failure not caught
 
 # ✓ Correct - check result
-[[ -d "$dir" ]] || mkdir "$dir" || die 1 "Cannot create directory: $dir"
-\`\`\`
+[[ -d "$dir" ]] || mkdir "$dir" || die 1 "Cannot create directory: ${dir@Q}"
+```
 
 **Combining file tests:**
 
-\`\`\`bash
+```bash
 # Multiple conditions with AND
 if [[ -f "$file" && -r "$file" && -s "$file" ]]; then
-  info "Processing non-empty readable file: $file"
+  info "Processing non-empty readable file ${file@Q}"
   process_file "$file"
 fi
 
@@ -179,9 +179,10 @@ fi
 validate_executable() {
   local script=$1
 
-  [[ -e "$script" ]] || die 2 "File does not exist: $script"
-  [[ -f "$script" ]] || die 22 "Not a regular file: $script"
-  [[ -x "$script" ]] || die 126 "Not executable: $script"
-  [[ -s "$script" ]] || die 22 "File is empty: $script"
+  [[ -e "$script" ]] || die 2 "File does not exist ${script@Q}"
+  [[ -f "$script" ]] || die 22 "Not a regular file ${script@Q}"
+  [[ -x "$script" ]] || die 126 "Not executable ${script@Q}"
+  [[ -s "$script" ]] || die 22 "File is empty ${script@Q}"
 }
-\`\`\`
+```
+

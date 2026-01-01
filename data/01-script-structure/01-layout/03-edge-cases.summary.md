@@ -1,12 +1,10 @@
 ### Edge Cases and Variations
 
-**Special scenarios where the standard 13-step BCS0101 layout may be modified or simplified.**
+Special scenarios where the standard 13-step BCS0101 layout may be modified.
 
 ---
 
-## Edge Cases and Variations
-
-### When to Skip `main()` Function
+## When to Skip `main()` Function
 
 **Small scripts under 200 lines** can skip `main()` and run directly:
 
@@ -25,11 +23,9 @@ echo "Found $count files"
 #fin
 ```
 
-**Rationale:** The overhead of `main()` isn't justified for trivial scripts.
+## Sourced Library Files
 
-### Sourced Library Files
-
-**Files meant only to be sourced** can skip execution parts:
+**Files meant only to be sourced** skip execution parts and `set -e`:
 
 ```bash
 #!/usr/bin/env bash
@@ -38,37 +34,32 @@ echo "Found $count files"
 # Don't use set -e when sourced (would affect caller)
 # Don't make variables readonly (caller might need to modify)
 
-is_integer() {
-  [[ "$1" =~ ^-?[0-9]+$ ]]
-}
+is_integer() { [[ "$1" =~ ^-?[0-9]+$ ]]; }
 
-is_valid_email() {
-  [[ "$1" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]
-}
+is_valid_email() { [[ "$1" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; }
 
-# No main(), no execution - just function definitions
+# No main(), no execution
+# Just function definitions for other scripts to use
 #fin
 ```
 
-### Scripts With External Configuration
-
-**When sourcing config files**, structure might include:
+## Scripts With External Configuration
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION='1.0.0'
+VERSION=1.0.0
 : ...
 
 # Default configuration
-declare -- CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/myapp/config.sh"
-declare -- DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/myapp"
+declare -- CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}"/myapp/config.sh
+declare -- DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}"/myapp
 
 # Source config file if it exists and can be read
 if [[ -r "$CONFIG_FILE" ]]; then
   #shellcheck source=/dev/null
-  source "$CONFIG_FILE" || die 1 "Failed to source config '$CONFIG_FILE'"
+  source "$CONFIG_FILE" || die 1 "Failed to source config ${CONFIG_FILE@Q}"
 fi
 
 # Now make readonly after sourcing config
@@ -77,38 +68,36 @@ readonly -- CONFIG_FILE DATA_DIR
 # ... rest of script
 ```
 
-### Platform-Specific Sections
-
-**When handling multiple platforms:**
+## Platform-Specific Sections
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION='1.0.0'
+VERSION=1.0.0
 : ...
 
 # Detect platform
 declare -- PLATFORM
 case $(uname -s) in
-  Darwin) PLATFORM='macos' ;;
-  Linux)  PLATFORM='linux' ;;
-  *)      PLATFORM='unknown' ;;
+  Darwin) PLATFORM=macos ;;
+  Linux)  PLATFORM=linux ;;
+  *)      PLATFORM=unknown ;;
 esac
 readonly -- PLATFORM
 
 # Platform-specific global variables
 case $PLATFORM in
   macos)
-    declare -- PACKAGE_MANAGER='brew'
+    declare -- PACKAGE_MANAGER=brew
     declare -- INSTALL_CMD='brew install'
     ;;
   linux)
-    declare -- PACKAGE_MANAGER='apt'
+    declare -- PACKAGE_MANAGER=apt
     declare -- INSTALL_CMD='apt-get install'
     ;;
   *)
-    die 1 "Unsupported platform '$PLATFORM'"
+    die 1 "Unsupported platform ${PLATFORM@Q}"
     ;;
 esac
 
@@ -117,15 +106,13 @@ readonly -- PACKAGE_MANAGER INSTALL_CMD
 : ... rest of script
 ```
 
-### Scripts With Cleanup Requirements
-
-**When trap handlers are needed:**
+## Scripts With Cleanup Requirements
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION='1.0.0'
+VERSION=1.0.0
 : ...
 
 # Temporary files array for cleanup
@@ -148,39 +135,27 @@ trap 'cleanup $?' SIGINT SIGTERM EXIT
 # ... rest of script uses TEMP_FILES
 ```
 
-**Trap should be set** after cleanup function is defined but before any code that creates temp files.
+**Trap placement:** After cleanup function defined, before code creating temp files.
 
 ---
 
-## When to Deviate from Standard Layout
-
-The 13-step layout is **strongly recommended**, but these edge cases represent legitimate exceptions:
+## Legitimate Deviations
 
 ### Simplifications
-- **Tiny scripts (<200 lines)** - Skip `main()`, run code directly
+- **Tiny scripts (<200 lines)** - Skip `main()`, run directly
 - **Library files** - Skip `set -e`, `main()`, script invocation
-- **One-off utilities** - May skip color definitions, verbose messaging
+- **One-off utilities** - May skip colors, verbose messaging
 
 ### Extensions
-- **External configuration** - Add config sourcing between metadata and business logic
-- **Platform detection** - Add platform-specific globals after standard globals
-- **Cleanup traps** - Add trap setup after utility functions but before business logic
-- **Logging setup** - May add log file initialization after metadata
-- **Lock files** - Add lock acquisition/release around main execution
+- **External configuration** - Config sourcing between metadata and business logic
+- **Platform detection** - Platform-specific globals after standard globals
+- **Cleanup traps** - Trap setup after utility functions, before business logic
+- **Lock files** - Lock acquisition/release around main execution
 
-### Key Principles
+---
 
-Even when deviating, maintain these principles:
+## Anti-Patterns
 
-1. **Safety first** - `set -euo pipefail` still comes first (unless library file)
-2. **Dependencies before usage** - Bottom-up organization still applies
-3. **Clear structure** - Readers should easily understand the flow
-4. **Minimal deviation** - Only deviate when there's clear benefit
-5. **Document reasons** - Comment why you're deviating from standard
-
-### Examples of Inappropriate Deviation
-
-**Don't do this:**
 ```bash
 # ✗ Wrong - arbitrary reordering without reason
 #!/usr/bin/env bash
@@ -191,19 +166,18 @@ validate_input() { : ... }
 set -euo pipefail  # Too late!
 
 # Globals scattered
-VERSION='1.0.0'
+VERSION=1.0.0
 check_system() { : ... }
-declare -- PREFIX='/usr'
+declare -- PREFIX=/usr
 ```
 
-**Instead:**
 ```bash
 # ✓ Correct - standard order maintained
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION='1.0.0'
-declare -- PREFIX='/usr'
+VERSION=1.0.0
+declare -- PREFIX=/usr
 
 validate_input() { : ... }
 check_system() { : ... }
@@ -211,18 +185,10 @@ check_system() { : ... }
 
 ---
 
-## Summary
+## Core Principles (Even When Deviating)
 
-Edge cases exist for legitimate reasons:
-- **Simplification** for tiny scripts that don't need full structure
-- **Libraries** that shouldn't modify sourcing environment
-- **External config** that must override defaults
-- **Platform detection** for cross-platform compatibility
-- **Cleanup traps** for resource management
-
-Core principles remain:
-- Error handling first
-- Dependencies before usage
-- Clear, predictable structure
-
-Deviate only when necessary, and always maintain the spirit of the standard: **safety, clarity, and maintainability**.
+1. **Safety first** - `set -euo pipefail` comes first (unless library)
+2. **Dependencies before usage** - Bottom-up organization applies
+3. **Clear structure** - Readers easily understand the flow
+4. **Minimal deviation** - Only when clear benefit exists
+5. **Document reasons** - Comment why deviating from standard

@@ -1,28 +1,26 @@
 # Bash Coding Standard
 
-Comprehensive Bash coding standard for Bash 5.2+. Not a compatibility standard.
+**Bash 5.2+ systems engineering philosophy for shell scripting.**
 
-## Coding Principles
-- K.I.S.S.
+## Principles
+- K.I.S.S. — Keep It Simple, Stupid
 - "The best process is no process"
-- "Everything should be made as simple as possible, but not simpler."
-
-Remove unused functions/variables from production scripts.
+- Remove unused functions/variables
 
 ## Contents
-1. [Script Structure & Layout](#script-structure--layout)
-2. [Variable Declarations & Constants](#variable-declarations--constants)
-3. [Variable Expansion & Parameter Substitution](#variable-expansion--parameter-substitution)
-4. [Quoting & String Literals](#quoting--string-literals)
-5. [Arrays](#arrays)
-6. [Functions](#functions)
-7. [Control Flow](#control-flow)
-8. [Error Handling](#error-handling)
-9. [Input/Output & Messaging](#inputoutput--messaging)
-10. [Command-Line Arguments](#command-line-arguments)
-11. [File Operations](#file-operations)
-12. [Security Considerations](#security-considerations)
-13. [Code Style & Best Practices](#code-style--best-practices)
-14. [Advanced Patterns](#advanced-patterns)
+1. Script Structure & Layout
+2. Variable Declarations & Constants
+3. Variable Expansion & Parameter Substitution
+4. Quoting & String Literals
+5. Arrays
+6. Functions
+7. Control Flow
+8. Error Handling
+9. Input/Output & Messaging
+10. Command-Line Arguments
+11. File Operations
+12. Security Considerations
+13. Code Style & Best Practices
+14. Advanced Patterns
 
-**Ref:** BSC00
+**Ref:** BCS00

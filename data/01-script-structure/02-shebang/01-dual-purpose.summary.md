@@ -1,8 +1,8 @@
 ### Dual-Purpose Scripts (Executable and Sourceable)
 
-Scripts designed to work as both standalone executables and sourceable libraries must apply `set -euo pipefail` and `shopt` settings **ONLY when executed directly, NOT when sourced**.
+Scripts designed to work as both standalone executables and sourceable libraries require special handling: `set -euo pipefail` and `shopt` settings must **ONLY** apply when executed directly, **NOT** when sourced.
 
-**Rationale:** Sourcing a script that applies `set -e` or modifies `shopt` settings would alter the calling shell's environment, potentially breaking the caller's error handling or glob behavior. The sourced script should provide functions/variables without modifying shell state.
+**Rationale:** When sourced, applying `set -e` or modifying `shopt` would alter the calling shell's environment, potentially breaking the caller's error handling or glob behavior.
 
 **Recommended pattern (early return):**
 ```bash
@@ -27,7 +27,7 @@ shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Metadata initialization with guard (allows re-sourcing safety)
 if [[ ! -v SCRIPT_VERSION ]]; then
-  declare -x SCRIPT_VERSION='1.0.0'
+  declare -x SCRIPT_VERSION=1.0.0
   declare -x SCRIPT_PATH=$(realpath -- "$0")
   declare -x SCRIPT_DIR=${SCRIPT_PATH%/*}
   declare -x SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -51,13 +51,13 @@ my_function "$@"
 
 **Pattern breakdown:**
 
-1. **Function definitions first** - Define all library functions at top, export with `declare -fx` if needed by subshells
-2. **Early return** - `[[ ${BASH_SOURCE[0]} != "$0" ]] && return 0` - when sourced: functions loaded then immediate exit; when executed: test fails, continues
+1. **Function definitions first** - Define all library functions at top; export with `declare -fx` if needed by subshells
+2. **Early return** - `[[ ${BASH_SOURCE[0]} != "$0" ]] && return 0` - when sourced, functions load then clean exit; when executed, continues
 3. **Visual separator** - Comment line marks executable section boundary
-4. **Set and shopt** - Only applied when executed (after separator)
-5. **Metadata with guard** - `if [[ ! -v SCRIPT_VERSION ]]` prevents re-initialization, safe to source multiple times
+4. **Set and shopt** - Only applied when executed, placed immediately after separator
+5. **Metadata with guard** - `if [[ ! -v SCRIPT_VERSION ]]` prevents re-initialization; safe for multiple sourcing
 
-**Alternative pattern (if/else block for different initialization per mode):**
+**Alternative pattern (if/else block)** for scripts requiring different initialization per mode:
 ```bash
 #!/bin/bash
 
@@ -79,14 +79,14 @@ fi
 ```
 
 **Key principles:**
-- Prefer early return pattern for clarity
-- Place all function definitions before sourced/executed detection
+- Prefer early return pattern for simplicity
+- Place all function definitions **before** sourced/executed detection
 - Only apply `set -euo pipefail` and `shopt` in executable section
 - Use `return` (not `exit`) for errors when sourced
-- Guard metadata initialization with `[[ ! -v VARIABLE ]]` for idempotence
+- Guard metadata with `[[ ! -v VARIABLE ]]` for idempotence
 - Test both modes: `./script.sh` (execute) and `source script.sh` (source)
 
-**Use cases:**
+**Common use cases:**
 - Utility libraries that demonstrate usage when executed
 - Scripts providing reusable functions plus CLI interface
 - Test frameworks sourceable for functions or runnable for tests

@@ -40,8 +40,8 @@ if kill -0 "$pid" 2>/dev/null; then
 fi
 
 # Get process state from /proc
-if [[ -d /proc/$pid ]]; then
-  state=$(< /proc/$pid/stat)
+if [[ -d /proc/"$pid" ]]; then
+  state=$(< /proc/"$pid"/stat)
 fi
 ```
 
@@ -118,5 +118,3 @@ echo "Started $!"
 **See Also:** BCS1407 (Parallel Execution), BCS1408 (Wait Patterns), BCS1409 (Timeout Handling)
 
 **Full implementation:** See `examples/exemplar-code/oknav/oknav` lines 475-510
-
-#fin
