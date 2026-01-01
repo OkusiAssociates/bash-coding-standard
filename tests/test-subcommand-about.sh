@@ -34,7 +34,7 @@ test_about_basic() {
   # Should contain key elements
   assert_contains "$output" "Bash Coding Standard" "Output contains title"
   assert_contains "$output" "BCS" "Output contains abbreviation"
-  assert_contains "$output" "1.0.0" "Output contains version"
+  assert_contains "$output" "1.0.1" "Output contains version"
   assert_contains "$output" "Biksu Okusi" "Output contains author"
   assert_contains "$output" "philosophy" "Output contains philosophy"
   assert_contains "$output" "K.I.S.S." "Output contains coding principles"
@@ -126,7 +126,7 @@ test_about_json() {
     # Extract and validate version
     local -- json_version
     json_version=$(echo "$output" | jq -r '.version')
-    if [[ "$json_version" == "1.0.0" ]]; then
+    if [[ "$json_version" == "1.0.1" ]]; then
       pass "JSON version is correct: $json_version"
     else
       fail "JSON version unexpected: $json_version"
