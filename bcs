@@ -4290,6 +4290,7 @@ cmd_compress() {
   local -i report_only=1  # Default mode
   local -i summary_limit=10000
   local -i abstract_limit=1500
+  local -- single_file=''  # Single file to process
 
   while (($#)); do
     case $1 in
@@ -4304,6 +4305,7 @@ MODES:
   --regenerate         Delete and regenerate all compressed files
 
 OPTIONS:
+  --file FILE            Process only this .complete.md file (use with --regenerate)
   --tier TIER            Process specific tier: summary or abstract (default: both)
   --force                Force regeneration even if timestamps match (use with --regenerate)
   --claude-cmd CMD       Claude CLI command path (default: claude)
@@ -4419,6 +4421,9 @@ EXAMPLES:
   # Force regeneration (ignore timestamps)
   bcs compress --regenerate --force --context-level abstract
 
+  # Regenerate a single file only
+  bcs compress --regenerate --file data/07-io-messaging/06-color-management.complete.md
+
   # Use custom Claude command and limits
   bcs compress --regenerate --context-level abstract \
     --claude-cmd /usr/local/bin/claude \
@@ -4457,6 +4462,19 @@ EOF
 
       -f|--force)
         force=1
+        ;;
+
+      --file)
+        arg2 "$@"; shift
+        single_file=$1
+        [[ -f "$single_file" ]] || {
+          error "File not found: $single_file"
+          return 2
+        }
+        [[ "$single_file" == *.complete.md ]] || {
+          error "File must be a .complete.md file: $single_file"
+          return 2
+        }
         ;;
 
       --tier)
@@ -4543,9 +4561,33 @@ EOF
   # Validate Claude CLI
   compress_validate_claude_cli "$claude_cmd" || return 1
 
-  # Process all rules
-  compress_process_all_rules "$data_dir" "$tier" "$claude_cmd" "$dry_run" \
-    "$compress_verbose" "$summary_limit" "$abstract_limit" "$context_level" "$force"
+  # Process single file or all rules
+  if [[ -n "$single_file" ]]; then
+    # Single file mode
+    ((compress_verbose)) && info "Processing single file: $single_file" ||:
+
+    # Convert to absolute path if needed
+    [[ "$single_file" == /* ]] || single_file="$PWD/$single_file"
+
+    # Force mode: touch file to bypass timestamp check
+    if ((force)); then
+      ((compress_verbose)) && info 'Force mode: touching file to bypass timestamp check' ||:
+      if ((dry_run)); then
+        ((compress_verbose)) && info "[DRY-RUN] Would touch $single_file" ||:
+      else
+        local -- newtime
+        newtime=$(awk -v t="$(date +%s.%N -r "$single_file")" 'BEGIN {printf "%.9f", t + 1}')
+        touch -d "@$newtime" "$single_file" || warn "Failed to touch ${single_file@Q}"
+      fi
+    fi
+
+    compress_process_complete_file "$single_file" "$data_dir" "$tier" "$claude_cmd" \
+      "$dry_run" "$compress_verbose" 1 "$summary_limit" "$abstract_limit" "$context_level"
+  else
+    # Process all rules
+    compress_process_all_rules "$data_dir" "$tier" "$claude_cmd" "$dry_run" \
+      "$compress_verbose" "$summary_limit" "$abstract_limit" "$context_level" "$force"
+  fi
 
   # Show statistics (note: this is a simplified version - full stats tracking
   # would require modifying the helper functions to return statistics)
