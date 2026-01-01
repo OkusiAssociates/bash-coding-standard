@@ -19,11 +19,9 @@ shopt -s inherit_errexit shift_verbose extglob nullglob
 # Script Metadata
 # ============================================================================
 
-VERSION=2.1.420
-SCRIPT_PATH=$(realpath -- "$0")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
+declare -r VERSION=2.1.420
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # ============================================================================
 # Global Variable Declarations
@@ -97,7 +95,6 @@ yn() {
   >&2 echo
   [[ ${REPLY,,} == y ]]
 }
-
 noarg() { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
 
 # ============================================================================
@@ -114,7 +111,7 @@ update_derived_paths() {
   LOG_DIR=/var/log/"$APP_NAME"
 }
 
-usage() {
+show_help() {
   cat <<EOF
 Usage: $SCRIPT_NAME [OPTIONS]
 
@@ -406,15 +403,17 @@ main() {
       -n|--dry-run)      DRY_RUN=1 ;;
       -f|--force)        FORCE=1 ;;
       -s|--systemd)      INSTALL_SYSTEMD=1 ;;
-      -v|--verbose)      VERBOSE=1 ;;
 
-      -h|--help)         usage
-                         return 0
-                         ;;
+      -v|--verbose)      VERBOSE+=1 ;;
+      -q|--quiet)        VERBOSE=0 ;;
 
       -V|--version)      echo "$SCRIPT_NAME $VERSION"
                          return 0
                          ;;
+      -h|--help)         show_help
+                         return 0
+                         ;;
+
 
       -*)                die 22 "Invalid option ${1@Q} (use --help for usage)" ;;
       *)                 die 2  "Unexpected argument ${1@Q}" ;;
