@@ -1,4 +1,4 @@
-.TH BCS 1 "2026-01-01" "BCS 1.0.1" "Bash Coding Standard Manual"
+.TH BCS 1 "2026-01-01" "BCS 1.0.2" "Bash Coding Standard Manual"
 .SH NAME
 bcs, bash-coding-standard \- Bash Coding Standard toolkit for modern Bash 5.2+ scripts
 .SH SYNOPSIS
@@ -40,7 +40,7 @@ K.I.S.S. (Keep It Simple, Stupid)
 .SS Project Information
 .TP
 .B Version
-1.0.0
+1.0.2
 .TP
 .B Author
 Biksu Okusi (Gary Dean) / Okusi Associates
@@ -698,7 +698,7 @@ When PREFIX=/usr is used, files are installed to /usr/bin, /usr/share, etc.
 .SS Variables Set by BCS
 .TP
 .B BCS_VERSION
-Current version (1.0.0)
+Current version (1.0.2)
 .TP
 .B BCS_PATH
 Absolute path to bcs script
@@ -890,27 +890,31 @@ You are free to share and adapt the material, provided you give appropriate cred
 indicate if changes were made, and distribute contributions under the same license.
 
 .SH VERSION
-BCS version 1.0.0
+BCS version 1.0.2
 
-Recent changes in v1.0.0:
+Recent changes in v1.0.2:
 .IP \(bu 2
-Symlink-based default tier detection
+Expunged old BCS code references (BCS13xx, BCS14xx)
 .IP \(bu 2
-All command aliases removed for simplification
+Updated section 11/12 to use correct code numbering
 .IP \(bu 2
-Enhanced BCS decode with section code support
+Deleted obsolete OLD-TO-NEW-MAPPING.md
 .IP \(bu 2
-Comprehensive test suite (19 files, 600+ tests, 74% pass rate)
+Updated README documentation
+
+Recent changes in v1.0.1:
 .IP \(bu 2
-Idempotent color variables
+Regenerated all 88 derived tier files
 .IP \(bu 2
-Complete shopt settings
+Fixed Claude CLI argument parsing in compress
+.IP \(bu 2
+Added --file option for single rule processing
 
 .SH BUGS
 Report bugs at: https://github.com/OkusiAssociates/bash-coding-standard/issues
 
 .SH NOTES
-This manpage corresponds to BCS version 1.0.0.
+This manpage corresponds to BCS version 1.0.2.
 
 The
 .B bcs
