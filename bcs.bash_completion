@@ -137,9 +137,14 @@ _bcs_compress() {
       # No completion for text/numeric values
       return 0
       ;;
+    --file)
+      # Complete .complete.md files
+      COMPREPLY=($(compgen -f -X '!*.complete.md' -- "$cur"))
+      return 0
+      ;;
   esac
 
-  local opts="-h --help --report-only --regenerate --tier --force --claude-cmd --summary-limit --abstract-limit --context-level -n --dry-run -q --quiet -v --verbose"
+  local opts="-h --help --report-only --regenerate --file --tier --force --claude-cmd --summary-limit --abstract-limit --context-level -n --dry-run -q --quiet -v --verbose"
   COMPREPLY=($(compgen -W "$opts" -- "$cur"))
 }
 
