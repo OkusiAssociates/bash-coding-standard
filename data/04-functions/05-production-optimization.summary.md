@@ -1,11 +1,11 @@
 ## Production Script Optimization
 
-For mature production scripts:
-- Remove unused utility functions (`yn()`, `decp()`, `trim()`, `s()`)
-- Remove unused globals (`SCRIPT_DIR`, `PROMPT`, `DEBUG`)
-- Remove unused messaging functions
-- Keep only what's actually needed
+Once a script is mature and ready for production:
+- Remove unused utility functions (e.g., `yn()`, `decp()`, `trim()`, `s()`)
+- Remove unused global variables (e.g., `SCRIPT_DIR`, `PROMPT`, `DEBUG`)
+- Remove unused messaging functions not called by your script
+- Keep only the functions and variables your script actually needs
 
-**Rationale:** Reduces size, improves clarity, eliminates maintenance burden.
+**Rationale:** Reduces script size, improves clarity, eliminates maintenance burden.
 
-**Example:** Simple scripts may only need `error()` and `die()`, not the full messaging suite.
+**Example:** A simple script may only need `error()` and `die()`, not the full messaging suite.

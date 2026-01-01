@@ -1,55 +1,70 @@
 ## Readonly After Group
 
-**Declare variables first, then make all readonly in single statement. Exception: script metadata uses `declare -r` (BCS0103).**
+**Initialize all related variables first, then protect entire group with single `readonly --` statement.**
 
-### Why
-- Prevents assignment to already-readonly variable
-- Groups related constants visually
-- Separates initialization from protection phase
+### Rationale
+- Prevents assignment-to-readonly errors
+- Groups related constants visibly
+- Explicit immutability contract
 
-### Three-Step Pattern (for arg-parsed values)
+### Three-Step Pattern (for parsed variables)
 ```bash
 # 1. Declare with defaults
 declare -i VERBOSE=0 DRY_RUN=0
-
-# 2. Parse in main()
-while (($#)); do case $1 in -v) VERBOSE+=1 ;; esac; shift; done
-
+# 2. Modify during parsing (in main)
 # 3. Make readonly AFTER parsing
 readonly -- VERBOSE DRY_RUN
 ```
 
 ### Standard Groups
-```bash
-# Colors (conditional init, then readonly)
-if [[ -t 1 ]]; then RED=$'\033[31m'; else RED=''; fi
-readonly -- RED
 
-# Paths (derive all, then readonly together)
+**Colors** (conditional):
+```bash
+if [[ -t 1 && -t 2 ]]; then
+  RED=$'\033[0;31m' NC=$'\033[0m'
+else
+  RED='' NC=''
+fi
+readonly -- RED NC
+```
+
+**Paths** (derived):
+```bash
 PREFIX=${PREFIX:-/usr/local}
 BIN_DIR="$PREFIX"/bin
 readonly -- PREFIX BIN_DIR
 ```
 
+### Exception
+Script metadata uses `declare -r` instead (see BCS0103).
+
 ### Anti-Patterns
+
 ```bash
 # ✗ Premature readonly
 PREFIX=/usr/local
 readonly -- PREFIX  # Too early!
 BIN_DIR="$PREFIX"/bin  # PREFIX locked before group complete
 
-# ✓ Correct
-PREFIX=/usr/local
-BIN_DIR="$PREFIX"/bin
-readonly -- PREFIX BIN_DIR
-
 # ✗ Missing -- separator
-readonly PREFIX  # Risky if var starts with -
+readonly PREFIX BIN_DIR  # Risky if var starts with -
 
 # ✗ Readonly inside conditional
-if [[ -f x ]]; then readonly -- VAR; fi  # May not be readonly!
+if [[ -f conf ]]; then
+  CONFIG=conf
+  readonly -- CONFIG  # May not execute!
+fi
+
+# ✓ Correct
+PREFIX=${PREFIX:-/usr/local}
+BIN_DIR="$PREFIX"/bin
+readonly -- PREFIX BIN_DIR
 ```
 
-**Key:** Always use `--` separator. Group logically related variables. Make readonly only when values are final.
+### Delayed Readonly
+Variables modified by argument parsing �' make readonly after parsing completes:
+```bash
+[[ -z "$CONFIG" ]] || readonly -- CONFIG
+```
 
 **Ref:** BCS0205

@@ -68,8 +68,10 @@ for item in "${items[@]}"; do
 
 ```bash
 pattern='*.txt'
+
 # ✗ Wrong
 echo $pattern       # Expands to all .txt files!
+
 # ✓ Correct
 echo "$pattern"     # Outputs literal: *.txt
 ```
@@ -99,7 +101,6 @@ EOF
 | Static string | `'literal'` | `"literal"` |
 | Variable | `"$var"` | `$var` |
 | Path with var | `"$HOME"/bin` | `"${HOME}/bin"` |
-| Conditional | `[[ -f "$file" ]]` | `[[ -f $file ]]` |
 | Array | `"${arr[@]}"` | `${arr[@]}` |
 
 **Key principle:** Single quotes for static text, double quotes for variables, avoid unnecessary braces, always quote variables.

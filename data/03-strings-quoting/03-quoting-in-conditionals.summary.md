@@ -2,7 +2,7 @@
 
 **Rule: BCS0303**
 
-**Always quote variables** in conditionals. Static literals use single quotes.
+**Always quote variables** in conditionals. Static comparison values follow normal rules (single quotes for literals).
 
 ```bash
 # ✓ Correct - variable quoted
@@ -17,12 +17,12 @@
 
 ---
 
-#### Why Quote Variables
+#### Rationale
 
-1. **Word splitting**: `$file` with spaces becomes multiple arguments
-2. **Glob expansion**: `$file` with `*` expands to matching files
-3. **Empty values**: Unquoted empty variables cause syntax errors
-4. **Security**: Prevents injection attacks
+- **Word splitting**: `$file` with spaces becomes multiple arguments
+- **Glob expansion**: `$file` with `*` expands to matching files
+- **Empty values**: Unquoted empty variables cause syntax errors
+- **Security**: Prevents injection attacks
 
 ---
 
@@ -36,7 +36,6 @@
 # String comparisons (variable quoted, literal single-quoted)
 [[ "$action" == 'start' ]]
 [[ -z "$value" ]]
-[[ -n "$result" ]]
 
 # Numeric comparisons
 declare -i count=0
@@ -59,7 +58,6 @@ pattern='^[0-9]+$'
 ```bash
 # ✗ Wrong - unquoted variable
 [[ -f $file ]]              # Breaks with spaces
-[[ $name == value ]]        # Breaks with spaces
 
 # ✗ Wrong - double quotes for static literal
 [[ "$mode" == "production" ]]
@@ -71,6 +69,6 @@ pattern='^[0-9]+$'
 
 ---
 
-**Key principle:** Variable quoting in conditionals is mandatory. Quote all variables: `[[ -f "$file" ]]`.
+**Key principle:** Quote all variables in conditionals: `[[ -f "$file" ]]`.
 
 #fin

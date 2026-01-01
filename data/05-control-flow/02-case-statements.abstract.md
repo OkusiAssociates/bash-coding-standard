@@ -1,37 +1,38 @@
 ## Case Statements
 
-**Use `case` for multi-way pattern matching on single value. Compact format for simple actions; expanded for multi-line. Always include `*)` default.**
+**Use `case` for multi-way pattern matching on single variable; use compact format for simple actions, expanded for multi-line logic; always include `*)` default case.**
 
-**Key rules:**
-- Case expression unquoted: `case ${1:-} in` (no word splitting occurs)
-- Quote test variable with content: `case "$filename" in`
-- Unquoted literal patterns: `start)` not `"start")`
-- Terminate every branch with `;;`
+**Rationale:** Faster than if/elif chains (single evaluation), native pattern/wildcard support, visually organized with column alignment.
 
-**When to use:** Single variable â†' multiple patterns, file extensions, arg parsing
-**When NOT to use:** Multiple variables, numeric ranges, complex conditions â†' use if/elif
+**Case vs if/elif:** Case for single-variable pattern matching; if/elif for multiple variables, numeric ranges, or complex boolean logic.
 
-**Compact format** (single actions, aligned `;;`):
+**Core patterns:**
 ```bash
-while (($#)); do
-  case $1 in
-    -v|--verbose) VERBOSE=1 ;;
-    -o|--output)  noarg "$@"; shift; OUTPUT="$1" ;;
-    -h|--help)    usage; exit 0 ;;
-    --)           shift; break ;;
-    -*)           die 22 "Invalid option: $1" ;;
-    *)            FILES+=("$1") ;;
-  esac
-  shift
-done
+# Compact (single actions, align ;;)
+case $1 in
+  -v|--verbose) VERBOSE=1 ;;
+  -o|--output)  shift; OUTPUT=$1 ;;
+  -*)           die 22 "Invalid: ${1@Q}" ;;
+  *)            FILES+=("$1") ;;
+esac
+
+# Pattern matching
+case "$file" in
+  *.txt|*.md) process_text ;;
+  *.jpg|*.png) process_image ;;
+  *)          die 1 'Unknown type' ;;
+esac
 ```
 
-**Pattern syntax:** `*` any chars, `?` single char, `|` alternation, `[a-z]` char class
-**Extglob:** `?(pat)` 0-1, `*(pat)` 0+, `+(pat)` 1+, `@(a|b)` exactly one, `!(pat)` negation
+**Expression quoting:** Don't quote case expression (`case $1 in` not `case "$1" in`)â€”word splitting doesn't apply there.
+
+**Pattern syntax:** Literals (`start`), wildcards (`*.txt`, `?`), alternation (`a|b|c`), extglob (`@(x|y)`, `!(*.tmp)`), character classes (`[0-9]`).
 
 **Anti-patterns:**
-- `case $var in` â†' unquoted variable with content (quote it)
-- Missing `*)` default â†' silent failure on unexpected input
-- `[0-9]+)` â†' not regex, use `+([0-9])` with extglob or `[[ =~ ]]` for regex
+- `case "${1:-}" in` â†' `case ${1:-} in` (unnecessary quotes)
+- Missing `*)` default â†' silent failures on unexpected input
+- Mixing compact/expanded formats inconsistently
+- `[0-9]+` in case â†' not regex; use `+([0-9])` with extglob
+- Nested case for multiple variables â†' use if/elif instead
 
 **Ref:** BCS0502

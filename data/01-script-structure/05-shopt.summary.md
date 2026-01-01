@@ -7,18 +7,17 @@ shopt -s inherit_errexit  # Critical: makes set -e work in subshells
 shopt -s shift_verbose    # Catches shift errors when no arguments remain
 shopt -s extglob          # Enables extended glob patterns like !(*.txt)
 
-# CHOOSE ONE based on use case:
-shopt -s nullglob   # For arrays/loops: unmatched globs â†' empty (no error)
+# CHOOSE ONE:
+shopt -s nullglob   # For arrays/loops: unmatched globs â†' empty
 shopt -s failglob   # For strict scripts: unmatched globs â†' error
 
 # OPTIONAL:
 shopt -s globstar   # Enable ** for recursive matching (slow on deep trees)
 ```
 
-### Rationale
+**Rationale:**
 
-**`inherit_errexit` (CRITICAL):** Without it, `set -e` does NOT apply inside command substitutions or subshells. Errors in `$(...)` and `(...)` won't propagate.
-
+**`inherit_errexit` (CRITICAL):** Without it, `set -e` does NOT apply inside command substitutions:
 ```bash
 set -e  # Without inherit_errexit
 result=$(false)  # This does NOT exit the script!
@@ -29,50 +28,46 @@ shopt -s inherit_errexit
 result=$(false)  # Script exits here as expected
 ```
 
-**`shift_verbose`:** Without it, `shift` silently fails when no arguments remain.
-
+**`shift_verbose`:** Prints error when shift fails instead of silent continue:
 ```bash
 shopt -s shift_verbose
 shift  # If no arguments: "bash: shift: shift count must be <= $#"
 ```
 
-**`extglob`:** Enables advanced patterns: `?(pattern)`, `*(pattern)`, `+(pattern)`, `@(pattern)`, `!(pattern)`
-
+**`extglob`:** Enables `?(pat)`, `*(pat)`, `+(pat)`, `@(pat)`, `!(pat)`:
 ```bash
 shopt -s extglob
-rm !(*.txt)                       # Delete everything EXCEPT .txt files
-cp *.@(jpg|png|gif) /destination/ # Match multiple extensions
+rm !(*.txt)                          # Delete everything EXCEPT .txt
+cp *.@(jpg|png|gif) /destination/    # Multiple extensions
 [[ $input == +([0-9]) ]] && echo 'Number'
 ```
 
 **`nullglob` vs `failglob`:**
 
-`nullglob` - Best for loops/arrays where empty result is valid:
+`nullglob` - unmatched glob expands to empty (for loops/arrays):
 ```bash
 shopt -s nullglob
-for file in *.txt; do  # If no .txt files, loop body never executes
+for file in *.txt; do  # No .txt files â†' loop never executes
   echo "$file"
 done
-files=(*.log)  # If no .log files: files=() (empty array)
+files=(*.log)  # No .log files â†' files=() (empty array)
 ```
 
-`failglob` - Best for strict scripts where unmatched glob is an error:
+`failglob` - unmatched glob causes error (strict scripts):
 ```bash
 shopt -s failglob
-cat *.conf  # If no .conf files: "bash: no match: *.conf" (exits with set -e)
+cat *.conf  # No .conf files: "bash: no match: *.conf" (exits with set -e)
 ```
 
-### Anti-Pattern: Default Bash Behavior
-
+**Anti-pattern - default behavior without nullglob/failglob:**
 ```bash
 # âœ— Dangerous default behavior
-for file in *.txt; do  # If no .txt files, $file = literal string "*.txt"
+for file in *.txt; do  # No .txt files â†' $file = literal "*.txt"
   rm "$file"  # Tries to delete file named "*.txt"!
 done
 ```
 
-**`globstar` (OPTIONAL):** Enables `**` for recursive matching. Warning: slow on deep trees.
-
+**`globstar`:** Enables `**` for recursive matching:
 ```bash
 shopt -s globstar
 for script in **/*.sh; do
@@ -87,8 +82,7 @@ set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 ```
 
-### Edge Cases
-
-- **Interactive scripts**: May want more lenient behavior
-- **Legacy compatibility**: Older bash versions may not support all options
-- **Performance-critical**: `globstar` can be slow on large directory trees
+**When NOT to use:**
+- Interactive scripts (may want lenient behavior)
+- Legacy compatibility (older bash versions)
+- Performance-critical loops (`globstar` slow on large trees)

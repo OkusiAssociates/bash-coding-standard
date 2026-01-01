@@ -1,10 +1,10 @@
 ## Main Function
 
-**Include `main()` for scripts >200 lines; place `main "$@"` before `#fin`. Single entry point for testability, organization, and scope control.**
+**Use `main()` for scripts >200 lines as single entry point; place `main "$@"` before `#fin`.**
 
-**Rationale:** Testability (source without executing), scope control (locals prevent global pollution), centralized exit code handling.
+**Rationale:** Testability (source without executing), scope control (locals in main), centralized exit code handling.
 
-**Structure:**
+**Core pattern:**
 ```bash
 main() {
   local -i verbose=0
@@ -15,7 +15,7 @@ main() {
     -v) verbose=1 ;;
     -o) shift; output=$1 ;;
     --) shift; break ;;
-    -*) die 22 "Invalid: ${1@Q}" ;;
+    -*) die 22 "Invalid: $1" ;;
     *) files+=("$1") ;;
   esac; shift; done
   files+=("$@")
@@ -28,15 +28,11 @@ main "$@"
 #fin
 ```
 
-**Sourceable pattern:**
-```bash
-[[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0
-main "$@"
-```
+**Sourceable pattern:** `[[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0` before `main "$@"`.
 
 **Anti-patterns:**
 - `main` without `"$@"` â†' arguments lost
-- Functions defined after `main "$@"` â†' not available
-- Argument parsing outside main â†' globals, consumed before main
+- Defining functions after `main "$@"` â†' undefined at runtime
+- Parsing arguments outside main â†' consumed before main runs
 
 **Ref:** BCS0403

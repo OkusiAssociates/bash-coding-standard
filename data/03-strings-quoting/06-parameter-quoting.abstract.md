@@ -1,35 +1,39 @@
 ### Parameter Quoting with @Q
 
-**Use `${parameter@Q}` for safe display of untrusted input in error messages and logs.**
+**Use `${parameter@Q}` for safe display of user input in error messages and logging.**
 
-#### Why
-- Prevents command injection via `$(...)` or glob expansion in displayed strings
-- Shows exact literal value without execution risk
+`${var@Q}` expands to shell-quoted value preventing injection and command execution.
 
-#### Pattern
+#### Core Behavior
+
 ```bash
-# Error messages - always @Q for user input
-die 2 "Unknown option ${1@Q}"
-
-# Dry-run display
-printf -v quoted '%s ' "${cmd[@]@Q}"
-info "[DRY-RUN] $quoted"
-```
-
-#### When to Use
-- **Yes:** Error messages, logging user input, dry-run output
-- **No:** Normal expansion `"$var"`, comparisons `[[ "$a" == "$b" ]]`
-
-#### Anti-Pattern
-```bash
-# ✗ Injection risk - user controls displayed value
-die 2 "Unknown option $1"
-# ✓ Safe literal display
-die 2 "Unknown option ${1@Q}"
+name='$(rm -rf /)'
+echo "${name@Q}"    # Output: '$(rm -rf /)' (safe, literal)
 ```
 
 | Input | `"$var"` | `${var@Q}` |
 |-------|----------|------------|
-| `$(rm -rf /)` | executes | `'$(rm -rf /)'` |
+| `$(date)` | executes | `'$(date)'` |
+| `*.txt` | `*.txt` | `'*.txt'` |
+
+#### When to Use
+
+**Use @Q:** Error messages, logging input, dry-run display
+```bash
+die 2 "Unknown option ${1@Q}"
+info "[DRY-RUN] ${cmd[@]@Q}"
+```
+
+**Don't use @Q:** Normal expansion (`"$file"`), comparisons
+
+#### Anti-Pattern
+
+```bash
+# ✗ Wrong - injection risk
+die 2 "Unknown option $1"
+
+# ✓ Correct
+die 2 "Unknown option ${1@Q}"
+```
 
 **Ref:** BCS0306

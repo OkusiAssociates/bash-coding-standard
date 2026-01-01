@@ -8,7 +8,7 @@ Proper synchronization when waiting for background processes.
 
 #### Rationale
 
-Ensures resource cleanup, correct exit code capture, prevents hanging on failed processes, and graceful interrupt handling.
+Ensures resource cleanup, exit code capture, no hanging on failures, graceful interrupt handling.
 
 ---
 
@@ -102,5 +102,3 @@ wait $! || die 1 'Command failed'
 ---
 
 **See Also:** BCS1406 (Background Jobs), BCS1407 (Parallel Execution)
-
-#fin

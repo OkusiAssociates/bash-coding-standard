@@ -1,52 +1,52 @@
 ## Testing Support Patterns
 
-**Use dependency injection and test mode flags to make scripts testable without modifying production code.**
+**Make scripts testable via dependency injection and test mode flags.**
 
-**Rationale:** Testability requires isolating external dependencies (commands, file systems) while maintaining production behavior.
+### Why
+- Enables mocking external commands without modifying production code
+- Isolates destructive operations during testing
+- Provides consistent test infrastructure across scripts
 
-**Example:**
+### Pattern
+
 ```bash
-# Dependency injection - override for tests
+# Dependency injection - define if not exists
 declare -f FIND_CMD >/dev/null || FIND_CMD() { find "$@"; }
-declare -f DATE_CMD >/dev/null || DATE_CMD() { date "$@"; }
 
 # Test mode flag
 declare -i TEST_MODE="${TEST_MODE:-0}"
 
 if ((TEST_MODE)); then
-  DATA_DIR='./test_data'
+  DATA_DIR=./test_data
   RM_CMD() { echo "TEST: Would remove $*"; }
 else
-  DATA_DIR='/var/lib/app'
+  DATA_DIR=/var/lib/app
   RM_CMD() { rm "$@"; }
 fi
+```
 
-# Assert helper
+### Anti-Patterns
+
+- `find "$@"` directly â†' cannot mock; use `FIND_CMD "$@"`
+- Hardcoded paths â†' use conditional `DATA_DIR` based on `TEST_MODE`
+
+### Test Infrastructure
+
+```bash
 assert() {
-  local -- expected="$1" actual="$2" message="${3:-Assertion failed}"
-  if [[ "$expected" != "$actual" ]]; then
-    >&2 echo "ASSERT FAIL: $message"
-    >&2 echo "  Expected: '$expected'"
-    >&2 echo "  Actual:   '$actual'"
-    return 1
-  fi
+  local -- expected=$1 actual=$2 message=${3:-Assertion failed}
+  [[ "$expected" = "$actual" ]] && return 0
+  >&2 echo "FAIL: $message - expected '$expected', got '$actual'"
+  return 1
 }
 
-# Test runner
 run_tests() {
   local -i passed=0 failed=0
-  for test_func in $(declare -F | awk '$3 ~ /^test_/ {print $3}'); do
-    if "$test_func"; then
-      passed+=1; echo " $test_func"
-    else
-      failed+=1; echo " $test_func"
-    fi
+  for f in $(declare -F | awk '$3 ~ /^test_/ {print $3}'); do
+    "$f" && passed+=1 || failed+=1
   done
-  echo "Tests: $passed passed, $failed failed"
   ((failed == 0))
 }
 ```
 
-**Anti-pattern:** Modifying production code for tests or using global mocks that affect all functions.
-
-**Ref:** BCS1409
+**Ref:** BCS1209

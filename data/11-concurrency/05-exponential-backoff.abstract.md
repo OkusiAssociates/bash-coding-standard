@@ -1,34 +1,40 @@
 ### Exponential Backoff
 
-**Use exponential delay (`2^attempt`) for transient failure retries; add jitter to prevent thundering herd.**
+**Implement retry logic with exponential delay (`2^attempt`) for transient failures; add jitter to prevent thundering herd.**
 
 #### Rationale
-- Reduces load on failing services vs fixed delays
-- Auto-recovery without manual intervention
-- Jitter prevents synchronized retry storms
+- Reduces load on failing services vs fixed-delay retry
+- Automatic recovery without manual intervention
 
 #### Pattern
 
 ```bash
 retry_with_backoff() {
-  local -i max=5 attempt=1
-  while ((attempt <= max)); do
+  local -i max_attempts=${1:-5} attempt=1
+  shift
+  while ((attempt <= max_attempts)); do
     "$@" && return 0
     sleep $((2 ** attempt))
-    ((attempt+=1))
+    attempt+=1
   done
   return 1
 }
 ```
 
-Add jitter: `delay=$((base + RANDOM % base))`
+**With jitter:** `delay=$((base_delay + RANDOM % base_delay))`
 
-Cap maximum: `((delay > 60)) && delay=60`
+**With cap:** `((delay > max_delay)) && delay=$max_delay`
 
 #### Anti-Patterns
 
-`while ! cmd; do sleep 5; done` â†' Fixed delay wastes time or floods service
+```bash
+# âœ— Fixed delay â†' same load pressure
+while ! cmd; do sleep 5; done
 
-`while ! curl "$url"; do :; done` â†' Immediate retry floods failing service
+# âœ“ Exponential backoff
+retry_with_backoff 5 curl -f "$url"
+```
 
-**Ref:** BCS1410
+`while ! curl "$url"; do :; done` â†' Immediate retry floods service
+
+**Ref:** BCS1105

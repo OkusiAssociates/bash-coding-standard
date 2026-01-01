@@ -1,53 +1,37 @@
 ## Pipes to While Loops
 
-**Avoid piping commands to while loops because pipes create subshells where variable assignments don't persist outside the loop. Use process substitution `< <(command)` or `readarray` instead. This is one of the most common and insidious bugs in Bash scripts.**
+**Avoid piping commands to while loops because pipes create subshells where variable assignments don't persist outside the loop. Use process substitution `< <(command)` or `readarray` instead.**
 
 **Rationale:**
-
-- **Variable Persistence**: Pipes create subshells; variables modified inside don't persist outside
-- **Silent Failure**: No error messages - script continues with counters at 0, arrays empty
-- **Process Substitution Fixes**: `< <(command)` runs loop in current shell, variables persist
-- **Readarray Alternative**: For line collection, `readarray` is cleaner and faster
-- **Set -e Interaction**: Failures in piped commands may not trigger `set -e` properly
+- Pipes create subshells; variables modified inside don't persist (counters stay 0, arrays stay empty)
+- Silent failure with no error messages - script continues with wrong values
+- Process substitution `< <(command)` runs loop in current shell, variables persist
+- `readarray` is cleaner and faster for simple line collection
+- Failures in piped commands may not trigger `set -e` properly
 
 **The subshell problem:**
 
-When you pipe to while, Bash creates a subshell for the while loop. Variable modifications happen in that subshell and are lost when the pipe ends.
-
 ```bash
-#  WRONG - Subshell loses variable changes
+# ✗ WRONG - Subshell loses variable changes
 declare -i count=0
 
 echo -e "line1\nline2\nline3" | while IFS= read -r line; do
   echo "$line"
-  ((count+=1))
+  count+=1
 done
 
 echo "Count: $count"  # Output: Count: 0 (NOT 3!)
 ```
 
-**Why this happens:**
-
-```bash
-# Pipe creates process tree:
-#   Parent shell (count=0)
-#      └─> Subshell (while loop)
-#            - Inherits count=0
-#            - Modifies count (1, 2, 3)
-#            - Subshell exits
-#            - Changes discarded!
-#   Back to parent (count still 0)
-```
-
 **Solution 1: Process substitution (most common)**
 
 ```bash
-#  CORRECT - Process substitution avoids subshell
+# ✓ CORRECT - Process substitution avoids subshell
 declare -i count=0
 
 while IFS= read -r line; do
   echo "$line"
-  ((count+=1))
+  count+=1
 done < <(echo -e "line1\nline2\nline3")
 
 echo "Count: $count"  # Output: Count: 3 (correct!)
@@ -56,7 +40,7 @@ echo "Count: $count"  # Output: Count: 3 (correct!)
 **Solution 2: Readarray/mapfile (when collecting lines)**
 
 ```bash
-#  CORRECT - readarray reads all lines into array
+# ✓ CORRECT - readarray reads all lines into array
 declare -a lines
 
 readarray -t lines < <(echo -e "line1\nline2\nline3")
@@ -64,7 +48,6 @@ readarray -t lines < <(echo -e "line1\nline2\nline3")
 declare -i count="${#lines[@]}"
 echo "Count: $count"  # Output: Count: 3 (correct!)
 
-# Iterate if needed
 local -- line
 for line in "${lines[@]}"; do
   echo "$line"
@@ -74,177 +57,31 @@ done
 **Solution 3: Here-string (for single variables)**
 
 ```bash
-#  CORRECT - Here-string when input is in variable
+# ✓ CORRECT - Here-string when input is in variable
 declare -- input=$'line1\nline2\nline3'
 declare -i count=0
 
 while IFS= read -r line; do
   echo "$line"
-  ((count+=1))
+  count+=1
 done <<< "$input"
 
 echo "Count: $count"  # Output: Count: 3 (correct!)
 ```
 
-**Example 1: Counting matching lines**
-
-```bash
-#  WRONG - Counter stays 0
-count_errors_wrong() {
-  local -- log_file="$1"
-  local -i error_count=0
-
-  grep 'ERROR' "$log_file" | while IFS= read -r line; do
-    echo "Found: $line"
-    ((error_count+=1))
-  done
-
-  echo "Errors: $error_count"  # Always 0!
-  return "$error_count"
-}
-
-#  CORRECT - Process substitution
-count_errors_correct() {
-  local -- log_file="$1"
-  local -i error_count=0
-
-  while IFS= read -r line; do
-    echo "Found: $line"
-    ((error_count+=1))
-  done < <(grep 'ERROR' "$log_file")
-
-  echo "Errors: $error_count"  # Correct count!
-  return "$error_count"
-}
-
-#  ALSO CORRECT - Using wc (when only count matters)
-count_errors_simple() {
-  local -- log_file="$1"
-  local -i error_count
-
-  error_count=$(grep -c 'ERROR' "$log_file")
-  echo "Errors: $error_count"
-  return "$error_count"
-}
-```
-
-**Example 2: Building array from command output**
-
-```bash
-#  WRONG - Array stays empty
-collect_users_wrong() {
-  local -a users=()
-
-  getent passwd | while IFS=: read -r user _; do
-    users+=("$user")
-  done
-
-  echo "Users: ${#users[@]}"  # Always 0!
-}
-
-#  CORRECT - Process substitution
-collect_users_correct() {
-  local -a users=()
-
-  while IFS=: read -r user _; do
-    users+=("$user")
-  done < <(getent passwd)
-
-  echo "Users: ${#users[@]}"  # Correct count!
-  printf '%s\n' "${users[@]}"
-}
-
-#  ALSO CORRECT - readarray (simpler)
-collect_users_readarray() {
-  local -a users
-
-  readarray -t users < <(getent passwd | cut -d: -f1)
-
-  echo "Users: ${#users[@]}"
-  printf '%s\n' "${users[@]}"
-}
-```
-
-**Example 3: Processing files with state**
-
-```bash
-#  WRONG - State variables lost
-process_files_wrong() {
-  local -i total_size=0
-  local -i file_count=0
-
-  find /data -type f | while IFS= read -r file; do
-    local -- size
-    size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null)
-    ((total_size+=size))
-    ((file_count+=1))
-  done
-
-  echo "Files: $file_count, Total: $total_size"  # Both 0!
-}
-
-#  CORRECT - Process substitution
-process_files_correct() {
-  local -i total_size=0
-  local -i file_count=0
-
-  while IFS= read -r file; do
-    local -- size
-    size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null)
-    ((total_size+=size))
-    ((file_count+=1))
-  done < <(find /data -type f)
-
-  echo "Files: $file_count, Total: $total_size"  # Correct values!
-}
-```
-
-**Example 4: Multi-variable read with associative array**
-
-```bash
-#  WRONG - Associative array stays empty
-parse_config_wrong() {
-  local -A config=()
-
-  cat config.conf | while IFS='=' read -r key value; do
-    config[$key]="$value"
-  done
-
-  echo "Config entries: ${#config[@]}"  # 0
-}
-
-#  CORRECT - Process substitution
-parse_config_correct() {
-  local -A config=()
-
-  while IFS='=' read -r key value; do
-    [[ "$key" =~ ^[[:space:]]*# ]] && continue
-    [[ -z "$key" ]] && continue
-    config[$key]="$value"
-  done < <(cat config.conf)
-
-  echo "Config entries: ${#config[@]}"  # Correct!
-
-  local -- k
-  for k in "${!config[@]}"; do
-    echo "$k = ${config[$k]}"
-  done
-}
-```
-
 **When readarray is better:**
 
 ```bash
-#  BEST - readarray for simple line collection
+# ✓ BEST - readarray for simple line collection
 declare -a log_lines
 readarray -t log_lines < <(tail -n 100 /var/log/app.log)
 
 local -- line
 for line in "${log_lines[@]}"; do
-  [[ "$line" =~ ERROR ]] && echo "Error: $line"
+  [[ "$line" =~ ERROR ]] && echo "Error: ${line@Q}" ||:
 done
 
-#  BEST - readarray with null-delimited input (safe for filenames with spaces)
+# ✓ BEST - readarray with null-delimited input (handles spaces in filenames)
 declare -a files
 readarray -d '' -t files < <(find /data -type f -print0)
 
@@ -257,34 +94,37 @@ done
 **Anti-patterns to avoid:**
 
 ```bash
-#  WRONG - Pipe to while with counter
+declare -i count=0
+# ✗ WRONG - Pipe to while with counter
 cat file.txt | while read -r line; do
-  ((count+=1))
+  count+=1
 done
 echo "$count"  # Still 0!
 
-#  CORRECT - Process substitution
+# ✓ CORRECT - Process substitution
 while read -r line; do
-  ((count+=1))
+  count+=1
 done < <(cat file.txt)
+echo "$count"  # Correct!
 
-#  WRONG - Pipe to while building array
+# ✗ WRONG - Pipe to while building array
 find /data -name '*.txt' | while read -r file; do
   files+=("$file")
 done
 echo "${#files[@]}"  # Still 0!
 
-#  CORRECT - readarray
+# ✓ CORRECT - readarray
 readarray -d '' -t files < <(find /data -name '*.txt' -print0)
+echo "${#files[@]}"  # Correct!
 
-#  WRONG - Setting flag in piped while
+# ✗ WRONG - Setting flag in piped while
 has_errors=0
 grep ERROR log | while read -r line; do
   has_errors=1
 done
 echo "$has_errors"  # Still 0!
 
-#  CORRECT - Use return value or process substitution
+# ✓ CORRECT - Use return value
 if grep -q ERROR log; then
   has_errors=1
 fi
@@ -293,46 +133,33 @@ fi
 **Edge cases:**
 
 **1. Empty input:**
-
 ```bash
-# Process substitution handles empty input correctly
 declare -i count=0
-
 while read -r line; do
-  ((count+=1))
-done < <(echo -n "")
-
+  count+=1
+done < <(echo -n "")  # No output
 echo "Count: $count"  # 0 - correct (no lines)
 ```
 
-**2. Command failure in process substitution:**
-
-```bash
-# With set -e, command failure is detected
-while read -r line; do
-  process "$line"
-done < <(failing_command)  # Script exits if failing_command fails
-```
-
-**3. Very large output:**
-
+**2. Very large output:**
 ```bash
 # readarray loads everything into memory
 readarray -t lines < <(cat huge_file)  # Might use lots of RAM
 
-# Process substitution processes line by line
+# Process substitution processes line by line - lower memory usage
 while read -r line; do
-  process "$line"  # Lower memory usage
+  process "$line"
 done < <(cat huge_file)
 ```
 
-**Summary:**
+**3. Null-delimited input (filenames with newlines):**
+```bash
+while IFS= read -r -d '' file; do
+  echo "File: $file"
+done < <(find /data -print0)
 
-- **Never pipe to while** - creates subshell, variables don't persist
-- **Use process substitution** - `while read; done < <(command)` - variables persist
-- **Use readarray** - `readarray -t array < <(command)` - simple and efficient for line collection
-- **Use here-string** - `while read; done <<< "$var"` - when input is in variable
-- **Subshell variables are lost** - any modifications disappear when pipe ends
-- **Always test with data** - empty counters/arrays indicate subshell problem
+# Or with readarray
+readarray -d '' -t files < <(find /data -print0)
+```
 
-**Key principle:** Piping to while is a dangerous anti-pattern that silently loses variable modifications. Always use process substitution `< <(command)` or `readarray` instead. This is not a style preference - it's about correctness. If you find `| while read` in code, it's almost certainly a bug waiting to manifest.
+**Key principle:** Piping to while is a dangerous anti-pattern that silently loses variable modifications. Always use process substitution `< <(command)` or `readarray` instead. This is not a style preference - it's about correctness. If you find `| while read` in code, it's almost certainly a bug.

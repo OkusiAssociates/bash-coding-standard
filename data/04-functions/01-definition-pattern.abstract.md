@@ -1,9 +1,10 @@
 ## Function Definition Pattern
 
-**Use `name() { }` syntax; single-line for simple ops, multi-line with `local` declarations for complex functions.**
+**Use single-line syntax for simple operations; multi-line with `local --` for complex functions.**
 
 ```bash
 vecho() { ((VERBOSE)) || return 0; _msg "$@"; }
+
 main() {
   local -i exitcode=0
   local -- variable
@@ -11,7 +12,6 @@ main() {
 }
 ```
 
-- `local -i` for integers, `local --` for strings
-- `function` keyword â†' non-portable, avoid
+**Anti-pattern:** `local file="$1"` â†' `local -- file="$1"` (always use `--` separator)
 
 **Ref:** BCS0401

@@ -1,30 +1,32 @@
 ## SUID/SGID
 
-**Never use SUID/SGID bits on Bash scripts - catastrophically dangerous with no exceptions.**
+**Never use SUID/SGID bits on Bash scripts—no exceptions.**
 
 ```bash
 # ✗ NEVER
 chmod u+s script.sh  # SUID
 chmod g+s script.sh  # SGID
 
-# ✓ Use sudo
-sudo script.sh
-# Or configure: username ALL=(root) NOPASSWD: /path/script.sh
+# ✓ Use sudo instead
+sudo /usr/local/bin/script.sh
 ```
 
-**Rationale:** Kernel executes interpreter with elevated privileges before script runs, creating attack vectors: IFS exploitation splits words maliciously; caller's PATH finds trojan interpreter before script's PATH sets; `LD_PRELOAD` injects code; race conditions on file operations; shell expansions exploitable; no compilation means readable/modifiable source.
+**Why prohibited:**
+- **IFS exploitation**: Attacker controls word splitting with elevated privileges
+- **PATH attack**: Kernel uses caller's PATH to find interpreter—trojan injection before script's PATH is set
+- **LD_PRELOAD**: Malicious libraries execute with root privileges before script runs
+- **Race conditions**: TOCTOU vulnerabilities in file operations
 
-**Attack example:**
-```bash
-# Attacker's trojan in /tmp/evil/bash runs as root BEFORE script's PATH setting
-export PATH=/tmp/evil:$PATH
-./suid-script.sh  # Kernel finds /tmp/evil/bash via caller's PATH
-```
+**Safe alternatives:**
+- `sudo` with `/etc/sudoers.d/` granular permissions
+- Compiled C wrapper that sanitizes environment
+- systemd service with `User=root`
+- Linux capabilities for compiled binaries
 
-**Safe alternatives:** sudo with `/etc/sudoers.d/` config; capabilities on compiled programs (`setcap`); compiled C wrapper that sanitizes environment then `execl()` script; PolicyKit; systemd service.
+**Anti-patterns:**
+- `chmod 4755 script.sh` �' catastrophic security hole
+- Assuming modern kernels ignore SUID on scripts �' many Unix variants honor it
 
-**Detection:** `find / -type f \( -perm -4000 -o -perm -2000 \) -exec file {} \; | grep -i script` should return nothing.
+**Audit:** `find / -type f \( -perm -4000 -o -perm -2000 \) -exec file {} \; | grep -i script`
 
-**Modern Linux ignores SUID on scripts but don't rely on it - many Unix variants honor it.**
-
-**Ref:** BCS1201
+**Ref:** BCS1001

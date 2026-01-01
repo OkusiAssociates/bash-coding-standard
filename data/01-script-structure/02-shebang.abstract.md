@@ -1,8 +1,8 @@
 ## Shebang and Initial Setup
 
-**First lines must include shebang, optional shellcheck directives, description comment, then `set -euo pipefail` as first command.**
+**First lines: shebang â†' optional shellcheck â†' description â†' `set -euo pipefail`**
 
-**Shebangs:** `#!/bin/bash` (Linux) | `#!/usr/bin/bash` (BSD) | `#!/usr/bin/env bash` (max portability)
+**Allowed shebangs:** `#!/bin/bash` (Linux) | `#!/usr/bin/bash` (BSD) | `#!/usr/bin/env bash` (portable)
 
 ```bash
 #!/bin/bash
@@ -11,8 +11,10 @@
 set -euo pipefail
 ```
 
-**Rationale:** Strict mode (`set -euo pipefail`) must execute before any other commands to catch errors immediately.
+**Key points:**
+- `set -euo pipefail` MUST be first executable command
+- Strict mode before any other code executes
 
-**Anti-patterns:** Missing `set -euo pipefail` â†' silent failures; shebang without path (`#!bash`) â†' won't execute.
+**Anti-patterns:** `#!/bin/sh` â†' not Bash | Missing `set -euo pipefail` â†' silent failures
 
 **Ref:** BCS0102

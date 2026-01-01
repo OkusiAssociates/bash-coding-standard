@@ -6,7 +6,7 @@
 
 ---
 
-#### Basic Usage
+#### The @Q Operator
 
 ```bash
 name='hello world'
@@ -18,11 +18,12 @@ echo "${name@Q}"      # Output: '$(rm -rf /)' (safe, literal)
 
 ---
 
-#### Error Messages & Validation
+#### Primary Use: Error Messages
 
 ```bash
 # ✗ Wrong - injection risk
 die 2 "Unknown option $1"
+die 2 "Unknown option '$1'"
 
 # ✓ Correct - safe display
 die 2 "Unknown option ${1@Q}"
@@ -69,8 +70,6 @@ run_command() {
 **Use @Q for:** Error messages, logging user input, dry-run output
 
 **Don't use @Q for:** Normal variable expansion, comparisons
-
----
 
 **Key principle:** Use `${parameter@Q}` when displaying user input in error messages to prevent injection.
 

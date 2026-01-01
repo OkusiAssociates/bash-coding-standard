@@ -1,13 +1,13 @@
 ## File Extensions
 
-**Use `.sh` for libraries, no extension for PATH executables.**
+**Executables: `.sh` or no extension; libraries: `.sh` only (non-executable); PATH-available commands: no extension.**
 
-| Type | Extension | Executable bit |
-|------|-----------|----------------|
-| Library | `.sh` | No |
-| Script (local) | `.sh` or none | Yes |
-| Script (PATH) | None | Yes |
+### Quick Rules
+- Executable scripts â†' `.sh` or extensionless
+- Libraries (sourced) â†' `.sh`, chmod 644
+- Global commands (in PATH) â†' no extension
 
-`â†'` Adding `.sh` to PATH commands creates awkward invocations (`myscript.sh` vs `myscript`)
+### Anti-Pattern
+`mylib` (no extension, executable library) â†' `mylib.sh` (chmod 644)
 
 **Ref:** BCS0106

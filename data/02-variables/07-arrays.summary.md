@@ -1,6 +1,6 @@
 ### Arrays
 
-**Rule: BCS0207**
+**Rule: BCS0207** (Merged from BCS0501 + BCS0502)
 
 Array declaration, usage, and safe list handling.
 
@@ -8,36 +8,26 @@ Array declaration, usage, and safe list handling.
 
 #### Rationale
 
-Arrays preserve element boundaries regardless of content, prevent word splitting with `"${array[@]}"`, protect wildcards from glob expansion, and enable safe command construction with arbitrary arguments.
+Arrays provide element preservation (boundaries maintained regardless of content), no word splitting with `"${array[@]}"`, glob safety (wildcards preserved literally), and safe command construction with arbitrary arguments.
 
 ---
 
 #### Declaration
 
 ```bash
-# Indexed arrays (explicit declaration)
-declare -a paths=()           # Empty array
+declare -a paths=()           # Empty indexed array
 declare -a colors=(red green blue)
-
-# Local arrays in functions
-local -a found_files=()
-
-# Associative arrays (Bash 4.0+)
-declare -A config=()
+local -a found_files=()       # Local arrays in functions
+declare -A config=()          # Associative arrays (Bash 4.0+)
 config['key']='value'
 ```
 
 #### Adding Elements
 
 ```bash
-# Append single element
-paths+=("$1")
-
-# Append multiple elements
-args+=("$arg1" "$arg2" "$arg3")
-
-# Append another array
-all_files+=("${config_files[@]}")
+paths+=("$1")                        # Append single element
+args+=("$arg1" "$arg2" "$arg3")      # Append multiple
+all_files+=("${config_files[@]}")    # Append another array
 ```
 
 #### Iteration
@@ -50,49 +40,36 @@ done
 
 # ✗ Wrong - unquoted, breaks with spaces
 for path in ${paths[@]}; do
-  process "$path"
-done
 ```
 
 #### Length and Checking
 
 ```bash
-count=${#files[@]}            # Get number of elements
-
-# Check if empty
-if ((${#array[@]} == 0)); then
+count=${#files[@]}                    # Get number of elements
+if ((${#array[@]} == 0)); then        # Check if empty
   info 'Array is empty'
 fi
-
-# Set default if empty
-((${#paths[@]})) || paths=('.')
+((${#paths[@]})) || paths=('.')       # Set default if empty
 ```
 
 #### Reading Into Arrays
 
 ```bash
-# Split string by delimiter
-IFS=',' read -ra fields <<< "$csv_line"
-
-# From command output (preferred)
-readarray -t lines < <(grep pattern file)
+IFS=',' read -ra fields <<< "$csv_line"      # Split by delimiter
+readarray -t lines < <(grep pattern file)    # From command (preferred)
 mapfile -t files < <(find . -name "*.txt")
-
-# From file
-readarray -t config_lines < config.txt
+readarray -t config_lines < config.txt       # From file
 ```
 
 #### Element Access
 
 ```bash
-first=${array[0]}             # Single element (0-indexed)
-last=${array[-1]}             # Last element (Bash 4.3+)
-
-"${array[@]}"                 # All elements as separate words
-"${array[*]}"                 # All as single word (rare)
-
-"${array[@]:2}"               # Slice from index 2
-"${array[@]:1:3}"             # 3 elements from index 1
+first=${array[0]}           # Single element (0-indexed)
+last=${array[-1]}           # Bash 4.3+
+"${array[@]}"               # All elements as separate words
+"${array[*]}"               # All as single word (rare)
+"${array[@]:2}"             # Slice from index 2
+"${array[@]:1:3}"           # 3 elements from index 1
 ```
 
 ---
@@ -100,15 +77,10 @@ last=${array[-1]}             # Last element (Bash 4.3+)
 #### Safe Command Construction
 
 ```bash
-# Build command with variable arguments
 local -a cmd=(myapp '--config' "$config_file")
-
-# Add conditional arguments
 ((verbose)) && cmd+=('--verbose') ||:
 [[ -z "$output" ]] || cmd+=('--output' "$output")
-
-# Execute safely
-"${cmd[@]}"
+"${cmd[@]}"                 # Execute safely
 ```
 
 #### Collecting Arguments During Parsing
@@ -122,8 +94,6 @@ while (($#)); do
   esac
   shift
 done
-
-# Process collected files
 for file in "${input_files[@]}"; do
   process_file "$file"
 done
@@ -136,17 +106,17 @@ done
 ```bash
 # ✗ Wrong - unquoted expansion
 rm ${files[@]}
-# ✓ Correct - quoted expansion
+# ✓ Correct
 rm "${files[@]}"
 
 # ✗ Wrong - word splitting to create array
 array=($string)
-# ✓ Correct - explicit
+# ✓ Correct
 readarray -t array <<< "$string"
 
 # ✗ Wrong - using [*] in iteration
 for item in "${array[*]}"; do
-# ✓ Correct - use [@]
+# ✓ Correct
 for item in "${array[@]}"; do
 ```
 

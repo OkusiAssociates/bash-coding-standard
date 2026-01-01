@@ -1,60 +1,49 @@
 ## Argument Validation
 
-**Use validation helpers to ensure option arguments exist and are valid types before processing.**
+**Use validation helpers to ensure option arguments exist and have correct types before processing.**
 
-**Rationale:** Prevents silent failures like `--output --verbose` (missing filename), catches type errors early, provides clear error messages.
+### Core Validators
 
-### Three Validators
-
-**1. `noarg()` - Basic check:**
 ```bash
-noarg() {
-  (($# > 1)) && [[ ${2:0:1} != '-' ]] || die 2 "Missing argument for option '$1'"
-}
+# Basic existence check
+noarg() { (($# > 1)) && [[ ${2:0:1} != '-' ]] || die 2 "Missing argument for option ${1@Q}"; }
+
+# String validation with safe quoting
+arg2() { ((${#@}-1<1)) || [[ "${2:0:1}" == '-' ]] && die 2 "${1@Q} requires argument" ||:; }
+
+# Numeric validation
+arg_num() { ((${#@}-1<1)) || [[ ! "$2" =~ ^[0-9]+$ ]] && die 2 "${1@Q} requires a numeric argument" ||:; }
 ```
 
-**2. `arg2()` - Enhanced with safe quoting:**
-```bash
-arg2() {
-  if ((${#@}-1<1)) || [[ "${2:0:1}" == '-' ]]; then
-    die 2 "${1@Q} requires argument"
-  fi
-}
-```
+### Usage Pattern
 
-**3. `arg2_num()` - Numeric validation:**
-```bash
-arg2_num() {
-  if ((${#@}-1<1)) || [[ ! "$2" =~ ^[0-9]+$ ]]; then
-    die 2 "${1@Q} requires a numeric argument"
-  fi
-}
-```
-
-**Usage:**
 ```bash
 while (($#)); do case $1 in
-  -o|--output) arg2 "$@"; shift; OUTPUT="$1" ;;
-  -d|--depth)  arg2_num "$@"; shift; MAX_DEPTH="$1" ;;
-  -v|--verbose) VERBOSE=1 ;;
+  -o|--output) arg2 "$@"; shift; OUTPUT=$1 ;;
+  -d|--depth)  arg_num "$@"; shift; MAX_DEPTH=$1 ;;
 esac; shift; done
 ```
 
-**Validator selection:**
-- `noarg()`: Simple existence (`-o FILE`)
-- `arg2()`: Strings, prevent `-` prefix (`--prefix PATH`)
-- `arg2_num()`: Integer args (`--depth NUM`)
+**Critical:** Call validator BEFORE `shift` â€” validator inspects `$2`.
 
-**Critical:** Call validator BEFORE `shift` (needs `$2`). Use `${1@Q}` for safe error messages.
+### Validator Selection
 
-**Anti-pattern:**
+| Validator | Use Case |
+|-----------|----------|
+| `noarg()` | Simple existence check |
+| `arg2()` | String args, prevent `-` prefix |
+| `arg_num()` | Numeric integers only |
+
+### Anti-Patterns
+
 ```bash
-#  No validation
+# âœ— No validation â†' --output --verbose sets OUTPUT='--verbose'
 -o|--output) shift; OUTPUT="$1" ;;
-# Problem: --output --verbose ’ OUTPUT='--verbose'
 
-#  Validated
--o|--output) arg2 "$@"; shift; OUTPUT="$1" ;;
+# âœ“ Validated
+-o|--output) arg2 "$@"; shift; OUTPUT=$1 ;;
 ```
 
-**Ref:** BCS1003
+**`${1@Q}` pattern:** Safe shell quoting prevents expansion of special characters in error messages.
+
+**Ref:** BCS0803

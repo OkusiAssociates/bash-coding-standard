@@ -1,34 +1,46 @@
 ### Wait Patterns
 
-**Rule:** Proper synchronization when waiting for background processesâ€”capture exit codes, track failures, clean up resources.
+**Synchronize background processes: capture exit codes, track failures, avoid hangs.**
 
-**Core patterns:**
-- `wait "$pid"` â†' capture `$?` for single job
-- `wait` (no args) â†' wait for all
-- `wait -n` (Bash 4.3+) â†' wait for first to complete
+---
 
-**Error tracking:**
+#### Why
+
+- Exit codes lost without `wait` capture â†' silent failures
+- Unwaited processes â†' zombie/resource leaks
+- `wait -n` enables first-completion processing (Bash 4.3+)
+
+---
+
+#### Core Patterns
+
 ```bash
+# Basic: capture exit code
+cmd &
+wait "$!" || die 1 'Command failed'
+
+# Multiple jobs: track failures
 declare -i errors=0
 for pid in "${pids[@]}"; do
   wait "$pid" || ((errors+=1))
 done
 ((errors)) && warn "$errors jobs failed"
-```
 
-**Wait-any pattern:**
-```bash
-while ((${#pids[@]} > 0)); do
+# Wait-any (4.3+): process as completed
+while ((${#pids[@]})); do
   wait -n; code=$?
-  # Update active list
-  local -a active=()
-  for pid in "${pids[@]}"; do
-    kill -0 "$pid" 2>/dev/null && active+=("$pid")
-  done
-  pids=("${active[@]}")
+  # Update active list via kill -0
 done
 ```
 
-**Anti-pattern:** `wait $!` without capturing â†' `wait $! || die 1 'Failed'`
+---
 
-**Ref:** BCS1408
+#### Anti-Pattern
+
+`wait $!` without checking `$?` â†' exit code silently discarded â†' `wait "$pid" || handle_error`
+
+---
+
+**See Also:** BCS1406, BCS1407
+
+**Ref:** BCS1103

@@ -1,50 +1,50 @@
 ## Type-Specific Declarations
 
-**Use explicit type declarations (`declare -i`, `declare --`, `declare -a`, `declare -A`) for type safety and intent documentation.**
+**Use explicit type declarations (`declare -i`, `declare --`, `-a`, `-A`) for type safety, intent documentation, and error prevention.**
 
 ### Declaration Types
 
-| Type | Syntax | Use For |
-|------|--------|---------|
-| Integer | `declare -i` | Counters, exit codes, ports |
-| String | `declare --` | Paths, text, user input |
-| Indexed array | `declare -a` | Lists, sequences |
-| Associative | `declare -A` | Key-value maps |
-| Constant | `readonly --` | Immutable values |
-| Local | `local --` | Function-scoped vars |
+| Type | Purpose | Example |
+|------|---------|---------|
+| `-i` | Integers | `declare -i count=0` |
+| `--` | Strings | `declare -- path=/tmp` |
+| `-a` | Indexed arrays | `declare -a files=()` |
+| `-A` | Associative arrays | `declare -A config=()` |
+| `readonly` | Constants | `readonly -- VERSION=1.0` |
+| `local` | Function scope | `local -- file=$1` |
 
-**Rationale:** Type enforcement catches bugs early; integers auto-evaluate arithmetic; `--` prevents option injection.
+### Core Rules
 
-### Core Pattern
+- **Always use `--` separator** with `declare`, `local`, `readonly` â†' prevents option injection
+- **Integer vars** auto-evaluate: `count='5+3'` â†' 8
+- **Combine modifiers**: `local -i`, `local -a`, `readonly -A`
+
+### Example
 
 ```bash
-declare -i count=0           # Integer
-declare -- filename=''       # String (-- prevents option injection)
-declare -a files=()          # Indexed array
-declare -A config=()         # Associative array
-readonly -- VERSION=1.0.0    # Immutable
+declare -i count=0
+declare -- config_path=/etc/app.conf
+declare -a files=()
+declare -A status=()
 
 process() {
-  local -- input=$1          # Always use -- with local
-  local -i attempts=0
-  local -a results=()
+  local -- file=$1
+  local -i lines
+  lines=$(wc -l < "$file")
 }
 ```
 
 ### Anti-Patterns
 
 ```bash
-# âœ— No type â†' intent unclear
-count=0; files=()
+# âœ— No type (intent unclear)     â†' âœ“ declare -i count=0
+count=0
 
-# âœ— Missing -- â†' option injection risk
-declare filename='-weird'
+# âœ— Missing -- separator         â†' âœ“ local -- file=$1
+local file=$1
 
-# âœ— Missing -A â†' creates indexed, not associative
-declare CONFIG; CONFIG[key]='value'
-
-# âœ— Global leak in function
-process() { temp=$1; }       # â†' local -- temp=$1
+# âœ— Scalar to array              â†' âœ“ files=(file.txt)
+files=file.txt
 ```
 
 **Ref:** BCS0201

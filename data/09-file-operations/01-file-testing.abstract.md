@@ -1,34 +1,21 @@
 ## Safe File Testing
 
-**Always quote variables and use `[[ ]]` for file tests to prevent word splitting and glob expansion.**
+**Always quote variables and use `[[ ]]` for all file tests.**
 
-**Rationale:** Unquoted variables break with spaces/special chars; `[[ ]]` more robust than `[ ]`; testing before use prevents runtime errors; failing fast with informative messages aids debugging.
+**Key operators:** `-f` (file), `-d` (dir), `-r` (readable), `-w` (writable), `-x` (executable), `-s` (non-empty), `-e` (exists), `-L` (symlink), `-nt`/`-ot` (newer/older than), `-ef` (same inode).
 
-**Core operators:**
-- `-f` regular file, `-d` directory, `-e` any type, `-L` symlink
-- `-r` readable, `-w` writable, `-x` executable, `-s` not empty
-- `-nt` newer than, `-ot` older than, `-ef` same file
-
-**Example:**
+**Core pattern:**
 ```bash
-# Validate and source config
-[[ -f "$config" ]] || die 3 "Config not found: $config"
-[[ -r "$config" ]] || die 5 "Cannot read: $config"
-source "$config"
-
-# Update if source newer
-[[ "$source" -nt "$dest" ]] && cp "$source" "$dest"
-
-# Validate executable
-validate_executable() {
-  [[ -f "$1" ]] || die 2 "Not found: $1"
-  [[ -x "$1" ]] || die 126 "Not executable: $1"
-}
+[[ -f "$file" && -r "$file" ]] || die 3 "Cannot read ${file@Q}"
+[[ -d "$dir" ]] || mkdir -p "$dir" || die 1 "Cannot create ${dir@Q}"
+[[ "$src" -nt "$dst" ]] && cp "$src" "$dst"
 ```
 
-**Anti-patterns:**
-- `[[ -f $file ]]` ’ `[[ -f "$file" ]]` (always quote)
-- `[ -f "$file" ]` ’ `[[ -f "$file" ]]` (use `[[ ]]`)
-- `source "$config"` ’ validate first with `-f` and `-r`
+**Rationale:** Quoting prevents word splitting/glob expansion; `[[ ]]` safer than `[ ]`; test-before-use prevents runtime errors.
 
-**Ref:** BCS1101
+**Anti-patterns:**
+- `[[ -f $file ]]` â†' `[[ -f "$file" ]]` (always quote)
+- `[ -f "$file" ]` â†' `[[ -f "$file" ]]` (use `[[ ]]`)
+- `source "$config"` without test â†' validate first with `|| die`
+
+**Ref:** BCS0901

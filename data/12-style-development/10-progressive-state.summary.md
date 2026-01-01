@@ -30,6 +30,7 @@ main() {
 
   # Check if prerequisites are met, adjust flags accordingly
   if ! check_builtin_support; then
+    # If user explicitly requested builtins, try to install dependencies
     if ((BUILTIN_REQUESTED)); then
       warn 'bash-builtins package not found, attempting to install...'
       install_bash_builtins || {
@@ -37,6 +38,7 @@ main() {
         INSTALL_BUILTIN=0  # Disable builtin installation
       }
     else
+      # User didn't explicitly request, just skip
       info 'bash-builtins not found, skipping builtin installation'
       INSTALL_BUILTIN=0
     fi
@@ -59,26 +61,33 @@ main() {
 ```
 
 **Pattern structure:**
-1. Declare all boolean flags at top with initial values
-2. Parse command-line arguments, setting flags based on user input
-3. Progressively adjust flags based on runtime conditions (dependency checks, build failures, user preferences)
+1. Declare boolean flags at top with initial values
+2. Parse arguments, setting flags based on user input
+3. Progressively adjust flags based on runtime conditions (dependency checks, build failures, user overrides)
 4. Execute actions based on final flag state
 
 **State progression example:**
 ```bash
+# Initial state (defaults)
+declare -i INSTALL_BUILTIN=0
+declare -i BUILTIN_REQUESTED=0
+declare -i SKIP_BUILTIN=0
+
 # 1. User input (--builtin flag)
 INSTALL_BUILTIN=1
 BUILTIN_REQUESTED=1
 
 # 2. Override check (--no-builtin takes precedence)
-((SKIP_BUILTIN)) && INSTALL_BUILTIN=0
+((SKIP_BUILTIN)) && INSTALL_BUILTIN=0 ||:
 
 # 3. Dependency check (no bash-builtins package)
 if ! check_builtin_support; then
   if ((BUILTIN_REQUESTED)); then
-    install_bash_builtins || INSTALL_BUILTIN=0  # Try to install, disable on failure
+    # Try to install, disable on failure
+    install_bash_builtins || INSTALL_BUILTIN=0
   else
-    INSTALL_BUILTIN=0  # User didn't ask, just disable
+    # User didn't ask, just disable
+    INSTALL_BUILTIN=0
   fi
 fi
 
@@ -89,18 +98,12 @@ fi
 ((INSTALL_BUILTIN)) && install_builtin
 ```
 
-**Benefits:**
-- Clean separation between decision logic and action
-- Easy to trace how flags change throughout execution
-- Fail-safe behavior (disable features when prerequisites fail)
-- User intent preserved (`BUILTIN_REQUESTED` tracks original request)
-- Idempotent (same input ’ same state ’ same output)
+**Benefits:** Clean separation of decision/action logic; traceable flag changes; fail-safe behavior; preserves user intent via separate tracking flag; idempotent execution.
 
 **Guidelines:**
-- Group related flags together (e.g., `INSTALL_*`, `SKIP_*`)
-- Use separate flags for user intent vs. runtime state
-- Document state transitions with comments
-- Apply state changes in logical order (parse ’ validate ’ execute)
-- Never modify flags during execution phase (only in setup/validation)
+- Group related flags (`INSTALL_*`, `SKIP_*`)
+- Use separate flags for user intent vs runtime state
+- Apply state changes in order: parse â†' validate â†' execute
+- Never modify flags during execution phase
 
-**Rationale:** Allows scripts to adapt to runtime conditions while maintaining clarity about why decisions were made. Especially useful for installation scripts where features may need to be disabled based on system capabilities or build failures.
+**Rationale:** Enables scripts to adapt to runtime conditions while maintaining decision clarity. Essential for installation scripts where features may need disabling based on system capabilities or build failures.

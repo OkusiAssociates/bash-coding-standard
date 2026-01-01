@@ -25,9 +25,8 @@ die 1 "File '$SCRIPT_DIR/testfile' not found"
 #### Why Single Quotes for Static Strings
 
 1. **Performance**: No variable/escape parsing
-2. **Clarity**: Signals literal content
-3. **Safety**: Prevents accidental expansion
-4. **No escaping**: `$`, `` ` ``, `\` are literal
+2. **Clarity**: Signals literal text, no substitution
+3. **Safety**: `$`, `` ` ``, `\` are literal—prevents accidental expansion
 
 ```bash
 msg='The variable $PATH will not expand'
@@ -56,27 +55,29 @@ Simple alphanumeric values (`a-zA-Z0-9_-./`) may be unquoted:
 STATUS=success
 [[ "$level" == INFO ]]
 
-# ✓ Recommended - quote for consistency
+# ✓ Better - quote for consistency
 STATUS='success'
 [[ "$level" == 'INFO' ]]
 ```
 
-**Mandatory quoting:** Spaces, special characters (`@`, `*`), empty strings (`''`), values with `$`/quotes/backslashes.
+**Mandatory quoting:** spaces, special characters (`@`, `*`), empty strings `''`, values with `$`/quotes/backslashes.
 
 ---
 
 #### Anti-Patterns
 
 ```bash
-# ✗ Wrong - double quotes for static
+# ✗ Wrong - double quotes for static strings
 info "Checking prerequisites..."
 [[ "$status" == "active" ]]
 
 # ✓ Correct
 info 'Checking prerequisites...'
 [[ "$status" == 'active' ]]
+```
 
-# ✗ Wrong - special chars unquoted
+```bash
+# ✗ Wrong - special characters unquoted
 EMAIL=user@domain.com
 PATTERN=*.log
 
@@ -99,10 +100,10 @@ Quote variable portions separately from literals:
 
 # ACCEPTABLE - combined
 "$PREFIX/bin"
-"$SCRIPT_DIR/data/$filename"
+"$dir/$file"
 ```
 
-**Rationale:** Makes variable boundaries explicit, improves readability in complex paths.
+**Rationale:** Makes variable boundaries visually explicit; improves readability in complex paths.
 
 ---
 

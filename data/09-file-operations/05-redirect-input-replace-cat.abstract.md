@@ -1,43 +1,45 @@
-## Input Redirection vs Cat: Performance Optimization
+## Input Redirection vs Cat
 
-**Replace `cat filename` with `< filename` in performance-critical contexts for 3-100x speedup.**
+**Replace `cat file` with `< file` redirection to eliminate process fork overhead (3-107x speedup).**
 
-**Rationale:** Eliminates process fork/exec overhead. Critical in loops and command substitution.
+### Key Patterns
 
-**Use `< filename` for:**
+| Context | Speedup | Technique |
+|---------|---------|-----------|
+| Command substitution | **107x** | `$(< file)` |
+| Single file to command | **3-4x** | `cmd < file` |
+| Loops | **cumulative** | Avoid repeated forks |
 
-- **Command substitution** (107x faster): `content=$(< file.txt)` not `$(cat file.txt)`
-- **Single input**: `grep "pattern" < file.txt` not `cat file.txt | grep "pattern"`
-- **Loops**: `data=$(< "$file")` not `data=$(cat "$file")`
+### Core Example
 
-**Example:**
 ```bash
-# Recommended - 100x faster
-for file in *.json; do
-    data=$(< "$file")
-    process "$data"
-done
+# ✓ CORRECT - 107x faster (zero processes)
+content=$(< config.json)
+errors=$(grep -c ERROR < "$logfile")
 
-# Avoid - forks cat thousands of times
-for file in *.json; do
-    data=$(cat "$file")
-    process "$data"
-done
+# ✗ AVOID - forks cat process each time
+content=$(cat config.json)
+errors=$(cat "$logfile" | grep -c ERROR)
 ```
 
-**Use `cat` when:**
+### When `cat` is Required
 
-- Multiple files: `cat file1 file2`
-- Need options: `cat -n file`
-- Concatenation required
+- **Multiple files**: `cat file1 file2` (syntax requirement)
+- **cat options**: `-n`, `-b`, `-A`, `-E` (no redirection equivalent)
+- **Direct output**: `< file` alone produces nothing
 
-**Anti-pattern:**
+### Anti-Patterns
+
 ```bash
-# ✗ Wrong - 100x slower
-content=$(cat file.txt)
+# ✗ Does nothing - no command to consume stdin
+< /tmp/test.txt
 
-# ✓ Correct
-content=$(< file.txt)
+# ✗ Invalid syntax
+< file1.txt file2.txt
 ```
 
-**Ref:** BCS1105
+### Why It Works
+
+`$(< file)` is Bash magic: shell reads file directly into substitution result with zero external processes. Regular `< file` only opens file descriptor—requires a command to consume it.
+
+**Ref:** BCS0905

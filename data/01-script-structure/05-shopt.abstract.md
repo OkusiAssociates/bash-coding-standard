@@ -1,36 +1,44 @@
-## shopt
+## shopt Settings
 
-**Configure shell options for robust error handling and glob behavior.**
+**Configure `shopt -s inherit_errexit shift_verbose extglob nullglob` for robust error handling and glob behavior.**
 
-**Recommended settings:**
-```bash
-shopt -s inherit_errexit shift_verbose extglob nullglob
-```
-
-### Critical Options
+### Required Settings
 
 | Option | Purpose |
 |--------|---------|
-| `inherit_errexit` | Makes `set -e` work in `$(...)` subshells (CRITICAL) |
-| `shift_verbose` | Error on `shift` when no args remain |
-| `extglob` | Extended patterns: `!(*.txt)`, `+([0-9])`, `@(jpg|png)` |
-| `nullglob` | Unmatched globs â†' empty (for loops/arrays) |
-| `failglob` | Unmatched globs â†' error (strict scripts) |
-| `globstar` | Enable `**` recursive matching (optional, slow) |
+| `inherit_errexit` | Makes `set -e` work in `$(...)` subshells |
+| `shift_verbose` | Error on invalid shift (no silent failure) |
+| `extglob` | Extended patterns: `!(*.txt)`, `+([0-9])` |
 
-### Key Anti-Patterns
+### Glob Behavior (Choose One)
+
+- **`nullglob`** â†' Unmatched glob = empty (for loops/arrays)
+- **`failglob`** â†' Unmatched glob = error (strict scripts)
+
+### Why inherit_errexit is Critical
 
 ```bash
-# âœ— Without inherit_errexit - error silently ignored
-result=$(false); echo 'Still running'
+set -e  # Without inherit_errexit
+result=$(false)  # Does NOT exit!
+echo 'Still runs'  # Executes
 
-# âœ— Default glob behavior - literal string if no match
-for f in *.txt; do rm "$f"; done  # Deletes file named "*.txt"!
+shopt -s inherit_errexit
+result=$(false)  # Script exits here
 ```
 
-### Rationale
+### Anti-Pattern
 
-1. **`inherit_errexit`**: Without it, `set -e` doesn't apply inside command substitutionsâ€”errors silently continue
-2. **`nullglob`/`failglob`**: Default bash passes literal glob string when no match, causing dangerous behavior
+```bash
+# âœ— Default: unmatched glob = literal string
+for f in *.txt; do rm "$f"; done  # Tries "rm *.txt" if no match!
+
+# âœ“ With nullglob: loop skipped if no matches
+shopt -s nullglob
+for f in *.txt; do rm "$f"; done
+```
+
+### Optional
+
+`globstar` enables `**/*.sh` recursive matching (slow on deep trees).
 
 **Ref:** BCS0105

@@ -1,42 +1,48 @@
 ## Loops
 
-**Use `for` for arrays/globs/ranges, `while` for input/conditions; always quote array expansion, use process substitution `< <(cmd)` to avoid subshell scope loss.**
+**Use `for` for arrays/globs/ranges, `while` for input/conditions; always quote arrays as `"${array[@]}"`, use `< <(cmd)` not pipes to avoid subshell issues.**
 
-**Rationale:**
-- `"${array[@]}"` preserves element boundaries with spaces
-- Pipes to while lose variable changes; process substitution preserves scope
-- `i+=1` not `i++` (fails with `set -e` when i=0)
+### Key Rationale
+- Process substitution preserves variable scope (pipes create subshells)
+- `while ((1))` is 15-22% faster than `while true`
+- `nullglob` prevents literal pattern iteration on no-match
 
-**Core patterns:**
+### Core Patterns
 
 ```bash
-# Array iteration (safest pattern)
-local -- item
-for item in "${files[@]}"; do process "$item"; done
+# Array iteration (safe with spaces)
+for file in "${files[@]}"; do process "$file"; done
 
-# Read command output (preserves variable scope)
-while IFS= read -r line; do
-  ((count+=1))
-done < <(find . -name '*.txt')
+# Command output (preserves variables)
+while IFS= read -r line; do count+=1; done < <(find . -name '*.txt')
 
-# C-style numeric (use i+=1 not i++)
+# C-style (use i+=1, NEVER i++)
 for ((i=0; i<10; i+=1)); do echo "$i"; done
 
 # Argument parsing
-while (($#)); do
-  case $1 in -v) VERBOSE=1 ;; esac
-  shift
-done
+while (($#)); do case $1 in -v) VERBOSE=1 ;; esac; shift; done
+
+# Infinite (fastest)
+while ((1)); do work; ((done)) && break; done
 ```
 
-**Critical anti-patterns:**
-- `for f in $(ls)` â†' parse ls output (NEVER)
-- `cmd | while read` â†' subshell loses variables
-- `for f in ${arr[@]}` â†' unquoted splits on spaces
-- `((i++))` â†' fails with `set -e` when i=0
-- `while (($# > 0))` â†' redundant; use `while (($#))`
-- `local` inside loop â†' wasteful, declare before loop
+### Anti-Patterns
 
-**Performance:** `while ((1))` fastest; `while true` 15-22% slower.
+```bash
+# âœ— Pipe loses variables     â†' âœ“ Use < <(cmd)
+cmd | while read -r x; do n+=1; done  # n stays 0!
+
+# âœ— Parse ls output          â†' âœ“ Use glob directly
+for f in $(ls *.txt); do ...          # for f in *.txt
+
+# âœ— Unquoted array           â†' âœ“ Quote expansion
+for x in ${arr[@]}; do ...            # "${arr[@]}"
+
+# âœ— i++ fails at 0 with -e   â†' âœ“ Use i+=1
+for ((i=0; i<n; i++)); do ...         # i+=1
+
+# âœ— local inside loop        â†' âœ“ Declare before loop
+for f in *; do local x; ...           # local x; for f in *
+```
 
 **Ref:** BCS0503

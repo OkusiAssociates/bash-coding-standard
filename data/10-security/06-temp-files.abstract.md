@@ -1,63 +1,51 @@
 ## Temporary File Handling
 
-**Always use `mktemp` for temp files/directories; use `trap` EXIT handlers for guaranteed cleanup.**
+**Always use `mktemp` for temp files/dirs with EXIT trap cleanup—never hard-code paths.**
 
-**Rationale:** mktemp creates files atomically with secure permissions (0600) preventing race conditions. EXIT trap ensures cleanup even on failure/interruption.
+**Rationale:** Secure permissions (0600/0700), unique names prevent collisions, atomic creation prevents races, EXIT trap guarantees cleanup on failure/interrupt.
 
-**Basic pattern:**
-
-```bash
-# Single temp file
-temp_file=$(mktemp) || die 1 'Failed to create temp file'
-trap 'rm -f "$temp_file"' EXIT
-readonly -- temp_file
-
-# Temp directory
-temp_dir=$(mktemp -d) || die 1 'Failed to create temp directory'
-trap 'rm -rf "$temp_dir"' EXIT
-readonly -- temp_dir
-```
-
-**Multiple temp resources:**
+**Core pattern:**
 
 ```bash
 declare -a TEMP_FILES=()
-
 cleanup() {
-  local -i exit_code=$?
-  local -- file
-  for file in "${TEMP_FILES[@]}"; do
-    [[ -f "$file" ]] && rm -f "$file"
-    [[ -d "$file" ]] && rm -rf "$file"
+  local -- f; for f in "${TEMP_FILES[@]}"; do
+    [[ -f "$f" ]] && rm -f "$f"
+    [[ -d "$f" ]] && rm -rf "$f"
   done
-  return "$exit_code"
 }
 trap cleanup EXIT
 
-temp1=$(mktemp) || die 1 'Failed'
-TEMP_FILES+=("$temp1")
+temp=$(mktemp) || die 1 'Failed to create temp file'
+TEMP_FILES+=("$temp")
 ```
 
-**Critical anti-patterns:**
+**Anti-patterns:**
 
 ```bash
-# ✗ Hard-coded path → collisions, insecure
-temp_file="/tmp/myapp_temp.txt"
+# ✗ Hard-coded path (collisions, predictable, no cleanup)
+temp=/tmp/myapp_temp.txt
 
-# ✗ PID in filename → predictable, race conditions  
-temp_file="/tmp/myapp_$$.txt"
+# ✗ PID-based (still predictable, race conditions)
+temp=/tmp/myapp_$$.txt
 
-# ✗ No trap → file remains on exit/failure
-temp_file=$(mktemp)
-
-# ✗ Multiple traps overwrite → only last executes
+# ✗ Multiple traps overwrite (temp1 leaked!)
 trap 'rm -f "$temp1"' EXIT
-trap 'rm -f "$temp2"' EXIT  # temp1 lost!
+trap 'rm -f "$temp2"' EXIT
 
-# ✓ Single trap for all
-trap 'rm -f "$temp1" "$temp2"' EXIT
+# ✗ No error check
+temp=$(mktemp)  # May fail silently
+
+# ✓ Correct
+temp=$(mktemp) || die 1 'Failed'
+trap 'rm -f "$temp"' EXIT
 ```
 
-**Template:** `mktemp /tmp/script.XXXXXX` (≥3 X's)
+**Key rules:**
+- `mktemp -d` for directories �' `rm -rf` in trap
+- Check success: `|| die`
+- Single cleanup function for multiple temps
+- Template: `mktemp /tmp/name.XXXXXX` (min 3 X's)
+- Trap signals too: `trap cleanup EXIT SIGINT SIGTERM`
 
-**Ref:** BCS1403
+**Ref:** BCS1006

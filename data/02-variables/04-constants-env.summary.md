@@ -2,6 +2,7 @@
 
 **Constants (readonly):**
 ```bash
+# Use readonly for values that never change
 declare -r SCRIPT_VERSION=1.0.0
 declare -ir MAX_RETRIES=3
 declare -r CONFIG_DIR=/etc/myapp
@@ -15,6 +16,7 @@ readonly -- VERSION AUTHOR LICENSE
 
 **Environment variables (export):**
 ```bash
+# Use declare -x (or export) for variables passed to child processes
 declare -x ORACLE_SID=PROD
 declare -x DATABASE_URL='postgresql://localhost/mydb'
 
@@ -25,7 +27,8 @@ export TEMP_DIR=/tmp/myapp
 
 **Rationale:**
 
-Use `readonly` for script metadata, configuration paths, and derived constants that should never change. Use `declare -x`/`export` for values needed by child processes and environment configuration for tools.
+- `readonly`: Script metadata (VERSION, AUTHOR), configuration paths, derived constants. Prevents modification, signals intent.
+- `declare -x`/`export`: Values for child processes, environment config (DATABASE_URL, API_KEY), settings for subshells.
 
 | Feature | `readonly` | `declare -x` / `export` |
 |---------|-----------|------------------------|
@@ -36,6 +39,7 @@ Use `readonly` for script metadata, configuration paths, and derived constants t
 
 **Combining both (readonly + export):**
 ```bash
+# Make a constant that is also exported to child processes
 declare -rx BUILD_ENV=production
 declare -rix MAX_CONNECTIONS=100
 
@@ -45,6 +49,7 @@ readonly -- DATABASE_URL
 ```
 
 **Anti-patterns:**
+
 ```bash
 # ✗ Wrong - exporting constants unnecessarily
 export MAX_RETRIES=3  # Child processes don't need this

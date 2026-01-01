@@ -1,51 +1,35 @@
 ## PATH Security
 
-**Lock down PATH immediately to prevent command hijacking and trojan binary injection.**
+**Lock PATH immediately after `set -euo pipefail` to prevent command hijacking attacks.**
 
-**Rationale:**
-- Attacker-controlled directories allow malicious binaries to replace system commands
-- `.` or empty elements (`:` `::`) cause execution from current directory
-- Earlier directories searched first, enabling priority-based attacks
+**Why:** Attacker-controlled directories allow trojan binaries; `.`, `::`, or `/tmp` in PATH enable current-directory/world-writable attacks; inherited PATH may be malicious.
 
-**Secure PATH patterns:**
+**Correct pattern:**
 
 ```bash
 #!/bin/bash
 set -euo pipefail
-
-# Pattern 1: Complete lockdown (recommended)
 readonly PATH='/usr/local/bin:/usr/bin:/bin'
 export PATH
-
-# Pattern 2: Full paths (maximum security)
-/bin/tar -czf backup.tar.gz data/
-/usr/bin/systemctl restart nginx
 ```
 
-**Validation approach:**
+**Validation if inherited PATH needed:**
 
 ```bash
-# Check for dangerous elements
-[[ "$PATH" =~ \.  ]] && die 1 'PATH contains current directory'
-[[ "$PATH" =~ ^:  ]] && die 1 'PATH starts with empty element'
-[[ "$PATH" =~ ::  ]] && die 1 'PATH contains empty element'
+[[ "$PATH" =~ \.  ]] && die 1 'PATH contains .'
+[[ "$PATH" =~ ^:|::|:$ ]] && die 1 'PATH has empty element'
 [[ "$PATH" =~ /tmp ]] && die 1 'PATH contains /tmp'
 ```
 
-**Critical anti-patterns:**
+**Anti-patterns:**
 
-```bash
-#  Trusting inherited PATH
-#!/bin/bash
-# No PATH setting - uses caller's environment
+- `# No PATH setting` â†' inherits unsafe environment
+- `PATH=.:$PATH` â†' current directory hijacking
+- `PATH=/tmp:$PATH` â†' world-writable directory
+- `PATH=/home/user/bin:$PATH` â†' user-controlled
+- `PATH=/usr/bin::/bin` â†' `::` equals current dir
+- Setting PATH late â†' commands before it are unsafe
 
-#  Current directory in PATH
-export PATH=.:$PATH
+**Critical:** Use `readonly PATH` to prevent modification. For maximum security, use absolute paths: `/bin/tar`, `/bin/rm`.
 
-#  Empty elements (:: = current dir)
-export PATH=/usr/local/bin::/usr/bin:/bin
-```
-
-**Key principle:** Set PATH in first few lines after `set -euo pipefail`. Use `readonly PATH` to prevent modification. Never include `.`, empty elements, `/tmp`, or user directories.
-
-**Ref:** BCS1202
+**Ref:** BCS1002

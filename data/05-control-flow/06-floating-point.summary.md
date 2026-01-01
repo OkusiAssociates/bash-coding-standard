@@ -2,25 +2,19 @@
 
 **Rule: BCS0706**
 
-Performing floating-point arithmetic in Bash using external tools.
+Bash only supports integer arithmetic natively. Use `bc` for arbitrary precision, `awk` for inline operations, `printf` for formatting.
 
 ---
 
-#### Rationale
-
-Bash supports only integer arithmetic. Use `bc` for arbitrary precision, `awk` for inline operations, `printf` for formatting. Avoid complex floating-point logic in Bash when possible.
-
----
-
-#### Using bc (Basic Calculator)
+#### Using bc
 
 ```bash
 # Simple calculation
 result=$(echo '3.14 * 2.5' | bc -l)
 
 # With variables
-width='10.5'
-height='7.25'
+declare -- width='10.5'
+declare -- height='7.25'
 area=$(echo "$width * $height" | bc -l)
 
 # Set precision (scale)

@@ -1,12 +1,12 @@
 ## Derived Variables
 
-**Derived variables are computed from base variables for paths, configurations, or composite values. Group them with section comments explaining dependencies. When base variables change (especially during argument parsing), update all derived variables.**
+**Derived variables are computed from base variables for paths, configs, or composite values. Group them with section comments explaining dependencies. When base variables change (during argument parsing), update all derived variables. This implements DRY at the configuration level.**
 
 **Rationale:**
-- **DRY Principle**: Single source of truth for base values
-- **Consistency**: When PREFIX changes, all paths update automatically
-- **Maintainability**: One place to change, derivations update automatically
-- **Correctness**: Updating derived variables when base changes prevents subtle bugs
+- Single source of truth for base values; derived everywhere else
+- When PREFIX changes, all paths update automatically
+- Section comments make variable relationships obvious
+- Prevents subtle bugs from stale derived values
 
 **Simple derived variables:**
 
@@ -33,7 +33,7 @@ declare -- CONFIG_FILE="$CONFIG_DIR"/config.conf
 declare -- CACHE_DIR="$HOME"/.cache/"$APP_NAME"
 ```
 
-**XDG Base Directory with fallbacks:**
+**XDG Base Directory with environment fallbacks:**
 
 ```bash
 # XDG_CONFIG_HOME with fallback to $HOME/.config
@@ -72,15 +72,14 @@ main() {
         noarg "$@"
         shift
         PREFIX=$1
-        # IMPORTANT: Update all derived paths when PREFIX changes
-        update_derived_paths
+        update_derived_paths  # IMPORTANT: Update all derived paths
         ;;
     esac
     shift
   done
 
   # Make variables readonly after parsing
-  readonly -- PREFIX APP_NAME BIN_DIR LIB_DIR DOC_DIR
+  readonly -- PREFIX BIN_DIR LIB_DIR DOC_DIR
 }
 ```
 
@@ -131,6 +130,7 @@ main() {
     --prefix)
       PREFIX=$1
       BIN_DIR="$PREFIX"/bin     # Update derived
+      LIB_DIR="$PREFIX"/lib
       ;;
   esac
 }
@@ -138,7 +138,6 @@ main() {
 # âœ— Wrong - making derived variables readonly before base
 BIN_DIR="$PREFIX"/bin
 readonly -- BIN_DIR             # Can't update if PREFIX changes!
-PREFIX=/usr/local
 
 # âœ“ Correct - make readonly after all values set
 PREFIX=/usr/local
@@ -148,8 +147,7 @@ readonly -- PREFIX BIN_DIR      # Now make readonly
 
 # âœ— Wrong - inconsistent derivation
 CONFIG_DIR=/etc/myapp                  # Hardcoded
-LOG_DIR=/var/log/"$APP_NAME"           # Derived
-# Inconsistent - either both derived or both hardcoded!
+LOG_DIR=/var/log/"$APP_NAME"           # Derived - inconsistent!
 
 # âœ“ Correct - consistent derivation
 CONFIG_DIR=/etc/"$APP_NAME"
@@ -183,12 +181,13 @@ fi
 CONFIG_FILE="$CONFIG_DIR"/config.conf
 ```
 
-**2. Hardcoded exceptions:**
+**2. Hardcoded exceptions with documentation:**
 
 ```bash
 # Most paths derived from PREFIX
 PREFIX=/usr/local
 BIN_DIR="$PREFIX"/bin
+LIB_DIR="$PREFIX"/lib
 
 # Exception: System-wide profile must be in /etc regardless of PREFIX
 # Reason: Shell initialization requires fixed path for all users
@@ -196,7 +195,7 @@ PROFILE_DIR=/etc/profile.d           # Hardcoded by design
 PROFILE_FILE="$PROFILE_DIR"/"$APP_NAME".sh
 ```
 
-**3. Multiple update functions:**
+**3. Multiple update functions for large scripts:**
 
 ```bash
 update_prefix_paths() {
@@ -217,11 +216,10 @@ update_all_derived() {
 ```
 
 **Summary:**
-- **Group derived variables** with section comments explaining dependencies
-- **Derive from base values** - never duplicate, always compute
-- **Update when base changes** - especially during argument parsing
-- **Document hardcoded exceptions** - explain why they don't derive
-- **Consistent derivation** - if one path derives from APP_NAME, all should
-- **Environment fallbacks** - use `${XDG_VAR:-$HOME/default}` pattern
-- **Make readonly last** - after all parsing and derivation complete
-- **Clear dependency chain** - base â†' derived1 â†' derived2
+- Group derived variables with section comments explaining dependencies
+- Derive from base values - never duplicate, always compute
+- Update when base changes - especially during argument parsing
+- Document hardcoded exceptions that don't derive
+- Use `${XDG_VAR:-$HOME/default}` for environment fallbacks
+- Make readonly last - after all parsing complete
+- Clear dependency chain: base â†' derived1 â†' derived2

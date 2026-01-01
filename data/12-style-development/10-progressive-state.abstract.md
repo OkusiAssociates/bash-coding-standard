@@ -1,46 +1,38 @@
 ## Progressive State Management
 
-**Modify boolean flags based on runtime conditions, separating decision logic from execution.**
+**Manage state via boolean flags modified by runtime conditions; separate decisions from execution.**
 
-**Pattern:**
-1. Declare flags with initial values (`declare -i INSTALL_BUILTIN=0`)
-2. Parse arguments, set flags from user input
-3. Adjust flags: dependency checks â†’ build failures â†’ user overrides
-4. Execute based on final flag state
+### Pattern
 
-**Example:**
+1. Declare flags at top with defaults
+2. Parse args â†' set flags from user input
+3. Progressively adjust based on: dependencies, failures, overrides
+4. Execute actions from final flag state
+
 ```bash
-# Initial state
-declare -i INSTALL_BUILTIN=0
-declare -i BUILTIN_REQUESTED=0
+declare -i INSTALL_FEAT=0 FEAT_REQUESTED=0 SKIP_FEAT=0
 
-# Parse: user requested --builtin
-INSTALL_BUILTIN=1
-BUILTIN_REQUESTED=1
+# Parse phase
+case $1 in --feat) INSTALL_FEAT=1; FEAT_REQUESTED=1 ;; esac
 
-# Validate: check prerequisites
-if ! check_builtin_support; then
-  ((BUILTIN_REQUESTED)) && install_bash_builtins || INSTALL_BUILTIN=0
-fi
+# Validation phase - progressively disable
+((SKIP_FEAT)) && INSTALL_FEAT=0
+check_deps || { ((FEAT_REQUESTED)) && try_install || INSTALL_FEAT=0; }
+((INSTALL_FEAT)) && ! build_feat && INSTALL_FEAT=0
 
-# Build: disable on failure
-((INSTALL_BUILTIN)) && ! build_builtin && INSTALL_BUILTIN=0
-
-# Execute: only if still enabled
-((INSTALL_BUILTIN)) && install_builtin
+# Execution phase - act on final state
+((INSTALL_FEAT)) && install_feat
 ```
 
-**Benefits:** Decision/action separation, traceable flag changes, fail-safe behavior, preserves user intent.
+### Key Points
 
-**Guidelines:**
-- Separate flags for user intent (`*_REQUESTED`) vs. runtime state (`INSTALL_*`)
-- Apply state changes in order: parse â†’ validate â†’ execute
+- Separate intent flag (`FEAT_REQUESTED`) from state flag (`INSTALL_FEAT`)
 - Never modify flags during execution phase
-- Document state transitions
+- State changes in order: parse â†' validate â†' execute
 
-**Anti-patterns:**
-- `[[ "$FLAG" == "yes" ]]` â†’ Use `((FLAG))` for booleans
-- Changing flags inside action functions â†’ Disable before actions
-- Single flag for request and state â†’ Separate concerns
+### Anti-Patterns
 
-**Ref:** BCS1410
+- `if ((INSTALL_FEAT)); then install_feat; INSTALL_FEAT=0; fi` â†' modifying flags during execution
+- Single flag for both user intent and runtime state â†' loses why vs. what distinction
+
+**Ref:** BCS1210

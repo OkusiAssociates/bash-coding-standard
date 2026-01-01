@@ -1,26 +1,11 @@
 ## STDOUT vs STDERR
 
-**All error messages must go to STDERR with `>&2` at command beginning.**
+**All error messages â†' STDERR; place `>&2` at beginning for clarity.**
 
-**Rationale:**
-- Separates error output from normal output (enables piping/redirection)
-- Leading `>&2` improves readability vs trailing
-
-**Example:**
 ```bash
-# Preferred - redirect at start
-error() {
-  >&2 echo "[$(date -Ins)]: $*"
-}
-
-# Acceptable - redirect at end
-warn() {
-  echo "Warning: $*" >&2
-}
+>&2 echo "[$(date -Ins)]: $*"
 ```
 
-**Anti-patterns:**
-- `echo "error"` ’ STDOUT (errors invisible when piped)
-- Mixing error/normal output on same stream
+Anti-pattern: `echo "error" >&2` â†' harder to spot redirection at line end.
 
-**Ref:** BCS0902
+**Ref:** BCS0702

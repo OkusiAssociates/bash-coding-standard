@@ -1,30 +1,51 @@
 ### Arrays
 
-**Always quote array expansions `"${array[@]}"` to preserve element boundaries and prevent word splitting.**
+**Always quote array expansions `"${array[@]}"` to preserve elements and prevent word splitting.**
 
-#### Why Arrays
-- Element boundaries preserved regardless of content (spaces, globs)
-- Safe command construction with arbitrary arguments
-
-#### Core Patterns
+#### Declaration & Operations
 
 ```bash
-declare -a paths=()              # Empty indexed array
+declare -a files=()              # Indexed array
 declare -A config=()             # Associative (Bash 4.0+)
-paths+=("$file")                 # Append element
-for p in "${paths[@]}"; do       # Iterate (MUST quote)
-readarray -t lines < <(cmd)      # From command output
+files+=("$path")                 # Append element
+count=${#files[@]}               # Length
+first=${files[0]}                # Access (0-indexed)
+```
+
+#### Safe Iteration
+
+```bash
+for f in "${files[@]}"; do process "$f"; done
+```
+
+#### Safe Population
+
+```bash
+readarray -t lines < <(command)  # From command
+IFS=',' read -ra fields <<< "$csv"  # Split string
+```
+
+#### Command Construction
+
+```bash
+local -a cmd=(app '--config' "$cfg")
+((verbose)) && cmd+=('--verbose') ||:
 "${cmd[@]}"                      # Execute safely
 ```
 
-#### Quick Reference
-| `${#arr[@]}` | Length | `${arr[-1]}` | Last element |
-|--------------|--------|--------------|--------------|
-| `"${arr[@]}"` | All (separate) | `${arr[@]:1:3}` | Slice |
+#### Critical Anti-Patterns
 
-#### Anti-Patterns
-- `${files[@]}` â†' `"${files[@]}"` (unquoted breaks on spaces)
-- `array=($string)` â†' `readarray -t array <<< "$string"` (word splitting)
-- `for x in "${arr[*]}"` â†' `"${arr[@]}"` (single vs separate words)
+`rm ${files[@]}` â†' `rm "${files[@]}"` (unquoted breaks on spaces)
+
+`array=($string)` â†' `readarray -t array <<< "$string"` (word splitting unsafe)
+
+`for x in "${arr[*]}"` â†' `for x in "${arr[@]}"` (single word vs separate)
+
+| Op | Syntax |
+|----|--------|
+| All | `"${arr[@]}"` |
+| Length | `${#arr[@]}` |
+| Slice | `"${arr[@]:1:3}"` |
+| Indices | `"${!arr[@]}"` |
 
 **Ref:** BCS0207

@@ -1,22 +1,28 @@
 ## Derived Variables
 
-**Compute variables from base values; update all derivations when base changes during argument parsing.**
+**Compute variables from base values; update all derivations when base changes.**
 
-**Rationale:** DRY principle—single source of truth; automatic path updates when PREFIX changes; prevents subtle bugs from stale values.
+**Rationale:** DRY principle—single source of truth; automatic consistency when PREFIX changes; prevents subtle bugs from stale derived values.
 
-**Core pattern:**
+**Pattern:**
 
 ```bash
-declare -- PREFIX=/usr/local
-declare -- BIN_DIR="$PREFIX"/bin
-declare -- LIB_DIR="$PREFIX"/lib
+# Base values
+declare -- PREFIX=/usr/local APP_NAME=myapp
 
+# Derived from PREFIX
+declare -- BIN_DIR="$PREFIX"/bin
+declare -- LIB_DIR="$PREFIX"/lib/"$APP_NAME"
+
+# Update function for arg parsing
 update_derived_paths() {
   BIN_DIR="$PREFIX"/bin
-  LIB_DIR="$PREFIX"/lib
+  LIB_DIR="$PREFIX"/lib/"$APP_NAME"
 }
 
-# Call after --prefix changes PREFIX
+# After --prefix changes: update_derived_paths
+# Make readonly AFTER all parsing complete
+readonly -- PREFIX BIN_DIR LIB_DIR
 ```
 
 **XDG fallbacks:** `CONFIG_BASE=${XDG_CONFIG_HOME:-$HOME/.config}`
@@ -24,20 +30,20 @@ update_derived_paths() {
 **Anti-patterns:**
 
 ```bash
-# ✗ Duplicating values
-BIN_DIR=/usr/local/bin     # Hardcoded, not derived!
+# ✗ Duplicating base value
+BIN_DIR=/usr/local/bin  # Hardcoded, not derived!
 
 # ✗ Not updating after base changes
-PREFIX=$1                  # Changed but BIN_DIR still has old value!
+PREFIX=$1  # BIN_DIR now stale!
 
-# ✓ Always update derived variables
-PREFIX=$1; update_derived_paths
+# ✗ Readonly before parsing complete
+readonly -- BIN_DIR  # Can't update later!
 ```
 
-**Rules:**
-- Group with section comments explaining dependencies
-- Make `readonly` only after all parsing complete
-- Document hardcoded exceptions (e.g., `/etc/profile.d`)
-- Consistent derivation—if one derives from APP_NAME, all should
+**Key rules:**
+- Group derived vars with section comments
+- Update ALL derivations when base changes
+- `readonly` only after parsing complete
+- Document hardcoded exceptions
 
 **Ref:** BCS0209

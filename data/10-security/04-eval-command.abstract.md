@@ -2,49 +2,36 @@
 
 **Never use `eval` with untrusted input. Avoid `eval` entirely—safer alternatives exist for all use cases.**
 
-**Rationale:**
-- **Code injection** - Executes arbitrary commands with full script privileges
-- **Double expansion** - Expands twice, enabling command substitution attacks
-- **Bypasses validation** - Sanitized input still vulnerable to metacharacters
+### Why It Matters
+- Code injection: arbitrary command execution with full script privileges
+- Bypasses all validation via metacharacters; impossible to audit
+- Double expansion enables attacks: `eval "echo $var"` executes `$(whoami)` in `var`
 
-**Core danger:**
+### Safe Alternatives
+
+| Need | Use Instead |
+|------|-------------|
+| Dynamic commands | Arrays: `cmd=(find -name "*.txt"); "${cmd[@]}"` |
+| Variable indirection | `${!var_name}` or `printf -v "$var" '%s' "$val"` |
+| Dynamic data | Associative arrays: `declare -A data; data[$key]=$val` |
+| Function dispatch | Case or array lookup: `"${actions[$action]}"` |
+
+### Core Pattern
 ```bash
-user_input="$1"
-eval "$user_input"  # ✗ Executes: rm -rf / or worse
-```
+# ✗ NEVER - eval with user input
+eval "$user_cmd"
 
-**Safe alternatives:**
-
-```bash
-# ✗ eval for command building
-eval "find /data -name '$pattern'"
-
-# ✓ Use arrays
-cmd=(find /data -name "$pattern")
+# ✓ Safe - array-based command construction
+declare -a cmd=(find /data -type f)
+[[ -n "$pattern" ]] && cmd+=(-name "$pattern")
 "${cmd[@]}"
 
-# ✗ eval for indirection → ✓ Use ${!var}
-eval "value=\$$var_name"  # ✗
-value="${!var_name}"       # ✓
-
-# ✗ eval for dynamic vars → ✓ Use associative arrays
-eval "var_$i='value'"     # ✗
-declare -A data; data["var_$i"]='value'  # ✓
-
-# ✗ eval for dispatch → ✓ Use case/array
-eval "${action}_func"     # ✗
-case "$action" in
-  start) start_func ;;
-  stop)  stop_func ;;
-  *)     die 22 "Invalid" ;;
-esac
+# ✓ Safe - indirect expansion for variable access
+echo "${!var_name}"
 ```
 
-**Anti-patterns:**
-- `eval "$input"` → Whitelist with case
-- `eval "$var='$val'"` → `printf -v "$var" '%s' "$val"`
-- `eval "source $file"` → `source "$file"`
+### Anti-Patterns
+- `eval "$var_name='$value'"` �' use `printf -v "$var_name" '%s' "$value"`
+- `eval "echo $$var_name"` �' use `echo "${!var_name}"`
 
-**Key principle:** Use arrays, indirect expansion (`${!var}`), or associative arrays instead of `eval`.
-
-**Ref:** BCS1204
+**Ref:** BCS1004

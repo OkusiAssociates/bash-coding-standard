@@ -1,18 +1,15 @@
 ### Quoting in Conditionals
 
-**Always quote variables in conditionals** â€” prevents word splitting, glob expansion, empty-value errors, and injection.
+**Always quote variables in conditionals.** Static values use single quotes.
 
 ```bash
-[[ -f "$file" ]]                    # âœ“ Variable quoted
-[[ "$action" == 'start' ]]          # âœ“ Literal single-quoted
-[[ "$filename" == *.txt ]]          # âœ“ Glob unquoted (pattern match)
-[[ "$input" =~ $pattern ]]          # âœ“ Regex pattern unquoted
+[[ -f "$file" ]]              # Variable quoted
+[[ "$name" == 'value' ]]      # Literal single-quoted
+[[ "$input" =~ $pattern ]]    # Regex pattern unquoted
 ```
 
-**Why:** `$file` with spaces/globs breaks; empty vars cause syntax errors.
+**Why:** Unquoted variables break on spaces/globs, empty values cause syntax errors, injection risk.
 
-**Anti-patterns:** `[[ -f $file ]]` â†' breaks with spaces | `[[ "$x" == "literal" ]]` â†' use single quotes for static strings
-
-**Exception:** Regex `=~` right-hand side must be unquoted for pattern matching.
+**Anti-patterns:** `[[ -f $file ]]` â†' breaks with spaces; `[[ "$x" == "literal" ]]` â†' use single quotes for static strings.
 
 **Ref:** BCS0303

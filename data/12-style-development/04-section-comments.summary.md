@@ -1,6 +1,6 @@
 ## Section Comments
 
-Use lightweight section comments to organize code into logical groups:
+Use lightweight `# Description` comments to organize code into logical groups.
 
 ```bash
 # Default values
@@ -26,15 +26,12 @@ info() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 
 # Unconditional messaging functions
 error() { >&2 _msg "$@"; }
-die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 ```
 
 **Guidelines:**
-- Simple `# Description` format (no dashes, no decorations)
-- Short and descriptive (2-4 words)
-- Placed immediately before group
-- Blank line after group
-- Groups related variables, functions, or logic blocks
-- Reserve 80-dash separators for major divisions only
+- Keep section comments short (2-4 words), no dashes or box drawing
+- Place immediately before the group; blank line after the group
+- Reserve 80-dash separators for major script divisions only
 
-**Common patterns:** `# Default values`, `# Derived paths`, `# Core message function`, `# Conditional messaging functions`, `# Helper functions`, `# Business logic`, `# Validation functions`
+**Common patterns:** `# Default values`, `# Derived paths`, `# Core message function`, `# Helper functions`, `# Business logic`, `# Validation functions`

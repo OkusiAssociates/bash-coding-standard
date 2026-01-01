@@ -1,6 +1,6 @@
 ### printf Patterns
 
-**Rule: BCS0305** (From BCS0409)
+**Rule: BCS0305**
 
 Quoting rules for printf and echo.
 
@@ -24,9 +24,15 @@ printf 'Found %d files in %s\n' "$count" "$dir"
 
 ---
 
-#### Format Specifiers
+#### Format String Escapes
 
-`%s` string | `%d` decimal | `%f` float | `%x` hex | `%%` literal %
+```bash
+printf '%s\n'   "$string"       # String
+printf '%d\n'   "$integer"      # Decimal
+printf '%f\n'   "$float"        # Float
+printf '%x\n'   "$hex"          # Hexadecimal
+printf '%%\n'                   # Literal %
+```
 
 ---
 

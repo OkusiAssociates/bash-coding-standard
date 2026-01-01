@@ -8,7 +8,8 @@ Patterns for creating reusable Bash libraries.
 
 #### Rationale
 
-Well-designed libraries provide code reuse, consistent interfaces, easier testing, and namespace isolation.
+- Code reuse across scripts with consistent interface
+- Easier testing, maintenance, and namespace isolation
 
 ---
 
@@ -22,12 +23,12 @@ Well-designed libraries provide code reuse, consistent interfaces, easier testin
 
 # Prevent execution
 [[ "${BASH_SOURCE[0]}" != "$0" ]] || {
-  echo "Error: This file must be sourced, not executed" >&2
+  >&2 echo 'Error: This file must be sourced, not executed'
   exit 1
 }
 
 # Library version
-declare -rx LIB_VALIDATION_VERSION='1.0.0'
+declare -rx LIB_VALIDATION_VERSION=1.0.0
 
 # Validation functions
 valid_ip4() {
@@ -57,7 +58,7 @@ declare -fx valid_email
 #!/usr/bin/env bash
 # lib-config.sh - Configuration management library
 
-[[ "${BASH_SOURCE[0]}" != "$0" ]] || exit 1
+[[ "${BASH_SOURCE[0]}" != "$0" ]] || return 1
 
 # Configurable defaults (can be overridden before sourcing)
 : "${CONFIG_DIR:=/etc/myapp}"
@@ -107,7 +108,7 @@ source "$SCRIPT_DIR/lib-validation.sh"
 
 # Source with existence check
 lib_path='/usr/local/lib/myapp/lib-utils.sh'
-[[ -f "$lib_path" ]] && source "$lib_path" || die 1 "Missing library: $lib_path"
+[[ -f "$lib_path" ]] && source "$lib_path" || die 1 "Missing library ${lib_path@Q}"
 
 # Source multiple libraries
 for lib in "$LIB_DIR"/*.sh; do
@@ -131,5 +132,3 @@ lib_init       # Explicit initialization call
 ---
 
 **See Also:** BCS0606 (Dual-Purpose Scripts), BCS0608 (Dependency Management)
-
-#fin

@@ -1,52 +1,40 @@
 ## Blank Line Usage
 
-**Strategic blank lines improve readability by separating logical blocks.**
+**Use single blank lines to separate logical blocks; never use multiple consecutive blanks.**
 
-**Core rules:**
-- One blank line between functions
-- One blank line between logical sections within functions
-- One blank line after section comments
-- One blank line between variable groups
-- Blank lines before/after multi-line conditionals or loops
-- Never use multiple consecutive blank lines
-- No blank line between short, related statements
+### Guidelines
 
-**Minimal example:**
+- One blank between functions, logical sections, variable groups
+- One blank after section comments
+- Blanks before/after multi-line conditionals/loops
+- No blank needed between short related statements
+
+### Pattern
 
 ```bash
-#!/bin/bash
-set -euo pipefail
-
-VERSION='1.0.0'
-SCRIPT_PATH=$(realpath -- "$0")
-
-PREFIX=/usr/local
-DRY_RUN=0
-
-BIN_DIR="$PREFIX"/bin
-LIB_DIR="$PREFIX"/lib
-
+declare -r VERSION=1.0.0
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*}
+                                          # ← After metadata group
+# Default values                          # ← Before section comment
+declare -- PREFIX=/usr/local
+declare -i DRY_RUN=0
+                                          # ← Before function
 check_prerequisites() {
-  info 'Checking prerequisites...'
-
-  if ! command -v gcc &> /dev/null; then
-    die 1 "'gcc' compiler not found."
+  info 'Checking...'
+                                          # ← Between logical blocks
+  if ! command -v gcc &>/dev/null; then
+    die 1 'gcc not found'
   fi
-
-  success 'Prerequisites check passed'
 }
-
+                                          # ← Between functions
 main() {
   check_prerequisites
-  install_files
 }
-
-main "$@"
-#fin
 ```
 
-**Anti-patterns:**
-- `function1() { ... }\nfunction2() { ... }` → No blank line between functions
-- Multiple consecutive blank lines → Use single blank line only
+### Anti-Patterns
 
-**Ref:** BCS1303
+- `✗` Multiple consecutive blank lines �' `✓` Single blank sufficient
+- `✗` No separation between unrelated blocks �' `✓` Add visual breaks
+
+**Ref:** BCS1203

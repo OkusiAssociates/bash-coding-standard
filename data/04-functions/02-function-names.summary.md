@@ -12,6 +12,10 @@ process_log_file() {
 }
 
 # ✓ Private functions use leading underscore
+_my_private_function() {
+  …
+}
+
 _validate_input() {
   …
 }
@@ -26,22 +30,22 @@ PROCESS_FILE() {    # Don't do this
 }
 ```
 
-**Rationale:** Matches Unix conventions and built-in commands (all lowercase). Underscore prefix signals internal-use functions.
+**Rationale:** Matches Unix naming conventions; avoids confusion with variables; underscore prefix signals internal-only use.
 
 **Anti-patterns:**
 ```bash
-# ✗ Don't override built-in commands
+# ✗ Don't override built-in commands without good reason
 cd() {           # Dangerous - overrides built-in cd
   builtin cd "$@" && ls
 }
 
-# ✓ Wrap built-ins with different name
+# ✓ If you must wrap built-ins, use a different name
 change_dir() {
   builtin cd "$@" && ls
 }
 
 # ✗ Don't use special characters
-my-function() {  # Dash creates issues
+my-function() {  # Dash creates issues in some contexts
   …
 }
 ```

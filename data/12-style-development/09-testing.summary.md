@@ -1,6 +1,6 @@
 ## Testing Support Patterns
 
-Patterns for making scripts testable through dependency injection, test modes, and assertions.
+Patterns for testable scripts: dependency injection, test modes, assertions.
 
 ```bash
 # Dependency injection for testing
@@ -21,20 +21,18 @@ declare -i TEST_MODE="${TEST_MODE:-0}"
 
 # Conditional behavior for testing
 if ((TEST_MODE)); then
-  # Use test data directory
-  DATA_DIR='./test_data'
-  # Disable destructive operations
+  DATA_DIR=./test_data
   RM_CMD() { echo "TEST: Would remove $*"; }
 else
-  DATA_DIR='/var/lib/app'
+  DATA_DIR=/var/lib/app
   RM_CMD() { rm "$@"; }
 fi
 
 # Assert function for tests
 assert() {
-  local -- expected="$1"
-  local -- actual="$2"
-  local -- message="${3:-Assertion failed}"
+  local -- expected=$1
+  local -- actual=$2
+  local -- message=${3:-Assertion failed}
 
   if [[ "$expected" != "$actual" ]]; then
     >&2 echo "ASSERT FAIL: $message"
@@ -50,14 +48,13 @@ run_tests() {
   local -i passed=0 failed=0
   local -- test_func
 
-  # Find all functions starting with test_
   for test_func in $(declare -F | awk '$3 ~ /^test_/ {print $3}'); do
     if "$test_func"; then
       passed+=1
-      echo " $test_func"
+      echo "✓ $test_func"
     else
       failed+=1
-      echo " $test_func"
+      echo "✗ $test_func"
     fi
   done
 
@@ -65,3 +62,9 @@ run_tests() {
   ((failed == 0))
 }
 ```
+
+**Key Patterns:**
+- **Dependency injection**: Wrap external commands in functions; override in tests
+- **Test mode flag**: `declare -i TEST_MODE` controls destructive operations
+- **Assertions**: Compare expected vs actual with clear failure messages
+- **Test discovery**: Find `test_*` functions via `declare -F`

@@ -1,21 +1,21 @@
 ### printf Patterns
 
-**Single-quote format strings; double-quote variable arguments. Prefer `printf` over `echo -e`.**
+**Single-quote format strings; double-quote variable arguments. Prefer printf over echo -e.**
 
-#### Core Pattern
+#### Pattern
 
 ```bash
-printf '%s: %d files\n' "$name" "$count"
-echo 'Static message'  # No variables â†' single quotes
+printf '%s: %d found\n' "$name" "$count"  # Format static, args quoted
+echo 'Done'                                # Static: single quotes
+echo "$SCRIPT_NAME $VERSION"               # Variables: double quotes
 ```
 
-#### Specifiers
+#### Key Specifiers
 
 `%s` string | `%d` decimal | `%f` float | `%x` hex | `%%` literal %
 
 #### Anti-Patterns
 
-- `echo -e "...\n..."` â†' `printf '...\n...\n'` (portable)
-- Double-quoted format: `printf "%s"` â†' `printf '%s'`
+`echo -e "a\nb"` â†' `printf 'a\nb\n'` or `echo $'a\nb'`
 
 **Ref:** BCS0305

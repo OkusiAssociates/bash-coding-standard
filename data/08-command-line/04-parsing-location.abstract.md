@@ -1,31 +1,30 @@
 ## Argument Parsing Location
 
-**Place argument parsing inside `main()` function, not at top level.**
+**Place argument parsing inside `main()` for testability and scoping.**
 
-**Rationale:** Enables testability (can invoke `main()` with test arguments), cleaner scoping (parsing variables local to `main()`), better encapsulation.
+### Rationale
+- Testability: call `main` with synthetic args
+- Scoping: parsing vars stay local to `main()`
 
-**Pattern:**
+### Pattern
 
 ```bash
 main() {
   while (($#)); do
     case $1 in
-      --opt)    FLAG=1 ;;
-      --prefix) shift; PREFIX="$1" ;;
+      --prefix) shift; PREFIX=$1 ;;
       -h|--help) show_help; exit 0 ;;
-      -*)       die 22 "Invalid option '$1'" ;;
-      *)        die 2 "Unknown option '$1'" ;;
+      -*) die 22 "Invalid option ${1@Q}" ;;
     esac
     shift
   done
-
-  check_prerequisites
-  process_data
+  # main logic
 }
-
 main "$@"
 ```
 
-**Exception:** Simple scripts <200 lines without `main()` may parse at top level ’ `while (($#)); do case $1 in -v) VERBOSE=1 ;; esac; shift; done`
+### Anti-Pattern
 
-**Ref:** BCS1004
+Top-level parsing in scripts >200 lines â†' harder to test, pollutes global scope.
+
+**Ref:** BCS0804

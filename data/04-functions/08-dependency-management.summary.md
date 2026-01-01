@@ -8,21 +8,21 @@ Checking and managing external dependencies in Bash scripts.
 
 #### Rationale
 
-- Provides clear error messages for missing tools
-- Enables graceful degradation and documents requirements
-- Supports portability checking
+- Clear error messages for missing tools
+- Enables graceful degradation and portability checking
+- Documents script requirements
 
 ---
 
 #### Basic Dependency Check
 
 ```bash
-# Check single command
+# Single command
 command -v curl >/dev/null || die 1 'curl is required but not installed'
 
-# Check multiple commands
+# Multiple commands
 for cmd in curl jq awk; do
-  command -v "$cmd" >/dev/null || die 1 "Required: $cmd"
+  command -v "$cmd" >/dev/null || die 1 "Required ${cmd@Q}"
 done
 ```
 
@@ -37,7 +37,7 @@ check_dependencies() {
     command -v "$cmd" >/dev/null || missing+=("$cmd")
   done
 
-  if ((${#missing[@]} > 0)); then
+  if ((${#missing[@]})); then
     error "Missing dependencies: ${missing[*]}"
     info 'Install with: sudo apt install ...'
     return 1
@@ -51,11 +51,9 @@ check_dependencies curl jq sqlite3 || exit 1
 #### Optional Dependencies
 
 ```bash
-# Check and set availability flag
 declare -i HAS_JQ=0
-command -v jq >/dev/null && HAS_JQ=1
+command -v jq >/dev/null && HAS_JQ=1 ||:
 
-# Use with fallback
 if ((HAS_JQ)); then
   result=$(echo "$json" | jq -r '.field')
 else
@@ -90,7 +88,6 @@ check_tool_version() {
 #### Lazy Loading
 
 ```bash
-# Initialize expensive resources only when needed
 declare -- SQLITE_DB=''
 
 get_db() {
@@ -108,16 +105,16 @@ get_db() {
 #### Anti-Patterns
 
 ```bash
-# ✗ Wrong - using which (not POSIX, unreliable)
+# ✗ Wrong - which is not POSIX, unreliable
 which curl >/dev/null
 
-# ✓ Correct - use command -v (POSIX compliant)
+# ✓ Correct - command -v is POSIX compliant
 command -v curl >/dev/null
 ```
 
 ```bash
-# ✗ Wrong - silent failure on missing dependency
-curl "$url"  # Cryptic error if curl missing
+# ✗ Wrong - silent failure, cryptic error if missing
+curl "$url"
 
 # ✓ Correct - explicit check with helpful message
 command -v curl >/dev/null || die 1 'curl required: apt install curl'

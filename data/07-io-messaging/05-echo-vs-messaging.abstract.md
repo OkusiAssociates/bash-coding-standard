@@ -1,51 +1,46 @@
 ## Echo vs Messaging Functions
 
-**Use `echo` for data output (stdout), messaging functions for operational status (stderr).**
+**Use messaging functions (`info`, `warn`, `error`) for operational status to stderr; use `echo` for data output to stdout.**
 
-**Rationale:** Stream separation enables piping/capturing data while showing status; verbosity control applies only to status messages; parseable output requires predictable format.
+**Key Distinction:**
+- **Messaging** â†' stderr, respects `VERBOSE`, has formatting/colors
+- **echo** â†' stdout, always displays, parseable/pipeable
 
-### Decision Criteria
-
-| Output Type | Tool | Stream | Verbosity |
-|-------------|------|--------|-----------|
-| Data/results | `echo` | stdout | Always shows |
-| Help/version | `echo`/`cat` | stdout | Always shows |
-| Status/progress | `info`/`success` | stderr | Respects VERBOSE |
-| Errors | `error`/`die` | stderr | Always shows |
-
-### Core Pattern
+**Use messaging for:** status updates, diagnostics, progress, color-coded feedback
+**Use echo for:** data returns, help/version, reports, parseable output
 
 ```bash
-# Data output - capturable
+# Messaging: operational status (stderr)
+info 'Processing...'
+error "File not found ${file@Q}"
+
+# Echo: data output (stdout, capturable)
 get_value() { echo "$result"; }
-val=$(get_value)  # Works
+val=$(get_value)
 
-# Status - never captured
-process() {
-  info 'Processing...'    # stderr
-  echo "$data"            # stdout (data)
-  success 'Done'          # stderr
+# Help text always uses echo/cat (not messaging)
+show_help() { cat <<'EOT'
+Usage: script.sh [OPTIONS]
+EOT
 }
-output=$(process)  # Only captures $data
 ```
 
-### Anti-Patterns
+**Anti-patterns:**
 
 ```bash
-# âœ— info() for data - can't capture
+# âœ— info() for data - goes to stderr, cannot capture
 get_email() { info "$email"; }
-result=$(get_email)  # Empty!
 
-# âœ— echo for status - pollutes data stream
-list_files() {
-  echo "Listing..."  # Mixes with data!
-  ls
-}
+# âœ— echo for status - mixes with data in stdout
+echo "Processing..."  # Use info instead
 
-# âœ— Help via info() - hidden when VERBOSE=0
+# âœ— Help via info() - hidden if VERBOSE=0
 show_help() { info 'Usage: ...'; }
+
+# âœ— Error to stdout
+echo "Error: failed"  # Use: error "failed"
 ```
 
-**Key:** Data â†' stdout (echo), Status â†' stderr (messaging functions).
+**Stream separation enables pipeline composition:** data piped/captured, status visible to user.
 
 **Ref:** BCS0705

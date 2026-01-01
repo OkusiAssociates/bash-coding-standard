@@ -2,7 +2,7 @@
 
 **Rule: BCS0210**
 
-Use `"$var"` by default. Add braces `"${var}"` only when syntactically required.
+Use `"$var"` as default; add braces `"${var}"` only when syntactically required.
 
 ---
 
@@ -43,27 +43,19 @@ ${!prefix@}                     # Variables starting with prefix
 
 ---
 
-#### Braces Required
+#### When Braces Are REQUIRED
 
-```bash
-"${var##*/}"        # Parameter expansion operations
-"${var:-default}"   # Default value
-"${var:0:5}"        # Substring
-"${var//old/new}"   # Substitution
-"${var,,}"          # Case conversion
-"${var1}${var2}"    # Adjacent variables (no separator)
-"${prefix}suffix"   # Variable + alphanumeric
-"${array[index]}"   # Array element access
-"${array[@]}"       # All array elements
-"${#array[@]}"      # Array length
-"${@:2}"            # Positional from 2nd
-"${10}"             # Positional > 9
-"${!var}"           # Indirect expansion
-```
+1. **Parameter expansion operations:** `"${var##*/}"`, `"${var:-default}"`, `"${var:0:5}"`, `"${var//old/new}"`, `"${var,,}"`
+
+2. **Variable concatenation (no separator):** `"${var1}${var2}"`, `"${prefix}suffix"`
+
+3. **Array access:** `"${array[index]}"`, `"${array[@]}"`, `"${#array[@]}"`
+
+4. **Special parameter expansion:** `"${@:2}"`, `"${10}"`, `"${!var}"`
 
 ---
 
-#### Braces NOT Required
+#### When Braces Are NOT Required
 
 ```bash
 # ✓ Correct - standalone variables
@@ -72,14 +64,10 @@ ${!prefix@}                     # Variables starting with prefix
 # ✓ Correct - separators delimit naturally
 "$PREFIX"/bin
 "$PREFIX/bin"
-"$SCRIPT_DIR"/build/lib
 echo "Installing to $PREFIX/bin"
-info "Found $count files"
 
 # ✗ Wrong - unnecessary braces
-"${var}"  "${HOME}"  "${SCRIPT_DIR}"
-"${PREFIX}"/bin
-echo "Installing to ${PREFIX}/bin"
+"${var}"  "${HOME}"  "${PREFIX}"/bin
 ```
 
 ---
@@ -87,7 +75,7 @@ echo "Installing to ${PREFIX}/bin"
 #### Edge Cases
 
 ```bash
-# Braces required - next char alphanumeric, no separator
+# Braces required - alphanumeric follows without separator
 "${var}_suffix"      # Prevents $var_suffix
 "${prefix}123"       # Prevents $prefix123
 
@@ -108,5 +96,7 @@ echo "Installing to ${PREFIX}/bin"
 | Parameter expansion | `"${var%pattern}"` | `"${path%/*}"` |
 | Concatenation (no sep) | `"${var1}${var2}"` | `"${prefix}${suffix}"` |
 | Array access | `"${array[i]}"` | `"${args[@]}"` |
+
+**Key Principle:** Use `"$var"` by default. Only add braces when required for correct parsing.
 
 #fin

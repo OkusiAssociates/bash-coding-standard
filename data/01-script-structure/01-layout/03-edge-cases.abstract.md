@@ -1,44 +1,50 @@
 ### Edge Cases and Variations
 
-**Standard 13-step layout allows specific deviations for tiny scripts, libraries, external config, platform detection, and cleanup traps.**
+**Standard 13-step layout modifications for specific use cases: small scripts, libraries, external config, platform detection, cleanup traps.**
 
 ---
 
 ## Legitimate Simplifications
 
-**Tiny scripts (<200 lines):** Skip `main()`, run directly after `set -euo pipefail`
-
-**Library files:** Skip `set -e` (affects caller), skip `main()`, skip executionâ€”define functions only:
-```bash
-#!/usr/bin/env bash
-# Library - sourced only
-is_integer() { [[ "$1" =~ ^-?[0-9]+$ ]]; }
-#fin
-```
+- **<200 lines** â†' skip `main()`, run directly
+- **Library files** â†' skip `set -e`, `main()`, execution (avoid affecting caller)
+- **One-off utilities** â†' may skip colors, verbose messaging
 
 ## Legitimate Extensions
 
-**Config sourcing:** Source between metadata and business logic, `readonly` after:
+- **External config** â†' source between metadata and business logic; `readonly` after sourcing
+- **Platform detection** â†' add platform globals after standard globals
+- **Cleanup traps** â†' after utility functions, before business logic
+- **Lock files** â†' acquisition/release around main execution
+
+## Core Example â€” Library Pattern
+
 ```bash
-[[ -r "$CONFIG_FILE" ]] && source "$CONFIG_FILE"
-readonly -- CONFIG_FILE
+#!/usr/bin/env bash
+# Library - meant to be sourced, not executed
+# No set -e (affects caller), no readonly (caller may modify)
+
+is_integer() { [[ "$1" =~ ^-?[0-9]+$ ]]; }
+# No main(), no execution
+#fin
 ```
 
-**Cleanup traps:** Define cleanup function first, set trap before temp file creation:
+## Anti-Pattern
+
 ```bash
-cleanup() { rm -f "${TEMP_FILES[@]}"; }
-trap 'cleanup $?' EXIT
+# âœ— Functions before set -e
+validate() { : ... }
+set -euo pipefail  # Too late!
+VERSION=1.0.0
+check() { : ... }
+declare -- PREFIX=/usr  # Globals scattered
 ```
 
-**Platform detection:** Add platform-specific globals after standard globals
+## Invariant Principles
 
-## Key Principles (Even When Deviating)
-
-1. `set -euo pipefail` first (unless library)
-2. Bottom-up organization maintained
-3. Dependencies before usage
-4. Document deviation reasons
-
-**Anti-pattern:** Functions before `set -e` â†' `set -euo pipefail` too late, errors not caught
+Even when deviating:
+1. **Safety first** â€” `set -euo pipefail` still comes first (unless library)
+2. **Dependencies before usage** â€” bottom-up organization applies
+3. **Document reasons** â€” comment why deviating
 
 **Ref:** BCS010103

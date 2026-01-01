@@ -2,17 +2,13 @@
 
 **Use `declare -fx` to export functions for subshell access.**
 
-### Rationale
-- Subshells don't inherit functions by default
-- Essential for `xargs -P`, `find -exec`, parallel jobs
+Required when functions must be available to: `xargs`, `find -exec`, parallel execution, or any child process.
 
-### Pattern
 ```bash
 grep() { /usr/bin/grep "$@"; }
 declare -fx grep
 ```
 
-### Anti-Pattern
-`export -f func` â†' Use `declare -fx` for consistency with variable exports.
+Anti-pattern: `export -f func` â†' use `declare -fx func` instead (consistent with BCS declaration style).
 
 **Ref:** BCS0404

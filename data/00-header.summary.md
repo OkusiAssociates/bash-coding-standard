@@ -1,13 +1,15 @@
 # Bash Coding Standard
 
-Comprehensive Bash coding standard for Bash 5.2+. Not a compatibility standard.
+Comprehensive Bash 5.2+ coding standard (not a compatibility standard).
 
-## Principles
+"This isn't just a coding standard -- it's a systems engineering philosophy applied to Bash." -- Biksu Okusi
+
+## Coding Principles
 - K.I.S.S.
 - "The best process is no process"
 - "Everything should be made as simple as possible, but not simpler."
 
-NOTE: Do not over-engineer; remove unused functions/variables.
+NOTE: Do not over-engineer scripts; remove unused functions and variables.
 
 ## Contents
 1. [Script Structure & Layout](#script-structure--layout)

@@ -2,13 +2,13 @@
 
 **Rule: BCS0908**
 
-Detecting and utilizing terminal features safely to ensure scripts work across all environments with graceful fallbacks.
+Detecting and utilizing terminal features safely.
 
 ---
 
 #### Rationale
 
-Terminal capability detection ensures scripts work in all environments (terminals, pipes, redirects) by providing graceful fallbacks for limited terminals while enabling rich output when available.
+Terminal capability detection ensures scripts work in all environments with graceful fallbacks, enables rich output when available, and prevents garbage output in non-terminal contexts.
 
 ---
 
@@ -17,25 +17,22 @@ Terminal capability detection ensures scripts work in all environments (terminal
 ```bash
 # Check if stdout is a terminal
 if [[ -t 1 ]]; then
-  # Terminal - can use colors, cursor control
   USE_COLORS=1
 else
-  # Pipe or redirect - plain output only
   USE_COLORS=0
 fi
 
 # Check both stdout and stderr
 if [[ -t 1 && -t 2 ]]; then
-  declare -- RED=$'\033[0;31m' NC=$'\033[0m'
+  declare -r RED=$'\033[0;31m' NC=$'\033[0m'
 else
-  declare -- RED='' NC=''
+  declare -r RED='' NC=''
 fi
 ```
 
 #### Terminal Size
 
 ```bash
-# Get terminal dimensions
 get_terminal_size() {
   if [[ -t 1 ]]; then
     TERM_COLS=$(tput cols 2>/dev/null || echo 80)
@@ -46,7 +43,6 @@ get_terminal_size() {
   fi
 }
 
-# Auto-update on resize
 trap 'get_terminal_size' WINCH
 get_terminal_size
 ```
@@ -54,19 +50,16 @@ get_terminal_size
 #### Capability Checking
 
 ```bash
-# Check for specific capability
 has_capability() {
   local -- cap=$1
   tput "$cap" &>/dev/null
 }
 
-# Use with fallback
 if has_capability colors; then
   num_colors=$(tput colors)
   ((num_colors >= 256)) && USE_256_COLORS=1
 fi
 
-# Check for Unicode support
 has_unicode() {
   [[ "${LC_ALL:-${LC_CTYPE:-${LANG:-}}}" == *UTF-8* ]]
 }
@@ -75,17 +68,14 @@ has_unicode() {
 #### Safe Output Functions
 
 ```bash
-# Width-aware output
 print_line() {
   local -i width=${TERM_COLS:-80}
   printf '%*s\n' "$width" '' | tr ' ' '─'
 }
 
-# Truncate to terminal width
 truncate_string() {
   local -- str=$1
   local -i max=${2:-$TERM_COLS}
-
   if ((${#str} > max)); then
     echo "${str:0:$((max-3))}..."
   else
@@ -93,12 +83,10 @@ truncate_string() {
   fi
 }
 
-# Center text
 center_text() {
   local -- text=$1
   local -i width=${TERM_COLS:-80}
   local -i padding=$(((width - ${#text}) / 2))
-
   printf '%*s%s\n' "$padding" '' "$text"
 }
 ```
@@ -106,7 +94,6 @@ center_text() {
 #### ANSI Code Reference
 
 ```bash
-# Common ANSI escape codes
 declare -r ESC=$'\033'
 
 # Colors (foreground)
@@ -136,7 +123,7 @@ declare -r RESTORE_CURSOR="${ESC}8"
 
 ```bash
 # ✗ Wrong - assuming terminal support
-echo -e '\033[31mError\033[0m'  # May output garbage in pipes
+echo -e '\033[31mError\033[0m'  # May output garbage
 
 # ✓ Correct - conditional output
 if [[ -t 1 ]]; then
@@ -144,7 +131,9 @@ if [[ -t 1 ]]; then
 else
   echo 'Error'
 fi
+```
 
+```bash
 # ✗ Wrong - hardcoded width
 printf '%-80s\n' "$text"  # May wrap or truncate wrong
 
@@ -155,5 +144,3 @@ printf '%-*s\n' "${TERM_COLS:-80}" "$text"
 ---
 
 **See Also:** BCS0907 (TUI Basics), BCS0906 (Color Management)
-
-#fin

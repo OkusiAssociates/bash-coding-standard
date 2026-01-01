@@ -1,51 +1,52 @@
 ## Arithmetic Operations
 
-**Always use `declare -i` for integers; use `i+=1` for increment (NEVER `((i++))`).**
+**Use `declare -i` for integers, `(())` for comparisons, and `i+=1` for increments.**
 
-### Core Requirements
+### Core Rules
 
-- `declare -i` mandatory for all integer variables (BCS0201)
-- Use `(())` for arithmetic expressions and conditionals
-- Use `$((expr))` only when value needed inline
-- No `$` prefix inside `(())` for variables
-- Use arithmetic truthiness: `((count))` not `((count > 0))`
+- **Declare integers**: `declare -i count=0` â€” enables auto-arithmetic, type safety
+- **Increment**: `i+=1` ONLY â†' requires `declare -i`; `((i++))` exits with `set -e` when i=0
+- **Comparisons**: Use `(())` not `[[ -eq ]]` â†' `((count > 10))` not `[[ "$count" -gt 10 ]]`
+- **Truthiness**: `((count))` not `((count > 0))` â€” non-zero is truthy
 
-### Increment Safety
+### Pattern
 
 ```bash
-declare -i i=0
-i+=1              # âœ“ Safe, always succeeds
-((i++))           # âœ— NEVER - returns 0 when i=0, exits with set -e
+declare -i i=0 max=5
+while ((i < max)); do
+  process_item
+  i+=1
+done
+((i < max)) || die 1 'Max reached'
 ```
-
-**Why `((i++))` fails:** Returns old value (0), which is false, causing `set -e` script exit.
-
-### Operators
-
-| Op | Use | Op | Use |
-|----|-----|----|-----|
-| `+ - * / %` | Math | `** ` | Power |
-| `< <= > >=` | Compare | `== !=` | Equality |
-| `+= -=` | Compound | `& \| ^` | Bitwise |
 
 ### Anti-Patterns
 
 ```bash
-[[ "$n" -gt 10 ]]         # â†' ((n > 10))
-result=$(expr $i + $j)    # â†' result=$((i + j))
-((result = $i + $j))      # â†' ((result = i + j))
-result="$((i + j))"       # â†' result=$((i + j))
+# âœ— NEVER - exits with set -e when i=0
+((i++))
+
+# âœ— Verbose/old-style
+[[ "$count" -gt 10 ]]
+
+# âœ“ Correct
+((count > 10))
+i+=1
 ```
 
-### Practical Pattern
+### Why `((i++))` Fails
 
 ```bash
-declare -i attempts=0 max=5
-while ((attempts < max)); do
-  process || { attempts+=1; continue; }
-  break
-done
-((attempts >= max)) && die 1 'Max attempts'
+set -e; i=0
+((i++))  # Returns 0 (old value) = "false" â†' script exits!
 ```
+
+### Operators
+
+| Op | Use | Note |
+|----|-----|------|
+| `+=` | `i+=1` | Only increment form |
+| `(())` | Comparisons | `<` `>` `==` `!=` `<=` `>=` |
+| `$(())` | Expressions | `result=$((a + b))` |
 
 **Ref:** BCS0505

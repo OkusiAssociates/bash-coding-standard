@@ -1,6 +1,6 @@
 ### Edge Cases and Variations
 
-Special scenarios where the standard 13-step BCS0101 layout may be modified.
+**Subrule covering scenarios where the standard 13-step BCS0101 layout may be modified.**
 
 ---
 
@@ -25,7 +25,7 @@ echo "Found $count files"
 
 ## Sourced Library Files
 
-**Files meant only to be sourced** skip execution parts and `set -e`:
+**Files meant only to be sourced** skip execution parts and `set -e` (would affect caller):
 
 ```bash
 #!/usr/bin/env bash
@@ -44,6 +44,8 @@ is_valid_email() { [[ "$1" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]
 ```
 
 ## Scripts With External Configuration
+
+**When sourcing config files**, make readonly after sourcing:
 
 ```bash
 #!/usr/bin/env bash
@@ -108,6 +110,8 @@ readonly -- PACKAGE_MANAGER INSTALL_CMD
 
 ## Scripts With Cleanup Requirements
 
+**Trap should be set** after cleanup function is defined but before code that creates temp files:
+
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
@@ -135,26 +139,31 @@ trap 'cleanup $?' SIGINT SIGTERM EXIT
 # ... rest of script uses TEMP_FILES
 ```
 
-**Trap placement:** After cleanup function defined, before code creating temp files.
-
 ---
 
-## Legitimate Deviations
+## When to Deviate from Standard Layout
 
 ### Simplifications
-- **Tiny scripts (<200 lines)** - Skip `main()`, run directly
+- **Tiny scripts (<200 lines)** - Skip `main()`, run code directly
 - **Library files** - Skip `set -e`, `main()`, script invocation
-- **One-off utilities** - May skip colors, verbose messaging
+- **One-off utilities** - May skip color definitions, verbose messaging
 
 ### Extensions
-- **External configuration** - Config sourcing between metadata and business logic
-- **Platform detection** - Platform-specific globals after standard globals
-- **Cleanup traps** - Trap setup after utility functions, before business logic
-- **Lock files** - Lock acquisition/release around main execution
+- **External configuration** - Add config sourcing between metadata and business logic
+- **Platform detection** - Add platform-specific globals after standard globals
+- **Cleanup traps** - Add trap setup after utility functions but before business logic
+- **Logging setup** - May add log file initialization after metadata
+- **Lock files** - Add lock acquisition/release around main execution
 
----
+### Key Principles
 
-## Anti-Patterns
+1. **Safety first** - `set -euo pipefail` still comes first (unless library file)
+2. **Dependencies before usage** - Bottom-up organization still applies
+3. **Clear structure** - Readers should easily understand the flow
+4. **Minimal deviation** - Only deviate when there's clear benefit
+5. **Document reasons** - Comment why you're deviating from standard
+
+### Anti-Pattern: Arbitrary Reordering
 
 ```bash
 # ✗ Wrong - arbitrary reordering without reason
@@ -185,10 +194,12 @@ check_system() { : ... }
 
 ---
 
-## Core Principles (Even When Deviating)
+## Summary
 
-1. **Safety first** - `set -euo pipefail` comes first (unless library)
-2. **Dependencies before usage** - Bottom-up organization applies
-3. **Clear structure** - Readers easily understand the flow
-4. **Minimal deviation** - Only when clear benefit exists
-5. **Document reasons** - Comment why deviating from standard
+**Legitimate simplifications:** Tiny scripts (<200 lines), libraries, one-off utilities
+
+**Legitimate extensions:** External config, platform detection, cleanup traps, logging, lock files
+
+**Core principles always apply:** Error handling first, dependencies before usage, clear structure
+
+Deviate only when necessary—maintain **safety, clarity, and maintainability**.

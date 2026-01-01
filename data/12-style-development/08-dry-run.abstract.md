@@ -1,33 +1,35 @@
 ## Dry-Run Pattern
 
-**Preview mode pattern: Check flag at function start, show preview message, return early without executing operations.**
+**Implement preview mode for state-modifying operations using `DRY_RUN` flag with early-return pattern.**
+
+### Implementation
 
 ```bash
 declare -i DRY_RUN=0
-
-# Parse options
 -n|--dry-run) DRY_RUN=1 ;;
 
-# Pattern in functions
-build_standalone() {
+deploy() {
   if ((DRY_RUN)); then
-    info '[DRY-RUN] Would build standalone binaries'
+    info '[DRY-RUN] Would deploy to' "$TARGET"
     return 0
   fi
-  make standalone || die 1 'Build failed'
+  rsync -av "$SRC" "$TARGET"/
 }
 ```
 
-**Structure:**
+### Pattern
+
 1. Check `((DRY_RUN))` at function start
-2. Display preview with `[DRY-RUN]` prefix via `info`
-3. Return early (exit 0) without operations
-4. Execute real operations when disabled
+2. Display `[DRY-RUN]` prefixed message via `info`
+3. `return 0` without performing operations
+4. Real operations only when flag is 0
 
-**Rationale:** Separates decision logic from action ’ script flows through same functions/logic paths whether previewing or executing ’ users verify paths/commands safely before destructive operations ’ maintains identical control flow for debugging.
+### Key Points
 
-**Anti-patterns:**
-- `if ! ((DRY_RUN))` ’ Inverted logic harder to read
-- Mixing dry-run checks with business logic ’ Test flag once at top, exit early
+- **Same control flow** â†' identical function calls in both modes
+- **Safe preview** â†' verify paths/commands before execution
+- **Debug installs** â†' essential for system modification scripts
 
-**Ref:** BCS1402
+**Anti-pattern:** Scattering dry-run checks throughout code â†' use function-level guards instead.
+
+**Ref:** BCS1208

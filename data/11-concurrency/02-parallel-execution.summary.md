@@ -2,13 +2,13 @@
 
 **Rule: BCS1407**
 
-Executing multiple commands concurrently while maintaining control and collecting results.
+Concurrent command execution with control and result collection.
 
 ---
 
 #### Rationale
 
-Parallel execution provides significant speedup for I/O-bound tasks, better resource utilization, and efficient batch processing.
+Parallel execution enables speedup for I/O-bound tasks, better resource utilization, and efficient batch processing.
 
 ---
 
@@ -51,8 +51,9 @@ for pid in "${pids[@]}"; do
   wait "$pid" || true
 done
 
+# Output results in original order
 for server in "${servers[@]}"; do
-  [[ -f "$temp_dir/$server.out" ]] && cat "$temp_dir/$server.out"
+  [[ -f "$temp_dir"/"$server".out ]] && cat "$temp_dir"/"$server".out
 done
 ```
 
@@ -63,8 +64,10 @@ declare -i max_jobs=4
 declare -a pids=()
 
 for task in "${tasks[@]}"; do
+  # Wait if at max concurrency
   while ((${#pids[@]} >= max_jobs)); do
     wait -n 2>/dev/null || true
+    # Remove completed PIDs
     local -a active=()
     for pid in "${pids[@]}"; do
       kill -0 "$pid" 2>/dev/null && active+=("$pid")
@@ -76,6 +79,7 @@ for task in "${tasks[@]}"; do
   pids+=($!)
 done
 
+# Wait for remaining
 wait
 ```
 
@@ -87,21 +91,19 @@ wait
 # ✗ Wrong - variable lost in subshell
 count=0
 for task in "${tasks[@]}"; do
-  { process "$task"; ((count+=1)); } &
+  { process "$task"; count+=1; } &
 done
 wait
 echo "$count"  # Always 0!
 
 # ✓ Correct - use temp files for results
 for task in "${tasks[@]}"; do
-  { process "$task" && echo 1 >> "$temp_dir/count"; } &
+  { process "$task" && echo 1 >> "$temp_dir"/count; } &
 done
 wait
-count=$(wc -l < "$temp_dir/count")
+count=$(wc -l < "$temp_dir"/count)
 ```
 
 ---
 
 **See Also:** BCS1406 (Background Jobs), BCS1408 (Wait Patterns)
-
-#fin

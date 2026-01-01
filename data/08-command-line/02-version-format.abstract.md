@@ -1,16 +1,16 @@
 ## Version Output Format
 
-**Format `--version` output as: `<script_name> <version_number>` without the word "version".**
+**Output `<script_name> <version_number>` with space separator — no "version" word.**
 
 ```bash
-#  Correct
--V|--version) echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
+# ✓ Correct
+-V|--version)   echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
 # Output: myscript 1.2.3
 
-#  Wrong
--V|--version) echo "$SCRIPT_NAME version $VERSION"; exit 0 ;;
+# ✗ Wrong
+-V|--version)   echo "$SCRIPT_NAME version $VERSION"; exit 0 ;;
 ```
 
-**Rationale:** GNU/Unix standard format (e.g., `bash --version` � "GNU bash, version 5.2.15").
+**Why:** GNU standards; consistent with Unix utilities.
 
-**Ref:** BCS1002
+**Ref:** BCS0802

@@ -1,8 +1,8 @@
 ### Dual-Purpose Scripts (Executable and Sourceable)
 
-Scripts designed to work as both standalone executables and sourceable libraries require special handling: `set -euo pipefail` and `shopt` settings must **ONLY** apply when executed directly, **NOT** when sourced.
+Scripts designed to work both as executables and sourceable libraries must apply `set -euo pipefail` and `shopt` settings **ONLY** when executed directly, **NOT** when sourced.
 
-**Rationale:** When sourced, applying `set -e` or modifying `shopt` would alter the calling shell's environment, potentially breaking the caller's error handling or glob behavior.
+**Rationale:** Sourcing a script that applies `set -e` or modifies `shopt` alters the caller's shell environment, potentially breaking error handling or glob behavior. Sourced scripts should only provide functions and variables without side effects.
 
 **Recommended pattern (early return):**
 ```bash
@@ -49,23 +49,20 @@ my_function "$@"
 #fin
 ```
 
-**Pattern breakdown:**
-
-1. **Function definitions first** - Define all library functions at top; export with `declare -fx` if needed by subshells
-2. **Early return** - `[[ ${BASH_SOURCE[0]} != "$0" ]] && return 0` - when sourced, functions load then clean exit; when executed, continues
+**Pattern structure:**
+1. **Functions first** - Define all library functions at top; export with `declare -fx` if needed
+2. **Early return** - `[[ ${BASH_SOURCE[0]} != "$0" ]] && return 0` (sourced: load functions then exit; executed: continue)
 3. **Visual separator** - Comment line marks executable section boundary
-4. **Set and shopt** - Only applied when executed, placed immediately after separator
-5. **Metadata with guard** - `if [[ ! -v SCRIPT_VERSION ]]` prevents re-initialization; safe for multiple sourcing
+4. **Set/shopt** - Only applied when executed, immediately after separator
+5. **Metadata guard** - `[[ ! -v SCRIPT_VERSION ]]` prevents re-initialization; safe to source multiple times
 
-**Alternative pattern (if/else block)** for scripts requiring different initialization per mode:
+**Alternative (if/else) for different initialization per mode:**
 ```bash
 #!/bin/bash
 
-# Functions first
 process_data() { ... }
 declare -fx process_data
 
-# Dual-mode initialization
 if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
   # EXECUTED MODE
   set -euo pipefail
@@ -74,7 +71,6 @@ if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
 else
   # SOURCED MODE - different initialization
   DATA_DIR=${DATA_DIR:-/tmp/test_data}
-  # Export functions, return to caller
 fi
 ```
 
@@ -84,9 +80,6 @@ fi
 - Only apply `set -euo pipefail` and `shopt` in executable section
 - Use `return` (not `exit`) for errors when sourced
 - Guard metadata with `[[ ! -v VARIABLE ]]` for idempotence
-- Test both modes: `./script.sh` (execute) and `source script.sh` (source)
+- Test both modes: `./script.sh` and `source script.sh`
 
-**Common use cases:**
-- Utility libraries that demonstrate usage when executed
-- Scripts providing reusable functions plus CLI interface
-- Test frameworks sourceable for functions or runnable for tests
+**Use cases:** Utility libraries with CLI demo, scripts providing reusable functions plus CLI, test frameworks sourceable for functions or runnable for tests.

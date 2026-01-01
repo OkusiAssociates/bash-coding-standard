@@ -8,9 +8,8 @@ Retry logic with exponential delay for transient failures.
 
 #### Rationale
 
-- Graceful handling of transient failures with automatic recovery
-- Reduced load on failing services (prevents flooding)
-- Configurable retry behavior
+- Graceful transient failure handling with automatic recovery
+- Reduced load on failing services; configurable retry behavior
 
 ---
 
@@ -30,7 +29,7 @@ retry_with_backoff() {
     local -i delay=$((2 ** attempt))
     warn "Attempt $attempt failed, retrying in ${delay}s..."
     sleep "$delay"
-    ((attempt+=1))
+    attempt+=1
   done
 
   error "Failed after $max_attempts attempts"
@@ -54,11 +53,11 @@ retry_with_backoff() {
     fi
 
     local -i delay=$((2 ** attempt))
-    ((delay > max_delay)) && delay=$max_delay
+    ((delay > max_delay)) && delay=$max_delay ||:
 
-    ((VERBOSE)) && info "Retry $attempt in ${delay}s..."
+    ((VERBOSE)) && info "Retry $attempt in ${delay}s..." ||:
     sleep "$delay"
-    ((attempt+=1))
+    attempt+=1
   done
 
   return 1
@@ -83,7 +82,7 @@ retry_with_jitter() {
     local -i delay=$((base_delay + jitter))
 
     sleep "$delay"
-    ((attempt+=1))
+    attempt+=1
   done
 
   return 1
@@ -101,10 +100,10 @@ while ! command; do
 done
 
 # ✓ Correct - exponential backoff
-attempt=1
+declare -i attempt=1
 while ! command; do
   sleep $((2 ** attempt))
-  ((attempt+=1))
+  attempt+=1
   ((attempt > 5)) && break
 done
 ```
@@ -120,5 +119,3 @@ retry_with_backoff 5 curl -f "$url"
 ---
 
 **See Also:** BCS1409 (Timeout Handling), BCS1406 (Background Jobs)
-
-#fin

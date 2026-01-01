@@ -1,23 +1,26 @@
 ## Production Script Optimization
 
-**Remove unused functions/variables from mature scripts to reduce size and maintenance.**
+**Remove unused functions/variables from mature production scripts.**
 
-### Requirements
-- Delete unused utilities (`yn()`, `trim()`, `s()`, etc.)
-- Delete unused globals (`SCRIPT_DIR`, `DEBUG`, `PROMPT` if unreferenced)
-- Keep only what script actually calls
+### Why
+- Reduces size, improves clarity, eliminates maintenance burden
 
-### Example
+### Pattern
 ```bash
-# Full template has: _msg, vecho, success, warn, info, debug, error, die, yn
-# Production script using only error handling:
-error() { >&2 printf '%s\n' "Error: $*"; }
-die()   { error "$@"; exit 1; }
+# Development: full toolkit
+source lib/messaging.sh  # All utilities
+
+# Production: keep only what's used
+error() { >&2 printf '%s\n' "ERROR: $*"; }
+die() { error "$@"; exit 1; }
+# Removed: info, warn, debug, yn, trim...
 ```
 
 ### Anti-Pattern
 ```bash
-# ✗ Keeping full messaging suite when only die() is used
+# ✗ Shipping unused utilities
+declare -- PROMPT='> '    # Never used
+debug() { :; }            # Never called
 ```
 
 **Ref:** BCS0405

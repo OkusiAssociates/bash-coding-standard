@@ -1,40 +1,52 @@
 ### Layout Anti-Patterns
 
-**Critical violations of BCS0101 13-step layout that cause silent failures and structural bugs.**
+**Eight critical BCS0101 violations with corrections.**
 
 ---
 
-#### Critical Anti-Patterns
-
-| Anti-Pattern | Problem | Fix |
-|--------------|---------|-----|
-| Missing `set -euo pipefail` | Silent failures, script continues after errors | Add immediately after shebang |
-| Variables after use | "Unbound variable" with `set -u` | Declare all globals before `main()` |
-| Business logic before utilities | Functions call undefined helpers | Bottom-up: utilities â†' business â†' main |
-| No `main()` (>40 lines) | Can't test, can't source, scattered parsing | Wrap execution in `main()` |
-| Missing `#fin` | Can't detect truncated files | Always end with `#fin` |
-| Premature `readonly` | Can't modify during arg parsing | `readonly` after parsing complete |
-| Scattered globals | Hard to audit state | Group all declarations together |
-
----
-
-#### Dual-Purpose Pattern
-
+**1. Missing strict mode** â†' silent failures
 ```bash
-#!/usr/bin/env bash
-# Functions available when sourced
-die() { >&2 echo "ERROR: ${*:2}"; exit "${1:-1}"; }
-
-# Exit early if sourced
-[[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0
-
-# Execution starts here
-set -euo pipefail
-main() { : ...; }
-main "$@"
-#fin
+# âœ— set -euo pipefail missing
+# âœ“ Add immediately after shebang
 ```
 
-**Key:** `set -euo pipefail` and `main "$@"` only run when executed, not sourced.
+**2. Variables after use** â†' "unbound variable" with `set -u`
+```bash
+# âœ— main() uses VERBOSE before declaration
+# âœ“ Declare all globals before functions
+```
+
+**3. Utilities after business logic** â†' harder to trace dependencies
+```bash
+# âœ— process_files() calls die() defined below
+# âœ“ Define utilities first, business logic after
+```
+
+**4. No main() in large scripts** â†' no clear entry point, untestable
+```bash
+# âœ— Logic runs directly after functions
+# âœ“ Use main() for scripts >40 lines
+```
+
+**5. Missing `#fin`** â†' can't detect truncated files
+
+**6. Readonly before parsing** â†' can't modify via `--prefix`
+```bash
+# âœ— readonly -- PREFIX before arg parsing
+# âœ“ readonly -- PREFIX after parsing complete
+```
+
+**7. Scattered declarations** â†' hard to see all state
+```bash
+# âœ— Globals interspersed with functions
+# âœ“ All globals grouped together
+```
+
+**8. Unprotected sourcing** â†' runs main when sourced
+```bash
+# âœ“ Dual-purpose pattern:
+[[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0
+set -euo pipefail  # Only when executed
+```
 
 **Ref:** BCS010102

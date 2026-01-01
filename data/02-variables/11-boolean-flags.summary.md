@@ -3,28 +3,34 @@
 Use integer variables with `declare -i` or `local -i` for boolean state:
 
 ```bash
+# Boolean flags - declare as integers with explicit initialization
+declare -i INSTALL_BUILTIN=0
+declare -i BUILTIN_REQUESTED=0
+declare -i SKIP_BUILTIN=0
+declare -i NON_INTERACTIVE=0
+declare -i UNINSTALL=0
 declare -i DRY_RUN=0
-declare -i VERBOSE=0
-declare -i SKIP_BUILD=0
 
-# Test with (()) - true for non-zero
+# Test flags in conditionals using (())
 ((DRY_RUN)) && info 'Dry-run mode enabled'
 
-if ((VERBOSE)); then
-  show_details
+if ((INSTALL_BUILTIN)); then
+  install_loadable_builtins
 fi
 
-# Toggle
+# Toggle flags
 ((VERBOSE)) && VERBOSE=0 || VERBOSE=1
 
-# Set from args
+# Set flags from command-line parsing
 case $1 in
-  --dry-run) DRY_RUN=1 ;;
+  --dry-run)    DRY_RUN=1 ;;
+  --skip-build) SKIP_BUILD=1 ;;
 esac
 ```
 
 **Guidelines:**
-- Use `declare -i` for boolean flags, initialize to `0` or `1`
-- Name descriptively in ALL_CAPS (e.g., `DRY_RUN`, `INSTALL_BUILTIN`)
-- Test with `((FLAG))` - returns true for non-zero
+- Use `declare -i` for integer-based boolean flags
+- Name flags in ALL_CAPS (e.g., `DRY_RUN`, `INSTALL_BUILTIN`)
+- Initialize explicitly to `0` (false) or `1` (true)
+- Test with `((FLAG))` (true for non-zero, false for zero)
 - Keep boolean flags separate from integer counters

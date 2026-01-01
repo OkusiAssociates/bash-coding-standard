@@ -1,19 +1,16 @@
 ## Variable Scoping
 
-**Always declare function variables with `local` to prevent namespace pollution.**
+**Always declare function variables as `local` to prevent namespace pollution.**
+
+Without `local`: variables become global â†' overwrite globals, persist after return, break recursion.
 
 ```bash
-main() {
-  local -a specs=()      # Local array
-  local -i depth=3       # Local integer
-  local -- file="$1"     # Local string
+process_file() {
+  local -- file=$1    # âœ“ Scoped to function
+  local -i count=0    # âœ“ Local integer
 }
 ```
 
-**Why:** Without `local`, variables become global â†' overwrite globals, persist after return, break recursion.
-
-**Anti-patterns:**
-- `file=$1` â†' overwrites global `$file`
-- Recursive functions without `local` share state across calls
+**Anti-patterns:** `file=$1` in function â†' overwrites global `$file`; recursive functions without `local` share state across calls.
 
 **Ref:** BCS0202

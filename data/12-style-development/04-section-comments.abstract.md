@@ -1,9 +1,13 @@
 ## Section Comments
 
-**Use lightweight `# Description` comments to group related code blocks (variables, functions, logical groups).**
+**Use simple `# Description` comments to organize code into logical groups.**
 
-**Format**: Simple `# Description` (no dashes/decorations), 2-4 words, placed immediately before group.
+### Format
+- `# Short description` (2-4 words, no dashes/boxes)
+- Place immediately before group; blank line after group
+- Reserve 80-dash separators for major divisions only
 
+### Example
 ```bash
 # Default values
 declare -- PREFIX=/usr/local
@@ -11,20 +15,14 @@ declare -i VERBOSE=1
 
 # Derived paths
 declare -- BIN_DIR="$PREFIX"/bin
-declare -- LIB_DIR="$PREFIX"/lib
-
-# Core message function
-_msg() { local -- prefix="$SCRIPT_NAME:" msg; }
 
 # Conditional messaging
 vecho() { ((VERBOSE)) || return 0; _msg "$@"; }
-
-# Unconditional messaging
-error() { >&2 _msg "$@"; }
 ```
 
-**Common patterns**: `# Default values`, `# Derived paths`, `# Helper functions`, `# Business logic`, `# Validation functions`
+### Common Patterns
+`# Default values` | `# Derived paths` | `# Helper functions` | `# Business logic` | `# Validation`
 
-Reserve 80-dash separators for major script divisions only.
+**Anti-pattern:** Heavy box-drawing or 80-dash separators for minor groupings â†' use simple `# Label` instead.
 
-**Ref:** BCS1304
+**Ref:** BCS1204

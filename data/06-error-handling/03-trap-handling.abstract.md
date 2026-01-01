@@ -1,34 +1,51 @@
 ## Trap Handling
 
-**Standard cleanup pattern ensures resource cleanup on any exit (error, signal, normal).**
+**Use cleanup functions with `trap 'cleanup $?' SIGINT SIGTERM EXIT` to ensure resources are released on any exit.**
+
+### Core Pattern
 
 ```bash
 cleanup() {
   local -i exitcode=${1:-0}
   trap - SIGINT SIGTERM EXIT  # Prevent recursion
-  [[ -n "$temp_dir" && -d "$temp_dir" ]] && rm -rf "$temp_dir"
-  [[ -n "$lockfile" && -f "$lockfile" ]] && rm -f "$lockfile"
+  [[ -d "$temp_dir" ]] && rm -rf "$temp_dir"
   exit "$exitcode"
 }
 trap 'cleanup $?' SIGINT SIGTERM EXIT
 ```
 
-**Rationale:**
-- Guarantees cleanup of temp files/locks/processes even on Ctrl+C, kill, or errors with `set -e`
-- Preserves original exit code via `$?` for proper error propagation
-- Prevents recursion by disabling trap before cleanup operations
+### Critical Rules
 
-**Key signals:** `EXIT` (always runs), `SIGINT` (Ctrl+C), `SIGTERM` (kill command)
+- **Set trap early** — before creating resources (prevents leaks if script fails between creation and trap)
+- **Disable trap first in cleanup** — prevents infinite recursion if cleanup fails
+- **Capture `$?` in trap command** — `trap 'cleanup $?' EXIT` preserves original exit code
+- **Single quotes** — delays variable expansion until trap fires
 
-**Critical rules:**
-1. **Set trap BEFORE creating resources** → `trap 'cleanup $?' EXIT` then `temp_file=$(mktemp)`
-2. **Disable trap first in cleanup** → Prevents infinite recursion if cleanup fails
-3. **Use single quotes** → `trap 'rm "$var"' EXIT` delays expansion until triggered
-4. **Capture exit code immediately** → `trap 'cleanup $?' EXIT` not `trap 'cleanup' EXIT`
+### Signals
 
-**Anti-patterns:**
-- `trap 'rm "$file"; exit 0' EXIT` → Loses original exit code
-- Creating resources before installing trap → Resource leaks if early exit
-- `trap "rm $temp_file" EXIT` → Expands variable now, not on trap execution
+| Signal | Trigger |
+|--------|---------|
+| `EXIT` | Any script exit |
+| `SIGINT` | Ctrl+C |
+| `SIGTERM` | `kill` command |
 
-**Ref:** BCS0803
+### Anti-Patterns
+
+```bash
+# ✗ Exit code lost
+trap 'rm "$f"; exit 0' EXIT
+# ✓ Preserve exit code
+trap 'ec=$?; rm "$f"; exit $ec' EXIT
+
+# ✗ Double quotes expand NOW
+trap "rm $temp" EXIT
+# ✓ Single quotes expand on TRAP
+trap 'rm "$temp"' EXIT
+
+# ✗ Resource before trap (leak risk)
+temp=$(mktemp); trap 'rm "$temp"' EXIT
+# ✓ Trap before resource
+trap 'rm "$temp"' EXIT; temp=$(mktemp)
+```
+
+**Ref:** BCS0603

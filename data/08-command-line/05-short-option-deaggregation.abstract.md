@@ -1,47 +1,49 @@
-# Short-Option Disaggregation in Command-Line Processing Loops
+# Short-Option Disaggregation
 
-**Split bundled short options (`-abc` → `-a -b -c`) for Unix-standard processing. Allows `script -vvn` instead of `script -v -v -n`.**
+**Split bundled options (`-abc` �' `-a -b -c`) for Unix-compliant CLI parsing.**
 
-## Three Methods
+## Methods (Performance)
 
-### Method 1: grep (Current)
+| Method | Speed | Dependencies |
+|--------|-------|--------------|
+| grep | ~190/s | External, SC2046 |
+| fold | ~195/s | External, SC2046 |
+| **Pure Bash** | **~318/s** | **None** |
+
+## Pure Bash (Recommended)
+
 ```bash
--[amLpvqVh]*) #shellcheck disable=SC2046
-  set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;
-```
-~190 iter/sec | Requires `grep` + SC2046 disable
-
-### Method 2: fold
-```bash
--[amLpvqVh]*) #shellcheck disable=SC2046
-  set -- '' $(printf -- "-%c " $(fold -w1 <<<"${1:1}")) "${@:2}" ;;
-```
-~195 iter/sec (+2.3%) | Requires `fold` + SC2046 disable
-
-### Method 3: Pure Bash (Recommended)
-```bash
--[amLpvqVh]*) # Pure bash method
-  local -- opt=${1:1}; local -a new_args=()
-  while ((${#opt})); do new_args+=("-${opt:0:1}"); opt=${opt:1}; done
+-[ovnVh]*)  # Split bundled options
+  local -- opt=${1:1}
+  local -a new_args=()
+  while ((${#opt})); do
+    new_args+=("-${opt:0:1}")
+    opt=${opt:1}
+  done
   set -- '' "${new_args[@]}" "${@:2}" ;;
 ```
-~318 iter/sec (**+68%**) | No external deps | No shellcheck warnings
 
-## Rationale
+## grep/fold Alternative
 
-1. **68% faster** - Eliminates subprocess overhead
-2. **No external dependencies** - Works in minimal environments
-3. **Cleaner code** - No shellcheck disables
+```bash
+-[ovnVh]*) #shellcheck disable=SC2046
+  set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+```
 
-## Key Points
+## Critical Rules
 
-- List valid options in pattern (`-[ovnVh]*`) prevents invalid disaggregation
-- Place before `-*)` case
-- Options with arguments at end: `-vno file.txt` ✓, `-von` ✗ (`-o` captures `n`)
+1. List valid options in pattern: `-[ovnVh]*`
+2. Options with arguments �' end of bundle or separate
+3. Place before `-*)` invalid option case
 
 ## Anti-Patterns
 
-`((i++))` → Use `i+=1` (fails with `set -e` when i=0)
-`[[ -f $file ]]` → Use `[[ -f "$file" ]]` (quote variables)
+```bash
+# ✗ Option with arg in middle of bundle
+./script -von out.txt  # -o captures 'n' as argument!
 
-**Ref:** BCS1005
+# ✓ Correct placement
+./script -vno out.txt  # -n -o out.txt
+```
+
+**Ref:** BCS0805

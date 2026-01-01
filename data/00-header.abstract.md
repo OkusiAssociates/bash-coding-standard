@@ -1,11 +1,10 @@
 # Bash Coding Standard
 
-**Bash 5.2+ systems engineering philosophy for shell scripting.**
+**Bash 5.2+ standard. Not a compatibility guide.**
 
 ## Principles
-- K.I.S.S. — Keep It Simple, Stupid
-- "The best process is no process"
-- Remove unused functions/variables
+- K.I.S.S. — Remove unused functions/variables
+- "Everything as simple as possible, but not simpler"
 
 ## Contents
 1. Script Structure & Layout

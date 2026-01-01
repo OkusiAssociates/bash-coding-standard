@@ -1,24 +1,35 @@
 ## Exit on Error
 
-**Always use `set -euo pipefail` at script start (line 4 after description).**
+**Mandatory `set -euo pipefail` enables strict mode: exit on command failure (`-e`), undefined variables (`-u`), or pipe failures (`-o pipefail`).**
 
-**Flags:**
-- `-e`: Exit on command failure (non-zero)
-- `-u`: Exit on undefined variable reference
-- `-o pipefail`: Pipeline fails if any command fails (not just last)
+**Why:** Catches errors immediately; prevents cascading failures; makes scripts behave like compiled languages.
 
-**Rationale:**
-- Catches errors immediately preventing cascading failures
-- Scripts behave predictably like compiled languages
+### Handling Expected Failures
 
-**Handle expected failures:**
 ```bash
-command || true                           # Allow failure
-if command; then ... else ... fi          # Capture result
-set +e; risky_command; set -e            # Temporarily disable
-[[ -n "${VAR:-}" ]] && use "$VAR"        # Test undefined vars
+# Allow failure
+cmd_might_fail || true
+
+# Capture in conditional (avoids set -e exit)
+if result=$(failing_cmd); then
+  echo "OK: $result"
+fi
+
+# Temporary disable
+set +e; risky_cmd; set -e
 ```
 
-**Critical gotcha:** `result=$(failing_command)` exits immediately with `set -e` ’ use `if result=$(cmd); then` or wrap in `set +e; ...; set -e`.
+### Critical Gotcha
 
-**Ref:** BCS0801
+```bash
+# âœ— Exits before check (set -e triggers on substitution)
+result=$(failing_cmd)
+[[ -n "$result" ]] && echo "$result"
+
+# âœ“ Conditional protects from exit
+if result=$(failing_cmd); then echo "$result"; fi
+```
+
+**Anti-patterns:** Leaving flags disabled longer than necessary â†' re-enable immediately after risky operation.
+
+**Ref:** BCS0601

@@ -1,10 +1,12 @@
 ### Dual-Purpose Scripts
 
-**Scripts working as both executables and sourceable libraries must apply `set -euo pipefail` and `shopt` ONLY when executed directly, never when sourced.**
+**Scripts that work both as executables AND sourceable libraries must apply `set -euo pipefail` only when executed directly, never when sourced.**
 
-Sourcing a script with `set -e` alters the caller's shell state, breaking error handling.
+Sourcing applies shell options to the caller's environment, breaking error handling.
 
-**Pattern (early return):**
+**Detection:** `[[ ${BASH_SOURCE[0]} != "$0" ]] && return 0`
+
+**Pattern:**
 ```bash
 #!/bin/bash
 my_func() { local -- arg="$1"; echo "$arg"; }
@@ -14,22 +16,16 @@ declare -fx my_func
 # --- Executable section ---
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
-
-if [[ ! -v SCRIPT_VERSION ]]; then
-  declare -x SCRIPT_VERSION=1.0.0
-  readonly -- SCRIPT_VERSION
-fi
-
-my_func "$@"
-#fin
 ```
 
-**Structure:** Functions first â†' early return for sourced mode â†' `set`/`shopt` â†' guarded metadata â†' main logic.
+**Key Rules:**
+- Functions defined BEFORE detection line (available in both modes)
+- `set`/`shopt` AFTER detection (executable only)
+- Use `return` not `exit` for sourced errors
+- Guard metadata: `[[ ! -v VAR ]] && declare...` for idempotence
 
 **Anti-patterns:**
-- `set -euo pipefail` before source detection â†' pollutes caller's shell
-- Using `exit` instead of `return` when sourced â†' kills caller's shell
-
-**Key:** Use `[[ ! -v VAR ]]` guard for idempotent re-sourcing; use `return` (not `exit`) for sourced errors.
+- `set -e` before detection â†' pollutes caller's shell
+- `exit 1` in sourced mode â†' terminates caller's shell
 
 **Ref:** BCS010201

@@ -16,13 +16,13 @@ main() {
 }
 ```
 
-**Rationale:** Without `local`, variables become global: overwrite same-named globals, persist after return, break recursive calls.
+**Rationale:** Without `local`, function variables: overwrite globals with same name, persist after return, break recursive calls.
 
-**Anti-pattern:**
+**Anti-patterns:**
 ```bash
 # ✗ Wrong - no local declaration
 process_file() {
-  file=$1  # Overwrites any global $file!
+  file=$1  # Overwrites any global $file variable!
 }
 
 # ✓ Correct - local declaration
@@ -31,9 +31,9 @@ process_file() {
 }
 ```
 
-**Edge case - recursive functions:**
+**Recursive function gotcha:**
 ```bash
-# ✗ Wrong - global resets each call
+# ✗ Wrong - global resets on each recursive call
 count_files() {
   total=0
   for file in "$1"/*; do total+=1; done

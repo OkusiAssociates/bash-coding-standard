@@ -23,50 +23,39 @@ cleanup() {
 trap 'cleanup $?' SIGINT SIGTERM EXIT
 ```
 
-**Rationale:** Ensures resources (temp files, locks, processes) are cleaned regardless of exit path (normal, error, Ctrl+C, kill). Preserves original exit code. Prevents partial state corruption.
+**Rationale:** Ensures temp files, locks, and processes are cleaned up on errors or signals. Preserves exit code via `$?`. Prevents partial state regardless of exit path.
 
-**Trap signals:**
+**Signal reference:**
 
-| Signal | Triggered By |
-|--------|--------------|
-| `EXIT` | Any script exit (normal or error) |
-| `SIGINT` | Ctrl+C |
-| `SIGTERM` | `kill` command |
-| `ERR` | Command failure with `set -e` |
+| Signal | When Triggered |
+|--------|----------------|
+| `EXIT` | Always on script exit (normal or error) |
+| `SIGINT` | User presses Ctrl+C |
+| `SIGTERM` | `kill` command (default signal) |
+| `ERR` | Command fails (with `set -e`) |
 
 **Common patterns:**
 
-**Temp file cleanup:**
+**Temp file/directory:**
 ```bash
 temp_file=$(mktemp) || die 1 'Failed to create temp file'
 trap 'rm -f "$temp_file"' EXIT
-echo "data" > "$temp_file"
-# Cleanup automatic on exit
 ```
 
-**Temp directory cleanup:**
+**Lockfile:**
 ```bash
-temp_dir=$(mktemp -d) || die 1 'Failed to create temp directory'
-trap 'rm -rf "$temp_dir"' EXIT
-extract_archive "$archive" "$temp_dir"
-```
-
-**Lockfile cleanup:**
-```bash
-lockfile="/var/lock/myapp.lock"
+lockfile=/var/lock/myapp.lock
 
 acquire_lock() {
   if [[ -f "$lockfile" ]]; then
-    die 1 "Already running (lock file exists: $lockfile)"
+    die 1 "Already running (lock file exists ${lockfile@Q})"
   fi
-  echo $$ > "$lockfile" || die 1 'Failed to create lock file'
+  echo $$ > "$lockfile" || die 1 "Failed to create lock file ${lockfile@Q}"
   trap 'rm -f "$lockfile"' EXIT
 }
-
-acquire_lock
 ```
 
-**Process cleanup:**
+**Background process:**
 ```bash
 long_running_command &
 bg_pid=$!
@@ -87,7 +76,7 @@ cleanup() {
 
   trap - SIGINT SIGTERM EXIT
 
-  ((bg_pid > 0)) && kill "$bg_pid" 2>/dev/null
+  ((bg_pid)) && kill "$bg_pid" 2>/dev/null
 
   if [[ -n "$temp_dir" && -d "$temp_dir" ]]; then
     rm -rf "$temp_dir" || warn "Failed to remove temp directory: $temp_dir"
@@ -97,7 +86,11 @@ cleanup() {
     rm -f "$lockfile" || warn "Failed to remove lockfile: $lockfile"
   fi
 
-  ((exitcode == 0)) && info 'Script completed successfully' || error "Script exited with error code: $exitcode"
+  if ((exitcode == 0)); then
+    info 'Script completed successfully'
+  else
+    error "Script exited with error code: $exitcode"
+  fi
 
   exit "$exitcode"
 }
@@ -106,7 +99,7 @@ cleanup() {
 trap 'cleanup $?' SIGINT SIGTERM EXIT
 
 temp_dir=$(mktemp -d)
-lockfile="/var/lock/myapp-$$.lock"
+lockfile=/var/lock/myapp-"$$".lock
 echo $$ > "$lockfile"
 
 monitor_process &
@@ -115,117 +108,66 @@ bg_pid=$!
 main "$@"
 ```
 
-**Multiple trap handlers:**
+**Multiple traps:**
 ```bash
-#  Wrong - second trap REPLACES first
+# ✗ This REPLACES the previous trap!
 trap 'echo "Exiting..."' EXIT
 trap 'rm -f "$temp_file"' EXIT
 
-#  Correct - combine in one trap
+# ✓ Combine in one trap or use cleanup function
 trap 'echo "Exiting..."; rm -f "$temp_file"' EXIT
-
-#  Or use cleanup function
-trap 'cleanup' EXIT
 ```
 
-**Execution order:** On Ctrl+C: SIGINT handler runs, then EXIT handler runs, then script exits.
+**Execution order:** On Ctrl+C: SIGINT handler runs �' EXIT handler runs �' script exits.
 
 **Disabling traps:**
 ```bash
-trap - EXIT
-trap - SIGINT SIGTERM
-
-# Disable during critical section
-trap - SIGINT
+trap - EXIT                    # Disable specific trap
+trap - SIGINT                  # Ignore Ctrl+C during critical operation
 perform_critical_operation
-trap 'cleanup $?' SIGINT
+trap 'cleanup $?' SIGINT       # Re-enable
 ```
 
 **Critical best practices:**
 
-**1. Prevent recursion:**
-```bash
-cleanup() {
-  #  Disable trap first - prevents infinite recursion if cleanup fails
-  trap - SIGINT SIGTERM EXIT
-  rm -rf "$temp_dir"
-  exit "$exitcode"
-}
-```
-
-**2. Preserve exit code:**
-```bash
-#  Correct - capture $? immediately
-trap 'cleanup $?' EXIT
-
-#  Wrong - $? may change between trigger and handler
-trap 'cleanup' EXIT
-```
-
-**3. Quote trap commands:**
-```bash
-#  Correct - single quotes delay variable expansion
-trap 'rm -f "$temp_file"' EXIT
-
-#  Wrong - double quotes expand now, not on trap execution
-temp_file="/tmp/foo"
-trap "rm -f $temp_file" EXIT  # Expands to: trap 'rm -f /tmp/foo' EXIT
-temp_file="/tmp/bar"  # Trap still removes /tmp/foo!
-```
-
-**4. Set trap early:**
-```bash
-#  Correct - trap before resource creation
-trap 'cleanup $?' EXIT
-temp_file=$(mktemp)
-
-#  Wrong - resource leak if script exits between lines
-temp_file=$(mktemp)
-trap 'cleanup $?' EXIT
-```
+1. **Recursion prevention:** Disable trap first inside cleanup function
+2. **Preserve exit code:** Use `trap 'cleanup $?' EXIT` - captures `$?` immediately
+3. **Single quotes:** Delays variable expansion until trap fires
+4. **Set trap early:** Before creating any resources
 
 **Anti-patterns:**
 
 ```bash
-#  Wrong - loses exit code
+# ✗ Wrong - not preserving exit code
 trap 'rm -f "$temp_file"; exit 0' EXIT
 
-#  Correct
+# ✓ Correct
 trap 'exitcode=$?; rm -f "$temp_file"; exit $exitcode' EXIT
 
-#  Wrong - missing function call syntax
-trap cleanup EXIT
+# ✗ Wrong - double quotes expand now, not on trap
+temp_file=/tmp/foo
+trap "rm -f $temp_file" EXIT  # Expands immediately!
+temp_file=/tmp/bar            # Trap still removes /tmp/foo!
 
-#  Correct
+# ✓ Correct - single quotes delay expansion
+trap 'rm -f "$temp_file"' EXIT
+
+# ✗ Wrong - resource before trap
+temp_file=$(mktemp)
+trap 'cleanup $?' EXIT  # Resource leaks if exit between lines!
+
+# ✓ Correct - trap before resource
 trap 'cleanup $?' EXIT
+temp_file=$(mktemp)
 
-#  Wrong - complex inline logic
+# ✗ Wrong - complex logic inline
 trap 'rm "$file1"; rm "$file2"; kill $pid; rm -rf "$dir"' EXIT
 
-#  Correct - use function
-cleanup() {
-  rm -f "$file1" "$file2"
-  kill "$pid" 2>/dev/null
-  rm -rf "$dir"
-}
+# ✓ Correct - use cleanup function
 trap 'cleanup' EXIT
 ```
 
-**Testing:**
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-cleanup() {
-  echo "Cleanup called with exit code: ${1:-?}"
-  trap - EXIT
-  exit "${1:-0}"
-}
-
-trap 'cleanup $?' EXIT
-
-echo "Normal operation..."
-# Test: Ctrl+C, error (false), normal exit
-```
-
-**Summary:** Always use cleanup function for non-trivial cleanup. Disable trap inside cleanup to prevent recursion. Set trap early before creating resources. Preserve exit code with `trap 'cleanup $?' EXIT`. Use single quotes to delay expansion. Test with normal exit, errors, and signals.
+**Edge cases:**
+- If cleanup fails, disabled trap prevents recursion - script still exits cleanly
+- Trap fires for both error exits and normal exits with `EXIT` signal
+- Test handlers with normal exit, `false` command, and Ctrl+C

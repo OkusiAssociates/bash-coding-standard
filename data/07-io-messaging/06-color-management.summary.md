@@ -1,17 +1,12 @@
 ## Color Management Library
 
-For sophisticated color management beyond inline declarations (BCS0701), use a dedicated library providing two-tier system, automatic terminal detection, and BCS \_msg integration (BCS0703).
+For sophisticated color management beyond inline declarations (BCS0701), use a dedicated library providing two-tier system, terminal detection, and BCS _msg integration (BCS0703).
 
-**Rationale:**
-- Two-tier system (basic vs complete) prevents global namespace pollution
-- Auto-detection, force-on, or force-off modes for deployment flexibility
-- `flags` option sets BCS control variables (VERBOSE, DEBUG, DRY_RUN, PROMPT)
-- Dual-purpose pattern (BCS010201) enables sourcing as library or executing for demo
-- Centralized color definitions improve maintainability
+**Rationale:** Two-tier system prevents namespace pollution. Auto-detection/force modes handle deployment scenarios. `flags` option sets BCS control variables. Dual-purpose pattern (BCS010201) allows sourcing or executing.
 
 **Two-Tier Color System:**
 
-**Basic tier (5 variables)** - Default, minimal pollution:
+**Basic tier (5 variables):**
 ```bash
 NC          # No Color / Reset
 RED         # Error messages
@@ -20,7 +15,7 @@ YELLOW      # Warnings
 CYAN        # Information
 ```
 
-**Complete tier (12 variables)** - Opt-in, full ANSI:
+**Complete tier (12 variables):**
 ```bash
 # Basic tier plus:
 BLUE        # Additional color option
@@ -32,7 +27,13 @@ DIM         # De-emphasized text
 REVERSE     # Inverted colors
 ```
 
-**Function Signature:** `color_set [OPTIONS...]`
+**Library Function Signature:**
+
+```bash
+color_set [OPTIONS...]
+```
+
+**Options:**
 
 | Option | Description |
 |--------|-------------|
@@ -42,7 +43,7 @@ REVERSE     # Inverted colors
 | `always` | Force colors on (even when piped/redirected) |
 | `never`, `none` | Force colors off |
 | `verbose`, `-v`, `--verbose` | Print all variable declarations |
-| `flags` | Set BCS \_msg globals: VERBOSE, DEBUG, DRY_RUN, PROMPT |
+| `flags` | Set BCS _msg globals: VERBOSE, DEBUG, DRY_RUN, PROMPT |
 
 **BCS _msg Integration:**
 
@@ -57,7 +58,7 @@ color_set complete flags
 # PROMPT=1
 ```
 
-**Dual-Purpose Pattern:**
+**Dual-Purpose Pattern (BCS010201):**
 
 ```bash
 # Usage 1: Source as library (traditional)
@@ -215,7 +216,6 @@ color_set complete always
 source color-set complete flags
 info "Starting process"        # Uses CYAN, respects VERBOSE
 success "Build completed"      # Uses GREEN, respects VERBOSE
-error "Connection failed"      # Uses RED, always shown
 ```
 
 **Anti-patterns:**
@@ -225,6 +225,7 @@ error "Connection failed"      # Uses RED, always shown
 # DON'T: Duplicate declarations across scripts
 RED=$'\033[0;31m'
 GREEN=$'\033[0;32m'
+# ... repeated in every script
 ```
 
 ❌ **Testing only stdout:**
@@ -243,8 +244,6 @@ color_set always
 color_set ${COLOR_MODE:-auto}
 ```
 
-**Reference:** `/usr/local/lib/color-set` or https://github.com/Open-Technology-Foundation/color-set
-
-**Cross-References:** BCS0701 (Inline Colors), BCS0703 (Core Message Functions), BCS010201 (Dual-Purpose Scripts)
+**Cross-References:** BCS0701 (inline colors), BCS0703 (_msg system), BCS010201 (dual-purpose pattern)
 
 **Ref:** BCS0706

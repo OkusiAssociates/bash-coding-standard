@@ -1,52 +1,59 @@
 ## Pipes to While Loops
 
-**Never pipe to `while` loopspipes create subshells where variable changes are lost. Use `< <(command)` or `readarray` instead.**
+**Never pipe to while loops—pipes create subshells where variables don't persist. Use `< <(cmd)` or `readarray`.**
 
-**Rationale:** Pipes create subshells; variables modified inside don't persist outsidecounters stay 0, arrays stay empty, no errors shown.
-
-**Pattern:**
+### Why It Fails
 
 ```bash
-#  Wrong - variables lost
+# ✗ Variables lost in subshell
 count=0
-echo -e "a\nb\nc" | while read -r x; do ((count+=1)); done
-echo "$count"  # 0 (lost!)
-
-#  Correct - process substitution
-count=0
-while read -r x; do ((count+=1)); done < <(echo -e "a\nb\nc")
-echo "$count"  # 3
-
-#  Correct - readarray for line collection
-readarray -t lines < <(echo -e "a\nb\nc")
-echo "${#lines[@]}"  # 3
+cmd | while read -r x; do count+=1; done
+echo "$count"  # Always 0!
 ```
 
-**Examples:**
+### Solutions
+
+**Process substitution** (most common):
+```bash
+# ✓ Loop runs in current shell
+while IFS= read -r line; do
+  count+=1
+done < <(command)
+```
+
+**readarray** (collecting lines):
+```bash
+# ✓ Direct to array
+readarray -t lines < <(command)
+readarray -d '' -t files < <(find . -print0)  # null-delimited
+```
+
+**Here-string** (variable input):
+```bash
+while read -r x; do ...; done <<< "$var"
+```
+
+### Anti-Patterns
 
 ```bash
-# Counter accumulation
-while read -r line; do ((count+=1)); done < <(grep ERROR log)
+# ✗ Counter stays 0
+grep PAT file | while read -r l; do n+=1; done
 
-# Array building
-while read -r file; do files+=("$file"); done < <(find /data -type f)
+# ✗ Array stays empty
+find . | while read -r f; do arr+=("$f"); done
 
-# Readarray (simpler)
-readarray -t users < <(cut -d: -f1 /etc/passwd)
+# ✗ Assoc array empty
+cat cfg | while IFS='=' read -r k v; do m[$k]=$v; done
 
-# Null-delimited (safe for filenames)
-readarray -d '' -t files < <(find /data -print0)
+# ✓ All fixed with: done < <(command)
 ```
 
-**Anti-pattern:**
+### Key Points
 
-```bash
-#  All variable changes lost in subshell
-cat file | while read -r line; do
-  ((count+=1))
-  array+=("$line")
-done
-# count=0, array=() - both lost!
-```
+- Subshell vars discarded when pipe ends �' silent bugs
+- No error messages—script runs with wrong values
+- `< <(cmd)` keeps loop in current shell
+- `readarray -d ''` for null-delimited (filenames with spaces)
+- For counts only: `grep -c` avoids the issue
 
-**Ref:** BCS0704
+**Ref:** BCS0504

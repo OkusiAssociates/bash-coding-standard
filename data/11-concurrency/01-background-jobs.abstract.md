@@ -1,37 +1,30 @@
 ### Background Job Management
 
-**Always track PIDs with `$!` and implement trap-based cleanup for background processes.**
+**Always track PIDs with `$!`; use trap-based cleanup for proper process lifecycle.**
 
-#### Key Patterns
+#### Core Pattern
 
 ```bash
-# Track PIDs in array
 declare -a PIDS=()
-command & PIDS+=($!)
-
-# Check if running (signal 0)
-kill -0 "$pid" 2>/dev/null
-
-# Wait patterns
-wait "$pid"    # Specific PID
-wait -n        # Any job (Bash 4.3+)
-```
-
-#### Cleanup Pattern
-
-```bash
 cleanup() {
-  trap - SIGINT SIGTERM EXIT  # Prevent recursion
-  for pid in "${PIDS[@]}"; do
-    kill "$pid" 2>/dev/null || true
-  done
+  trap - SIGINT SIGTERM EXIT
+  for pid in "${PIDS[@]}"; do kill "$pid" 2>/dev/null || true; done
 }
-trap 'cleanup $?' SIGINT SIGTERM EXIT
+trap 'cleanup' SIGINT SIGTERM EXIT
+
+command & PIDS+=($!)
+wait "${PIDS[@]}"
 ```
+
+#### Key Operations
+
+- **Start:** `cmd &` then `pid=$!`
+- **Check:** `kill -0 "$pid" 2>/dev/null`
+- **Wait:** `wait "$pid"` (specific) or `wait -n` (any, Bash 4.3+)
 
 #### Anti-Patterns
 
-- `command &` without `pid=$!` â†' cannot manage process later
+- `command &` without `pid=$!` â†' cannot manage job later
 - Using `$$` for background PID â†' wrong; `$$` is parent, `$!` is child
 
-**Ref:** BCS1101
+**Ref:** BCS1406

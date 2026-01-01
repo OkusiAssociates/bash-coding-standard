@@ -1,47 +1,48 @@
 ### Terminal Capabilities
 
-**Detect terminal features before using colors/cursor control; provide fallbacks for pipes/redirects.**
+**Detect terminal features before using; provide graceful fallbacks for pipes/redirects.**
 
-#### Rationale
-- Prevents garbage output in non-terminal contexts (pipes, cron, logs)
-- Enables graceful degradation across environments
+#### Why
+- Prevents garbage output in non-TTY contexts
+- Enables rich output when available
+- Ensures cross-environment compatibility
 
-#### Core Pattern
+#### Core Patterns
 
 ```bash
-# Check if stdout is terminal
-if [[ -t 1 ]]; then
-  declare -- RED=$'\033[0;31m' NC=$'\033[0m'
+# TTY detection with color fallback
+if [[ -t 1 && -t 2 ]]; then
+  declare -r RED=$'\033[0;31m' NC=$'\033[0m'
 else
-  declare -- RED='' NC=''
+  declare -r RED='' NC=''
 fi
 
-# Terminal size with fallback
+# Terminal size with WINCH trap
 TERM_COLS=$(tput cols 2>/dev/null || echo 80)
+trap 'TERM_COLS=$(tput cols 2>/dev/null || echo 80)' WINCH
+
+# Unicode check
+[[ "${LC_ALL:-${LC_CTYPE:-${LANG:-}}}" == *UTF-8* ]]
 ```
 
-#### Key Techniques
-- `[[ -t 1 ]]` â†' stdout is terminal; `[[ -t 2 ]]` â†' stderr is terminal
-- `tput cols/lines` â†' dimensions with 80x24 fallback
-- `trap 'get_terminal_size' WINCH` â†' auto-update on resize
-- Unicode check: `[[ "${LANG:-}" == *UTF-8* ]]`
+#### ANSI Quick Reference
+
+| Type | Codes |
+|------|-------|
+| Colors | `\033[31m` (red) `\033[32m` (green) `\033[0m` (reset) |
+| Styles | `\033[1m` (bold) `\033[2m` (dim) `\033[4m` (underline) |
+| Cursor | `\033[?25l` (hide) `\033[?25h` (show) |
 
 #### Anti-Patterns
 
 ```bash
-# âœ— Assumes terminal
+# âœ— Assumes terminal support
 echo -e '\033[31mError\033[0m'
 
-# âœ“ Conditional
+# âœ“ Conditional on TTY
 [[ -t 1 ]] && echo -e '\033[31mError\033[0m' || echo 'Error'
+
+# âœ— Hardcoded width â†' âœ“ Use ${TERM_COLS:-80}
 ```
 
-```bash
-# âœ— Hardcoded width
-printf '%-80s\n' "$text"
-
-# âœ“ Dynamic width
-printf '%-*s\n' "${TERM_COLS:-80}" "$text"
-```
-
-**Ref:** BCS0908
+**Ref:** BCS0708

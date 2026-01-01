@@ -1,8 +1,8 @@
 ## Arithmetic Operations
 
-> **See Also:** BCS0201 for declaring integer variables with `declare -i`
+> **See Also:** BCS0201 for integer variable declaration with `declare -i`
 
-**Declare integers explicitly:**
+**Declare integer variables explicitly:**
 
 ```bash
 declare -i i j result count total
@@ -10,121 +10,135 @@ declare -i counter=0
 declare -i max_retries=3
 ```
 
-**Rationale for `declare -i`:** Automatic arithmetic context (no `$(())` needed), type safety, performance, clarity, BCS0201 compliance.
+**Rationale for `declare -i`:**
+- Automatic arithmetic context (no `$(())` needed for assignments)
+- Type safety catches non-numeric assignment errors
+- Slightly faster for repeated operations
+- Required for BCS compliance (BCS0201)
 
 **Increment operations:**
 
 ```bash
-# ✓ CORRECT - The ONLY acceptable form
+# ✓ CORRECT - The ONLY acceptable increment form
 declare -i i=0    # MUST declare as integer first
 i+=1              # Clearest, safest, most readable
 
-# ✗ WRONG - NEVER use these
-((i++))           # Returns old value, fails with set -e when i=0
-((++i))           # Unnecessary complexity
-i++               # Syntax error outside arithmetic context
+# ✗ WRONG - NEVER use these increment forms
+((i+=1))          # NEVER - (()) is unnecessary
+((i++))           # NEVER - fails with set -e when i=0
+((++i))           # NEVER - unnecessary complexity
+i++               # NEVER - syntax error outside arithmetic context
 ```
+
+**Critical rule:** Use `i+=1` for ALL increments. Requires `declare -i` or `local -i` first.
 
 **Why `((i++))` is dangerous:**
 
 ```bash
-set -e
+#!/usr/bin/env bash
+set -e  # Exit on error
+
 i=0
-((i++))  # Returns 0 (old value) = "false", script exits!
+((i++))  # Returns 0 (the old value), which is "false"
+         # Script exits here with set -e!
+
 echo "This never executes"
 ```
 
 **Arithmetic expressions:**
 
 ```bash
-# In (()) - no $ needed
+# In (()) - no $ needed for variables
 ((result = x * y + z))
 ((total = sum / count))
 
-# With $(()) for assignments/commands
+# With $(()), for assignments or commands
 result=$((x * y + z))
 echo "$((i * 2 + 5))"
 ```
 
-**Operators:**
+**Arithmetic operators:**
 
-| Operator | Meaning | Note |
-|----------|---------|------|
-| `+` `-` `*` `/` `%` `**` | Basic arithmetic | `/` is integer division |
+| Operator | Meaning | Example |
+|----------|---------|---------|
+| `+` `-` `*` `/` `%` | Basic math | `((i = a + b))` |
+| `**` | Exponentiation | `((i = a ** b))` |
+| `+=` `-=` | Compound assignment | `i+=5` |
 | `++` `--` | Increment/Decrement | Use `i+=1` instead |
-| `+=` `-=` | Compound assignment | `((i+=5))` |
 
 **Arithmetic conditionals:**
 
 ```bash
-if ((i < j)); then echo 'i is less than j'; fi
-((count > 0)) && process_items
+if ((i < j)); then
+  echo 'i is less than j'
+fi
+
+((count)) && process_items
 ((attempts >= max_retries)) && die 1 'Too many attempts'
 ```
 
 **Comparison operators:** `<` `<=` `>` `>=` `==` `!=`
 
-**Arithmetic truthiness (non-zero = true):**
+**Arithmetic truthiness:** Non-zero is truthy. Use directly instead of explicit comparisons:
 
 ```bash
 # ✓ CORRECT - use truthiness directly
 declare -i count=5
 if ((count)); then echo 'Has items'; fi
 ((VERBOSE)) && echo 'Verbose mode enabled'
-((DRY_RUN)) || execute_command
 
 # ✗ WRONG - redundant comparison
 if ((count > 0)); then echo 'Has items'; fi
-((VERBOSE == 1)) && echo 'Verbose mode'
+if ((VERBOSE == 1)); then echo 'Verbose mode'; fi
 ```
 
 **Complex expressions:**
 
 ```bash
 ((result = (a + b) * (c - d)))
-((max = a > b ? a : b))         # Ternary (bash 5.2+)
-((flags = flag1 | flag2))       # Bitwise OR
-((masked = value & 0xFF))       # Bitwise AND
+((max = a > b ? a : b))           # Ternary (bash 5.2+)
+((flags = flag1 | flag2))         # Bitwise OR
+((masked = value & 0xFF))         # Bitwise AND
 ```
 
-**Anti-patterns:**
+**Anti-pattern: Using [[ ]] for arithmetic:**
 
 ```bash
-# ✗ WRONG - [[ ]] for arithmetic (verbose, old-style)
+# ✗ WRONG - verbose, old-style
 if [[ "$exit_code" -eq 0 ]]; then echo 'Success'; fi
 [[ "$count" -gt 10 ]] && process_items
 
-# ✓ CORRECT - use (())
+# ✓ CORRECT - clean arithmetic syntax
 if ((exit_code == 0)); then echo 'Success'; fi
-((count > 10)) && process_items
+((count > 10)) && process_items ||:
+```
 
-# ✗ WRONG - expr command (slow, external)
+**Why `(())` is better:** No quoting required, native operators (`>` vs `-gt`), more readable, faster (pure bash), type-safe.
+
+**Other anti-patterns:**
+
+```bash
+# ✗ Wrong - expr command (slow, external)
 result=$(expr $i + $j)
-
-# ✓ CORRECT
+# ✓ Correct
 result=$((i + j))
 
-# ✗ WRONG - $ inside (()) on left side
+# ✗ Wrong - $ inside (())
 ((result = $i + $j))
-
-# ✓ CORRECT - no $ inside (())
+# ✓ Correct
 ((result = i + j))
 
-# ✗ WRONG - unnecessary quotes
+# ✗ Wrong - quotes around arithmetic
 result="$((i + j))"
-
-# ✓ CORRECT
+# ✓ Correct
 result=$((i + j))
 ```
 
-**Integer division truncates:**
+**Integer division:** Truncates toward zero. Use `bc` or `awk` for floating point:
 
 ```bash
-((result = 10 / 3))   # result=3
-((result = -10 / 3))  # result=-3
-
-# For floating point, use bc or awk
-result=$(bc <<< "scale=2; 10 / 3")  # 3.33
+((result = 10 / 3))                    # result=3
+result=$(bc <<< "scale=2; 10 / 3")     # result=3.33
 ```
 
 **Practical examples:**
@@ -141,12 +155,7 @@ declare -i attempts=0 max_attempts=5
 while ((attempts < max_attempts)); do
   process_item && break
   attempts+=1
-  ((attempts < max_attempts)) && sleep 1
+  ((attempts > max_attempts)) || sleep 1
 done
-((attempts >= max_attempts)) && die 1 'Max attempts reached'
-
-# Percentage calculation
-declare -i total=100 completed=37
-declare -i percentage=$((completed * 100 / total))
-echo "Progress: $percentage%"
+((attempts < max_attempts)) || die 1 'Max attempts reached'
 ```

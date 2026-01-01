@@ -1,41 +1,34 @@
 ## Exit Codes
 
-**Use standardized exit codes: 0=success, 1=general error, 2=usage error, 22=invalid argument (EINVAL).**
+**Use standard exit codes 0-125; define constants for readability.**
+
+```bash
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+die 1 'General error'
+die 22 "Invalid option ${1@Q}"
+```
+
+| Code | Meaning | Use |
+|------|---------|-----|
+| 0 | Success | Completed OK |
+| 1 | General error | Catchall |
+| 2 | Usage error | Missing arg |
+| 22 | Invalid arg | EINVAL |
+| 126 | Cannot execute | Permission |
+| 127 | Not found | PATH/typo |
+| 128+n | Signal n | 130=Ctrl+C |
+
+**Constants pattern:**
+```bash
+readonly -i ERR_GENERAL=1 ERR_USAGE=2 ERR_CONFIG=3
+die "$ERR_CONFIG" 'Config load failed'
+```
 
 **Rationale:**
-- 0 is universal Unix convention for success
-- 1 is safe catchall for general errors
-- 2 matches bash builtin behavior for argument errors
-- 22 (EINVAL) is standard errno for invalid arguments
-- Consistency enables reliable error handling in scripts and CI/CD
+- 0=success universal Unix convention
+- 22=EINVAL standard errno
+- Avoid 126-255 (reserved for signals)
 
-**Core implementation:**
-```bash
-die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
-die 0                    # Success
-die 1 'General error'    # General error
-die 2 'Missing argument' # Usage error
-die 22 'Invalid option'  # Invalid argument
-```
+**Anti-patterns:** Exit codes >125 conflict with signals â†' use 1-125 for custom codes.
 
-**Standard codes:**
-- `0` = Success
-- `1` = General error (catchall)
-- `2` = Misuse of shell builtin/missing argument
-- `22` = Invalid argument (EINVAL)
-- `126` = Command cannot execute (permission issue)
-- `127` = Command not found
-- `128+n` = Fatal signal (e.g., 130 = Ctrl+C)
-
-**Best practice - named constants:**
-```bash
-readonly -i SUCCESS=0 ERR_GENERAL=1 ERR_USAGE=2 ERR_CONFIG=3
-die "$ERR_CONFIG" 'Failed to load configuration'
-```
-
-**Anti-patterns:**
-- Inconsistent exit codes across similar errors ’ `die 1` for all failures
-- Using high numbers (>125) for custom codes (conflicts with signals)
-- Exiting with 0 on errors or non-zero on success
-
-**Ref:** BCS0802
+**Ref:** BCS0602

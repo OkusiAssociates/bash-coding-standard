@@ -1,7 +1,7 @@
 # Script Structure & Layout
 
-**Mandatory 13-step layout from shebang to `#fin` marker.**
+**Mandatory 13-step layout for all Bash scripts: shebang â†' metadata â†' functions â†' main â†' `#fin`.**
 
-Covers: script metadata, shopt settings, dual-purpose patterns, FHS compliance, file extensions, bottom-up function organization (low-level utilities before high-level orchestration).
+Core elements: shebang, `set -euo pipefail`, shopt settings, metadata block, bottom-up function organization, `main()` function, end marker.
 
 **Ref:** BCS0100

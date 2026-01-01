@@ -1,39 +1,46 @@
 ## Process Substitution
 
-**Use `<(cmd)` for input, `>(cmd)` for output to avoid temp files and subshells.**
+**Use `<(cmd)` for input and `>(cmd)` for output to eliminate temp files, avoid subshell scope issues, and enable parallel processing.**
 
-**Rationale:** Eliminates temp files, preserves variable scope (no subshell), enables parallelism.
+**Why:** No temp file cleanup; preserves variable scope (unlike pipes); multiple substitutions run in parallel; efficient FIFO/fd streaming.
 
-**Input:** `<(cmd)` treats output as readable file:
+**Core patterns:**
+
 ```bash
+# Compare command outputs
 diff <(sort file1) <(sort file2)
-readarray -t users < <(getent passwd | cut -d: -f1)
-while read -r line; do ((count+=1)); done < <(cat file)
+
+# Array from command (avoids subshell)
+readarray -t arr < <(cmd)
+
+# While loop preserving scope
+declare -i count=0
+while IFS= read -r line; do
+  count+=1
+done < <(cat file)
+echo "$count"  # Correct!
+
+# Parallel output processing
+cat log | tee >(grep ERR > e.log) >(wc -l > n.txt) >/dev/null
 ```
 
-**Output:** `>(cmd)` treats command as writable file:
+**Anti-patterns:**
+
 ```bash
-cat log | tee >(grep ERROR > err.txt) >(wc -l > count.txt) > /dev/null
-```
-
-**Use cases:**
-- Compare outputs: `diff <(ls dir1) <(ls dir2)`
-- Avoid subshell in loops: `while read -r x; do count+=1; done < <(cmd)`
-- Parallel processing: `cat log | tee >(process1) >(process2) > out`
-- Multiple inputs: `paste <(cut -f1 file) <(cut -f2 file)`
-
-**Anti-pattern:**
-```bash
-# ✗ Temp files
-tmp=$(mktemp); sort file1 > "$tmp"; diff "$tmp" file2; rm "$tmp"
-# ✓ Process substitution
-diff <(sort file1) file2
-
-# ✗ Pipe creates subshell
-count=0; cat file | while read -r x; do ((count+=1)); done
+# ✗ Pipe to while (subshell loses vars)
+cat file | while read -r line; do count+=1; done
 echo "$count"  # Still 0!
-# ✓ Preserves scope
-count=0; while read -r x; do ((count+=1)); done < <(cat file)
+
+# ✗ Temp files for diff
+sort f1 > /tmp/a; sort f2 > /tmp/b; diff /tmp/a /tmp/b
+
+# ✗ Unquoted variables inside substitution
+diff <(sort $file1) <(sort $file2)
+
+# ✗ Overcomplicated - use here-string
+cmd < <(echo "$var")  # �' cmd <<< "$var"
 ```
 
-**Ref:** BCS1103
+**When NOT to use:** Simple `result=$(cmd)` or `grep pat file` — don't overcomplicate.
+
+**Ref:** BCS0903

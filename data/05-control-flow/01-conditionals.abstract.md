@@ -2,34 +2,26 @@
 
 **Use `[[ ]]` for string/file tests, `(())` for arithmetic.**
 
-```bash
-# String/file tests - use [[ ]]
-[[ -d "$path" ]] && echo 'Directory exists'
-[[ "$status" == 'success' ]] && continue
+**Why `[[ ]]` over `[ ]`:** No word splitting/glob expansion, pattern matching (`==`, `=~`), logical operators inside (`&&`, `||`), no `-a`/`-o` needed.
 
-# Arithmetic - use (())
-((VERBOSE==0)) || echo 'Verbose mode'
-((count >= MAX_RETRIES)) && die 1 'Too many retries'
+```bash
+# String/file tests
+[[ -f "$file" && -r "$file" ]] && source "$file" ||:
+[[ "$name" == *.txt ]] && process "$name"
+
+# Arithmetic tests
+((count)) && echo "Items: $count"
+((i >= MAX)) && die 1 'Limit exceeded'
 
 # Combined
-if [[ -n "$var" ]] && ((count > 0)); then
-  process_data
-fi
+if [[ -n "$var" ]] && ((count)); then process; fi
 ```
 
-**Why `[[ ]]` over `[ ]`:** No word splitting/glob expansion, pattern matching (`==`, `=~`), logical operators (`&&`, `||`) work inside, more operators (`<`, `>` for strings).
+**Key operators:** `-e` exists, `-f` file, `-d` dir, `-r` readable, `-w` writable, `-x` executable, `-z` empty, `-n` not-empty, `=~` regex.
 
-**Pattern matching:**
-```bash
-[[ "$file" == *.txt ]] && echo "Text file"
-[[ "$email" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]] || die 22 'Invalid'
-```
+**Anti-patterns:**
+- `[ ]` syntax â†' use `[[ ]]`
+- `[ -f "$f" -a -r "$f" ]` â†' `[[ -f "$f" && -r "$f" ]]`
+- `[[ "$count" -gt 10 ]]` â†' `((count > 10))`
 
-**Anti-patterns:** `[ ]` syntax ’ use `[[ ]]`; `-a`/`-o` operators ’ use `&&`/`||`; arithmetic with `-gt`/`-lt` ’ use `(())`
-
-**Common operators:**
-- File: `-e` (exists), `-f` (file), `-d` (dir), `-r` (readable), `-w` (writable), `-x` (executable), `-s` (not empty)
-- String: `-z` (empty), `-n` (not empty), `==`/`!=` (equal/not), `<`/`>` (lexicographic), `=~` (regex)
-- Arithmetic: `>`, `>=`, `<`, `<=`, `==`, `!=` (use in `(())`)
-
-**Ref:** BCS0701
+**Ref:** BCS0501

@@ -1,24 +1,37 @@
 ### Dual-Purpose Scripts
 
-**BCS0606: Scripts usable as both executable and sourceable library.**
+**Scripts that execute directly OR source as libraries, using `BASH_SOURCE[0]` detection.**
 
-**Core Pattern:**
+#### Pattern
+
 ```bash
 #!/usr/bin/env bash
-my_func() { local -- arg=$1; echo "$arg"; }
+my_func() { local -- arg=$1; echo "${arg@Q}"; }
 declare -fx my_func
 
 [[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0
+
 set -euo pipefail
 main() { my_func "$@"; }
 main "$@"
 #fin
 ```
 
-**Critical:** `set -e` AFTER source checkâ€”library shouldn't impose error handling on caller.
+#### Critical Rules
 
-**Idempotent Init:** `[[ -v MY_LIB_VERSION ]] || declare -rx MY_LIB_VERSION='1.0.0'`
+- Define functions BEFORE `set -e` â†' sourcing parent controls error handling
+- Export functions: `declare -fx func_name` â†' enables subshell access
+- Idempotent init: `[[ -v LIB_VERSION ]] || declare -rx LIB_VERSION=1.0`
 
-**Anti-pattern:** `my_func() { :; }` without `declare -fx` â†' can't call from subshells after sourcing.
+#### Anti-Patterns
 
-**Ref:** BCS0606
+```bash
+# âœ— set -e before source check
+set -euo pipefail
+[[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0  # Risky
+
+# âœ— Functions not exported â†' subshell access fails
+my_func() { :; }
+```
+
+**Ref:** BCS0406

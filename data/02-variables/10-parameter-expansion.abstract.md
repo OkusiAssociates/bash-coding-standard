@@ -1,41 +1,38 @@
-### Parameter Expansion & Braces Usage
+### Parameter Expansion & Braces
 
 **Use `"$var"` by default; braces only when syntactically required.**
 
----
-
-#### Braces REQUIRED
-
-- **Operations:** `${var##*/}` `${var:-default}` `${var:0:5}` `${var//old/new}` `${var,,}`
-- **Concatenation:** `"${var1}${var2}"` `"${prefix}suffix"`
-- **Arrays:** `"${array[@]}"` `"${#array[@]}"`
-- **Special:** `"${@:2}"` `"${10}"` `"${!var}"`
-
-#### Braces NOT Required
+#### Braces Required
 
 ```bash
-# âœ“ Correct
-"$var"  "$PREFIX"/bin  "Found $count files"
-
-# âœ— Wrong - unnecessary braces
-"${var}"  "${PREFIX}"/bin  "Found ${count} files"
+"${var##*/}"      # Pattern removal
+"${var:-default}" # Default value
+"${var:0:5}"      # Substring
+"${var//old/new}" # Substitution
+"${var,,}"        # Lowercase
+"${array[@]}"     # Array access
+"${var1}${var2}"  # No-separator concat
+"${prefix}suffix" # Alphanumeric follows
 ```
 
-#### Edge Cases
+#### No Braces Needed
 
 ```bash
-"${var}_suffix"   # Required - no separator
-"$var-suffix"     # OK - dash separates
+"$var"           # Standalone
+"$PREFIX"/bin    # Separator delimits
+"$var-suffix"    # Dash/dot/slash separates
 ```
 
-#### Summary
+#### Key Operations
 
-| Situation | Form |
-|-----------|------|
-| Standalone | `"$var"` |
-| Path with `/` | `"$var"/path` |
-| Expansion op | `"${var%/*}"` |
-| Concatenation | `"${a}${b}"` |
-| Array | `"${arr[@]}"` |
+| Op | Syntax | Use |
+|----|--------|-----|
+| Prefix rm | `${v##*/}` | Basename |
+| Suffix rm | `${v%/*}` | Dirname |
+| Default | `${v:-x}` | Fallback |
+| Replace | `${v//a/b}` | Subst all |
+| Length | `${#v}` | Char count |
+
+**Anti-patterns:** `"${var}"` standalone â†' `"$var"` | `"${PREFIX}/bin"` â†' `"$PREFIX"/bin`
 
 **Ref:** BCS0210

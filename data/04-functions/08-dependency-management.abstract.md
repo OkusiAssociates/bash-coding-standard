@@ -1,42 +1,30 @@
 ### Dependency Management
 
-**Use `command -v` for dependency checks; provide helpful error messages for missing tools.**
+**Use `command -v` for dependency checks; provide clear errors for missing tools; support graceful degradation with availability flags.**
 
-#### Core Pattern
+#### Core Rationale
+- Clear errors vs cryptic failures from missing tools
+- Enables optional dependency fallbacks
+- Documents requirements explicitly
 
-```bash
-# Single check
-command -v curl >/dev/null || die 1 'curl required'
-
-# Multiple with collection
-check_dependencies() {
-  local -a missing=()
-  for cmd in "$@"; do
-    command -v "$cmd" >/dev/null || missing+=("$cmd")
-  done
-  ((${#missing[@]})) && { error "Missing: ${missing[*]}"; return 1; }
-}
-```
-
-#### Optional Dependencies
+#### Pattern
 
 ```bash
+# Required dependencies
+for cmd in curl jq; do
+  command -v "$cmd" >/dev/null || die 1 "Required: $cmd"
+done
+
+# Optional with fallback
 declare -i HAS_JQ=0
-command -v jq >/dev/null && HAS_JQ=1
-((HAS_JQ)) && result=$(jq -r '.field' <<<"$json")
-```
-
-#### Version Check
-
-```bash
-check_bash_version() {
-  ((BASH_VERSINFO[0] < 5)) && die 1 "Requires Bash 5.2+"
-}
+command -v jq >/dev/null && HAS_JQ=1 ||:
+((HAS_JQ)) && jq -r '.f' <<< "$json" || grep -oP '"f":"\K[^"]+'
 ```
 
 #### Anti-Patterns
 
-- `which curl` â†' `command -v curl` (which is non-POSIX, unreliable)
-- Silent failures â†' Explicit check with install hints
+`which curl` â†' `command -v curl` (POSIX compliant)
 
-**Ref:** BCS0608
+Silent `curl "$url"` â†' explicit check first with helpful install message
+
+**Ref:** BCS0408

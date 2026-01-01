@@ -23,7 +23,7 @@ Scripts that can be both executed directly and sourced as libraries.
 # Define functions first (before any set -e)
 my_function() {
   local -- arg=$1
-  echo "Processing: $arg"
+  echo "Processing ${arg@Q}"
 }
 declare -fx my_function
 
@@ -35,16 +35,14 @@ set -euo pipefail
 shopt -s inherit_errexit shift_verbose
 
 # Script metadata
-SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- SCRIPT_PATH SCRIPT_NAME
+declare -r SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
+declare -r SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 main() {
   my_function "$@"
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -55,7 +53,7 @@ main "$@"
 # Prevent double-initialization when sourced
 
 [[ -v MY_LIB_VERSION ]] || {
-  declare -rx MY_LIB_VERSION='1.0.0'
+  declare -rx MY_LIB_VERSION=1.0.0
   declare -rx MY_LIB_PATH=$(realpath -e -- "${BASH_SOURCE[0]}")
 }
 
@@ -70,16 +68,15 @@ declare -fx my_func
 set -euo pipefail
 main() { my_func "$@"; }
 main "$@"
-
 #fin
 ```
 
 #### Why set -e Comes After Check
 
 `set -e` must come AFTER the sourced check:
-1. When sourced, parent script controls error handling
-2. `return 0` with `set -e` active could cause issues
-3. Library code should not impose error handling on caller
+- When sourced, parent script controls error handling
+- `return 0` with `set -e` active could cause issues
+- Library code should not impose error handling on caller
 
 ```bash
 # ✗ Wrong - set -e before source check

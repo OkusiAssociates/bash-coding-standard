@@ -1,58 +1,44 @@
 ## Conditional Declarations with Exit Code Handling
 
-**Append `|| :` after `((condition)) && action` to prevent false conditions from triggering `set -e` exit.**
+**Append `|| :` to `((cond)) && action` patterns under `set -e` to prevent false conditions from terminating script.**
+
+**Core Problem:** `(())` returns 1 (failure) when false �' `set -e` exits script.
 
 **Rationale:**
-- Arithmetic `(())` returns 0 (true) or 1 (false); under `set -e`, exit code 1 terminates script
-- False condition in `((x)) && action` returns 1, causing unwanted exit
-- `|| :` provides safe fallback (colon always returns 0, traditional Unix idiom)
+- `|| :` provides safe fallback (`:` always returns 0)
+- Traditional Unix idiom for "ignore this error"
 
-**Example:**
+**Pattern:**
 
 ```bash
-set -euo pipefail
 declare -i complete=0
 
-# ✗ Script exits when complete=0
+# ✗ DANGEROUS: Script exits if complete=0
 ((complete)) && declare -g BLUE=$'\033[0;34m'
 
-# ✓ Script continues
+# ✓ SAFE: Script continues
 ((complete)) && declare -g BLUE=$'\033[0;34m' || :
 ```
 
-**Common patterns:**
+**Use `:` over `true`:** Traditional, concise (1 char), built-in, no PATH lookup.
 
-```bash
-# Conditional declarations
-((complete)) && declare -g BLUE=$'\033[0;34m' MAGENTA=$'\033[0;35m' || :
+**When to use:** Optional declarations, conditional exports, feature-gated actions, optional logging.
 
-# Feature-gated actions
-((VERBOSE)) && echo "Processing $file" || :
-
-# Nested conditionals
-((outer)) && {
-  action1
-  ((inner)) && action2 || :
-} || :
-```
-
-**Use when:** Optional declarations, feature flags, debug output, tier-based variables
-
-**Don't use for:** Critical operations (use explicit error handling)
+**When NOT to use:** Critical operations needing explicit error handling �' use `if` statement instead.
 
 **Anti-patterns:**
 
 ```bash
-# ✗ Missing || :, exits on false
-((complete)) && declare -g BLUE=$'\033[0;34m'
+# ✗ Missing || : - exits on false
+((flag)) && action
 
-# ✗ Suppressing critical errors
-((confirmed)) && delete_all_files || :
+# ✗ Suppressing critical operations
+((confirmed)) && delete_files || :
 
-# ✓ Explicit check for critical ops
+# ✓ Critical ops need explicit handling
 if ((confirmed)); then
-  delete_all_files || die 1 "Failed"
+  delete_files || die 1 'Failed'
 fi
 ```
 
-**Ref:** BCS0806
+**Ref:** BCS0606

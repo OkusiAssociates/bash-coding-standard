@@ -1,6 +1,6 @@
 ## Shebang and Initial Setup
 
-First lines must include shebang, optional shellcheck directives, brief description, and `set -euo pipefail` as first command.
+First lines require: shebang, optional shellcheck directives, brief description, then `set -euo pipefail`.
 
 ```bash
 #!/bin/bash
@@ -10,9 +10,8 @@ set -euo pipefail
 ```
 
 **Allowable shebangs:**
+1. `#!/bin/bash` - Most portable for Linux
+2. `#!/usr/bin/bash` - BSD systems
+3. `#!/usr/bin/env bash` - Maximum portability (searches PATH)
 
-1. `#!/bin/bash` - Most portable for Linux systems
-2. `#!/usr/bin/bash` - BSD systems where bash is in /usr/bin
-3. `#!/usr/bin/env bash` - Maximum portability; searches PATH for bash
-
-**Rationale:** First command must be `set -euo pipefail` for strict error handling before any other commands execute.
+**Rationale:** `set -euo pipefail` must be first command to enable strict error handling before any other commands execute.

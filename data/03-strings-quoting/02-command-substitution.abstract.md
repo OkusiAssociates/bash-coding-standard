@@ -1,13 +1,18 @@
 ### Command Substitution
 
-**Use double quotes when strings include `$(...)`; always quote results to prevent word splitting.**
+**Always double-quote strings containing `$()` and quote variables holding command output to prevent word splitting.**
+
+#### Core Pattern
 
 ```bash
-info "Found $(wc -l < "$file") lines"
+# âœ“ Correct
+echo "Time: $(date +%T)"
 VERSION="$(git describe --tags 2>/dev/null || echo 'unknown')"
-result=$(cmd); echo "$result"  # âœ“ Quoted
+result=$(cmd); echo "$result"
 ```
 
-`echo $result` â†' word splitting breaks multi-word output.
+#### Anti-Pattern
+
+`echo $result` â†' word splitting on whitespace
 
 **Ref:** BCS0302

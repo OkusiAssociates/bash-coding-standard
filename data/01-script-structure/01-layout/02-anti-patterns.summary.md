@@ -1,6 +1,6 @@
 ### Common Layout Anti-Patterns
 
-Common violations of BCS0101 13-step layout with corrections.
+**Common violations of BCS0101 13-step layout with incorrect approach and correct solution.**
 
 ---
 
@@ -10,43 +10,64 @@ Common violations of BCS0101 13-step layout with corrections.
 
 ```bash
 #!/usr/bin/env bash
+
+# Script starts without error handling
 VERSION=1.0.0
-rm -rf /important/data  # Fails silently
+
+# Commands can fail silently
+rm -rf /important/data
+cp config.txt /etc/
 ```
 
 **Problem:** Errors not caught, script continues after failures.
 
-### ✓ Correct
+### ✓ Correct: Error Handling First
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose
+
 VERSION=1.0.0
 ```
 
 ---
 
-### ✗ Variables After Use
+### ✗ Variables Declared After Use
 
 ```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
 main() {
-  ((VERBOSE)) && echo 'Starting...' ||:  # VERBOSE undefined!
+  ((VERBOSE)) && echo 'Starting...' ||:  # VERBOSE not declared!
+  process_files
 }
+
 declare -i VERBOSE=0  # Too late
+
+main "$@"
+#fin
 ```
 
-**Problem:** "Unbound variable" errors with `set -u`.
+**Problem:** "unbound variable" errors with `set -u`.
 
-### ✓ Correct
+### ✓ Correct: Declare Before Use
 
 ```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
 declare -i VERBOSE=0
 declare -i DRY_RUN=0
 
 main() {
   ((VERBOSE)) && echo 'Starting...' ||:
+  process_files
 }
+
+main "$@"
+#fin
 ```
 
 ---
@@ -54,22 +75,45 @@ main() {
 ### ✗ Business Logic Before Utilities
 
 ```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
 process_files() {
-  [[ -f "$file" ]] || die 2 "Not a file"  # die() not defined yet!
+  local -- file
+  for file in *.txt; do
+    [[ -f "$file" ]] || die 2 "Not a file ${file@Q}"  # die() not defined!
+  done
 }
+
 die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+
+main() { process_files; }
+
+main "$@"
+#fin
 ```
 
-**Problem:** Violates bottom-up organization; harder to understand.
+**Problem:** Violates bottom-up organization, harder to understand.
 
-### ✓ Correct
+### ✓ Correct: Utilities Before Business Logic
 
 ```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
 die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 process_files() {
-  [[ -f "$file" ]] || die 2 "Not a file"
+  local -- file
+  for file in *.txt; do
+    [[ -f "$file" ]] || die 2 "Not a file ${file@Q}"
+  done
 }
+
+main() { process_files; }
+
+main "$@"
+#fin
 ```
 
 ---
@@ -77,17 +121,34 @@ process_files() {
 ### ✗ No `main()` in Large Script
 
 ```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+VERSION=1.0.0
 # ... 200 lines of functions ...
-if [[ "$1" == '--help' ]]; then echo 'Usage: ...'; exit 0; fi
+
+if [[ "$1" == '--help' ]]; then
+  echo 'Usage: ...'
+  exit 0
+fi
+
 check_prerequisites
+validate_config
 install_files
+echo 'Done'
+#fin
 ```
 
-**Problem:** No clear entry point, scattered parsing, can't source for testing.
+**Problem:** No clear entry point, scattered argument parsing, can't source to test functions.
 
-### ✓ Correct
+### ✓ Correct: Use `main()` for Scripts Over 40 Lines
 
 ```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+VERSION=1.0.0
+
 main() {
   while (($#)); do
     case $1 in
@@ -96,9 +157,13 @@ main() {
     esac
     shift
   done
+
   check_prerequisites
+  validate_config
   install_files
+  success 'Installation complete'
 }
+
 main "$@"
 #fin
 ```
@@ -108,88 +173,152 @@ main "$@"
 ### ✗ Missing End Marker
 
 ```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+main() { echo 'Hello, World!'; }
+
 main "$@"
 # File ends without #fin
 ```
 
-**Problem:** No confirmation file is complete; truncation harder to detect.
+**Problem:** No visual confirmation file is complete, harder to detect truncation.
 
-### ✓ Correct
+### ✓ Correct: Always End With `#fin`
 
 ```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+main() { echo 'Hello, World!'; }
+
 main "$@"
 #fin
 ```
 
 ---
 
-### ✗ Readonly Before Parsing
+### ✗ Readonly Before Parsing Arguments
 
 ```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+VERSION=1.0.0
 PREFIX=/usr/local
-readonly -- PREFIX
+readonly -- VERSION PREFIX  # Too early!
 
 main() {
-  case $1 in
-    --prefix) PREFIX="$1" ;;  # Fails - readonly!
-  esac
+  while (($#)); do
+    case $1 in
+      --prefix) shift; PREFIX="$1" ;;  # Fails - readonly!
+    esac
+    shift
+  done
 }
+
+main "$@"
+#fin
 ```
 
-### ✓ Correct
+### ✓ Correct: Readonly After Argument Parsing
 
 ```bash
-declare -- PREFIX=/usr/local
+#!/usr/bin/env bash
+set -euo pipefail
+
+VERSION=1.0.0
+SCRIPT_PATH=$(realpath -- "$0")
+SCRIPT_NAME=${SCRIPT_PATH##*/}
+readonly -- VERSION SCRIPT_PATH SCRIPT_NAME  # Never change
+
+declare -- PREFIX=/usr/local  # Modified during parsing
 
 main() {
-  case $1 in --prefix) PREFIX=$1 ;; esac
-  readonly -- PREFIX  # After parsing
+  while (($#)); do
+    case $1 in
+      --prefix) shift; PREFIX=$1 ;;
+    esac
+    shift
+  done
+  readonly -- PREFIX  # Now lock it
 }
+
+main "$@"
+#fin
 ```
 
 ---
 
-### ✗ Scattered Declarations
+### ✗ Mixing Declaration and Logic
 
 ```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
 declare -i VERBOSE=0
+
 check_something() { echo 'Checking...'; }
-declare -- PREFIX=/usr/local  # More globals after function
+
+declare -- PREFIX=/usr/local  # Globals scattered!
+declare -- CONFIG_FILE=''
+
+main() { check_something; }
+main "$@"
+#fin
 ```
 
-**Problem:** Hard to see all state variables at once.
-
-### ✓ Correct
+### ✓ Correct: All Globals Together
 
 ```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+VERSION=1.0.0
 declare -i VERBOSE=0
 declare -- PREFIX=/usr/local
+declare -- CONFIG_FILE=''
 
 check_something() { echo 'Checking...'; }
+
+main() { check_something; }
+main "$@"
+#fin
 ```
 
 ---
 
-### ✗ Unprotected Sourcing
+### ✗ Sourcing Without Protecting Execution
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail  # Modifies caller's shell!
-main "$@"          # Runs when sourced!
+
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+
+main "$@"  # Runs automatically when sourced!
+#fin
 ```
 
-### ✓ Dual-Purpose Script
+### ✓ Correct: Dual-Purpose Script
 
 ```bash
 #!/usr/bin/env bash
+
 error() { >&2 echo "ERROR: $*"; }
 die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
-[[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0
+[[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0  # Exit if sourced
 
 set -euo pipefail
+
 VERSION=1.0.0
+SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
+SCRIPT_NAME=${SCRIPT_PATH##*/}
+readonly -- VERSION SCRIPT_PATH SCRIPT_NAME
+
 main() { echo 'Running main'; }
+
 main "$@"
 #fin
 ```
@@ -198,13 +327,15 @@ main "$@"
 
 ## Summary
 
+Eight anti-patterns violating BCS0101:
+
 | Anti-Pattern | Consequence |
-|--------------|-------------|
-| Missing strict mode | Silent failures |
-| Declaration order | Unbound variable errors |
-| Function organization | Code harder to understand |
-| Missing main() | Can't test or source script |
-| Missing #fin | Truncation undetectable |
-| Premature readonly | Assignment errors |
-| Scattered declarations | State hard to audit |
-| Unprotected sourcing | Caller's shell modified |
+|-------------|-------------|
+| Missing strict mode | Scripts fail silently |
+| Late declaration | Unbound variable errors |
+| Wrong function order | Violates bottom-up organization |
+| Missing main() | No testable entry point |
+| Missing end marker | Can't detect truncation |
+| Premature readonly | Breaks argument parsing |
+| Scattered declarations | Hard to see all state |
+| Unprotected sourcing | Modifies caller's shell |

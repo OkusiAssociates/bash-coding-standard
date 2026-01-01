@@ -1,33 +1,41 @@
 ## Language Best Practices
 
-**Use `$()` for command substitution and prefer builtins over external commands (10-100x faster).**
+**Use `$()` for command substitution; prefer builtins over external commands (10-100x faster).**
 
 ### Command Substitution
-Use `$()` â†' readable, nestable, better editor support. Never use backticks.
+Always `$()` â†' never backticks. Nests naturally without escaping.
 
 ```bash
-outer=$(echo "inner: $(date +%T)")  # âœ“ nests naturally
-outer=`echo "inner: \`date +%T\`"`  # âœ— requires escaping
+outer=$(echo "inner: $(date +%T)")   # âœ“ Clean nesting
+outer=`echo "inner: \`date +%T\`"`   # âœ— Requires escaping
 ```
 
 ### Builtins vs External Commands
-Prefer builtinsâ€”no process creation, no PATH dependency, no pipe failures.
 
-| External | Builtin |
-|----------|---------|
-| `expr $x + $y` | `$((x + y))` |
-| `basename "$p"` | `${p##*/}` |
-| `dirname "$p"` | `${p%/*}` |
-| `tr A-Z a-z` | `${var,,}` |
-| `[ -f "$f" ]` | `[[ -f "$f" ]]` |
-| `seq 1 10` | `{1..10}` |
-
-### Anti-Patterns
+| External | Builtin | Example |
+|----------|---------|---------|
+| `expr` | `$(())` | `$((x + y))` |
+| `basename` | `${var##*/}` | `${path##*/}` |
+| `dirname` | `${var%/*}` | `${path%/*}` |
+| `tr` (case) | `${var^^}` `${var,,}` | `${str,,}` |
+| `test`/`[` | `[[` | `[[ -f "$file" ]]` |
+| `seq` | `{1..10}` | Brace expansion |
 
 ```bash
-var=`command`              # â†' var=$(command)
-$(expr "$x" + "$y")        # â†' $((x + y))
-[ -f "$file" ]             # â†' [[ -f "$file" ]]
+# âœ“ Builtin - instant (no process creation)
+result=$((i * 2))
+string=${var,,}
+
+# âœ— External - spawns process each call
+result=$(expr $i \* 2)
+string=$(echo "$var" | tr A-Z a-z)
 ```
+
+**Use external only when no builtin exists:** `sha256sum`, `sort`, `whoami`.
+
+### Anti-patterns
+- `` `command` `` â†' `$(command)`
+- `[ -f "$file" ]` â†' `[[ -f "$file" ]]`
+- `$(expr $x + $y)` â†' `$((x + y))`
 
 **Ref:** BCS1205

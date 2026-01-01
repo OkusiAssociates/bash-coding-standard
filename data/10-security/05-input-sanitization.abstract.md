@@ -1,64 +1,41 @@
 ## Input Sanitization
 
-**Always validate user input to prevent injection attacks and directory traversal.**
+**Always validate and sanitize user input before processing.**
 
-**Rationale:** Never trust user input—validate type, format, range before processing.
+**Rationale:** Prevents injection attacks, directory traversal (`../../../etc/passwd`), and type mismatches. Defense in depth—never trust user input.
 
-**Patterns:**
+**Core Pattern—Filename Validation:**
 
 ```bash
-# Filename validation
 sanitize_filename() {
-  [[ -n "$1" ]] || die 22 'Empty'
-  local n="${1//\.\./}"; n="${n//\//}"
-  [[ "$n" =~ ^[a-zA-Z0-9._-]+$ ]] || die 22 "Unsafe: $n"
-}
-
-# Integer range
-validate_port() {
-  [[ "$1" =~ ^[0-9]+$ ]] || die 22 "Invalid: $1"
-  ((1 <= $1 && $1 <= 65535)) || die 22 "Range: $1"
-}
-
-# Path containment
-validate_path() {
-  local p=$(realpath -e -- "$1") || die 22 "Invalid: $1"
-  [[ "$p" == "$2"* ]] || die 5 "Outside: $p"
-}
-
-# Whitelist
-validate_choice() {
-  local in="$1"; shift
-  for c in "$@"; do [[ "$in" == "$c" ]] && return 0; done
-  die 22 "Invalid: $in"
+  local -- name=$1
+  [[ -n "$name" ]] || die 22 'Filename cannot be empty'
+  name="${name//\.\./}"; name="${name//\//}"  # Strip traversal
+  [[ "$name" =~ ^[a-zA-Z0-9._-]+$ ]] || die 22 "Invalid: ${name@Q}"
+  echo "$name"
 }
 ```
 
-**Injection prevention:**
+**Injection Prevention:**
 
 ```bash
-# ✗ Command injection
-eval "$user_cmd"          # NEVER!
-cat "$file"               # file="; rm -rf /"
+# Option injection - always use -- separator
+rm -- "$user_file"    # ✓ Safe
+rm "$user_file"       # ✗ Dangerous if file="-rf /"
 
-# ✓ Safe
-case "$cmd" in start|stop) systemctl "$cmd" app ;; esac
-cat -- "$file"            # Use -- separator
-
-# ✗ Option injection  
-rm "$file"                # file="--delete-all"
-# ✓ Safe
-rm -- "$file"
-ls ./"$file"
+# Command injection - whitelist, never eval
+case "$cmd" in start|stop) systemctl "$cmd" app ;; esac  # ✓
+eval "$user_cmd"      # ✗ NEVER with user input
 ```
 
-**Anti-pattern:**
+**Validation Types:** Integer (`^-?[0-9]+$`), path (realpath + directory check), email (`^[a-zA-Z0-9._%+-]+@...`), whitelist (array membership).
 
-```bash
-# ✗ Blacklist (incomplete)
-[[ "$input" != *'rm'* ]] || die 1 'Invalid'
-# ✓ Whitelist
-[[ "$input" =~ ^[a-zA-Z0-9]+$ ]] || die 1 'Invalid'
-```
+**Anti-Patterns:**
 
-**Ref:** BCS1205
+- `rm -rf "$user_dir"` without validation �' validate_path first
+- Blacklist approach (`!= *rm*`) �' whitelist regex instead
+- Trusting "looks safe" input �' always validate type/format/range/length
+
+**Security Principles:** Whitelist over blacklist; validate early; fail securely; use `--` separator; avoid `eval`; principle of least privilege.
+
+**Ref:** BCS1005

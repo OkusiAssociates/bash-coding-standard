@@ -1,13 +1,13 @@
 ## Script Metadata
 
-**Every script must declare standard metadata variables (VERSION, SCRIPT_PATH, SCRIPT_DIR, SCRIPT_NAME) immediately after `shopt` settings. Declare them as readonly using `declare -r`.**
+**Every script must declare standard metadata variables (VERSION, SCRIPT_PATH, SCRIPT_DIR, SCRIPT_NAME) immediately after `shopt` settings and before any other code. Declare them as readonly using `declare -r`.**
 
 **Rationale:**
-- `realpath` provides canonical absolute paths and fails early if script doesn't exist
-- VERSION enables versioning for deployment, debugging, and `--version` output
-- SCRIPT_DIR enables reliable loading of companion files and resources
-- SCRIPT_NAME provides consistent identification in logs and error messages
-- Making metadata readonly prevents accidental modification
+- **Reliable Path Resolution**: `realpath` provides canonical absolute paths and fails early if script doesn't exist
+- **Self-Documentation**: VERSION provides versioning for deployment and debugging
+- **Resource Location**: SCRIPT_DIR enables reliable loading of companion files and configuration
+- **Logging**: SCRIPT_NAME provides consistent script identification in logs and errors
+- **Defensive Programming**: Readonly prevents accidental modification that could break resource loading
 
 **Standard metadata pattern:**
 
@@ -21,6 +21,8 @@ declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
+
+# Rest of script follows
 ```
 
 **Metadata variables:**
@@ -28,30 +30,31 @@ declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 | Variable | Purpose | Derivation |
 |----------|---------|------------|
 | VERSION | Semantic version (Major.Minor.Patch) | Manual assignment |
-| SCRIPT_PATH | Absolute canonical path to script | `realpath -- "$0"` |
+| SCRIPT_PATH | Absolute canonical path | `$(realpath -- "$0")` |
 | SCRIPT_DIR | Directory containing script | `${SCRIPT_PATH%/*}` |
 | SCRIPT_NAME | Base filename only | `${SCRIPT_PATH##*/}` |
 
-**Using metadata for resource location:**
+**Usage examples:**
 
 ```bash
-# Load libraries relative to script location
-source "$SCRIPT_DIR"/lib/logging.sh
+# Version display
+show_version() { echo "$SCRIPT_NAME $VERSION"; }
 
-# Load configuration
-declare -- config_file="$SCRIPT_DIR"/../etc/app.conf
-[[ -f "$config_file" ]] && source "$config_file" ||:
+# Load libraries relative to script
+source "$SCRIPT_DIR"/lib/common.sh
 
-# Access data files
-declare -- data_dir="$SCRIPT_DIR"/../share/data
-[[ -d "$data_dir" ]] || die 2 "Data directory not found ${data_dir@Q}"
+# Error messages
+die() { (($# < 2)) || >&2 echo "$SCRIPT_NAME: error: ${*:2}"; exit "${1:-0}"; }
 
-# Use metadata in logging
-info "Starting $SCRIPT_NAME $VERSION"
+# Help text
+show_help() { cat << EOF
+Usage: $SCRIPT_NAME [OPTIONS] FILE
+EOF
+}
 ```
 
 **Why realpath over readlink:**
-- Simpler syntax (no -e/-n flags needed)
+- Simpler syntax: No `-e` and `-n` flags needed
 - Loadable builtin available for maximum performance
 - POSIX compliant (readlink is GNU-specific)
 - Fails if file doesn't exist (catches errors early)
@@ -64,22 +67,15 @@ SCRIPT_PATH=$(realpath -- "$0")
 SCRIPT_PATH=$(readlink -en -- "$0")
 ```
 
-**About SC2155:** We disable SC2155 for SCRIPT_PATH because realpath failure should cause immediate script termination anyway. The concise pattern with documented disable is preferred.
-
-**Edge cases:**
+**About SC2155:**
 
 ```bash
-# Script in root directory (SCRIPT_DIR becomes empty)
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-[[ -n "$SCRIPT_DIR" ]] || SCRIPT_DIR='/'
-readonly -- SCRIPT_DIR
-
-# Sourced vs executed
-if [[ "${BASH_SOURCE[0]}" != "$0" ]]; then
-  SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
-else
-  SCRIPT_PATH=$(realpath -- "$0")
-fi
+# shellcheck SC2155 warns about command substitution in declare -r masking return value
+# We disable it because:
+# 1. realpath failure is acceptable - we WANT early failure if script doesn't exist
+# 2. Pattern is concise and immediately makes variable readonly
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "$0")
 ```
 
 **Anti-patterns:**
@@ -88,34 +84,47 @@ fi
 # ✗ Wrong - using $0 directly without realpath
 SCRIPT_PATH="$0"  # Could be relative path or symlink!
 
-# ✗ Wrong - using dirname and basename (external commands)
+# ✓ Correct
+SCRIPT_PATH=$(realpath -- "$0")
+
+# ✗ Wrong - using dirname/basename (external commands)
 SCRIPT_DIR=$(dirname "$0")
 SCRIPT_NAME=$(basename "$0")
 
-# ✓ Correct - use parameter expansion
+# ✓ Correct - parameter expansion (faster)
 SCRIPT_DIR=${SCRIPT_PATH%/*}
 SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # ✗ Wrong - using PWD for script directory
-SCRIPT_DIR=$PWD  # This is current working directory, not script location
+SCRIPT_DIR=$PWD  # This is CWD, not script location!
 
-# ✗ Wrong - making readonly individually
+# ✗ Wrong - readonly assignment fails
 readonly SCRIPT_PATH=$(realpath -- "$0")
-readonly SCRIPT_DIR=${SCRIPT_PATH%/*}  # Can't assign to readonly variable!
+readonly SCRIPT_DIR=${SCRIPT_PATH%/*}  # Can't assign to readonly!
 
-# ✓ Correct - declare -r immediately
-declare -r VERSION=1.0.0
-#shellcheck disable=SC2155
+# ✓ Correct - declare -r
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*}
+```
 
-# ✗ Wrong - using inconsistent variable names
-SCRIPT_VERSION=1.0.0  # Should be VERSION
-SCRIPT_DIRECTORY="$SCRIPT_DIR"  # Redundant
+**Edge case: Script in root directory:**
 
-# ✗ Wrong - declaring metadata late in script
-# ... 50 lines of code ...
-VERSION=1.0.0  # Too late! Should be near top
+```bash
+# If script is /myscript, SCRIPT_DIR becomes empty string
+SCRIPT_DIR=${SCRIPT_PATH%/*}
+[[ -n "$SCRIPT_DIR" ]] || SCRIPT_DIR='/'
+readonly -- SCRIPT_DIR
+```
+
+**Edge case: Sourced vs executed:**
+
+```bash
+# When sourced, $0 is the calling shell
+if [[ "${BASH_SOURCE[0]}" != "$0" ]]; then
+  SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
+else
+  SCRIPT_PATH=$(realpath -- "$0")
+fi
 ```
 
 **Complete example:**
@@ -152,9 +161,19 @@ Location: $SCRIPT_PATH
 EOF
 }
 
+load_config() {
+  if [[ -f "$CONFIG_FILE" ]]; then
+    info "Loading configuration from ${CONFIG_FILE@Q}"
+    source "$CONFIG_FILE"
+  else
+    die 2 "Configuration file not found ${CONFIG_FILE@Q}"
+  fi
+}
+
 main() {
   info "Starting $SCRIPT_NAME $VERSION"
-  # Main logic here
+  load_config
+  info 'Processing complete'
 }
 
 main "$@"
@@ -162,4 +181,10 @@ main "$@"
 #fin
 ```
 
-**Key principle:** Metadata provides the foundation for reliable script operation. Declaring it consistently at the top enables predictable behavior regardless of how the script is invoked or where it's located.
+**Summary:**
+- Declare metadata immediately after `shopt` settings
+- Use standard names: VERSION, SCRIPT_PATH, SCRIPT_DIR, SCRIPT_NAME
+- Use `realpath` to resolve SCRIPT_PATH (canonical BCS approach)
+- Derive SCRIPT_DIR/SCRIPT_NAME from SCRIPT_PATH using parameter expansion
+- Use `declare -r` for immediate readonly
+- Use metadata for resource location, logging, error messages, version display

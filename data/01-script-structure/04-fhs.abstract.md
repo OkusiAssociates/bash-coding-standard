@@ -1,12 +1,12 @@
-## FHS Compliance
+## FHS Preference
 
 **Follow Filesystem Hierarchy Standard for scripts that install files or search for resourcesâ€”enables predictable locations, multi-environment support, and package manager compatibility.**
 
-**Key rationale:** Eliminates hardcoded paths; scripts work across dev/local/system installs without modification.
+**Key rationale:** Eliminates hardcoded paths; works in dev/local/system install modes; XDG support for user files.
 
-**Standard locations:** `/usr/local/bin/` (executables), `/usr/local/share/` (data), `/usr/local/lib/` (libraries), `/usr/local/etc/` (config), `${XDG_DATA_HOME:-$HOME/.local/share}/` (user data)
+**FHS locations:** `/usr/local/{bin,share,lib,etc}/` (local install) â†' `/usr/{bin,share}/` (system) â†' `$HOME/.local/{bin,share}/` (user) â†' `${XDG_CONFIG_HOME:-$HOME/.config}/` (user config)
 
-**FHS search pattern:**
+**Core patternâ€”FHS search:**
 ```bash
 find_data_file() {
   local -- filename=$1
@@ -24,16 +24,12 @@ find_data_file() {
 }
 ```
 
-**PREFIX pattern:**
-```bash
-PREFIX=${PREFIX:-/usr/local}
-BIN_DIR="$PREFIX"/bin
-```
+**PREFIX pattern:** `PREFIX=${PREFIX:-/usr/local}; BIN_DIR="$PREFIX"/bin` â†' supports `make PREFIX=/usr install`
 
 **Anti-patterns:**
 - `source /usr/local/lib/myapp/common.sh` â†' hardcoded path breaks portability
-- `BIN_DIR=/usr/local/bin` â†' use `PREFIX=${PREFIX:-/usr/local}; BIN_DIR="$PREFIX"/bin`
+- `install myapp /opt/random/` â†' non-FHS location, breaks package managers
 
-**Skip FHS:** Single-user scripts, project-specific tools, containers
+**When NOT to use:** Single-user scripts, project-specific tools, containers with `/app`
 
 **Ref:** BCS0104

@@ -1,54 +1,40 @@
 ## IFS Manipulation Safety
 
-**Always protect IFS changes to prevent field splitting attacks and command injection.**
+**Never trust inherited IFS; always protect IFS changes to prevent field splitting attacks.**
 
-**Rationale:** Attackers manipulate inherited IFS values to exploit word splitting, bypass validation, or inject commands through unquoted expansions.
+**Why:** Attackers manipulate IFS to exploit word splitting �' command injection, privilege escalation, bypass validation.
 
 **Safe Patterns:**
 
 ```bash
-# Set at script start
-IFS=$' \t\n'
-readonly IFS
+# Pattern 1: One-line (preferred for single commands)
+IFS=',' read -ra fields <<< "$csv_data"
 
-# One-line scope (preferred)
-IFS=',' read -ra fields <<< "$csv"
+# Pattern 2: Local IFS in function
+local -- IFS; IFS=','
+read -ra fields <<< "$data"
 
-# Local scope in functions
-local -- IFS
-IFS=','
-read -ra fields <<< "$csv"
-
-# Subshell isolation
-fields=( $(IFS=','; printf '%s\n' $csv) )
-
-# Save/restore
-saved_ifs="$IFS"
-IFS=','
-read -ra fields <<< "$csv"
-IFS="$saved_ifs"
+# Pattern 3: Script start protection
+IFS=$' \t\n'; readonly IFS; export IFS
 ```
 
-**Attack Example:**
+**Anti-patterns:**
 
 ```bash
-#  Vulnerable - trusts inherited IFS
-read -ra parts <<< "$user_input"
-# Attacker: export IFS='/'; script splits on '/' not spaces
-
-#  Protected
-IFS=$' \t\n'
-readonly IFS
-read -ra parts <<< "$user_input"
-```
-
-**Anti-pattern:**
-
-```bash
-#  Wrong - global IFS change without restore
+# ✗ Global modification without restore
 IFS=','
 read -ra fields <<< "$data"
-# All subsequent operations broken!
+# IFS stays ',' for rest of script!
+
+# ✗ Trusting inherited IFS
+#!/bin/bash
+read -ra parts <<< "$input"  # Attacker controls IFS!
 ```
 
-**Ref:** BCS1203
+**Key Rules:**
+- Set `IFS=$' \t\n'; readonly IFS` at script start
+- Use `IFS='x' read` for single operations (auto-resets)
+- Use `local -- IFS` in functions for scoped changes
+- Use subshells `( IFS=','; ... )` for isolation
+
+**Ref:** BCS1003

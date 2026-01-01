@@ -1,6 +1,6 @@
 ## File Extensions
 
-- Executables: `.sh` extension or no extension
-- Libraries: `.sh` extension, should not be executable
-- Dual-purpose libraries (executable + sourceable): `.sh` or no extension
-- PATH-available executables: always use no extension
+- **Executables**: Use `.sh` extension or no extension
+- **Libraries**: Must have `.sh` extension; should not be executable
+- **Dual-purpose scripts**: Can use `.sh` or no extension
+- **PATH-available executables**: Always omit extension

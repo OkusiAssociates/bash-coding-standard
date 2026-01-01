@@ -1,19 +1,13 @@
 ## Wildcard Expansion
 
-**Always prefix wildcards with explicit path to prevent filenames starting with `-` from being interpreted as flags.**
+**Always use explicit `./*` path prefix for wildcard operations.**
 
-**Rationale:** Files like `-rf` or `--force` become command flags without path prefix, causing catastrophic execution errors or unintended destructive operations.
+Prevents filenames starting with `-` from being interpreted as command flags.
 
-**Example:**
 ```bash
-# ✓ Correct
-rm -v ./*
-for file in ./*.txt; do process "$file"; done
-
-# ✗ Wrong - `-rf.txt` becomes `rm -v -rf.txt`
-rm -v *
+rm -v ./*                    # ✓ Safe
+for f in ./*.txt; do         # ✓ Safe
+# rm -v *                    # ✗ -file.txt becomes flag
 ```
 
-**Anti-patterns:** `rm *`, `cp * dest/`, `for f in *.sh` → Use `./*`, `./*.sh`
-
-**Ref:** BCS1102
+**Ref:** BCS0902

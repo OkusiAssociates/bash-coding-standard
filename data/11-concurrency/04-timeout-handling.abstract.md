@@ -1,31 +1,31 @@
 ### Timeout Handling
 
-**Use `timeout` command for all potentially-blocking operations; check exit code 124 for timeout detection.**
+**Use `timeout` command to prevent hangs; exit code 124 = timed out.**
 
-#### Key Exit Codes
-- **124**: timed out | **125**: timeout failed | **137**: SIGKILL (128+9)
+#### Rationale
+- Prevents indefinite hangs on unresponsive commands
+- Avoids resource exhaustion from stuck processes
+- Exit 124=timeout, 137=SIGKILL (128+9)
 
 #### Pattern
-```bash
-declare -i TIMEOUT=${TIMEOUT:-30}
-if ! timeout --signal=TERM --kill-after=10 "$TIMEOUT" "$@"; then
-  ((($? == 124))) && warn 'Timed out'
-fi
-```
 
-#### Read Timeout
 ```bash
+if timeout 30 long_command; then
+  success 'Completed'
+else
+  local -i ec=$?
+  ((ec == 124)) && warn 'Timed out' || error "Failed: $ec"
+fi
+
+# Graceful: SIGTERM then SIGKILL
+timeout --signal=TERM --kill-after=10 60 command
+
+# Read with timeout
 read -r -t 10 -p 'Value: ' val || val='default'
 ```
 
-#### Network Operations
-```bash
-# Always timeout network ops
-timeout 300 ssh -o ConnectTimeout=10 "$server" 'cmd'
-curl --connect-timeout 10 --max-time 60 "$url"
-```
-
 #### Anti-Pattern
-`ssh "$server" 'cmd'` â†' hangs forever; use `timeout` wrapper
+
+`ssh "$server" cmd` â†' `timeout 300 ssh -o ConnectTimeout=10 "$server" cmd`
 
 **Ref:** BCS1104

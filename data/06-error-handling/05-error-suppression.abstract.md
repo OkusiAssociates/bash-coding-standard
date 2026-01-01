@@ -1,56 +1,54 @@
 ## Error Suppression
 
-**Only suppress when failure is expected, non-critical, and safe. Always document WHY. Suppression masks bugs.**
+**Only suppress errors when failure is expected, non-critical, and safe. Always document WHY.**
 
-**Appropriate:**
-- Optional checks: `command -v tool >/dev/null 2>&1`
-- Cleanup: `rm -f /tmp/myapp_* 2>/dev/null || true`
-- Idempotent: `install -d "$dir" 2>/dev/null || true`
+**Rationale:** Masks bugs, silent failures, debugging nightmare, security risk.
 
-**NEVER suppress:**
+### Safe to Suppress
 
-```bash
-# ✗ Critical file ops
-cp "$config" "$dest" 2>/dev/null || true
-# ✓ Correct
-cp "$config" "$dest" || die 1 "Copy failed"
+- Command existence: `command -v tool >/dev/null 2>&1`
+- Optional files: `[[ -f "$optional" ]]`
+- Cleanup: `rm -f /tmp/app_* 2>/dev/null || true`
+- Idempotent ops: `install -d "$dir" 2>/dev/null || true`
 
-# ✗ Data processing
-process < in.txt > out.txt 2>/dev/null || true
-# ✓ Correct
-process < in.txt > out.txt || die 1 'Processing failed'
+### NEVER Suppress
 
-# ✗ Security ops
-chmod 600 "$key" 2>/dev/null || true
-# ✓ Correct
-chmod 600 "$key" || die 1 "Failed to secure $key"
-```
+- Critical file ops �' must verify success
+- Data processing �' silent data loss
+- System config �' `systemctl` must check
+- Security ops �' `chmod 600` must succeed
+- Required deps �' fail early
 
-**Patterns:**
-- `2>/dev/null` - Suppress messages, check return
-- `|| true` - Ignore return code
-- `2>/dev/null || true` - Suppress both
-
-**Documentation required:**
+### Patterns
 
 ```bash
-# Suppress: temp files may not exist (non-critical)
-rm -f /tmp/myapp_* 2>/dev/null || true
+# Suppress stderr, check return
+if ! command 2>/dev/null; then handle_error; fi
 
-# ✗ WRONG - no reason
-cmd 2>/dev/null || true
+# Ignore return (stderr visible)
+command || true
+
+# Full suppression (document why!)
+# Rationale: temp files may not exist
+rm -f /tmp/app_* 2>/dev/null || true
 ```
 
-**Anti-patterns:**
+### Anti-Patterns
 
 ```bash
-# ✗ Function-wide suppression
-process() { ...; } 2>/dev/null
+# ✗ Suppressing critical op
+cp "$file" "$backup" 2>/dev/null || true
 
-# ✗ Using set +e
-set +e; operation; set -e
+# ✗ Undocumented suppression
+some_cmd 2>/dev/null || true
+
+# ✗ Block suppression
+set +e; critical_op; set -e
+
+# ✓ Check critical ops
+cp "$file" "$dest" || die 1 'Failed'
 ```
 
-**Principle:** Suppression is exceptional. Document every `2>/dev/null` and `|| true` with WHY.
+**Key:** Every suppression needs a comment explaining why failure is safe to ignore.
 
-**Ref:** BCS0805
+**Ref:** BCS0605
