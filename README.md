@@ -2,7 +2,7 @@
 
 A comprehensive coding standard for modern Bash 5.2+ scripts, designed for consistency, robustness, and maintainability.
 
-**Version 1.0.1** | **12 Sections** | **101 Rules** | **13 Subcommands**
+**Version 1.0.2** | **12 Sections** | **101 Rules** | **13 Subcommands**
 
 ---
 
@@ -670,7 +670,7 @@ bcs decode BCS0102 --all      # Show all tiers
 
 ```
 bash-coding-standard/
-├── bcs                       # Main CLI toolkit (v1.0.1, 161KB)
+├── bcs                       # Main CLI toolkit (v1.0.2, 161KB)
 ├── bash-coding-standard      # Symlink → bcs
 ├── bcs.1                     # Man page (19KB)
 ├── bcs.bash_completion       # Bash completion (9KB)
@@ -1208,4 +1208,4 @@ See [LICENSE](LICENSE) for details.
 
 ---
 
-*Updated: 2026-01-01 | Version 1.0.1*
+*Updated: 2026-01-01 | Version 1.0.2*
