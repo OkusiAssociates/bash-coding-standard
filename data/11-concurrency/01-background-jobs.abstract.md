@@ -27,4 +27,4 @@ wait "${PIDS[@]}"
 - `command &` without `pid=$!` â†' cannot manage job later
 - Using `$$` for background PID â†' wrong; `$$` is parent, `$!` is child
 
-**Ref:** BCS1406
+**Ref:** BCS1101

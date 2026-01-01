@@ -21523,7 +21523,7 @@ This section covers parallel execution patterns, background job management, and 
 
 ## Background Job Management
 
-**Rule: BCS1406**
+**Rule: BCS1101**
 
 Managing background processes, job control, and process lifecycle in Bash scripts.
 
@@ -21638,7 +21638,7 @@ echo "Started $!"
 
 ---
 
-**See Also:** BCS1407 (Parallel Execution), BCS1408 (Wait Patterns), BCS1409 (Timeout Handling)
+**See Also:** BCS1102 (Parallel Execution), BCS1103 (Wait Patterns), BCS1104 (Timeout Handling)
 
 **Full implementation:** See `examples/exemplar-code/oknav/oknav` lines 475-510
 
@@ -21650,7 +21650,7 @@ echo "Started $!"
 
 ## Parallel Execution Patterns
 
-**Rule: BCS1407** (New)
+**Rule: BCS1102** (New)
 
 Executing multiple commands concurrently while maintaining control and collecting results.
 
@@ -21760,7 +21760,7 @@ count=$(wc -l < "$temp_dir"/count)
 
 ---
 
-**See Also:** BCS1406 (Background Jobs), BCS1408 (Wait Patterns)
+**See Also:** BCS1101 (Background Jobs), BCS1103 (Wait Patterns)
 
 **Full implementation:** See `examples/exemplar-code/oknav/oknav` lines 465-530
 
@@ -21772,7 +21772,7 @@ count=$(wc -l < "$temp_dir"/count)
 
 ## Wait Patterns
 
-**Rule: BCS1408** (New)
+**Rule: BCS1103** (New)
 
 Proper synchronization when waiting for background processes.
 
@@ -21877,7 +21877,7 @@ wait $! || die 1 'Command failed'
 
 ---
 
-**See Also:** BCS1406 (Background Jobs), BCS1407 (Parallel Execution)
+**See Also:** BCS1101 (Background Jobs), BCS1102 (Parallel Execution)
 
 
 ---
@@ -21887,7 +21887,7 @@ wait $! || die 1 'Command failed'
 
 ## Timeout Handling
 
-**Rule: BCS1409** (New)
+**Rule: BCS1104** (New)
 
 Managing command timeouts and handling timeout conditions gracefully.
 
@@ -21991,7 +21991,7 @@ timeout 300 ssh -o ConnectTimeout=10 "$server" 'long_command'
 
 ---
 
-**See Also:** BCS1410 (Exponential Backoff)
+**See Also:** BCS1105 (Exponential Backoff)
 
 **Full implementation:** See `examples/exemplar-code/oknav/oknav` line 676
 
@@ -22003,7 +22003,7 @@ timeout 300 ssh -o ConnectTimeout=10 "$server" 'long_command'
 
 ## Exponential Backoff
 
-**Rule: BCS1410**
+**Rule: BCS1105**
 
 Implementing retry logic with exponential delay for transient failures.
 
@@ -22147,7 +22147,7 @@ retry_with_backoff 5 curl -f "$url"
 
 ---
 
-**See Also:** BCS1409 (Timeout Handling), BCS1406 (Background Jobs)
+**See Also:** BCS1104 (Timeout Handling), BCS1101 (Background Jobs)
 
 **Full implementation:** See `examples/exemplar-code/checkpoint` lines 850-870
 

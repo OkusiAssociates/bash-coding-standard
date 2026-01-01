@@ -1,6 +1,6 @@
 ### Background Job Management
 
-**Rule: BCS1406**
+**Rule: BCS1101**
 
 Managing background processes, job control, and process lifecycle in Bash scripts.
 
@@ -115,6 +115,6 @@ echo "Started $!"
 
 ---
 
-**See Also:** BCS1407 (Parallel Execution), BCS1408 (Wait Patterns), BCS1409 (Timeout Handling)
+**See Also:** BCS1102 (Parallel Execution), BCS1103 (Wait Patterns), BCS1104 (Timeout Handling)
 
 **Full implementation:** See `examples/exemplar-code/oknav/oknav` lines 475-510

@@ -1,6 +1,6 @@
 ### Timeout Handling
 
-**Rule: BCS1409**
+**Rule: BCS1104**
 
 Managing command timeouts and handling timeout conditions gracefully.
 
@@ -91,4 +91,4 @@ timeout 300 ssh -o ConnectTimeout=10 "$server" 'long_command'
 
 ---
 
-**See Also:** BCS1410 (Exponential Backoff)
+**See Also:** BCS1105 (Exponential Backoff)

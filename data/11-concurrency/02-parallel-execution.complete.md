@@ -1,6 +1,6 @@
 ### Parallel Execution Patterns
 
-**Rule: BCS1407** (New)
+**Rule: BCS1102** (New)
 
 Executing multiple commands concurrently while maintaining control and collecting results.
 
@@ -110,6 +110,6 @@ count=$(wc -l < "$temp_dir"/count)
 
 ---
 
-**See Also:** BCS1406 (Background Jobs), BCS1408 (Wait Patterns)
+**See Also:** BCS1101 (Background Jobs), BCS1103 (Wait Patterns)
 
 **Full implementation:** See `examples/exemplar-code/oknav/oknav` lines 465-530

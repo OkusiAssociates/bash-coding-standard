@@ -1,6 +1,6 @@
 ### Timeout Handling
 
-**Rule: BCS1409** (New)
+**Rule: BCS1104** (New)
 
 Managing command timeouts and handling timeout conditions gracefully.
 
@@ -104,6 +104,6 @@ timeout 300 ssh -o ConnectTimeout=10 "$server" 'long_command'
 
 ---
 
-**See Also:** BCS1410 (Exponential Backoff)
+**See Also:** BCS1105 (Exponential Backoff)
 
 **Full implementation:** See `examples/exemplar-code/oknav/oknav` line 676

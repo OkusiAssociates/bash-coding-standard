@@ -1,6 +1,6 @@
 ### Exponential Backoff
 
-**Rule: BCS1410**
+**Rule: BCS1105**
 
 Implementing retry logic with exponential delay for transient failures.
 
@@ -144,6 +144,6 @@ retry_with_backoff 5 curl -f "$url"
 
 ---
 
-**See Also:** BCS1409 (Timeout Handling), BCS1406 (Background Jobs)
+**See Also:** BCS1104 (Timeout Handling), BCS1101 (Background Jobs)
 
 **Full implementation:** See `examples/exemplar-code/checkpoint` lines 850-870

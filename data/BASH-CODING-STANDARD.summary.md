@@ -10021,7 +10021,7 @@ Parallel execution patterns, background job management, and robust waiting strat
 
 ## Background Job Management
 
-**Rule: BCS1406**
+**Rule: BCS1101**
 
 Managing background processes, job control, and process lifecycle.
 
@@ -10124,7 +10124,7 @@ echo "Started $!"
 
 ---
 
-**See Also:** BCS1407 (Parallel Execution), BCS1408 (Wait Patterns), BCS1409 (Timeout Handling)
+**See Also:** BCS1102 (Parallel Execution), BCS1103 (Wait Patterns), BCS1104 (Timeout Handling)
 
 
 ---
@@ -10134,7 +10134,7 @@ echo "Started $!"
 
 ## Parallel Execution Patterns
 
-**Rule: BCS1407**
+**Rule: BCS1102**
 
 Concurrent command execution with control and result collection.
 
@@ -10240,7 +10240,7 @@ count=$(wc -l < "$temp_dir"/count)
 
 ---
 
-**See Also:** BCS1406 (Background Jobs), BCS1408 (Wait Patterns)
+**See Also:** BCS1101 (Background Jobs), BCS1103 (Wait Patterns)
 
 
 ---
@@ -10250,7 +10250,7 @@ count=$(wc -l < "$temp_dir"/count)
 
 ## Wait Patterns
 
-**Rule: BCS1408**
+**Rule: BCS1103**
 
 Proper synchronization when waiting for background processes.
 
@@ -10351,7 +10351,7 @@ wait $! || die 1 'Command failed'
 
 ---
 
-**See Also:** BCS1406 (Background Jobs), BCS1407 (Parallel Execution)
+**See Also:** BCS1101 (Background Jobs), BCS1102 (Parallel Execution)
 
 
 ---
@@ -10361,7 +10361,7 @@ wait $! || die 1 'Command failed'
 
 ## Timeout Handling
 
-**Rule: BCS1409**
+**Rule: BCS1104**
 
 Managing command timeouts and handling timeout conditions gracefully.
 
@@ -10452,7 +10452,7 @@ timeout 300 ssh -o ConnectTimeout=10 "$server" 'long_command'
 
 ---
 
-**See Also:** BCS1410 (Exponential Backoff)
+**See Also:** BCS1105 (Exponential Backoff)
 
 
 ---
@@ -10462,7 +10462,7 @@ timeout 300 ssh -o ConnectTimeout=10 "$server" 'long_command'
 
 ## Exponential Backoff
 
-**Rule: BCS1410**
+**Rule: BCS1105**
 
 Retry logic with exponential delay for transient failures.
 
@@ -10580,7 +10580,7 @@ retry_with_backoff 5 curl -f "$url"
 
 ---
 
-**See Also:** BCS1409 (Timeout Handling), BCS1406 (Background Jobs)
+**See Also:** BCS1104 (Timeout Handling), BCS1101 (Background Jobs)
 
 
 ---

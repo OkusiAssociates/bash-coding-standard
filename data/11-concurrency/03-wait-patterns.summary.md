@@ -1,6 +1,6 @@
 ### Wait Patterns
 
-**Rule: BCS1408**
+**Rule: BCS1103**
 
 Proper synchronization when waiting for background processes.
 
@@ -101,4 +101,4 @@ wait $! || die 1 'Command failed'
 
 ---
 
-**See Also:** BCS1406 (Background Jobs), BCS1407 (Parallel Execution)
+**See Also:** BCS1101 (Background Jobs), BCS1102 (Parallel Execution)

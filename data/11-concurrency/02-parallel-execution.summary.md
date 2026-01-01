@@ -1,6 +1,6 @@
 ### Parallel Execution Patterns
 
-**Rule: BCS1407**
+**Rule: BCS1102**
 
 Concurrent command execution with control and result collection.
 
@@ -106,4 +106,4 @@ count=$(wc -l < "$temp_dir"/count)
 
 ---
 
-**See Also:** BCS1406 (Background Jobs), BCS1408 (Wait Patterns)
+**See Also:** BCS1101 (Background Jobs), BCS1103 (Wait Patterns)

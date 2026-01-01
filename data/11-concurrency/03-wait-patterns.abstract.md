@@ -41,6 +41,6 @@ done
 
 ---
 
-**See Also:** BCS1406, BCS1407
+**See Also:** BCS1101, BCS1102
 
 **Ref:** BCS1103
