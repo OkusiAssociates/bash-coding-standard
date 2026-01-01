@@ -2,7 +2,7 @@
 
 A comprehensive coding standard for modern Bash 5.2+ scripts, designed for consistency, robustness, and maintainability.
 
-**Version 1.0.0** | **12 Sections** | **101 Rules** | **13 Subcommands**
+**Version 1.0.1** | **12 Sections** | **101 Rules** | **13 Subcommands**
 
 ---
 
@@ -253,6 +253,7 @@ AI-powered compression of BCS rule files (developer mode).
 bcs compress                              # Report oversized files only
 bcs compress --regenerate                 # Regenerate all tiers
 bcs compress --regenerate --context-level abstract   # Recommended
+bcs compress --regenerate --file path/to/rule.complete.md  # Single file
 ```
 
 **Options:**
@@ -260,6 +261,7 @@ bcs compress --regenerate --context-level abstract   # Recommended
 |--------|-------------|
 | `--report-only` | Report oversized files only (default) |
 | `--regenerate` | Delete and regenerate compressed files |
+| `--file FILE` | Process single .complete.md file (v1.0.1+) |
 | `--tier TIER` | Process tier: `summary` or `abstract` |
 | `--force` | Force regeneration (bypass timestamp checks) |
 | `--summary-limit N` | Max summary size in bytes (default: 10000) |
@@ -668,7 +670,7 @@ bcs decode BCS0102 --all      # Show all tiers
 
 ```
 bash-coding-standard/
-├── bcs                       # Main CLI toolkit (v1.0.0, 160KB)
+├── bcs                       # Main CLI toolkit (v1.0.1, 161KB)
 ├── bash-coding-standard      # Symlink → bcs
 ├── bcs.1                     # Man page (19KB)
 ├── bcs.bash_completion       # Bash completion (9KB)
@@ -1206,4 +1208,4 @@ See [LICENSE](LICENSE) for details.
 
 ---
 
-*Updated: 2025-12-25 | Version 1.0.0*
+*Updated: 2026-01-01 | Version 1.0.1*
