@@ -17,7 +17,7 @@
 # BCS Metadata
 #shellcheck disable=SC2155,SC2034
 [[ -v BCS_VERSION ]] || {
-  declare -rx BCS_VERSION=1.0.0
+  declare -rx BCS_VERSION=1.0.1
   declare -n VERSION=BCS_VERSION  # Alias for external use
   declare -rx BCS_PATH=$(realpath -e -- "${BASH_SOURCE[0]}")
   declare -rx BCS_DIR=${BCS_PATH%/*}
