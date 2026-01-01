@@ -365,7 +365,9 @@ Failed:        0
 │   ├── head.c
 │   └── cut.c
 ├── test/                          # Test suite
-│   └── test-builtins.sh
+│   ├── test-builtins.sh           # Main test suite
+│   ├── performance-test.sh        # Performance benchmarks
+│   └── simple-perf-test.sh        # Quick performance check
 └── *.so                           # Compiled builtins (after build)
 ```
 

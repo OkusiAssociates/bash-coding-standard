@@ -2,7 +2,7 @@
 
 Comprehensive test suite for the `bcs` toolkit covering all 13 subcommands, 8 workflow scripts, and core functionality.
 
-**Statistics:** 34 test files | 600+ tests | 21 assertion types
+**Statistics:** 34 test files | 460+ tests | 21 assertion types | 100% pass rate
 
 ---
 

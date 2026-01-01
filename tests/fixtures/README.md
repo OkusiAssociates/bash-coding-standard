@@ -1,50 +1,75 @@
 # Test Fixtures
 
-This directory contains test fixtures used by the BCS test suite.
+Test fixtures used by the BCS test suite.
 
 ## Directory Structure
 
-### `valid-scripts/`
-BCS-compliant test scripts that should pass validation:
+```
+fixtures/
+├── sample-complete.sh        # Full BCS-compliant script example
+├── sample-minimal.sh         # Minimal BCS-compliant script
+├── sample-non-compliant.sh   # Non-compliant script for testing
+├── valid-scripts/
+│   └── minimal-compliant.sh  # Minimal compliant script fixture
+├── invalid-scripts/
+│   ├── no-shebang.sh         # Missing shebang line
+│   ├── no-set-options.sh     # Missing set -euo pipefail
+│   └── no-fin-marker.sh      # Missing #fin end marker
+├── test-rules/
+│   ├── 99-test-rule.complete.md
+│   ├── 99-test-rule.summary.md
+│   └── 99-test-rule.abstract.md
+└── templates/                # Reserved for expected template outputs
+```
+
+## Sample Scripts (Root)
+
+Scripts in the fixtures root for direct testing:
+
+| File | Purpose |
+|------|---------|
+| `sample-complete.sh` | Full-featured BCS-compliant script |
+| `sample-minimal.sh` | Minimal BCS-compliant script |
+| `sample-non-compliant.sh` | Script with deliberate violations |
+
+## valid-scripts/
+
+BCS-compliant scripts that should pass validation:
 - `minimal-compliant.sh` - Minimal BCS-compliant script
-- `complete-compliant.sh` - Full-featured BCS-compliant script
-- `dual-purpose-compliant.sh` - Dual-purpose (sourceable/executable) script
 
-### `invalid-scripts/`
+## invalid-scripts/
+
 Non-compliant scripts for negative testing:
-- `no-shebang.sh` - Missing shebang
-- `no-set-options.sh` - Missing set -euo pipefail
-- `no-fin-marker.sh` - Missing #fin end marker
-- `wrong-quotes.sh` - Incorrect quoting patterns
+- `no-shebang.sh` - Missing shebang line
+- `no-set-options.sh` - Missing `set -euo pipefail`
+- `no-fin-marker.sh` - Missing `#fin` end marker
 
-### `test-rules/`
-Sample BCS rule files for testing data structure:
-- `sample-rule.complete.md` - Complete tier rule
-- `sample-rule.abstract.md` - Abstract tier rule
-- `sample-rule.summary.md` - Summary tier rule
+## test-rules/
 
-### `templates/`
-Expected template outputs for verification:
-- `expected-minimal.sh` - Expected minimal template output
-- `expected-basic.sh` - Expected basic template output
-- `expected-complete.sh` - Expected complete template output
-- `expected-library.sh` - Expected library template output
+Sample BCS rule files for testing data structure parsing:
+- `99-test-rule.complete.md` - Complete tier test rule
+- `99-test-rule.summary.md` - Summary tier test rule
+- `99-test-rule.abstract.md` - Abstract tier test rule
+
+## templates/
+
+Reserved directory for expected template outputs (currently empty).
 
 ## Usage in Tests
 
 ```bash
-# Load fixture
-source "$(dirname "${BASH_SOURCE[0]}")/fixtures/valid-scripts/minimal-compliant.sh"
-
-# Test against fixture
+# Test compliance checking
 ./bcs check tests/fixtures/valid-scripts/minimal-compliant.sh
 
-# Compare output with expected
-diff <(./bcs template -t minimal) tests/fixtures/templates/expected-minimal.sh
+# Test against non-compliant script
+./bcs check tests/fixtures/sample-non-compliant.sh
+
+# Compare template output
+diff <(./bcs template -t minimal) tests/fixtures/sample-minimal.sh
 ```
 
 ## Maintenance
 
 - Keep fixtures synchronized with BCS standard updates
 - Add new fixtures when new test cases are needed
-- Document any special characteristics of fixtures in comments
+- Document fixture characteristics in script comments

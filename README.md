@@ -690,7 +690,7 @@ bash-coding-standard/
 │
 ├── BCS/                      # Numeric-indexed symlinks
 ├── lib/                      # Bundled tools (15 utilities, ~544KB)
-├── tests/                    # Test suite (34 files, 600+ tests)
+├── tests/                    # Test suite (34 files, 460+ tests)
 ├── workflows/                # Maintenance scripts (8 files)
 ├── examples/                 # Production examples (3 scripts)
 ├── builtins/                 # Optional C builtins (5 commands)
@@ -854,8 +854,8 @@ main() {
 | Metric | Value |
 |--------|-------|
 | Test files | 34 |
-| Total tests | 600+ |
-| Pass rate | 74% |
+| Total tests | 460+ |
+| Pass rate | 100% |
 | Assertions | 21 types |
 
 ### Running Tests

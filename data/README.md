@@ -190,7 +190,7 @@ data/01-script-structure/              → BCS01 (Section)
 ### Lookup Commands
 
 ```bash
-bcs codes                     # List all 107+ BCS codes
+bcs codes                     # List all 101 BCS codes
 bcs decode BCS0102            # Get file path
 bcs decode BCS0102 -p         # Print content
 bcs decode BCS0102 --all      # Show all tier paths
@@ -286,27 +286,27 @@ Consistent markdown heading levels across all files:
 
 | Category | Count |
 |----------|-------|
-| Total markdown files | 341 |
-| Complete tier files | 108 |
-| Summary tier files | 108 |
-| Abstract tier files | 108 |
-| Rulet files | 16 |
+| Total markdown files | 325 |
+| Complete tier files | 102 |
+| Summary tier files | 102 |
+| Abstract tier files | 102 |
+| Rulet files | 17 |
 | Template files | 4 |
 
 ### Structure Counts
 
 | Category | Count |
 |----------|-------|
-| Section directories | 14 |
-| Main rules | 98 |
+| Section directories | 12 |
+| Main rules | 97 |
 | Subrule directories | 2 (in section 01) |
 | Subrules | 4 |
-| Total BCS codes | 107+ |
+| Total BCS codes | 101 |
 
 ### Directory Size
 
-- **Total data/ directory:** ~4.4 MB
-- **Compiled standards:** ~1.2 MB (all 4 tiers)
+- **Total data/ directory:** ~4.1 MB
+- **Compiled standards:** ~1.0 MB (all 4 tiers)
 
 ---
 
