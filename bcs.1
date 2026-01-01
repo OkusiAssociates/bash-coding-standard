@@ -1,4 +1,4 @@
-.TH BCS 1 "2025-02-11" "BCS 1.0.0" "Bash Coding Standard Manual"
+.TH BCS 1 "2026-01-01" "BCS 1.0.1" "Bash Coding Standard Manual"
 .SH NAME
 bcs, bash-coding-standard \- Bash Coding Standard toolkit for modern Bash 5.2+ scripts
 .SH SYNOPSIS
@@ -298,6 +298,9 @@ Delete and recreate all compressed files
 .BR \-h ", " \-\-help
 Show help message
 .TP
+.B \-\-file " " \fIFILE\fR
+Process only this .complete.md file (use with \-\-regenerate)
+.TP
 .B \-\-tier " " \fITIER\fR
 Regenerate specific tier: \fIsummary\fR or \fIabstract\fR
 .TP
@@ -331,6 +334,7 @@ Suppress non-error output
 bcs compress                                    # Show oversized files
 bcs compress --regenerate --context-level abstract
 bcs compress --regenerate --tier summary --dry-run
+bcs compress --regenerate --file data/07-io-messaging/06-color-management.complete.md
 .fi
 .RE
 
