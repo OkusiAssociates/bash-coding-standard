@@ -71,7 +71,7 @@ validate_positive_integer() {
 
 # Validate with range check
 validate_port() {
-  local -- port="$1"
+  local -- port=$1
   port=$(validate_positive_integer "$port")
 
   ((port >= 1 && port <= 65535)) || die 22 "Port must be 1-65535: $port"
@@ -171,7 +171,7 @@ validate_choice "$user_action" "${valid_actions[@]}"
 
 ```bash
 validate_username() {
-  local -- username="$1"
+  local -- username=$1
   [[ -n "$username" ]] || die 22 'Username cannot be empty'
 
   # Standard Unix username rules
@@ -192,7 +192,7 @@ validate_username() {
 ```bash
 # NEVER pass user input directly to shell
 # ✗ DANGEROUS - command injection vulnerability
-user_file="$1"
+user_file=$1
 cat "$user_file"  # If user_file="; rm -rf /", disaster!
 
 # ✓ Safe - validate first

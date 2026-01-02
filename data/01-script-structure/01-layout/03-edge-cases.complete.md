@@ -55,7 +55,7 @@ is_valid_email() { [[ "$1" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION=1.0.0
+declare -r VERSION=1.0.0
 : ...
 
 # Default configuration
@@ -82,7 +82,7 @@ readonly -- CONFIG_FILE DATA_DIR
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION=1.0.0
+declare -r VERSION=1.0.0
 : ...
 
 # Detect platform
@@ -122,7 +122,7 @@ readonly -- PACKAGE_MANAGER INSTALL_CMD
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION=1.0.0
+declare -r VERSION=1.0.0
 : ...
 
 # Temporary files array for cleanup
@@ -188,7 +188,7 @@ validate_input() { : ... }
 set -euo pipefail  # Too late!
 
 # Globals scattered
-VERSION=1.0.0
+declare -r VERSION=1.0.0
 check_system() { : ... }
 declare -- PREFIX=/usr
 ```
@@ -199,7 +199,7 @@ declare -- PREFIX=/usr
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION=1.0.0
+declare -r VERSION=1.0.0
 declare -- PREFIX=/usr
 
 validate_input() { : ... }

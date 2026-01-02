@@ -1,6 +1,6 @@
 ### Dependency Management
 
-**Rule: BCS0608** (New)
+**Rule: BCS0608**
 
 Checking and managing external dependencies in Bash scripts.
 
@@ -129,5 +129,3 @@ curl "$url"
 ---
 
 **See Also:** BCS0607 (Library Patterns)
-
-#fin

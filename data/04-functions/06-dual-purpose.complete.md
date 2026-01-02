@@ -123,5 +123,3 @@ declare -fx my_func
 **See Also:** BCS0607 (Library Patterns), BCS0604 (Function Export)
 
 **Full implementation:** See `examples/exemplar-code/internetip/internetip`
-
-#fin

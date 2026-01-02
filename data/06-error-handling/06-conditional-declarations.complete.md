@@ -268,9 +268,9 @@ This script demonstrates:
 ((complete)) && declare -g BLUE=$'\033[0;34m'
 # If complete=0, script exits with set -e!
 
-# ✗ WRONG: Double negative, less readable
+# ✓ ACCEPTABLE: Double negative, less readable
 ((complete==0)) || declare -g BLUE=$'\033[0;34m'
-# Logically equivalent but harder to understand
+# Logically equivalent but can sometimes be harder to understand
 
 # ✗ WRONG: Using true instead of : (verbose, less idiomatic)
 ((complete)) && declare -g BLUE=$'\033[0;34m' || true
@@ -323,7 +323,7 @@ fi
 ((complete==0)) || declare -g BLUE=$'\033[0;34m'
 
 # Pros: No || : needed (fails when complete≠0, which is fine)
-# Cons: Double negative is confusing
+# Cons: Double negative can sometimes be confusing
 ```
 
 **Alternative 4: Temporarily disable errexit**

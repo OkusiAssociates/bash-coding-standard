@@ -235,7 +235,7 @@ die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 # Return user's home directory (data output)
 get_user_home() {
-  local -- username="$1"
+  local -- username=$1
   local -- home_dir
 
   home_dir=$(getent passwd "$username" | cut -d: -f6)
@@ -296,24 +296,24 @@ main() {
 
   # Parse arguments (messaging functions for progress)
   while (($#)); do case $1 in
+    -n|--num)     shift
+                  num=${1:-$num}
+                  ;;
+    -v|--verbose) VERBOSE+=1
+                  ;;
+    -q|--quiet)   VERBOSE=0
+                  ;;
+    -D|--debug)   DEBUG=1
+                  ;;
     -V|--version) echo "$SCRIPT_NAME $VERSION"
                   return 0
                   ;;
     -h|--help)    show_help
                   return 0
                   ;;
-    -n|--num)     shift
-                  num=${1:-$num}
-                  ;;
-    -D|--debug)   DEBUG=1
-                  ;;
-    -v|--verbose) VERBOSE+=1
-                  ;;
-    -q|--quiet)   VERBOSE=0
-                  ;;
     --)           shift; break
                   ;;
-    -[VhnDvq]*) #shellcheck disable=SC2046 #split up single options
+    -[nvqDVh]*) #shellcheck disable=SC2046 #split up single options
                   set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"
                   ;;
     -*)           error "Invalid option ${1@Q}"
@@ -328,7 +328,7 @@ main() {
   # Validate arguments (error message)
   if (($# != 1)); then
     error 'Expected exactly one argument'
-    usage
+    show_help
     return 22
   fi
 
@@ -447,11 +447,11 @@ show_help() {
 
 # ✓ Correct - help text using echo/cat
 show_help() {
-  cat <<'EOF'
+  cat <<HELP
 Usage: script.sh [OPTIONS]
   -v  Verbose mode
   -h  Show help
-EOF
+HELP
 }
 
 # ✗ Wrong - mixing data and status on same stream
@@ -486,7 +486,8 @@ validate_input() {
 # ✗ Wrong - data output respecting VERBOSE
 get_count() {
   local -i count=10
-  ((VERBOSE)) && echo "$count" ||:  # Data not shown if VERBOSE=0!
+  ((VERBOSE)) || return 0
+  echo "$count"  # Data not shown if VERBOSE=0!
 }
 
 # ✓ Correct - data always outputs
@@ -496,7 +497,7 @@ get_count() {
 }
 
 # ✗ Wrong - multi-line help with info()
-show_usage() {
+show_help() {
   info 'Usage: script.sh [OPTIONS]'
   info ''
   info 'Options:'
@@ -505,13 +506,20 @@ show_usage() {
 # Verbose-dependent, ugly formatting
 
 # ✓ Correct - multi-line help with echo/cat
-show_usage() {
-  cat <<'EOF'
-Usage: script.sh [OPTIONS]
+show_help() {
+  cat <<HELP
+$SCRIPT_NAME $VERSION - A brief description
+
+A longer description.
+
+Usage: $SCRIPT_NAME [OPTIONS]
 
 Options:
   -v  Verbose
-EOF
+
+Examples:
+
+HELP
 }
 ```
 

@@ -20,6 +20,8 @@ Options:
 Examples:
   # Example 1
   $SCRIPT_NAME -v file.txt
+  # Example 2
+  $SCRIPT_NAME -qn 10 file.txt
 EOT
 }
 ```

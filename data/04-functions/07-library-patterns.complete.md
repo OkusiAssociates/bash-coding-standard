@@ -1,6 +1,6 @@
 ### Library Patterns
 
-**Rule: BCS0607** (New)
+**Rule: BCS0607**
 
 Patterns for creating reusable Bash libraries.
 
@@ -47,8 +47,7 @@ valid_ip4() {
 declare -fx valid_ip4
 
 valid_email() {
-  local -- email=$1
-  [[ $email =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]]
+  [[ $1 =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]]
 }
 declare -fx valid_email
 
@@ -65,7 +64,7 @@ declare -fx valid_email
 
 # Configurable defaults (can be overridden before sourcing)
 : "${CONFIG_DIR:=/etc/myapp}"
-: "${CONFIG_FILE:=$CONFIG_DIR/config}"
+: "${CONFIG_FILE:="$CONFIG_DIR"/config}"
 
 load_config() {
   [[ -f "$CONFIG_FILE" ]] || return 1
@@ -107,7 +106,7 @@ declare -fx myapp_init myapp_cleanup myapp_process
 ```bash
 # Source with path resolution
 SCRIPT_DIR=${BASH_SOURCE[0]%/*}
-source "$SCRIPT_DIR/lib-validation.sh"
+source "$SCRIPT_DIR"/lib-validation.sh
 
 # Source with existence check
 lib_path='/usr/local/lib/myapp/lib-utils.sh'
@@ -115,7 +114,7 @@ lib_path='/usr/local/lib/myapp/lib-utils.sh'
 
 # Source multiple libraries
 for lib in "$LIB_DIR"/*.sh; do
-  [[ -f "$lib" ]] && source "$lib"
+  [[ -f "$lib" ]] && source "$lib" ||:
 done
 ```
 

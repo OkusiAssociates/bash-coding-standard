@@ -6,12 +6,12 @@
 # String and file tests - use [[ ]]
 [[ -d "$path" ]] && echo 'Directory exists' ||:
 [[ -f "$file" ]] || die 1 "File not found ${file@Q}"
-[[ "$status" == success ]] && continue
+[[ "$status" == success ]] && continue ||:
 
 # Arithmetic tests - use (())
 ((VERBOSE==0)) || echo 'Verbose mode'
 ((var > 5)) || return 1
-((count >= MAX_RETRIES)) && die 1 'Too many retries'
+((count >= MAX_RETRIES)) && die 1 'Too many retries' ||:
 
 # Complex conditionals - combine both
 if [[ -n "$var" ]] && ((count)); then
@@ -19,7 +19,7 @@ if [[ -n "$var" ]] && ((count)); then
 fi
 
 # Short-circuit evaluation
-[[ -f "$file" ]] && source "$file" ||:
+[[ -f "$file" ]] && source "$file"
 ((VERBOSE)) || return 0
 ```
 
@@ -66,7 +66,7 @@ if ((count)); then
   echo "Count: $count"
 fi
 
-((i >= MAX)) && die 1 'Limit exceeded'
+((i >= MAX)) && die 1 'Limit exceeded' ||:
 
 # ✗ Wrong - using [[ ]] for arithmetic (verbose, error-prone)
 if [[ "$count" -gt 0 ]]; then  # Unnecessary
@@ -86,7 +86,7 @@ fi
 
 ```bash
 # Glob pattern matching
-[[ "$filename" == *.@(jpg|png|gif) ]] && process_image "$filename"
+[[ "$filename" == *.@(jpg|png|gif) ]] && process_image "$filename" ||:
 
 # Regular expression matching
 if [[ "$email" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then

@@ -53,7 +53,7 @@ declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 main() {
   # Parse arguments
   while (($#)); do case $1 in
-    -h|--help) usage; return 0 ;;
+    -h|--help) show_help; return 0 ;;
     # short options...
     *) die 22 "Invalid option ${1@Q}" ;;
   esac; shift; done
@@ -73,7 +73,6 @@ main() {
 
 # Script invocation
 main "$@"
-
 #fin
 ```
 
@@ -89,13 +88,14 @@ main() {
 
   # Parse arguments
   while (($#)); do case $1 in
-    -v|--verbose) verbose=1 ;;
     -n|--dry-run) dry_run=1 ;;
     -o|--output)
       noarg "$@"
       shift
       output_file=$1
       ;;
+    -v|--verbose) verbose=1 ;;
+    -q|--quiet)   verbose=0 ;;
     -h|--help)
       usage
       return 0
@@ -129,7 +129,7 @@ main() {
   # Main logic
   if ((verbose)); then
     info "Processing ${#input_files[@]} files"
-    ((dry_run)) && info '[DRY-RUN] Mode enabled'
+    ((dry_run)) && info '[DRY-RUN] Mode enabled' ||:
   fi
 
   # Process files
@@ -175,7 +175,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -211,6 +210,8 @@ main() {
 **Main function enabling sourcing for tests:**
 
 ```bash
+# ...
+# ...
 # Script can be sourced for testing
 # Only execute main if script is run directly (not sourced)
 [[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0
@@ -244,9 +245,9 @@ declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 # ============================================================================
 
 if [[ -t 1 && -t 2 ]]; then
-  readonly -- RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' NC=$'\033[0m'
+  declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' NC=$'\033[0m'
 else
-  readonly -- RED='' GREEN='' YELLOW='' CYAN='' NC=''
+  declare -r RED='' GREEN='' YELLOW='' CYAN='' NC=''
 fi
 
 # ============================================================================
@@ -275,22 +276,25 @@ die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 # Documentation Functions
 # ============================================================================
 
-usage() {
-  cat <<'EOF'
-Usage: script.sh [OPTIONS] FILE...
+show_help() {
+  cat <<EOF
+$SCRIPT_NAME $VERSION - Process files
 
 Process files with various options.
 
+Usage: $SCRIPT_NAME [OPTIONS] FILE...
+
 Options:
   -v, --verbose     Enable verbose output
+  -q, --quiet       Disable verbose output
   -n, --dry-run     Show what would be done
   -o, --output DIR  Output directory
   -h, --help        Show this help
 
 Examples:
-  script.sh file.txt
-  script.sh -v -o /tmp file1.txt file2.txt
-  script.sh -n --output /backup *.txt
+  $SCRIPT_NAME file.txt
+  $SCRIPT_NAME -v -o /tmp file1.txt file2.txt
+  $SCRIPT_NAME -n --output /backup *.txt
 EOF
 }
 
@@ -300,7 +304,7 @@ EOF
 
 noarg() {
   if (($# < 2)) || [[ "$2" =~ ^- ]]; then
-    die 22 "Option $1 requires an argument"
+    die 22 "Option ${1@Q} requires an argument"
   fi
 }
 
@@ -309,7 +313,7 @@ noarg() {
 # ============================================================================
 
 process_file() {
-  local -- file="$1"
+  local -- file=$1
 
   # Validate file
   if [[ ! -f "$file" ]]; then
@@ -346,7 +350,7 @@ main() {
       output_dir=$1
       ;;
     -h|--help)
-      usage
+      show_help
       return 0
       ;;
     --)
@@ -419,7 +423,6 @@ main() {
 # ============================================================================
 
 main "$@"
-
 #fin
 ```
 
@@ -444,7 +447,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 
 # ✗ Wrong - main() not at end
@@ -541,7 +543,8 @@ declare -i DRY_RUN=0
 main() {
   # Parse arguments and modify globals
   while (($#)); do case $1 in
-    -v|--verbose) VERBOSE=1 ;;
+    -v|--verbose) VERBOSE+=1 ;;
+    -q|--quiet)   VERBOSE=0 ;;
     -n|--dry-run) DRY_RUN=1 ;;
     *) die 22 "Invalid option ${1@Q}" ;;
   esac; shift; done
@@ -610,12 +613,12 @@ main_uninstall() {
 }
 
 main() {
-  local -- mode="${1:-}"
+  local -- mode=${1:-}
 
   case "$mode" in
     install) shift; main_install "$@" ;;
     uninstall) shift; main_uninstall "$@" ;;
-    *) die 22 "Invalid mode: $mode" ;;
+    *) die 22 "Invalid mode ${mode@Q}" ;;
   esac
 }
 
@@ -627,7 +630,7 @@ main "$@"
 ```bash
 # Script: myapp.sh
 main() {
-  local -i value="$1"
+  local -i value=$1
   ((value * 2))
   echo "$value"
 }
@@ -641,9 +644,10 @@ main "$@"
 source ./myapp.sh  # Source without executing
 
 # Test main function
+declare -i result
 result=$(main 5)
 
-if [[ "$result" == "10" ]]; then
+if ((result == 10)); then
   echo "PASS"
 else
   echo "FAIL: Expected 10, got ${result@Q}"

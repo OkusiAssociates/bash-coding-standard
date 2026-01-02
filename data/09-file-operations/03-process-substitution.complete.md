@@ -197,7 +197,7 @@ main "$@"
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -r VERSION='1.0.0'
+declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -239,7 +239,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -292,7 +291,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -418,7 +416,7 @@ diff \
 ```bash
 # Handle filenames with spaces/newlines
 while IFS= read -r -d '' file; do
-  echo "Processing: $file"
+  echo "Processing ${file@Q}"
 done < <(find /data -type f -print0)
 
 # With readarray
@@ -461,7 +459,7 @@ test_process_substitution() {
   if [[ "$content" == hello ]]; then
     info 'Process substitution read test: PASS'
   else
-    error "Expected 'hello', got: ${content@Q}"
+    error "Expected 'hello', got ${content@Q}"
     return 1
   fi
 }

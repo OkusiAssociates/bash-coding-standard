@@ -23,7 +23,7 @@ TUI elements provide:
 spinner() {
   local -a frames=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏')
   local -i i=0
-  while :; do
+  while ((1)); do
     printf '\r%s %s' "${frames[i % ${#frames[@]}]}" "$*"
     i+=1
     sleep 0.1
@@ -152,5 +152,3 @@ fi
 ---
 
 **See Also:** BCS0908 (Terminal Capabilities), BCS0701 (Color Support)
-
-#fin

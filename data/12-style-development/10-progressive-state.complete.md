@@ -54,7 +54,7 @@ main() {
 
   # Execution phase: actions based on final flag state
   install_standalone
-  ((INSTALL_BUILTIN)) && install_builtin  # Only runs if still enabled
+  ((INSTALL_BUILTIN)) && install_builtin ||: # Only runs if still enabled
 
   show_completion_message
 }

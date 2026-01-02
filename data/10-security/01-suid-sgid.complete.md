@@ -79,13 +79,13 @@ tar -czf /backup/data.tar.gz /var/data
 ```bash
 # Attacker creates malicious bash
 mkdir /tmp/evil
-cat > /tmp/evil/bash << 'EOF'
+cat > /tmp/evil/bash << 'EOT'
 #!/bin/bash
 # Copy root's SSH keys
 cp -r /root/.ssh /tmp/stolen_keys
 # Now execute the real script
 exec /bin/bash "$@"
-EOF
+EOT
 chmod +x /tmp/evil/bash
 
 # Attacker manipulates PATH before executing SUID script
@@ -112,7 +112,7 @@ df -h >> /root/report.txt
 **Attack:**
 ```bash
 # Attacker creates malicious shared library
-cat > /tmp/evil.c << 'EOF'
+cat > /tmp/evil.c << 'EOT'
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -124,7 +124,7 @@ void __attribute__((constructor)) init(void) {
         system("chmod 644 /tmp/shadow_copy");
     }
 }
-EOF
+EOT
 
 gcc -shared -fPIC -o /tmp/evil.so /tmp/evil.c
 
@@ -217,7 +217,7 @@ setcap cap_net_bind_service=+ep /usr/local/bin/myserver
 
 **3. Use a setuid wrapper (compiled C program):**
 
-```bash
+```c
 # Wrapper validates input, then executes script as root
 # /usr/local/bin/backup_wrapper.c (compiled and SUID)
 int main(int argc, char *argv[]) {
@@ -248,7 +248,7 @@ pkexec /usr/local/bin/system-config.sh
 
 **5. Use systemd service with elevated privileges:**
 
-```bash
+```
 # /etc/systemd/system/myapp.service
 [Unit]
 Description=My Application Service

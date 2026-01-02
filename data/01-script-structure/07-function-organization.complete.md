@@ -60,11 +60,11 @@ main() {
   fi
 
   build_standalone
-  ((INSTALL_BUILTIN)) && build_builtin ||:
+  ((INSTALL_BUILTIN)) && build_builtin
 
   install_standalone
   install_completions
-  ((INSTALL_BUILTIN)) && install_builtin ||:
+  ((INSTALL_BUILTIN)) && install_builtin
 
   update_man_database
   show_completion_message
@@ -108,7 +108,7 @@ main "$@" invocation
 - **Used by**: Everything
 
 **Layer 2: Documentation functions**
-- `show_help()`, `show_version()`, `show_usage()`
+- `show_help()`, `show_version()`, `show_help()`
 - **Purpose**: Display help text and usage information
 - **Dependencies**: May use messaging functions
 - **Used by**: Argument parsing, main()
@@ -162,34 +162,30 @@ declare -- BUILD_DIR=/tmp/build
 # ============================================================================
 # Layer 1: Messaging functions
 # ============================================================================
+declare -i VERBOSE=1
+#declare -i DEBUG=0 PROMPT=1
 
 _msg() {
-  local -- func="${FUNCNAME[1]}"
-  echo "[$func] $*"
+  local -- prefix="$SCRIPT_NAME:" msg
+  case ${FUNCNAME[1]} in
+    vecho)   : ;;
+    info)    prefix+=" ${CYAN}◉${NC}" ;;
+    warn)    prefix+=" ${YELLOW}▲${NC}" ;;
+#    debug)   prefix+=" ${CYAN}DEBUG${NC}" ;;
+    success) prefix+=" ${GREEN}✓${NC}" ;;
+    error)   prefix+=" ${RED}✗${NC}" ;;
+    *)       ;;
+  esac
+  for msg in "$@"; do printf '%s %s\n' "$prefix" "$msg"; done
 }
 
-info() {
-  >&2 _msg "$@"
-}
-
-warn() {
-  >&2 _msg "warning: $*"
-}
-
-error() {
-  >&2 _msg "error: $*"
-}
-
+vecho() { ((VERBOSE)) || return 0; _msg "$@"; }
+info() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
+warn() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
+#debug() { ((DEBUG)) || return 0; >&2 _msg "$@"; }
+success() { ((VERBOSE)) || return 0; >&2 _msg "$@" || return 0; }
+error() { >&2 _msg "$@"; }
 die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
-
-success() {
-  >&2 _msg "SUCCESS: $*"
-}
-
-debug() {
-  ((VERBOSE)) && >&2 _msg "DEBUG: $*"
-  return 0
-}
 
 # ============================================================================
 # Layer 2: Documentation functions
@@ -201,17 +197,22 @@ show_version() {
 
 show_help() {
   cat << EOF
+$SCRIPT_NAME $VERSION - Build/Deploy application
+
+Build and deploy the application for all users on $HOSTNAME.
+
 Usage: $SCRIPT_NAME [OPTIONS]
 
-Build and deploy application.
-
 Options:
-  -v, --verbose   Enable verbose output
   -n, --dry-run   Dry-run mode (no changes)
-  -h, --help      Show this help
+  -v, --verbose   Enable verbose output
+  -q, --quiet     Disable verbose output
   -V, --version   Show version
+  -h, --help      Show this help
 
-Version: $VERSION
+Examples:
+  $SCRIPT_NAME -vn
+  $SCRIPT_NAME -V
 EOF
 }
 
@@ -319,7 +320,7 @@ run_tests() {
 
 create_package() {
   info 'Creating package...'
-  local -- package_file="$BUILD_DIR/app.tar.gz"
+  local -- package_file="$BUILD_DIR"/app.tar.gz
 
   if ((DRY_RUN)); then
     info "[DRY-RUN] Would create package: $package_file"
@@ -362,8 +363,10 @@ main() {
     -v|--verbose) VERBOSE+=1 ;;
     -q|--quiet)   VERBOSE=0 ;;
     -n|--dry-run) DRY_RUN=1 ;;
-    -h|--help)    show_help; exit 0 ;;
-    -V|--version) show_version; exit 0 ;;
+    -V|--version) show_version; return 0 ;;
+    -h|--help)    show_help; return 0 ;;
+    -[vqnVh]*) #shellcheck disable=SC2046 # Split combined short options: -Dv -> -D -v
+                  set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
     -*)           die 22 "Invalid option ${1@Q}" ;;
     *)            die 2 "Unexpected argument ${1@Q}" ;;
   esac; shift; done
@@ -386,7 +389,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 

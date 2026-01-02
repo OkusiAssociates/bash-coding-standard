@@ -1,6 +1,6 @@
 ### Parallel Execution Patterns
 
-**Rule: BCS1102** (New)
+**Rule: BCS1102**
 
 Executing multiple commands concurrently while maintaining control and collecting results.
 
@@ -67,12 +67,13 @@ done
 declare -i max_jobs=4
 declare -a pids=()
 
+local -a active=()
 for task in "${tasks[@]}"; do
   # Wait if at max concurrency
   while ((${#pids[@]} >= max_jobs)); do
     wait -n 2>/dev/null || true
     # Remove completed PIDs
-    local -a active=()
+    active=()
     for pid in "${pids[@]}"; do
       kill -0 "$pid" 2>/dev/null && active+=("$pid")
     done

@@ -977,7 +977,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -1028,6 +1027,7 @@ for file in "$@"; do
 done
 
 echo "Found $count files"
+
 #fin
 ```
 
@@ -2367,7 +2367,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -2544,7 +2543,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -2664,7 +2662,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -3541,7 +3538,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -4132,7 +4128,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -4724,7 +4719,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -4897,7 +4891,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -5154,8 +5147,6 @@ for item in "${array[@]}"; do
 | Indices | `"${!arr[@]}"` | All array indices |
 
 **Key principle:** Always quote array expansions: `"${array[@]}"` to preserve spacing and prevent word splitting.
-
-#fin
 
 
 ---
@@ -22819,4 +22810,3 @@ fi
 - Never modify flags during execution phase (only in setup/validation)
 
 **Rationale:** This pattern allows scripts to adapt to runtime conditions while maintaining clarity about why decisions were made. It's especially useful for installation scripts where features may need to be disabled based on system capabilities or build failures.
-#fin

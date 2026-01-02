@@ -68,11 +68,10 @@ shopt -s inherit_errexit shift_verbose extglob nullglob
 # Script Metadata
 # ============================================================================
 
-VERSION=2.1.420
-SCRIPT_PATH=$(realpath -- "$0")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
+declare -r VERSION=2.1.420
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # ============================================================================
 # Global Variable Declarations
@@ -146,7 +145,6 @@ yn() {
   >&2 echo
   [[ ${REPLY,,} == y ]]
 }
-
 noarg() { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
 
 # ============================================================================
@@ -163,23 +161,26 @@ update_derived_paths() {
   LOG_DIR=/var/log/"$APP_NAME"
 }
 
-usage() {
-  cat <<EOF
-Usage: $SCRIPT_NAME [OPTIONS]
+show_help() {
+  cat <<EOT
+$SCRIPT_NAME $VERSION - Installation script
 
 Configurable installation script with dry-run mode.
 
-OPTIONS:
+Usage: $SCRIPT_NAME [Options] [arguments]
+
+Options:
   -p, --prefix DIR       Installation prefix (default: /usr/local)
   -u, --user USER        System user for service (default: myapp)
   -n, --dry-run          Show what would be done without doing it
   -f, --force            Overwrite existing files
   -s, --systemd          Install systemd service unit
   -v, --verbose          Enable verbose output
+  -q, --quiet            Disable verbose output
   -h, --help             Display this help message
   -V, --version          Display version information
 
-EXAMPLES:
+Examples:
   # Dry-run installation to /opt
   $SCRIPT_NAME --prefix /opt --dry-run
 
@@ -188,8 +189,7 @@ EXAMPLES:
 
   # Force reinstall to default location
   $SCRIPT_NAME --force
-
-EOF
+EOT
 }
 
 check_prerequisites() {
@@ -215,19 +215,19 @@ check_prerequisites() {
 validate_config() {
   # Validate PREFIX
   [[ -n "$PREFIX" ]] || die 22 'PREFIX cannot be empty'
-  [[ "$PREFIX" =~ [[:space:]] ]] && die 22 'PREFIX cannot contain spaces'
+  [[ "$PREFIX" =~ [[:space:]] ]] && die 22 "PREFIX cannot contain spaces ${PREFIX@Q}"
 
   # Validate APP_NAME
   [[ -n "$APP_NAME" ]] || die 22 'APP_NAME cannot be empty'
   [[ "$APP_NAME" =~ ^[a-z][a-z0-9_-]*$ ]] || \
-    die 22 'Invalid APP_NAME: must start with letter, contain only lowercase, digits, dash, underscore'
+      die 22 'Invalid APP_NAME: must start with letter, contain only lowercase, digits, dash, underscore'
 
   # Validate SYSTEM_USER
   [[ -n "$SYSTEM_USER" ]] || die 22 'SYSTEM_USER cannot be empty'
 
   # Check write permissions
   if [[ ! -d "$PREFIX" ]]; then
-    if ((FORCE)) || yn "Create PREFIX directory '$PREFIX'?"; then
+    if ((FORCE)) || yn "Create PREFIX directory ${PREFIX@Q}?"; then
       vecho "Will create ${PREFIX@Q}"
     else
       die 1 'Installation cancelled'
@@ -256,8 +256,8 @@ create_directories() {
 }
 
 install_binaries() {
-  local -- source="$SCRIPT_DIR/bin"
-  local -- target="$BIN_DIR"
+  local -- source="$SCRIPT_DIR"/bin
+  local -- target=$BIN_DIR
 
   [[ -d "$source" ]] || die 2 "Source directory not found ${source@Q}"
 
@@ -266,14 +266,13 @@ install_binaries() {
     return 0
   }
 
-  local -- file
+  local -- file basename target_file
   local -i count=0
-
   for file in "$source"/*; do
     [[ -f "$file" ]] || continue
 
-    local -- basename=${file##*/}
-    local -- target_file="$target/$basename"
+    basename=${file##*/}
+    target_file="$target/$basename"
 
     if [[ -f "$target_file" ]] && ! ((FORCE)); then
       warn "File exists (use --force to overwrite) ${target_file@Q}"
@@ -345,13 +344,13 @@ log_level = INFO
 EOT
 
   chmod 644 "$config_file"
-  success "Generated config '$config_file'"
+  success "Generated config ${config_file@Q}"
 }
 
 install_systemd_unit() {
   ((INSTALL_SYSTEMD)) || return 0
 
-  local -- unit_file="/etc/systemd/system/${APP_NAME}.service"
+  local -- unit_file=/etc/systemd/system/"$APP_NAME".service
 
   if ((DRY_RUN)); then
     info "[DRY-RUN] Would install systemd unit ${unit_file@Q}"
@@ -388,7 +387,7 @@ set_permissions() {
 
   # Log directory should be writable by system user
   if id "$SYSTEM_USER" >/dev/null 2>&1; then
-    chown -R "$SYSTEM_USER:$SYSTEM_USER" "$LOG_DIR" 2>/dev/null || \
+    chown -R "$SYSTEM_USER":"$SYSTEM_USER" "$LOG_DIR" 2>/dev/null || \
       warn "Failed to set ownership on ${LOG_DIR@Q} (may need sudo)"
   else
     warn "System user ${SYSTEM_USER@Q} does not exist - skipping ownership changes"
@@ -400,7 +399,7 @@ set_permissions() {
 show_summary() {
   cat <<EOT
 
-${BOLD}Installation Summary${RESET}
+${BOLD}Installation Summary${NC}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   Application:    $APP_NAME
@@ -420,7 +419,7 @@ ${BOLD}Installation Summary${RESET}
 EOT
 
   if ((${#WARNINGS[@]})); then
-    echo "${YELLOW}Warnings:${RESET}"
+    echo "${YELLOW}Warnings:${NC}"
     local -- warning
     for warning in "${WARNINGS[@]}"; do
       echo "  • $warning"
@@ -429,7 +428,7 @@ EOT
   fi
 
   if ((DRY_RUN)); then
-    echo "${BLUE}This was a DRY-RUN - no changes were made${RESET}"
+    echo "${CYAN}This was a DRY-RUN - no changes were made${NC}"
   fi
 }
 
@@ -441,32 +440,36 @@ main() {
   # Parse command-line arguments
   while (($#)); do
     case $1 in
-      -p|--prefix)       noarg "$@"
-                         shift
-                         PREFIX=$1
-                         update_derived_paths
-                         ;;
+      -p|--prefix)   noarg "$@"
+                     shift
+                     PREFIX=$1
+                     update_derived_paths
+                     ;;
 
-      -u|--user)         noarg "$@"
-                         shift
-                         SYSTEM_USER=$1
-                         ;;
+      -u|--user)     noarg "$@"
+                     shift
+                     SYSTEM_USER=$1
+                     ;;
 
-      -n|--dry-run)      DRY_RUN=1 ;;
-      -f|--force)        FORCE=1 ;;
-      -s|--systemd)      INSTALL_SYSTEMD=1 ;;
-      -v|--verbose)      VERBOSE=1 ;;
+      -n|--dry-run)  DRY_RUN=1 ;;
+      -f|--force)    FORCE=1 ;;
+      -s|--systemd)  INSTALL_SYSTEMD=1 ;;
 
-      -h|--help)         usage
-                         return 0
-                         ;;
+      -v|--verbose)  VERBOSE+=1 ;;
+      -q|--quiet)    VERBOSE=0 ;;
 
-      -V|--version)      echo "$SCRIPT_NAME $VERSION"
-                         return 0
-                         ;;
+      -V|--version)  echo "$SCRIPT_NAME $VERSION"
+                     return 0
+                     ;;
+      -h|--help)     show_help
+                     return 0
+                     ;;
 
-      -*)                die 22 "Invalid option ${1@Q} (use --help for usage)" ;;
-      *)                 die 2  "Unexpected argument ${1@Q}" ;;
+      -[punfsvqVh]*) #shellcheck disable=SC2046 #split up single options
+                     set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+
+      -*)            die 22 "Invalid option ${1@Q} (use --help for usage)" ;;
+      *)             die 2  "Unexpected argument ${1@Q}" ;;
     esac
     shift
   done
@@ -17856,7 +17859,7 @@ command <<< "$variable"
 
 **Rule: BCS0904**
 
-## 
+##
 Here Documents
 Use for multi-line strings or input.
 
@@ -22256,7 +22259,7 @@ In codebase documentation, internal and external, you may use any of these icons
      debug   ⦿
      warn    ▲
      success ✓
-     error   ✗ 
+     error   ✗
 
 Avoid use of any other icon/emoticon unless it can be justified.
 
@@ -40684,7 +40687,7 @@ command <<< "$variable"
 
 **Rule: BCS0904**
 
-## 
+##
 Here Documents
 Use for multi-line strings or input.
 
@@ -45084,7 +45087,7 @@ In codebase documentation, internal and external, you may use any of these icons
      debug   ⦿
      warn    ▲
      success ✓
-     error   ✗ 
+     error   ✗
 
 Avoid use of any other icon/emoticon unless it can be justified.
 
@@ -45649,5 +45652,3 @@ fi
 - Never modify flags during execution phase (only in setup/validation)
 
 **Rationale:** This pattern allows scripts to adapt to runtime conditions while maintaining clarity about why decisions were made. It's especially useful for installation scripts where features may need to be disabled based on system capabilities or build failures.
-#fin
-#fin

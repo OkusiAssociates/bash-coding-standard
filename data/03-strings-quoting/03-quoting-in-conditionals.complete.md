@@ -1,6 +1,6 @@
 ### Quoting in Conditionals
 
-**Rule: BCS0303** (From BCS0406)
+**Rule: BCS0303**
 
 Variable quoting in test expressions.
 
@@ -8,13 +8,12 @@ Variable quoting in test expressions.
 
 #### The Rule
 
-**Always quote variables** in conditionals. Static comparison values follow normal rules (single quotes for literals).
+**Always quote variables** in conditionals. Static comparison values follow normal rules (single quotes for literals with breaking chars).
 
 ```bash
 # ✓ Correct - variable quoted
 [[ -f "$file" ]]
-[[ "$name" == 'value' ]]
-[[ "$count" -eq 0 ]]
+[[ "$name" == value ]]
 
 # ✗ Wrong - unquoted variable
 [[ -f $file ]]
@@ -64,8 +63,8 @@ pattern='^[0-9]+$'
 
 ```bash
 # ✗ Wrong - unquoted variable
-[[ -f $file ]]              # Breaks with spaces
-[[ $name == value ]]        # Breaks with spaces
+[[ -f $file ]] # Breaks with spaces
+[[ $name == value with breaking chars ]] # Breaks with spaces
 
 # ✗ Wrong - double quotes for static literal
 [[ "$mode" == "production" ]]
@@ -78,5 +77,3 @@ pattern='^[0-9]+$'
 ---
 
 **Key principle:** Variable quoting in conditionals is mandatory. Quote all variables: `[[ -f "$file" ]]`.
-
-#fin

@@ -101,21 +101,10 @@ declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 ```bash
 # Terminal colors (conditional)
 if [[ -t 1 && -t 2 ]]; then
-  RED=$'\033[0;31m'
-  GREEN=$'\033[0;32m'
-  YELLOW=$'\033[0;33m'
-  CYAN=$'\033[0;36m'
-  BOLD=$'\033[1m'
-  NC=$'\033[0m'
+  declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' BOLD=$'\033[1m' NC=$'\033[0m'
 else
-  RED=''
-  GREEN=''
-  YELLOW=''
-  CYAN=''
-  BOLD=''
-  NC=''
+  declare -r RED='' GREEN='' YELLOW='' CYAN='' BOLD='' NC=''
 fi
-readonly -- RED GREEN YELLOW CYAN BOLD NC
 ```
 
 **3. Path constants group:**
@@ -158,11 +147,10 @@ declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 # ============================================================================
 
 if [[ -t 1 && -t 2 ]]; then
-  RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' NC=$'\033[0m'
+  declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' NC=$'\033[0m'
 else
-  RED='' GREEN='' YELLOW='' CYAN='' NC=''
+  declare -r RED='' GREEN='' YELLOW='' CYAN='' NC=''
 fi
-readonly -- RED GREEN YELLOW CYAN NC
 
 # ============================================================================
 # Installation Paths (Group 3)
@@ -378,7 +366,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -416,7 +403,7 @@ fi
 # config_file might be modified - don't make readonly yet
 
 # Only make readonly when value is final
-[[ -n "$config_file" ]] && readonly -- config_file
+[[ -z "$config_file" ]] || readonly -- config_file
 ```
 
 **Summary:**

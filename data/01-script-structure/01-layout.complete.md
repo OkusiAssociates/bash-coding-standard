@@ -61,6 +61,7 @@ Within a module+script program -- one that can be either sourced or executed -- 
 ```bash
 #shellcheck disable=SC2034  # Unused variables OK (sourced by other scripts)
 #shellcheck disable=SC1091  # Don't follow sourced files
+#shellcheck disable=SC2155  # I promise I'll be good.
 ```
 
 **Always include explanatory comments** for disabled checks.
@@ -397,7 +398,7 @@ main() {
       -f|--force)    FORCE=1 ;;
 
       -V|--version)  echo "$SCRIPT_NAME $VERSION"; return 0 ;;
-      -h|--help)     usage; return 0 ;;
+      -h|--help)     show_help; return 0 ;;
 
       -[pvqnfVh]*) #shellcheck disable=SC2046 #split up single options
                      set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;

@@ -4,9 +4,6 @@
 
 ```bash
 while (($#)); do case $1 in
-  -V|--version)   echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
-  -h|--help)      show_help; exit 0 ;;
-
   -a|--add)       noarg "$@"; shift
                   process_argument "$1" ;;
   -m|--depth)     noarg "$@"; shift
@@ -18,7 +15,10 @@ while (($#)); do case $1 in
   -v|--verbose)   VERBOSE+=1 ;;
   -q|--quiet)     VERBOSE=0 ;;
 
-  -[VhamLpvq]*) #shellcheck disable=SC2046 #split up single options
+  -V|--version)   echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
+  -h|--help)      show_help; exit 0 ;;
+
+  -[amLpvqVh]*) #shellcheck disable=SC2046 #split up single options
                   set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
   -*)             die 22 "Invalid option ${1@Q}" ;;
   *)              Paths+=("$1") ;;
@@ -145,10 +145,12 @@ die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 noarg() { (($# > 1)) || die 2 "Option ${1@Q} requires an argument"; }
 
 show_help() {
-  cat <<EOF
-Usage: $SCRIPT_NAME [OPTIONS] FILE...
+  cat <<HELP
+$SCRIPT_NAME $VERSION - Process files
 
 Process files with various options.
+
+Usage: $SCRIPT_NAME [OPTIONS] FILE...
 
 Options:
   -o, --output FILE  Output file (required)
@@ -159,8 +161,8 @@ Options:
 
 Examples:
   $SCRIPT_NAME -o output.txt file1.txt file2.txt
-  $SCRIPT_NAME -v -n -o result.txt *.txt
-EOF
+  $SCRIPT_NAME -vno result.txt *.txt
+HELP
 }
 
 # ============================================================================
@@ -207,7 +209,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 

@@ -28,6 +28,7 @@ shopt -s inherit_errexit shift_verbose extglob nullglob
 # Metadata initialization with guard (allows re-sourcing safety)
 if [[ ! -v SCRIPT_VERSION ]]; then
   declare -x SCRIPT_VERSION=1.0.0
+  #shellcheck disable=SC2155
   declare -x SCRIPT_PATH=$(realpath -- "$0")
   declare -x SCRIPT_DIR=${SCRIPT_PATH%/*}
   declare -x SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -89,11 +90,11 @@ declare -fx process_data
 if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
   # EXECUTED MODE
   set -euo pipefail
-  DATA_DIR=/var/lib/myapp
+  declare -r DATA_DIR=/var/lib/myapp
   process_data "$DATA_DIR"
 else
   # SOURCED MODE - different initialization
-  DATA_DIR=${DATA_DIR:-/tmp/test_data}
+  declare -r DATA_DIR=${DATA_DIR:-/tmp/test_data}
   # Export functions, return to caller
 fi
 ```

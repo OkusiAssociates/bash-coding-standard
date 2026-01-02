@@ -76,12 +76,12 @@ while (($#)); do case $1 in
   -d|--depth)
     arg_num "$@"   # Validate numeric
     shift
-    MAX_DEPTH="$1"  # Guaranteed to be integer
+    MAX_DEPTH=$1   # Guaranteed to be integer
     ;;
   -C|--context)
     arg_num "$@"
     shift
-    CONTEXT_LINES="$1"
+    CONTEXT_LINES=$1
     ;;
 esac; shift; done
 ```
@@ -94,12 +94,12 @@ esac; shift; done
 **Type safety benefit:**
 ```bash
 # Without validation:
--d|--depth) shift; MAX_DEPTH="$1" ;;
+-d|--depth) shift; MAX_DEPTH=$1 ;;
 # User types: script --depth abc
 # Result: MAX_DEPTH='abc' → errors in arithmetic later
 
 # With validation:
--d|--depth) arg2_num "$@"; shift; MAX_DEPTH="$1" ;;
+-d|--depth) arg2_num "$@"; shift; MAX_DEPTH=$1 ;;
 # User types: script --depth abc
 # Result: Immediate clear error: '--depth requires a numeric argument'
 ```
@@ -110,6 +110,13 @@ esac; shift; done
 declare -i MAX_DEPTH=5 VERBOSE=0
 declare -- OUTPUT_FILE=''
 declare -a INPUT_FILES=()
+
+# Validation helpers
+arg2() { ((${#@}-1<1)) || [[ "${2:0:1}" == '-' ]] && die 2 "${1@Q} requires argument" ||:; }
+
+arg_num() { ((${#@}-1<1)) || [[ ! "$2" =~ ^[0-9]+$ ]] && die 2 "${1@Q} requires a numeric argument" ||:; }
+
+noarg() { (($# > 1)) && [[ ${2:0:1} != '-' ]] || die 2 "Missing argument for option ${1@Q}"; }
 
 main() {
   while (($#)); do case $1 in
@@ -149,13 +156,6 @@ main() {
   # ... rest of script
 }
 
-# Validation helpers
-arg2() { ((${#@}-1<1)) || [[ "${2:0:1}" == '-' ]] && die 2 "${1@Q} requires argument" ||:; }
-
-arg_num() { ((${#@}-1<1)) || [[ ! "$2" =~ ^[0-9]+$ ]] && die 2 "${1@Q} requires a numeric argument" ||:; }
-
-noarg() { (($# > 1)) && [[ ${2:0:1} != '-' ]] || die 2 "Missing argument for option ${1@Q}"; }
-
 main "$@"
 ```
 
@@ -171,11 +171,11 @@ main "$@"
 
 ```bash
 # ✗ No validation - silent failure
--o|--output) shift; OUTPUT="$1" ;;
+-o|--output) shift; OUTPUT=$1 ;;
 # Problem: --output --verbose → OUTPUT='--verbose'
 
 # ✗ No validation - type error later
--d|--depth) shift; MAX_DEPTH="$1" ;;
+-d|--depth) shift; MAX_DEPTH=$1 ;;
 # Problem: --depth abc → arithmetic errors: "abc: syntax error"
 
 # ✗ Manual validation - verbose

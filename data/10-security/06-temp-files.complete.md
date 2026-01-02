@@ -169,7 +169,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -254,7 +253,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -310,7 +308,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -553,9 +550,11 @@ batch_process() {
 # Main Function
 # ============================================================================
 
-usage() {
-  cat <<'EOF'
-Usage: script.sh [OPTIONS] FILE...
+show_help() {
+  cat <<HELP
+$SCRIPT_NAME $VERSION - Process files with temp files
+
+Usage: $SCRIPT_NAME [OPTIONS] FILE...
 
 Process files with temporary file handling.
 
@@ -574,7 +573,7 @@ Examples:
   script.sh file.txt
   script.sh -v file1.txt file2.txt
   script.sh -k --dry-run data/*.txt
-EOF
+HELP
 }
 
 main() {
@@ -584,7 +583,7 @@ main() {
   while (($#)); do
     case $1 in
       -v|--verbose)
-        VERBOSE=1
+        VERBOSE+=1
         ;;
 
       -vv)
@@ -605,7 +604,7 @@ main() {
         ;;
 
       -h|--help)
-        usage
+        show_help
         return 0
         ;;
 
@@ -635,7 +634,7 @@ main() {
   # Validate
   if ((${#input_files[@]} == 0)); then
     error 'No input files specified'
-    usage
+    show_help
     return 22
   fi
 
@@ -643,8 +642,8 @@ main() {
   if ((VERBOSE)); then
     info "$SCRIPT_NAME $VERSION"
     info "Input files: ${#input_files[@]}"
-    ((DRY_RUN)) && info '[DRY-RUN] Mode enabled'
-    ((KEEP_TEMP)) && info '[KEEP-TEMP] Temporary files will be preserved'
+    ((DRY_RUN)) && info '[DRY-RUN] Mode enabled' ||:
+    ((KEEP_TEMP)) && info '[KEEP-TEMP] Temporary files will be preserved' ||:
   fi
 
   # Process files
@@ -656,7 +655,6 @@ main() {
 # ============================================================================
 
 main "$@"
-
 #fin
 ```
 
@@ -928,7 +926,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -992,7 +989,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -1030,8 +1026,8 @@ declare -a TEMP_FILES=()
 cleanup_temp() {
   local -- file
   for file in "${TEMP_FILES[@]}"; do
-    [[ -f "$file" ]] && rm -f "$file"
-    [[ -d "$file" ]] && rm -rf "$file"
+    [[ -f "$file" ]] && rm -f "$file" ||:
+    [[ -d "$file" ]] && rm -rf "$file" ||:
   done
 }
 
@@ -1062,7 +1058,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -1110,7 +1105,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 

@@ -277,12 +277,12 @@ For scripts that don't need colors:
 ```bash
 _msg() {
   local -- level="${FUNCNAME[1]}"
-  printf '[%s] %s: %s\n' "$SCRIPT_NAME" "${level^^}" "$*"
+  printf '%s: %s: %s\n' "$SCRIPT_NAME" "${level^^}" "$*"
 }
 
 info()    { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 error()   { >&2 _msg "$@"; }
-die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+die()     { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 ```
 
 **Variation: Log to file:**

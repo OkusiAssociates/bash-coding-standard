@@ -113,5 +113,3 @@ if (($(echo "$a > $b" | bc -l))); then
 **See Also:** BCS0705 (Integer Arithmetic)
 
 **Full implementation:** See `examples/exemplar-code/hr2int` and `examples/exemplar-code/int2hr`
-
-#fin

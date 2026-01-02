@@ -75,5 +75,3 @@ EOF
 ---
 
 **Key principle:** Quote the delimiter (`<<'EOF'`) to prevent expansion; leave unquoted for variable substitution.
-
-#fin

@@ -1,6 +1,6 @@
 ### Quoting Anti-Patterns
 
-**Rule: BCS0307** (From BCS0411)
+**Rule: BCS0307**
 
 Common quoting mistakes to avoid.
 
@@ -120,5 +120,3 @@ EOF
 ---
 
 **Key principle:** Single quotes for static text, double quotes for variables, avoid unnecessary braces, always quote variables.
-
-#fin

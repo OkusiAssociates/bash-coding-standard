@@ -153,8 +153,8 @@ log_event "$user_action"
 ```bash
 # ✓ Correct - build command safely with array
 build_find_command() {
-  local -- search_path="$1"
-  local -- file_pattern="$2"
+  local -- search_path=$1
+  local -- file_pattern=$2
   local -a cmd
 
   # Build command in array - no eval needed!
@@ -472,8 +472,8 @@ build_curl_command() {
   local -a curl_cmd=(curl)
 
   # Add options based on configuration
-  [[ -v config[proxy] ]] && curl_cmd+=(--proxy "${config[proxy]}")
-  [[ -v config[timeout] ]] && curl_cmd+=(--timeout "${config[timeout]}")
+  [[ -v config[proxy] ]] && curl_cmd+=(--proxy "${config[proxy]}") ||:
+  [[ -v config[timeout] ]] && curl_cmd+=(--timeout "${config[timeout]}") ||:
 
   # Add URL
   curl_cmd+=("$url")

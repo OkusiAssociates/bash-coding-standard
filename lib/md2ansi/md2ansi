@@ -1350,10 +1350,8 @@ parse_arguments() {
         (($#)) && INPUT_FILES+=("$@")
         break
         ;;
-      -[wDVht]*)
-        # Split combined short options: -Dv -> -D -v
-        #shellcheck disable=SC2046
-        set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}"
+      -[wDVht]*) #shellcheck disable=SC2046 # Split combined short options: -Dv -> -D -v
+        set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"
         ;;
       -*)
         die 22 "Invalid option ${1@Q}"

@@ -207,7 +207,7 @@ SCRIPT_NAME=${SCRIPT_PATH##*/}
 # ✓ Correct - use realpath
 SCRIPT_PATH=$(realpath -- "$0")
 
-# ✗ Avoid - readlink requires -en flags (more complex, GNU-specific)
+# ✓ Acceptable, but usually prefer realpath - readlink requires -en flags (more complex, GNU-specific)
 SCRIPT_PATH=$(readlink -en -- "$0")
 
 # Note: realpath without -m will fail if file doesn't exist
@@ -247,7 +247,7 @@ declare -r SCRIPT_PATH
 **Anti-patterns to avoid:**
 
 ```bash
-# ✗ Wrong - using $0 directly without realpath
+# ✗ Wrong - using $0 directly without realpath or readlink
 SCRIPT_PATH="$0"  # Could be relative path or symlink!
 
 # ✓ Correct - resolve with realpath
@@ -342,18 +342,20 @@ show_version() {
 
 # Show help with script name
 show_help() {
-  cat << EOF
-Usage: $SCRIPT_NAME [OPTIONS]
+  cat <<HELP
+$SCRIPT_NAME $VERSION - Process data
 
 Process data according to configuration.
+
+Usage: $SCRIPT_NAME [OPTIONS]
 
 Options:
   -h, --help     Show this help message
   -V, --version  Show version information
 
-Version: $VERSION
-Location: $SCRIPT_PATH
-EOF
+Examples:
+  $SCRIPT_NAME -V
+HELP
 }
 
 # Load configuration from script directory

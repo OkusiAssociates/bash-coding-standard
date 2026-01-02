@@ -78,7 +78,7 @@ readonly -- CONFIG_FILE=/etc/app.conf
 readonly -- OUTPUT_DIR="$HOME"/output  # Can't be overridden by user!
 
 # ✓ Correct - allow override, then make readonly
-OUTPUT_DIR=${OUTPUT_DIR:-$HOME/output}
+OUTPUT_DIR=${OUTPUT_DIR:-"$HOME"/output}
 readonly -- OUTPUT_DIR
 ```
 

@@ -24,7 +24,7 @@ Without disaggregation support, your script would treat `-lha` as a single unkno
 
 ## The Three Methods
 
-### Method 1: grep (Current Standard)
+### Method 1: grep (Current Standard and Recommended)
 
 **Approach:** Use `grep -o .` to split characters
 
@@ -91,7 +91,7 @@ esac
 
 **Performance:** ~195 iterations/second
 
-### Method 3: Pure Bash (Recommended)
+### Method 3: Pure Bash
 
 **Approach:** Use only bash built-ins for maximum performance
 
@@ -238,7 +238,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -321,11 +320,10 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
-### Example 3: Using Pure Bash (Recommended)
+### Example 3: Using Pure Bash
 
 ```bash
 #!/usr/bin/env bash
@@ -432,7 +430,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -521,15 +518,6 @@ For scripts that:
 - Need to start quickly (interactive tools)
 - Run in resource-constrained environments
 
-**Recommendation:** Use pure bash method for 68% performance improvement.
-
-For scripts where:
-- Argument parsing happens once at startup
-- External command overhead is negligible
-- One-liner readability is valued
-
-**Acceptable:** Use grep/fold methods.
-
 ## Implementation Checklist
 
 When implementing short-option disaggregation:
@@ -600,7 +588,7 @@ method_bash() {
 # Verification function using inline logic
 verify_grep() {
   local -a result
-  set -- '' $(printf -- "-%c " $(grep -o . <<<"${TEST_INPUT:1}"))
+  set -- '' $(printf -- '-%c ' $(grep -o . <<<"${TEST_INPUT:1}"))
   shift
   result=("$@")
 
@@ -621,7 +609,7 @@ verify_grep() {
 
 verify_fold() {
   local -a result
-  set -- '' $(printf -- "-%c " $(fold -w1 <<<"${TEST_INPUT:1}"))
+  set -- '' $(printf -- '-%c ' $(fold -w1 <<<"${TEST_INPUT:1}"))
   shift
   result=("$@")
 
@@ -782,46 +770,13 @@ Test complete
 
 ## Recommendations
 
-### For New Scripts
-
-**Use Pure Bash Method (Method 3)**
-
-Reasons:
-- 68% performance improvement over grep/fold
-- No external dependencies
-- No shellcheck warnings
-- More portable across environments
-- Future-proof (doesn't rely on external command availability)
-
-Trade-off:
-- Slightly more verbose (6 lines vs 1 line)
-- Slightly more complex logic
-
-**Implementation:**
-```bash
--[ovnVh]*)   # Split up single options (pure bash)
-              opt=${1:1}
-              new_args=()
-              while ((${#opt})); do
-                new_args+=("-${opt:0:1}")
-                opt=${opt:1}
-              done
-              set -- '' "${new_args[@]}" "${@:2}" ;;
-```
-
-### For Existing Scripts
+### Recommendation
 
 **Keep Current Method (grep) Unless:**
 1. Performance is critical
 2. Script is called frequently
 3. External dependencies are a concern
 4. Running in restricted environment
-
-**Migration Path:**
-1. Run benchmarks in your environment
-2. If performance matters, migrate to pure bash
-3. Update tests to verify bundled options still work
-4. Document the change in commit message
 
 ### For High-Performance Scripts
 
@@ -892,10 +847,7 @@ echo "All tests passed!"
 Short-option disaggregation is essential for creating user-friendly command-line tools that follow Unix conventions. While all three methods produce identical results, the pure bash method offers significant performance advantages with no external dependencies.
 
 **Summary:**
-- **grep method:** Current standard, external dependency, ~190 iter/sec
+- **grep method:** Recommended, Current standard, external dependency, ~190 iter/sec
 - **fold method:** Marginal improvement, external dependency, ~195 iter/sec
-- **Pure bash:** Recommended, no dependencies, ~318 iter/sec (68% faster)
+- **Pure bash:** No dependencies, ~318 iter/sec (68% faster)
 
-Choose based on your script's requirements, but prefer pure bash for new development.
-
-#fin

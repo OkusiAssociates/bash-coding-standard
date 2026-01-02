@@ -1,1 +1,1 @@
-BASH-CODING-STANDARD.summary.md
+BASH-CODING-STANDARD.complete.md

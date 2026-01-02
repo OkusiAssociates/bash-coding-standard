@@ -186,7 +186,7 @@ count_by_twos() {
 
 # ✓ CORRECT - Countdown
 countdown() {
-  local -i seconds="${1:-10}"
+  local -i seconds=${1:-10}
   local -i i
 
   for ((i=seconds; i>0; i-=1)); do
@@ -297,7 +297,7 @@ process_null_delimited() {
 
 # ✓ CORRECT - Read CSV with custom delimiter
 read_csv() {
-  local -- csv_file="$1"
+  local -- csv_file=$1
   local -- name email age
 
   while IFS=',' read -r name email age; do
@@ -376,7 +376,7 @@ main() {
         ;;
 
       -h|--help)
-        usage
+        show_help
         return 0
         ;;
 
@@ -414,7 +414,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -685,9 +684,8 @@ process_log_file() {
   while IFS= read -r line; do
     # Skip empty lines
     [[ -n "$line" ]] || continue
-
     # Skip comments
-    [[ "$line" =~ ^# ]] && continue ||:
+    [[ ! "$line" =~ ^# ]] || continue
 
     # Process error lines
     if [[ "$line" =~ ERROR ]]; then
@@ -946,7 +944,6 @@ info() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 warn() { >&2 _msg "$@"; }
 error() { >&2 _msg "$@"; }
 success() { >&2 _msg "$@"; }
-
 die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 # ============================================================================
@@ -1051,7 +1048,7 @@ collect_files() {
 
   # Iterate over each pattern
   for pattern in "${INPUT_PATTERNS[@]}"; do
-    ((VERBOSE)) && info "Searching for pattern: $pattern"
+    ((VERBOSE)) && info "Searching for pattern: $pattern" ||:
 
     # Iterate over glob matches
     for file in $pattern; do
@@ -1106,7 +1103,7 @@ main() {
         ;;
 
       -h|--help)
-        echo 'Usage: script.sh [OPTIONS] PATTERN...'
+        echo "Usage: $SCRIPT_NAME [OPTIONS] PATTERN..."
         echo 'Options:'
         echo '  -v, --verbose    Verbose output'
         echo '  -n, --dry-run    Dry-run mode'

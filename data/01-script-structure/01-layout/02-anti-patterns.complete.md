@@ -32,7 +32,7 @@ set -euo pipefail
 
 shopt -s inherit_errexit shift_verbose
 
-VERSION=1.0.0
+declare -r VERSION=1.0.0
 # ... rest of script
 ```
 
@@ -149,7 +149,7 @@ main "$@"
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION=1.0.0
+declare -r VERSION=1.0.0
 
 # ... 200 lines of functions ...
 
@@ -176,7 +176,7 @@ echo 'Done'
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION=1.0.0
+declare -r VERSION=1.0.0
 
 # ... 200 lines of functions ...
 
@@ -184,7 +184,7 @@ main() {
   # Centralized argument parsing
   while (($#)); do
     case $1 in
-      -h|--help) usage; exit 0 ;;
+      -h|--help) show_help; exit 0 ;;
       *) die 22 "Invalid argument ${1@Q}" ;;
     esac
     shift
@@ -210,7 +210,7 @@ main "$@"
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION=1.0.0
+declare -r VERSION=1.0.0
 
 main() {
   echo 'Hello, World!'
@@ -228,7 +228,7 @@ main "$@"
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION=1.0.0
+declare -r VERSION=1.0.0
 
 main() {
   echo 'Hello, World!'
@@ -246,8 +246,8 @@ main "$@"
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION=1.0.0
-PREFIX=/usr/local
+declare -r VERSION=1.0.0
+declare -r PREFIX=/usr/local
 
 # Made readonly too early!
 readonly -- VERSION PREFIX
@@ -258,7 +258,7 @@ main() {
       --prefix)
         shift
         # This will fail - PREFIX is readonly!
-        PREFIX="$1"
+        PREFIX=$1
         ;;
     esac
     shift
@@ -277,10 +277,10 @@ main "$@"
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION=1.0.0
-SCRIPT_PATH=$(realpath -- "$0")
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- VERSION SCRIPT_PATH SCRIPT_NAME  # These never change
+declare -r VERSION=1.0.0
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+declare -r SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 declare -- PREFIX=/usr/local  # Will be modified during parsing
 
@@ -313,7 +313,7 @@ main "$@"
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION=1.0.0
+declare -r VERSION=1.0.0
 
 # Some globals
 declare -i VERBOSE=0
@@ -343,7 +343,7 @@ main "$@"
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION=1.0.0
+declare -r VERSION=1.0.0
 
 # All globals in one place
 declare -i VERBOSE=0
@@ -371,7 +371,7 @@ main "$@"
 #!/usr/bin/env bash
 # This file is meant to be sourced, but...
 
-set -euo pipefail  # Modifies caller's shell!
+set -euo pipefail  # Modifies caller's shell!!
 
 die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
@@ -399,10 +399,10 @@ die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 # Now start main script
 set -euo pipefail
 
-VERSION=1.0.0
-SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- VERSION SCRIPT_PATH SCRIPT_NAME  # These never change
+declare -r VERSION=1.0.0
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
+declare -r SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 : ...
 
@@ -412,7 +412,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 

@@ -29,5 +29,3 @@ Do not use BCS0208 in documentation or compliance checking until this placeholde
 
 **Status:** Reserved
 **Version:** 1.0.0
-
-#fin

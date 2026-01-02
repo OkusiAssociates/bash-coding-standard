@@ -10,8 +10,8 @@ cleanup() {
   trap - SIGINT SIGTERM EXIT
 
   # Cleanup operations
-  [[ -n "$temp_dir" && -d "$temp_dir" ]] && rm -rf "$temp_dir"
-  [[ -n "$lockfile" && -f "$lockfile" ]] && rm -f "$lockfile"
+  [[ -n "$temp_dir" && -d "$temp_dir" ]] && rm -rf "$temp_dir" ||:
+  [[ -n "$lockfile" && -f "$lockfile" ]] && rm -f "$lockfile" ||:
 
   # Log cleanup completion
   ((exitcode == 0)) && info 'Cleanup completed successfully' || warn "Cleanup after error (exit $exitcode)"
@@ -114,16 +114,16 @@ cleanup() {
   trap - SIGINT SIGTERM EXIT
 
   # Kill background processes
-  ((bg_pid)) && kill "$bg_pid" 2>/dev/null
+  ((bg_pid)) && kill "$bg_pid" 2>/dev/null ||:
 
   # Remove temp directory
   if [[ -n "$temp_dir" && -d "$temp_dir" ]]; then
-    rm -rf "$temp_dir" || warn "Failed to remove temp directory: $temp_dir"
+    rm -rf "$temp_dir" || warn "Failed to remove temp directory ${temp_dir@Q}"
   fi
 
   # Remove lockfile
   if [[ -n "$lockfile" && -f "$lockfile" ]]; then
-    rm -f "$lockfile" || warn "Failed to remove lockfile: $lockfile"
+    rm -f "$lockfile" || warn "Failed to remove lockfile ${lockfile@Q}"
   fi
 
   # Log exit

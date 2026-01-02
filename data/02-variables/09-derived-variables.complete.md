@@ -55,7 +55,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -82,21 +81,21 @@ declare -- APP_NAME=myapp
 # ============================================================================
 
 # XDG_CONFIG_HOME with fallback to $HOME/.config
-declare -- CONFIG_BASE=${XDG_CONFIG_HOME:-$HOME/.config}
+declare -- CONFIG_BASE=${XDG_CONFIG_HOME:-"$HOME"/.config}
 declare -- CONFIG_DIR="$CONFIG_BASE"/"$APP_NAME"
 declare -- CONFIG_FILE="$CONFIG_DIR"/config.conf
 
 # XDG_DATA_HOME with fallback to $HOME/.local/share
-declare -- DATA_BASE=${XDG_DATA_HOME:-$HOME/.local/share}
+declare -- DATA_BASE=${XDG_DATA_HOME:-"$HOME"/.local/share}
 declare -- DATA_DIR="$DATA_BASE"/"$APP_NAME"
 
 # XDG_STATE_HOME with fallback to $HOME/.local/state (for logs)
-declare -- STATE_BASE=${XDG_STATE_HOME:-$HOME/.local/state}
+declare -- STATE_BASE=${XDG_STATE_HOME:-"$HOME"/.local/state}
 declare -- LOG_DIR="$STATE_BASE"/"$APP_NAME"
 declare -- LOG_FILE="$LOG_DIR"/app.log
 
 # XDG_CACHE_HOME with fallback to $HOME/.cache
-declare -- CACHE_BASE=${XDG_CACHE_HOME:-$HOME/.cache}
+declare -- CACHE_BASE=${XDG_CACHE_HOME:-"$HOME"/.cache}
 declare -- CACHE_DIR="$CACHE_BASE"/"$APP_NAME"
 
 main() {
@@ -107,7 +106,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -182,11 +180,11 @@ main() {
         shift
         APP_NAME=$1
         # DOC_DIR depends on APP_NAME, update it
-        DOC_DIR="$PREFIX/share/doc/$APP_NAME"
+        DOC_DIR="$PREFIX"/share/doc/"$APP_NAME"
         ;;
 
       -h|--help)
-        echo 'Usage: script.sh [--prefix PREFIX] [--app-name NAME]'
+        echo "Usage: $SCRIPT_NAME [--prefix PREFIX] [--app-name NAME]"
         return 0
         ;;
 
@@ -211,7 +209,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -250,20 +247,20 @@ declare -- LOG_PREFIX="$ENVIRONMENT/$REGION/$APP_NAME"
 # ============================================================================
 
 # Paths that depend on environment
-declare -- CONFIG_DIR="/etc/$APP_NAME/$ENVIRONMENT"
-declare -- LOG_DIR="/var/log/$APP_NAME/$ENVIRONMENT"
-declare -- DATA_DIR="/var/lib/$APP_NAME/$ENVIRONMENT"
+declare -- CONFIG_DIR=/etc/"$APP_NAME"/"$ENVIRONMENT"
+declare -- LOG_DIR=/var/log/"$APP_NAME"/"$ENVIRONMENT"
+declare -- DATA_DIR=/var/lib/"$APP_NAME"/"$ENVIRONMENT"
 
 # Files derived from directories and identifiers
-declare -- CONFIG_FILE="$CONFIG_DIR/config-$REGION.conf"
-declare -- LOG_FILE="$LOG_DIR/$APP_NAME-$REGION.log"
-declare -- PID_FILE="/var/run/$DEPLOYMENT_ID.pid"
+declare -- CONFIG_FILE="$CONFIG_DIR"/config-"$REGION".conf
+declare -- LOG_FILE="$LOG_DIR"/"$APP_NAME"-"$REGION".log
+declare -- PID_FILE=/var/run/"$DEPLOYMENT_ID".pid
 
 # ============================================================================
 # Configuration - Derived URLs
 # ============================================================================
 
-declare -- API_HOST="api-$ENVIRONMENT.example.com"
+declare -- API_HOST=api-"$ENVIRONMENT".example.com
 declare -- API_URL="https://$API_HOST/v1"
 declare -- METRICS_URL="https://metrics-$REGION.example.com/$APP_NAME"
 
@@ -278,7 +275,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -455,7 +451,7 @@ create_directories() {
         debug "Creating directory ${dir@Q}"
         mkdir -p "$dir"
       else
-        debug "Directory exists: ${dir@Q}"
+        debug "Directory exists ${dir@Q}"
       fi
     fi
   done
@@ -495,11 +491,13 @@ install_files() {
 # Main Function
 # ============================================================================
 
-usage() {
-  cat <<'EOF'
-Usage: install.sh [OPTIONS]
+show_help() {
+  cat <<HELP
+$SCRIPT_NAME $VERSION - Install myapp
 
 Install myapp with configurable paths.
+
+Usage: install.sh [OPTIONS]
 
 Options:
   -v, --verbose           Verbose output (additive: -vv == debug)                     Very verbose (debug) output
@@ -510,11 +508,11 @@ Options:
   -V, --version           Show version
 
 Examples:
-  install.sh
-  install.sh --prefix /opt/myapp
-  install.sh --dry-run --verbose
-  install.sh --prefix /usr --system-user webapp
-EOF
+  $SCRIPT_NAME
+  $SCRIPT_NAME --prefix /opt/myapp
+  $SCRIPT_NAME --dry-run --verbose
+  $SCRIPT_NAME --prefix /usr --system-user webapp
+HELP
 }
 
 main() {
@@ -557,7 +555,7 @@ main() {
         ;;
 
       -h|--help)
-        usage
+        show_help
         return 0
         ;;
 
@@ -599,12 +597,11 @@ main() {
   install_files
 
   # Success
-  ((DRY_RUN)) && info '[DRY-RUN] Installation preview complete'
+  ((DRY_RUN)) && info '[DRY-RUN] Installation preview complete' ||:
   ((DRY_RUN)) || success "$APP_NAME $VERSION installed successfully!"
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -667,11 +664,11 @@ BIN_DIR="$PREFIX"/bin
 readonly -- PREFIX BIN_DIR      # Now make readonly
 
 # ✗ Wrong - complex derivation without comments
-DEPLOYMENT="$ENV-$REGION-$APP-$VERSION-$COMMIT"
+DEPLOYMENT="$ENV"-"$REGION"-"$APP"-"$VERSION"-"$COMMIT"
 
 # ✓ Correct - explain complex derivation
 # Deployment ID format: environment-region-app-version-commit
-DEPLOYMENT="$ENV-$REGION-$APP-$VERSION-$COMMIT"
+DEPLOYMENT="$ENV"-"$REGION"-"$APP"-"$VERSION"-"$COMMIT"
 
 # ✗ Wrong - inconsistent derivation
 CONFIG_DIR=/etc/myapp                  # Hardcoded
@@ -707,10 +704,10 @@ CONFIG_FILE="$CONFIG_DIR"/config.conf    # Derived
 
 ```bash
 # XDG Base Directory support with fallbacks
-CONFIG_BASE=${XDG_CONFIG_HOME:-$HOME/.config}
-DATA_BASE=${XDG_DATA_HOME:-$HOME/.local/share}
-CACHE_BASE=${XDG_CACHE_HOME:-$HOME/.cache}
-STATE_BASE=${XDG_STATE_HOME:-$HOME/.local/state}
+CONFIG_BASE=${XDG_CONFIG_HOME:-"$HOME"/.config}
+DATA_BASE=${XDG_DATA_HOME:-"$HOME"/.local/share}
+CACHE_BASE=${XDG_CACHE_HOME:-"$HOME"/.cache}
+STATE_BASE=${XDG_STATE_HOME:-"$HOME"/.local/state}
 
 # Derived from environment-aware bases
 CONFIG_DIR="$CONFIG_BASE"/"$APP_NAME"

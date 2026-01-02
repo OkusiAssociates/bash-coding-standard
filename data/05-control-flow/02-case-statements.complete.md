@@ -35,7 +35,7 @@ esac
 # ✓ Use case when - parsing command-line arguments
 case $1 in
   -v|--verbose) VERBOSE=1 ;;
-  -h|--help)    usage; exit 0 ;;
+  -h|--help)    show_help; exit 0 ;;
   -*)           die 22 "Invalid option ${1@Q}" ;;
   *)            FILENAME=$1 ;;
 esac
@@ -75,7 +75,7 @@ The `case` expression doesn't require quoting. Word splitting doesn't apply in t
 ```bash
 # ✓ CORRECT - no quotes needed on case expression
 case ${1:-} in
-  --help) usage ;;
+  --help) show_help ;;
 esac
 
 case $action in
@@ -84,7 +84,7 @@ esac
 
 # ✗ UNNECESSARY - quotes don't add value here
 case "${1:-}" in
-  --help) usage ;;
+  --help) show_help ;;
 esac
 ```
 
@@ -128,13 +128,13 @@ declare -a INPUT_FILES=()
 # Compact case for simple argument parsing
 while (($#)); do
   case $1 in
-    -v|--verbose) VERBOSE=1 ;;
     -n|--dry-run) DRY_RUN=1 ;;
     -f|--force)   FORCE=1 ;;
-    -q|--quiet)   VERBOSE=0 ;;
-    -h|--help)    usage; exit 0 ;;
     -V|--version) echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
-    -o|--output)  noarg "$@"; shift; OUTPUT_FILE="$1" ;;
+    -o|--output)  noarg "$@"; shift; OUTPUT_FILE=$1 ;;
+    -v|--verbose) VERBOSE+=1 ;;
+    -q|--quiet)   VERBOSE=0 ;;
+    -h|--help)    show_help; exit 0 ;;
     --)           shift; break ;;
     -*)           die 22 "Invalid option ${1@Q}" ;;
     *)            INPUT_FILES+=("$1") ;;
@@ -182,43 +182,51 @@ declare -- LIB_DIR=''
 # Expanded case for complex argument parsing
 while (($#)); do
   case $1 in
-    -b|--builtin)     INSTALL_BUILTIN=1
-                      ((VERBOSE)) && info 'Builtin installation enabled' ||:
-                      ;;
+    -b|--builtin)  INSTALL_BUILTIN=1
+                   ((VERBOSE)) && info 'Builtin installation enabled' ||:
+                   ;;
 
-    -p|--prefix)      noarg "$@"
-                      shift
-                      PREFIX=$1
-                      BIN_DIR="$PREFIX"/bin
-                      LIB_DIR="$PREFIX"/lib/bash
-                      ((VERBOSE)) && info "Prefix set to: $PREFIX" ||:
-                      ;;
+    -p|--prefix)   noarg "$@"
+                   shift
+                   PREFIX=$1
+                   BIN_DIR="$PREFIX"/bin
+                   LIB_DIR="$PREFIX"/lib/bash
+                   ((VERBOSE)) && info "Prefix set to: $PREFIX" ||:
+                   ;;
 
-    -v|--verbose)     VERBOSE=1
-                      info 'Verbose mode enabled'
-                      ;;
+    -v|--verbose)  VERBOSE+=1
+                   info 'Verbose mode enabled'
+                   ;;
 
-    -V|--version)     echo "$SCRIPT_NAME $VERSION"
-                      exit 0
-                      ;;
+    -q|--quiet)    VERBOSE=0
+                   info 'Verbose mode disabled'
+                   ;;
 
-    -h|--help)        usage
-                      exit 0
-                      ;;
+    -V|--version)  echo "$SCRIPT_NAME $VERSION"
+                   exit 0
+                   ;;
 
-    --)               shift
-                      break
-                      ;;
+    -h|--help)     show_help
+                   exit 0
+                   ;;
 
-    -*)               error "Invalid option ${1@Q}"
-                      usage
-                      exit 22
-                      ;;
+    --)            shift
+                   break
+                   ;;
 
-    *)                error "Unexpected argument ${1@Q}"
-                      usage
-                      exit 2
-                      ;;
+    -[bpvqVh]*) #shellcheck disable=SC2046 #split up single options
+                   set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"
+                   ;;
+
+    -*)            error "Invalid option ${1@Q}"
+                   show_help
+                   exit 22
+                   ;;
+
+    *)             error "Unexpected argument ${1@Q}"
+                   show_help;
+                   exit 2
+                   ;;
   esac
   shift
 done
@@ -235,15 +243,15 @@ readonly -- INSTALL_BUILTIN VERBOSE PREFIX BIN_DIR LIB_DIR
 ```bash
 # Exact string match
 case "$value" in
-  start) echo 'Starting...' ;;
-  stop) echo 'Stopping...' ;;
-  restart) echo 'Restarting...' ;;
+  start)    echo 'Starting...' ;;
+  stop)     echo 'Stopping...' ;;
+  restart)  echo 'Restarting...' ;;
 esac
 
 # Quote pattern if it contains special characters
 case "$email" in
   'admin@example.com') echo 'Admin user' ;;
-  'user@example.com') echo 'Regular user' ;;
+  'user@example.com')  echo 'Regular user' ;;
 esac
 ```
 
@@ -279,7 +287,7 @@ esac
 ```bash
 # Multiple patterns with |
 case "$option" in
-  -h|--help|help) usage; exit 0 ;;
+  -h|--help|help) show_help; exit 0 ;;
   -v|--verbose|verbose) VERBOSE+=1 ;;
   -q|--quiet|quiet) VERBOSE=0 ;;
 esac
@@ -369,37 +377,39 @@ info() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 warn() { >&2 _msg "$@"; }
 error() { >&2 _msg "$@"; }
 success() { >&2 _msg "$@"; }
-
 die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 # ============================================================================
 # Documentation Functions
 # ============================================================================
 
-usage() {
-  cat <<'EOF'
-Usage: script.sh [OPTIONS] FILE...
+show_help() {
+  cat <<HELP
+$SCRIPT_NAME $VERSION - Process files
 
 Process files with various options.
 
+Usage: $SCRIPT_NAME [OPTIONS] FILE...
+
 Options:
-  -v, --verbose          Enable verbose output
   -n, --dry-run          Show what would be done without doing it
   -f, --force            Force overwrite of existing files
   -q, --quiet            Suppress non-error output
   -o, --output DIR       Output directory
   -c, --config FILE      Configuration file
-  -h, --help             Show this help message
+  -v, --verbose          Enable verbose output
+  -q, --quiet            Disable verbose output
   -V, --version          Show version information
+  -h, --help             Show this help message
 
 Arguments:
   FILE...                Input files to process
 
 Examples:
-  script.sh file.txt
-  script.sh -v -o /tmp file1.txt file2.txt
-  script.sh -n --output /backup *.txt
-EOF
+  $SCRIPT_NAME file.txt
+  $SCRIPT_NAME -vo /tmp file1.txt file2.txt
+  $SCRIPT_NAME -nv --output /backup *.txt
+HELP
 }
 
 # ============================================================================
@@ -442,17 +452,10 @@ main() {
   # Parse command-line arguments
   while (($#)); do
     case $1 in
-      -v|--verbose)     VERBOSE+=1
-                        info 'Verbose mode enabled'
-                        ;;
-
       -n|--dry-run)     DRY_RUN=1
                         ;;
 
       -f|--force)       FORCE=1
-                        ;;
-
-      -q|--quiet)       VERBOSE=0
                         ;;
 
       -o|--output)      noarg "$@"
@@ -465,12 +468,24 @@ main() {
                         CONFIG_FILE=$1
                         ;;
 
+      -v|--verbose)     VERBOSE+=1
+                        info 'Verbose mode enabled'
+                        ;;
+
+      -q|--quiet)       VERBOSE=0
+                        info 'Verbose mode disabled'
+                        ;;
+
       -V|--version)     echo "$SCRIPT_NAME $VERSION"
                         return 0
                         ;;
 
-      -h|--help)        usage
+      -h|--help)        show_help
                         return 0
+                        ;;
+
+      -[nfocvqVh]*) #shellcheck disable=SC2046 #split up single options
+                        set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"
                         ;;
 
       --)               shift
@@ -496,7 +511,7 @@ main() {
   # Validate arguments
   if [[ ${#INPUT_FILES[@]} -eq 0 ]]; then
     error 'No input files specified'
-    usage
+    show_help
     return 2
   fi
 
@@ -549,7 +564,6 @@ main() {
 # ============================================================================
 
 main "$@"
-
 #fin
 ```
 
@@ -660,7 +674,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -740,7 +753,7 @@ reload_service() {
 }
 
 main() {
-  local -- action="${1:-}"
+  local -- action=${1:-}
 
   [[ -n "$action" ]] || die 22 'No action specified (start|stop|restart|status|reload)'
 
@@ -783,7 +796,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -825,25 +837,25 @@ fi
 
 # ✓ Correct - case is clearer
 case "$ext" in
-  txt) process_text ;;
-  pdf) process_pdf ;;
-  md) process_markdown ;;
-  *) die 1 'Unknown type' ;;
+  txt)  process_text ;;
+  pdf)  process_pdf ;;
+  md)   process_markdown ;;
+  *)    die 1 'Unknown type' ;;
 esac
 
 # ✗ Wrong - missing default case
 case "$action" in
   start) start_service ;;
-  stop) stop_service ;;
+  stop)  stop_service ;;
 esac
 # What if $action is 'restart'? Silent failure!
 
 # ✓ Correct - always include default case
 case "$action" in
-  start) start_service ;;
-  stop) stop_service ;;
+  start)   start_service ;;
+  stop)    stop_service ;;
   restart) restart_service ;;
-  *) die 22 "Invalid action ${action@Q}" ;;
+  *)       die 22 "Invalid action ${action@Q}" ;;
 esac
 
 # ✗ Wrong - inconsistent format mixing
@@ -852,14 +864,14 @@ case "$opt" in
   -o) shift
       OUTPUT=$1
       ;;                 # Inconsistent - mixing compact and expanded
-  -h) usage; exit 0 ;;
+  -h) show_help; exit 0 ;;
 esac
 
 # ✓ Correct - consistent compact format
 case "$opt" in
   -v) VERBOSE=1 ;;
-  -o) shift; OUTPUT=$1 ;;
-  -h) usage; exit 0 ;;
+  -o) shift; OUTPUT=${1:-} ;;
+  -h) show_help; exit 0 ;;
 esac
 
 # ✗ Wrong - poor column alignment
@@ -867,7 +879,7 @@ case $1 in
   -v|--verbose) VERBOSE+=1 ;;
   -n|--dry-run) DRY_RUN=1 ;;
   -f|--force) FORCE=1 ;;        # Alignment is inconsistent
-  -h|--help) usage; exit 0 ;;
+  -h|--help) show_help; exit 0 ;;
 esac
 
 # ✓ Correct - consistent column alignment
@@ -875,7 +887,7 @@ case $1 in
   -v|--verbose) VERBOSE+=1 ;;
   -n|--dry-run) DRY_RUN=1 ;;
   -f|--force)   FORCE=1 ;;
-  -h|--help)    usage; exit 0 ;;
+  -h|--help)    show_help; exit 0 ;;
 esac
 
 # ✗ Wrong - not using ;; terminator
@@ -887,7 +899,7 @@ esac
 # ✓ Correct - always use ;; terminator
 case "$value" in
   start) start_service ;;
-  stop) stop_service ;;
+  stop)  stop_service ;;
 esac
 
 # ✗ Wrong - fall-through patterns (not supported in Bash)

@@ -147,5 +147,3 @@ info "Found ${count} files"
 | Array access | `"${array[i]}"` | `"${args[@]}"` |
 
 **Key Principle:** Use `"$var"` by default. Only add braces when required for correct parsing.
-
-#fin

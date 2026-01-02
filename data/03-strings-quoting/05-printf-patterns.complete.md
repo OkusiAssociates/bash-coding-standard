@@ -1,6 +1,6 @@
 ### printf Patterns
 
-**Rule: BCS0305** (From BCS0409)
+**Rule: BCS0305**
 
 Quoting rules for printf and echo.
 
@@ -53,5 +53,3 @@ echo $'Line1\nLine2'
 ---
 
 **Key principle:** Single quotes for format strings, double quotes for variable arguments.
-
-#fin

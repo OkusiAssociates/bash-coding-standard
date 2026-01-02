@@ -118,7 +118,7 @@ validate_file() {
 
   [[ -f "$file" ]] || return 2  # Not found
   [[ -r "$file" ]] || return 5  # Permission denied
-  [[ -s "$file" ]] || return 22  # Invalid (empty)
+  [[ -s "$file" ]] || return 22 # Invalid (empty)
 
   return 0  # Success
 }
@@ -198,13 +198,13 @@ fi
 if some_command; then
   process_result
 else
-  die 1 'some_command failed'
+  die $? 'some_command failed'
 fi
 
 # Or check return code
 some_command
 if (($?)); then
-  die 1 'some_command failed'
+  die $? 'some_command failed'
 fi
 ```
 
@@ -258,12 +258,12 @@ create_backup() {
 
   # Check destination writable
   if [[ ! -w "${backup_file%/*}" ]]; then
-    error "Cannot write to directory: ${backup_file%/*}"
+    error "Cannot write to directory '${backup_file%/*}'"
     return 5
   fi
 
   # Create backup with error handling
-  temp_file="${backup_file}.tmp"
+  temp_file="$backup_file".tmp
 
   # Create tar archive
   if ! tar -czf "$temp_file" -C "${source_dir%/*}" "${source_dir##*/}"; then
@@ -293,7 +293,7 @@ create_backup() {
     return 0
   fi
 
-  info "Backup created successfully: $backup_file"
+  info "Backup created successfully ${backup_file@Q}"
   return 0
 }
 

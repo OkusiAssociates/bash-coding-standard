@@ -20,5 +20,3 @@ This rule exists only for testing purposes and should not be included in product
 **Exceptions:**
 
 None - test purposes only.
-
-#fin

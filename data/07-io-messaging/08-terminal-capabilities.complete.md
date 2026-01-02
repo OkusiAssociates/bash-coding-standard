@@ -19,6 +19,7 @@ Terminal capability detection:
 #### Terminal Detection
 
 ```bash
+declare -i USE_COLORS
 # Check if stdout is a terminal
 if [[ -t 1 ]]; then
   # Terminal - can use colors, cursor control
@@ -67,7 +68,7 @@ has_capability() {
 # Use with fallback
 if has_capability colors; then
   num_colors=$(tput colors)
-  ((num_colors >= 256)) && USE_256_COLORS=1
+  ((num_colors >= 256)) && USE_256_COLORS=1 ||:
 fi
 
 # Check for Unicode support
@@ -126,6 +127,7 @@ declare -r BLINK="${ESC}[5m"   REVERSE="${ESC}[7m"
 
 # Reset
 declare -r NC="${ESC}[0m"
+declare -n RESET=NC
 
 # Cursor
 declare -r HIDE_CURSOR="${ESC}[?25l"

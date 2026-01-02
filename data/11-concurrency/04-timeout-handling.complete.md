@@ -1,6 +1,6 @@
 ### Timeout Handling
 
-**Rule: BCS1104** (New)
+**Rule: BCS1104**
 
 Managing command timeouts and handling timeout conditions gracefully.
 

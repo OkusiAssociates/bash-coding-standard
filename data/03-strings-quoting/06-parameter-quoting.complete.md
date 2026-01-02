@@ -1,6 +1,6 @@
 ### Parameter Quoting with @Q
 
-**Rule: BCS0306** (From BCS0415)
+**Rule: BCS0306**
 
 Using `${parameter@Q}` for safe display of user input.
 
@@ -81,5 +81,3 @@ run_command() {
 ---
 
 **Key principle:** Use `${parameter@Q}` when displaying user input in error messages to prevent injection.
-
-#fin

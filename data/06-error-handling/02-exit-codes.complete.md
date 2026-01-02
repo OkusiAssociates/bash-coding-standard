@@ -44,11 +44,11 @@ die 22 "Invalid option ${1@Q}"  # Bad argument (EINVAL)
 **Best practices:**
 ```bash
 # Define exit codes as constants for readability
-readonly -i SUCCESS=0
-readonly -i ERR_GENERAL=1
-readonly -i ERR_USAGE=2
-readonly -i ERR_CONFIG=3
-readonly -i ERR_NETWORK=4
+declare -i SUCCESS=0
+declare -i ERR_GENERAL=1
+declare -i ERR_USAGE=2
+declare -i ERR_CONFIG=3
+declare -i ERR_NETWORK=4
 
 die "$ERR_CONFIG" 'Failed to load configuration file'
 ```

@@ -254,7 +254,7 @@ parse_config_correct() {
 
   while IFS='=' read -r key value; do
     # Skip comments and empty lines
-    [[ "$key" =~ ^[[:space:]]*# ]] && continue
+    [[ "$key" =~ ^[[:space:]]*# ]] && continue ||:
     [[ -n "$key" ]] || continue
 
     config[$key]="$value"
@@ -337,8 +337,8 @@ analyze_log() {
   echo "  Warnings: $warn_count"
 
   if ((error_count > 0)); then
-    echo ""
-    echo "Error lines:"
+    echo
+    echo 'Error lines:'
     printf '  %s\n' "${error_lines[@]}"
   fi
 }
@@ -527,9 +527,9 @@ test_pipe_subshell() {
   done
 
   if ((count == 0)); then
-    echo "FAIL: Pipe created subshell, count not updated"
+    echo 'FAIL: Pipe created subshell, count not updated'
   else
-    echo "PASS: Count was updated"
+    echo 'PASS: Count was updated'
   fi
 }
 

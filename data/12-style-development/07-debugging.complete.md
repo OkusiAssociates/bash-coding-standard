@@ -4,7 +4,7 @@ Enable debugging features for development and troubleshooting.
 
 ```bash
 # Debug mode implementation
-declare -i DEBUG="${DEBUG:-0}"
+declare -i DEBUG=${DEBUG:-0}
 
 # Enable trace mode when DEBUG is set
 ((DEBUG)) && set -x ||:

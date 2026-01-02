@@ -37,7 +37,7 @@ find_data_file() {
     "$script_dir"/"$filename"  # Same directory (development)
     /usr/local/share/myapp/"$filename" # Local install
     /usr/share/myapp/"$filename" # System install
-    "${XDG_DATA_HOME:-$HOME/.local/share}"/myapp/"$filename"  # User install
+    "${XDG_DATA_HOME:-"$HOME"/.local/share}"/myapp/"$filename"  # User install
   )
 
   local -- path
@@ -90,7 +90,7 @@ install_files() {
 
   # Install configuration (preserve existing)
   if [[ ! -f "$ETC_DIR"/myapp.conf ]]; then
-    install -m 644 "$SCRIPT_DIR/myapp.conf.example" "$ETC_DIR/myapp.conf"
+    install -m 644 "$SCRIPT_DIR"/myapp.conf.example "$ETC_DIR"/myapp.conf
   fi
 
   # Install man page
@@ -145,16 +145,16 @@ find_data_file() {
   local -- filename=$1
   local -a search_paths=(
     # Development: same directory as script
-    "$SCRIPT_DIR/$filename"
+    "$SCRIPT_DIR"/"$filename"
 
     # Local install: /usr/local/share
-    "/usr/local/share/myapp/$filename"
+    /usr/local/share/myapp/"$filename"
 
     # System install: /usr/share
-    "/usr/share/myapp/$filename"
+    /usr/share/myapp/"$filename"
 
     # User install: XDG Base Directory
-    "${XDG_DATA_HOME:-$HOME/.local/share}/myapp/$filename"
+    "${XDG_DATA_HOME:-"$HOME"/.local/share}"/myapp/"$filename"
   )
 
   local -- path
@@ -165,7 +165,7 @@ find_data_file() {
     fi
   done
 
-  die 2 "Data file not found: $filename"
+  die 2 "Data file not found ${filename@Q}"
 }
 
 # Find configuration file with XDG support
@@ -173,24 +173,21 @@ find_config_file() {
   local -- filename=$1
   local -a search_paths=(
     # User-specific config (highest priority)
-    "${XDG_CONFIG_HOME:-$HOME/.config}/myapp/$filename"
+    "${XDG_CONFIG_HOME:-"$HOME"/.config}"/myapp/"$filename"
 
     # System-wide local config
-    "/usr/local/etc/myapp/$filename"
+    /usr/local/etc/myapp/"$filename"
 
     # System-wide config
-    "/etc/myapp/$filename"
+    /etc/myapp/"$filename"
 
     # Development/fallback
-    "$SCRIPT_DIR/$filename"
+    "$SCRIPT_DIR"/"$filename"
   )
 
   local -- path
   for path in "${search_paths[@]}"; do
-    if [[ -f "$path" ]]; then
-      echo "$path"
-      return 0
-    fi
+    [[ ! -f "$path" ]] || { echo "$path"; return 0; }
   done
 
   # Return empty if not found (config is optional)
@@ -202,24 +199,21 @@ load_library() {
   local -- lib_name=$1
   local -a search_paths=(
     # Development
-    "$SCRIPT_DIR/lib/$lib_name"
+    "$SCRIPT_DIR"/lib/"$lib_name"
 
     # Local install
-    "/usr/local/lib/myapp/$lib_name"
+    /usr/local/lib/myapp/"$lib_name"
 
     # System install
-    "/usr/lib/myapp/$lib_name"
+    /usr/lib/myapp/"$lib_name"
   )
 
   local -- path
   for path in "${search_paths[@]}"; do
-    if [[ -f "$path" ]]; then
-      source "$path"
-      return 0
-    fi
+    [[ -f "$path" ]] && { source "$path"; return 0; } ||:
   done
 
-  die 2 "Library not found: $lib_name"
+  die 2 "Library not found ${lib_name@Q}"
 }
 
 main() {
@@ -234,17 +228,17 @@ main() {
   # Find config file (optional)
   local -- config
   if config=$(find_config_file myapp.conf); then
-    info "Loading config: $config"
+    info "Loading config ${config@Q}"
     source "$config"
   else
     info 'No config file found, using defaults'
   fi
 
   # Main logic here
+  #...
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -271,8 +265,8 @@ uninstall:
 	rm -f $(MANDIR)/myapp.1
 
 # Usage:
-# make install                  # Installs to /usr/local
-# make PREFIX=/usr install      # Installs to /usr
+# make install                      # Installs to /usr/local
+# make PREFIX=/usr install          # Installs to /usr
 # make PREFIX=$HOME/.local install  # User install
 ```
 
@@ -282,10 +276,10 @@ For user-specific files, follow XDG Base Directory spec:
 
 ```bash
 # XDG environment variables with fallbacks
-declare -- XDG_DATA_HOME=${XDG_DATA_HOME:-$HOME/.local/share}
-declare -- XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-$HOME/.config}
-declare -- XDG_CACHE_HOME=${XDG_CACHE_HOME:-$HOME/.cache}
-declare -- XDG_STATE_HOME=${XDG_STATE_HOME:-$HOME/.local/state}
+declare -- XDG_DATA_HOME=${XDG_DATA_HOME:-"$HOME"/.local/share}
+declare -- XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-"$HOME"/.config}
+declare -- XDG_CACHE_HOME=${XDG_CACHE_HOME:-"$HOME"/.cache}
+declare -- XDG_STATE_HOME=${XDG_STATE_HOME:-"$HOME"/.local/state}
 
 # User-specific paths
 declare -- USER_DATA_DIR="$XDG_DATA_HOME"/myapp
@@ -322,7 +316,10 @@ find_bcs_file() {
   )
   local -- path
   for path in "${search_paths[@]}"; do
-    [[ -f "$path"/BASH-CODING-STANDARD.md ]] && { echo "$path"/BASH-CODING-STANDARD.md; return 0; }
+    if [[ -f "$path"/BASH-CODING-STANDARD.md ]]; then
+      echo "$path"/BASH-CODING-STANDARD.md
+      return 0
+    fi
   done
 
   return 1
@@ -371,7 +368,7 @@ find_data_dir() {
   )
   local -- path
   for path in "${search_paths[@]}"; do
-    [[ -d "$path" ]] && { echo "$path"; return 0; }
+    [[ -d "$path" ]] && { echo "$path"; return 0; } ||:
   done
 
   return 1
@@ -427,8 +424,8 @@ find_resource() {
   for path in "${search_paths[@]}"; do
     local -- resource="$path/$name"
     case "$type" in
-      file) [[ -f "$resource" ]] && { echo "$resource"; return 0; } ;;
-      dir)  [[ -d "$resource" ]] && { echo "$resource"; return 0; } ;;
+      file) [[ -f "$resource" ]] && { echo "$resource"; return 0; } ||: ;;
+      dir)  [[ -d "$resource" ]] && { echo "$resource"; return 0; } ||: ;;
       *)    die 2 "Invalid resource type ${type@Q}" ;;
     esac
   done
@@ -454,15 +451,15 @@ find_bcs_file() {
     "$SCRIPT_DIR"/BASH-CODING-STANDARD.md
 
     # Local install: /usr/local/share
-    '/usr/local/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md'
+    /usr/local/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md
 
     # System install: /usr/share
-    '/usr/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md'
+    /usr/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md
   )
 
   local -- path
   for path in "${search_paths[@]}"; do
-    [[ -f "$path" ]] && { echo "$path"; return 0; }
+    [[ -f "$path" ]] && { echo "$path"; return 0; } ||:
   done
 
   die 2 'BASH-CODING-STANDARD.md not found in any standard location'
@@ -509,22 +506,22 @@ BIN_DIR=/usr/local/bin  # Hardcoded
 
 # ✓ Correct - respect PREFIX environment variable
 PREFIX=${PREFIX:-/usr/local}
-BIN_DIR="$PREFIX"/bin"
+BIN_DIR="$PREFIX"/bin
 
 # ✗ Wrong - mixing executables and data in same directory
 install myapp /opt/myapp/
 install template.txt /opt/myapp/
 
 # ✓ Correct - separate by FHS hierarchy
-install myapp "$PREFIX/bin/"
-install template.txt "$PREFIX/share/myapp/"
+install myapp "$PREFIX"/bin/
+install template.txt "$PREFIX"/share/myapp/
 
 # ✗ Wrong - overwriting user configuration on upgrade
-install myapp.conf "$PREFIX/etc/myapp/myapp.conf"
+install myapp.conf "$PREFIX"/etc/myapp/myapp.conf
 
 # ✓ Correct - preserve existing config
-[[ -f "$PREFIX/etc/myapp/myapp.conf" ]] || \
-  install myapp.conf.example "$PREFIX/etc/myapp/myapp.conf"
+[[ -f "$PREFIX"/etc/myapp/myapp.conf ]] || \
+  install myapp.conf.example "$PREFIX"/etc/myapp/myapp.conf
 ```
 
 **Edge cases:**
@@ -554,7 +551,7 @@ fi
 ```bash
 # Some systems need LD_LIBRARY_PATH for custom locations
 if [[ -d "$PREFIX"/lib/myapp ]]; then
-  export LD_LIBRARY_PATH="$PREFIX/lib/myapp${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+  export LD_LIBRARY_PATH="$PREFIX"/lib/myapp"${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 fi
 ```
 

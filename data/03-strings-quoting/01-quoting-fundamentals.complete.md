@@ -58,12 +58,12 @@ error "Permission denied for '$dir'"
 Simple alphanumeric values (containing only `a-zA-Z0-9_-./`) may be unquoted:
 
 ```bash
-# ✓ Acceptable
+# ✓ Acceptable and Standard
 STATUS=success
 VERSION=1.0.0
 [[ "$level" == INFO ]]
 
-# ✓ Better - quote for consistency (recommended)
+# ✓ Acceptable
 STATUS='success'
 VERSION='1.0.0'
 [[ "$level" == 'INFO' ]]
@@ -87,6 +87,10 @@ info "Checking prerequisites..."
 # ✓ Correct
 info 'Checking prerequisites...'
 [[ "$status" == 'active' ]]
+
+# ✓ Correct
+info 'Checking prerequisites...'
+[[ "$status" == active ]]
 ```
 
 ```bash
@@ -113,7 +117,7 @@ cat "$dir"/"$file"
 [[ -f "$CONFIG_DIR"/hosts.conf ]]
 install -m 755 "$TEMP_DIR"/"$file" "$INSTALL_DIR"/"$file"
 
-# ACCEPTABLE, BUT NOT RECOMMENDED - variable and literal combined
+# ACCEPTABLE - variable and literal combined
 "$PREFIX/bin"
 "$SCRIPT_DIR/data/$filename"
 cat "$dir/$file"
@@ -141,5 +145,3 @@ cat "$dir/$file"
 | Path with separator | Separate | `"$var"/path` |
 
 **Key principle:** Use single quotes as the default. Switch to double quotes only when expansion is needed.
-
-#fin

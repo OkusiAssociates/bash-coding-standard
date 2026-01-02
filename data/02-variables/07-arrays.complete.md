@@ -1,6 +1,6 @@
 ### Arrays
 
-**Rule: BCS0207** (Merged from BCS0501 + BCS0502)
+**Rule: BCS0207**
 
 Array declaration, usage, and safe list handling.
 
@@ -42,6 +42,7 @@ args+=("$arg1" "$arg2" "$arg3")
 
 # Append another array
 all_files+=("${config_files[@]}")
+all_files+=("$@")
 ```
 
 #### Iteration
@@ -109,11 +110,11 @@ last=${array[-1]}           # Bash 4.3+
 
 ```bash
 # Build command with variable arguments
-local -a cmd=(myapp '--config' "$config_file")
+local -a cmd=(myapp --config "$config_file")
 
 # Add conditional arguments
-((verbose)) && cmd+=('--verbose') ||:
-[[ -z "$output" ]] || cmd+=('--output' "$output")
+((verbose)) && cmd+=(--verbose) ||:
+[[ -z "$output" ]] || cmd+=(--output "$output")
 
 # Execute safely
 "${cmd[@]}"
@@ -181,5 +182,3 @@ for item in "${array[@]}"; do
 | Indices | `"${!arr[@]}"` | All array indices |
 
 **Key principle:** Always quote array expansions: `"${array[@]}"` to preserve spacing and prevent word splitting.
-
-#fin

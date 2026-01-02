@@ -141,7 +141,8 @@ fi
 
 ```bash
 # Make command always succeed
-command || true
+command1 || true
+command2 ||:
 
 # Use when: Failure is acceptable and you want to continue
 rm -f /tmp/optional_file || true
@@ -277,7 +278,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
