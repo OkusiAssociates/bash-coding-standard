@@ -407,8 +407,6 @@ uninstall:
 	rm -f $(BINDIR)/md
 	rm -f $(BINDIR)/mdheaders
 	rm -f $(BINDIR)/libmdheaders.bash
-	rm -f $(BINDIR)/whichx
-	rm -f $(BINDIR)/which
 	rm -f $(BINDIR)/dir-sizes
 	rm -f $(BINDIR)/dux
 	rm -f $(BINDIR)/printline
