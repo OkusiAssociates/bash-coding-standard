@@ -1,18 +1,13 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2207  # COMPREPLY array pattern is standard in bash completion
-# shellcheck disable=SC2034  # Metadata variables required for BCS compliance
 # Bash completion for bcs (Bash Coding Standard) command
 # Provides intelligent completion for all bcs subcommands, options, and arguments
 
-set -euo pipefail
-shopt -s inherit_errexit shift_verbose extglob nullglob
-
-# Script metadata
-VERSION='1.0.2'
-SCRIPT_PATH=$(realpath -- "$0")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
+# NOTE: Bash completion scripts must NOT use set -euo pipefail as it causes
+# the parent shell to exit on any completion error. They also must not use
+# script metadata variables (VERSION, SCRIPT_PATH, etc.) as completions are
+# sourced into the parent shell, not executed.
+shopt -s extglob nullglob
 
 # Fallback for _init_completion if bash-completion is not available
 if ! declare -F _init_completion &>/dev/null; then
