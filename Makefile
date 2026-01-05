@@ -33,6 +33,10 @@ help:
 	@echo "  sudo make uninstall                # Uninstall"
 	@echo "  make check-deps                    # Check optional dependencies"
 	@echo "  sudo make install-deps             # Install missing dependencies"
+	@echo ""
+	@echo "Non-interactive mode (for remote/CI installations):"
+	@echo "  NONINTERACTIVE=1 sudo make install # Auto-accept all prompts"
+	@echo "  (Also auto-detected when stdin is not a TTY)"
 
 check-deps:
 	@echo "Checking optional dependencies..."
@@ -153,7 +157,12 @@ install:
 	if [ -n "$$MISSING" ]; then \
 		echo "Missing dependencies:$$MISSING"; \
 		echo ""; \
-		read -p "Install missing dependencies? [y/N] " REPLY; \
+		if [ "$$NONINTERACTIVE" = "1" ] || [ ! -t 0 ]; then \
+			echo "◉ Non-interactive mode: auto-installing dependencies..."; \
+			REPLY=y; \
+		else \
+			read -p "Install missing dependencies? [y/N] " REPLY; \
+		fi; \
 		case "$$REPLY" in \
 			[Yy]*) \
 				echo "Installing dependencies..."; \
@@ -287,7 +296,12 @@ install:
 		echo "▲ Warning: The following files are symlinks and will be removed:"; \
 		printf "$$SYMLINKS" | sed 's/^/  /'; \
 		echo ""; \
-		read -p "Remove these symlinks and continue? [y/N] " REPLY; \
+		if [ "$$NONINTERACTIVE" = "1" ] || [ ! -t 0 ]; then \
+			echo "◉ Non-interactive mode: auto-removing symlinks..."; \
+			REPLY=y; \
+		else \
+			read -p "Remove these symlinks and continue? [y/N] " REPLY; \
+		fi; \
 		case "$$REPLY" in \
 			[Yy]*) \
 				echo "Removing symlinks..."; \
