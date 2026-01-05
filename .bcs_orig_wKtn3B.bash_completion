@@ -1,0 +1,363 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC2207  # COMPREPLY array pattern is standard in bash completion
+# shellcheck disable=SC2034  # Metadata variables required for BCS compliance
+# Bash completion for bcs (Bash Coding Standard) command
+# Provides intelligent completion for all bcs subcommands, options, and arguments
+
+# NOTE: Bash completion scripts must NOT use set -euo pipefail as it causes
+# the parent shell to exit on any completion error
+shopt -s extglob nullglob
+
+# Script metadata
+VERSION='1.0.2'
+SCRIPT_PATH=$(realpath -- "$0")
+SCRIPT_DIR=${SCRIPT_PATH%/*}
+SCRIPT_NAME=${SCRIPT_PATH##*/}
+readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
+
+# Fallback for _init_completion if bash-completion is not available
+if ! declare -F _init_completion &>/dev/null; then
+  _init_completion() {
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    words=("${COMP_WORDS[@]}")
+    cword=$COMP_CWORD
+    return 0
+  }
+fi
+
+# Helper function: Get BCS codes dynamically for decode completion
+_bcs_get_codes() {
+  local codes
+  if command -v bcs &>/dev/null; then
+    codes=$(bcs codes 2>/dev/null | awk -F: '{print $1}' | tr '\n' ' ')
+    echo "$codes"
+  fi
+}
+
+# Helper function: Check if option is already present
+_bcs_has_option() {
+  local opt=$1
+  local i
+  for ((i=1; i < cword; i++)); do
+    if [[ "${words[i]}" == "$opt" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+# Subcommand: display
+_bcs_display() {
+  local opts="-h --help -V --version -c --cat -s --squeeze -b --bash -a --md2ansi -j --json"
+  COMPREPLY=($(compgen -W "$opts" -- "$cur"))
+}
+
+# Subcommand: about
+_bcs_about() {
+  local opts="-h --help -s --stats -l --links -v --verbose -q --quote --json"
+  COMPREPLY=($(compgen -W "$opts" -- "$cur"))
+}
+
+# Subcommand: template
+_bcs_template() {
+  case "$prev" in
+    -t|--type)
+      local types="minimal basic complete library"
+      COMPREPLY=($(compgen -W "$types" -- "$cur"))
+      return 0
+      ;;
+    -n|--name|-d|--description|-v|--version)
+      # No completion for text values
+      return 0
+      ;;
+    -o|--output)
+      # File path completion
+      _filedir
+      return 0
+      ;;
+  esac
+
+  local opts="-h --help -t --type -n --name -d --description -v --version -o --output -x --executable -f --force"
+  COMPREPLY=($(compgen -W "$opts" -- "$cur"))
+}
+
+# Subcommand: check
+_bcs_check() {
+  case "$prev" in
+    -f|--format)
+      local formats="text json markdown bcs-json"
+      COMPREPLY=($(compgen -W "$formats" -- "$cur"))
+      return 0
+      ;;
+    --tier)
+      local tiers="abstract complete summary rulet"
+      COMPREPLY=($(compgen -W "$tiers" -- "$cur"))
+      return 0
+      ;;
+    --severity)
+      local severities="all violations warnings"
+      COMPREPLY=($(compgen -W "$severities" -- "$cur"))
+      return 0
+      ;;
+    --add-dir)
+      # Directory completion
+      _filedir -d
+      return 0
+      ;;
+    --codes|--sections|--claude-cmd|--append-prompt|--allowed-tools)
+      # No completion for text/list values
+      return 0
+      ;;
+  esac
+
+  # If no option, complete with file path for SCRIPT_FILE
+  if [[ "$cur" != -* ]]; then
+    _filedir
+    return 0
+  fi
+
+  local opts="-h --help -s --strict -f --format -q --quiet --codes --sections --tier --claude-cmd --append-prompt --allowed-tools --add-dir --skip-permissions --severity"
+  COMPREPLY=($(compgen -W "$opts" -- "$cur"))
+}
+
+# Subcommand: compress
+_bcs_compress() {
+  case "$prev" in
+    --tier)
+      local tiers="summary abstract"
+      COMPREPLY=($(compgen -W "$tiers" -- "$cur"))
+      return 0
+      ;;
+    --context-level)
+      local levels="none toc abstract summary complete"
+      COMPREPLY=($(compgen -W "$levels" -- "$cur"))
+      return 0
+      ;;
+    --claude-cmd|--summary-limit|--abstract-limit)
+      # No completion for text/numeric values
+      return 0
+      ;;
+    --file)
+      # Complete .complete.md files
+      COMPREPLY=($(compgen -f -X '!*.complete.md' -- "$cur"))
+      return 0
+      ;;
+  esac
+
+  local opts="-h --help --report-only --regenerate --file --tier --force --claude-cmd --summary-limit --abstract-limit --context-level -n --dry-run -q --quiet -v --verbose"
+  COMPREPLY=($(compgen -W "$opts" -- "$cur"))
+}
+
+# Subcommand: codes
+_bcs_codes() {
+  local opts="-h --help"
+  COMPREPLY=($(compgen -W "$opts" -- "$cur"))
+}
+
+# Subcommand: generate
+_bcs_generate() {
+  case "$prev" in
+    -t|--type)
+      local types="complete abstract summary rulet abstract-complete"
+      COMPREPLY=($(compgen -W "$types" -- "$cur"))
+      return 0
+      ;;
+    -o|--output)
+      # File path completion
+      _filedir
+      return 0
+      ;;
+    -x|--exclude)
+      # No completion for code lists
+      return 0
+      ;;
+  esac
+
+  local opts="-h --help -t --type -o --output -x --exclude --canonical -f --force"
+  COMPREPLY=($(compgen -W "$opts" -- "$cur"))
+}
+
+# Subcommand: generate-rulets
+_bcs_generate_rulets() {
+  case "$prev" in
+    --agent-cmd)
+      # File path completion
+      _filedir
+      return 0
+      ;;
+  esac
+
+  # If no option, complete with category numbers/names
+  if [[ "$cur" != -* ]]; then
+    local categories="01 02 03 04 05 06 07 08 09 10 11 12"
+    local cat_names="script-structure variables strings-quoting functions control-flow error-handling io-messaging command-line file-operations security concurrency style-development"
+    COMPREPLY=($(compgen -W "$categories $cat_names" -- "$cur"))
+    return 0
+  fi
+
+  local opts="-h --help -a --all -f --force --agent-cmd"
+  COMPREPLY=($(compgen -W "$opts" -- "$cur"))
+}
+
+# Subcommand: search
+_bcs_search() {
+  case "$prev" in
+    -C)
+      # No completion for numeric values
+      return 0
+      ;;
+  esac
+
+  # If no option, don't complete (waiting for search pattern)
+  if [[ "$cur" != -* ]]; then
+    return 0
+  fi
+
+  local opts="-h --help -i --ignore-case -C"
+  COMPREPLY=($(compgen -W "$opts" -- "$cur"))
+}
+
+# Subcommand: decode
+_bcs_decode() {
+  # If no option, complete with BCS codes
+  if [[ "$cur" != -* ]]; then
+    local codes
+    codes=$(_bcs_get_codes)
+    if [[ -n "$codes" ]]; then
+      COMPREPLY=($(compgen -W "$codes" -- "$cur"))
+      return 0
+    fi
+  fi
+
+  local opts="-h --help -a --abstract -s --summary -c --complete -r --rulet -p --print --all --relative --basename --exists"
+  COMPREPLY=($(compgen -W "$opts" -- "$cur"))
+}
+
+# Subcommand: sections
+_bcs_sections() {
+  local opts="-h --help"
+  COMPREPLY=($(compgen -W "$opts" -- "$cur"))
+}
+
+# Subcommand: default
+_bcs_default() {
+  case "$prev" in
+    default)
+      # If directly after 'default', complete with tier names
+      local tiers="complete summary abstract rulet"
+      COMPREPLY=($(compgen -W "$tiers" -- "$cur"))
+      return 0
+      ;;
+  esac
+
+  # If no option, complete with tiers
+  if [[ "$cur" != -* ]]; then
+    local tiers="complete summary abstract rulet"
+    COMPREPLY=($(compgen -W "$tiers" -- "$cur"))
+    return 0
+  fi
+
+  local opts="-h --help -l --list"
+  COMPREPLY=($(compgen -W "$opts" -- "$cur"))
+}
+
+# Subcommand: help
+_bcs_help() {
+  # Complete with subcommand names
+  if [[ "$cur" != -* ]]; then
+    local subcommands="display about template check compress codes generate generate-rulets search decode sections default help"
+    COMPREPLY=($(compgen -W "$subcommands" -- "$cur"))
+    return 0
+  fi
+
+  local opts="-h --help"
+  COMPREPLY=($(compgen -W "$opts" -- "$cur"))
+}
+
+# Main completion function
+_bcs_completion() {
+  local cur prev words cword
+  _init_completion || return
+
+  # Handle global -V/--version option
+  if [[ "$cur" == "-V" ]] || [[ "$cur" == "--version" ]]; then
+    COMPREPLY=($(compgen -W "-V --version" -- "$cur"))
+    return 0
+  fi
+
+  # Find subcommand position
+  local subcommand=""
+  local subcommand_index=-1
+  local i
+
+  for ((i=1; i < cword; i++)); do
+    local word="${words[i]}"
+    # Skip options (words starting with -)
+    if [[ "$word" != -* ]]; then
+      subcommand="$word"
+      subcommand_index=$i
+      break
+    fi
+  done
+
+  # If no subcommand found or cursor is before subcommand position, complete subcommands
+  if [[ -z "$subcommand" ]] || [[ "$subcommand_index" -eq "$cword" ]]; then
+    local subcommands="display about template check compress codes generate generate-rulets search decode sections default help"
+    COMPREPLY=($(compgen -W "$subcommands" -- "$cur"))
+    return 0
+  fi
+
+  # Route to subcommand-specific completion function
+  case "$subcommand" in
+    display)
+      _bcs_display
+      ;;
+    about)
+      _bcs_about
+      ;;
+    template)
+      _bcs_template
+      ;;
+    check)
+      _bcs_check
+      ;;
+    compress)
+      _bcs_compress
+      ;;
+    codes)
+      _bcs_codes
+      ;;
+    generate)
+      _bcs_generate
+      ;;
+    generate-rulets)
+      _bcs_generate_rulets
+      ;;
+    search)
+      _bcs_search
+      ;;
+    decode)
+      _bcs_decode
+      ;;
+    sections)
+      _bcs_sections
+      ;;
+    default)
+      _bcs_default
+      ;;
+    help)
+      _bcs_help
+      ;;
+    *)
+      # Unknown subcommand, no completion
+      return 0
+      ;;
+  esac
+}
+
+# Register completion for both bcs and bash-coding-standard commands
+complete -F _bcs_completion bcs
+complete -F _bcs_completion bash-coding-standard
+
+#fin
