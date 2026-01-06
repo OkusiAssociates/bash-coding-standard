@@ -835,34 +835,43 @@ compress_rule_to_tier() {
     local -i use_tee=0
     [[ -t 2 ]] && use_tee=1 ||:
 
+    # Run Claude from temp dir to avoid CLAUDE.md contamination
     if [[ -n "$context_file_persistent" ]]; then
       # Tell Claude to read context file first, then process the target file
       if ((use_tee)); then
-        "$claude_cmd" --print --dangerously-skip-permissions \
-           --allowedTools "Read" "Write" \
-           --system-prompt "$system_prompt" \
-           -- "Read context: $context_file_persistent | Read source: $complete_file | Write compressed to: $temp_file" \
-           2>&1 | tee /dev/stderr || claude_exit=$?
+        (
+          cd "$(mktemp -d)" || exit 1
+          "$claude_cmd" --print --dangerously-skip-permissions \
+             --allowedTools "Read" "Write" \
+             --system-prompt "$system_prompt" \
+             -- "Read context: $context_file_persistent | Read source: $complete_file | Write compressed to: $temp_file"
+        ) 2>&1 | tee /dev/stderr || claude_exit=$?
       else
-        "$claude_cmd" --print --dangerously-skip-permissions \
-           --allowedTools "Read" "Write" \
-           --system-prompt "$system_prompt" \
-           -- "Read context: $context_file_persistent | Read source: $complete_file | Write compressed to: $temp_file" \
-           2>&1 || claude_exit=$?
+        (
+          cd "$(mktemp -d)" || exit 1
+          "$claude_cmd" --print --dangerously-skip-permissions \
+             --allowedTools "Read" "Write" \
+             --system-prompt "$system_prompt" \
+             -- "Read context: $context_file_persistent | Read source: $complete_file | Write compressed to: $temp_file"
+        ) 2>&1 || claude_exit=$?
       fi
     else
       if ((use_tee)); then
-        "$claude_cmd" --print --dangerously-skip-permissions \
-           --allowedTools "Read" "Write" \
-           --system-prompt "$system_prompt" \
-           -- "Read file: $complete_file | Write compressed output to: $temp_file" \
-           2>&1 | tee /dev/stderr || claude_exit=$?
+        (
+          cd "$(mktemp -d)" || exit 1
+          "$claude_cmd" --print --dangerously-skip-permissions \
+             --allowedTools "Read" "Write" \
+             --system-prompt "$system_prompt" \
+             -- "Read file: $complete_file | Write compressed output to: $temp_file"
+        ) 2>&1 | tee /dev/stderr || claude_exit=$?
       else
-        "$claude_cmd" --print --dangerously-skip-permissions \
-           --allowedTools "Read" "Write" \
-           --system-prompt "$system_prompt" \
-           -- "Read file: $complete_file | Write compressed output to: $temp_file" \
-           2>&1 || claude_exit=$?
+        (
+          cd "$(mktemp -d)" || exit 1
+          "$claude_cmd" --print --dangerously-skip-permissions \
+             --allowedTools "Read" "Write" \
+             --system-prompt "$system_prompt" \
+             -- "Read file: $complete_file | Write compressed output to: $temp_file"
+        ) 2>&1 || claude_exit=$?
       fi
     fi
 
@@ -4107,6 +4116,9 @@ EOF
 
   [[ -f "$script_file" ]] || { error "Script file not found ${script_file@Q}'"; return 1; }
 
+  # Convert to absolute path for isolation subshell
+  script_file=$(realpath -- "$script_file")
+
   [[ -r "$script_file" ]] || { error "Script file not readable ${script_file@Q}"; return 1; }
 
   # Check Claude availability
@@ -4184,8 +4196,11 @@ EOF
   local -- validation_output
   local -i claude_exit=0
 
-  # Pipe script to Claude
-  validation_output=$("${claude_args[@]}" < "$script_file" 2>&1) || claude_exit=$?
+  # Pipe script to Claude (run from temp dir to avoid CLAUDE.md contamination)
+  validation_output=$(
+    cd "$(mktemp -d)" || exit 1
+    "${claude_args[@]}" < "$script_file" 2>&1
+  ) || claude_exit=$?
 
   if ((claude_exit)); then
     error "Claude validation failed (exit code $claude_exit)"
