@@ -1,41 +1,26 @@
 # Command-Line Arguments - Rulets
 ## Standard Parsing Pattern
-- [BCS0801] Use `while (($#)); do case $1 in ... esac; shift; done` as the canonical argument parsing structure; `(($#))` is more efficient than `while [[ $# -gt 0 ]]`.
-- [BCS0801] Support both short and long options for every option: `-V|--version`, `-h|--help`, `-v|--verbose`.
-- [BCS0801] For options with arguments, always call `noarg "$@"` before `shift` to validate the argument exists: `-o|--output) noarg "$@"; shift; output_file=$1 ;;`
-- [BCS0801] For options that exit immediately (`-V`, `-h`), use `exit 0` (or `return 0` inside a function) without needing an additional shift.
-- [BCS0801] Use `VERBOSE+=1` for stackable verbose flags allowing `-vvv` to set `VERBOSE=3`; requires prior `declare -i VERBOSE=0`.
-- [BCS0801] Always include a mandatory `shift` at the end of the loop after `esac` to prevent infinite loops.
-- [BCS0801] Catch invalid options with `-*) die 22 "Invalid option ${1@Q}" ;;` using exit code 22 (EINVAL).
-- [BCS0801] Collect positional arguments in a default case: `*) files+=("$1") ;;`
-## The noarg Helper
-- [BCS0801] Define `noarg() { (($# > 1)) || die 2 "Option ${1@Q} requires an argument"; }` to validate option arguments exist.
-- [BCS0801] Always call `noarg "$@"` BEFORE `shift` since it needs to inspect `$2` for the argument value.
+- [BCS0801] Use `while (($#)); do case $1 in ... esac; shift; done` for argument parsing; prefer arithmetic test `(($#))` over `[[ $# -gt 0 ]]` for efficiency.
+- [BCS0801] Support both short and long options with pipe patterns: `-v|--verbose) VERBOSE+=1 ;;`
+- [BCS0801] For options requiring arguments, call `noarg "$@"` before shifting, then capture: `noarg "$@"; shift; OUTPUT=$1`
+- [BCS0801] Use `exit 0` for `--help` and `--version` handlers (or `return 0` if inside a function).
+- [BCS0801] Catch invalid options with: `-*) die 22 "Invalid option ${1@Q}" ;;`
+- [BCS0801] Collect positional arguments in arrays: `*) FILES+=("$1") ;;`
+- [BCS0801] The mandatory `shift` at loop end (`esac; shift; done`) is critical—omitting it causes infinite loops.
+## Short Option Disaggregation
+- [BCS0801,BCS0805] Always include short option bundling support in parsing loops to allow `-vvn` instead of `-v -v -n`: `-[vVhn]*) set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;`
+- [BCS0805] List only valid short options in the disaggregation pattern: `-[ovnVh]*` documents valid options and prevents incorrect expansion of unknown options.
+- [BCS0805] For performance-critical scripts, use pure bash disaggregation (68% faster): `local -- opt=${1:1}; local -a new_args=(); while ((${#opt})); do new_args+=("-${opt:0:1}"); opt=${opt:1}; done; set -- '' "${new_args[@]}" "${@:2}"`
+- [BCS0805] Options requiring arguments cannot be bundled mid-string; place them at end or use separately: `-vno output.txt` works, but `-von file` captures `n` as argument to `-o`.
 ## Version Output Format
-- [BCS0802] Use format `<script_name> <version_number>` for version output: `echo "$SCRIPT_NAME $VERSION"` → "myscript 1.2.3".
-- [BCS0802] Never include the words "version", "vs", or "v" between script name and version number.
-## Argument Validation
-- [BCS0803] Use `noarg()` for basic existence checking: `noarg() { (($# > 1)) && [[ ${2:0:1} != '-' ]] || die 2 "Missing argument for option ${1@Q}"; }`
-- [BCS0803] Use `arg2()` for enhanced validation that prevents options being captured as values: `arg2() { ((${#@}-1<1)) || [[ "${2:0:1}" == '-' ]] && die 2 "${1@Q} requires argument" ||:; }`
+- [BCS0802] Version output must be `scriptname X.Y.Z` without the word "version": `echo "$SCRIPT_NAME $VERSION"; exit 0`
+- [BCS0802] Never include "version", "vs", or "v" between script name and version number.
+## Argument Validation Helpers
+- [BCS0803] Use `noarg()` for basic existence check: `noarg() { (($# > 1)) && [[ ${2:0:1} != '-' ]] || die 2 "Missing argument for option ${1@Q}"; }`
+- [BCS0803] Use `arg2()` for enhanced validation with safe quoting: `arg2() { ((${#@}-1<1)) || [[ "${2:0:1}" == '-' ]] && die 2 "${1@Q} requires argument" ||:; }`
 - [BCS0803] Use `arg_num()` for numeric argument validation: `arg_num() { ((${#@}-1<1)) || [[ ! "$2" =~ ^[0-9]+$ ]] && die 2 "${1@Q} requires a numeric argument" ||:; }`
-- [BCS0803] Never shift before validating—always call the validator with `"$@"` first, then shift, then capture the value.
-- [BCS0803] Use `${1@Q}` shell quoting in error messages to safely display option names with special characters.
+- [BCS0803] Always call validators BEFORE `shift`—they must inspect `$2` to work correctly.
+- [BCS0803] Validators prevent silent failures like `--output --verbose` where `--verbose` becomes the filename.
 ## Parsing Location
-- [BCS0804] Place argument parsing inside the `main()` function for better testability, cleaner scoping, and encapsulation.
-- [BCS0804] For simple scripts (<200 lines) without a `main()` function, top-level parsing is acceptable.
-- [BCS0804] Make parsed variables readonly after parsing is complete: `readonly -- VERBOSE DRY_RUN output_file`
-## Short Option Bundling (Disaggregation)
-- [BCS0805] Always include short option bundling support in argument parsing loops to allow `-vvn` instead of `-v -v -n`.
-- [BCS0805] List all valid short options explicitly in the bundling pattern: `-[ovnVh]*)` to prevent disaggregation of unknown options.
-- [BCS0805] Place the bundling case before the `-*)` invalid option case so unknown bundled options fall through correctly.
-- [BCS0805] Grep method (one-liner): `set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"` with `#shellcheck disable=SC2046`.
-- [BCS0805] Fold method (alternative): `set -- '' $(printf -- '-%c ' $(fold -w1 <<<"${1:1}")) "${@:2}"` with `#shellcheck disable=SC2046`.
-- [BCS0805] Pure bash method (recommended, 68% faster): use a while loop with `opt=${1:1}` and `new_args+=("-${opt:0:1}")` to build the expanded argument array.
-- [BCS0805] Options requiring arguments cannot be bundled in the middle; document that they should be at the end of a bundle or used separately.
-- [BCS0805] For high-performance scripts, prefer the pure bash method to avoid external command overhead.
-## Anti-Patterns
-- [BCS0801] Never use `while [[ $# -gt 0 ]]`; use `while (($#))` instead.
-- [BCS0801] Never use if/elif chains for option parsing; use case statements for readability.
-- [BCS0801] Never forget the `shift` at the end of the parsing loop—this causes infinite loops.
-- [BCS0803] Never shift before validating option arguments; validation must inspect `$2`.
-- [BCS0803] Never skip validation—`-o|--output) shift; OUTPUT=$1 ;;` silently captures `--verbose` as the filename if user forgets the argument.
+- [BCS0804] Place argument parsing inside `main()` for better testability, cleaner scoping, and encapsulation.
+- [BCS0804] Top-level parsing is acceptable only for simple scripts under 200 lines without a `main()` function.

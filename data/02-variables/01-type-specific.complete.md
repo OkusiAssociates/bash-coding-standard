@@ -159,15 +159,15 @@ done
 
 ```bash
 # Declare constants
-readonly -- VERSION=1.0.0
+readonly -- SCRIPT_VERSION=1.0.0
 readonly -i MAX_RETRIES=3
 readonly -a ALLOWED_ACTIONS=(start stop restart status)
 
 # Attempt to modify (will fail)
-VERSION=2.0.0  # bash: VERSION: readonly variable
+SCRIPT_VERSION=2.0.0  # bash: VERSION: readonly variable
 
 # Verify readonly status
-readonly -p | grep VERSION
+readonly -p | grep SCRIPT_VERSION
 # Output: declare -r VERSION="1.0.0"
 ```
 
@@ -377,7 +377,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 

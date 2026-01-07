@@ -2071,36 +2071,38 @@ if result=$(failing_cmd); then echo "$result"; fi
 
 ## Exit Codes
 
-**Use standard exit codes 0-125; define constants for readability.**
+**Use consistent exit codes for predictable error handling across scripts.**
 
+### die() Function
 ```bash
 die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
-die 1 'General error'
-die 22 "Invalid option ${1@Q}"
+die 3 'File not found'
 ```
 
-| Code | Meaning | Use |
-|------|---------|-----|
-| 0 | Success | Completed OK |
-| 1 | General error | Catchall |
-| 2 | Usage error | Missing arg |
-| 22 | Invalid arg | EINVAL |
-| 126 | Cannot execute | Permission |
-| 127 | Not found | PATH/typo |
-| 128+n | Signal n | 130=Ctrl+C |
+### Core Codes
+| Code | Name | Use |
+|------|------|-----|
+| 0 | SUCCESS | OK |
+| 1 | ERR_GENERAL | Catchall |
+| 2 | ERR_USAGE | CLI error |
+| 3-7 | File ops | NOENT/ISDIR/IO/NOTDIR/EMPTY |
+| 8-10,22 | Validation | REQUIRED/RANGE/TYPE/INVAL |
+| 11-13 | Permissions | PERM/READONLY/ACCESS |
+| 14-17 | Resources | NOMEM/NOSPC/BUSY/EXIST |
+| 18-21 | Environment | NODEP/CONFIG/ENV/STATE |
+| 23-25 | Network | NETWORK/TIMEOUT/HOST |
 
-**Constants pattern:**
+### Reserved: 64-78 (sysexits), 126-127 (Bash), 128+n (signals)
+
+### Usage
 ```bash
-readonly -i ERR_GENERAL=1 ERR_USAGE=2 ERR_CONFIG=3
-die "$ERR_CONFIG" 'Config load failed'
+[[ -f "$cfg" ]] || die 3 "Not found ${cfg@Q}"
+command -v jq &>/dev/null || die 18 'Missing: jq'
 ```
 
-**Rationale:**
-- 0=success universal Unix convention
-- 22=EINVAL standard errno
-- Avoid 126-255 (reserved for signals)
-
-**Anti-patterns:** Exit codes >125 conflict with signals â†' use 1-125 for custom codes.
+### Anti-Patterns
+- `exit 1` for all errors â†' Use specific codes
+- Codes 64+ â†' Reserved for system use
 
 **Ref:** BCS0602
 
@@ -3507,7 +3509,7 @@ wait "${PIDS[@]}"
 - `command &` without `pid=$!` â†' cannot manage job later
 - Using `$$` for background PID â†' wrong; `$$` is parent, `$!` is child
 
-**Ref:** BCS1406
+**Ref:** BCS1101
 
 
 ---
@@ -3610,7 +3612,7 @@ done
 
 ---
 
-**See Also:** BCS1406, BCS1407
+**See Also:** BCS1101, BCS1102
 
 **Ref:** BCS1103
 
@@ -6182,36 +6184,38 @@ if result=$(failing_cmd); then echo "$result"; fi
 
 ## Exit Codes
 
-**Use standard exit codes 0-125; define constants for readability.**
+**Use consistent exit codes for predictable error handling across scripts.**
 
+### die() Function
 ```bash
 die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
-die 1 'General error'
-die 22 "Invalid option ${1@Q}"
+die 3 'File not found'
 ```
 
-| Code | Meaning | Use |
-|------|---------|-----|
-| 0 | Success | Completed OK |
-| 1 | General error | Catchall |
-| 2 | Usage error | Missing arg |
-| 22 | Invalid arg | EINVAL |
-| 126 | Cannot execute | Permission |
-| 127 | Not found | PATH/typo |
-| 128+n | Signal n | 130=Ctrl+C |
+### Core Codes
+| Code | Name | Use |
+|------|------|-----|
+| 0 | SUCCESS | OK |
+| 1 | ERR_GENERAL | Catchall |
+| 2 | ERR_USAGE | CLI error |
+| 3-7 | File ops | NOENT/ISDIR/IO/NOTDIR/EMPTY |
+| 8-10,22 | Validation | REQUIRED/RANGE/TYPE/INVAL |
+| 11-13 | Permissions | PERM/READONLY/ACCESS |
+| 14-17 | Resources | NOMEM/NOSPC/BUSY/EXIST |
+| 18-21 | Environment | NODEP/CONFIG/ENV/STATE |
+| 23-25 | Network | NETWORK/TIMEOUT/HOST |
 
-**Constants pattern:**
+### Reserved: 64-78 (sysexits), 126-127 (Bash), 128+n (signals)
+
+### Usage
 ```bash
-readonly -i ERR_GENERAL=1 ERR_USAGE=2 ERR_CONFIG=3
-die "$ERR_CONFIG" 'Config load failed'
+[[ -f "$cfg" ]] || die 3 "Not found ${cfg@Q}"
+command -v jq &>/dev/null || die 18 'Missing: jq'
 ```
 
-**Rationale:**
-- 0=success universal Unix convention
-- 22=EINVAL standard errno
-- Avoid 126-255 (reserved for signals)
-
-**Anti-patterns:** Exit codes >125 conflict with signals â†' use 1-125 for custom codes.
+### Anti-Patterns
+- `exit 1` for all errors â†' Use specific codes
+- Codes 64+ â†' Reserved for system use
 
 **Ref:** BCS0602
 
@@ -7618,7 +7622,7 @@ wait "${PIDS[@]}"
 - `command &` without `pid=$!` â†' cannot manage job later
 - Using `$$` for background PID â†' wrong; `$$` is parent, `$!` is child
 
-**Ref:** BCS1406
+**Ref:** BCS1101
 
 
 ---
@@ -7721,7 +7725,7 @@ done
 
 ---
 
-**See Also:** BCS1406, BCS1407
+**See Also:** BCS1101, BCS1102
 
 **Ref:** BCS1103
 
@@ -8215,3 +8219,5 @@ check_deps || { ((FEAT_REQUESTED)) && try_install || INSTALL_FEAT=0; }
 - Single flag for both user intent and runtime state â†' loses why vs. what distinction
 
 **Ref:** BCS1210
+#fin
+#fin

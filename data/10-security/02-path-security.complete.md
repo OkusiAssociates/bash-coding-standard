@@ -18,7 +18,7 @@
 set -euo pipefail
 
 # ✓ Correct - set secure PATH immediately
-readonly PATH='/usr/local/bin:/usr/bin:/bin'
+readonly -- PATH='/usr/local/bin:/usr/bin:/bin'
 export PATH
 
 # Rest of script uses locked-down PATH
@@ -139,7 +139,7 @@ set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Lock down PATH immediately
-readonly PATH='/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin'
+readonly -- PATH='/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin'
 export PATH
 
 # Use commands with confidence
@@ -178,7 +178,7 @@ validate_path() {
      [[ "$PATH" =~ /tmp ]]; then
     # PATH is suspicious, reset to safe default
     export PATH='/usr/local/bin:/usr/bin:/bin'
-    readonly PATH
+    readonly -- PATH
     warn 'Suspicious PATH detected, reset to safe default'
   fi
 }
@@ -254,7 +254,7 @@ export PATH='/usr/bin:/bin'
 # ✓ Correct - set PATH at top of script
 #!/bin/bash
 set -euo pipefail
-readonly PATH='/usr/local/bin:/usr/bin:/bin'
+readonly -- PATH='/usr/local/bin:/usr/bin:/bin'
 export PATH
 # Now all commands use secure PATH
 ```
@@ -266,14 +266,14 @@ export PATH
 set -euo pipefail
 
 # Start with secure base PATH
-readonly BASE_PATH='/usr/local/bin:/usr/bin:/bin'
+readonly -- BASE_PATH='/usr/local/bin:/usr/bin:/bin'
 
 # Add application-specific paths
-readonly APP_PATH='/opt/myapp/bin'
+readonly -- APP_PATH='/opt/myapp/bin'
 
 # Combine with secure base first
 export PATH="$BASE_PATH:$APP_PATH"
-readonly PATH
+readonly -- PATH
 
 # Validate application path exists and is not world-writable
 [[ -d "$APP_PATH" ]] || die 1 "Application path does not exist ${APP_PATH@Q}"
@@ -299,7 +299,7 @@ sudo /usr/local/bin/backup.sh
 # ✓ Correct - script sets its own PATH regardless
 sudo /usr/local/bin/backup.sh
 # Even if sudo preserves PATH, script overwrites it:
-#   readonly PATH='/usr/local/bin:/usr/bin:/bin'
+#   readonly -- PATH='/usr/local/bin:/usr/bin:/bin'
 ```
 
 **Checking PATH from within script:**
@@ -368,16 +368,15 @@ set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Lock down PATH immediately - critical for security
-readonly PATH='/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin'
+readonly -- PATH='/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin'
 export PATH
 
-VERSION=1.0.0
-SCRIPT_NAME=$(basename "$0")
+declare -r VERSION=1.0.0
+declare -r SCRIPT_NAME=$(basename "$0")
 
 # Script metadata
-SCRIPT_PATH=$(realpath -- "$0")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-readonly VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*}
 
 # Verify we're using expected command locations
 command -v tar | grep -q '^/bin/tar$' || \

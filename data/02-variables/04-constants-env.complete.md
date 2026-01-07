@@ -7,7 +7,7 @@ declare -r SCRIPT_VERSION=1.0.0
 declare -ir MAX_RETRIES=3
 declare -r CONFIG_DIR=/etc/myapp
 
-# Group readonly declarations
+# Group readonly declarations; usually prefer declare -r
 VERSION=1.0.0
 AUTHOR='John Doe'
 LICENSE=GPL-3
@@ -88,8 +88,8 @@ readonly -- OUTPUT_DIR
 set -euo pipefail
 
 # Script constants (not exported)
-readonly -- SCRIPT_VERSION=2.1.0
-readonly -- MAX_FILE_SIZE=$((100 * 1024 * 1024))  # 100MB
+declare -r VERSION=2.1.0
+declare -ri MAX_FILE_SIZE=$((100 * 1024 * 1024))  # 100MB
 
 # Environment variables for child processes (exported)
 declare -x LOG_LEVEL=${LOG_LEVEL:-INFO}

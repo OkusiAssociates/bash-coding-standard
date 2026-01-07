@@ -4,7 +4,7 @@
 
 **Rationale:**
 
-- **Prevents Assignment Errors**: Cannot assign value to an already-readonly variable
+- **Prevents Assignment Errors**: Cannot assign value to an already-readonly variable (Can use #shellcheck disable for simple assignments)
 - **Visual Grouping**: Related constants are visually grouped together as a logical unit
 - **Clear Intent**: Single readonly statement makes immutability contract obvious
 - **Maintainability**: Easy to add/remove variables from the readonly group
@@ -350,7 +350,7 @@ main() {
     -n|--dry-run) DRY_RUN=1 ;;
     -c|--config)  noarg "$@"; shift; CONFIG_FILE=$1 ;;
     -l|--log)     noarg "$@"; shift; LOG_FILE=$1 ;;
-    *) die 22 "Invalid option ${1@Q}" ;;
+    *)            die 22 "Invalid option ${1@Q}" ;;
   esac; shift; done
 
   # Now make parsed values readonly
