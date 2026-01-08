@@ -1727,26 +1727,29 @@ Usage: bcs generate [OPTIONS]
 
 Options:
   -h, --help              Show this help message
-  -t, --type TYPE         File type: complete, abstract, summary, rulet, abstract-complete (default: abstract)
+  -t, --type TYPE         File type: complete, abstract, summary, rulet, abstract-complete
+                          (def: abstract)
   -o, --output FILE       Output to specific file
   -x, --exclude CODES     Exclude BCS codes (comma-separated, BCS prefix optional)
-  --canonical             Generate all four tiers to BASH-CODING-STANDARD.{complete,summary,abstract,rulet}.md
+  --canonical             Generate all four tiers to
+                          BASH-CODING-STANDARD.{complete,summary,abstract,rulet}.md
   -f, --force             Force regeneration ignoring timestamps (use with --canonical)
 
 Default behavior: Output to stdout (safe, non-destructive)
 
 Examples:
-  bcs generate                           # Generate abstract standard to stdout (default)
-  bcs generate --canonical               # Generate all four tier files (complete, summary, abstract, rulet)
-  bcs generate --canonical --force       # Force regeneration of all four tier files
-  bcs generate -t complete               # Generate complete version to stdout
-  bcs generate -t summary                # Generate summary version to stdout
-  bcs generate -t rulet                  # Generate rulet version to stdout
-  bcs generate -t abstract-complete      # Generate combined abstract+complete version
+  bcs generate                       # Generate abstract standard to stdout (def)
+  bcs generate --canonical           # Generate all four tier files
+                                     # (complete, summary, abstract, rulet)
+  bcs generate --canonical --force   # Force regeneration of all four tier files
+  bcs generate -t complete           # Generate complete version to stdout
+  bcs generate -t summary            # Generate summary version to stdout
+  bcs generate -t rulet              # Generate rulet version to stdout
+  bcs generate -t abstract-complete  # Generate combined abstract+complete version
   bcs generate -t summary -o /tmp/BCS-summary.md
-  bcs generate -x 0103,0201              # Exclude BCS0103 and BCS0201
-  bcs generate -x BCS01 --tier summary   # Exclude entire Section 1 from summary
-  bcs generate --exclude 0103,010201,02  # Exclude specific rules and Section 2
+  bcs generate -x 0103,0201          # Exclude BCS0103 and BCS0201
+  bcs generate -x BCS01 --tier summary  # Exclude entire Section 1 from summary
+  bcs generate --exclude 0103,010201,02 # Exclude specific rules and Section 2
 
 File types:
   complete          - Complete standard (*.complete.md files)
