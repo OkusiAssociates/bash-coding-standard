@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-exec bcs check "$@"
+exec bcs check --tier summary --strict \
+    --append-prompt "Do a comprehesive analysis of the submitted Bash script, checking for its compliance with the Bash Coding Standard (BCS).
+Highlight actual coding errors.
+List any possible improvements." \
+    --add-dir "$PWD" \
+    "$@"
 
 #fin

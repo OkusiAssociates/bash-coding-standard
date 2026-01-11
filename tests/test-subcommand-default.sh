@@ -76,6 +76,44 @@ test_default_list_short_option() {
   assert_contains "$output" "\*" "Short option indicates current with asterisk"
 }
 
+test_default_file_option() {
+  test_section "File Option Tests"
+
+  local -- output
+  output=$("$SCRIPT" default --file 2>&1)
+
+  # Should have content
+  assert_not_empty "$output" "bcs default --file produces output"
+
+  # Should contain BASH-CODING-STANDARD.md
+  assert_contains "$output" "BASH-CODING-STANDARD.md" "Output contains BASH-CODING-STANDARD.md"
+
+  # Should be an actual file path
+  if [[ -f "$output" ]]; then
+    pass "Output is a valid file path"
+  else
+    fail "Output should be a valid file path: $output"
+  fi
+}
+
+test_default_file_short_option() {
+  test_section "File Short Option Tests"
+
+  local -- output
+  output=$("$SCRIPT" default -f 2>&1)
+
+  # Should produce same output as --file
+  assert_not_empty "$output" "bcs default -f produces output"
+  assert_contains "$output" "BASH-CODING-STANDARD.md" "Short option shows file path"
+
+  # Should be an actual file path
+  if [[ -f "$output" ]]; then
+    pass "Short option returns valid file path"
+  else
+    fail "Short option should return valid file path: $output"
+  fi
+}
+
 test_default_invalid_tier() {
   test_section "Invalid Tier Tests"
 
@@ -405,6 +443,8 @@ test_default_help
 test_default_show_current
 test_default_list
 test_default_list_short_option
+test_default_file_option
+test_default_file_short_option
 test_default_invalid_tier
 test_default_set_complete
 test_default_set_summary

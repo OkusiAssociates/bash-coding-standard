@@ -3397,12 +3397,14 @@ Arguments:
 
 Options:
   -h, --help              Show this help message
+  -f, --file              Show the symlink file path
   -l, --list              List all available tiers with current default marked
 
 When called without arguments, shows the current default tier.
 
 Examples:
   bcs default                    # Show current default tier
+  bcs default --file             # Show symlink file path
   bcs default complete           # Set default to complete tier
   bcs default --list             # List all available tiers
   bcs default rulet              # Set default to rulet tier
@@ -3410,6 +3412,17 @@ Examples:
 The default tier is determined by the BASH-CODING-STANDARD.md symlink target.
 
 EOF
+    return 0
+  fi
+
+  # Handle --file
+  if [[ "${1:-}" == '-f' || "${1:-}" == '--file' ]]; then
+    local -- bcs_file
+    bcs_file=$(find_bcs_file "$BCS_DIR") || {
+      error 'BASH-CODING-STANDARD.md not found'
+      return 1
+    }
+    echo "$bcs_file"
     return 0
   fi
 
@@ -4721,6 +4734,7 @@ Examples:
   bcs generate-rulets --all              # Generate rulets for all categories
   bcs sections                           # List all 12 sections
   bcs default                            # Show current default tier
+  bcs default --file                     # Show symlink file path
   bcs default complete                   # Set default to complete tier
   bcs default --list                     # List all available tiers
   bcs help check                         # Show help for check command

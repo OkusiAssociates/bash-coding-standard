@@ -1,11 +1,12 @@
 #!/bin/bash
 #shellcheck disable=SC2155
 set -euo pipefail
-shopt -s inherit_errexit shift_verbose
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 declare -r SCRIPT_PATH="$(realpath -e -- "$0")"
 declare -r SCRIPT_DIR="${SCRIPT_PATH%/*}"
 
+# Use directory name (repo name) as script name, not this helper's filename
 declare -r SCRIPT_NAME=$(basename -- "$SCRIPT_DIR")
 
 # Cleanup handler
@@ -17,14 +18,14 @@ trap 'cleanup $?' SIGINT SIGTERM EXIT
 
 cd "$SCRIPT_DIR"
 
-cln -Nq
+command -v cln &>/dev/null && cln -Pq ||: # clean up ~trash~ files; cln --help
 
-declare -- version=$(./"$SCRIPT_NAME" --version | cut -d' ' -f2)
+declare -- version=$(./"$SCRIPT_NAME" --version 2>/dev/null | cut -d' ' -f2 || echo 'unknown')
 
 # Configuration - adjust for your environment
 REPO_USER=$USER
 REPO_GROUP=$USER
-# Fix ownership 
+# Fix ownership
 sudo chown "$REPO_USER:$REPO_GROUP" "$SCRIPT_DIR" -R
 
 git add .
@@ -42,3 +43,4 @@ else
 fi
 
 #fin
+
