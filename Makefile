@@ -283,7 +283,7 @@ install:
 	@# Phase 1: Detect existing symlinks in destination
 	@echo "Checking for existing symlinks in $(BINDIR)..."
 	@SYMLINKS=""; \
-	for FILE in bcs md2ansi md mdheaders libmdheaders.bash whichx dir-sizes printline bcx \
+	for FILE in bcs bcscheck md2ansi md mdheaders libmdheaders.bash whichx dir-sizes printline bcx \
 	            shlock timer post_slug remblanks hr2int int2hr \
 	            ltrim rtrim trim trimall trimv squeeze; do \
 		if [ -L "$(BINDIR)/$$FILE" ]; then \
@@ -305,7 +305,7 @@ install:
 		case "$$REPLY" in \
 			[Yy]*) \
 				echo "Removing symlinks..."; \
-				for FILE in bcs md2ansi md mdheaders libmdheaders.bash whichx dir-sizes printline bcx \
+				for FILE in bcs bcscheck md2ansi md mdheaders libmdheaders.bash whichx dir-sizes printline bcx \
 				            shlock timer post_slug remblanks hr2int int2hr \
 				            ltrim rtrim trim trimall trimv squeeze; do \
 					[ -L "$(BINDIR)/$$FILE" ] && rm -f "$(BINDIR)/$$FILE"; \
@@ -325,6 +325,7 @@ install:
 	@# Phase 2: Normal installation
 	install -d $(BINDIR)
 	install -m 755 bcs $(BINDIR)/
+	install -m 755 bcscheck $(BINDIR)/
 	ln -sf bcs $(BINDIR)/bash-coding-standard
 	install -m 755 lib/md2ansi/md2ansi $(BINDIR)/
 	install -m 755 lib/md2ansi/md $(BINDIR)/
@@ -369,8 +370,9 @@ install:
 	@echo ""
 	@echo "✓ Installed to $(PREFIX)"
 	@echo ""
-	@echo "Installed files (23 commands):"
+	@echo "Installed files (24 commands):"
 	@echo "  - Main executable: $(BINDIR)/bcs (and bash-coding-standard symlink)"
+	@echo "  - Compliance checker: bcscheck (wrapper for bcs check)"
 	@echo "  - Markdown tools: md2ansi, md, mdheaders"
 	@echo "  - Command locator: whichx (and which symlink)"
 	@echo "  - Directory analyzer: dir-sizes (and dux symlink)"
@@ -392,6 +394,7 @@ install:
 	@echo "Usage examples:"
 	@echo "  bcs                                  # View BCS standard"
 	@echo "  bcs --help                           # Show help"
+	@echo "  bcscheck script.sh                   # AI compliance check"
 	@echo "  md file.md                           # View markdown file"
 	@echo "  mdheaders upgrade file.md            # Manipulate headers"
 	@echo "  which <command>                      # Locate command"
@@ -416,6 +419,7 @@ install:
 
 uninstall:
 	rm -f $(BINDIR)/bcs
+	rm -f $(BINDIR)/bcscheck
 	rm -f $(BINDIR)/bash-coding-standard
 	rm -f $(BINDIR)/md2ansi
 	rm -f $(BINDIR)/md

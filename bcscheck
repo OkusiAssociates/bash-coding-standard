@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-exec bcs check --tier summary --strict \
-    --append-prompt "Do a comprehesive analysis of the submitted Bash script, checking for its compliance with the Bash Coding Standard (BCS).
+declare -- APPEND_PROMPT='
+Do a comprehesive analysis of the submitted Bash script, checking for its compliance with the Bash Coding Standard (BCS).
 Highlight actual coding errors.
-List any possible improvements." \
+List any possible improvements.
+'
+
+exec bcs check --tier summary --strict \
+    --append-prompt "$APPEND_PROMPT" \
     --add-dir "$PWD" \
     "$@"
 

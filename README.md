@@ -120,6 +120,7 @@ bcs template -t complete -n myscript -o myscript.sh -x
 
 # Check script compliance (requires Claude CLI)
 bcs check myscript.sh
+bcscheck myscript.sh             # Quick check with defaults
 
 # Look up BCS rules
 bcs codes                        # List all 101 rule codes
@@ -220,7 +221,10 @@ AI-powered compliance checking using Claude CLI.
 bcs check myscript.sh                    # Comprehensive check
 bcs check --strict deploy.sh             # Strict mode (for CI/CD)
 bcs check --format json script.sh        # JSON output
+bcscheck myscript.sh                     # Quick check (wrapper with defaults)
 ```
+
+**Quick Check:** The `bcscheck` command is a convenience wrapper that runs `bcs check` with recommended defaults (summary tier, strict mode, enhanced prompt).
 
 **Options:**
 | Option | Description |
