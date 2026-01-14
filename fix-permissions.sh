@@ -5,39 +5,45 @@
 set -euo pipefail
 shopt -s inherit_errexit
 
-VERSION='1.0.0'
-SCRIPT_PATH=$(realpath -- "$0")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
+declare -r VERSION=1.0.1
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*}
+declare -r SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Configuration
-readonly -- GROUP='bcs'
-readonly -- REPO_DIR="$SCRIPT_DIR"
-readonly -- INSTALL_DIR='/usr/local/share/yatti/bash-coding-standard'
+declare -r GROUP=bcs
+declare -r REPO_DIR=$SCRIPT_DIR
+declare -r INSTALL_DIR=/usr/local/share/yatti/bash-coding-standard
+
+declare -i VERBOSE=1
 
 # Terminal colors
 if [[ -t 1 && -t 2 ]]; then
-  readonly -- RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[1;33m' BLUE=$'\033[0;34m' NC=$'\033[0m'
+  declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[1;33m' BLUE=$'\033[0;34m' NC=$'\033[0m'
 else
-  readonly -- RED='' GREEN='' YELLOW='' BLUE='' NC=''
+  declare -r RED='' GREEN='' YELLOW='' BLUE='' NC=''
 fi
 
-# Messaging functions
 _msg() {
-  local -- prefix="${1:?'_msg: missing required parameter: prefix'}"
-  shift
-  local -- msg
-  for msg in "$@"; do >&2 echo "$SCRIPT_NAME: $prefix $msg"; done
+  local -- prefix="$SCRIPT_NAME:" msg
+  case ${FUNCNAME[1]} in
+    vecho)   : ;;
+    info)    prefix+=" ${CYAN}â—‰${NC}" ;;
+    warn)    prefix+=" ${YELLOW}â–²${NC}" ;;
+    success) prefix+=" ${GREEN}âœ“${NC}" ;;
+    error)   prefix+=" ${RED}âœ—${NC}" ;;
+    *)       ;;
+  esac
+  for msg in "$@"; do printf '%s %s\n' "$prefix" "$msg"; done
 }
-info() { _msg "${BLUE}◉${NC}" "$@"; }
-success() { _msg "${GREEN}✓${NC}" "$@"; }
-warn() { _msg "${YELLOW}▲${NC}" "$@"; }
-error() { _msg "${RED}✗${NC}" "$@"; }
-die() { error "${@:2}"; exit ${1:-1}; }
 
+vecho() { ((VERBOSE)) || return 0; _msg "$@"; }
+info() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
+warn() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
+success() { ((VERBOSE)) || return 0; >&2 _msg "$@" || return 0; }
+error() { >&2 _msg "$@"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 yn() {
-  #((PROMPT)) || return 0
   local -- REPLY
   >&2 read -r -n 1 -p "$(2>&1 warn "${1:-'Continue?'}") y/n "
   >&2 echo
@@ -45,16 +51,18 @@ yn() {
 }
 
 main() {
-  info "BCS Permissions Fix Script v${VERSION}"
+  info "BCS Permissions Fix Script ${VERSION}"
   >&2 echo
 
   # Check if group exists
   getent group "$GROUP" >/dev/null 2>&1 \
-      || die "Group '${GROUP}' does not exist. Create it first: sudo groupadd -g 8088 ${GROUP}"
+      || die "Group ${GROUP@Q} does not exist." \
+             "Create it first: sudo groupadd -g 8088 $GROUP"
 
   # Check if running as root for installed location
   if ((EUID)); then
-    warn "Not running as root. Can only fix repository permissions, not ${INSTALL_DIR}"
+    warn "Not running as root. Can only fix repository permissions," \
+         "not ${INSTALL_DIR@Q}"
     warn 'Run with sudo to fix both locations'
     >&2 echo
   fi
@@ -63,19 +71,19 @@ main() {
   if [[ -t 0 ]]; then
     info 'This will modify file and directory permissions for:'
     info "  - Repository: ${REPO_DIR}"
-    ((EUID == 0)) && info "  - Installed: ${INSTALL_DIR}"
+    ((EUID)) || info "  - Installed: ${INSTALL_DIR}"
     >&2 echo
     yn 'Proceed with permission changes?' || die 'Operation cancelled by user'
     >&2 echo
   fi
 
   # Fix repository permissions
-  info "Fixing repository permissions: ${REPO_DIR}"
+  info "Fixing repository permissions in ${REPO_DIR@Q}"
 
-  if ((EUID == 0)); then
-    chgrp -R "$GROUP" "$REPO_DIR"
-  else
+  if ((EUID)); then
     sudo chgrp -R "$GROUP" "$REPO_DIR"
+  else
+    chgrp -R "$GROUP" "$REPO_DIR"
   fi
 
   find "$REPO_DIR" -type d -exec chmod 2775 {} +
@@ -83,7 +91,7 @@ main() {
 
   # Set executable scripts
   chmod 775 "$REPO_DIR"/bcs
-  [[ -f "$REPO_DIR/testcode" ]] && chmod 775 "$REPO_DIR/testcode"
+  [[ -f "$REPO_DIR"/testcode ]] && chmod 775 "$REPO_DIR"/testcode ||:
   find "$REPO_DIR" -name "*.sh" -type f -exec chmod 775 {} +
 
   success 'Repository permissions fixed'
@@ -91,7 +99,7 @@ main() {
   # Fix installed location (if running as root)
   if ((EUID == 0)); then
     if [[ -d "$INSTALL_DIR" ]]; then
-      info "Fixing installed location permissions: ${INSTALL_DIR}"
+      info "Fixing installed location permissions in ${INSTALL_DIR@Q}"
 
       chgrp -R "$GROUP" "$INSTALL_DIR"
       find "$INSTALL_DIR" -type d -exec chmod 2775 {} +
@@ -99,14 +107,14 @@ main() {
 
       success 'Installed location permissions fixed'
     else
-      warn "Installed location not found: ${INSTALL_DIR}"
+      warn "Installed location not found ${INSTALL_DIR@Q}"
     fi
   fi
 
   >&2 echo
   success 'Permission fix complete'
-  info "Group '${GROUP}' members can now read/write all BCS files"
-  info "New files will automatically inherit '${GROUP}' group ownership (setgid)"
+  info "Group ${GROUP@Q} members can now read/write all BCS files"
+  info "New files will automatically inherit ${GROUP@Q} group ownership (setgid)"
 }
 
 main "$@"

@@ -38,10 +38,14 @@ declare -a OPTS=(
   --add-dir /tmp
 )
 
-declare -- TEST_FILE=''
+declare -- TARGET_SCRIPT=''
 
 while (($#)); do
   case $1 in
+    -V|--version)
+      echo "$SCRIPT_NAME $VERSION"
+      exit 0
+      ;;
     -h|--help)
       show_help
       exit 0
@@ -54,13 +58,13 @@ while (($#)); do
       OPTS+=("$1")
       ;;
     *)
-      [[ -z "$TEST_FILE" ]] || die 1 "Target file already defined ${TEST_FILE@Q}"
-      TEST_FILE=$1
-      [[ -f "$TEST_FILE" ]] || die 3 "File ${TEST_FILE@Q} not found"
-      OPTS+=("$TEST_FILE" --add-dir "$(dirname -- "$(realpath -- "$TEST_FILE")")")
+      [[ -z "$TARGET_SCRIPT" ]] || die 1 "Target script file already specified ${TARGET_SCRIPT@Q}"
+      TARGET_SCRIPT=$1
+      [[ -f "$TARGET_SCRIPT" ]] || die 3 "File ${TARGET_SCRIPT@Q} not found"
+      OPTS+=("$TARGET_SCRIPT" --add-dir "$(dirname -- "$(realpath -- "$TARGET_SCRIPT")")")
       ;;
   esac
-  shift
+  shift ||:
 done
 
 exec bcs check "${OPTS[@]}"
