@@ -42,6 +42,7 @@ squeeze() {
       echo "$REPLY"
     done
   fi
+  return 0
 }
 declare -fx squeeze
 
@@ -51,7 +52,7 @@ declare -fx squeeze
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -- VERSION='1.0.0' SCRIPT_NAME=squeeze.bash
+declare -- VERSION='0.9.5.420' SCRIPT_NAME=squeeze.bash
 
 if (($#)); then
   case $1 in

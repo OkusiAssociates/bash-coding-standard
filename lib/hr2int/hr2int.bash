@@ -14,7 +14,7 @@
 #         : hr2int 34M    # Returns: 34000000 (34 × 1000²)
 hr2int() {
   local -- num h fmt=si
-  local LC_ALL=C  # Set once, outside the loop
+  local -- LC_ALL=C  # Set once, outside the loop
   while (($#)); do
     num=${1:-0}
 
@@ -75,8 +75,8 @@ int2hr() {
     fi
 
     # Use -- to handle negative numbers properly
-    hr=$(numfmt --to="$fmt" -- "$num") || { >&2 echo "${FUNCNAME[0]}: Conversion failed for ${num@Q}'"; return 1; }
-    [[ $fmt == 'iec' ]] && hr="${hr,,}"
+    hr=$(numfmt --to="$fmt" -- "$num") || { >&2 echo "${FUNCNAME[0]}: Conversion failed for ${num@Q}"; return 1; }
+    [[ $fmt == 'iec' ]] && hr=${hr,,}
     echo "$hr"
     shift 1
     (($#==0)) || shift 1
@@ -89,6 +89,7 @@ declare -fx int2hr
 
 #/bin/bash #semantic ----------------------------------------------------------
 set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Quick help
 if [[ $* == *'-h'* ]]; then
@@ -96,13 +97,13 @@ if [[ $* == *'-h'* ]]; then
   exit 0
 fi
 
-
-if [[ $(basename -- "$0") == hr2int ]]; then
+declare -- basename=${0##*/}
+if [[ "$basename" == hr2int ]]; then
   hr2int "$@"
-elif [[ $(basename -- "$0") == int2hr ]]; then
+elif [[ "$basename" == int2hr ]]; then
   int2hr "$@"
 else
-  >&2 echo "Invalid basename $(basename -- "$0")"
+  >&2 echo "Invalid basename $basename"
   exit 1
 fi 
 

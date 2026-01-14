@@ -27,7 +27,6 @@ trimv() {
       # Export to parent environment
       export _TRIMV_VARNAME="$varname"
       # Create variable if it doesn't exist
-      # shellcheck disable=SC2086  # eval safe: varname validated above (line 22)
       [[ -n "${!varname+x}" ]] || eval "$varname=''"
       
       # Remove processed arguments
@@ -53,7 +52,6 @@ trimv() {
 
     if [[ -n "$varname" ]]; then
       # Assign to the target variable if using -n
-      # shellcheck disable=SC2086  # eval safe: varname validated above (line 22)
       eval "$varname=\"\$v\""
     else
       # Otherwise print to stdout
@@ -82,12 +80,10 @@ trimv() {
       # Set variable content from file
       if [[ -s "$tmp_file" ]]; then
         local -- content
-        # shellcheck disable=SC2034  # content used in eval below
+	#shellcheck disable=SC2034
         content=$(<"$tmp_file")
-        # shellcheck disable=SC2086  # eval safe: varname validated above (line 22)
         eval "$varname=\"\$content\""
       else
-        # shellcheck disable=SC2086  # eval safe: varname validated above (line 22)
         eval "$varname=''"
       fi
 
@@ -113,7 +109,7 @@ declare -fx trimv
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -- VERSION='1.0.0' SCRIPT_NAME=trimv.bash
+declare -- VERSION='0.9.5.420' SCRIPT_NAME=trimv.bash
 
 if (($#)); then
   case $1 in

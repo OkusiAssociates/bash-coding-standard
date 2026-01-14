@@ -22,6 +22,7 @@
 #   -m, --max-age HOURS     Maximum lock age in hours (default: 24)
 #   -w, --wait              Wait indefinitely for lock to become available
 #   -t, --timeout SECONDS   Maximum time to wait for lock (implies --wait)
+#   -s, --steal             Forcefully remove existing lock (prompts only if process running)
 #   -h, --help              Display this help message
 #   -V, --version           Display version information
 #
@@ -58,10 +59,14 @@
 #   # Using short options
 #   shlock -t 60 -m 6 backup -- /usr/local/bin/backup.sh
 #
+#   # Forcefully steal a held lock (prompts only if holder is running)
+#   shlock --steal backup -- /usr/local/bin/backup.sh
+#
 # NOTES:
 #   - Lock files persist after command completion for reuse
 #   - PID files are cleaned up on exit
 #   - flock is released when the script exits (normal or signal)
+#   - --steal removes dead locks automatically, prompts only for running processes
 #   - Safe for use in cron jobs and automated scripts
 
 set -euo pipefail
@@ -78,11 +83,18 @@ declare -- PIDFILE=''
 declare -i MAX_AGE_HOURS=24
 declare -i WAIT_MODE=0
 declare -i TIMEOUT_SECONDS=0
+declare -i STEAL_MODE=0
 
 # Messaging functions -----------------
 error() { >&2 echo "$SCRIPT_NAME: error: $*"; }
 
 die() { (($#>1)) && error "${@:2}"; exit "${1:-1}"; }
+
+yn() {
+  local -- reply
+  read -p "$* [y/N] " -r reply
+  [[ $reply =~ ^[Yy] ]]
+}
 
 # Helper functions --------------------
 # Validate that $2 exists and is numeric, die with error if not
@@ -147,6 +159,36 @@ cleanup() {
   # flock is released when fd 200 closes; lock file persists for reuse
 }
 
+steal_lock() {
+  # Check if lock exists
+  if [[ ! -f "$LOCKFILE" ]]; then
+    # No lock to steal, just proceed normally
+    return 0
+  fi
+
+  # Read holder PID
+  local -- holder_pid='unknown'
+  if [[ -f "$PIDFILE" ]]; then
+    holder_pid=$(cat "$PIDFILE" 2>/dev/null || echo 'unknown')
+  fi
+
+  # Check if holder process is running
+  if [[ "$holder_pid" != 'unknown' ]] && is_process_running "$holder_pid"; then
+    # Process is RUNNING - warn and prompt for confirmation
+    >&2 echo "$SCRIPT_NAME: ▲ WARNING: Lock ${LOCKNAME@Q} is held by RUNNING process PID $holder_pid"
+    if ! yn "$SCRIPT_NAME: Really steal this lock?"; then
+      die 1 'Lock steal cancelled by user'
+    fi
+    >&2 echo "$SCRIPT_NAME: Stealing lock ${LOCKNAME@Q} from running process..."
+  else
+    # Process is DEAD - just clean up automatically (no prompt needed)
+    >&2 echo "$SCRIPT_NAME: Removing abandoned lock ${LOCKNAME@Q} (process $holder_pid is dead)"
+  fi
+
+  # Remove lock and pid files
+  rm -f "$LOCKFILE" "$PIDFILE" 2>/dev/null || true
+}
+
 # Usage -------------------------------
 show_help() {
   cat >&2 <<EOF
@@ -164,6 +206,7 @@ Options:
   -m, --max-age HOURS      Maximum lock age in hours (default: $MAX_AGE_HOURS)
   -w, --wait               Wait indefinitely for lock to become available
   -t, --timeout SECONDS    Maximum time to wait for lock (implies --wait)
+  -s, --steal              Forcefully remove existing lock (prompts only if process running)
   -h, --help               Display this help message
   -V, --version            Display version information
 
@@ -191,6 +234,9 @@ Examples:
 
   # Using short options
   $SCRIPT_NAME -t 60 -m 6 backup -- /usr/local/bin/backup.sh
+
+  # Forcefully steal a held lock (prompts only if holder is running)
+  $SCRIPT_NAME --steal backup -- /usr/local/bin/backup.sh
 EOF
 }
 
@@ -217,12 +263,15 @@ main() {
         shift
         TIMEOUT_SECONDS=$1
         ;;
+      -s|--steal)
+        STEAL_MODE=1
+        ;;
       --)
         shift
         break
         ;;
-      # Note: Short options like -mwt are NOT supported (no deaggregation)
-      # Use separate flags: -m -w -t
+      # Note: Short options like -mwts are NOT supported (no deaggregation)
+      # Use separate flags: -m -w -t -s
       -*)
         die 2 "Unknown option ${1@Q}"
         ;;
@@ -269,6 +318,11 @@ main() {
       fi
       clean_stale_lock
     fi
+  fi
+
+  # Steal lock if requested
+  if ((STEAL_MODE)); then
+    steal_lock
   fi
 
   # Try to acquire lock using flock

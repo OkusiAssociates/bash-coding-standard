@@ -35,8 +35,8 @@ This directory contains vendored copies of external dependencies to ensure the B
 **Used by:** `bcs display` command (optional enhancement)
 
 **Upstream:** https://github.com/Open-Technology-Foundation/md2ansi.bash
-**Git commit:** `ccb34b95bbcc62579e8e3a730f062886fce2ccd8`
-**Last synced:** 2025-10-25 19:24:22 +0800
+**Git commit:** `908f6306b3fce8c2d02af556e91aeb8527ad5009`
+**Last synced:** 2026-01-13 14:36:53 +0800
 
 **License:** MIT (see LICENSES/md2ansi.LICENSE)
 
@@ -64,8 +64,8 @@ This directory contains vendored copies of external dependencies to ensure the B
 **Used by:** General markdown document manipulation
 
 **Upstream:** /ai/scripts/Markdown/mdheaders
-**Git commit:** `6837187071ecf602be393dabd19f9bd16ef46372`
-**Last synced:** 2025-10-23 11:06:57 +0800
+**Git commit:** `94af891abaedcf2038ca2c3b19f2d1925a989709`
+**Last synced:** 2025-12-31 09:36:02 +0800
 
 **License:** GPL v3 (see LICENSES/mdheaders.LICENSE)
 
@@ -101,8 +101,8 @@ This directory contains vendored copies of external dependencies to ensure the B
 **Used by:** Drop-in replacement for standard 'which' command
 
 **Upstream:** https://github.com/Open-Technology-Foundation/whichx
-**Git commit:** `6f2b28b2f87520b3a76005ab7beed5c770b72de9`
-**Last synced:** 2025-10-04 13:20:39 +0800
+**Git commit:** `5e9bf7351e8e880d734751df6033e39eb1e5c1f9`
+**Last synced:** 2026-01-13 12:24:47 +0800
 
 **License:** GPL v3 (see LICENSES/whichx.LICENSE)
 
@@ -140,8 +140,8 @@ This directory contains vendored copies of external dependencies to ensure the B
 **Used by:** Disk space analysis and directory size monitoring
 
 **Upstream:** /ai/scripts/File/dux (internal YaTTI tool)
-**Git commit:** `ee0927ce87cc516ad9243a8214e48b041892d559`
-**Last synced:** 2025-09-21 10:40:03 +0800
+**Git commit:** `461f872245cdfd97daca41292f417113e845ee6a`
+**Last synced:** 2026-01-13 12:17:30 +0800
 
 **License:** GPL v3 (see LICENSES/dux.LICENSE)
 
@@ -223,8 +223,8 @@ This directory contains vendored copies of external dependencies to ensure the B
 **Used by:** Quick calculations from command line or scripts
 
 **Upstream:** /ai/scripts/bcx (internal YaTTI tool)
-**Git commit:** `f10947282674653b9ce6e2c8d88e9a825be339c6`
-**Last synced:** 2025-10-20 09:34:43 +0800
+**Git commit:** `4b3338dac5259496da47ea13378e420be3023936`
+**Last synced:** 2026-01-08 09:05:48 +0800
 
 **License:** GPL v3 (see LICENSES/bcx.LICENSE)
 
@@ -284,8 +284,8 @@ This directory contains vendored copies of external dependencies to ensure the B
 **Used by:** Available for general use in scripts
 
 **Upstream:** https://github.com/Open-Technology-Foundation/trim
-**Git commit:** `8b37c556f40fad179451ada68e6553d17d811973`
-**Last synced:** 2025-10-19 06:50:49 +0800
+**Git commit:** `4e345b55d6cf8961760440f2d55103aa90834515`
+**Last synced:** 2026-01-13 14:36:19 +0800
 
 **License:** GPL v3 (see LICENSES/trim.LICENSE)
 
@@ -348,8 +348,8 @@ This directory contains vendored copies of external dependencies to ensure the B
 **Used by:** Available for general use in scripts (URL generation, file naming)
 
 **Upstream:** https://github.com/Open-Technology-Foundation/post_slug
-**Git commit:** `d4f73ff5eee87b50b3bc4c607029a099e6c11bc9`
-**Last synced:** 2025-10-09 10:11:12 +0800
+**Git commit:** `f132ecea3631bd1add3afc50d713b064109eae06`
+**Last synced:** 2026-01-13 14:26:19 +0800
 
 **License:** GPL v3 (see LICENSES/post_slug.LICENSE)
 
