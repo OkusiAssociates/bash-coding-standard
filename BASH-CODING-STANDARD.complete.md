@@ -743,7 +743,7 @@ echo 'Done'
 
 **Problem:** No clear entry point, argument parsing is scattered, can't easily test the script, can't source it to test individual functions.
 
-### ✓ Correct: Use `main()` for Scripts Over 40 Lines
+### ✓ Correct: Use `main()` for Scripts Over 200 Lines
 
 ```bash
 #!/usr/bin/env bash
@@ -23619,7 +23619,7 @@ echo 'Done'
 
 **Problem:** No clear entry point, argument parsing is scattered, can't easily test the script, can't source it to test individual functions.
 
-### ✓ Correct: Use `main()` for Scripts Over 40 Lines
+### ✓ Correct: Use `main()` for Scripts Over 200 Lines
 
 ```bash
 #!/usr/bin/env bash
@@ -26800,15 +26800,15 @@ done
 
 ```bash
 # Declare constants
-readonly -- VERSION=1.0.0
+readonly -- SCRIPT_VERSION=1.0.0
 readonly -i MAX_RETRIES=3
 readonly -a ALLOWED_ACTIONS=(start stop restart status)
 
 # Attempt to modify (will fail)
-VERSION=2.0.0  # bash: VERSION: readonly variable
+SCRIPT_VERSION=2.0.0  # bash: VERSION: readonly variable
 
 # Verify readonly status
-readonly -p | grep VERSION
+readonly -p | grep SCRIPT_VERSION
 # Output: declare -r VERSION="1.0.0"
 ```
 
@@ -27018,7 +27018,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -27300,7 +27299,7 @@ declare -r SCRIPT_VERSION=1.0.0
 declare -ir MAX_RETRIES=3
 declare -r CONFIG_DIR=/etc/myapp
 
-# Group readonly declarations
+# Group readonly declarations; usually prefer declare -r
 VERSION=1.0.0
 AUTHOR='John Doe'
 LICENSE=GPL-3
@@ -27381,8 +27380,8 @@ readonly -- OUTPUT_DIR
 set -euo pipefail
 
 # Script constants (not exported)
-readonly -- SCRIPT_VERSION=2.1.0
-readonly -- MAX_FILE_SIZE=$((100 * 1024 * 1024))  # 100MB
+declare -r VERSION=2.1.0
+declare -ri MAX_FILE_SIZE=$((100 * 1024 * 1024))  # 100MB
 
 # Environment variables for child processes (exported)
 declare -x LOG_LEVEL=${LOG_LEVEL:-INFO}
@@ -27409,7 +27408,7 @@ readonly -- SCRIPT_PATH SCRIPT_DIR
 
 **Rationale:**
 
-- **Prevents Assignment Errors**: Cannot assign value to an already-readonly variable
+- **Prevents Assignment Errors**: Cannot assign value to an already-readonly variable (Can use #shellcheck disable for simple assignments)
 - **Visual Grouping**: Related constants are visually grouped together as a logical unit
 - **Clear Intent**: Single readonly statement makes immutability contract obvious
 - **Maintainability**: Easy to add/remove variables from the readonly group
@@ -27755,7 +27754,7 @@ main() {
     -n|--dry-run) DRY_RUN=1 ;;
     -c|--config)  noarg "$@"; shift; CONFIG_FILE=$1 ;;
     -l|--log)     noarg "$@"; shift; LOG_FILE=$1 ;;
-    *) die 22 "Invalid option ${1@Q}" ;;
+    *)            die 22 "Invalid option ${1@Q}" ;;
   esac; shift; done
 
   # Now make parsed values readonly
@@ -41527,7 +41526,7 @@ Modern Linux distributions (since ~2005) ignore SUID bits on scripts by default,
 set -euo pipefail
 
 # ✓ Correct - set secure PATH immediately
-readonly PATH='/usr/local/bin:/usr/bin:/bin'
+readonly -- PATH='/usr/local/bin:/usr/bin:/bin'
 export PATH
 
 # Rest of script uses locked-down PATH
@@ -41648,7 +41647,7 @@ set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Lock down PATH immediately
-readonly PATH='/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin'
+readonly -- PATH='/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin'
 export PATH
 
 # Use commands with confidence
@@ -41687,7 +41686,7 @@ validate_path() {
      [[ "$PATH" =~ /tmp ]]; then
     # PATH is suspicious, reset to safe default
     export PATH='/usr/local/bin:/usr/bin:/bin'
-    readonly PATH
+    readonly -- PATH
     warn 'Suspicious PATH detected, reset to safe default'
   fi
 }
@@ -41763,7 +41762,7 @@ export PATH='/usr/bin:/bin'
 # ✓ Correct - set PATH at top of script
 #!/bin/bash
 set -euo pipefail
-readonly PATH='/usr/local/bin:/usr/bin:/bin'
+readonly -- PATH='/usr/local/bin:/usr/bin:/bin'
 export PATH
 # Now all commands use secure PATH
 ```
@@ -41775,14 +41774,14 @@ export PATH
 set -euo pipefail
 
 # Start with secure base PATH
-readonly BASE_PATH='/usr/local/bin:/usr/bin:/bin'
+readonly -- BASE_PATH='/usr/local/bin:/usr/bin:/bin'
 
 # Add application-specific paths
-readonly APP_PATH='/opt/myapp/bin'
+readonly -- APP_PATH='/opt/myapp/bin'
 
 # Combine with secure base first
 export PATH="$BASE_PATH:$APP_PATH"
-readonly PATH
+readonly -- PATH
 
 # Validate application path exists and is not world-writable
 [[ -d "$APP_PATH" ]] || die 1 "Application path does not exist ${APP_PATH@Q}"
@@ -41808,7 +41807,7 @@ sudo /usr/local/bin/backup.sh
 # ✓ Correct - script sets its own PATH regardless
 sudo /usr/local/bin/backup.sh
 # Even if sudo preserves PATH, script overwrites it:
-#   readonly PATH='/usr/local/bin:/usr/bin:/bin'
+#   readonly -- PATH='/usr/local/bin:/usr/bin:/bin'
 ```
 
 **Checking PATH from within script:**
@@ -41877,16 +41876,15 @@ set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Lock down PATH immediately - critical for security
-readonly PATH='/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin'
+readonly -- PATH='/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin'
 export PATH
 
-VERSION=1.0.0
-SCRIPT_NAME=$(basename "$0")
+declare -r VERSION=1.0.0
+declare -r SCRIPT_NAME=$(basename "$0")
 
 # Script metadata
-SCRIPT_PATH=$(realpath -- "$0")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-readonly VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*}
 
 # Verify we're using expected command locations
 command -v tar | grep -q '^/bin/tar$' || \
