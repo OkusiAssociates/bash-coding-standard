@@ -170,7 +170,7 @@ echo 'Done'
 
 **Problem:** No clear entry point, argument parsing is scattered, can't easily test the script, can't source it to test individual functions.
 
-### ✓ Correct: Use `main()` for Scripts Over 40 Lines
+### ✓ Correct: Use `main()` for Scripts Over 200 Lines
 
 ```bash
 #!/usr/bin/env bash
