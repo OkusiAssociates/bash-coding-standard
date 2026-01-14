@@ -698,7 +698,6 @@ bash-coding-standard/
 ├── workflows/                # Maintenance scripts (8 files)
 ├── examples/                 # Production examples (3 scripts)
 ├── builtins/                 # Optional C builtins (5 commands)
-├── docs/                     # Additional documentation
 └── .github/workflows/        # CI/CD (3 workflows)
 ```
 
