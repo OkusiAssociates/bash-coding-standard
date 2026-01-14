@@ -2,6 +2,7 @@
 # test-builtins.sh - Comprehensive test suite for bash loadable builtins
 
 set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Script metadata
 VERSION='1.0.0'

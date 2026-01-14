@@ -2,6 +2,7 @@
 # Simple performance test to verify builtins work
 
 set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 

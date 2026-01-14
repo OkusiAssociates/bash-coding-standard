@@ -3,6 +3,7 @@
 # This script automates the build and installation process
 
 set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Script metadata
 VERSION='1.0.0'
