@@ -1,15 +1,67 @@
 #!/usr/bin/env bash
+# Focused wrapper for 'bcs check' with default BCS analysis prompts
 set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
+
+declare -r VERSION=1.0.0
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
+declare -r SCRIPT_NAME=${SCRIPT_PATH##*/}
+
+die() { (($# < 2)) || >&2 echo "✗ ${*:2}"; exit "${1:-1}"; }
+
+show_help() {
+      cat <<HELP
+$SCRIPT_NAME $VERSION - Focussed wrapper for 'bcs check ...'
+
+Usage: $SCRIPT_NAME ['bcs check' options] BASHFILE
+
+Run 'bcs check -h' for options
+
+HELP
+}
 
 declare -- APPEND_PROMPT='
-Do a comprehesive analysis of the submitted Bash script, checking for its compliance with the Bash Coding Standard (BCS).
-Highlight actual coding errors.
-List any possible improvements.
+Do a comprehensive analysis of this Bash script:
+
+  - Check its compliance with the Bash Coding Standard (BCS).
+  - Highlight actual coding errors.
+  - List any possible improvements.
+
 '
 
-exec bcs check --tier summary --strict \
-    --append-prompt "$APPEND_PROMPT" \
-    --add-dir "$PWD" \
-    "$@"
+declare -a OPTS=(
+  --append-prompt "$APPEND_PROMPT"
+  --tier summary
+  --strict
+  --add-dir "$(realpath -- "$PWD")"
+  --add-dir /tmp
+)
 
+declare -- TEST_FILE=''
+
+while (($#)); do
+  case $1 in
+    -h|--help)
+      show_help
+      exit 0
+      ;;
+    -f|--format|--codes|--sections|--tier|--claude-cmd|--append-prompt|--allowed-tools|--add-dir|--severity)
+      OPTS+=("$1" "$2")
+      shift
+      ;;
+    -*)
+      OPTS+=("$1")
+      ;;
+    *)
+      [[ -z "$TEST_FILE" ]] || die 1 "Target file already defined ${TEST_FILE@Q}"
+      TEST_FILE=$1
+      [[ -f "$TEST_FILE" ]] || die 3 "File ${TEST_FILE@Q} not found"
+      OPTS+=("$TEST_FILE" --add-dir "$(dirname -- "$(realpath -- "$TEST_FILE")")")
+      ;;
+  esac
+  shift
+done
+
+exec bcs check "${OPTS[@]}"
 #fin
