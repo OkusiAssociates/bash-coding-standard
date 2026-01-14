@@ -3,7 +3,7 @@
 # Interactive workflow for creating rules with templates and validation
 
 set -euo pipefail
-shopt -s inherit_errexit shift_verbose
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Script metadata
 SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
@@ -15,11 +15,14 @@ readonly -- SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
 PROJECT_DIR=$(realpath -- "$SCRIPT_DIR/..")
 DATA_DIR="$PROJECT_DIR/data"
 BCS_CMD="$PROJECT_DIR/bcs"
+#shellcheck disable=SC2034  # BCS_CMD reserved for future use
 readonly -- PROJECT_DIR DATA_DIR BCS_CMD
 
 # Global variables
 declare -i VERBOSE=1 QUIET=0 INTERACTIVE=1 AUTO_COMPRESS=1 AUTO_VALIDATE=1
-declare -- SECTION='' RULE_NUMBER='' RULE_NAME='' TEMPLATE='standard'
+declare -- SECTION='' RULE_NUMBER='' RULE_NAME=''
+#shellcheck disable=SC2034  # Reserved for future template support
+declare -- TEMPLATE='standard'
 
 # Colors
 if [[ -t 1 && -t 2 ]]; then
@@ -107,6 +110,7 @@ parse_arguments() {
         ;;
       --template)
         (($# > 1)) || die 2 "Missing value for --template"
+        #shellcheck disable=SC2034  # Reserved for future template support
         TEMPLATE=$2
         shift 2
         ;;

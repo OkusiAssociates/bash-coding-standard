@@ -3,7 +3,7 @@
 # Comprehensive wrapper around 'bcs generate' with validation and statistics
 
 set -euo pipefail
-shopt -s inherit_errexit shift_verbose
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Script metadata
 SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")

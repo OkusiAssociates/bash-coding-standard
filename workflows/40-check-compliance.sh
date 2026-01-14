@@ -3,7 +3,7 @@
 # Wrapper around 'bcs check' with batch processing and reporting
 
 set -euo pipefail
-shopt -s inherit_errexit shift_verbose nullglob
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Script metadata
 SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")

@@ -3,7 +3,7 @@
 # Comprehensive validation workflow for rule integrity
 
 set -euo pipefail
-shopt -s inherit_errexit shift_verbose
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Script metadata
 SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
@@ -445,7 +445,7 @@ validate_file_size_limits() {
   info "Checking file size limits..."
 
   local -i oversized_count=0
-  local -- file size_str tier
+  local -- file
   local -i size
 
   # Check summary files

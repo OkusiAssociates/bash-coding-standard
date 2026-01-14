@@ -3,7 +3,7 @@
 # Provides comprehensive rule metadata and content viewing
 
 set -euo pipefail
-shopt -s inherit_errexit shift_verbose
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Script metadata
 SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
@@ -15,6 +15,7 @@ readonly -- SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
 PROJECT_DIR=$(realpath -- "$SCRIPT_DIR/..")
 DATA_DIR="$PROJECT_DIR/data"
 BCS_CMD="$PROJECT_DIR/bcs"
+#shellcheck disable=SC2034  # DATA_DIR reserved for consistency across workflows
 readonly -- PROJECT_DIR DATA_DIR BCS_CMD
 
 # Global variables
@@ -194,7 +195,7 @@ get_file_metadata() {
 # Interrogate a single rule by BCS code
 interrogate_by_code() {
   local -- code=$1
-  local -- default_tier file_path
+  local -- file_path
   local -a tier_files=()
 
   [[ -x "$BCS_CMD" ]] || die 2 "bcs command not executable"
@@ -261,7 +262,7 @@ interrogate_by_file() {
 
   # If all tiers requested, find the other tiers
   if ((SHOW_ALL_TIERS)); then
-    local -- base_path="${file_path%.$tier.md}"
+    local -- base_path="${file_path%."$tier".md}"
     for t in complete summary abstract; do
       [[ "$t" == "$tier" ]] && continue
       [[ -f "$base_path.$t.md" ]] && tier_files+=("$t:$base_path.$t.md")
@@ -276,7 +277,6 @@ display_rule_info() {
   local -- code=$1
   local -n tiers_ref=$2
   local -- tier_entry tier file_path metadata
-  local -a metadata_parts
 
   if [[ "$OUTPUT_FORMAT" == "json" ]]; then
     echo "{"

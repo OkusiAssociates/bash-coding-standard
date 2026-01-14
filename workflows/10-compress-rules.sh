@@ -3,7 +3,7 @@
 # Enhanced wrapper around 'bcs compress' with pre-flight checks and progress reporting
 
 set -euo pipefail
-shopt -s inherit_errexit shift_verbose
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Script metadata
 SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")

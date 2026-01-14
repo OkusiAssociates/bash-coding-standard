@@ -3,7 +3,7 @@
 # Edit .complete.md and optionally recompress other tiers
 
 set -euo pipefail
-shopt -s inherit_errexit shift_verbose
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Script metadata
 SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
@@ -134,7 +134,7 @@ find_complete_file() {
 # Modify rule
 modify_rule() {
   local -- input=$1
-  local -- complete_file backup_file base_path
+  local -- complete_file backup_file
 
   complete_file=$(find_complete_file "$input")
   info "Modifying: $complete_file"
