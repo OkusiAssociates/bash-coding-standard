@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Tests for bcs template subcommand
 set -euo pipefail
-shopt -s inherit_errexit shift_verbose
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Load test helpers
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)

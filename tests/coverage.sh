@@ -3,7 +3,7 @@
 # Analyzes which functions and commands are covered by tests
 
 set -euo pipefail
-shopt -s inherit_errexit shift_verbose
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Script metadata
 VERSION=1.0.0

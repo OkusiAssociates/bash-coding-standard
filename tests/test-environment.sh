@@ -2,6 +2,7 @@
 # Tests for environment conditions (terminal, md2ansi, etc.)
 
 set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Load test helpers
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -109,6 +110,7 @@ test_bcs_md_variable() {
   cat >"$test_script" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
 # shellcheck source=../bash-coding-standard
 source "$1"
 
@@ -141,6 +143,7 @@ test_path_variables() {
   cat >"$test_script" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
 # shellcheck source=../bash-coding-standard
 source "$1"
 

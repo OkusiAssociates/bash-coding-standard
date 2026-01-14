@@ -3,7 +3,7 @@
 # Tests rule interrogation by BCS code and file path
 
 set -euo pipefail
-shopt -s inherit_errexit shift_verbose
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Test metadata
 SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")

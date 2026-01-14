@@ -3,7 +3,7 @@
 # Runs all test files and reports overall results
 
 set -euo pipefail
-shopt -s inherit_errexit shift_verbose
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Script metadata
 SCRIPT_PATH=$(realpath -- "$0")

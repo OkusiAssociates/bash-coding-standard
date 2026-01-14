@@ -2,7 +2,7 @@
 # Tests for bcs compress subcommand
 
 set -euo pipefail
-shopt -s inherit_errexit shift_verbose
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Skip in CI environment - this test requires Claude CLI
 if [[ -n "${CI:-}" ]]; then

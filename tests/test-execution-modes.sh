@@ -2,6 +2,7 @@
 # Tests for execution modes (direct execution vs sourcing)
 
 set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Load test helpers
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -49,6 +50,7 @@ test_sourced_mode() {
   cat >"$test_script" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Source the bash-coding-standard script
 # shellcheck source=../bash-coding-standard
@@ -79,6 +81,7 @@ EOF
   cat >"$test_script" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
 # shellcheck source=../bash-coding-standard
 source "$1"
 # BCS_MD should contain the document
@@ -92,6 +95,7 @@ EOF
   cat >"$test_script" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
 # shellcheck source=../bash-coding-standard
 source "$1"
 declare -F cmd_display >/dev/null && echo "function exported"
@@ -104,6 +108,7 @@ EOF
   cat >"$test_script" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
 # shellcheck source=../bash-coding-standard
 source "$1"
 declare -F find_bcs_file >/dev/null && echo "function available"
@@ -116,6 +121,7 @@ EOF
   cat >"$test_script" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
 # shellcheck source=../bash-coding-standard
 source "$1"
 
@@ -161,6 +167,7 @@ EOF
   cat >"$test_script" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
 # shellcheck source=../bash-coding-standard
 source "$1"
 cmd_display --cat 2>&1 | head -5 || true
@@ -186,6 +193,7 @@ test_error_handling_in_modes() {
   cat >"$test_script" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
 # shellcheck source=../bash-coding-standard
 source "$1"
 

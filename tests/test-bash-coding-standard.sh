@@ -3,7 +3,7 @@
 # Tests both original and fixed versions
 
 set -euo pipefail
-shopt -s inherit_errexit shift_verbose
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Test metadata
 SCRIPT_PATH=$(realpath -- "$0")
