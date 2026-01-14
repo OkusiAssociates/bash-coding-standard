@@ -3,7 +3,7 @@
 # Real-world example: Monitor system resources and generate alerts
 
 set -euo pipefail
-shopt -s inherit_errexit shift_verbose nullglob
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Script metadata
 declare -x VERSION='1.0.0'
