@@ -27,9 +27,10 @@ test_find_bcs_file() {
 
   # Test 2: Test with nonexistent directory (may still find in FHS paths)
   # Note: This test may pass if BASH-CODING-STANDARD.md exists in /usr/local/share or /usr/share
+  exit_code=0
   result=$(find_bcs_file "/nonexistent/path" 2>/dev/null) || exit_code=$?
-  if [[ -f /usr/local/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md ]] || \
-     [[ -f /usr/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md ]]; then
+  if [[ -f /usr/local/share/yatti/bash-coding-standard/data/BASH-CODING-STANDARD.md ]] || \
+     [[ -f /usr/share/yatti/bash-coding-standard/data/BASH-CODING-STANDARD.md ]]; then
     pass "find_bcs_file falls back to FHS paths (system install detected)"
   else
     assert_failure "$exit_code" "find_bcs_file returns non-zero when file not found"
@@ -60,9 +61,10 @@ test_find_bcs_file() {
 
   # Test 5: Test with empty string
   # Empty path should still succeed if file exists in FHS paths
+  exit_code=0
   result=$(find_bcs_file "" 2>/dev/null) || exit_code=$?
-  if [[ -f /usr/local/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md ]] || \
-     [[ -f /usr/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md ]]; then
+  if [[ -f /usr/local/share/yatti/bash-coding-standard/data/BASH-CODING-STANDARD.md ]] || \
+     [[ -f /usr/share/yatti/bash-coding-standard/data/BASH-CODING-STANDARD.md ]]; then
     assert_success "$exit_code" "find_bcs_file falls back to FHS paths even with empty input"
   else
     assert_failure "$exit_code" "find_bcs_file returns error when no file found anywhere"
