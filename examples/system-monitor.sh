@@ -6,11 +6,9 @@ set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Script metadata
-declare -x VERSION='1.0.0'
-SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
+declare -r VERSION=1.0.0
+declare -r SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Configuration
 declare -i CPU_THRESHOLD=80 MEM_THRESHOLD=80 DISK_THRESHOLD=90
@@ -24,12 +22,10 @@ declare -i ITERATION=0
 
 # Colors (conditional on TTY)
 if [[ -t 1 && -t 2 ]]; then
-  declare -- RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m'
-  declare -- CYAN=$'\033[0;36m' MAGENTA=$'\033[0;35m' BOLD=$'\033[1m' NC=$'\033[0m'
+  declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' MAGENTA=$'\033[0;35m' BOLD=$'\033[1m' NC=$'\033[0m'
 else
-  declare -- RED='' GREEN='' YELLOW='' CYAN='' MAGENTA='' BOLD='' NC=''
+  declare -r RED='' GREEN='' YELLOW='' CYAN='' MAGENTA='' BOLD='' NC=''
 fi
-readonly -- RED GREEN YELLOW CYAN MAGENTA BOLD NC
 
 # Messaging functions
 _msg() {
@@ -54,7 +50,8 @@ success() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 error() { >&2 _msg "$@"; }
 alert() { >&2 _msg "$@"; }
 debug() { ((DEBUG)) || return 0; >&2 _msg "$@"; }
-die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+noarg() { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
 
 # Log to file
 log_msg() {
@@ -64,17 +61,13 @@ log_msg() {
 }
 
 # Usage
-usage() {
-  cat <<EOF
+show_help() {
+  cat <<HELP
 Usage: $SCRIPT_NAME [OPTIONS]
 
 System resource monitoring with threshold-based alerts.
 
 OPTIONS:
-  -h, --help              Show this help message
-  -v, --verbose           Verbose output (default)
-  -q, --quiet             Quiet mode (alerts only)
-  -d, --debug             Debug mode
   -c, --continuous        Continuous monitoring
   -i, --interval SECONDS  Check interval in seconds (default: 5)
   -n, --iterations NUM    Max iterations for continuous mode (default: 12)
@@ -83,7 +76,11 @@ OPTIONS:
   --disk-threshold PCT    Disk threshold percentage (default: 90)
   --alert-email EMAIL     Email for alerts
   --log-file FILE         Log file path (default: /var/log/system-monitor.log)
+  -v, --verbose           Verbose output (default)
+  -q, --quiet             Quiet mode (alerts only)
+  -d, --debug             Debug mode
   -V, --version           Show script version
+  -h, --help              Show this help message
 
 EXAMPLES:
   $SCRIPT_NAME                                    # Single check
@@ -100,59 +97,68 @@ EXIT CODES:
   0 - All metrics within thresholds
   1 - One or more metrics exceeded thresholds
   2 - Invalid arguments or system error
-EOF
-  exit "${1:-0}"
+HELP
 }
 
 # Parse arguments
 parse_arguments() {
-  while (($# > 0)); do
+  while (($#)); do
     case $1 in
-      -h|--help) usage 0 ;;
-      -v|--verbose) VERBOSE=1; shift ;;
-      -q|--quiet) VERBOSE=0; shift ;;
-      -d|--debug) DEBUG=1; shift ;;
-      -c|--continuous) CONTINUOUS=1; shift ;;
+      -V|--version)
+        echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
+      -h|--help)
+        show_help; exit 0 ;;
+      -v|--verbose)
+        VERBOSE=1 ;;
+      -q|--quiet)
+        VERBOSE=0 ;;
+      -d|--debug)
+        DEBUG=1 ;;
+      -c|--continuous)
+        CONTINUOUS=1 ;;
       -i|--interval)
-        (($# > 1)) || die 2 "Missing value for --interval"
-        CHECK_INTERVAL=$2
-        shift 2
+        noarg "$@"; shift
+        CHECK_INTERVAL=$1
         ;;
       -n|--iterations)
         (($# > 1)) || die 2 "Missing value for --iterations"
         MAX_ITERATIONS=$2
-        shift 2
+        shift
         ;;
       --cpu-threshold)
         (($# > 1)) || die 2 "Missing value for --cpu-threshold"
         CPU_THRESHOLD=$2
-        shift 2
+        shift
         ;;
       --mem-threshold)
         (($# > 1)) || die 2 "Missing value for --mem-threshold"
         MEM_THRESHOLD=$2
-        shift 2
+        shift
         ;;
       --disk-threshold)
         (($# > 1)) || die 2 "Missing value for --disk-threshold"
         DISK_THRESHOLD=$2
-        shift 2
+        shift
         ;;
       --alert-email)
         (($# > 1)) || die 2 "Missing value for --alert-email"
         ALERT_EMAIL=$2
         ALERT_MODE=1
-        shift 2
+        shift
         ;;
       --log-file)
         (($# > 1)) || die 2 "Missing value for --log-file"
         LOG_FILE=$2
-        shift 2
+        shift
         ;;
-      -V|--version) echo "$SCRIPT_NAME version $VERSION"; exit 0 ;;
-      -*) die 2 "Unknown option: $1" ;;
-      *) die 2 "Unexpected argument: $1" ;;
+      -[Vhvqdcin]*)     #shellcheck disable=SC2046
+        set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+      -*)
+        die 22 "Unknown option ${1@Q}" ;;
+      *)
+        die 2 "Unexpected argument ${1@Q}" ;;
     esac
+    shift
   done
 }
 
@@ -226,18 +232,18 @@ check_threshold() {
 
   if [[ "$current" -ge "$threshold" ]]; then
     color=$RED
-    status_msg="CRITICAL"
+    status_msg=CRITICAL
     alert "$metric: ${color}${current}%${NC} (threshold: ${threshold}%)"
     log_msg "ALERT: $metric at ${current}% (threshold: ${threshold}%)"
     return 1
   elif [[ "$current" -ge $((threshold - 10)) ]]; then
     color=$YELLOW
-    status_msg="WARNING"
+    status_msg=WARNING
     warn "$metric: ${color}${current}%${NC} (approaching threshold)"
     return 0
   else
     color=$GREEN
-    status_msg="OK"
+    status_msg=OK
     debug "$metric: ${color}${current}%${NC}"
     return 0
   fi
@@ -258,11 +264,11 @@ monitor_system() {
 
   # Display header
   if ((VERBOSE)); then
-    echo ""
+    echo
     echo "${BOLD}System Monitor - Check #$((ITERATION + 1))${NC}"
     echo "Time: $timestamp"
     echo "Load Average: $load_avg"
-    echo ""
+    echo
   fi
 
   # Check thresholds
@@ -272,7 +278,7 @@ monitor_system() {
 
   # Summary
   if ((alerts > 0)); then
-    echo ""
+    echo
     error "${alerts} metric(s) exceeded threshold"
 
     # Send email alert if configured
@@ -283,7 +289,7 @@ monitor_system() {
     return 1
   else
     if ((VERBOSE)); then
-      echo ""
+      echo
       success "All metrics within thresholds"
     fi
     return 0
@@ -302,7 +308,7 @@ send_alert_email() {
 
   local -- subject="System Alert: Resource Threshold Exceeded"
   local -- body
-  body=$(cat <<EOF
+  body=$(cat <<EOT
 System Monitor Alert
 ====================
 
@@ -317,8 +323,8 @@ Current Metrics:
 Please investigate immediately.
 
 ---
-$SCRIPT_NAME v$VERSION
-EOF
+$SCRIPT_NAME $VERSION
+EOT
 )
 
   echo "$body" | mail -s "$subject" "$ALERT_EMAIL"
@@ -357,7 +363,7 @@ main() {
     fi
   done
 
-  echo ""
+  echo
   info "Monitoring complete: $MAX_ITERATIONS checks performed"
   exit "$exit_code"
 }
