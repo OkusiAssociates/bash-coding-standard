@@ -1705,6 +1705,68 @@ filter_excluded_files() {
 }
 declare -fx filter_excluded_files
 
+# Generate a single tier file for canonical generation
+# Args: tier data_dir output_dir [exclusion_codes...]
+generate_single_tier() {
+  local -- tier=$1 data_dir=$2 output_dir=$3
+  shift 3
+  local -a exclusion_codes=("$@")
+
+  local -- suffix=".$tier.md"
+  local -- output_file="$output_dir/BASH-CODING-STANDARD.$tier.md"
+  local -a md_files=()
+
+  # Find matching files
+  readarray -t md_files < <(find "$data_dir" -name "*$suffix" -type f \
+    ! -name 'README.md' ! -name 'BASH-CODING-STANDARD.*' | sort)
+
+  if ((${#md_files[@]} == 0)); then
+    error "No $tier files found in ${data_dir@Q}"
+    return 1
+  fi
+
+  # Apply exclusions if provided
+  if ((${#exclusion_codes[@]} > 0)); then
+    local -- filter_output
+    local -i excluded_count
+    filter_output=$(filter_excluded_files md_files exclusion_codes)
+    excluded_count=$(grep '^EXCLUDED:' <<<"$filter_output" | cut -d: -f2)
+    readarray -t md_files < <(grep -v '^EXCLUDED:' <<<"$filter_output")
+    if ((excluded_count > 0)); then
+      >&2 echo
+      info "Excluding $excluded_count rule$(s $excluded_count): ${exclusion_codes[*]}"
+    fi
+  fi
+
+  info "Generating $tier standard from ${#md_files[@]} files..."
+
+  {
+    local -- file bcs_code basename_file
+    local -i first_iteration=1
+    for file in "${md_files[@]}"; do
+      if ((first_iteration)); then
+        first_iteration=0
+      else
+        echo -en "\n\n---\n\n\f\n"
+      fi
+      basename_file=$(basename "$file")
+      if [[ "$basename_file" =~ ^00-header\. ]]; then
+        fix_header_level "$file" "$data_dir"
+      else
+        bcs_code=$(get_bcs_code "$file") || bcs_code='BCS????'
+        echo "**Rule: $bcs_code**"
+        echo
+        fix_header_level "$file" "$data_dir"
+      fi
+    done
+    echo '#fin'
+  } > "$output_file"
+
+  success "Generated ${output_file@Q}"
+  info "Total lines: $(wc -l < "$output_file")"
+}
+declare -fx generate_single_tier
+
 # Regenerate BASH-CODING-STANDARD.md from data/ tree
 cmd_generate() {
   # Parse arguments
@@ -1833,230 +1895,11 @@ GENERATE
     data_dir=$(find_data_dir) || { error 'Data directory not found'; return 1; }
     local -- output_dir="$data_dir"
 
-    # Generate complete tier
-    file_type='complete'
-    output_file="$output_dir"/BASH-CODING-STANDARD.complete.md
-
-    # Find and validate files
-    local -- suffix='.complete.md'
-    local -a md_files=()
-
-    readarray -t md_files < <(find "$data_dir" -name "*$suffix" -type f ! -name "README.md" ! -name "BASH-CODING-STANDARD.*" | sort)
-
-    if ((${#md_files[@]} == 0)); then
-      error "No complete files found in ${data_dir@Q}"
-      return 1
-    fi
-
-    # Apply exclusions if provided
-    local -i excluded_count=0
-    if ((${#exclusion_codes[@]} > 0)); then
-      local -- filter_output
-      filter_output=$(filter_excluded_files md_files exclusion_codes)
-      excluded_count=$(grep "^EXCLUDED:" <<<"$filter_output" | cut -d: -f2)
-      readarray -t md_files < <(grep -v "^EXCLUDED:" <<<"$filter_output")
-      if ((excluded_count > 0)); then
-        >&2 echo
-        info "Excluding $excluded_count rule$(s $excluded_count): ${exclusion_codes[*]}"
-      fi
-    fi
-
-    info "Generating complete standard from ${#md_files[@]} files..."
-
-    {
-      local -- file bcs_code basename_file
-      local -i first_iteration=1
-      for file in "${md_files[@]}"; do
-        if ((first_iteration==1)); then
-          first_iteration=0
-        else
-          echo -en "\n\n---\n\n\f\n"
-        fi
-
-        # Check if this is the header file (00-header.md)
-        basename_file=$(basename "$file")
-        if [[ "$basename_file" =~ ^00-header\. ]]; then
-          # Output header without Rule prefix
-          fix_header_level "$file" "$data_dir"
-        else
-          # Output with Rule prefix for all other files
-          bcs_code=$(get_bcs_code "$file") || bcs_code='BCS????'
-          echo "**Rule: $bcs_code**"
-          echo
-          fix_header_level "$file" "$data_dir"
-        fi
-      done
-      echo '#fin'
-    } > "$output_file"
-
-    success "Generated ${output_file@Q}"
-    info "Total lines: $(wc -l < "$output_file")"
-
-    # Generate summary tier
-    file_type=summary
-    output_file="$output_dir"/BASH-CODING-STANDARD.summary.md
-    suffix='.summary.md'
-    md_files=()
-
-    readarray -t md_files < <(find "$data_dir" -name "*$suffix" -type f ! -name "README.md" ! -name "BASH-CODING-STANDARD.*" | sort)
-
-    if ((${#md_files[@]} == 0)); then
-      error "No summary files found in ${data_dir@Q}"
-      return 1
-    fi
-
-    # Apply exclusions if provided
-    if ((${#exclusion_codes[@]} > 0)); then
-      local -- filter_output
-      filter_output=$(filter_excluded_files md_files exclusion_codes)
-      excluded_count=$(grep "^EXCLUDED:" <<<"$filter_output" | cut -d: -f2)
-      readarray -t md_files < <(grep -v "^EXCLUDED:" <<<"$filter_output")
-      if ((excluded_count > 0)); then
-        >&2 echo
-        info "Excluding $excluded_count rule$(s $excluded_count): ${exclusion_codes[*]}"
-      fi
-    fi
-
-    info "Generating summary standard from ${#md_files[@]} files..."
-
-    { local -- file bcs_code basename_file
-      local -i first_iteration=1
-      for file in "${md_files[@]}"; do
-        if ((first_iteration==1)); then
-          first_iteration=0
-        else
-          echo -en "\n\n---\n\n\f\n"
-        fi
-
-        # Check if this is the header file (00-header.md)
-        basename_file=$(basename "$file")
-        if [[ "$basename_file" =~ ^00-header\. ]]; then
-          # Output header without Rule prefix
-          fix_header_level "$file" "$data_dir"
-        else
-          # Output with Rule prefix for all other files
-          bcs_code=$(get_bcs_code "$file") || bcs_code='BCS????'
-          echo "**Rule: $bcs_code**"
-          echo
-          fix_header_level "$file" "$data_dir"
-        fi
-      done
-      echo '#fin'
-    } > "$output_file"
-
-    success "Generated '$output_file'"
-    info "Total lines: $(wc -l < "$output_file")"
-
-    # Generate abstract tier
-    file_type=abstract
-    output_file="$output_dir"/BASH-CODING-STANDARD.abstract.md
-    suffix='.abstract.md'
-    md_files=()
-
-    readarray -t md_files < <(find "$data_dir" -name "*$suffix" -type f ! -name "README.md" ! -name "BASH-CODING-STANDARD.*" | sort)
-
-    if ((${#md_files[@]} == 0)); then
-      error "No abstract files found in ${data_dir@Q}"
-      return 1
-    fi
-
-    # Apply exclusions if provided
-    if ((${#exclusion_codes[@]} > 0)); then
-      local -- filter_output
-      filter_output=$(filter_excluded_files md_files exclusion_codes)
-      excluded_count=$(grep "^EXCLUDED:" <<<"$filter_output" | cut -d: -f2)
-      readarray -t md_files < <(grep -v "^EXCLUDED:" <<<"$filter_output")
-      if ((excluded_count > 0)); then
-        >&2 echo
-        info "Excluding $excluded_count rule$(s $excluded_count): ${exclusion_codes[*]}"
-      fi
-    fi
-
-    info "Generating abstract standard from ${#md_files[@]} files..."
-
-    { local -- file bcs_code basename_file
-      local -i first_iteration=1
-      for file in "${md_files[@]}"; do
-        if ((first_iteration==1)); then
-          first_iteration=0
-        else
-          echo -en "\n\n---\n\n\f\n"
-        fi
-
-        # Check if this is the header file (00-header.md)
-        basename_file=$(basename "$file")
-        if [[ "$basename_file" =~ ^00-header\. ]]; then
-          # Output header without Rule prefix
-          fix_header_level "$file" "$data_dir"
-        else
-          # Output with Rule prefix for all other files
-          bcs_code=$(get_bcs_code "$file") || bcs_code='BCS????'
-          echo "**Rule: $bcs_code**"
-          echo
-          fix_header_level "$file" "$data_dir"
-        fi
-      done
-      echo '#fin'
-    } > "$output_file"
-
-    success "Generated ${output_file@Q}"
-    info "Total lines: $(wc -l < "$output_file")"
-
-    # Generate rulet tier
-    file_type=rulet
-    output_file="$output_dir"/BASH-CODING-STANDARD.rulet.md
-    suffix='.rulet.md'
-    md_files=()
-
-    readarray -t md_files < <(find "$data_dir" -name "*$suffix" -type f ! -name "README.md" ! -name "BASH-CODING-STANDARD.*" | sort)
-
-    if ((${#md_files[@]} == 0)); then
-      error "No rulet files found in ${data_dir@Q}"
-      return 1
-    fi
-
-    # Apply exclusions if provided
-    if ((${#exclusion_codes[@]} > 0)); then
-      local -- filter_output
-      filter_output=$(filter_excluded_files md_files exclusion_codes)
-      excluded_count=$(grep "^EXCLUDED:" <<<"$filter_output" | cut -d: -f2)
-      readarray -t md_files < <(grep -v "^EXCLUDED:" <<<"$filter_output")
-      if ((excluded_count > 0)); then
-        >&2 echo
-        info "Excluding $excluded_count rule$(s $excluded_count): ${exclusion_codes[*]}"
-      fi
-    fi
-
-    info "Generating rulet standard from ${#md_files[@]} files..."
-
-    {
-      local -- file bcs_code basename_file
-      local -i first_iteration=1
-      for file in "${md_files[@]}"; do
-        if ((first_iteration==1)); then
-          first_iteration=0
-        else
-          echo -en "\n\n---\n\n\f\n"
-        fi
-
-        # Check if this is the header file (00-header.md)
-        basename_file=$(basename "$file")
-        if [[ "$basename_file" =~ ^00-header\. ]]; then
-          # Output header without Rule prefix
-          fix_header_level "$file" "$data_dir"
-        else
-          # Output with Rule prefix for all other files
-          bcs_code=$(get_bcs_code "$file") || bcs_code='BCS????'
-          echo "**Rule: $bcs_code**"
-          echo
-          fix_header_level "$file" "$data_dir"
-        fi
-      done
-      echo '#fin'
-    } > "$output_file"
-
-    success "Generated ${output_file@Q}"
-    info "Total lines: $(wc -l < "$output_file")"
+    # Generate all four tiers using helper function
+    local -- tier
+    for tier in complete summary abstract rulet; do
+      generate_single_tier "$tier" "$data_dir" "$output_dir" "${exclusion_codes[@]}" || return 1
+    done
 
     success 'All four tiers generated'
     >&2 echo
