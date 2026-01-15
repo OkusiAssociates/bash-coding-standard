@@ -48,12 +48,12 @@ validate_csv() {
   local -- file=$1
   local -i line_num=0 errors=0
 
-  [[ -f "$file" ]] || { error "File not found: $file"; return 1; }
-  [[ -r "$file" ]] || { error "File not readable: $file"; return 1; }
+  [[ -f "$file" ]] || { error "File not found ${file@Q}"; return 1; }
+  [[ -r "$file" ]] || { error "File not readable ${file@Q}"; return 1; }
 
   # Check header
   local -- header
-  IFS= read -r header < "$file" || { error "Empty file: $file"; return 1; }
+  IFS= read -r header < "$file" || { error "Empty file ${file@Q}"; return 1; }
 
   # Validate format
   while IFS= read -r line; do
@@ -78,10 +78,10 @@ validate_csv() {
 process_csv_file() {
   local -- input_file=$1
   local -- output_file
-  output_file="$OUTPUT_DIR/$(basename "${input_file%.csv}")-processed.csv"
+  output_file="$OUTPUT_DIR/$(basename -- "${input_file%.csv}")-processed.csv"
   local -i record_count=0
 
-  info "Processing '$(basename "$input_file")'"
+  info "Processing '$(basename -- "$input_file")'"
 
   # Validate
   ((SKIP_VALIDATION)) || validate_csv "$input_file" || return 1
@@ -137,23 +137,28 @@ main() {
         show_help
         exit 0
         ;;
-      -n|--dry-run) DRY_RUN=1; shift ;;
-      --skip-validation) SKIP_VALIDATION=1; shift ;;
+      -n|--dry-run)
+        DRY_RUN=1 ;;
+      --skip-validation)
+        SKIP_VALIDATION=1 ;;
       -o|--output)
-        (($# > 1)) || die 2 "Missing value for --output"
+        (($# > 1)) || die 2 'Missing value for --output'
         OUTPUT_DIR=$2
-        shift 2
+        shift
         ;;
-      -*) die 2 "Unknown option: $1" ;;
-      *) input_files+=("$1"); shift ;;
+      -*)
+        die 22 "Unknown option ${1@Q}" ;;
+      *)
+        input_files+=("$1") ;;
     esac
+    shift
   done
 
-  [[ "${#input_files[@]}" -gt 0 ]] || die 2 "No input files specified"
+  ((${#input_files[@]})) || die 2 'No input files specified'
 
   info "Data Processor $VERSION"
-  ((DRY_RUN)) && warn "DRY-RUN MODE"
-  echo ""
+  ((DRY_RUN==0)) || warn 'DRY-RUN MODE'
+  echo
 
   # Create output directory
   [[ -d "$OUTPUT_DIR" ]] || mkdir -p "$OUTPUT_DIR"
@@ -162,21 +167,21 @@ main() {
   TOTAL_FILES=${#input_files[@]}
   for file in "${input_files[@]}"; do
     if process_csv_file "$file"; then
-      ((PROCESSED_FILES+=1))
+      PROCESSED_FILES+=1
     else
-      ((FAILED_FILES+=1))
+      FAILED_FILES+=1
     fi
   done
 
   # Summary
-  echo ""
-  info "Processing Summary:"
+  echo
+  info 'Processing Summary:'
   echo "  Total files: $TOTAL_FILES"
   echo "  Processed: $PROCESSED_FILES"
   echo "  Failed: $FAILED_FILES"
   echo "  Total records: $TOTAL_RECORDS"
 
-  [[ "$FAILED_FILES" -eq 0 ]] && exit 0 || exit 1
+  ((FAILED_FILES==0)) && exit 0 || exit 1
 }
 
 main "$@"
