@@ -2,11 +2,13 @@
 
 **Rule: BCS0306**
 
-`${parameter@Q}` expands to a shell-quoted value safe for display and re-use.
+Using `${parameter@Q}` for safe display of user input.
 
 ---
 
 #### The @Q Operator
+
+`${parameter@Q}` expands to a shell-quoted value that can be safely displayed and re-used.
 
 ```bash
 name='hello world'
@@ -23,7 +25,6 @@ echo "${name@Q}"      # Output: '$(rm -rf /)' (safe, literal)
 ```bash
 # ✗ Wrong - injection risk
 die 2 "Unknown option $1"
-die 2 "Unknown option '$1'"
 
 # ✓ Correct - safe display
 die 2 "Unknown option ${1@Q}"
@@ -67,10 +68,10 @@ run_command() {
 
 #### When to Use
 
-**Use @Q for:** Error messages, logging user input, dry-run output
+**Use @Q for:** Error messages, logging user input, dry-run output.
 
-**Don't use @Q for:** Normal variable expansion, comparisons
+**Don't use @Q for:** Normal variable expansion, comparisons.
+
+---
 
 **Key principle:** Use `${parameter@Q}` when displaying user input in error messages to prevent injection.
-
-#fin

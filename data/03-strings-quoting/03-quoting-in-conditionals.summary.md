@@ -1,14 +1,17 @@
 ### Quoting in Conditionals
 
-**Rule: BCS0303**
+**Rule: BCS0303** — Variable quoting in test expressions.
 
-**Always quote variables** in conditionals. Static comparison values follow normal rules (single quotes for literals).
+---
+
+#### The Rule
+
+**Always quote variables** in conditionals. Static comparison values follow normal rules (single quotes for literals with breaking chars).
 
 ```bash
 # ✓ Correct - variable quoted
 [[ -f "$file" ]]
-[[ "$name" == 'value' ]]
-[[ "$count" -eq 0 ]]
+[[ "$name" == value ]]
 
 # ✗ Wrong - unquoted variable
 [[ -f $file ]]
@@ -17,12 +20,12 @@
 
 ---
 
-#### Rationale
+#### Why Quote Variables
 
-- **Word splitting**: `$file` with spaces becomes multiple arguments
-- **Glob expansion**: `$file` with `*` expands to matching files
-- **Empty values**: Unquoted empty variables cause syntax errors
-- **Security**: Prevents injection attacks
+1. **Word splitting**: `$file` with spaces becomes multiple arguments
+2. **Glob expansion**: `$file` with `*` expands to matching files
+3. **Empty values**: Unquoted empty variables cause syntax errors
+4. **Security**: Prevents injection attacks
 
 ---
 
@@ -36,6 +39,7 @@
 # String comparisons (variable quoted, literal single-quoted)
 [[ "$action" == 'start' ]]
 [[ -z "$value" ]]
+[[ -n "$result" ]]
 
 # Numeric comparisons
 declare -i count=0
@@ -57,7 +61,8 @@ pattern='^[0-9]+$'
 
 ```bash
 # ✗ Wrong - unquoted variable
-[[ -f $file ]]              # Breaks with spaces
+[[ -f $file ]] # Breaks with spaces
+[[ $name == value with breaking chars ]] # Breaks with spaces
 
 # ✗ Wrong - double quotes for static literal
 [[ "$mode" == "production" ]]
@@ -69,6 +74,4 @@ pattern='^[0-9]+$'
 
 ---
 
-**Key principle:** Quote all variables in conditionals: `[[ -f "$file" ]]`.
-
-#fin
+**Key principle:** Variable quoting in conditionals is mandatory. Quote all variables: `[[ -f "$file" ]]`.

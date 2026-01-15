@@ -1,30 +1,29 @@
 # Strings & Quoting
 
-**Single quotes for static strings; double quotes when variable expansion needed.**
+**Single quotes for literals, double quotes for expansion.**
 
-## 7 Rules
+## Rules (7)
 
-| Code | Rule |
-|------|------|
-| BCS0301 | Quoting Fundamentals - static vs dynamic |
-| BCS0302 | Command Substitution - quote `$(...)` |
-| BCS0303 | Conditionals - quote vars in `[[ ]]` |
-| BCS0304 | Here Documents - delimiter quoting |
-| BCS0305 | printf - format string quoting |
-| BCS0306 | Parameter Quoting - `${param@Q}` |
-| BCS0307 | Anti-Patterns - common mistakes |
+| Rule | Purpose |
+|------|---------|
+| BCS0301 | Quoting fundamentals: static vs dynamic |
+| BCS0302 | Quote `$(...)` command substitution |
+| BCS0303 | Variable quoting in `[[ ]]` |
+| BCS0304 | Heredoc delimiter quoting |
+| BCS0305 | printf format/argument quoting |
+| BCS0306 | `${param@Q}` safe display |
+| BCS0307 | Common quoting anti-patterns |
 
 ## Core Pattern
 
 ```bash
-info 'Static message'           # Single quotes
-info "Processing $file"         # Double quotes for vars
-[[ -f "$path" ]]               # Always quote in conditionals
+readonly STATIC='literal text'     # Single: no expansion
+msg="Hello, ${name}"               # Double: expansion needed
 ```
 
-## Anti-Patterns
+## Key Anti-Patterns
 
-`echo $var` â†' `echo "$var"` (unquoted expansion)
-`info "Literal text"` â†' `info 'Literal text'` (wrong quote type)
+- `$var` â†' `"$var"` (unquoted variables cause word-splitting)
+- `echo $@` â†' `echo "$@"` (preserve argument boundaries)
 
 **Ref:** BCS0300

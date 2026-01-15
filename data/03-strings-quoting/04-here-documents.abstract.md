@@ -2,33 +2,39 @@
 
 **Quote delimiter (`<<'EOF'`) to prevent expansion; unquoted (`<<EOF`) for variable substitution.**
 
-#### Delimiter Types
+#### Delimiter Quoting
 
 | Delimiter | Expansion | Use |
 |-----------|-----------|-----|
 | `<<EOF` | Yes | Dynamic content |
 | `<<'EOF'` | No | Literal (JSON, SQL) |
 
-#### Core Pattern
+#### Examples
 
 ```bash
-# Variables expand
+# Expansion enabled
 cat <<EOF
 User: $USER
 EOF
 
 # Literal content (no expansion)
 cat <<'EOF'
-{"name": "$APP_NAME"}
+{"name": "$VAR"}
 EOF
 ```
 
-#### Indentation
-
-`<<-` removes leading tabs only (not spaces).
-
 #### Anti-Pattern
 
-`<<EOF` with SQL â†' injection risk if variables contain user input. Use `<<'EOF'` for literal queries with placeholders.
+```bash
+# âœ— Unquoted â†' SQL injection risk
+cat <<EOF
+SELECT * FROM users WHERE name = "$name"
+EOF
+
+# âœ“ Quoted for literal SQL
+cat <<'EOF'
+SELECT * FROM users WHERE name = ?
+EOF
+```
 
 **Ref:** BCS0304

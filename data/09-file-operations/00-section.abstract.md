@@ -1,35 +1,23 @@
 # File Operations
 
-**Safe file handling to prevent data loss and handle edge cases reliably.**
+**Use explicit paths, quote all variables, prefer process substitution over pipes.**
 
-**Core Requirements:**
-- Always quote variables in file tests: `[[ -f "$file" ]]` never `[[ -f $file ]]`
-- Use explicit paths for wildcards: `rm ./*` never `rm *` (prevents accidental root deletion)
-- Use `< <(command)` process substitution instead of pipes to `while` loops (avoids subshell variable loss)
-- File test operators: `-e` (exists), `-f` (regular file), `-d` (directory), `-r` (readable), `-w` (writable), `-x` (executable)
+## File Tests
+Always quote: `[[ -f "$file" ]]` `[[ -d "$dir" ]]` `[[ -r "$path" ]]`
 
-**Anti-Patterns:**
-- `rm *` ’ Expands to `rm /` if run in empty directory with `nullglob`
-- `cat file | while read line` ’ Variables modified in loop are lost (subshell)
-- `[[ -f $file ]]` ’ Breaks with filenames containing spaces or special chars
+## Safe Wildcards
+`rm ./*` â†' never `rm *`; explicit path prevents catastrophic deletion
 
-**Minimal Example:**
+## Process Substitution
 ```bash
-shopt -s nullglob
-declare -- file='/path/to/file'
-
-[[ -f "$file" ]] || die "File not found: $file"
-[[ -r "$file" ]] || die "File not readable: $file"
-
-# Safe wildcard (explicit path)
-for f in ./*.txt; do
-  process "$f"
-done
-
-# Process substitution (preserves variables)
 while IFS= read -r line; do
-  count+=1
+    ((count++))
 done < <(command)
+# Variables persist (no subshell)
 ```
 
-**Ref:** BCS1100
+## Anti-Patterns
+- `rm *` â†' use `rm ./*`
+- `cat file | while read` â†' use `while read < <(cat file)` or `< file`
+
+**Ref:** BCS0900

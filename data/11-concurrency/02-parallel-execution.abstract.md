@@ -1,44 +1,38 @@
 ### Parallel Execution Patterns
 
-**Track PIDs with `pids+=($!)`, wait with `wait "$pid"`, limit concurrency with `wait -n` and `kill -0`.**
+**Execute multiple commands concurrently while tracking PIDs and collecting results.**
 
-**Rationale:** 10-100x speedup for I/O-bound tasks; better resource utilization; ordered output via temp files.
+#### Rationale
+- Significant speedup for I/O-bound tasks
+- Better resource utilization
 
----
+#### Basic Pattern (PID Tracking)
 
-#### Core Patterns
-
-**Basic parallel with PID tracking:**
 ```bash
 declare -a pids=()
 for server in "${servers[@]}"; do
   run_command "$server" &
   pids+=($!)
 done
-for pid in "${pids[@]}"; do wait "$pid" || true; done
-```
-
-**Concurrency limit (pool pattern):**
-```bash
-while ((${#pids[@]} >= max_jobs)); do
-  wait -n 2>/dev/null || true
-  # Prune completed PIDs with kill -0
+for pid in "${pids[@]}"; do
+  wait "$pid" || true
 done
 ```
 
----
+#### Output Capture Pattern
 
-#### Anti-Pattern
-
+Use temp files per job, cleanup via trap:
 ```bash
-# ✗ Variables lost in subshell
-count=0; for t in "${tasks[@]}"; do { process "$t"; count+=1; } & done
-echo "$count"  # Always 0!
-
-# ✓ Use temp files: echo 1 >> "$temp"/count; count=$(wc -l < "$temp"/count)
+temp_dir=$(mktemp -d); trap 'rm -rf "$temp_dir"' EXIT
 ```
 
----
+#### Concurrency Limit
+
+Use `wait -n` with PID array, check `kill -0 "$pid"` to prune completed jobs.
+
+#### Anti-Patterns
+
+`count=0; { process; ((count++)); } &` �' subshell loses variable changes. Use temp files: `echo 1 >> "$temp"/count`, then `wc -l < "$temp"/count`.
 
 **See Also:** BCS1101 (Background Jobs), BCS1103 (Wait Patterns)
 

@@ -1,26 +1,19 @@
 ## Here Documents
 
-**Use heredocs for multi-line strings or input to commands.**
+**Use heredocs for multi-line strings/input; quote delimiter to prevent expansion.**
 
-### Syntax
-
-| Delimiter | Expansion |
-|-----------|-----------|
-| `<<'EOF'` | No variable expansion (literal) |
-| `<<EOF` | Variables expand (`$USER`, `$HOME`) |
-
-### Example
+`<<'EOF'` â†' literal (no expansion) | `<<EOF` â†' variables expand
 
 ```bash
-# Literal (quoted delimiter)
-cat <<'EOF'
-$USER stays literal
-EOF
+cat <<'EOT'
+Literal $VAR text
+EOT
 
-# Expanded (unquoted delimiter)
-cat <<EOF
-User: $USER
-EOF
+cat <<EOT
+Expanded: $USER
+EOT
 ```
+
+**Anti-pattern:** Using `echo` with embedded newlines â†' use heredoc instead.
 
 **Ref:** BCS0904

@@ -8,7 +8,7 @@ Managing command timeouts and handling timeout conditions gracefully.
 
 #### Rationale
 
-Timeout handling prevents scripts hanging on unresponsive commands, resource exhaustion from stuck processes, poor user experience, and cascading failures in automated systems.
+Timeout handling prevents scripts hanging on unresponsive commands, resource exhaustion from stuck processes, poor UX with indefinite waits, and cascading failures in automated systems.
 
 ---
 
@@ -34,7 +34,12 @@ fi
 # Send SIGTERM first, SIGKILL after grace period
 timeout --signal=TERM --kill-after=10 60 command
 
-# Exit codes: 124=timed out, 125=timeout failed, 126=not executable, 127=not found, 137=SIGKILL
+# Common timeout exit codes:
+# 124 - command timed out
+# 125 - timeout command itself failed
+# 126 - command found but not executable
+# 127 - command not found
+# 137 - killed by SIGKILL (128 + 9)
 ```
 
 #### Timeout with Variable Duration
@@ -62,6 +67,7 @@ run_with_timeout "$TIMEOUT" ssh "$server" "$command"
 #### Read with Timeout
 
 ```bash
+# User input with timeout
 if read -r -t 10 -p 'Enter value: ' value; then
   info "Got: $value"
 else
@@ -73,13 +79,16 @@ fi
 #### Connection Timeout Pattern
 
 ```bash
+# SSH with connection timeout
 ssh -o ConnectTimeout=10 -o BatchMode=yes "$server" "$command"
+
+# curl with timeout
 curl --connect-timeout 10 --max-time 60 "$url"
 ```
 
 ---
 
-#### Anti-Pattern
+#### Anti-Patterns
 
 ```bash
 # ✗ Wrong - no timeout on network operations
@@ -92,3 +101,5 @@ timeout 300 ssh -o ConnectTimeout=10 "$server" 'long_command'
 ---
 
 **See Also:** BCS1105 (Exponential Backoff)
+
+**Full implementation:** See `examples/exemplar-code/oknav/oknav` line 676

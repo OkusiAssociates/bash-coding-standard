@@ -1,8 +1,16 @@
 ### Parameter Expansion & Braces Usage
 
-**Rule: BCS0210**
+**Rule: BCS0210** (Merged from BCS0301 + BCS0302)
 
-Use `"$var"` as default; add braces `"${var}"` only when syntactically required.
+Variable expansion operations and when to use braces.
+
+---
+
+#### General Rule
+
+Always quote variables with `"$var"` as the default form. Only use braces `"${var}"` when syntactically necessary.
+
+**Rationale:** Braces add visual noise without value when not required. Using them only when necessary makes code cleaner and necessary cases stand out.
 
 ---
 
@@ -58,16 +66,19 @@ ${!prefix@}                     # Variables starting with prefix
 #### When Braces Are NOT Required
 
 ```bash
-# ✓ Correct - standalone variables
+# ✓ Standalone variables
 "$var"  "$HOME"  "$SCRIPT_DIR"
 
-# ✓ Correct - separators delimit naturally
+# ✓ Path concatenation with separators
 "$PREFIX"/bin
-"$PREFIX/bin"
+"$SCRIPT_DIR"/build/lib
+
+# ✓ In strings with separators
 echo "Installing to $PREFIX/bin"
+info "Found $count files"
 
 # ✗ Wrong - unnecessary braces
-"${var}"  "${HOME}"  "${PREFIX}"/bin
+"${var}"  "${PREFIX}"/bin  "${count}"
 ```
 
 ---
@@ -75,7 +86,7 @@ echo "Installing to $PREFIX/bin"
 #### Edge Cases
 
 ```bash
-# Braces required - alphanumeric follows without separator
+# Braces required - next char alphanumeric, no separator
 "${var}_suffix"      # Prevents $var_suffix
 "${prefix}123"       # Prevents $prefix123
 
@@ -87,7 +98,7 @@ echo "Installing to $PREFIX/bin"
 
 ---
 
-#### Summary
+#### Summary Table
 
 | Situation | Form | Example |
 |-----------|------|---------|
@@ -98,5 +109,3 @@ echo "Installing to $PREFIX/bin"
 | Array access | `"${array[i]}"` | `"${args[@]}"` |
 
 **Key Principle:** Use `"$var"` by default. Only add braces when required for correct parsing.
-
-#fin

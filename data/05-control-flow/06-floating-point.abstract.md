@@ -1,40 +1,33 @@
 ### Floating-Point Operations
 
-**Bash only supports integer arithmetic; use `bc` (precision) or `awk` (inline) for floats.**
+**Use `bc` or `awk` for float math; Bash only supports integers natively.**
 
-#### Tools
+#### Rationale
+- Bash `$(())` truncates decimals â†' data loss
+- `bc -l` provides arbitrary precision; `awk` handles inline ops
+- Float string comparison (`[[ "$a" > "$b" ]]`) gives wrong results
 
-**bc** â€” arbitrary precision:
+#### Core Patterns
+
 ```bash
+# bc: precision calculation
 result=$(echo "$width * $height" | bc -l)
-```
 
-**awk** â€” inline with formatting:
-```bash
+# awk: formatted output with variables
 area=$(awk -v w="$width" -v h="$height" 'BEGIN {printf "%.2f", w * h}')
-```
 
-#### Comparisons
-
-```bash
-# bc returns 1=true, 0=false
+# Float comparison (bc returns 1=true, 0=false)
 if (($(echo "$a > $b" | bc -l))); then
-
-# awk comparison
-if awk -v a="$a" -v b="$b" 'BEGIN {exit !(a > b)}'; then
+  echo "$a is greater"
+fi
 ```
 
 #### Anti-Patterns
 
-```bash
-# âœ— Integer division loses precision
-result=$((10 / 3))  # Returns 3, not 3.333
-# âœ“ Use bc
-result=$(echo '10 / 3' | bc -l)
+`result=$((10/3))` â†' returns 3, not 3.333 â†' use `echo '10/3' | bc -l`
 
-# âœ— String comparison of floats
-[[ "$a" > "$b" ]]  # Wrong!
-# âœ“ Use bc/awk numeric comparison
-```
+`[[ "$a" > "$b" ]]` â†' string comparison â†' use `(($(echo "$a > $b" | bc -l)))`
+
+**See Also:** BCS0705 (Integer Arithmetic)
 
 **Ref:** BCS0506

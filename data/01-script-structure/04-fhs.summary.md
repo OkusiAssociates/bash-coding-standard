@@ -1,48 +1,78 @@
 ## Filesystem Hierarchy Standard (FHS) Preference
 
-**Follow FHS for scripts that install files or search for resources. FHS enables predictable locations, multi-environment support, and package manager compatibility.**
+**Follow FHS when designing scripts that install files or search for resources. FHS compliance enables predictable file locations, supports multi-environment installations, and integrates with package managers.**
 
 **Rationale:**
-- Predictability: Standard locations (`/usr/local/bin/`, `/usr/share/`)
-- Multi-environment: Works in development, local, system, and user installs
-- Package manager compatible (apt, yum, pacman)
-- Eliminates hardcoded paths; portable across distributions
-- Separates executables, data, configuration, and documentation
+- Predictability: Users/package managers expect files in standard locations
+- Multi-environment support: Works in development, local, system, and user installs
+- No hardcoded paths: FHS search patterns eliminate brittle absolute paths
+- Portability: Works across distributions without modification
 
-**FHS Locations:**
-| Path | Purpose |
-|------|---------|
-| `/usr/local/bin/` | User-installed executables (not package-managed) |
-| `/usr/local/share/` | Architecture-independent data |
-| `/usr/local/lib/` | Libraries and loadable modules |
-| `/usr/local/etc/` | Configuration files |
-| `/usr/bin/`, `/usr/share/` | Package-managed system files |
-| `$HOME/.local/bin/` | User-specific executables |
-| `${XDG_DATA_HOME:-$HOME/.local/share}/` | User-specific data |
-| `${XDG_CONFIG_HOME:-$HOME/.config}/` | User-specific config |
+**Common FHS locations:**
+- `/usr/local/bin/`, `/usr/bin/` - Executables (user-installed vs package-managed)
+- `/usr/local/share/`, `/usr/share/` - Architecture-independent data
+- `/usr/local/lib/`, `/usr/lib/` - Libraries and loadable modules
+- `/usr/local/etc/`, `/etc/` - Configuration files
+- `$HOME/.local/bin/`, `$HOME/.local/share/` - User-specific executables/data
+- `${XDG_CONFIG_HOME:-$HOME/.config}/` - User-specific configuration
 
-**FHS Search Pattern (Canonical):**
+**Core FHS search pattern:**
 ```bash
 find_data_file() {
-  local -- script_dir=$1
-  local -- filename=$2
+  local -- filename=$1
   local -a search_paths=(
-    "$script_dir"/"$filename"  # Same directory (development)
-    /usr/local/share/myapp/"$filename" # Local install
-    /usr/share/myapp/"$filename" # System install
-    "${XDG_DATA_HOME:-$HOME/.local/share}"/myapp/"$filename"  # User install
+    "$SCRIPT_DIR"/"$filename"                                    # Development
+    /usr/local/share/myapp/"$filename"                           # Local install
+    /usr/share/myapp/"$filename"                                 # System install
+    "${XDG_DATA_HOME:-"$HOME"/.local/share}"/myapp/"$filename"   # User install
   )
 
   local -- path
   for path in "${search_paths[@]}"; do
     [[ -f "$path" ]] && { echo "$path"; return 0; } ||:
   done
-
   return 1
 }
 ```
 
-**FHS-Compliant Installation Script:**
+**Config file search (XDG priority):**
+```bash
+find_config_file() {
+  local -- filename=$1
+  local -a search_paths=(
+    "${XDG_CONFIG_HOME:-"$HOME"/.config}"/myapp/"$filename"  # User config (highest)
+    /usr/local/etc/myapp/"$filename"                          # System-local
+    /etc/myapp/"$filename"                                    # System-wide
+    "$SCRIPT_DIR"/"$filename"                                 # Development/fallback
+  )
+
+  local -- path
+  for path in "${search_paths[@]}"; do
+    [[ ! -f "$path" ]] || { echo "$path"; return 0; }
+  done
+  return 1  # Config is optional
+}
+```
+
+**Library loading pattern:**
+```bash
+load_library() {
+  local -- lib_name=$1
+  local -a search_paths=(
+    "$SCRIPT_DIR"/lib/"$lib_name"      # Development
+    /usr/local/lib/myapp/"$lib_name"   # Local install
+    /usr/lib/myapp/"$lib_name"         # System install
+  )
+
+  local -- path
+  for path in "${search_paths[@]}"; do
+    [[ -f "$path" ]] && { source "$path"; return 0; } ||:
+  done
+  die 2 "Library not found ${lib_name@Q}"
+}
+```
+
+**FHS-compliant installation script:**
 ```bash
 #!/bin/bash
 set -euo pipefail
@@ -59,26 +89,21 @@ declare -- BIN_DIR="$PREFIX"/bin
 declare -- SHARE_DIR="$PREFIX"/share/myapp
 declare -- LIB_DIR="$PREFIX"/lib/myapp
 declare -- ETC_DIR="$PREFIX"/etc/myapp
-declare -- MAN_DIR="$PREFIX"/share/man/man1
-readonly -- PREFIX BIN_DIR SHARE_DIR LIB_DIR ETC_DIR MAN_DIR
+readonly -- PREFIX BIN_DIR SHARE_DIR LIB_DIR ETC_DIR
 
 install_files() {
-  install -d "$BIN_DIR" "$SHARE_DIR" "$LIB_DIR" "$ETC_DIR" "$MAN_DIR"
+  install -d "$BIN_DIR" "$SHARE_DIR" "$LIB_DIR" "$ETC_DIR"
   install -m 755 "$SCRIPT_DIR"/myapp "$BIN_DIR"/myapp
   install -m 644 "$SCRIPT_DIR"/data/template.txt "$SHARE_DIR"/template.txt
   install -m 644 "$SCRIPT_DIR"/lib/common.sh "$LIB_DIR"/common.sh
   # Preserve existing config
-  if [[ ! -f "$ETC_DIR"/myapp.conf ]]; then
-    install -m 644 "$SCRIPT_DIR/myapp.conf.example" "$ETC_DIR/myapp.conf"
-  fi
-  install -m 644 "$SCRIPT_DIR"/docs/myapp.1 "$MAN_DIR"/myapp.1
-  info "Installation complete to $PREFIX"
+  [[ -f "$ETC_DIR"/myapp.conf ]] || \
+    install -m 644 "$SCRIPT_DIR"/myapp.conf.example "$ETC_DIR"/myapp.conf
 }
 
 uninstall_files() {
-  rm -f "$BIN_DIR"/myapp "$SHARE_DIR"/template.txt "$LIB_DIR"/common.sh "$MAN_DIR"/myapp.1
+  rm -f "$BIN_DIR"/myapp "$SHARE_DIR"/template.txt "$LIB_DIR"/common.sh
   rmdir --ignore-fail-on-non-empty "$SHARE_DIR" "$LIB_DIR" "$ETC_DIR"
-  info 'Uninstallation complete'
 }
 
 main() {
@@ -88,107 +113,82 @@ main() {
     *)         die 2 "Usage: $SCRIPT_NAME {install|uninstall}" ;;
   esac
 }
-
 main "$@"
-
 #fin
 ```
 
-**Generic FHS Resource Finder:**
+**Generic resource finder (file or directory):**
 ```bash
 find_resource() {
-  local -- type=$1     # 'file' or 'dir'
-  local -- name=$2     # Resource name
+  local -- type=$1 name=$2
   local -- install_base="${SCRIPT_DIR%/bin}"/share/myorg/myproject
   local -a search_paths=(
-    "$SCRIPT_DIR"                        # Development
-    "$install_base"                      # Custom PREFIX
-    /usr/local/share/myorg/myproject     # Local install
-    /usr/share/myorg/myproject           # System install
+    "$SCRIPT_DIR"                     # Development
+    "$install_base"                   # Custom PREFIX
+    /usr/local/share/myorg/myproject  # Local install
+    /usr/share/myorg/myproject        # System install
   )
 
   local -- path
   for path in "${search_paths[@]}"; do
     local -- resource="$path/$name"
     case "$type" in
-      file) [[ -f "$resource" ]] && { echo "$resource"; return 0; } ;;
-      dir)  [[ -d "$resource" ]] && { echo "$resource"; return 0; } ;;
-      *)    die 2 "Invalid resource type ${type@Q}" ;;
+      file) [[ -f "$resource" ]] && { echo "$resource"; return 0; } ||: ;;
+      dir)  [[ -d "$resource" ]] && { echo "$resource"; return 0; } ||: ;;
     esac
   done
-
   return 1
 }
-declare -fx find_resource
 
 # Usage:
 CONFIG=$(find_resource file config.yml) || die 'Config not found'
 DATA_DIR=$(find_resource dir data) || die 'Data directory not found'
 ```
 
-**XDG Base Directory Variables:**
+**XDG Base Directory variables:**
 ```bash
-declare -- XDG_DATA_HOME=${XDG_DATA_HOME:-$HOME/.local/share}
-declare -- XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-$HOME/.config}
-declare -- XDG_CACHE_HOME=${XDG_CACHE_HOME:-$HOME/.cache}
-declare -- XDG_STATE_HOME=${XDG_STATE_HOME:-$HOME/.local/state}
-
-declare -- USER_DATA_DIR="$XDG_DATA_HOME"/myapp
-declare -- USER_CONFIG_DIR="$XDG_CONFIG_HOME"/myapp
-install -d "$USER_DATA_DIR" "$USER_CONFIG_DIR"
-```
-
-**Makefile Pattern:**
-```makefile
-PREFIX ?= /usr/local
-BINDIR = $(PREFIX)/bin
-SHAREDIR = $(PREFIX)/share/myapp
-
-install:
-	install -d $(BINDIR) $(SHAREDIR)
-	install -m 755 myapp $(BINDIR)/myapp
-	install -m 644 data/template.txt $(SHAREDIR)/template.txt
-
-# Usage: make install | make PREFIX=/usr install | make PREFIX=$HOME/.local install
+declare -- XDG_DATA_HOME=${XDG_DATA_HOME:-"$HOME"/.local/share}
+declare -- XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-"$HOME"/.config}
+declare -- XDG_CACHE_HOME=${XDG_CACHE_HOME:-"$HOME"/.cache}
+declare -- XDG_STATE_HOME=${XDG_STATE_HOME:-"$HOME"/.local/state}
 ```
 
 **Anti-patterns:**
 ```bash
-# ✗ Wrong - hardcoded absolute path
+# ✗ Hardcoded absolute path
 data_file=/home/user/projects/myapp/data/template.txt
-# ✓ Correct - FHS search pattern
+# ✓ FHS search pattern
 data_file=$(find_data_file template.txt)
 
-# ✗ Wrong - assuming specific install location
+# ✗ Assuming specific install location
 source /usr/local/lib/myapp/common.sh
-# ✓ Correct - search multiple FHS locations
+# ✓ Search multiple FHS locations
 load_library common.sh
 
-# ✗ Wrong - using relative paths from CWD
-source ../lib/common.sh  # Breaks when run from different directory
-# ✓ Correct - paths relative to script location
+# ✗ Relative paths from CWD (breaks when run elsewhere)
+source ../lib/common.sh
+# ✓ Paths relative to script location
 source "$SCRIPT_DIR"/../lib/common.sh
 
-# ✗ Wrong - not supporting PREFIX customization
-BIN_DIR=/usr/local/bin  # Hardcoded
-# ✓ Correct - respect PREFIX environment variable
+# ✗ Not supporting PREFIX customization
+BIN_DIR=/usr/local/bin
+# ✓ Respect PREFIX environment variable
 PREFIX=${PREFIX:-/usr/local}
-BIN_DIR="$PREFIX"/bin"
+BIN_DIR="$PREFIX"/bin
 
-# ✗ Wrong - overwriting user configuration on upgrade
-install myapp.conf "$PREFIX/etc/myapp/myapp.conf"
-# ✓ Correct - preserve existing config
-[[ -f "$PREFIX/etc/myapp/myapp.conf" ]] || \
-  install myapp.conf.example "$PREFIX/etc/myapp/myapp.conf"
+# ✗ Overwriting user config on upgrade
+install myapp.conf "$PREFIX"/etc/myapp/myapp.conf
+# ✓ Preserve existing config
+[[ -f "$PREFIX"/etc/myapp/myapp.conf ]] || \
+  install myapp.conf.example "$PREFIX"/etc/myapp/myapp.conf
 ```
 
-**Edge Cases:**
+**Edge cases:**
 
 **1. PREFIX with trailing slash:**
 ```bash
 PREFIX=${PREFIX:-/usr/local}
 PREFIX=${PREFIX%/}  # Remove trailing slash if present
-BIN_DIR="$PREFIX"/bin
 ```
 
 **2. User install without sudo:**
@@ -202,15 +202,16 @@ fi
 
 **3. Symlink resolution:**
 ```bash
-# realpath resolves symlinks - SCRIPT_DIR points to actual install location
-SCRIPT_PATH=$(realpath -- "$0")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
+# realpath resolves symlinks to actual installation directory
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*}
+# SCRIPT_DIR points to actual location, not symlink (/usr/local/bin)
 ```
 
 **When NOT to use FHS:**
-- Single-user scripts
-- Project-specific tools (build scripts, test runners)
-- Container applications (Docker often uses `/app`)
+- Single-user scripts only used by one person
+- Project-specific tools (build scripts, test runners) staying in project directory
+- Container applications using `/app` or similar
 - Embedded systems with custom layouts
 
-**Summary:** FHS makes scripts portable, predictable, and package-manager compatible. Use PREFIX for custom installs, search multiple locations, separate file types by hierarchy, support XDG for user files, preserve user config on upgrades.
+**Key principle:** FHS compliance makes scripts portable, predictable, and package-manager compatible. Design scripts to work in development mode and multiple install scenarios without modification.

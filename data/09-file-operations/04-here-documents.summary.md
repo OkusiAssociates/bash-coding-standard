@@ -4,15 +4,15 @@ Use for multi-line strings or input.
 
 ```bash
 # No variable expansion (note single quotes)
-cat <<'EOF'
+cat <<'EOT'
 This is a multi-line
 string with no variable
 expansion.
-EOF
+EOT
 
 # With variable expansion
-cat <<EOF
+cat <<EOT
 User: $USER
 Home: $HOME
-EOF
+EOT
 ```

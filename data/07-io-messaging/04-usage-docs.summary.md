@@ -1,7 +1,4 @@
 ## Usage Documentation
-
-Standard `show_help()` pattern using heredoc with variable interpolation.
-
 ```bash
 show_help() {
   cat <<EOT
@@ -23,8 +20,8 @@ Options:
 Examples:
   # Example 1
   $SCRIPT_NAME -v file.txt
+  # Example 2
+  $SCRIPT_NAME -qn 10 file.txt
 EOT
 }
 ```
-
-**Key elements:** Script name/version header, description, usage line, grouped options with blank-line separators, examples section.

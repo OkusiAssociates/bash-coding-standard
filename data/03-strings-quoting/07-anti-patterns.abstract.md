@@ -1,50 +1,45 @@
 ### Quoting Anti-Patterns
 
-**Avoid common quoting mistakes that cause word splitting, glob expansion, and inconsistent code.**
-
----
+**Single quotes for static text, double quotes for variables, avoid unnecessary braces.**
 
 #### Critical Anti-Patterns
 
-**Static strings:** Use single quotes â†' `info 'message'` not `info "message"`
+| Wrong | Correct | Why |
+|-------|---------|-----|
+| `"literal"` | `'literal'` | Static strings need single quotes |
+| `$var` | `"$var"` | Prevents word splitting/glob expansion |
+| `"${HOME}/bin"` | `"$HOME"/bin` | Braces only when needed |
+| `${arr[@]}` | `"${arr[@]}"` | Arrays require quotes |
 
-**Unquoted variables:** Always quote â†' `"$var"` not `$var`
-
-**Unnecessary braces:** Omit when not needed â†' `"$HOME"/bin` not `"${HOME}/bin"`
-
-**Braces required for:** `${var:-default}`, `${file##*/}`, `"${array[@]}"`, `${var1}${var2}`
-
-**Arrays:** Always quote â†' `"${items[@]}"` not `${items[@]}`
-
-**Glob danger:** `echo "$pattern"` preserves literal; `echo $pattern` expands
-
-**Here-docs:** Quote delimiter for literal content â†' `<<'EOF'` not `<<EOF`
-
----
-
-#### Example
+#### When Braces ARE Required
 
 ```bash
-# âœ— Wrong
-info "Starting..."
-[[ -f $file ]]
-echo "${HOME}/bin"
-
-# âœ“ Correct
-info 'Starting...'
-[[ -f "$file" ]]
-echo "$HOME"/bin
+"${var:-default}"    # Default value
+"${file##*/}"        # Parameter expansion
+"${array[@]}"        # Array expansion
+"${var1}${var2}"     # Adjacent variables
 ```
 
----
+#### Glob Danger
 
-#### Quick Reference
+```bash
+pattern='*.txt'
+echo $pattern    # âœ— Expands to all .txt files!
+echo "$pattern"  # âœ“ Outputs literal: *.txt
+```
 
-| Context | Correct | Wrong |
-|---------|---------|-------|
-| Static | `'literal'` | `"literal"` |
-| Variable | `"$var"` | `$var` |
-| Path | `"$HOME"/bin` | `"${HOME}/bin"` |
-| Array | `"${arr[@]}"` | `${arr[@]}` |
+#### Here-doc: Quote Delimiter for Literals
+
+```bash
+# âœ— Variables expand unexpectedly
+cat <<EOF
+SELECT * FROM users WHERE name = "$name"
+EOF
+
+# âœ“ Quoted delimiter prevents expansion
+cat <<'EOF'
+SELECT * FROM users WHERE name = ?
+EOF
+```
 
 **Ref:** BCS0307

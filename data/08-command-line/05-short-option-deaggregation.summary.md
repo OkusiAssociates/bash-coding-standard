@@ -1,8 +1,10 @@
-# Short-Option Disaggregation in Command-Line Processing
+# Short-Option Disaggregation
 
 ## Overview
 
-Short-option disaggregation splits bundled options (`-abc`) into individual options (`-a -b -c`), enabling Unix-standard commands like `script -vvn` instead of `script -v -v -n`.
+Splits bundled short options (e.g., `-abc`) into individual options (`-a -b -c`) for processing. Enables `script -vvn` instead of `script -v -v -n`, following Unix conventions.
+
+Without disaggregation, `-lha` is treated as unknown single option rather than `-l -h -a`.
 
 ## The Three Methods
 
@@ -14,9 +16,11 @@ Short-option disaggregation splits bundled options (`-abc`) into individual opti
   ;;
 ```
 
-**Performance:** ~190 iter/sec | Requires external `grep`, SC2046 disable
+**How it works:** `${1:1}` removes leading dash â†' `grep -o .` outputs each char on separate line â†' `printf -- "-%c "` prepends dash â†' `set --` replaces argument list.
 
-### Method 2: fold (Alternative)
+**Performance:** ~190 iter/sec | External dep: grep | Requires SC2046 disable
+
+### Method 2: fold
 
 ```bash
 -[amLpvqVh]*) #shellcheck disable=SC2046
@@ -24,28 +28,27 @@ Short-option disaggregation splits bundled options (`-abc`) into individual opti
   ;;
 ```
 
-**Performance:** ~195 iter/sec (+2.3%) | Still requires external command
+**Performance:** ~195 iter/sec (+2.3%) | External dep: fold | Requires SC2046 disable
 
-### Method 3: Pure Bash (Recommended)
+### Method 3: Pure Bash (Recommended for Performance)
 
 ```bash
--[amLpvqVh]*) # Split up single options (pure bash)
+-[mjvqVh]*) # Split up single options (pure bash)
   local -- opt=${1:1}
   local -a new_args=()
   while ((${#opt})); do
     new_args+=("-${opt:0:1}")
     opt=${opt:1}
   done
-  set -- '' "${new_args[@]}" "${@:2}"
-  ;;
+  set -- '' "${new_args[@]}" "${@:2}" ;;
 ```
 
-**Performance:** ~318 iter/sec (**+68%**) | No external deps, no shellcheck warnings
+**Performance:** ~318 iter/sec (+68%) | No external deps | No shellcheck warnings
 
 ## Performance Comparison
 
-| Method | Iter/Sec | Speed | External Deps | Shellcheck |
-|--------|----------|-------|---------------|------------|
+| Method | Iter/Sec | Relative | External Deps | Shellcheck |
+|--------|----------|----------|---------------|------------|
 | grep | 190.82 | Baseline | grep | SC2046 |
 | fold | 195.25 | +2.3% | fold | SC2046 |
 | **Pure Bash** | **317.75** | **+66.5%** | **None** | **Clean** |
@@ -111,6 +114,12 @@ main() {
 
   ((${#targets[@]} > 0)) || die 2 'No targets specified'
   [[ "$mode" =~ ^(normal|fast|safe)$ ]] || die 2 "Invalid mode: '$mode'"
+  ((PARALLEL > 0)) || die 2 'Parallel jobs must be positive'
+
+  local -- target
+  for target in "${targets[@]}"; do
+    ((VERBOSE)) && echo "Processing '$target'"
+  done
 }
 
 main "$@"
@@ -121,64 +130,48 @@ main "$@"
 
 ### Options Requiring Arguments
 
-Options with arguments cannot be in middle of bundle:
+Options with arguments cannot be mid-bundle:
 
 ```bash
-# âœ“ Correct - option with argument at end or separate
+# âœ“ Correct - argument option at end or separate
 ./script -vno output.txt file.txt    # -v -n -o output.txt
 ./script -vn -o output.txt file.txt
 
-# âœ— Wrong - option with argument in middle
+# âœ— Wrong - argument option in middle
 ./script -von output.txt file.txt    # -o captures "n" as argument!
 ```
 
 ### Character Set Validation
 
 Pattern `-[amLpvqVh]*` explicitly lists valid options:
-- Prevents incorrect disaggregation of unknown options
+- Prevents disaggregation of unknown options
 - Unknown options caught by `-*)` case
 - Documents valid short options
 
 ```bash
-./script -xyz  # Doesn't match pattern â†' "Invalid option '-xyz'"
+-[ovnVh]*)  # Only these are valid short options
+
+./script -xyz  # Doesn't match, caught by -*) â†' Error: Invalid option '-xyz'
 ```
 
 ### Special Characters
 
-All methods handle correctly: `-123` â†' `-1 -2 -3`, `-v1n2` â†' `-v -1 -n -2`
-
-## Anti-Patterns
-
-```bash
-# âœ— Missing character set validation
--*)  # Catches everything including valid bundled options
-
-# âœ— Placing disaggregation after invalid option catch
--*)             die 22 "Invalid option" ;;
--[ovnVh]*)      ...  # Never reached!
-
-# âœ— Options with args in middle of bundle
-./script -ovn output.txt  # -o captures "v" as value
-
-# âœ— Using grep/fold when performance matters
-# 68% slower than pure bash for frequently-called scripts
-```
+All methods handle correctly: digits (`-123` â†' `-1 -2 -3`), letters, mixed (`-v1n2` â†' `-v -1 -n -2`).
 
 ## Implementation Checklist
 
-- [ ] List valid short options in pattern: `-[ovnVh]*`
+- [ ] List all valid short options in pattern: `-[ovnVh]*`
 - [ ] Place disaggregation case before `-*)` invalid option case
-- [ ] Ensure `shift` happens at end of loop
+- [ ] Ensure `shift` at end of loop for all cases
 - [ ] Document options-with-arguments bundling limitations
 - [ ] Add shellcheck disable for grep/fold methods
-- [ ] Test: single, bundled, mixed long/short, stacking (`-vvv`)
+- [ ] Test: single options, bundled, mixed long/short, stacking (`-vvv`)
 
 ## Recommendations
 
-**New Scripts:** Use pure bash method for 68% performance improvement, no external dependencies, no shellcheck warnings.
+**Use grep method** unless:
+- Performance is critical (loops, build systems, interactive tools)
+- External dependencies are a concern
+- Running in restricted environments
 
-**Existing Scripts:** Keep grep unless performance critical, frequently called, or running in restricted environments.
-
-**High-Performance Scripts:** Always use pure bash for scripts called in tight loops, build systems, interactive tools, or containers.
-
-#fin
+**Use Pure Bash** for high-performance scripts called frequently or in containers.

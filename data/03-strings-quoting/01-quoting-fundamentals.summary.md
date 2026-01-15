@@ -1,6 +1,6 @@
 ### Quoting Fundamentals
 
-**Rule: BCS0301**
+**Rule: BCS0301** (Merged from BCS0401 + BCS0402 + BCS0403 + BCS0404)
 
 Core quoting rules for strings, variables, and literals.
 
@@ -11,25 +11,30 @@ Core quoting rules for strings, variables, and literals.
 **Single quotes** for static strings, **double quotes** when variable expansion needed.
 
 ```bash
-# ✓ Single quotes for static
+# ✓ Correct - single quotes for static
 info 'Checking prerequisites...'
+error 'Failed to connect'
 [[ "$status" == 'success' ]]
 
-# ✓ Double quotes for variables
+# ✓ Correct - double quotes for variables
 info "Found $count files"
 die 1 "File '$SCRIPT_DIR/testfile' not found"
+echo "$SCRIPT_NAME $VERSION"
 ```
 
 ---
 
 #### Why Single Quotes for Static Strings
 
-1. **Performance**: No variable/escape parsing
-2. **Clarity**: Signals literal text, no substitution
-3. **Safety**: `$`, `` ` ``, `\` are literal—prevents accidental expansion
+1. **Performance**: Slightly faster (no variable/escape parsing)
+2. **Clarity**: Signals "this is literal, no substitution"
+3. **Safety**: Prevents accidental expansion
+4. **No escaping**: `$`, `` ` ``, `\` are literal
 
 ```bash
+# Single quotes preserve special characters
 msg='The variable $PATH will not expand'
+sql='SELECT * FROM users WHERE name = "John"'
 regex='^\$[0-9]+\.[0-9]{2}$'
 ```
 
@@ -51,16 +56,13 @@ warn "Cannot access '$file_path'"
 Simple alphanumeric values (`a-zA-Z0-9_-./`) may be unquoted:
 
 ```bash
-# ✓ Acceptable
+# ✓ Both acceptable
 STATUS=success
 [[ "$level" == INFO ]]
-
-# ✓ Better - quote for consistency
 STATUS='success'
-[[ "$level" == 'INFO' ]]
 ```
 
-**Mandatory quoting:** spaces, special characters (`@`, `*`), empty strings `''`, values with `$`/quotes/backslashes.
+**Mandatory quoting:** Spaces, special chars (`@`, `*`), empty strings, values with `$`/quotes/backslashes.
 
 ---
 
@@ -90,7 +92,7 @@ PATTERN='*.log'
 
 #### Path Concatenation Quoting
 
-Quote variable portions separately from literals:
+Quote variable portion separately from literal for clarity:
 
 ```bash
 # ✓ RECOMMENDED - separate quoting
@@ -100,10 +102,10 @@ Quote variable portions separately from literals:
 
 # ACCEPTABLE - combined
 "$PREFIX/bin"
-"$dir/$file"
+"$SCRIPT_DIR/data/$filename"
 ```
 
-**Rationale:** Makes variable boundaries visually explicit; improves readability in complex paths.
+Separate quoting makes variable boundaries visually explicit and improves readability in complex paths.
 
 ---
 
@@ -119,6 +121,4 @@ Quote variable portions separately from literals:
 | Empty string | Single | `VAR=''` |
 | Path with separator | Separate | `"$var"/path` |
 
-**Key principle:** Single quotes as default; double quotes only when expansion needed.
-
-#fin
+**Key principle:** Use single quotes as default. Double quotes only when expansion needed.

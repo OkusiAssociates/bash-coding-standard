@@ -1,28 +1,38 @@
 # Input/Output & Messaging
 
-**Standardized messaging with proper stream separation and color support.**
+**Use standardized messaging functions with proper stream separation: STDOUT for data, STDERR for diagnostics.**
 
-STDOUT = data, STDERR = diagnostics. Always prefix error output: `>&2 echo "error"`.
+## Core Functions
 
-**Core messaging suite:**
-- `_msg()` - Core using FUNCNAME for caller name
-- `vecho()` - Verbose output (respects VERBOSE flag)
-- `success()`, `warn()`, `info()`, `debug()` - Status messages
-- `error()` - Unconditional stderr output
-- `die()` - Exit with error message
-- `yn()` - Yes/no prompts
+| Function | Purpose | Stream |
+|----------|---------|--------|
+| `_msg()` | Core messaging (uses FUNCNAME) | varies |
+| `error()` | Unconditional errors | STDERR |
+| `die()` | Exit with error message | STDERR |
+| `warn()` | Warnings | STDERR |
+| `info()` | Informational | STDOUT |
+| `debug()` | Debug output | STDERR |
+| `success()` | Success messages | STDOUT |
+| `vecho()` | Verbose output | STDOUT |
+| `yn()` | Yes/no prompts | STDERR |
 
-**Implementation:**
+## Key Rules
+
+- **STDERR redirect first**: `>&2 echo "error"` â†' NOT `echo "error" >&2`
+- Data output â†' STDOUT (pipeable)
+- Diagnostics/errors â†' STDERR
+
+## Example
+
 ```bash
-_msg() { local level=$1 color=$2; shift 2; >&2 echo -e "${color}[${level}]${RESET} ${FUNCNAME[2]}: $*"; }
-vecho() { ((VERBOSE)) && echo "$@"; }
-success() { _msg SUCCESS "$GREEN" "$@"; }
-warn() { _msg WARNING "$YELLOW" "$@"; }
-info() { _msg INFO "$CYAN" "$@"; }
-error() { _msg ERROR "$RED" "$@"; }
-die() { error "$@"; exit "${2:-1}"; }
+error() { >&2 echo "ERROR: $*"; }
+die()   { error "$@"; exit 1; }
+info()  { echo "INFO: $*"; }
 ```
 
-**Anti-patterns:** `echo "error" >&2` ’ use `>&2 echo "error"` (clarity); bare `echo` for diagnostics ’ use messaging functions.
+## Anti-patterns
 
-**Ref:** BCS0900
+- `echo "Error" >&2` â†' Use `>&2 echo "Error"` (redirect first)
+- Mixing data and diagnostics on same stream
+
+**Ref:** BCS0700

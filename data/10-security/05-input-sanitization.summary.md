@@ -3,11 +3,8 @@
 **Always validate and sanitize user input to prevent security issues.**
 
 **Rationale:**
-- Prevent injection attacks (malicious code in input)
-- Prevent directory traversal (`../../../etc/passwd`)
-- Validate data types match expected format
-- Fail early - reject invalid input before processing
-- Defense in depth - never trust user input
+- Prevent injection attacks, directory traversal (`../../../etc/passwd`)
+- Validate data types/format, fail early, defense in depth—never trust user input
 
 **1. Filename validation:**
 
@@ -34,13 +31,6 @@ safe_path="$SAFE_DIR/$user_filename"
 **2. Numeric input validation:**
 
 ```bash
-validate_integer() {
-  local -- input=$1
-  [[ -n "$input" ]] || die 22 'Number cannot be empty'
-  [[ "$input" =~ ^-?[0-9]+$ ]] || die 22 "Invalid integer: '$input'"
-  echo "$input"
-}
-
 validate_positive_integer() {
   local -- input=$1
   [[ -n "$input" ]] || die 22 'Number cannot be empty'
@@ -50,7 +40,7 @@ validate_positive_integer() {
 }
 
 validate_port() {
-  local -- port="$1"
+  local -- port=$1
   port=$(validate_positive_integer "$port")
   ((port >= 1 && port <= 65535)) || die 22 "Port must be 1-65535: $port"
   echo "$port"
@@ -75,24 +65,18 @@ validate_path() {
 safe_path=$(validate_path "$user_path" "/var/app/data")
 ```
 
-**4. Email validation:**
+**4. Email/URL validation:**
 
 ```bash
 validate_email() {
   local -- email=$1
   [[ -n "$email" ]] || die 22 'Email cannot be empty'
-
   local -- email_regex='^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
   [[ "$email" =~ $email_regex ]] || die 22 "Invalid email format: $email"
   ((${#email} <= 254)) || die 22 "Email too long (max 254 chars): $email"
-
   echo "$email"
 }
-```
 
-**5. URL validation:**
-
-```bash
 validate_url() {
   local -- url=$1
   [[ -n "$url" ]] || die 22 'URL cannot be empty'
@@ -102,7 +86,7 @@ validate_url() {
 }
 ```
 
-**6. Whitelist validation:**
+**5. Whitelist validation:**
 
 ```bash
 validate_choice() {
@@ -122,11 +106,11 @@ declare -a valid_actions=('start' 'stop' 'restart' 'status')
 validate_choice "$user_action" "${valid_actions[@]}"
 ```
 
-**7. Username validation:**
+**6. Username validation:**
 
 ```bash
 validate_username() {
-  local -- username="$1"
+  local -- username=$1
   [[ -n "$username" ]] || die 22 'Username cannot be empty'
   [[ "$username" =~ ^[a-z_][a-z0-9_-]*$ ]] || die 22 "Invalid username ${username@Q}"
   ((${#username} >= 1 && ${#username} <= 32)) || die 22 "Username must be 1-32 characters ${username@Q}"
@@ -134,18 +118,18 @@ validate_username() {
 }
 ```
 
-**8. Command injection prevention:**
+**7. Command/option injection prevention:**
 
 ```bash
-# ✗ DANGEROUS - command injection vulnerability
-user_file="$1"
+# ✗ DANGEROUS - command injection
+user_file=$1
 cat "$user_file"  # If user_file="; rm -rf /", disaster!
 
-# ✓ Safe - validate first
+# ✓ Safe - validate first, use -- separator
 validate_filename "$user_file"
-cat -- "$user_file"  # Use -- to prevent option injection
+cat -- "$user_file"
 
-# ✗ DANGEROUS - using eval with user input
+# ✗ DANGEROUS - eval with user input
 eval "$user_command"  # NEVER DO THIS!
 
 # ✓ Safe - whitelist allowed commands
@@ -153,31 +137,16 @@ case "$user_command" in
   start|stop|restart) systemctl "$user_command" myapp ;;
   *) die 22 "Invalid command: $user_command" ;;
 esac
-```
 
-**9. Option injection prevention:**
-
-```bash
-user_file=$1
-
-# ✗ Dangerous - if user_file="--delete-all", disaster!
-rm "$user_file"
-
-# ✓ Safe - use -- separator
+# Option injection - use -- or ./ prefix
 rm -- "$user_file"
-
-# ✗ Dangerous - filename starting with -
-ls "$user_file"  # If user_file="-la", becomes: ls -la
-
-# ✓ Safe - use -- or prepend ./
-ls -- "$user_file"
 ls ./"$user_file"
 ```
 
-**10. SQL injection prevention:**
+**8. SQL injection prevention:**
 
 ```bash
-# ✗ DANGEROUS - SQL injection vulnerability
+# ✗ DANGEROUS
 user_id=$1
 query="SELECT * FROM users WHERE id=$user_id"  # user_id="1 OR 1=1"
 
@@ -196,13 +165,6 @@ rm -rf "$user_dir"  # user_dir="/" = disaster!
 validate_path "$user_dir" "/safe/base/dir"
 rm -rf "$user_dir"
 
-# ✗ WRONG - weak validation
-[[ -n "$filename" ]] && process "$filename"  # Not enough!
-
-# ✓ Correct - thorough validation
-filename=$(sanitize_filename "$filename")
-process "$filename"
-
 # ✗ WRONG - blacklist approach (always incomplete)
 [[ "$input" != *'rm'* ]] || die 1 'Invalid input'  # Can be bypassed!
 
@@ -211,11 +173,10 @@ process "$filename"
 ```
 
 **Security principles:**
-
 1. **Whitelist over blacklist**: Define what IS allowed, not what isn't
 2. **Validate early**: Check input before any processing
 3. **Fail securely**: Reject invalid input with clear error
 4. **Use `--` separator**: Prevent option injection in commands
 5. **Never use `eval`**: Especially not with user input
-6. **Absolute paths**: Use full paths to prevent PATH manipulation
-7. **Principle of least privilege**: Run with minimum necessary permissions
+6. **Absolute paths**: Prevent PATH manipulation
+7. **Least privilege**: Run with minimum necessary permissions

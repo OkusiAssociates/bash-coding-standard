@@ -9,7 +9,7 @@ Retry logic with exponential delay for transient failures.
 #### Rationale
 
 - Graceful transient failure handling with automatic recovery
-- Reduced load on failing services; configurable retry behavior
+- Reduces load on failing services via configurable retry behavior
 
 ---
 
@@ -46,13 +46,14 @@ retry_with_backoff() {
   local -i max_attempts=5
   local -i max_delay=60
   local -i attempt=1
+  local -i delay
 
   while ((attempt <= max_attempts)); do
     if "$@"; then
       return 0
     fi
 
-    local -i delay=$((2 ** attempt))
+    delay=$((2 ** attempt))
     ((delay > max_delay)) && delay=$max_delay ||:
 
     ((VERBOSE)) && info "Retry $attempt in ${delay}s..." ||:
@@ -72,14 +73,16 @@ retry_with_jitter() {
   local -i max_attempts=5
   local -i attempt=1
 
+  local -i base_delay jitter delay
+
   while ((attempt <= max_attempts)); do
     if "$@"; then
       return 0
     fi
 
-    local -i base_delay=$((2 ** attempt))
-    local -i jitter=$((RANDOM % base_delay))
-    local -i delay=$((base_delay + jitter))
+    base_delay=$((2 ** attempt))
+    jitter=$((RANDOM % base_delay))
+    delay=$((base_delay + jitter))
 
     sleep "$delay"
     attempt+=1
@@ -89,12 +92,33 @@ retry_with_jitter() {
 }
 ```
 
+#### Claude AI Retry Pattern
+
+```bash
+local -i attempt=1 max_attempts=3
+
+while ((attempt <= max_attempts)); do
+  if claude --print ... > "$temp_file" 2>&1; then
+    if [[ -s "$temp_file" ]]; then
+      # Success - non-empty output
+      break
+    fi
+    warn 'Empty response, retrying...'
+  fi
+
+  sleep $((2 ** attempt))
+  attempt+=1
+done
+
+((attempt > max_attempts)) && die 1 'Max retries exceeded' ||:
+```
+
 ---
 
 #### Anti-Patterns
 
 ```bash
-# ✗ Wrong - fixed delay
+# ✗ Wrong - fixed delay floods service
 while ! command; do
   sleep 5  # Same delay every time
 done
@@ -104,16 +128,8 @@ declare -i attempt=1
 while ! command; do
   sleep $((2 ** attempt))
   attempt+=1
-  ((attempt > 5)) && break
+  ((attempt > 5)) && break ||:
 done
-```
-
-```bash
-# ✗ Wrong - immediate retry floods service
-while ! curl "$url"; do :; done
-
-# ✓ Correct - backoff prevents flooding
-retry_with_backoff 5 curl -f "$url"
 ```
 
 ---

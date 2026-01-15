@@ -1,70 +1,33 @@
 ## Readonly After Group
 
-**Initialize all related variables first, then protect entire group with single `readonly --` statement.**
+**Declare variables with values first, then make entire group readonly in single statement.**
 
-### Rationale
-- Prevents assignment-to-readonly errors
-- Groups related constants visibly
-- Explicit immutability contract
+**Rationale:** Prevents assignment-to-readonly errors; makes immutability contract explicit; fails if uninitialized.
 
-### Three-Step Pattern (for parsed variables)
+**Three-step pattern** (for args/config that need parsing):
 ```bash
 # 1. Declare with defaults
 declare -i VERBOSE=0 DRY_RUN=0
-# 2. Modify during parsing (in main)
-# 3. Make readonly AFTER parsing
-readonly -- VERBOSE DRY_RUN
+declare -- OUTPUT_FILE=''
+
+# 2. Parse/modify in main()
+main() {
+  while (($#)); do case $1 in
+    -v) VERBOSE+=1 ;; -n) DRY_RUN=1 ;;
+  esac; shift; done
+  # 3. Readonly AFTER parsing
+  readonly -- VERBOSE DRY_RUN OUTPUT_FILE
+}
 ```
 
-### Standard Groups
+**Group patterns:**
+- **Metadata**: Use `declare -r` (BCS0103 exception)
+- **Colors**: Conditional `declare -r` in if/else
+- **Paths/Config**: Initialize â†' `readonly --` group
 
-**Colors** (conditional):
-```bash
-if [[ -t 1 && -t 2 ]]; then
-  RED=$'\033[0;31m' NC=$'\033[0m'
-else
-  RED='' NC=''
-fi
-readonly -- RED NC
-```
-
-**Paths** (derived):
-```bash
-PREFIX=${PREFIX:-/usr/local}
-BIN_DIR="$PREFIX"/bin
-readonly -- PREFIX BIN_DIR
-```
-
-### Exception
-Script metadata uses `declare -r` instead (see BCS0103).
-
-### Anti-Patterns
-
-```bash
-# âœ— Premature readonly
-PREFIX=/usr/local
-readonly -- PREFIX  # Too early!
-BIN_DIR="$PREFIX"/bin  # PREFIX locked before group complete
-
-# âœ— Missing -- separator
-readonly PREFIX BIN_DIR  # Risky if var starts with -
-
-# âœ— Readonly inside conditional
-if [[ -f conf ]]; then
-  CONFIG=conf
-  readonly -- CONFIG  # May not execute!
-fi
-
-# âœ“ Correct
-PREFIX=${PREFIX:-/usr/local}
-BIN_DIR="$PREFIX"/bin
-readonly -- PREFIX BIN_DIR
-```
-
-### Delayed Readonly
-Variables modified by argument parsing â†' make readonly after parsing completes:
-```bash
-[[ -z "$CONFIG" ]] || readonly -- CONFIG
-```
+**Anti-patterns:**
+- `readonly -- VAR` before derived vars set â†' inconsistent protection
+- Missing `--` separator â†' option injection risk
+- `readonly` inside conditional â†' may not execute
 
 **Ref:** BCS0205

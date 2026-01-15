@@ -2,26 +2,33 @@
 
 **Use `[[ ]]` for string/file tests, `(())` for arithmetic.**
 
-**Why `[[ ]]` over `[ ]`:** No word splitting/glob expansion, pattern matching (`==`, `=~`), logical operators inside (`&&`, `||`), no `-a`/`-o` needed.
+### Why `[[ ]]` over `[ ]`
+- No word splitting/glob expansion on variables
+- Pattern matching (`==`, `=~`) and logical ops (`&&`, `||`) inside
+- `<`/`>` for lexicographic comparison
 
+### Core Pattern
 ```bash
-# String/file tests
-[[ -f "$file" && -r "$file" ]] && source "$file" ||:
-[[ "$name" == *.txt ]] && process "$name"
-
-# Arithmetic tests
-((count)) && echo "Items: $count"
-((i >= MAX)) && die 1 'Limit exceeded'
-
-# Combined
-if [[ -n "$var" ]] && ((count)); then process; fi
+[[ -f "$file" ]] && source "$file" ||:
+((count > MAX)) && die 1 'Limit exceeded' ||:
+[[ -n "$var" ]] && ((count)) && process_data
+[[ "$str" =~ ^[0-9]+$ ]] && echo "Number"
 ```
 
-**Key operators:** `-e` exists, `-f` file, `-d` dir, `-r` readable, `-w` writable, `-x` executable, `-z` empty, `-n` not-empty, `=~` regex.
+### Key Operators
+**File:** `-e` exists, `-f` file, `-d` dir, `-r` readable, `-w` writable, `-x` exec, `-s` non-empty
+**String:** `-z` empty, `-n` non-empty, `==` equal, `=~` regex
+**Arithmetic:** `>`, `>=`, `<`, `<=`, `==`, `!=`
 
-**Anti-patterns:**
-- `[ ]` syntax â†' use `[[ ]]`
-- `[ -f "$f" -a -r "$f" ]` â†' `[[ -f "$f" && -r "$f" ]]`
-- `[[ "$count" -gt 10 ]]` â†' `((count > 10))`
+### Anti-patterns
+```bash
+# âœ— Old [ ] syntax â†' use [[ ]]
+[ -f "$file" -a -r "$file" ]  # Deprecated -a/-o
+# âœ“ [[ -f "$file" && -r "$file" ]]
+
+# âœ— Arithmetic with [[ ]] â†' use (())
+[[ "$count" -gt 10 ]]
+# âœ“ ((count > 10))
+```
 
 **Ref:** BCS0501

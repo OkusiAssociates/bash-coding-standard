@@ -1,117 +1,91 @@
 ## SUID/SGID
 
-**Never use SUID or SGID bits on Bash scripts. This is a critical security prohibition with no exceptions.**
+**Never use SUID/SGID bits on Bash scripts. Critical security prohibition with no exceptions.**
 
 ```bash
-# ✗ NEVER do this - catastrophically dangerous
+# ✗ NEVER do this
 chmod u+s /usr/local/bin/myscript.sh  # SUID
 chmod g+s /usr/local/bin/myscript.sh  # SGID
 
-# ✓ Correct - use sudo for elevated privileges
+# ✓ Use sudo instead
 sudo /usr/local/bin/myscript.sh
-
-# ✓ Correct - configure sudoers for specific commands
-# In /etc/sudoers:
-# username ALL=(ALL) NOPASSWD: /usr/local/bin/myscript.sh
+# In /etc/sudoers: username ALL=(ALL) NOPASSWD: /usr/local/bin/myscript.sh
 ```
 
 **Rationale:**
 
-- **IFS Exploitation**: Attacker can set `IFS` to control word splitting with elevated privileges
-- **PATH Manipulation**: Kernel uses caller's `PATH` to find interpreter, allowing trojan attacks
-- **Library Injection**: `LD_PRELOAD`/`LD_LIBRARY_PATH` inject malicious code before script execution
-- **Shell Expansion**: Multiple Bash expansions (brace, tilde, parameter, command, glob) can be exploited
+- **IFS Exploitation**: Attacker controls word splitting with elevated privileges
+- **PATH Manipulation**: Kernel uses caller's `PATH` to find interpreter, enabling trojan attacks
+- **Library Injection**: `LD_PRELOAD`/`LD_LIBRARY_PATH` inject code before script execution
+- **Shell Expansion**: Multiple expansion phases (brace, tilde, parameter, command, glob) exploitable
 - **Race Conditions**: TOCTOU vulnerabilities in file operations
-- **Interpreter Vulnerabilities**: Bash bugs exploitable when running with elevated privileges
-- **No Compilation**: Script source readable and modifiable, increasing attack surface
+- **No Compilation**: Script source readable/modifiable, increasing attack surface
 
-**Why dangerous:** For shell scripts, the kernel executes the interpreter with SUID/SGID privileges, then the interpreter processes the script—this multi-step process creates attack vectors that don't exist for compiled programs.
+**Why dangerous:** SUID changes effective UID to file owner during execution. For scripts, kernel reads shebang, executes interpreter with script as argument—interpreter inherits privileges and processes expansions. This multi-step process creates attack vectors absent in compiled programs.
 
-**Attack Examples:**
+**Anti-Patterns:**
 
 **1. PATH Attack (interpreter resolution):**
-
 ```bash
-# SUID script: /usr/local/bin/backup.sh (owned by root)
+# SUID script sets secure PATH internally—irrelevant
 #!/bin/bash
-set -euo pipefail
-PATH=/usr/bin:/bin  # Script sets secure PATH
+PATH=/usr/bin:/bin
 tar -czf /backup/data.tar.gz /var/data
 ```
-
 Attack:
 ```bash
-# Attacker creates malicious bash
 mkdir /tmp/evil
-cat > /tmp/evil/bash << 'EOF'
+cat > /tmp/evil/bash << 'EOT'
 #!/bin/bash
-cp -r /root/.ssh /tmp/stolen_keys  # Malicious action
-exec /bin/bash "$@"                # Then execute real script
-EOF
+cp -r /root/.ssh /tmp/stolen_keys
+exec /bin/bash "$@"
+EOT
 chmod +x /tmp/evil/bash
-
 export PATH=/tmp/evil:$PATH
 /usr/local/bin/backup.sh
-# Kernel uses caller's PATH - attacker's code runs as root BEFORE script's PATH is set
+# Kernel uses CALLER's PATH—malicious bash runs as root BEFORE script's PATH is set
 ```
 
-**2. Library Injection Attack:**
-
+**2. Library Injection:**
 ```bash
 # Attacker creates malicious shared library
-cat > /tmp/evil.c << 'EOF'
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-
+cat > /tmp/evil.c << 'EOT'
 void __attribute__((constructor)) init(void) {
-    if (geteuid() == 0) {
-        system("cp /etc/shadow /tmp/shadow_copy");
-        system("chmod 644 /tmp/shadow_copy");
-    }
+    if (geteuid() == 0) system("cp /etc/shadow /tmp/shadow_copy");
 }
-EOF
-
+EOT
 gcc -shared -fPIC -o /tmp/evil.so /tmp/evil.c
 LD_PRELOAD=/tmp/evil.so /usr/local/bin/report.sh
-# Malicious library runs with root privileges before the script
+# Library runs with root privileges before script
 ```
 
 **3. Symlink Race Condition:**
-
 ```bash
-# Vulnerable SUID script
-#!/bin/bash
-set -euo pipefail
-output_file=$1
-
-if [[ -f "$output_file" ]]; then
-  die 1 "File ${output_file@Q} already exists'
-fi
-# Race condition window here!
+# SUID script checks file existence then writes
+if [[ -f "$output_file" ]]; then die 1 "File exists"; fi
+# Race window here!
 echo "secret data" > "$output_file"
 ```
-
-Attack: Attacker creates symlink to `/etc/passwd` between check and write.
+Attack: Loop creating symlink to /etc/passwd in race window—script writes to /etc/passwd.
 
 **Safe Alternatives:**
 
-**1. Use sudo with configured permissions:**
+**1. sudo with configured permissions:**
 ```bash
 # /etc/sudoers.d/myapp
 username ALL=(root) NOPASSWD: /usr/local/bin/myapp.sh
 %admin ALL=(root) /usr/local/bin/backup.sh --backup-only
 ```
 
-**2. Use capabilities (compiled programs only):**
+**2. Capabilities (compiled programs only):**
 ```bash
 setcap cap_net_bind_service=+ep /usr/local/bin/myserver
+# Grants specific privilege without full root
 ```
 
-**3. Use a setuid wrapper (compiled C):**
-```bash
+**3. Setuid wrapper (compiled C):**
+```c
 int main(int argc, char *argv[]) {
-    if (argc != 2) return 1;
     setenv("PATH", "/usr/bin:/bin", 1);
     unsetenv("LD_PRELOAD");
     unsetenv("LD_LIBRARY_PATH");
@@ -121,25 +95,30 @@ int main(int argc, char *argv[]) {
 }
 ```
 
-**4. Use systemd service:**
-```bash
-# /etc/systemd/system/myapp.service
+**4. systemd service:**
+```
 [Service]
 Type=oneshot
 User=root
 ExecStart=/usr/local/bin/myapp.sh
 ```
 
+**Why sudo is safer:**
+- Logging to /var/log/auth.log
+- Credential timeout (15min)
+- Granular control (commands, arguments, users)
+- Environment sanitization (clears dangerous variables)
+- Audit trail
+
 **Detection:**
-
 ```bash
-# Find SUID/SGID scripts (should return nothing!)
+# Find SUID/SGID scripts (should return nothing)
 find / -type f \( -perm -4000 -o -perm -2000 \) -exec file {} \; | grep -i script
-
-# In deployment, explicitly ensure no SUID:
-install -m 755 myscript.sh /usr/local/bin/
 ```
 
-**Why sudo is safer:** Provides logging, timeout, granular control, environment sanitization, and audit trail.
+**Edge Cases:**
+
+1. **Modern Linux kernels ignore SUID on scripts by default**—don't rely on this; many Unix variants still honor them, legacy systems may be vulnerable
+2. **Capabilities don't work on scripts**—only compiled programs; use sudo/wrapper for scripts
 
 **Key principle:** If you think you need SUID on a shell script, you're solving the wrong problem. Redesign using sudo, PolicyKit, systemd services, or a compiled wrapper.

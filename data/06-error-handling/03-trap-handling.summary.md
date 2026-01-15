@@ -10,8 +10,8 @@ cleanup() {
   trap - SIGINT SIGTERM EXIT
 
   # Cleanup operations
-  [[ -n "$temp_dir" && -d "$temp_dir" ]] && rm -rf "$temp_dir"
-  [[ -n "$lockfile" && -f "$lockfile" ]] && rm -f "$lockfile"
+  [[ -n "$temp_dir" && -d "$temp_dir" ]] && rm -rf "$temp_dir" ||:
+  [[ -n "$lockfile" && -f "$lockfile" ]] && rm -f "$lockfile" ||:
 
   # Log cleanup completion
   ((exitcode == 0)) && info 'Cleanup completed successfully' || warn "Cleanup after error (exit $exitcode)"
@@ -23,102 +23,73 @@ cleanup() {
 trap 'cleanup $?' SIGINT SIGTERM EXIT
 ```
 
-**Rationale:** Ensures temp files, locks, and processes are cleaned up on errors or signals. Preserves exit code via `$?`. Prevents partial state regardless of exit path.
+**Rationale:** Ensures temp files, locks, and processes are cleaned up on errors or signals (Ctrl+C, kill). Captures original exit status with `$?`. Prevents partial state regardless of exit method.
 
-**Signal reference:**
+**Trap signals:**
 
 | Signal | When Triggered |
 |--------|----------------|
 | `EXIT` | Always on script exit (normal or error) |
-| `SIGINT` | User presses Ctrl+C |
+| `SIGINT` | Ctrl+C |
 | `SIGTERM` | `kill` command (default signal) |
 | `ERR` | Command fails (with `set -e`) |
 
 **Common patterns:**
 
-**Temp file/directory:**
+**Temp file/directory cleanup:**
 ```bash
 temp_file=$(mktemp) || die 1 'Failed to create temp file'
 trap 'rm -f "$temp_file"' EXIT
 ```
 
-**Lockfile:**
+**Lockfile cleanup:**
 ```bash
 lockfile=/var/lock/myapp.lock
-
-acquire_lock() {
-  if [[ -f "$lockfile" ]]; then
-    die 1 "Already running (lock file exists ${lockfile@Q})"
-  fi
-  echo $$ > "$lockfile" || die 1 "Failed to create lock file ${lockfile@Q}"
-  trap 'rm -f "$lockfile"' EXIT
-}
+if [[ -f "$lockfile" ]]; then
+  die 1 "Already running (lock file exists ${lockfile@Q})"
+fi
+echo $$ > "$lockfile" || die 1 "Failed to create lock file ${lockfile@Q}"
+trap 'rm -f "$lockfile"' EXIT
 ```
 
-**Background process:**
+**Process cleanup:**
 ```bash
 long_running_command &
 bg_pid=$!
 trap 'kill $bg_pid 2>/dev/null' EXIT
 ```
 
-**Comprehensive cleanup:**
+**Comprehensive cleanup function:**
 ```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-declare -- temp_dir=''
-declare -- lockfile=''
+declare -- temp_dir='' lockfile=''
 declare -i bg_pid=0
 
 cleanup() {
   local -i exitcode=${1:-0}
-
   trap - SIGINT SIGTERM EXIT
 
-  ((bg_pid)) && kill "$bg_pid" 2>/dev/null
+  ((bg_pid)) && kill "$bg_pid" 2>/dev/null ||:
+  [[ -n "$temp_dir" && -d "$temp_dir" ]] && rm -rf "$temp_dir" ||:
+  [[ -n "$lockfile" && -f "$lockfile" ]] && rm -f "$lockfile" ||:
 
-  if [[ -n "$temp_dir" && -d "$temp_dir" ]]; then
-    rm -rf "$temp_dir" || warn "Failed to remove temp directory: $temp_dir"
-  fi
-
-  if [[ -n "$lockfile" && -f "$lockfile" ]]; then
-    rm -f "$lockfile" || warn "Failed to remove lockfile: $lockfile"
-  fi
-
-  if ((exitcode == 0)); then
-    info 'Script completed successfully'
-  else
-    error "Script exited with error code: $exitcode"
-  fi
-
+  ((exitcode == 0)) && info 'Script completed successfully' || error "Script exited with error code: $exitcode"
   exit "$exitcode"
 }
 
 # Install trap EARLY (before creating resources)
 trap 'cleanup $?' SIGINT SIGTERM EXIT
-
-temp_dir=$(mktemp -d)
-lockfile=/var/lock/myapp-"$$".lock
-echo $$ > "$lockfile"
-
-monitor_process &
-bg_pid=$!
-
-main "$@"
 ```
 
-**Multiple traps:**
+**Multiple traps for same signal:**
 ```bash
-# ✗ This REPLACES the previous trap!
 trap 'echo "Exiting..."' EXIT
-trap 'rm -f "$temp_file"' EXIT
+trap 'rm -f "$temp_file"' EXIT  # ✗ REPLACES previous trap!
 
 # ✓ Combine in one trap or use cleanup function
 trap 'echo "Exiting..."; rm -f "$temp_file"' EXIT
 ```
 
-**Execution order:** On Ctrl+C: SIGINT handler runs �' EXIT handler runs �' script exits.
+**Trap execution order:** On Ctrl+C: SIGINT handler �' EXIT handler �' script exits.
 
 **Disabling traps:**
 ```bash
@@ -128,46 +99,41 @@ perform_critical_operation
 trap 'cleanup $?' SIGINT       # Re-enable
 ```
 
-**Critical best practices:**
-
-1. **Recursion prevention:** Disable trap first inside cleanup function
-2. **Preserve exit code:** Use `trap 'cleanup $?' EXIT` - captures `$?` immediately
-3. **Single quotes:** Delays variable expansion until trap fires
-4. **Set trap early:** Before creating any resources
-
 **Anti-patterns:**
 
 ```bash
-# ✗ Wrong - not preserving exit code
-trap 'rm -f "$temp_file"; exit 0' EXIT
+# ✗ Not preserving exit code
+trap 'rm -f "$temp_file"; exit 0' EXIT  # Always exits 0!
 
-# ✓ Correct
+# ✓ Preserve exit code
 trap 'exitcode=$?; rm -f "$temp_file"; exit $exitcode' EXIT
 
-# ✗ Wrong - double quotes expand now, not on trap
+# ✗ Double quotes expand variables immediately
 temp_file=/tmp/foo
-trap "rm -f $temp_file" EXIT  # Expands immediately!
+trap "rm -f $temp_file" EXIT  # Expands NOW to /tmp/foo
 temp_file=/tmp/bar            # Trap still removes /tmp/foo!
 
-# ✓ Correct - single quotes delay expansion
+# ✓ Single quotes delay expansion
 trap 'rm -f "$temp_file"' EXIT
 
-# ✗ Wrong - resource before trap
+# ✗ Resource created before trap installed
 temp_file=$(mktemp)
-trap 'cleanup $?' EXIT  # Resource leaks if exit between lines!
+trap 'cleanup $?' EXIT  # If script exits here, temp_file leaks!
 
-# ✓ Correct - trap before resource
+# ✓ Set trap BEFORE creating resources
 trap 'cleanup $?' EXIT
 temp_file=$(mktemp)
 
-# ✗ Wrong - complex logic inline
+# ✗ Complex cleanup inline
 trap 'rm "$file1"; rm "$file2"; kill $pid; rm -rf "$dir"' EXIT
 
-# ✓ Correct - use cleanup function
-trap 'cleanup' EXIT
+# ✓ Use cleanup function
+trap 'cleanup $?' EXIT
 ```
 
-**Edge cases:**
-- If cleanup fails, disabled trap prevents recursion - script still exits cleanly
-- Trap fires for both error exits and normal exits with `EXIT` signal
-- Test handlers with normal exit, `false` command, and Ctrl+C
+**Best practices:**
+- Use cleanup function for non-trivial cleanup
+- Disable trap inside cleanup to prevent recursion
+- Set trap early before creating resources
+- Preserve exit code with `trap 'cleanup $?' EXIT`
+- Use single quotes to delay variable expansion

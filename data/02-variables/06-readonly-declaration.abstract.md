@@ -1,12 +1,12 @@
 ## Readonly Declaration
 
-**Use `readonly` for constants to prevent accidental modification.**
+**Use `declare -r` or `readonly` for constants to prevent accidental modification.**
 
 ```bash
-readonly -a REQUIRED=(pandoc git)
-readonly -- SCRIPT_PATH=$(realpath -- "$0")
+declare -ar REQUIRED=(pandoc git md2ansi)
+declare -r SCRIPT_PATH=$(realpath -- "$0")
 ```
 
-**Anti-pattern:** Omitting `readonly` for values that should never change â†' silent bugs from accidental overwrites.
+**Anti-pattern:** Omitting `-r` on values that should never change â†' silent bugs from accidental reassignment.
 
 **Ref:** BCS0206

@@ -2,13 +2,15 @@
 
 **Rule: BCS1102**
 
-Concurrent command execution with control and result collection.
+Executing multiple commands concurrently while maintaining control and collecting results.
 
 ---
 
 #### Rationale
 
-Parallel execution enables speedup for I/O-bound tasks, better resource utilization, and efficient batch processing.
+- Significant speedup for I/O-bound tasks
+- Better resource utilization
+- Efficient batch processing
 
 ---
 
@@ -63,12 +65,13 @@ done
 declare -i max_jobs=4
 declare -a pids=()
 
+local -a active=()
 for task in "${tasks[@]}"; do
   # Wait if at max concurrency
   while ((${#pids[@]} >= max_jobs)); do
     wait -n 2>/dev/null || true
     # Remove completed PIDs
-    local -a active=()
+    active=()
     for pid in "${pids[@]}"; do
       kill -0 "$pid" 2>/dev/null && active+=("$pid")
     done
@@ -107,3 +110,5 @@ count=$(wc -l < "$temp_dir"/count)
 ---
 
 **See Also:** BCS1101 (Background Jobs), BCS1103 (Wait Patterns)
+
+**Full implementation:** See `examples/exemplar-code/oknav/oknav` lines 465-530

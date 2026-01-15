@@ -19,7 +19,7 @@ declare -i VERBOSE=1
 
 # Terminal colors
 if [[ -t 1 && -t 2 ]]; then
-  declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[1;33m' BLUE=$'\033[0;34m' NC=$'\033[0m'
+  declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' BLUE=$'\033[0;34m' NC=$'\033[0m'
 else
   declare -r RED='' GREEN='' YELLOW='' BLUE='' NC=''
 fi
@@ -28,10 +28,10 @@ _msg() {
   local -- prefix="$SCRIPT_NAME:" msg
   case ${FUNCNAME[1]} in
     vecho)   : ;;
-    info)    prefix+=" ${CYAN}â—‰${NC}" ;;
-    warn)    prefix+=" ${YELLOW}â–²${NC}" ;;
-    success) prefix+=" ${GREEN}âœ“${NC}" ;;
-    error)   prefix+=" ${RED}âœ—${NC}" ;;
+    info)    prefix+=" ${CYAN}◉${NC}" ;;
+    warn)    prefix+=" ${YELLOW}▲${NC}" ;;
+    success) prefix+=" ${GREEN}✓${NC}" ;;
+    error)   prefix+=" ${RED}✗${NC}" ;;
     *)       ;;
   esac
   for msg in "$@"; do printf '%s %s\n' "$prefix" "$msg"; done

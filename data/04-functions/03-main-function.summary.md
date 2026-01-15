@@ -1,19 +1,17 @@
 ## Main Function
 
-**Always include a `main()` function for scripts longer than ~200 lines. Serves as single entry point for organization, testability, and maintainability. Place `main "$@"` at bottom before `#fin`.**
+**Always include a `main()` function for scripts longer than ~200 lines. Place `main "$@"` at the bottom of the script, just before `#fin`.**
 
 **Rationale:**
 - Single entry point with clear execution flow
-- Testable: source without executing, test functions individually
-- Scope control: locals in main prevent global namespace pollution
-- Centralized exit code handling and debugging
+- Testability: source scripts without executing; test functions individually
+- Scope control: local variables prevent global namespace pollution
+- Centralized argument parsing, exit code handling, and debugging
 
 **When to use main():**
 ```bash
-# Use main() when:
-# - Script > ~200 lines, multiple functions, argument parsing, complex flow
-# Can skip main() when:
-# - Trivial script (< 200 lines), simple wrapper, no functions, linear
+# Use main() when: >200 lines, multiple functions, argument parsing, complex logic, testability needed
+# Skip main() when: trivial (<200 lines), simple wrapper, no functions, linear flow
 ```
 
 **Basic main() structure:**
@@ -30,13 +28,11 @@ declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 # ... helper functions ...
 
 main() {
-  # Parse arguments
   while (($#)); do case $1 in
-    -h|--help) usage; return 0 ;;
+    -h|--help) show_help; return 0 ;;
     *) die 22 "Invalid option ${1@Q}" ;;
   esac; shift; done
 
-  # Main logic
   info 'Starting processing...'
   return 0
 }
@@ -48,23 +44,23 @@ main "$@"
 **Main function with argument parsing:**
 ```bash
 main() {
-  local -i verbose=0
-  local -i dry_run=0
+  local -i verbose=0 dry_run=0
   local -- output_file=''
   local -a input_files=()
 
   while (($#)); do case $1 in
-    -v|--verbose) verbose=1 ;;
     -n|--dry-run) dry_run=1 ;;
     -o|--output)
       noarg "$@"
       shift
       output_file=$1
       ;;
-    -h|--help) usage; return 0 ;;
-    --) shift; break ;;
-    -*) die 22 "Invalid option ${1@Q}" ;;
-    *) input_files+=("$1") ;;
+    -v|--verbose) verbose=1 ;;
+    -q|--quiet)   verbose=0 ;;
+    -h|--help)    usage; return 0 ;;
+    --)           shift; break ;;
+    -*)           die 22 "Invalid option ${1@Q}" ;;
+    *)            input_files+=("$1") ;;
   esac; shift; done
 
   input_files+=("$@")
@@ -100,40 +96,21 @@ main() {
   TEMP_DIR=$(mktemp -d)
   readonly -- TEMP_DIR
   info "Using temp directory ${TEMP_DIR@Q}"
-  # ... processing ...
   return 0
 }
-```
 
-**Main function with error tracking:**
-```bash
-main() {
-  local -i errors=0
-  local -- item
-  for item in "${items[@]}"; do
-    if ! process_item "$item"; then
-      error "Failed to process: $item"
-      errors+=1
-    fi
-  done
-
-  if ((errors)); then
-    error "Completed with $errors errors"
-    return 1
-  else
-    success 'All items processed successfully'
-    return 0
-  fi
-}
+main "$@"
+#fin
 ```
 
 **Main function enabling sourcing for tests:**
 ```bash
+# Only execute main if script is run directly (not sourced)
 [[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0
+
 set -euo pipefail
 
 main() {
-  # ... script logic ...
   return 0
 }
 
@@ -141,40 +118,38 @@ main "$@"
 #fin
 ```
 
-**Anti-patterns:**
-
+**Anti-patterns to avoid:**
 ```bash
-# ✗ Wrong - no main function in complex script (hard to test/organize)
+# ✗ Wrong - no main function in complex script (200+ lines)
 #!/bin/bash
-set -euo pipefail
-# ... 200 lines of code directly in script ...
+# ... 200 lines of code directly in script - hard to test/organize
 
 # ✓ Correct - main function
-main() { # Script logic }
+main() { ... }
 main "$@"
 #fin
 
-# ✗ Wrong - main() not at end (functions defined after execution)
-main() { # ... }
+# ✗ Wrong - main() not at end (functions defined after main executes)
+main() { ... }
 main "$@"
-helper_function() { # ... }  # Defined after main executes!
+helper_function() { ... }  # Defined AFTER main is called!
 
 # ✓ Correct - main() at end, called last
-helper_function() { # ... }
-main() { # Can call helper_function }
+helper_function() { ... }
+main() { ... }
 main "$@"
 #fin
 
 # ✗ Wrong - parsing arguments outside main
 verbose=0
-while (($#)); do # ... parse args ... ; done
-main() { # Uses globals }
-main "$@"  # Arguments already consumed!
+while (($#)); do ... done  # Arguments consumed!
+main() { ... }
+main "$@"  # No arguments left!
 
 # ✓ Correct - parsing in main
 main() {
   local -i verbose=0
-  while (($#)); do # ... ; done
+  while (($#)); do ... done
   readonly -- verbose
 }
 main "$@"
@@ -184,19 +159,6 @@ main  # Missing "$@"!
 
 # ✓ Correct
 main "$@"
-
-# ✗ Wrong - mixing global and local logic
-total=0  # Global
-main() {
-  local -i count=0
-  ((total+=count))  # Mixes global/local
-}
-
-# ✓ Correct - all logic in main
-main() {
-  local -i total=0 count=0
-  total+=count
-}
 ```
 
 **Edge cases:**
@@ -207,7 +169,7 @@ declare -i VERBOSE=0 DRY_RUN=0
 
 main() {
   while (($#)); do case $1 in
-    -v|--verbose) VERBOSE=1 ;;
+    -v|--verbose) VERBOSE+=1 ;;
     -n|--dry-run) DRY_RUN=1 ;;
     *) die 22 "Invalid option ${1@Q}" ;;
   esac; shift; done
@@ -216,12 +178,12 @@ main() {
 main "$@"
 ```
 
-**2. Library and executable (dual-purpose):**
+**2. Script is library and executable:**
 ```bash
-utility_function() { # ... }
+utility_function() { ... }
+main() { ... }
 
-main() { # ... }
-
+# Only run main if executed (not sourced)
 [[ "${BASH_SOURCE[0]}" == "${0}" ]] || return
 main "$@"
 #fin
@@ -229,43 +191,25 @@ main "$@"
 
 **3. Multiple main scenarios (subcommands):**
 ```bash
-main_install() { # Installation logic }
-main_uninstall() { # Uninstallation logic }
+main_install() { ... }
+main_uninstall() { ... }
 
 main() {
-  local -- mode="${1:-}"
+  local -- mode=${1:-}
   case "$mode" in
-    install) shift; main_install "$@" ;;
+    install)   shift; main_install "$@" ;;
     uninstall) shift; main_uninstall "$@" ;;
-    *) die 22 "Invalid mode: $mode" ;;
+    *) die 22 "Invalid mode ${mode@Q}" ;;
   esac
 }
 main "$@"
 ```
 
-**Testing with main():**
-```bash
-# Script: myapp.sh
-main() {
-  local -i value="$1"
-  ((value * 2))
-  echo "$value"
-}
-[[ "${BASH_SOURCE[0]}" == "${0}" ]] || return
-main "$@"
-
-# Test file: test_myapp.sh
-#!/bin/bash
-source ./myapp.sh  # Source without executing
-result=$(main 5)
-[[ "$result" == "10" ]] && echo "PASS" || echo "FAIL: Expected 10, got ${result@Q}"
-```
-
-**Key principles:**
-- Use main() for scripts >200 lines
-- Place main() at end, define helpers first
-- Always call with `main "$@"`
-- Parse arguments in main, make locals readonly after parsing
-- Return 0 for success, non-zero for errors
-- Use `[[ "${BASH_SOURCE[0]}" == "${0}" ]]` for testability
-- main() is the orchestrator - heavy lifting in helper functions
+**Summary:**
+- **Use main() for scripts >200 lines** - organization and testability
+- **Place main() at end** - define helpers first, main last
+- **Always call with `main "$@"`** - pass all arguments
+- **Parse arguments in main** - keep argument handling centralized
+- **Make locals readonly after parsing** - immutable option state
+- **Consider sourcing** - use `[[ "${BASH_SOURCE[0]}" == "${0}" ]]` for testability
+- **main() is the orchestrator** - coordinates helpers, doesn't do heavy lifting

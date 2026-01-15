@@ -3,52 +3,45 @@
 **Organize functions bottom-up: primitives first, `main()` last. Dependencies flow downward only.**
 
 ### Rationale
-- No forward references—Bash reads top-to-bottom
-- Readability—understand primitives before compositions
-- Testability—low-level functions testable independently
+- **No forward references**: Bash reads top-to-bottom; functions must exist before called
+- **Debugging**: Read top-down, understand dependencies immediately
+- **Testability**: Low-level functions tested independently
 
 ### 7-Layer Pattern
-
-1. **Messaging** `_msg()`, `info()`, `warn()`, `error()`, `die()`
-2. **Documentation** `show_help()`, `show_version()`
-3. **Utilities** `yn()`, `noarg()`, `trim()`
-4. **Validation** `check_prerequisites()`, `validate_input()`
-5. **Business logic** Domain operations
-6. **Orchestration** `run_build_phase()`, `cleanup()`
-7. **main()** Top-level flow �' `main "$@"` �' `#fin`
-
 ```bash
-# Layer 1: Messaging (lowest)
-info() { >&2 _msg "$@"; }
-die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+# 1. Messaging: _msg(), info(), warn(), error(), die()
+# 2. Helpers: noarg(), trim()
+# 3. Documentation: show_help(), show_version()
+# 4. Validation: check_root(), check_prerequisites()
+# 5. Business logic: build_project(), process_file()
+# 6. Orchestration: run_build_phase(), cleanup()
+# 7. main() - calls all layers
 
-# Layer 4: Validation
-check_prerequisites() { info 'Checking...'; }
-
-# Layer 5: Business logic
-build_project() { check_prerequisites; make all; }
-
-# Layer 7: main() (highest)
-main() { build_project; }
+main() {
+  check_prerequisites
+  run_build_phase
+}
 main "$@"
-#fin
 ```
 
-### Anti-Patterns
-
+### Anti-patterns
 ```bash
-# ✗ main() at top (forward references)
+# ✗ main() at top �' forward references
 main() { build_project; }  # Not defined yet!
 build_project() { ... }
 
-# ✗ Random ordering
-cleanup(); build(); check_deps(); main()
+# ✓ main() at bottom
+build_project() { ... }
+main() { build_project; }
 
 # ✗ Circular dependencies
 func_a() { func_b; }
-func_b() { func_a; }  # Extract common logic instead
-```
+func_b() { func_a; }  # Bad!
 
-**Key:** Each function calls only functions defined above it.
+# ✓ Extract common logic
+common() { ... }
+func_a() { common; }
+func_b() { common; }
+```
 
 **Ref:** BCS0107

@@ -2,127 +2,82 @@
 
 **Only suppress errors when failure is expected, non-critical, and explicitly safe. Always document WHY.**
 
-**Rationale:** Suppression masks bugs, creates silent failures, leaves systems in insecure states, makes debugging impossible, and indicates design problems requiring fixes.
+**Rationale:**
+- Masks bugs and creates silent failures
+- Security risk: ignored errors leave systems vulnerable
+- Debugging nightmare: impossible to diagnose suppressed errors
+- False success: users think operations succeeded when they failed
 
-### When Suppression IS Appropriate
+**When suppression IS appropriate:**
 
-**1. Command/file existence checks (failure expected):**
 ```bash
+# 1. Checking if command exists (expected to fail)
 if command -v optional_tool >/dev/null 2>&1; then
   info 'optional_tool available'
 fi
 
-if [[ -f "$optional_config" ]]; then
-  source "$optional_config"
-fi
-```
+# 2. Cleanup operations (may have nothing to clean)
+rm -f /tmp/myapp_* 2>/dev/null || true
+rmdir /tmp/myapp 2>/dev/null || true
 
-**2. Cleanup operations (may have nothing to clean):**
-```bash
-cleanup_temp_files() {
-  # Suppress - temp files might not exist
-  rm -f /tmp/myapp_* 2>/dev/null || true
-  rmdir /tmp/myapp 2>/dev/null || true
-}
-```
-
-**3. Idempotent operations:**
-```bash
+# 3. Idempotent operations
 install -d "$target_dir" 2>/dev/null || true
 id "$username" >/dev/null 2>&1 || useradd "$username"
+
+# 4. Optional operations with fallback
+command -v md2ansi >/dev/null 2>&1 && md2ansi < "$file" || cat "$file"
 ```
 
-### When Suppression is DANGEROUS
-
-**Critical operations that MUST NOT be suppressed:**
+**When suppression is DANGEROUS:**
 
 ```bash
-# ✗ DANGEROUS - copy fails, script continues with missing file
+# ✗ File operations - script continues with missing file
 cp "$important_config" "$destination" 2>/dev/null || true
-# ✓ Correct
+
+# ✓ Correct - fail explicitly
 cp "$important_config" "$destination" || die 1 "Failed to copy config"
 
-# ✗ DANGEROUS - data silently lost
-process_data < input.txt > output.txt 2>/dev/null || true
-# ✓ Correct
-process_data < input.txt > output.txt || die 1 'Data processing failed'
-
-# ✗ DANGEROUS - service not running
+# ✗ System configuration - service not running
 systemctl start myapp 2>/dev/null || true
+
 # ✓ Correct
 systemctl start myapp || die 1 'Failed to start myapp service'
 
-# ✗ DANGEROUS - wrong permissions (security vulnerability)
+# ✗ Security operations - wrong permissions
 chmod 600 "$private_key" 2>/dev/null || true
+
 # ✓ Correct
 chmod 600 "$private_key" || die 1 "Failed to secure ${private_key@Q}"
 
-# ✗ DANGEROUS - missing dependency, later failures mysterious
+# ✗ Required dependency checks
 command -v git >/dev/null 2>&1 || true
+
 # ✓ Correct
 command -v git >/dev/null 2>&1 || die 1 'git is required'
 ```
 
-### Suppression Patterns
+**Suppression patterns:**
 
 | Pattern | Effect | Use When |
 |---------|--------|----------|
-| `2>/dev/null` | Suppress stderr only | Error messages noisy but check return value |
-| `\|\| true` | Ignore return code | Failure acceptable, continue execution |
+| `2>/dev/null` | Suppress stderr only | Messages noisy but check return value |
+| `\|\| true` | Ignore return code | Failure acceptable, want to continue |
 | `2>/dev/null \|\| true` | Suppress both | Both messages and return code irrelevant |
 
-**Always document suppression:**
 ```bash
+# Pattern 4: ALWAYS document WHY
 # Rationale: Temp files may not exist, this is not an error
 rm -f /tmp/myapp_* 2>/dev/null || true
-```
 
-**Conditional suppression:**
-```bash
+# Pattern 5: Conditional suppression
 if ((DRY_RUN)); then
-  actual_operation 2>/dev/null || true  # Expected to fail
+  actual_operation 2>/dev/null || true
 else
   actual_operation || die 1 'Operation failed'
 fi
 ```
 
-### Anti-Patterns
-
-```bash
-# ✗ WRONG - suppressing without documented reason
-some_command 2>/dev/null || true
-
-# ✗ WRONG - suppressing ALL errors in function
-process_files() {
-  # ... many operations ...
-} 2>/dev/null
-
-# ✓ Correct - only suppress specific operations
-process_files() {
-  critical_operation || die 1 'Critical operation failed'
-  optional_cleanup 2>/dev/null || true  # Only this suppressed
-}
-
-# ✗ WRONG - using set +e to suppress errors
-set +e
-critical_operation
-set -e
-
-# ✓ Correct - use || true for specific command
-critical_operation || {
-  error 'Operation failed but continuing'
-  true
-}
-
-# ✗ WRONG - different handling for production vs development
-if [[ "$ENV" == production ]]; then
-  operation 2>/dev/null || true
-else
-  operation
-fi
-```
-
-### Complete Example
+**Complete example:**
 
 ```bash
 #!/bin/bash
@@ -135,7 +90,7 @@ declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 declare -- CACHE_DIR="$HOME"/.cache/myapp
 
-# Optional dependency - suppression OK
+# Optional dependency - suppress OK
 check_optional_tools() {
   if command -v md2ansi >/dev/null 2>&1; then
     declare -g -i HAS_MD2ANSI=1
@@ -144,28 +99,28 @@ check_optional_tools() {
   fi
 }
 
-# Required dependency - NO suppression
+# Required dependency - DO NOT suppress
 check_required_tools() {
   command -v jq >/dev/null 2>&1 || die 1 'jq is required'
 }
 
-# Idempotent creation - suppression OK, but verify
+# Idempotent creation - suppress OK, but verify
 create_directories() {
   # Rationale: install -d is idempotent
   install -d "$CACHE_DIR" 2>/dev/null || true
   [[ -d "$CACHE_DIR" ]] || die 1 "Failed to create ${CACHE_DIR@Q}"
 }
 
-# Cleanup - suppression OK
+# Cleanup - suppress OK
 cleanup_old_files() {
   # Rationale: files may not exist
   rm -f "$CACHE_DIR"/*.tmp 2>/dev/null || true
 }
 
-# Data processing - NO suppression
+# Data processing - DO NOT suppress
 process_data() {
   local -- input_file=$1 output_file=$2
-  jq '.data' < "$input_file" > "$output_file" || die 1 "Failed: ${input_file@Q}"
+  jq '.data' < "$input_file" > "$output_file" || die 1 "Failed to process ${input_file@Q}"
 }
 
 main() {
@@ -177,14 +132,36 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
-### Key Rules
+**Anti-patterns:**
 
-- **Only suppress** when failure is expected, non-critical, and safe
-- **Always document** WHY with comment above suppression
-- **Never suppress** critical operations (data, security, required dependencies)
-- **Verify after** suppressed operations when possible
-- **Test without** suppression first to ensure correctness
+```bash
+# ✗ Suppressing critical operation
+cp "$important_file" "$backup" 2>/dev/null || true
+# ✓ cp "$important_file" "$backup" || die 1 'Failed to create backup'
+
+# ✗ Suppressing without understanding
+some_command 2>/dev/null || true
+# ✓ Add comment: # Rationale: temp directory may not exist
+
+# ✗ Suppressing all errors in function
+process_files() { ... } 2>/dev/null
+# ✓ Suppress only specific optional operations
+
+# ✗ Using set +e to suppress errors
+set +e; critical_operation; set -e
+# ✓ Use || true for specific commands only
+
+# ✗ Different handling prod vs dev
+[[ "$ENV" == production ]] && operation 2>/dev/null || operation
+# ✓ Same error handling everywhere
+```
+
+**Key principles:**
+- Suppress only when failure is expected, non-critical, safe to ignore
+- Always document WHY with a comment
+- Never suppress: data ops, security ops, required dependencies
+- Verify after suppressed operations when possible
+- Error suppression is the exception, not the rule

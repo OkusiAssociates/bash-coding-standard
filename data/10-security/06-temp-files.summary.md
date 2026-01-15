@@ -1,13 +1,12 @@
 ## Temporary File Handling
 
-**Always use `mktemp` to create temporary files and directories, never hard-code temp file paths. Use trap handlers to ensure cleanup occurs even on script failure or interruption. Store temp file paths in variables, make them readonly when possible, and always clean up in EXIT trap.**
+**Always use `mktemp` to create temporary files and directories, never hard-code temp file paths. Use trap handlers to ensure cleanup occurs even on script failure or interruption.**
 
 **Rationale:**
-- **Security**: mktemp creates files with secure permissions (0600) in safe locations
-- **Uniqueness**: Guaranteed unique filenames prevent collisions
-- **Atomicity**: mktemp creates file atomically, preventing race conditions
-- **Cleanup Guarantee**: EXIT trap ensures cleanup even on failure/interruption
-- **Portability**: mktemp works consistently across Unix-like systems
+- **Security**: mktemp creates files with secure permissions (0600) atomically, preventing race conditions
+- **Uniqueness**: Guaranteed unique filenames prevent collisions with other processes
+- **Cleanup Guarantee**: EXIT trap ensures cleanup even when script fails or is interrupted
+- **Portability**: mktemp works consistently across Unix-like systems using TMPDIR or /tmp
 
 **Basic temp file creation:**
 
@@ -45,20 +44,16 @@ create_temp_dir() {
 # Template: myapp.XXXXXX (at least 3 X's required)
 temp_file=$(mktemp /tmp/"$SCRIPT_NAME".XXXXXX) ||
   die 1 'Failed to create temporary file'
-trap 'rm -f "$temp_file"' EXIT
-# Output example: /tmp/myscript.Ab3X9z
 
 # Temp file with extension (mktemp doesn't support extensions directly)
 temp_file=$(mktemp /tmp/"$SCRIPT_NAME".XXXXXX)
 mv "$temp_file" "$temp_file".json
 temp_file="$temp_file".json
-trap 'rm -f "$temp_file"' EXIT
 ```
 
-**Multiple temp files with cleanup:**
+**Multiple temp files with cleanup function:**
 
 ```bash
-# Global array for temp files
 declare -a TEMP_FILES=()
 
 cleanup_temp_files() {
@@ -66,11 +61,8 @@ cleanup_temp_files() {
   local -- file
 
   for file in "${TEMP_FILES[@]}"; do
-    if [[ -f "$file" ]]; then
-      rm -f "$file"
-    elif [[ -d "$file" ]]; then
-      rm -rf "$file"
-    fi
+    [[ -f "$file" ]] && rm -f "$file" ||:
+    [[ -d "$file" ]] && rm -rf "$file" ||:
   done
 
   return "$exit_code"
@@ -78,7 +70,6 @@ cleanup_temp_files() {
 
 trap cleanup_temp_files EXIT
 
-# Create and register temp file
 create_temp() {
   local -- temp_file
   temp_file=$(mktemp) || die 1 'Failed to create temporary file'
@@ -87,20 +78,18 @@ create_temp() {
 }
 ```
 
-**Temp file security validation:**
+**Secure temp file with validation:**
 
 ```bash
-# ✓ CORRECT - Robust temp file creation with validation
-create_temp_robust() {
+secure_temp_file() {
   local -- temp_file
 
   if ! temp_file=$(mktemp 2>&1); then
     die 1 "Failed to create temporary file ${temp_file@Q}"
   fi
 
-  if [[ ! -f "$temp_file" ]]; then
-    die 1 "Temp file does not exist ${temp_file@Q}"
-  fi
+  # Validate temp file exists and is regular file
+  [[ -f "$temp_file" ]] || die 1 "Temp file does not exist ${temp_file@Q}"
 
   # Check permissions (should be 0600)
   local -- perms
@@ -119,34 +108,20 @@ create_temp_robust() {
 **Anti-patterns to avoid:**
 
 ```bash
-# ✗ WRONG - Hard-coded temp file path (not unique, predictable, no cleanup)
+# ✗ WRONG - Hard-coded temp file path (collisions, predictable, no cleanup)
 temp_file=/tmp/myapp_temp.txt
 
 # ✗ WRONG - Using PID in filename (still predictable, race condition)
 temp_file=/tmp/myapp_"$$".txt
 
-# ✗ WRONG - No cleanup trap
+# ✗ WRONG - No cleanup trap (temp file remains if script fails)
 temp_file=$(mktemp)
 echo 'data' > "$temp_file"
-# Script exits, temp file remains!
 
-# ✗ WRONG - Cleanup in script body (fails if script fails before rm)
+# ✗ WRONG - Cleanup in script body, not trap (cleanup skipped on failure)
 temp_file=$(mktemp)
 echo 'data' > "$temp_file"
 rm -f "$temp_file"
-
-# ✗ WRONG - Creating temp file manually (not atomic, race conditions)
-temp_file="/tmp/myapp_$(date +%s).txt"
-touch "$temp_file"
-chmod 600 "$temp_file"
-
-# ✗ WRONG - Insecure permissions
-temp_file=$(mktemp)
-chmod 666 "$temp_file"  # World writable!
-
-# ✗ WRONG - Not checking mktemp success
-temp_file=$(mktemp)
-echo 'data' > "$temp_file"  # May fail if mktemp failed!
 
 # ✗ WRONG - Multiple traps overwrite each other
 temp1=$(mktemp)
@@ -159,26 +134,29 @@ temp1=$(mktemp) || die 1 'Failed to create temp file'
 temp2=$(mktemp) || die 1 'Failed to create temp file'
 trap 'rm -f "$temp1" "$temp2"' EXIT
 
+# ✗ WRONG - Insecure permissions
+chmod 666 "$temp_file"  # World writable!
+
+# ✗ WRONG - Not checking mktemp success
+temp_file=$(mktemp)
+echo 'data' > "$temp_file"  # May fail if mktemp failed!
+
 # ✗ WRONG - Removing temp directory without -r
-temp_dir=$(mktemp -d)
 trap 'rm "$temp_dir"' EXIT  # Fails if directory not empty!
 
 # ✓ CORRECT - Use -rf for directories
-temp_dir=$(mktemp -d) || die 1 'Failed to create temp directory'
 trap 'rm -rf "$temp_dir"' EXIT
 ```
 
-**Edge cases:**
+**Edge Cases:**
 
 **1. Preserving temp files for debugging:**
 
 ```bash
 declare -i KEEP_TEMP=0
-declare -a TEMP_FILES=()
 
 cleanup() {
   local -i exit_code=$?
-  local -- file
 
   if ((KEEP_TEMP)); then
     info 'Keeping temp files for debugging:'
@@ -194,46 +172,35 @@ cleanup() {
 
   return "$exit_code"
 }
-
-trap cleanup EXIT
 ```
 
-**2. Temp files in specific directory:**
+**2. Signal handling for cleanup on interruption:**
 
 ```bash
-# Create temp file in specific directory
-temp_file=$(mktemp "$SCRIPT_DIR"/temp.XXXXXX) ||
-  die 1 'Failed to create temp file in script directory'
-trap 'rm -f "$temp_file"' EXIT
-
-# Create temp directory in specific location
-temp_dir=$(mktemp -d "$HOME"/work/temp.XXXXXX) ||
-  die 1 'Failed to create temp directory'
-trap 'rm -rf "$temp_dir"' EXIT
-```
-
-**3. Handling signals:**
-
-```bash
-declare -- TEMP_FILE=''
-
-cleanup() {
-  local -i exit_code=$?
-  if [[ -n "$TEMP_FILE" && -f "$TEMP_FILE" ]]; then
-    rm -f "$TEMP_FILE"
-  fi
-  return "$exit_code"
-}
-
 # Cleanup on normal exit and signals
 trap cleanup EXIT SIGINT SIGTERM
 ```
 
+**3. Temp files in specific directory:**
+
+```bash
+temp_file=$(mktemp "$SCRIPT_DIR"/temp.XXXXXX) ||
+  die 1 'Failed to create temp file in script directory'
+
+temp_dir=$(mktemp -d "$HOME"/work/temp.XXXXXX) ||
+  die 1 'Failed to create temp directory'
+```
+
 **Summary:**
-- **Always use mktemp** - never hard-code temp file paths
-- **Use trap for cleanup** - ensure cleanup happens even on failure
-- **EXIT trap is mandatory** - automatic cleanup when script ends
-- **Check mktemp success** - `|| die` to handle creation failure
-- **Default permissions are secure** - mktemp creates 0600 files, 0700 directories
-- **Use cleanup function pattern** - for multiple temp files/directories
-- **Handle signals** - trap SIGINT SIGTERM for interruption cleanup
+
+| Requirement | Implementation |
+|-------------|----------------|
+| Always use mktemp | Never hard-code temp file paths |
+| EXIT trap mandatory | Automatic cleanup when script ends |
+| Check mktemp success | `\|\| die` to handle creation failure |
+| Secure permissions | mktemp creates 0600 files, 0700 directories |
+| Multiple temp files | Use array + cleanup function pattern |
+| Signal handling | trap SIGINT SIGTERM for interruption cleanup |
+| Debug support | --keep-temp option to preserve files |
+
+**Key principle:** The combination of mktemp + trap EXIT is the gold standard for temp file handling - it's atomic, secure, and guarantees cleanup even when scripts fail or are interrupted.

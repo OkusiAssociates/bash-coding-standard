@@ -8,17 +8,20 @@ Detecting and utilizing terminal features safely.
 
 #### Rationale
 
-Terminal capability detection ensures scripts work in all environments with graceful fallbacks, enables rich output when available, and prevents garbage output in non-terminal contexts.
+Terminal capability detection ensures scripts work in all environments, provides graceful fallbacks for limited terminals, enables rich output when available, and prevents garbage output in non-terminal contexts.
 
 ---
 
 #### Terminal Detection
 
 ```bash
+declare -i USE_COLORS
 # Check if stdout is a terminal
 if [[ -t 1 ]]; then
+  # Terminal - can use colors, cursor control
   USE_COLORS=1
 else
+  # Pipe or redirect - plain output only
   USE_COLORS=0
 fi
 
@@ -33,6 +36,7 @@ fi
 #### Terminal Size
 
 ```bash
+# Get terminal dimensions
 get_terminal_size() {
   if [[ -t 1 ]]; then
     TERM_COLS=$(tput cols 2>/dev/null || echo 80)
@@ -43,6 +47,7 @@ get_terminal_size() {
   fi
 }
 
+# Auto-update on resize
 trap 'get_terminal_size' WINCH
 get_terminal_size
 ```
@@ -50,16 +55,19 @@ get_terminal_size
 #### Capability Checking
 
 ```bash
+# Check for specific capability
 has_capability() {
   local -- cap=$1
   tput "$cap" &>/dev/null
 }
 
+# Use with fallback
 if has_capability colors; then
   num_colors=$(tput colors)
-  ((num_colors >= 256)) && USE_256_COLORS=1
+  ((num_colors >= 256)) && USE_256_COLORS=1 ||:
 fi
 
+# Check for Unicode support
 has_unicode() {
   [[ "${LC_ALL:-${LC_CTYPE:-${LANG:-}}}" == *UTF-8* ]]
 }
@@ -68,14 +76,17 @@ has_unicode() {
 #### Safe Output Functions
 
 ```bash
+# Width-aware output
 print_line() {
   local -i width=${TERM_COLS:-80}
   printf '%*s\n' "$width" '' | tr ' ' '─'
 }
 
+# Truncate to terminal width
 truncate_string() {
   local -- str=$1
   local -i max=${2:-$TERM_COLS}
+
   if ((${#str} > max)); then
     echo "${str:0:$((max-3))}..."
   else
@@ -83,10 +94,12 @@ truncate_string() {
   fi
 }
 
+# Center text
 center_text() {
   local -- text=$1
   local -i width=${TERM_COLS:-80}
   local -i padding=$(((width - ${#text}) / 2))
+
   printf '%*s%s\n' "$padding" '' "$text"
 }
 ```
@@ -94,6 +107,7 @@ center_text() {
 #### ANSI Code Reference
 
 ```bash
+# Common ANSI escape codes
 declare -r ESC=$'\033'
 
 # Colors (foreground)
@@ -109,6 +123,7 @@ declare -r BLINK="${ESC}[5m"   REVERSE="${ESC}[7m"
 
 # Reset
 declare -r NC="${ESC}[0m"
+declare -n RESET=NC
 
 # Cursor
 declare -r HIDE_CURSOR="${ESC}[?25l"

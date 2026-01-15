@@ -2,7 +2,13 @@
 
 **Rule: BCS0907**
 
-Text-based user interface elements for terminal scripts: visual feedback, progress indication, interactive prompts.
+Creating text-based user interface elements in terminal scripts.
+
+---
+
+#### Rationale
+
+TUI elements provide visual feedback for long-running operations, interactive prompts/menus, progress indication, and better UX.
 
 ---
 
@@ -13,7 +19,7 @@ Text-based user interface elements for terminal scripts: visual feedback, progre
 spinner() {
   local -a frames=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏')
   local -i i=0
-  while :; do
+  while ((1)); do
     printf '\r%s %s' "${frames[i % ${#frames[@]}]}" "$*"
     i+=1
     sleep 0.1
@@ -142,5 +148,3 @@ fi
 ---
 
 **See Also:** BCS0908 (Terminal Capabilities), BCS0701 (Color Support)
-
-#fin

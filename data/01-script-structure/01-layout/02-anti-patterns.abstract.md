@@ -1,50 +1,43 @@
 ### Layout Anti-Patterns
 
-**Eight critical BCS0101 violations with corrections.**
+**Avoid these 8 critical violations of BCS0101 13-step layout to prevent silent failures and unmaintainable code.**
 
----
+#### Critical Anti-Patterns
 
-**1. Missing strict mode** â†' silent failures
+| Anti-Pattern | Consequence |
+|--------------|-------------|
+| Missing `set -euo pipefail` | Silent failures, corrupt operations |
+| Variables used before declaration | "Unbound variable" errors with `set -u` |
+| Business logic before utilities | Forward references, harder to understand |
+| No `main()` in large scripts (200+ lines) | No clear entry point, untestable |
+| Missing `#fin` end marker | Cannot detect truncated files |
+| `readonly` before argument parsing | Cannot modify config vars |
+| Scattered global declarations | State variables hard to track |
+| Unprotected sourcing | Modifies caller's shell, auto-runs |
+
+#### Correct Pattern (Minimal)
+
 ```bash
-# âœ— set -euo pipefail missing
-# âœ“ Add immediately after shebang
+#!/usr/bin/env bash
+set -euo pipefail
+
+declare -r VERSION=1.0.0
+declare -- PREFIX=/usr/local  # Modified during parsing
+
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+
+main() {
+  while (($#)); do case $1 in --prefix) shift; PREFIX=$1 ;; esac; shift; done
+  readonly -- PREFIX
+}
+
+main "$@"
+#fin
 ```
 
-**2. Variables after use** â†' "unbound variable" with `set -u`
-```bash
-# âœ— main() uses VERBOSE before declaration
-# âœ“ Declare all globals before functions
-```
+#### Dual-Purpose Script Guard
 
-**3. Utilities after business logic** â†' harder to trace dependencies
 ```bash
-# âœ— process_files() calls die() defined below
-# âœ“ Define utilities first, business logic after
-```
-
-**4. No main() in large scripts** â†' no clear entry point, untestable
-```bash
-# âœ— Logic runs directly after functions
-# âœ“ Use main() for scripts >40 lines
-```
-
-**5. Missing `#fin`** â†' can't detect truncated files
-
-**6. Readonly before parsing** â†' can't modify via `--prefix`
-```bash
-# âœ— readonly -- PREFIX before arg parsing
-# âœ“ readonly -- PREFIX after parsing complete
-```
-
-**7. Scattered declarations** â†' hard to see all state
-```bash
-# âœ— Globals interspersed with functions
-# âœ“ All globals grouped together
-```
-
-**8. Unprotected sourcing** â†' runs main when sourced
-```bash
-# âœ“ Dual-purpose pattern:
 [[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0
 set -euo pipefail  # Only when executed
 ```

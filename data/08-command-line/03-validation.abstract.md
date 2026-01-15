@@ -1,17 +1,22 @@
 ## Argument Validation
 
-**Use validation helpers to ensure option arguments exist and have correct types before processing.**
+**Use validation helpers to ensure option arguments exist and are valid types before processing.**
 
-### Core Validators
+### Rationale
+- Catches `--output --verbose` (missing filename) â†' prevents next option becoming value
+- Type validation prevents late arithmetic errors (`--depth abc`)
+- `${1@Q}` provides safe quoting in error messages
+
+### Three Validators
 
 ```bash
-# Basic existence check
+# Existence check - arg doesn't start with '-'
 noarg() { (($# > 1)) && [[ ${2:0:1} != '-' ]] || die 2 "Missing argument for option ${1@Q}"; }
 
-# String validation with safe quoting
+# Enhanced string validation
 arg2() { ((${#@}-1<1)) || [[ "${2:0:1}" == '-' ]] && die 2 "${1@Q} requires argument" ||:; }
 
-# Numeric validation
+# Numeric validation (integers only)
 arg_num() { ((${#@}-1<1)) || [[ ! "$2" =~ ^[0-9]+$ ]] && die 2 "${1@Q} requires a numeric argument" ||:; }
 ```
 
@@ -21,29 +26,20 @@ arg_num() { ((${#@}-1<1)) || [[ ! "$2" =~ ^[0-9]+$ ]] && die 2 "${1@Q} requires 
 while (($#)); do case $1 in
   -o|--output) arg2 "$@"; shift; OUTPUT=$1 ;;
   -d|--depth)  arg_num "$@"; shift; MAX_DEPTH=$1 ;;
+  -v|--verbose) VERBOSE=1 ;;
 esac; shift; done
 ```
-
-**Critical:** Call validator BEFORE `shift` â€” validator inspects `$2`.
-
-### Validator Selection
-
-| Validator | Use Case |
-|-----------|----------|
-| `noarg()` | Simple existence check |
-| `arg2()` | String args, prevent `-` prefix |
-| `arg_num()` | Numeric integers only |
 
 ### Anti-Patterns
 
 ```bash
-# âœ— No validation â†' --output --verbose sets OUTPUT='--verbose'
--o|--output) shift; OUTPUT="$1" ;;
+# âœ— No validation â†' OUTPUT='--verbose'
+-o|--output) shift; OUTPUT=$1 ;;
 
 # âœ“ Validated
 -o|--output) arg2 "$@"; shift; OUTPUT=$1 ;;
 ```
 
-**`${1@Q}` pattern:** Safe shell quoting prevents expansion of special characters in error messages.
+**Critical:** Call validator BEFORE `shift` - validator inspects `$2`.
 
 **Ref:** BCS0803

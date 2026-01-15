@@ -8,19 +8,17 @@ Checking and managing external dependencies in Bash scripts.
 
 #### Rationale
 
-- Clear error messages for missing tools
-- Enables graceful degradation and portability checking
-- Documents script requirements
+Proper dependency management provides clear error messages for missing tools, enables graceful degradation, documents script requirements, and supports portability checking.
 
 ---
 
 #### Basic Dependency Check
 
 ```bash
-# Single command
+# Check single command
 command -v curl >/dev/null || die 1 'curl is required but not installed'
 
-# Multiple commands
+# Check multiple commands
 for cmd in curl jq awk; do
   command -v "$cmd" >/dev/null || die 1 "Required ${cmd@Q}"
 done
@@ -51,9 +49,11 @@ check_dependencies curl jq sqlite3 || exit 1
 #### Optional Dependencies
 
 ```bash
+# Check and set availability flag
 declare -i HAS_JQ=0
 command -v jq >/dev/null && HAS_JQ=1 ||:
 
+# Use with fallback
 if ((HAS_JQ)); then
   result=$(echo "$json" | jq -r '.field')
 else
@@ -88,6 +88,7 @@ check_tool_version() {
 #### Lazy Loading
 
 ```bash
+# Initialize expensive resources only when needed
 declare -- SQLITE_DB=''
 
 get_db() {
@@ -105,16 +106,14 @@ get_db() {
 #### Anti-Patterns
 
 ```bash
-# ✗ Wrong - which is not POSIX, unreliable
+# ✗ Wrong - using which (not POSIX, unreliable)
 which curl >/dev/null
 
-# ✓ Correct - command -v is POSIX compliant
+# ✓ Correct - use command -v (POSIX compliant)
 command -v curl >/dev/null
-```
 
-```bash
-# ✗ Wrong - silent failure, cryptic error if missing
-curl "$url"
+# ✗ Wrong - silent failure on missing dependency
+curl "$url"  # Cryptic error if curl missing
 
 # ✓ Correct - explicit check with helpful message
 command -v curl >/dev/null || die 1 'curl required: apt install curl'
@@ -124,5 +123,3 @@ curl "$url"
 ---
 
 **See Also:** BCS0607 (Library Patterns)
-
-#fin

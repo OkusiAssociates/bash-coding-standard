@@ -1,6 +1,10 @@
 ### Dual-Purpose Scripts
 
-**Scripts that execute directly OR source as libraries, using `BASH_SOURCE[0]` detection.**
+**Rule:** Scripts executable directly OR sourceable as libraries using `BASH_SOURCE[0]` check.
+
+**Key:** `set -e` MUST come AFTER source checkâ€”library code must not impose error handling on caller.
+
+**Rationale:** Reusable functions without duplication; testing flexibility (source functions independently).
 
 #### Pattern
 
@@ -14,24 +18,16 @@ declare -fx my_func
 set -euo pipefail
 main() { my_func "$@"; }
 main "$@"
-#fin
 ```
 
-#### Critical Rules
-
-- Define functions BEFORE `set -e` â†' sourcing parent controls error handling
-- Export functions: `declare -fx func_name` â†' enables subshell access
-- Idempotent init: `[[ -v LIB_VERSION ]] || declare -rx LIB_VERSION=1.0`
+**Idempotent:** Use `[[ -v MY_LIB_VERSION ]] || declare -rx MY_LIB_VERSION=1.0.0` to prevent double-init.
 
 #### Anti-Patterns
 
-```bash
-# âœ— set -e before source check
-set -euo pipefail
-[[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0  # Risky
+`my_func() { :; }` without `declare -fx` â†' cannot call from subshells after sourcing.
 
-# âœ— Functions not exported â†' subshell access fails
-my_func() { :; }
-```
+`set -euo pipefail` before source check â†' risky `return 0` behavior.
+
+**See Also:** BCS0607 (Library Patterns), BCS0604 (Function Export)
 
 **Ref:** BCS0406

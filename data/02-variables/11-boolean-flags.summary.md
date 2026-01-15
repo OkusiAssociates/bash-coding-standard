@@ -1,18 +1,15 @@
 ## Boolean Flags Pattern
 
-Use integer variables with `declare -i` or `local -i` for boolean state:
+Use integer variables with `declare -i` or `local -i` for boolean state tracking:
 
 ```bash
 # Boolean flags - declare as integers with explicit initialization
 declare -i INSTALL_BUILTIN=0
-declare -i BUILTIN_REQUESTED=0
-declare -i SKIP_BUILTIN=0
-declare -i NON_INTERACTIVE=0
-declare -i UNINSTALL=0
 declare -i DRY_RUN=0
+declare -i VERBOSE=0
 
 # Test flags in conditionals using (())
-((DRY_RUN)) && info 'Dry-run mode enabled'
+((DRY_RUN)) && info 'Dry-run mode enabled' ||:
 
 if ((INSTALL_BUILTIN)); then
   install_loadable_builtins
@@ -33,4 +30,4 @@ esac
 - Name flags in ALL_CAPS (e.g., `DRY_RUN`, `INSTALL_BUILTIN`)
 - Initialize explicitly to `0` (false) or `1` (true)
 - Test with `((FLAG))` (true for non-zero, false for zero)
-- Keep boolean flags separate from integer counters
+- Don't mix boolean flags with integer counters

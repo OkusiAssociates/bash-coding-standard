@@ -26,10 +26,12 @@ info 'Checking prerequisites...'
 # ✗ Wrong - word splitting/glob expansion
 [[ -f $file ]]
 echo $result
+rm $temp_file
 
 # ✓ Correct
 [[ -f "$file" ]]
 echo "$result"
+rm "$temp_file"
 ```
 
 ---
@@ -39,9 +41,11 @@ echo "$result"
 ```bash
 # ✗ Wrong - braces not needed
 echo "${HOME}/bin"
+path="${CONFIG_DIR}/app.conf"
 
 # ✓ Correct
 echo "$HOME"/bin
+path="$CONFIG_DIR"/app.conf
 
 # Braces ARE needed for:
 "${var:-default}"     # Default value
@@ -101,8 +105,10 @@ EOF
 | Static string | `'literal'` | `"literal"` |
 | Variable | `"$var"` | `$var` |
 | Path with var | `"$HOME"/bin` | `"${HOME}/bin"` |
+| Conditional | `[[ -f "$file" ]]` | `[[ -f $file ]]` |
 | Array | `"${arr[@]}"` | `${arr[@]}` |
+| Static literal | `== 'value'` | `== "value"` |
+
+---
 
 **Key principle:** Single quotes for static text, double quotes for variables, avoid unnecessary braces, always quote variables.
-
-#fin

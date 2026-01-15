@@ -1,10 +1,8 @@
 ### Dual-Purpose Scripts
 
-**Scripts that work both as executables AND sourceable libraries must apply `set -euo pipefail` only when executed directly, never when sourced.**
+**Scripts executable AND sourceable must apply `set -euo pipefail`/`shopt` ONLY when executed directly, never when sourced.**
 
-Sourcing applies shell options to the caller's environment, breaking error handling.
-
-**Detection:** `[[ ${BASH_SOURCE[0]} != "$0" ]] && return 0`
+**Why:** Sourcing applies settings to caller's shell, breaking its error handling/glob behavior.
 
 **Pattern:**
 ```bash
@@ -12,20 +10,22 @@ Sourcing applies shell options to the caller's environment, breaking error handl
 my_func() { local -- arg="$1"; echo "$arg"; }
 declare -fx my_func
 
-[[ ${BASH_SOURCE[0]} != "$0" ]] && return 0
-# --- Executable section ---
+# Early return when sourced
+[[ ${BASH_SOURCE[0]} == "$0" ]] || return 0
+
+# Executable section only
 set -euo pipefail
-shopt -s inherit_errexit shift_verbose extglob nullglob
+shopt -s inherit_errexit extglob nullglob
+my_func "$@"
 ```
 
-**Key Rules:**
-- Functions defined BEFORE detection line (available in both modes)
-- `set`/`shopt` AFTER detection (executable only)
-- Use `return` not `exit` for sourced errors
-- Guard metadata: `[[ ! -v VAR ]] && declare...` for idempotence
+**Rules:**
+- Functions BEFORE source detection
+- `return 0` for sourced mode (not `exit`)
+- Guard metadata: `[[ ! -v VAR ]]` for idempotence
 
 **Anti-patterns:**
-- `set -e` before detection â†' pollutes caller's shell
-- `exit 1` in sourced mode â†' terminates caller's shell
+- `set -euo pipefail` at top of dual-purpose script â†' breaks caller's shell
+- Using `exit` when sourced â†' terminates caller's shell
 
 **Ref:** BCS010201

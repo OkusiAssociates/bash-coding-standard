@@ -1,54 +1,54 @@
 ## Error Suppression
 
-**Only suppress errors when failure is expected, non-critical, and safe. Always document WHY.**
+**Only suppress errors when failure is expected, non-critical, and safe to continue. Always document WHY.**
 
-**Rationale:** Masks bugs, silent failures, debugging nightmare, security risk.
+**Rationale:** Masks real bugs; silent failures appear successful; creates debugging nightmares.
 
 ### Safe to Suppress
 
-- Command existence: `command -v tool >/dev/null 2>&1`
-- Optional files: `[[ -f "$optional" ]]`
-- Cleanup: `rm -f /tmp/app_* 2>/dev/null || true`
-- Idempotent ops: `install -d "$dir" 2>/dev/null || true`
+- **Command/file existence checks:** `command -v tool >/dev/null 2>&1`
+- **Cleanup operations:** `rm -f /tmp/app_* 2>/dev/null || true`
+- **Idempotent operations:** `install -d "$dir" 2>/dev/null || true`
 
 ### NEVER Suppress
 
-- Critical file ops �' must verify success
-- Data processing �' silent data loss
-- System config �' `systemctl` must check
-- Security ops �' `chmod 600` must succeed
-- Required deps �' fail early
+- File operations, data processing, system config, security ops, required dependencies
 
-### Patterns
+### Suppression Patterns
+
+| Pattern | Use When |
+|---------|----------|
+| `2>/dev/null` | Hide messages, still check return |
+| `|| true` | Ignore return, keep stderr |
+| Both combined | Both irrelevant |
+
+### Example
 
 ```bash
-# Suppress stderr, check return
-if ! command 2>/dev/null; then handle_error; fi
+# ✓ Safe - cleanup may have nothing to do
+# Rationale: Temp files may not exist
+rm -f "$CACHE"/*.tmp 2>/dev/null || true
 
-# Ignore return (stderr visible)
-command || true
+# ✗ DANGEROUS - critical operation
+cp "$config" "$dest" 2>/dev/null || true
 
-# Full suppression (document why!)
-# Rationale: temp files may not exist
-rm -f /tmp/app_* 2>/dev/null || true
+# ✓ Correct - check critical operations
+cp "$config" "$dest" || die 1 "Copy failed"
 ```
 
 ### Anti-Patterns
 
 ```bash
-# ✗ Suppressing critical op
-cp "$file" "$backup" 2>/dev/null || true
-
-# ✗ Undocumented suppression
+# ✗ Suppress without documenting why
 some_cmd 2>/dev/null || true
 
-# ✗ Block suppression
-set +e; critical_op; set -e
+# ✗ Suppress entire function
+process() { ...; } 2>/dev/null
 
-# ✓ Check critical ops
-cp "$file" "$dest" || die 1 'Failed'
+# ✗ Using set +e to suppress
+set +e; critical_op; set -e
 ```
 
-**Key:** Every suppression needs a comment explaining why failure is safe to ignore.
+**Key:** Every suppression is a deliberate decision—document it with a comment.
 
 **Ref:** BCS0605

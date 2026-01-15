@@ -1,37 +1,49 @@
 ## Eval Command
 
-**Never use `eval` with untrusted input. Avoid `eval` entirely—safer alternatives exist for all use cases.**
+**Never use `eval` with untrusted input. Avoid `eval` entirely—safer alternatives exist for all common use cases.**
 
-### Why It Matters
-- Code injection: arbitrary command execution with full script privileges
-- Bypasses all validation via metacharacters; impossible to audit
-- Double expansion enables attacks: `eval "echo $var"` executes `$(whoami)` in `var`
+### Rationale
+- **Code injection**: `eval` executes arbitrary code with full script privileges—complete system compromise
+- **Bypasses validation**: Even sanitized input can contain metacharacters enabling injection
+- **Better alternatives**: Arrays, indirect expansion, associative arrays handle all use cases safely
 
 ### Safe Alternatives
 
-| Need | Use Instead |
-|------|-------------|
-| Dynamic commands | Arrays: `cmd=(find -name "*.txt"); "${cmd[@]}"` |
-| Variable indirection | `${!var_name}` or `printf -v "$var" '%s' "$val"` |
-| Dynamic data | Associative arrays: `declare -A data; data[$key]=$val` |
-| Function dispatch | Case or array lookup: `"${actions[$action]}"` |
-
-### Core Pattern
 ```bash
-# ✗ NEVER - eval with user input
-eval "$user_cmd"
+# ✗ eval for variable indirection
+eval "value=\$$var_name"
+# ✓ Indirect expansion
+echo "${!var_name}"
 
-# ✓ Safe - array-based command construction
+# ✗ eval for dynamic assignment
+eval "$var_name='$value'"
+# ✓ printf -v
+printf -v "$var_name" '%s' "$value"
+
+# ✗ eval for command building
+eval "$cmd"
+# ✓ Array execution
 declare -a cmd=(find /data -type f)
 [[ -n "$pattern" ]] && cmd+=(-name "$pattern")
 "${cmd[@]}"
 
-# ✓ Safe - indirect expansion for variable access
-echo "${!var_name}"
+# ✗ eval for function dispatch
+eval "${action}_function"
+# ✓ Associative array lookup
+declare -A actions=([start]=start_fn [stop]=stop_fn)
+[[ -v "actions[$action]" ]] && "${actions[$action]}"
 ```
 
 ### Anti-Patterns
-- `eval "$var_name='$value'"` �' use `printf -v "$var_name" '%s' "$value"`
-- `eval "echo $$var_name"` �' use `echo "${!var_name}"`
+
+```bash
+# ✗ eval with user input �' `case` whitelist
+eval "$user_command"
+
+# ✗ eval in loop �' associative array dispatch
+for f in *.txt; do eval "process_${f%.txt}"; done
+```
+
+**Key principle:** If you think you need `eval`, use arrays, indirect expansion `${!var}`, or associative arrays instead.
 
 **Ref:** BCS1004

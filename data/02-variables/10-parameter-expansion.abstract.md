@@ -4,35 +4,27 @@
 
 #### Braces Required
 
-```bash
-"${var##*/}"      # Pattern removal
-"${var:-default}" # Default value
-"${var:0:5}"      # Substring
-"${var//old/new}" # Substitution
-"${var,,}"        # Lowercase
-"${array[@]}"     # Array access
-"${var1}${var2}"  # No-separator concat
-"${prefix}suffix" # Alphanumeric follows
-```
+- **Expansion ops:** `${var##*/}` `${var:-default}` `${var:0:5}` `${var//old/new}` `${var,,}`
+- **Adjacent concat:** `${prefix}suffix` `${var1}${var2}`
+- **Arrays:** `${array[@]}` `${array[i]}` `${#array[@]}`
+- **Special:** `${10}` `${@:2}` `${!var}` `${#var}`
 
-#### No Braces Needed
+#### No Braces (separators delimit)
+
+`"$var"` `"$HOME"` `"$PREFIX"/bin` `"$var-suffix"` `"$var.suffix"`
 
 ```bash
-"$var"           # Standalone
-"$PREFIX"/bin    # Separator delimits
-"$var-suffix"    # Dash/dot/slash separates
+# Pattern/default/substring
+name=${path##*/}; dir=${path%/*}; val=${var:-default}
+# âœ“ "$PREFIX"/bin  â†' âœ— "${PREFIX}"/bin
+# âœ“ "$var"         â†' âœ— "${var}"
 ```
 
-#### Key Operations
-
-| Op | Syntax | Use |
-|----|--------|-----|
-| Prefix rm | `${v##*/}` | Basename |
-| Suffix rm | `${v%/*}` | Dirname |
-| Default | `${v:-x}` | Fallback |
-| Replace | `${v//a/b}` | Subst all |
-| Length | `${#v}` | Char count |
-
-**Anti-patterns:** `"${var}"` standalone â†' `"$var"` | `"${PREFIX}/bin"` â†' `"$PREFIX"/bin`
+| Context | Form |
+|---------|------|
+| Standalone | `"$var"` |
+| With separator | `"$var"/path` |
+| Expansion op | `"${var%pat}"` |
+| Concat (no sep) | `"${a}${b}"` |
 
 **Ref:** BCS0210

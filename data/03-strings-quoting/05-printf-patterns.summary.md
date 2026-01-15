@@ -1,8 +1,6 @@
 ### printf Patterns
 
-**Rule: BCS0305**
-
-Quoting rules for printf and echo.
+**Rule: BCS0305** — Quoting rules for printf and echo.
 
 ---
 
@@ -22,8 +20,6 @@ echo "$SCRIPT_NAME $VERSION"
 printf 'Found %d files in %s\n' "$count" "$dir"
 ```
 
----
-
 #### Format String Escapes
 
 ```bash
@@ -33,8 +29,6 @@ printf '%f\n'   "$float"        # Float
 printf '%x\n'   "$hex"          # Hexadecimal
 printf '%%\n'                   # Literal %
 ```
-
----
 
 #### Prefer printf Over echo -e
 
@@ -52,5 +46,3 @@ echo $'Line1\nLine2'
 ---
 
 **Key principle:** Single quotes for format strings, double quotes for variable arguments.
-
-#fin

@@ -1,50 +1,31 @@
 ### Edge Cases and Variations
 
-**Standard 13-step layout modifications for specific use cases: small scripts, libraries, external config, platform detection, cleanup traps.**
+**Standard 13-step layout may be simplified/extended for specific scenarios.**
 
----
-
-## Legitimate Simplifications
-
-- **<200 lines** â†' skip `main()`, run directly
-- **Library files** â†' skip `set -e`, `main()`, execution (avoid affecting caller)
-- **One-off utilities** â†' may skip colors, verbose messaging
-
-## Legitimate Extensions
-
-- **External config** â†' source between metadata and business logic; `readonly` after sourcing
-- **Platform detection** â†' add platform globals after standard globals
-- **Cleanup traps** â†' after utility functions, before business logic
-- **Lock files** â†' acquisition/release around main execution
-
-## Core Example â€” Library Pattern
-
+#### Skip `main()` (<200 lines)
 ```bash
 #!/usr/bin/env bash
-# Library - meant to be sourced, not executed
-# No set -e (affects caller), no readonly (caller may modify)
-
-is_integer() { [[ "$1" =~ ^-?[0-9]+$ ]]; }
-# No main(), no execution
+set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
+for file in "$@"; do [[ ! -f "$file" ]] || ((count++)); done
 #fin
 ```
 
-## Anti-Pattern
+#### Libraries (sourced files)
+Skip `set -e` (affects caller), skip `main()`, define functions only.
 
-```bash
-# âœ— Functions before set -e
-validate() { : ... }
-set -euo pipefail  # Too late!
-VERSION=1.0.0
-check() { : ... }
-declare -- PREFIX=/usr  # Globals scattered
-```
+#### Extensions
+- **Config sourcing**: After metadata, before `readonly`
+- **Platform detection**: After globals, use `case $(uname -s)`
+- **Cleanup traps**: After function defs, before temp file creation: `trap 'cleanup $?' SIGINT SIGTERM EXIT`
 
-## Invariant Principles
+#### Key Principles
+1. `set -euo pipefail` still first (unless library)
+2. Dependencies before usage
+3. Document deviations
 
-Even when deviating:
-1. **Safety first** â€” `set -euo pipefail` still comes first (unless library)
-2. **Dependencies before usage** â€” bottom-up organization applies
-3. **Document reasons** â€” comment why deviating
+#### Anti-patterns
+`set -e` after functions â†' **Wrong**: safety must come first
+Globals scattered between functions â†' **Wrong**: group declarations
 
 **Ref:** BCS010103

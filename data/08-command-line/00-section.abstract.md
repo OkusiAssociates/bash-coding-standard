@@ -1,11 +1,24 @@
 # Command-Line Arguments
 
-**Standard argument parsing supporting short (`-h`, `-v`) and long (`--help`, `--version`) options with consistent patterns.**
+**Standard argument parsing with short (`-h`) and long (`--help`) options for consistent CLI interfaces.**
 
-**Core requirements:**
-- Canonical version format: `scriptname X.Y.Z`
-- Validation patterns for required arguments and option conflicts
-- Placement: main function (complex scripts) vs top-level (simple scripts)
-- Predictable, user-friendly interfaces for interactive and automated usage
+Core requirements:
+- Version format: `scriptname X.Y.Z`
+- Validate required args; detect option conflicts
+- Simple scripts: top-level parsing; complex: in `main()`
 
-**Ref:** BCS1000
+```bash
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -h|--help) usage; exit 0 ;;
+    -v|--version) echo "${0##*/} 1.0.0"; exit 0 ;;
+    --) shift; break ;;
+    -*) die "Unknown option: $1" ;;
+    *) args+=("$1") ;;
+  esac; shift
+done
+```
+
+Anti-patterns: No `getopt`/`getopts` for long options â†' use `case`; no silent failures on missing required args.
+
+**Ref:** BCS0800

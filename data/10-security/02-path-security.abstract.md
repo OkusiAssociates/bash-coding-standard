@@ -1,35 +1,34 @@
 ## PATH Security
 
-**Lock PATH immediately after `set -euo pipefail` to prevent command hijacking attacks.**
+**Lock down PATH at script start to prevent command hijacking and trojan injection.**
 
-**Why:** Attacker-controlled directories allow trojan binaries; `.`, `::`, or `/tmp` in PATH enable current-directory/world-writable attacks; inherited PATH may be malicious.
+**Rationale:**
+- Attacker-controlled directories allow malicious binaries to replace system commands
+- Empty PATH elements (`:`, `::`, trailing `:`) resolve to current directory
+- PATH inherited from caller's environment may be malicious
 
-**Correct pattern:**
-
+**Secure PATH pattern:**
 ```bash
 #!/bin/bash
 set -euo pipefail
-readonly PATH='/usr/local/bin:/usr/bin:/bin'
+readonly -- PATH='/usr/local/bin:/usr/bin:/bin'
 export PATH
 ```
 
-**Validation if inherited PATH needed:**
-
+**Validate PATH (if not resetting):**
 ```bash
 [[ "$PATH" =~ \.  ]] && die 1 'PATH contains .'
-[[ "$PATH" =~ ^:|::|:$ ]] && die 1 'PATH has empty element'
+[[ "$PATH" =~ ^:|:::|:$ ]] && die 1 'PATH has empty element'
 [[ "$PATH" =~ /tmp ]] && die 1 'PATH contains /tmp'
 ```
 
 **Anti-patterns:**
+- `# No PATH setting` â†' inherits untrusted environment
+- `PATH=.:$PATH` â†' current directory searchable
+- `PATH=/tmp:$PATH` â†' world-writable dir in PATH
+- `PATH=::` or leading/trailing `:` â†' empty = current dir
+- Setting PATH late â†' commands before it use inherited PATH
 
-- `# No PATH setting` â†' inherits unsafe environment
-- `PATH=.:$PATH` â†' current directory hijacking
-- `PATH=/tmp:$PATH` â†' world-writable directory
-- `PATH=/home/user/bin:$PATH` â†' user-controlled
-- `PATH=/usr/bin::/bin` â†' `::` equals current dir
-- Setting PATH late â†' commands before it are unsafe
-
-**Critical:** Use `readonly PATH` to prevent modification. For maximum security, use absolute paths: `/bin/tar`, `/bin/rm`.
+**Key:** Set `readonly PATH` immediately after `set -euo pipefail`. Use absolute paths (`/bin/tar`) for critical commands as defense in depth.
 
 **Ref:** BCS1002

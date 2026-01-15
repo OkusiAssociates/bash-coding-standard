@@ -1,16 +1,16 @@
 ## Conditionals
 
-**Use `[[ ]]` for string/file tests, `(())` for arithmetic:**
+**Use `[[ ]]` for string/file tests, `(())` for arithmetic.**
 
 ```bash
 # String and file tests - use [[ ]]
 [[ -d "$path" ]] && echo 'Directory exists' ||:
 [[ -f "$file" ]] || die 1 "File not found ${file@Q}"
-[[ "$status" == success ]] && continue
+[[ "$status" == success ]] && continue ||:
 
 # Arithmetic tests - use (())
 ((VERBOSE==0)) || echo 'Verbose mode'
-((count >= MAX_RETRIES)) && die 1 'Too many retries'
+((count >= MAX_RETRIES)) && die 1 'Too many retries' ||:
 
 # Complex conditionals - combine both
 if [[ -n "$var" ]] && ((count)); then
@@ -18,13 +18,13 @@ if [[ -n "$var" ]] && ((count)); then
 fi
 ```
 
-**Rationale for `[[ ]]` over `[ ]`:**
-1. No word splitting or glob expansion on variables
-2. Pattern matching with `==` and `=~` operators
-3. Logical operators `&&` and `||` work inside (no `-a`/`-o` needed)
-4. `<`, `>` for lexicographic string comparison
+**Why `[[ ]]` over `[ ]`:**
+- No word splitting or glob expansion on variables
+- Pattern matching with `==` and `=~` operators
+- Logical operators `&&`/`||` work inside (no `-a`/`-o` needed)
+- String comparison with `<`, `>` (lexicographic)
 
-**Comparison `[[ ]]` vs `[ ]`:**
+**Comparison of `[[ ]]` vs `[ ]`:**
 
 ```bash
 var='two words'
@@ -35,7 +35,7 @@ var='two words'
 # ✓ [[ ]] handles unquoted variables (but quote anyway)
 [[ "$var" == 'two words' ]]  # Recommended
 
-# Pattern matching (only in [[ ]])
+# Pattern matching (only works in [[ ]])
 [[ "$file" == *.txt ]] && echo "Text file"
 [[ "$input" =~ ^[0-9]+$ ]] && echo "Number"
 
@@ -46,19 +46,12 @@ var='two words'
 **Arithmetic conditionals - use `(())`:**
 
 ```bash
-declare -i count=0
-
 # ✓ Correct - natural C-style syntax
-if ((count)); then
-  echo "Count: $count"
-fi
-
-((i >= MAX)) && die 1 'Limit exceeded'
+((count)) && echo "Count: $count"
+((i >= MAX)) && die 1 'Limit exceeded' ||:
 
 # ✗ Wrong - using [[ ]] for arithmetic
-if [[ "$count" -gt 0 ]]; then  # Unnecessary, verbose
-  echo "Count: $count"
-fi
+[[ "$count" -gt 0 ]]  # Verbose, error-prone
 
 # Comparison operators in (())
 ((a > b))   ((a >= b))  ((a < b))
@@ -69,13 +62,11 @@ fi
 
 ```bash
 # Glob pattern matching
-[[ "$filename" == *.@(jpg|png|gif) ]] && process_image "$filename"
+[[ "$filename" == *.@(jpg|png|gif) ]] && process_image "$filename" ||:
 
 # Regular expression matching
 if [[ "$email" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
   echo 'Valid email'
-else
-  die 22 "Invalid email ${email@Q}"
 fi
 
 # Case-insensitive matching
@@ -87,34 +78,31 @@ shopt -u nocasematch
 **Short-circuit evaluation:**
 
 ```bash
-# Execute if first succeeds
-[[ -f "$config" ]] && source "$config" ||:
-
-# Execute if first fails
-[[ -d "$dir" ]] || mkdir -p "$dir"
+[[ -f "$config" ]] && source "$config" ||:  # Execute if first succeeds
+[[ -d "$dir" ]] || mkdir -p "$dir"          # Execute if first fails
 ((count)) || die 1 'No items to process'
 ```
 
 **Anti-patterns:**
 
 ```bash
-# ✗ Wrong - old [ ] syntax
-if [ -f "$file" ]; then echo 'Found'; fi
+# ✗ Using old [ ] syntax
+if [ -f "$file" ]; then  # Use [[ ]] instead
 
-# ✗ Wrong - deprecated -a/-o in [ ]
-[ -f "$file" -a -r "$file" ]  # Fragile
+# ✗ Using -a and -o in [ ]
+[ -f "$file" -a -r "$file" ]  # Deprecated, fragile
 
-# ✓ Correct - use [[ ]] with &&/||
+# ✓ Use [[ ]] with && and ||
 [[ -f "$file" && -r "$file" ]]
 
-# ✗ Wrong - arithmetic with [[ ]] using -gt/-lt
+# ✗ Arithmetic with [[ ]] using -gt/-lt
 [[ "$count" -gt 10 ]]  # Verbose
 
-# ✓ Correct - use (())
+# ✓ Use (()) for arithmetic
 ((count > 10))
 ```
 
-**File test operators (`[[ ]]`):**
+**File test operators (use with `[[ ]]`):**
 
 | Operator | Meaning |
 |----------|---------|
@@ -126,18 +114,18 @@ if [ -f "$file" ]; then echo 'Found'; fi
 | `-x file` | Executable |
 | `-s file` | Not empty (size > 0) |
 | `-L link` | Symbolic link |
-| `f1 -nt f2` | f1 newer than f2 |
-| `f1 -ot f2` | f1 older than f2 |
+| `file1 -nt file2` | file1 newer than file2 |
+| `file1 -ot file2` | file1 older than file2 |
 
-**String test operators (`[[ ]]`):**
+**String test operators (use with `[[ ]]`):**
 
 | Operator | Meaning |
 |----------|---------|
-| `-z "$str"` | Empty string |
-| `-n "$str"` | Non-empty string |
-| `"$a" == "$b"` | Equal |
-| `"$a" != "$b"` | Not equal |
-| `"$a" < "$b"` | Lexicographic less |
-| `"$a" > "$b"` | Lexicographic greater |
-| `"$str" =~ regex` | Regex match |
-| `"$str" == pattern` | Glob match |
+| `-z "$str"` | String is empty |
+| `-n "$str"` | String is not empty |
+| `"$a" == "$b"` | Strings equal |
+| `"$a" != "$b"` | Strings not equal |
+| `"$a" < "$b"` | Lexicographic less than |
+| `"$a" > "$b"` | Lexicographic greater than |
+| `"$str" =~ regex` | Matches regex |
+| `"$str" == pattern` | Matches glob pattern |

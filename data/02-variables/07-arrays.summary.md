@@ -1,6 +1,6 @@
 ### Arrays
 
-**Rule: BCS0207** (Merged from BCS0501 + BCS0502)
+**Rule: BCS0207**
 
 Array declaration, usage, and safe list handling.
 
@@ -8,26 +8,37 @@ Array declaration, usage, and safe list handling.
 
 #### Rationale
 
-Arrays provide element preservation (boundaries maintained regardless of content), no word splitting with `"${array[@]}"`, glob safety (wildcards preserved literally), and safe command construction with arbitrary arguments.
+Arrays provide element preservation, no word splitting with `"${array[@]}"`, glob safety, and safe command construction with arbitrary arguments.
 
 ---
 
 #### Declaration
 
 ```bash
-declare -a paths=()           # Empty indexed array
+# Indexed arrays (explicit declaration)
+declare -a paths=()           # Empty array
 declare -a colors=(red green blue)
-local -a found_files=()       # Local arrays in functions
-declare -A config=()          # Associative arrays (Bash 4.0+)
+
+# Local arrays in functions
+local -a found_files=()
+
+# Associative arrays (Bash 4.0+)
+declare -A config=()
 config['key']='value'
 ```
 
 #### Adding Elements
 
 ```bash
-paths+=("$1")                        # Append single element
-args+=("$arg1" "$arg2" "$arg3")      # Append multiple
-all_files+=("${config_files[@]}")    # Append another array
+# Append single element
+paths+=("$1")
+
+# Append multiple elements
+args+=("$arg1" "$arg2" "$arg3")
+
+# Append another array
+all_files+=("${config_files[@]}")
+all_files+=("$@")
 ```
 
 #### Iteration
@@ -40,35 +51,49 @@ done
 
 # ✗ Wrong - unquoted, breaks with spaces
 for path in ${paths[@]}; do
+  process "$path"
+done
 ```
 
 #### Length and Checking
 
 ```bash
-count=${#files[@]}                    # Get number of elements
-if ((${#array[@]} == 0)); then        # Check if empty
+count=${#files[@]}
+
+# Check if empty
+if ((${#array[@]} == 0)); then
   info 'Array is empty'
 fi
-((${#paths[@]})) || paths=('.')       # Set default if empty
+
+# Set default if empty
+((${#paths[@]})) || paths=('.')
 ```
 
 #### Reading Into Arrays
 
 ```bash
-IFS=',' read -ra fields <<< "$csv_line"      # Split by delimiter
-readarray -t lines < <(grep pattern file)    # From command (preferred)
+# Split string by delimiter
+IFS=',' read -ra fields <<< "$csv_line"
+
+# From command output (preferred)
+readarray -t lines < <(grep pattern file)
 mapfile -t files < <(find . -name "*.txt")
-readarray -t config_lines < config.txt       # From file
+
+# From file
+readarray -t config_lines < config.txt
 ```
 
 #### Element Access
 
 ```bash
-first=${array[0]}           # Single element (0-indexed)
+first=${array[0]}
 last=${array[-1]}           # Bash 4.3+
-"${array[@]}"               # All elements as separate words
+
+"${array[@]}"               # Each as separate word
 "${array[*]}"               # All as single word (rare)
-"${array[@]:2}"             # Slice from index 2
+
+# Slice
+"${array[@]:2}"             # From index 2
 "${array[@]:1:3}"           # 3 elements from index 1
 ```
 
@@ -77,10 +102,14 @@ last=${array[-1]}           # Bash 4.3+
 #### Safe Command Construction
 
 ```bash
-local -a cmd=(myapp '--config' "$config_file")
-((verbose)) && cmd+=('--verbose') ||:
-[[ -z "$output" ]] || cmd+=('--output' "$output")
-"${cmd[@]}"                 # Execute safely
+local -a cmd=(myapp --config "$config_file")
+
+# Add conditional arguments
+((verbose)) && cmd+=(--verbose) ||:
+[[ -z "$output" ]] || cmd+=(--output "$output")
+
+# Execute safely
+"${cmd[@]}"
 ```
 
 #### Collecting Arguments During Parsing
@@ -94,6 +123,7 @@ while (($#)); do
   esac
   shift
 done
+
 for file in "${input_files[@]}"; do
   process_file "$file"
 done
@@ -106,17 +136,17 @@ done
 ```bash
 # ✗ Wrong - unquoted expansion
 rm ${files[@]}
-# ✓ Correct
+# ✓ Correct - quoted expansion
 rm "${files[@]}"
 
 # ✗ Wrong - word splitting to create array
 array=($string)
-# ✓ Correct
+# ✓ Correct - explicit
 readarray -t array <<< "$string"
 
 # ✗ Wrong - using [*] in iteration
 for item in "${array[*]}"; do
-# ✓ Correct
+# ✓ Correct - use [@]
 for item in "${array[@]}"; do
 ```
 
@@ -136,5 +166,3 @@ for item in "${array[@]}"; do
 | Indices | `"${!arr[@]}"` | All array indices |
 
 **Key principle:** Always quote array expansions: `"${array[@]}"` to preserve spacing and prevent word splitting.
-
-#fin

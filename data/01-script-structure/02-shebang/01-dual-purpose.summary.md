@@ -1,13 +1,14 @@
 ### Dual-Purpose Scripts (Executable and Sourceable)
 
-Scripts designed to work both as executables and sourceable libraries must apply `set -euo pipefail` and `shopt` settings **ONLY** when executed directly, **NOT** when sourced.
+Scripts designed to work both as standalone executables and source libraries. `set -euo pipefail` and `shopt` settings must **ONLY** be applied when executed directly, **NOT** when sourced.
 
-**Rationale:** Sourcing a script that applies `set -e` or modifies `shopt` alters the caller's shell environment, potentially breaking error handling or glob behavior. Sourced scripts should only provide functions and variables without side effects.
+**Rationale:** When sourced, applying `set -e` or modifying `shopt` would alter the calling shell's environment, breaking the caller's error handling or glob behavior.
 
 **Recommended pattern (early return):**
 ```bash
 #!/bin/bash
 # Description of dual-purpose script
+: ...
 
 # Function definitions (available in both modes)
 my_function() {
@@ -18,7 +19,7 @@ my_function() {
 declare -fx my_function
 
 # Early return for sourced mode - stops here when sourced
-[[ ${BASH_SOURCE[0]} != "$0" ]] && return 0
+[[ ${BASH_SOURCE[0]} == "$0" ]] || return 0
 
 # -----------------------------------------------------------------------------
 # Executable code starts here (only runs when executed directly)
@@ -28,6 +29,7 @@ shopt -s inherit_errexit shift_verbose extglob nullglob
 # Metadata initialization with guard (allows re-sourcing safety)
 if [[ ! -v SCRIPT_VERSION ]]; then
   declare -x SCRIPT_VERSION=1.0.0
+  #shellcheck disable=SC2155
   declare -x SCRIPT_PATH=$(realpath -- "$0")
   declare -x SCRIPT_DIR=${SCRIPT_PATH%/*}
   declare -x SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -49,14 +51,14 @@ my_function "$@"
 #fin
 ```
 
-**Pattern structure:**
-1. **Functions first** - Define all library functions at top; export with `declare -fx` if needed
-2. **Early return** - `[[ ${BASH_SOURCE[0]} != "$0" ]] && return 0` (sourced: load functions then exit; executed: continue)
-3. **Visual separator** - Comment line marks executable section boundary
-4. **Set/shopt** - Only applied when executed, immediately after separator
-5. **Metadata guard** - `[[ ! -v SCRIPT_VERSION ]]` prevents re-initialization; safe to source multiple times
+**Pattern breakdown:**
+1. **Function definitions first** - Define library functions at top, export with `declare -fx` if needed
+2. **Early return** - `[[ ${BASH_SOURCE[0]} == "$0" ]] || return 0` - when sourced: functions loaded, clean exit
+3. **Visual separator** - Clear comment marks executable section boundary
+4. **Set and shopt** - Only applied when executed, placed immediately after separator
+5. **Metadata with guard** - `[[ ! -v SCRIPT_VERSION ]]` prevents re-initialization, safe for multiple sourcing
 
-**Alternative (if/else) for different initialization per mode:**
+**Alternative pattern (if/else)** for different initialization per mode:
 ```bash
 #!/bin/bash
 
@@ -66,20 +68,20 @@ declare -fx process_data
 if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
   # EXECUTED MODE
   set -euo pipefail
-  DATA_DIR=/var/lib/myapp
+  declare -r DATA_DIR=/var/lib/myapp
   process_data "$DATA_DIR"
 else
   # SOURCED MODE - different initialization
-  DATA_DIR=${DATA_DIR:-/tmp/test_data}
+  declare -r DATA_DIR=${DATA_DIR:-/tmp/test_data}
 fi
 ```
 
 **Key principles:**
 - Prefer early return pattern for simplicity
-- Place all function definitions **before** sourced/executed detection
+- Place function definitions **before** sourced/executed detection
 - Only apply `set -euo pipefail` and `shopt` in executable section
 - Use `return` (not `exit`) for errors when sourced
 - Guard metadata with `[[ ! -v VARIABLE ]]` for idempotence
 - Test both modes: `./script.sh` and `source script.sh`
 
-**Use cases:** Utility libraries with CLI demo, scripts providing reusable functions plus CLI, test frameworks sourceable for functions or runnable for tests.
+**Common use cases:** Utility libraries with CLI demos, reusable functions + CLI interface, test frameworks.

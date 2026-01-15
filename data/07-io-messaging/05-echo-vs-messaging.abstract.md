@@ -1,46 +1,44 @@
 ## Echo vs Messaging Functions
 
-**Use messaging functions (`info`, `warn`, `error`) for operational status to stderr; use `echo` for data output to stdout.**
+**Use messaging functions (`info`, `warn`, `error`) for statusâ†'stderr; plain `echo` for dataâ†'stdout.**
 
-**Key Distinction:**
-- **Messaging** â†' stderr, respects `VERBOSE`, has formatting/colors
-- **echo** â†' stdout, always displays, parseable/pipeable
+**Key distinction:** Messaging respects `VERBOSE` and goes to stderr. Echo always outputs to stdout for piping/capture.
 
-**Use messaging for:** status updates, diagnostics, progress, color-coded feedback
-**Use echo for:** data returns, help/version, reports, parseable output
+### When to Use Which
+
+| Output Type | Tool | Stream | Verbosity |
+|-------------|------|--------|-----------|
+| Status/progress | `info`, `warn` | stderr | Respects VERBOSE |
+| Errors | `error` | stderr | Always shows |
+| Data/results | `echo` | stdout | Always shows |
+| Help/version | `echo`/`cat` | stdout | Always shows |
+
+### Core Pattern
 
 ```bash
-# Messaging: operational status (stderr)
-info 'Processing...'
-error "File not found ${file@Q}"
-
-# Echo: data output (stdout, capturable)
-get_value() { echo "$result"; }
-val=$(get_value)
-
-# Help text always uses echo/cat (not messaging)
-show_help() { cat <<'EOT'
-Usage: script.sh [OPTIONS]
-EOT
+get_data() {
+  info "Processing..."     # Statusâ†'stderr (verbose-controlled)
+  echo "$result"           # Dataâ†'stdout (capturable)
 }
+
+# Correct separation:
+output=$(get_data)         # Captures only data, sees status
 ```
 
-**Anti-patterns:**
+### Anti-Patterns
 
 ```bash
-# âœ— info() for data - goes to stderr, cannot capture
-get_email() { info "$email"; }
+# âœ— Data via messaging - can't capture!
+get_value() { info "$val"; }
+x=$(get_value)  # Empty!
 
-# âœ— echo for status - mixes with data in stdout
-echo "Processing..."  # Use info instead
+# âœ— Status via echo - pollutes data stream
+process() { echo "Working..."; cat "$f"; }
 
-# âœ— Help via info() - hidden if VERBOSE=0
-show_help() { info 'Usage: ...'; }
-
-# âœ— Error to stdout
-echo "Error: failed"  # Use: error "failed"
+# âœ— Help via info() - hidden when VERBOSE=0
+show_help() { info "Usage: ..."; }
 ```
 
-**Stream separation enables pipeline composition:** data piped/captured, status visible to user.
+**Rule:** Data=`echo`â†'stdout. Status=messagingâ†'stderr. Errors always stderr. Help/version always display.
 
 **Ref:** BCS0705

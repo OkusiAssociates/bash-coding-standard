@@ -1,39 +1,37 @@
 ## Conditional Declarations with Exit Code Handling
 
-**Append `|| :` to `((cond)) && action` patterns under `set -e` to prevent false conditions from terminating script.**
-
-**Core Problem:** `(())` returns 1 (failure) when false �' `set -e` exits script.
+**Append `|| :` to `((cond)) && action` patterns under `set -e` to prevent false conditions from exiting.**
 
 **Rationale:**
-- `|| :` provides safe fallback (`:` always returns 0)
-- Traditional Unix idiom for "ignore this error"
+- `(())` returns exit code 1 when false �' `set -e` terminates script
+- `|| :` (colon = no-op returning 0) provides safe fallback
+- Traditional Unix idiom; `:` preferred over `true` (built-in, 1 char)
 
 **Pattern:**
 
 ```bash
+set -euo pipefail
 declare -i complete=0
 
-# ✗ DANGEROUS: Script exits if complete=0
+# ✗ DANGEROUS: exits when complete=0
 ((complete)) && declare -g BLUE=$'\033[0;34m'
 
-# ✓ SAFE: Script continues
+# ✓ SAFE: continues when complete=0
 ((complete)) && declare -g BLUE=$'\033[0;34m' || :
 ```
 
-**Use `:` over `true`:** Traditional, concise (1 char), built-in, no PATH lookup.
+**Use for:** optional declarations, conditional exports, feature-gated actions, debug output.
 
-**When to use:** Optional declarations, conditional exports, feature-gated actions, optional logging.
-
-**When NOT to use:** Critical operations needing explicit error handling �' use `if` statement instead.
+**Don't use for:** critical operations needing error handling �' use `if` with explicit error checks.
 
 **Anti-patterns:**
 
 ```bash
-# ✗ Missing || : - exits on false
+# ✗ Missing || : - script exits on false
 ((flag)) && action
 
 # ✗ Suppressing critical operations
-((confirmed)) && delete_files || :
+((confirmed)) && delete_files || :  # hides failures!
 
 # ✓ Critical ops need explicit handling
 if ((confirmed)); then

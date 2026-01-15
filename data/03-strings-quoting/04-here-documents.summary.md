@@ -1,6 +1,6 @@
 ### Here Documents
 
-**Rule: BCS0304**
+**Rule: BCS0304** (Merged from BCS0408 + BCS1104)
 
 Quoting rules for here documents.
 
@@ -19,6 +19,7 @@ Quoting rules for here documents.
 #### With Variable Expansion
 
 ```bash
+# Unquoted delimiter - variables expand
 cat <<EOF
 User: $USER
 Home: $HOME
@@ -31,6 +32,7 @@ EOF
 #### Literal Content (No Expansion)
 
 ```bash
+# Single-quoted delimiter - no expansion
 cat <<'EOF'
 {
   "name": "$APP_NAME",
@@ -55,13 +57,14 @@ fi
 
 ---
 
-#### Anti-Pattern
+#### Anti-Patterns
 
 ```bash
-# ✗ Wrong - unquoted when literal needed (SQL injection risk)
+# ✗ Wrong - unquoted when literal needed
 cat <<EOF
 SELECT * FROM users WHERE name = "$name"
 EOF
+# SQL injection risk if $name is attacker-controlled!
 
 # ✓ Correct - quoted for literal SQL
 cat <<'EOF'
@@ -71,6 +74,4 @@ EOF
 
 ---
 
-**Key principle:** Quote delimiter (`<<'EOF'`) to prevent expansion; leave unquoted for variable substitution.
-
-#fin
+**Key principle:** Quote the delimiter (`<<'EOF'`) to prevent expansion; leave unquoted for variable substitution.

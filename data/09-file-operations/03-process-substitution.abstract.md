@@ -1,46 +1,39 @@
 ## Process Substitution
 
-**Use `<(cmd)` for input and `>(cmd)` for output to eliminate temp files, avoid subshell scope issues, and enable parallel processing.**
+**Use `<(cmd)` for input and `>(cmd)` for output to eliminate temp files and avoid subshell variable scope issues.**
 
-**Why:** No temp file cleanup; preserves variable scope (unlike pipes); multiple substitutions run in parallel; efficient FIFO/fd streaming.
+**Rationale:** No temp file cleanup; preserves variables unlike pipes; enables parallel processing.
 
 **Core patterns:**
 
 ```bash
-# Compare command outputs
+# Compare outputs (no temp files)
 diff <(sort file1) <(sort file2)
 
-# Array from command (avoids subshell)
-readarray -t arr < <(cmd)
-
-# While loop preserving scope
+# Avoid subshell - variables preserved
 declare -i count=0
-while IFS= read -r line; do
-  count+=1
-done < <(cat file)
+while read -r line; do ((count+=1)); done < <(cat file)
 echo "$count"  # Correct!
 
-# Parallel output processing
-cat log | tee >(grep ERR > e.log) >(wc -l > n.txt) >/dev/null
+# Populate array safely
+readarray -t files < <(find /data -type f -print0)
 ```
 
 **Anti-patterns:**
 
 ```bash
-# âœ— Pipe to while (subshell loses vars)
+# âœ— Pipe to while (subshell loses variables)
 cat file | while read -r line; do count+=1; done
 echo "$count"  # Still 0!
 
-# âœ— Temp files for diff
-sort f1 > /tmp/a; sort f2 > /tmp/b; diff /tmp/a /tmp/b
-
-# âœ— Unquoted variables inside substitution
-diff <(sort $file1) <(sort $file2)
-
-# âœ— Overcomplicated - use here-string
-cmd < <(echo "$var")  # â†' cmd <<< "$var"
+# âœ— Temp files when process sub works
+temp=$(mktemp); sort file > "$temp"; diff "$temp" other; rm "$temp"
+# â†' Use: diff <(sort file) other
 ```
 
-**When NOT to use:** Simple `result=$(cmd)` or `grep pat file` â€” don't overcomplicate.
+**When NOT to use:** Simple cases where direct methods work:
+- `result=$(command)` â†' not `result=$(cat <(command))`
+- `grep pat file` â†' not `grep pat < <(cat file)`
+- `cmd <<< "$var"` â†' not `cmd < <(echo "$var")`
 
 **Ref:** BCS0903

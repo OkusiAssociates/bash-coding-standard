@@ -1,48 +1,48 @@
 ## Loops
 
-**Use `for` for arrays/globs/ranges, `while` for input/conditions; always quote arrays as `"${array[@]}"`, use `< <(cmd)` not pipes to avoid subshell issues.**
+**Use `for` for arrays/globs/ranges, `while` for input streams/conditions. Always quote arrays `"${array[@]}"`, use process substitution `< <(cmd)` to avoid subshell scope loss.**
 
-### Key Rationale
-- Process substitution preserves variable scope (pipes create subshells)
-- `while ((1))` is 15-22% faster than `while true`
-- `nullglob` prevents literal pattern iteration on no-match
+### Key Patterns
 
-### Core Patterns
+**For loops:** `for item in "${array[@]}"` | `for file in *.txt` | `for ((i=0; i<n; i+=1))`
 
-```bash
-# Array iteration (safe with spaces)
-for file in "${files[@]}"; do process "$file"; done
+**While input:** `while IFS= read -r line; do ... done < file` or `< <(command)`
 
-# Command output (preserves variables)
-while IFS= read -r line; do count+=1; done < <(find . -name '*.txt')
+**Infinite:** `while ((1))` (fastest) â†' `while :` (POSIX) â†' avoid `while true` (15-22% slower)
 
-# C-style (use i+=1, NEVER i++)
-for ((i=0; i<10; i+=1)); do echo "$i"; done
+**Arg parsing:** `while (($#)); do case $1 in ... esac; shift; done`
 
-# Argument parsing
-while (($#)); do case $1 in -v) VERBOSE=1 ;; esac; shift; done
-
-# Infinite (fastest)
-while ((1)); do work; ((done)) && break; done
-```
-
-### Anti-Patterns
+### Core Example
 
 ```bash
-# âœ— Pipe loses variables     â†' âœ“ Use < <(cmd)
-cmd | while read -r x; do n+=1; done  # n stays 0!
+local -- file
+local -i count=0
 
-# âœ— Parse ls output          â†' âœ“ Use glob directly
-for f in $(ls *.txt); do ...          # for f in *.txt
+# Process command output (preserves variable scope)
+while IFS= read -r -d '' file; do
+  [[ -f "$file" ]] || continue
+  count+=1
+done < <(find . -name '*.sh' -print0)
 
-# âœ— Unquoted array           â†' âœ“ Quote expansion
-for x in ${arr[@]}; do ...            # "${arr[@]}"
-
-# âœ— i++ fails at 0 with -e   â†' âœ“ Use i+=1
-for ((i=0; i<n; i++)); do ...         # i+=1
-
-# âœ— local inside loop        â†' âœ“ Declare before loop
-for f in *; do local x; ...           # local x; for f in *
+echo "Processed $count files"
 ```
+
+### Critical Anti-Patterns
+
+| Wrong | Correct |
+|-------|---------|
+| `for f in $(ls *.txt)` | `for f in *.txt` |
+| `cat file \| while read` | `while read < file` or `< <(cat)` |
+| `for x in ${array[@]}` | `for x in "${array[@]}"` |
+| `for ((i=0;i<n;i++))` | `for ((i=0;i<n;i+=1))` |
+| `while (($# > 0))` | `while (($#))` |
+| `local x` inside loop | declare locals before loop |
+
+### Essential Rules
+
+- Enable `nullglob` for glob loops (empty match = zero iterations)
+- Use `break 2` for nested loop exit (explicit level)
+- Use `IFS= read -r` always (preserves whitespace/backslashes)
+- Declare loop variables before loop, not inside
 
 **Ref:** BCS0503

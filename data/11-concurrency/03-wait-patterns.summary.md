@@ -8,7 +8,8 @@ Proper synchronization when waiting for background processes.
 
 #### Rationale
 
-Ensures resource cleanup, exit code capture, no hanging on failures, graceful interrupt handling.
+- All resources cleaned up, exit codes captured correctly
+- Scripts don't hang on failed processes; graceful interrupt handling
 
 ---
 
@@ -31,9 +32,9 @@ wait
 # With error tracking
 declare -i errors=0
 for pid in "${pids[@]}"; do
-  wait "$pid" || ((errors+=1))
+  wait "$pid" || errors+=1
 done
-((errors)) && warn "$errors jobs failed"
+((errors)) && warn "$errors jobs failed" ||:
 ```
 
 #### Wait for Any (Bash 4.3+)
@@ -47,13 +48,14 @@ for task in "${tasks[@]}"; do
 done
 
 # Process as they complete
+local -a active=()
 while ((${#pids[@]} > 0)); do
   wait -n
   exit_code=$?
   # Handle completion...
 
   # Update active PIDs list
-  local -a active=()
+  active=()
   for pid in "${pids[@]}"; do
     kill -0 "$pid" 2>/dev/null && active+=("$pid")
   done
@@ -76,7 +78,7 @@ for server in "${!exit_codes[@]}"; do
   pid=${exit_codes[$server]}
   if ! wait "$pid"; then
     exit_codes[$server]=$?
-    ((failures+=1))
+    failures+=1
   else
     exit_codes[$server]=0
   fi

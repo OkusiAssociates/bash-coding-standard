@@ -1,32 +1,35 @@
 ### TUI Basics
 
-**Build terminal UI elements: spinners, progress bars, menus—always with terminal detection.**
+**Use terminal check `[[ -t 1 ]]` before TUI output; restore cursor on exit.**
 
-#### Core Patterns
+#### Key Patterns
 
-**Spinner:** Background process with `kill "$pid"` cleanup:
+- **Spinner**: Background process with `kill`/cleanup
+- **Progress bar**: `printf '\r[...]'` with `%*s | tr ' ' '█'`
+- **Cursor**: Hide `\033[?25l`, show `\033[?25h`, trap EXIT
+- **Clear**: Line `\033[2K\r`, screen `\033[2J\033[H`
+
+#### Rationale
+
+- Visual feedback for long operations
+- Interactive menus improve UX
+
+#### Example
+
 ```bash
-spinner() {
-  local -a frames=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏')
-  local -i i=0
-  while :; do printf '\r%s %s' "${frames[i % ${#frames[@]}]}" "$*"; i+=1; sleep 0.1; done
+# Progress bar with terminal check
+progress_bar() {
+  local -i cur=$1 tot=$2 w=50 f=$((cur*w/tot))
+  printf '\r[%s%s] %3d%%' \
+    "$(printf '%*s' "$f" ''|tr ' ' '█')" \
+    "$(printf '%*s' $((w-f)) ''|tr ' ' '░')" \
+    $((cur*100/tot))
 }
-spinner 'Working...' & spinner_pid=$!
+[[ -t 1 ]] && progress_bar 50 100 || echo '50%'
 ```
 
-**Progress bar:** `printf '\r[%s] %3d%%' "$bar" $((cur*100/total))`
+#### Anti-Pattern
 
-**Cursor:** `hide_cursor() { printf '\033[?25l'; }` �' trap restore on EXIT
-
-**Menu:** Arrow keys via escape sequences `$'\x1b'[A/B`, return selection as `$?`
-
-#### Critical Rule
-
-**Always check `[[ -t 1 ]]`** before TUI output �' fall back to plain text for non-terminals.
-
-```bash
-# ✗ progress_bar 50 100  # Garbage if piped
-# ✓ [[ -t 1 ]] && progress_bar 50 100 || echo '50%'
-```
+`progress_bar 50 100` without `[[ -t 1 ]]` �' garbage output to non-terminal
 
 **Ref:** BCS0707

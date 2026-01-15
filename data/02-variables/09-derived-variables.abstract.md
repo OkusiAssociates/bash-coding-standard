@@ -1,49 +1,54 @@
 ## Derived Variables
 
-**Compute variables from base values; update all derivations when base changes.**
+**Compute variables from base values; group with section comments; update derived when base changes (especially during argument parsing).**
 
-**Rationale:** DRY principleâ€”single source of truth; automatic consistency when PREFIX changes; prevents subtle bugs from stale derived values.
+**Rationale:** DRY principle (single source of truth) â†' consistency when PREFIX changes â†' prevents subtle bugs from stale derived values.
 
-**Pattern:**
+**Core pattern:**
 
 ```bash
 # Base values
 declare -- PREFIX=/usr/local APP_NAME=myapp
 
-# Derived from PREFIX
+# Derived from PREFIX and APP_NAME
 declare -- BIN_DIR="$PREFIX"/bin
-declare -- LIB_DIR="$PREFIX"/lib/"$APP_NAME"
+declare -- CONFIG_DIR=/etc/"$APP_NAME"
+declare -- CONFIG_FILE="$CONFIG_DIR"/config.conf
 
-# Update function for arg parsing
-update_derived_paths() {
-  BIN_DIR="$PREFIX"/bin
-  LIB_DIR="$PREFIX"/lib/"$APP_NAME"
-}
-
-# After --prefix changes: update_derived_paths
-# Make readonly AFTER all parsing complete
-readonly -- PREFIX BIN_DIR LIB_DIR
+# XDG fallback pattern
+declare -- CONFIG_BASE=${XDG_CONFIG_HOME:-"$HOME"/.config}
 ```
 
-**XDG fallbacks:** `CONFIG_BASE=${XDG_CONFIG_HOME:-$HOME/.config}`
+**Update function when base changes:**
+
+```bash
+update_derived_paths() {
+  BIN_DIR="$PREFIX"/bin
+  LIB_DIR="$PREFIX"/lib
+  CONFIG_FILE="$CONFIG_DIR"/config.conf
+}
+
+# In argument parsing:
+--prefix) shift; PREFIX=$1; update_derived_paths ;;
+```
 
 **Anti-patterns:**
 
 ```bash
-# âœ— Duplicating base value
-BIN_DIR=/usr/local/bin  # Hardcoded, not derived!
+# âœ— Duplicating values instead of deriving
+BIN_DIR=/usr/local/bin   # â†' BIN_DIR="$PREFIX"/bin
 
-# âœ— Not updating after base changes
-PREFIX=$1  # BIN_DIR now stale!
+# âœ— Not updating derived when base changes
+PREFIX=$1  # BIN_DIR now wrong! â†' call update_derived_paths
 
-# âœ— Readonly before parsing complete
-readonly -- BIN_DIR  # Can't update later!
+# âœ— Making readonly before parsing complete
+readonly BIN_DIR  # â†' readonly after all parsing done
 ```
 
 **Key rules:**
-- Group derived vars with section comments
-- Update ALL derivations when base changes
-- `readonly` only after parsing complete
-- Document hardcoded exceptions
+- Group derived vars with `# Derived from PREFIX` comments
+- Update ALL derived vars when any base changes
+- Make readonly AFTER argument parsing complete
+- Document hardcoded exceptions (e.g., `/etc/profile.d` fixed path)
 
 **Ref:** BCS0209

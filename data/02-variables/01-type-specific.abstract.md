@@ -1,50 +1,37 @@
 ## Type-Specific Declarations
 
-**Use explicit type declarations (`declare -i`, `declare --`, `-a`, `-A`) for type safety, intent documentation, and error prevention.**
+**Use explicit type declarations (`declare -i/-a/-A`, `declare --`, `local --`) to enforce type safety and document intent.**
 
-### Declaration Types
+**Rationale:** Integer declarations catch non-numeric assignments (become 0). Array declarations prevent scalar overwrites. `--` separator prevents option injection.
 
-| Type | Purpose | Example |
-|------|---------|---------|
-| `-i` | Integers | `declare -i count=0` |
-| `--` | Strings | `declare -- path=/tmp` |
-| `-a` | Indexed arrays | `declare -a files=()` |
-| `-A` | Associative arrays | `declare -A config=()` |
-| `readonly` | Constants | `readonly -- VERSION=1.0` |
-| `local` | Function scope | `local -- file=$1` |
-
-### Core Rules
-
-- **Always use `--` separator** with `declare`, `local`, `readonly` â†' prevents option injection
-- **Integer vars** auto-evaluate: `count='5+3'` â†' 8
-- **Combine modifiers**: `local -i`, `local -a`, `readonly -A`
-
-### Example
+**Declaration types:**
+- `-i` integers: counters, ports, exit codes â†' auto-arithmetic, type-checked
+- `--` strings: paths, text, config â†' default for text data
+- `-a` indexed arrays: lists, args â†' safe word-splitting
+- `-A` associative arrays: key-value maps â†' fast lookups (Bash 4.0+)
+- `-r` readonly: constants â†' immutable after init
+- `local` in functions: ALL function variables â†' prevents global pollution
 
 ```bash
-declare -i count=0
-declare -- config_path=/etc/app.conf
+declare -i count=0 port=8080
+declare -- filename=data.txt
 declare -a files=()
-declare -A status=()
+declare -A config=([key]=value)
+declare -r VERSION=1.0.0
 
 process() {
-  local -- file=$1
-  local -i lines
-  lines=$(wc -l < "$file")
+  local -- input=$1
+  local -i attempts=0
+  local -a items=()
 }
 ```
 
-### Anti-Patterns
-
+**Anti-patterns:**
 ```bash
-# âœ— No type (intent unclear)     â†' âœ“ declare -i count=0
-count=0
-
-# âœ— Missing -- separator         â†' âœ“ local -- file=$1
-local file=$1
-
-# âœ— Scalar to array              â†' âœ“ files=(file.txt)
-files=file.txt
+count=0              # â†' declare -i count=0
+files=file.txt       # â†' files=(file.txt) or files+=(file.txt)
+local name=$1        # â†' local -- name=$1 (prevents -n injection)
+declare CONFIG       # â†' declare -A CONFIG=() (for assoc array)
 ```
 
 **Ref:** BCS0201

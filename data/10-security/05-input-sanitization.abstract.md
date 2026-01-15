@@ -1,41 +1,41 @@
 ## Input Sanitization
 
-**Always validate and sanitize user input before processing.**
+**Validate/sanitize all user input to prevent injection and traversal attacks.**
 
-**Rationale:** Prevents injection attacks, directory traversal (`../../../etc/passwd`), and type mismatches. Defense in depthâ€”never trust user input.
+### Rationale
+- Prevents command injection, directory traversal (`../../../etc/passwd`)
+- Enforces expected data types; rejects invalid input early
 
-**Core Patternâ€”Filename Validation:**
+### Core Patterns
 
+**Filename sanitization:**
 ```bash
 sanitize_filename() {
   local -- name=$1
-  [[ -n "$name" ]] || die 22 'Filename cannot be empty'
-  name="${name//\.\./}"; name="${name//\//}"  # Strip traversal
+  name="${name//\.\./}"; name="${name//\//}"
   [[ "$name" =~ ^[a-zA-Z0-9._-]+$ ]] || die 22 "Invalid: ${name@Q}"
   echo "$name"
 }
 ```
 
-**Injection Prevention:**
+**Path containment:** Use `realpath -e` â†' verify path starts with allowed dir.
 
+**Numeric:** `[[ "$input" =~ ^[0-9]+$ ]]` â†' reject leading zeros for integers.
+
+**Whitelist choices:** Loop array, match exact â†' `die` if no match.
+
+### Critical Rules
+- **Always use `--`** separator: `rm -- "$file"` prevents option injection
+- **Never use `eval`** with user input
+- **Whitelist > blacklist**: Define allowed chars, not forbidden ones
+
+### Anti-patterns
 ```bash
-# Option injection - always use -- separator
-rm -- "$user_file"    # âœ“ Safe
-rm "$user_file"       # âœ— Dangerous if file="-rf /"
+# âœ— Trusting input
+rm -rf "$user_dir"  # user_dir="/" = disaster
 
-# Command injection - whitelist, never eval
-case "$cmd" in start|stop) systemctl "$cmd" app ;; esac  # âœ“
-eval "$user_cmd"      # âœ— NEVER with user input
+# âœ“ Validate first
+validate_path "$user_dir" "/safe/base"; rm -rf -- "$user_dir"
 ```
-
-**Validation Types:** Integer (`^-?[0-9]+$`), path (realpath + directory check), email (`^[a-zA-Z0-9._%+-]+@...`), whitelist (array membership).
-
-**Anti-Patterns:**
-
-- `rm -rf "$user_dir"` without validation â†' validate_path first
-- Blacklist approach (`!= *rm*`) â†' whitelist regex instead
-- Trusting "looks safe" input â†' always validate type/format/range/length
-
-**Security Principles:** Whitelist over blacklist; validate early; fail securely; use `--` separator; avoid `eval`; principle of least privilege.
 
 **Ref:** BCS1005

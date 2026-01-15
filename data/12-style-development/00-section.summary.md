@@ -1,6 +1,6 @@
 # Style & Development
 
-Code formatting, documentation, and development patterns for maintainable Bash scripts.
+Code formatting, documentation practices, and development patterns for maintainable Bash scripts.
 
 **10 Rules:**
 

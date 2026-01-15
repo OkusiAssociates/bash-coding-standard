@@ -3,13 +3,13 @@
 **Always use explicit type declarations (`declare -i`, `declare --`, `declare -a`, `declare -A`) to make variable intent clear and enable type-safe operations.**
 
 **Rationale:**
-- Type Safety: Integer declarations (`-i`) enforce numeric operations, catch non-numeric assignments
-- Intent Documentation: Types serve as inline documentation showing variable usage
-- Array Safety: Prevents accidental scalar assignment breaking array operations
-- Performance: Type-specific operations are faster than string-based operations
-- Error Prevention: Type mismatches caught early rather than causing subtle bugs
+- **Type Safety**: Integer declarations (`-i`) enforce numeric operations; non-numeric becomes 0
+- **Intent Documentation**: Types serve as inline documentation for variable usage
+- **Array Safety**: Prevents accidental scalar assignment breaking array operations
+- **Scope Control**: `declare`/`local` provide precise variable scoping
+- **Error Prevention**: Type mismatches caught early rather than causing subtle bugs
 
-**All declaration types:**
+### Declaration Types
 
 **1. Integer variables (`declare -i`)**
 
@@ -21,12 +21,10 @@ declare -i port=8080
 # Automatic arithmetic evaluation
 count=count+1  # Same as: ((count+=1))
 count='5 + 3'  # Evaluates to 8, not string "5 + 3"
-
-# Type enforcement
-count='abc'  # Evaluates to 0 (non-numeric becomes 0)
+count='abc'    # Evaluates to 0 (non-numeric becomes 0)
 ```
 
-**Use for:** Counters, loop indices, exit codes, port numbers, numeric flags, any variable in arithmetic operations.
+Use for: counters, loop indices, exit codes, port numbers, any arithmetic operations.
 
 > **See Also:** BCS0705 for using declared integers in arithmetic comparisons with `(())` instead of `[[ ... -eq ... ]]`
 
@@ -41,7 +39,7 @@ declare -- config_path=/etc/app/config.conf
 declare -- var_name='-weird'  # Without --, interpreted as option
 ```
 
-**Use for:** File paths, user input, configuration values, any text data. Default choice for most variables.
+Use for: file paths, user input, configuration values, any text data.
 
 **3. Indexed arrays (`declare -a`)**
 
@@ -50,18 +48,16 @@ declare -a files=()
 declare -a args=(one two three)
 
 files+=('file1.txt')
-files+=('file2.txt')
-
 echo "${files[0]}"   # file1.txt
 echo "${files[@]}"   # All elements
-echo "${#files[@]}"  # Count: 2
+echo "${#files[@]}"  # Count
 
 for file in "${files[@]}"; do
   process "$file"
 done
 ```
 
-**Use for:** Lists of items (files, arguments, options), command arrays, any sequential collection.
+Use for: lists of items, command arrays, any sequential collection.
 
 **4. Associative arrays (`declare -A`)**
 
@@ -72,17 +68,13 @@ declare -A config=(
   [app_host]=localhost
 )
 
-declare -A user_data=()
 user_data[name]=Alice
-user_data[email]='alice@example.com'
-
 echo "${config[app_name]}"  # myapp
 echo "${!config[@]}"        # All keys
-echo "${config[@]}"         # All values
 
 # Check if key exists
 if [[ -v "config[app_port]" ]]; then
-  echo "Port configured: ${config[app_port]}"
+  echo "Port: ${config[app_port]}"
 fi
 
 for key in "${!config[@]}"; do
@@ -90,23 +82,23 @@ for key in "${!config[@]}"; do
 done
 ```
 
-**Use for:** Configuration data (key-value pairs), dynamic function dispatch, caching/memoization.
+Use for: configuration data, dynamic function dispatch, caching, key-value data.
 
-**5. Read-only constants (`readonly --`)**
+**5. Read-only constants (`declare -r`)**
 
 ```bash
-readonly -- VERSION=1.0.0
-readonly -i MAX_RETRIES=3
-readonly -a ALLOWED_ACTIONS=(start stop restart status)
+declare -r SCRIPT_VERSION=1.0.0
+declare -ir MAX_RETRIES=3
+declare -ar ALLOWED_ACTIONS=(start stop restart status)
 
-VERSION=2.0.0  # bash: VERSION: readonly variable
+SCRIPT_VERSION=2.0.0  # bash: VERSION: readonly variable
 ```
 
-**Use for:** VERSION, SCRIPT_PATH, SCRIPT_DIR, SCRIPT_NAME, configuration values that shouldn't change, magic numbers/strings.
+Use for: VERSION, SCRIPT_PATH, SCRIPT_DIR, SCRIPT_NAME, configuration constants.
 
 **6. Local variables in functions (`local --`)**
 
-**MANDATORY: Always use `--` separator with `local` declarations.** Prevents option injection if variable name or value starts with `-`.
+**MANDATORY: Always use `--` separator with `local` declarations.**
 
 ```bash
 # ✓ CORRECT - always use `--` separator
@@ -117,7 +109,6 @@ process_file() {
 
   line_count=$(wc -l < "$filename")
   readarray -t lines < "$filename"
-  echo "Processed $line_count lines"
 }
 
 # ✗ WRONG - missing `--` separator
@@ -127,7 +118,7 @@ process_file_bad() {
 }
 ```
 
-**Use for:** ALL function parameters, ALL temporary variables in functions, variables that shouldn't leak to global scope.
+Use `local` for ALL function parameters and temporary variables.
 
 **Combining type and scope:**
 
@@ -140,11 +131,9 @@ function count_files() {
   local -a files
 
   files=("$dir"/*)
-
   for file in "${files[@]}"; do
     [[ -f "$file" ]] && file_count+=1 ||:
   done
-
   echo "$file_count"
 }
 
@@ -153,56 +142,57 @@ declare -A FILE_STATUS=()
 readonly -- CONFIG_FILE=config.conf
 ```
 
-**Anti-patterns to avoid:**
+### Anti-patterns
 
 ```bash
-# ✗ Wrong - no type declaration (intent unclear)
+# ✗ No type declaration (intent unclear)
 count=0
 files=()
 
-# ✓ Correct - explicit type declarations
+# ✓ Explicit type declarations
 declare -i count=0
 declare -a files=()
 
-# ✗ Wrong - using strings for numeric operations
+# ✗ Using strings for numeric operations
 max_retries='3'
 attempts='0'
 if [[ "$attempts" -lt "$max_retries" ]]; then  # String comparison!
 
-# ✓ Correct - use integers for numeric operations
+# ✓ Use integers for numeric operations
 declare -i max_retries=3
 declare -i attempts=0
 if ((attempts < max_retries)); then  # Numeric comparison
 
-# ✗ Wrong - forgetting -A for associative arrays
+# ✗ Forgetting -A for associative arrays
 declare CONFIG  # Creates scalar, not associative array
 CONFIG[key]='value'  # Treats 'key' as 0, creates indexed array!
 
-# ✓ Correct - explicit associative array declaration
+# ✓ Explicit associative array declaration
 declare -A CONFIG=()
 CONFIG[key]='value'
 
-# ✗ Wrong - global variables in functions
+# ✗ Global variables in functions
 process_data() {
   temp_var=$1  # Global variable leak!
 }
 
-# ✓ Correct - local variables in functions
+# ✓ Local variables in functions
 process_data() {
   local -- temp_var=$1
+  local -- result
+  result=$(process "$temp_var")
 }
 
-# ✗ Wrong - scalar assignment to array variable
+# ✗ Scalar assignment to array variable
 declare -a files=()
 files=file.txt  # Overwrites array with scalar!
 
-# ✓ Correct - array assignment
-declare -a files=()
+# ✓ Array assignment
 files=(file.txt)   # Array with one element
 files+=(file.txt)  # Append to array
 ```
 
-**Edge cases:**
+### Edge Cases
 
 **1. Integer overflow:**
 
@@ -222,7 +212,6 @@ result=$(bc <<< "$big + 1")
 if ((BASH_VERSINFO[0] < 4)); then
   die 1 'Associative arrays require Bash 4.0+'
 fi
-declare -A config=()
 ```
 
 **3. Array assignment syntax:**
@@ -231,9 +220,8 @@ declare -A config=()
 declare -a arr1=()           # Empty array
 declare -a arr2=('a' 'b')    # Array with 2 elements
 declare -a arr3              # Declare without initialization
-
-declare -a arr4='string'     # arr4 is string 'string', not array!
-declare -a arr5=('string')   # Correct: Array with one element
+declare -a arr4='string'     # arr4 is string, NOT array!
+declare -a arr5=('string')   # Array with one element
 ```
 
 **4. Nameref variables (Bash 4.3+):**
@@ -249,14 +237,15 @@ modify_array my_array  # Pass name, not value
 echo "${my_array[@]}"  # Output: a b new element
 ```
 
-**Summary:**
-- **`declare -i`**: integers (counters, exit codes, ports)
-- **`declare --`**: strings (paths, text, user input)
-- **`declare -a`**: indexed arrays (lists, sequences)
-- **`declare -A`**: associative arrays (key-value maps, configs)
-- **`readonly --`**: constants that shouldn't change
-- **`local`**: ALL variables in functions (prevent global leaks)
-- **Combine modifiers**: `local -i`, `local -a`, `readonly -A`
-- **Always use `--`**: separator prevents option injection
+### Summary
 
-**Key principle:** Explicit type declarations serve as inline documentation and enable type checking. `declare -i count=0` tells both Bash and readers: "This variable holds an integer for arithmetic operations."
+| Type | Declaration | Use Case |
+|------|-------------|----------|
+| Integer | `declare -i` | counters, exit codes, ports |
+| String | `declare --` | paths, text, user input |
+| Indexed array | `declare -a` | lists, sequences |
+| Associative array | `declare -A` | key-value maps, configs |
+| Constant | `declare -r` | immutable values |
+| Local | `local --` | ALL function variables |
+
+Combine modifiers: `local -i`, `local -a`, `readonly -A`. Always use `--` separator to prevent option injection.

@@ -1,45 +1,44 @@
-## General Script Layout
+## BCS0101: Script Layout
 
-**All scripts follow a mandatory 13-step structure ensuring safe initialization and bottom-up dependency resolution.**
+**13-step bottom-up structure: infrastructure â†' utilities â†' logic â†' orchestration.**
 
-### The 13 Steps
+### Rationale
+1. **Safe init** - `set -euo pipefail` before commands; dependencies before use
+2. **Predictability** - Metadataâ†'utilitiesâ†'logicâ†'main() in fixed order
+3. **Bottom-up** - Functions call only previously defined functions
 
-1. **Shebang** `#!/bin/bash` or `#!/usr/bin/env bash`
-2. **ShellCheck directives** (if needed)
-3. **Brief description** - one-line purpose
-4. **`set -euo pipefail`** - MUST precede any commands
-5. **`shopt -s inherit_errexit shift_verbose extglob nullglob`**
-6. **Metadata** - `VERSION`, `SCRIPT_PATH`, `SCRIPT_DIR`, `SCRIPT_NAME`
-7. **Global declarations** - typed (`-i`/`--`/`-a`/`-A`)
-8. **Colors** (conditional on `[[ -t 1 && -t 2 ]]`)
-9. **Utility functions** - messaging (`info`, `warn`, `error`, `die`)
-10. **Business logic** - organized bottom-up
-11. **`main()`** - argument parsing, orchestration
-12. **`main "$@"`** - invocation
-13. **`#fin`** - mandatory end marker
+### 13 Steps
 
-### Minimal Example
+| # | Element |
+|---|---------|
+| 1 | `#!/bin/bash` |
+| 2 | ShellCheck directives (opt) |
+| 3 | Brief description |
+| 4 | `set -euo pipefail` **MANDATORY** |
+| 5 | `shopt -s inherit_errexit shift_verbose extglob nullglob` |
+| 6 | Metadata: `VERSION`, `SCRIPT_PATH`, `SCRIPT_DIR`, `SCRIPT_NAME` |
+| 7 | Globals with types (`declare -i/-a/-A/--`) |
+| 8 | Colors (terminal-conditional) |
+| 9 | Utilities (`info`, `warn`, `error`, `die`) |
+| 10 | Business logic |
+| 11 | `main()` with arg parsing |
+| 12 | `main "$@"` |
+| 13 | `#fin` **MANDATORY** |
 
+### Example
 ```bash
 #!/bin/bash
 set -euo pipefail
-shopt -s inherit_errexit shift_verbose extglob nullglob
-declare -r VERSION=1.0.0
-die() { >&2 echo "error: ${2:-}"; exit "${1:-1}"; }
-main() { echo 'Hello'; }
+shopt -s inherit_errexit extglob nullglob
+declare -r VERSION=1.0.0 SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
+main() { echo "$SCRIPT_NAME $VERSION"; }
 main "$@"
 #fin
 ```
 
-### Key Rationale
-
-- **Bottom-up**: functions call only previously-defined functions
-- **`set -euo pipefail` first**: error handling before execution
-- **`main()` required** for scripts >100 lines (enables testing)
-
 ### Anti-Patterns
-
-- âœ— Business logic before `set -euo pipefail` â†' runtime failures
-- âœ— Missing `main()` in large scripts â†' untestable
+- Missing `set -euo pipefail` â†' undefined error behavior
+- Business logic before utilities â†' undefined function calls
 
 **Ref:** BCS0101

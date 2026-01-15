@@ -1,49 +1,37 @@
 # Short-Option Disaggregation
 
-**Split bundled options (`-abc` â†' `-a -b -c`) for Unix-compliant CLI parsing.**
+**Split bundled options (`-abc` â†' `-a -b -c`) to follow Unix conventions.**
 
-## Methods (Performance)
+## Methods
 
-| Method | Speed | Dependencies |
-|--------|-------|--------------|
-| grep | ~190/s | External, SC2046 |
-| fold | ~195/s | External, SC2046 |
-| **Pure Bash** | **~318/s** | **None** |
+| Method | Speed | Deps | Notes |
+|--------|-------|------|-------|
+| grep | ~190/s | grep | Current standard |
+| fold | ~195/s | fold | Marginal gain |
+| **Pure Bash** | **~318/s** | None | **68% faster**, no shellcheck |
 
-## Pure Bash (Recommended)
-
-```bash
--[ovnVh]*)  # Split bundled options
-  local -- opt=${1:1}
-  local -a new_args=()
-  while ((${#opt})); do
-    new_args+=("-${opt:0:1}")
-    opt=${opt:1}
-  done
-  set -- '' "${new_args[@]}" "${@:2}" ;;
-```
-
-## grep/fold Alternative
+## Pattern
 
 ```bash
+# grep method (current standard)
 -[ovnVh]*) #shellcheck disable=SC2046
-  set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+    set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+
+# Pure bash (recommended for performance)
+-[ovnVh]*)
+    local -- opt=${1:1}; local -a new_args=()
+    while ((${#opt})); do new_args+=("-${opt:0:1}"); opt=${opt:1}; done
+    set -- '' "${new_args[@]}" "${@:2}" ;;
 ```
 
 ## Critical Rules
 
-1. List valid options in pattern: `-[ovnVh]*`
-2. Options with arguments â†' end of bundle or separate
-3. Place before `-*)` invalid option case
+- List valid options in pattern: `-[ovnVh]*`
+- Options with arguments must be at end of bundle or separate
+- Place before `-*)` invalid option case
 
-## Anti-Patterns
+## Anti-patterns
 
-```bash
-# âœ— Option with arg in middle of bundle
-./script -von out.txt  # -o captures 'n' as argument!
-
-# âœ“ Correct placement
-./script -vno out.txt  # -n -o out.txt
-```
+`-von output.txt` â†' `-o` captures `n` as argument (wrong order)
 
 **Ref:** BCS0805

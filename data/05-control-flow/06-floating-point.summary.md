@@ -2,11 +2,20 @@
 
 **Rule: BCS0706**
 
-Bash only supports integer arithmetic natively. Use `bc` for arbitrary precision, `awk` for inline operations, `printf` for formatting.
+Performing floating-point arithmetic in Bash using external tools.
 
 ---
 
-#### Using bc
+#### Rationale
+
+Bash only supports integer arithmetic natively. For floating-point:
+- Use `bc` for arbitrary precision calculations
+- Use `awk` for inline floating-point operations
+- Use `printf` for formatting floating-point output
+
+---
+
+#### Using bc (Basic Calculator)
 
 ```bash
 # Simple calculation
@@ -85,7 +94,9 @@ result=$((10 / 3))  # Returns 3, not 3.333
 
 # ✓ Correct - use bc for float division
 result=$(echo '10 / 3' | bc -l)  # Returns 3.333...
+```
 
+```bash
 # ✗ Wrong - comparing floats as strings
 if [[ "$a" > "$b" ]]; then  # String comparison!
 
@@ -97,4 +108,4 @@ if (($(echo "$a > $b" | bc -l))); then
 
 **See Also:** BCS0705 (Integer Arithmetic)
 
-#fin
+**Full implementation:** See `examples/exemplar-code/hr2int` and `examples/exemplar-code/int2hr`

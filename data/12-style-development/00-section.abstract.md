@@ -1,20 +1,22 @@
 # Style & Development
 
-**Consistent formatting and documentation make scripts maintainable by humans and AI.**
+**Code formatting, documentation, and development patterns for maintainable Bash.**
 
-## 10 Rules
+## Rules
 
-| Code | Rule | Focus |
-|------|------|-------|
-| BCS1201 | Code Formatting | Indentation, line length |
-| BCS1202 | Comments | Style, placement |
-| BCS1203 | Blank Lines | Readability whitespace |
-| BCS1204 | Section Markers | Visual delimiters |
-| BCS1205 | Language Practices | Bash idioms |
-| BCS1206 | Development Practices | VCS, testing |
-| BCS1207 | Debugging | Debug output, tracing |
-| BCS1208 | Dry-Run Mode | Safe destructive previews |
-| BCS1209 | Testing | Structure, assertions |
-| BCS1210 | Progressive State | Multi-stage tracking |
+| Rule | Focus |
+|------|-------|
+| BCS1201 | Indentation, line length, structure |
+| BCS1202 | Comment style/placement |
+| BCS1203 | Blank lines for readability |
+| BCS1204 | Visual section delimiters |
+| BCS1205 | Bash-specific idioms |
+| BCS1206 | Version control, testing habits |
+| BCS1207 | Debug output/tracing |
+| BCS1208 | Dry-run for destructive ops |
+| BCS1209 | Test structure/assertions |
+| BCS1210 | Multi-stage operation tracking |
 
-**Ref:** BCS12
+**Principle:** Consistent formatting enables maintainability by humans and AI.
+
+**Ref:** BCS1200

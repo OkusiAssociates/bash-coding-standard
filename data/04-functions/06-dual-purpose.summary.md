@@ -75,7 +75,6 @@ main "$@"
 
 `set -e` must come AFTER the sourced check:
 - When sourced, parent script controls error handling
-- `return 0` with `set -e` active could cause issues
 - Library code should not impose error handling on caller
 
 ```bash
@@ -90,7 +89,7 @@ set -euo pipefail
 
 ---
 
-#### Usage
+#### Using Dual-Purpose Scripts
 
 ```bash
 # As executable
@@ -120,5 +119,3 @@ declare -fx my_func
 **See Also:** BCS0607 (Library Patterns), BCS0604 (Function Export)
 
 **Full implementation:** See `examples/exemplar-code/internetip/internetip`
-
-#fin

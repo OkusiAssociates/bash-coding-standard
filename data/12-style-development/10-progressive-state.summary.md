@@ -54,56 +54,30 @@ main() {
 
   # Execution phase: actions based on final flag state
   install_standalone
-  ((INSTALL_BUILTIN)) && install_builtin  # Only runs if still enabled
+  ((INSTALL_BUILTIN)) && install_builtin ||: # Only runs if still enabled
 
   show_completion_message
 }
 ```
 
 **Pattern structure:**
-1. Declare boolean flags at top with initial values
+1. Declare all boolean flags at top with initial values
 2. Parse arguments, setting flags based on user input
-3. Progressively adjust flags based on runtime conditions (dependency checks, build failures, user overrides)
+3. Progressively adjust flags based on runtime conditions (dependency checks, build failures, user preferences)
 4. Execute actions based on final flag state
 
-**State progression example:**
-```bash
-# Initial state (defaults)
-declare -i INSTALL_BUILTIN=0
-declare -i BUILTIN_REQUESTED=0
-declare -i SKIP_BUILTIN=0
-
-# 1. User input (--builtin flag)
-INSTALL_BUILTIN=1
-BUILTIN_REQUESTED=1
-
-# 2. Override check (--no-builtin takes precedence)
-((SKIP_BUILTIN)) && INSTALL_BUILTIN=0 ||:
-
-# 3. Dependency check (no bash-builtins package)
-if ! check_builtin_support; then
-  if ((BUILTIN_REQUESTED)); then
-    # Try to install, disable on failure
-    install_bash_builtins || INSTALL_BUILTIN=0
-  else
-    # User didn't ask, just disable
-    INSTALL_BUILTIN=0
-  fi
-fi
-
-# 4. Build check (compilation failed)
-((INSTALL_BUILTIN)) && ! build_builtin && INSTALL_BUILTIN=0
-
-# 5. Final execution (only runs if INSTALL_BUILTIN=1)
-((INSTALL_BUILTIN)) && install_builtin
-```
-
-**Benefits:** Clean separation of decision/action logic; traceable flag changes; fail-safe behavior; preserves user intent via separate tracking flag; idempotent execution.
+**Benefits:**
+- Clean separation between decision logic and action
+- Traceable flag changes throughout execution
+- Fail-safe behavior (disable features when prerequisites fail)
+- User intent preserved (`BUILTIN_REQUESTED` tracks original request)
+- Idempotent (same input â†' same state â†' same output)
 
 **Guidelines:**
 - Group related flags (`INSTALL_*`, `SKIP_*`)
-- Use separate flags for user intent vs runtime state
+- Use separate flags for user intent vs. runtime state
+- Document state transitions with comments
 - Apply state changes in order: parse â†' validate â†' execute
 - Never modify flags during execution phase
 
-**Rationale:** Enables scripts to adapt to runtime conditions while maintaining decision clarity. Essential for installation scripts where features may need disabling based on system capabilities or build failures.
+**Rationale:** Scripts adapt to runtime conditions while maintaining clarity about decisions. Useful for installation scripts where features may need disabling based on system capabilities or build failures.

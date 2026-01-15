@@ -1,32 +1,40 @@
 ## SUID/SGID
 
-**Never use SUID/SGID bits on Bash scripts—no exceptions.**
+**Never use SUID/SGID bits on Bash scripts—critical security prohibition, no exceptions.**
+
+### Why Dangerous
+
+SUID/SGID changes effective UID/GID to file owner during execution. For scripts, kernel executes interpreter with elevated privileges, then interpreter processes script—creating attack vectors:
+
+- **IFS/PATH manipulation**: Attacker controls word splitting or substitutes malicious interpreter before script's PATH is set
+- **LD_PRELOAD injection**: Malicious code runs with root privileges before script executes
+- **Race conditions**: TOCTOU vulnerabilities in file operations
+
+### Correct Approach
 
 ```bash
 # ✗ NEVER
-chmod u+s script.sh  # SUID
-chmod g+s script.sh  # SGID
+chmod u+s /usr/local/bin/myscript.sh
 
-# ✓ Use sudo instead
-sudo /usr/local/bin/script.sh
+# ✓ Use sudo with sudoers config
+sudo /usr/local/bin/myscript.sh
+# /etc/sudoers.d/myapp:
+# username ALL=(root) NOPASSWD: /usr/local/bin/myscript.sh
 ```
 
-**Why prohibited:**
-- **IFS exploitation**: Attacker controls word splitting with elevated privileges
-- **PATH attack**: Kernel uses caller's PATH to find interpreter—trojan injection before script's PATH is set
-- **LD_PRELOAD**: Malicious libraries execute with root privileges before script runs
-- **Race conditions**: TOCTOU vulnerabilities in file operations
+### Anti-Patterns
 
-**Safe alternatives:**
-- `sudo` with `/etc/sudoers.d/` granular permissions
-- Compiled C wrapper that sanitizes environment
-- systemd service with `User=root`
-- Linux capabilities for compiled binaries
+| Wrong | Right |
+|-------|-------|
+| `chmod u+s script.sh` | Configure sudoers, use `sudo` |
+| `chmod g+s script.sh` | Use PolicyKit, systemd service, or compiled wrapper |
 
-**Anti-patterns:**
-- `chmod 4755 script.sh` �' catastrophic security hole
-- Assuming modern kernels ignore SUID on scripts �' many Unix variants honor it
+### Detection
 
-**Audit:** `find / -type f \( -perm -4000 -o -perm -2000 \) -exec file {} \; | grep -i script`
+```bash
+find / -type f \( -perm -4000 -o -perm -2000 \) -exec file {} \; | grep -i script
+```
+
+**Key principle:** If you need SUID on a script, redesign using sudo, PolicyKit, systemd, or compiled wrapper.
 
 **Ref:** BCS1001
