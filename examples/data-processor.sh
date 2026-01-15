@@ -6,11 +6,9 @@ set -euo pipefail
 shopt -s inherit_errexit shift_verbose nullglob extglob
 
 # Script metadata
-declare -x VERSION='1.0.0'
-SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
+declare -r VERSION=1.0.0
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Global variables
 declare -i VERBOSE=1 DRY_RUN=0 SKIP_VALIDATION=0
@@ -22,12 +20,10 @@ declare -i TOTAL_FILES=0 PROCESSED_FILES=0 FAILED_FILES=0 TOTAL_RECORDS=0
 
 # Colors
 if [[ -t 1 && -t 2 ]]; then
-  declare -- RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m'
-  declare -- CYAN=$'\033[0;36m' NC=$'\033[0m'
+  declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' NC=$'\033[0m'
 else
-  declare -- RED='' GREEN='' YELLOW='' CYAN='' NC=''
+  declare -r RED='' GREEN='' YELLOW='' CYAN='' NC=''
 fi
-readonly -- RED GREEN YELLOW CYAN NC
 
 # Messaging functions
 _msg() {
@@ -45,7 +41,7 @@ info() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 warn() { >&2 _msg "$@"; }
 success() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 error() { >&2 _msg "$@"; }
-die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 # Validate CSV file
 validate_csv() {
@@ -61,20 +57,20 @@ validate_csv() {
 
   # Validate format
   while IFS= read -r line; do
-    ((line_num+=1))
+    line_num+=1
     [[ -n "$line" ]] || continue
 
     local -i field_count
     IFS="$FIELD_SEPARATOR" read -ra fields <<< "$line"
     field_count=${#fields[@]}
 
-    [[ "$field_count" -ge 3 ]] || {
+    ((field_count >= 3)) || {
       warn "Line $line_num: Insufficient fields ($field_count < 3)"
-      ((errors+=1))
+      errors+=1
     }
   done < <(tail -n +2 "$file")
 
-  [[ "$errors" -eq 0 ]] || { error "Validation found $errors error(s)"; return 1; }
+  ((errors==0)) || { error "Validation found $errors error(s)"; return 1; }
   return 0
 }
 
@@ -85,13 +81,13 @@ process_csv_file() {
   output_file="$OUTPUT_DIR/$(basename "${input_file%.csv}")-processed.csv"
   local -i record_count=0
 
-  info "Processing: $(basename "$input_file")"
+  info "Processing '$(basename "$input_file")'"
 
   # Validate
   ((SKIP_VALIDATION)) || validate_csv "$input_file" || return 1
 
   if ((DRY_RUN)); then
-    info "DRY-RUN: Would process to $output_file"
+    info "DRY-RUN: Would process to ${output_file@Q}"
     return 0
   fi
 
@@ -99,29 +95,22 @@ process_csv_file() {
   {
     # Header
     IFS= read -r header
-    echo "${header},processed_at"
+    echo "$header,processed_at"
 
     # Data rows
     while IFS= read -r line; do
       [[ -n "$line" ]] || continue
       echo "${line^^},$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-      ((record_count+=1))
+      record_count+=1
     done
   } < "$input_file" > "$output_file"
 
-  ((TOTAL_RECORDS+=record_count))
+  TOTAL_RECORDS+=record_count
   success "Processed $record_count records -> $(basename "$output_file")"
 }
 
-# Main
-main() {
-  local -a input_files=()
-
-  # Parse arguments
-  while (($# > 0)); do
-    case $1 in
-      -h|--help)
-        cat <<EOF
+show_help() {
+  cat <<HELP
 Usage: $SCRIPT_NAME [OPTIONS] FILE [FILE ...]
 
 Process CSV files with validation and reporting.
@@ -135,7 +124,17 @@ OPTIONS:
 EXAMPLES:
   $SCRIPT_NAME data/*.csv
   $SCRIPT_NAME --dry-run file.csv
-EOF
+HELP
+}
+# Main
+main() {
+  local -a input_files=()
+
+  # Parse arguments
+  while (($#)); do
+    case $1 in
+      -h|--help)
+        show_help
         exit 0
         ;;
       -n|--dry-run) DRY_RUN=1; shift ;;
@@ -152,7 +151,7 @@ EOF
 
   [[ "${#input_files[@]}" -gt 0 ]] || die 2 "No input files specified"
 
-  info "Data Processor v$VERSION"
+  info "Data Processor $VERSION"
   ((DRY_RUN)) && warn "DRY-RUN MODE"
   echo ""
 

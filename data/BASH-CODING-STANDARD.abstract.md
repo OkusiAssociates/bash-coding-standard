@@ -32,9 +32,9 @@
 
 # Script Structure & Layout
 
-**Mandatory 13-step layout for all Bash scripts: shebang â†' metadata â†' functions â†' main â†' `#fin`.**
+**Mandatory 13-step structural layout for all Bash scripts ensuring consistency, maintainability, and safe initialization.**
 
-Core elements: shebang, `set -euo pipefail`, shopt settings, metadata block, bottom-up function organization, `main()` function, end marker.
+Covers: shebang â†' metadata â†' shopt â†' dual-purpose patterns â†' FHS compliance â†' file extensions â†' bottom-up function organization (low-level utilities before high-level orchestration) â†' `#fin` marker.
 
 **Ref:** BCS0100
 
@@ -50,61 +50,41 @@ Core elements: shebang, `set -euo pipefail`, shopt settings, metadata block, bot
 
 ---
 
-## 13-Step Pattern (Minimal)
+#### Key Elements
+
+- **Initialization:** shebang â†' shellcheck â†' description â†' `set -euo pipefail` â†' shopt
+- **Metadata:** `VERSION`, `SCRIPT_PATH`, `SCRIPT_DIR`, `SCRIPT_NAME` (all readonly)
+- **Globals:** config vars â†' derived paths â†' runtime flags â†' arrays
+- **Colors:** TTY-conditional (`[[ -t 1 && -t 2 ]]`)
+- **Functions:** `_msg()` dispatcher â†' utility helpers â†' business logic â†' `main()`
+- **main():** arg parsing â†' readonly freeze â†' workflow execution
+- **Invocation:** `main "$@"` then `#fin`
+
+#### Minimal Example
 
 ```bash
 #!/bin/bash
-#shellcheck disable=SC2034
-# Description comment
 set -euo pipefail
-shopt -s inherit_errexit shift_verbose extglob nullglob
-
-VERSION=1.0.0
-SCRIPT_PATH=$(realpath -- "$0")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
-
-declare -- CONFIG_VAR=default
+declare -r VERSION=1.0.0 SCRIPT_NAME=${0##*/}
 declare -i DRY_RUN=0
-
-# Colors (TTY-aware)
-if [[ -t 1 && -t 2 ]]; then
-  declare -r RED=$'\033[0;31m' NC=$'\033[0m'
-else
-  declare -r RED='' NC=''
-fi
-
-# Messaging functions
-error() { >&2 echo "$SCRIPT_NAME: ${RED}âœ—${NC} $*"; }
-die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
-
-# Business logic
-do_work() { ((DRY_RUN)) && { echo '[DRY-RUN]'; return 0; }; }
-
 main() {
-  while (($#)); do
-    case $1 in
-      -n|--dry-run) DRY_RUN=1 ;;
-      -h|--help)    echo "Usage: $SCRIPT_NAME [-n]"; return 0 ;;
-      *)            die 22 "Invalid: ${1@Q}" ;;
-    esac
-    shift
-  done
-  readonly -i DRY_RUN
-  do_work
+  [[ ${1:-} == -n ]] && DRY_RUN=1
+  ((DRY_RUN)) && echo "[DRY-RUN] Would execute"
 }
-
 main "$@"
 #fin
 ```
 
-## Key Patterns
+#### Critical Patterns
 
-- **Metadata** â†' VERSION, SCRIPT_PATH/DIR/NAME with grouped `readonly --`
-- **TTY colors** â†' `[[ -t 1 && -t 2 ]]` conditional
-- **Dry-run** â†' `declare -i DRY_RUN=0`, check via `((DRY_RUN))`
-- **Progressive readonly** â†' After arg parsing: `readonly -i DRY_RUN`
+- **Dry-run:** Every operation checks flag before executing
+- **Progressive readonly:** Variables frozen after arg parsing
+- **Derived paths:** Update dependent vars when PREFIX changes
+
+#### Anti-patterns
+
+- âœ— Modifying globals after readonly declaration
+- âœ— Missing `#fin` end marker
 
 **Ref:** BCS010101
 
@@ -116,53 +96,32 @@ main "$@"
 
 ### Layout Anti-Patterns
 
-**Eight critical BCS0101 violations with corrections.**
+**Avoid these 8 critical violations of BCS0101 13-step layout.**
 
----
+#### Critical Anti-Patterns
 
-**1. Missing strict mode** â†' silent failures
+| Pattern | Problem | Fix |
+|---------|---------|-----|
+| Missing `set -euo pipefail` | Silent failures, corruption | Add immediately after shebang |
+| Variables after use | Unbound variable errors with `-u` | Declare all globals before `main()` |
+| Business logic before utilities | Forward references, unclear deps | Utilities â†' business logic â†' `main()` |
+| No `main()` (>200 lines) | Untestable, scattered parsing | Wrap execution in `main "$@"` |
+| Missing `#fin` | Can't detect truncated files | Always end with `#fin` |
+| Premature `readonly` | Can't modify during arg parsing | `readonly` after parsing complete |
+| Scattered globals | Hidden state | Group all declarations together |
+| Unprotected sourcing | Modifies caller's shell | Guard: `[[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0` |
+
+#### Minimal Correct Pattern
+
 ```bash
-# âœ— set -euo pipefail missing
-# âœ“ Add immediately after shebang
-```
-
-**2. Variables after use** â†' "unbound variable" with `set -u`
-```bash
-# âœ— main() uses VERBOSE before declaration
-# âœ“ Declare all globals before functions
-```
-
-**3. Utilities after business logic** â†' harder to trace dependencies
-```bash
-# âœ— process_files() calls die() defined below
-# âœ“ Define utilities first, business logic after
-```
-
-**4. No main() in large scripts** â†' no clear entry point, untestable
-```bash
-# âœ— Logic runs directly after functions
-# âœ“ Use main() for scripts >40 lines
-```
-
-**5. Missing `#fin`** â†' can't detect truncated files
-
-**6. Readonly before parsing** â†' can't modify via `--prefix`
-```bash
-# âœ— readonly -- PREFIX before arg parsing
-# âœ“ readonly -- PREFIX after parsing complete
-```
-
-**7. Scattered declarations** â†' hard to see all state
-```bash
-# âœ— Globals interspersed with functions
-# âœ“ All globals grouped together
-```
-
-**8. Unprotected sourcing** â†' runs main when sourced
-```bash
-# âœ“ Dual-purpose pattern:
-[[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0
-set -euo pipefail  # Only when executed
+#!/usr/bin/env bash
+set -euo pipefail
+declare -r VERSION=1.0.0
+declare -- PREFIX=/usr/local  # mutable until parsed
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+main() { readonly -- PREFIX; : ...; }
+main "$@"
+#fin
 ```
 
 **Ref:** BCS010102
@@ -175,52 +134,47 @@ set -euo pipefail  # Only when executed
 
 ### Edge Cases and Variations
 
-**Standard 13-step layout modifications for specific use cases: small scripts, libraries, external config, platform detection, cleanup traps.**
+**Standard 13-step layout may be modified for specific use cases: tiny scripts, libraries, external config, platform detection, and cleanup traps.**
 
----
+#### When to Skip `main()`
 
-## Legitimate Simplifications
-
-- **<200 lines** â†' skip `main()`, run directly
-- **Library files** â†' skip `set -e`, `main()`, execution (avoid affecting caller)
-- **One-off utilities** â†' may skip colors, verbose messaging
-
-## Legitimate Extensions
-
-- **External config** â†' source between metadata and business logic; `readonly` after sourcing
-- **Platform detection** â†' add platform globals after standard globals
-- **Cleanup traps** â†' after utility functions, before business logic
-- **Lock files** â†' acquisition/release around main execution
-
-## Core Example â€” Library Pattern
+Scripts <200 lines can run directly:
 
 ```bash
 #!/usr/bin/env bash
-# Library - meant to be sourced, not executed
-# No set -e (affects caller), no readonly (caller may modify)
-
-is_integer() { [[ "$1" =~ ^-?[0-9]+$ ]]; }
-# No main(), no execution
+set -euo pipefail
+declare -i count=0
+for file in "$@"; do [[ ! -f "$file" ]] || count+=1; done
+echo "Found $count files"
 #fin
 ```
 
-## Anti-Pattern
+#### Sourced Libraries
+
+Skip `set -e` and `main()` â€” would affect caller:
 
 ```bash
-# âœ— Functions before set -e
-validate() { : ... }
-set -euo pipefail  # Too late!
-VERSION=1.0.0
-check() { : ... }
-declare -- PREFIX=/usr  # Globals scattered
+#!/usr/bin/env bash
+is_integer() { [[ "$1" =~ ^-?[0-9]+$ ]]; }
+#fin
 ```
 
-## Invariant Principles
+#### Legitimate Extensions
 
-Even when deviating:
-1. **Safety first** â€” `set -euo pipefail` still comes first (unless library)
-2. **Dependencies before usage** â€” bottom-up organization applies
-3. **Document reasons** â€” comment why deviating
+- **External config** â†' Source between metadata and business logic
+- **Platform detection** â†' Add after standard globals
+- **Cleanup traps** â†' After utility functions, before business logic
+
+#### Key Principles (Even When Deviating)
+
+1. Safety first â€” `set -euo pipefail` still comes first (unless library)
+2. Dependencies before usage â€” bottom-up organization
+3. Minimal deviation â€” only with clear benefit
+
+#### Anti-Patterns
+
+`set -euo pipefail` after functions â†' **Wrong** (safety comes first)
+Globals scattered between functions â†' **Wrong** (maintain structure)
 
 **Ref:** BCS010103
 
@@ -2425,14 +2379,14 @@ Anti-pattern: `echo "error" >&2` â†' harder to spot redirection at line end.
 
 ## Core Message Functions
 
-**Use private `_msg()` with `FUNCNAME[1]` inspection for auto-formatted, DRY messaging.**
+**Use private `_msg()` with `FUNCNAME[1]` inspection to auto-format messages; wrapper functions control verbosity and stream routing.**
 
-**Key points:**
-- `FUNCNAME[1]` detects caller â†' determines color/symbol automatically
-- Conditional: `info`/`warn`/`success` respect `VERBOSE`; `error` always shows
-- Errors to stderr (`>&2`); separates data from messages
-- `die()` takes exit code first: `die 1 'message'`
+### Rationale
+- `FUNCNAME` auto-detects caller â†' single DRY implementation
+- Conditional output via `VERBOSE`/`DEBUG` flags
+- Proper streams: errorsâ†'stderr, dataâ†'stdout (enables `data=$(./script)`)
 
+### Core Pattern
 ```bash
 _msg() {
   local -- prefix="$SCRIPT_NAME:" msg
@@ -2444,16 +2398,23 @@ _msg() {
   esac
   for msg in "$@"; do printf '%s %s\n' "$prefix" "$msg"; done
 }
+
+# Wrappers
 info()  { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 error() { >&2 _msg "$@"; }
-die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+die()   { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 ```
 
-**Anti-patterns:**
-- `echo "Error: ..."` â†' Use `error` function (no prefix, wrong stream)
-- Duplicate logic per function â†' Use single `_msg()` with FUNCNAME
-- `error()` to stdout â†' Must use `>&2`
-- `info()` ignoring VERBOSE â†' Always check: `((VERBOSE)) || return 0`
+### File Logging
+```bash
+# Use printf builtin (10-50x faster than $(date))
+log_msg() { printf '[%(%Y-%m-%d %H:%M:%S)T] %s\n' -1 "$*" >> "$LOG_FILE"; }
+```
+
+### Anti-Patterns
+- `echo "Error: ..."` â†' no stderr, no prefix, no color
+- `$(date ...)` in log â†' subshell per call; use `printf '%()T'`
+- `die() { error "$@"; exit 1; }` â†' no exit code param
 
 **Ref:** BCS0703
 

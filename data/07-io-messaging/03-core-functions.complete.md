@@ -285,17 +285,72 @@ error()   { >&2 _msg "$@"; }
 die()     { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 ```
 
-**Variation: Log to file:**
+**Variation: File Logging**
+
+For scripts that log to files, use the `printf '%()T'` built-in (Bash 4.2+) instead of `$(date ...)` to avoid subshell overhead.
+
+**Minimal log_msg() - Single-process scripts:**
 
 ```bash
-LOG_FILE=/var/log/"$SCRIPT_NAME".log
+declare -- LOG_FILE=/var/log/"$SCRIPT_NAME".log
+
+log_msg() {
+  printf '[%(%Y-%m-%d %H:%M:%S)T] %s\n' -1 "$*" >> "$LOG_FILE"
+}
+```
+
+**Rationale:**
+- `%(%Y-%m-%d %H:%M:%S)T` uses Bash's built-in strftime formatting
+- `-1` means "current time" (no external command needed)
+- `$*` joins all arguments as a single log message
+- 10-50x faster than `$(date ...)` subshell
+
+**Concurrent-safe log_msg() - Multi-process scripts:**
+
+```bash
+declare -- LOG_FILE=/var/log/"$SCRIPT_NAME".log
+
+log_msg() {
+  {
+    flock -n 9 || return 0
+    printf '[%(%Y-%m-%d %H:%M:%S)T] %s\n' -1 "$*"
+  } 9>>"$LOG_FILE"
+}
+```
+
+**Rationale:**
+- `flock -n 9` acquires exclusive lock on file descriptor 9
+- `-n` (non-blocking) returns immediately if lock unavailable
+- `9>>"$LOG_FILE"` opens file for append on FD 9
+- Prevents log corruption from concurrent writes
+- `return 0` silently skips if lock unavailable (adjust as needed)
+
+**Usage:**
+
+```bash
+log_msg 'Starting process'
+log_msg "Processing file ${file@Q}"
+log_msg 'Process complete'
+```
+
+**Output:**
+```
+[2026-01-15 14:32:01] Starting process
+[2026-01-15 14:32:01] Processing file 'data.txt'
+[2026-01-15 14:32:02] Process complete
+```
+
+**Combined logging (terminal + file):**
+
+```bash
+declare -- LOG_FILE=/var/log/"$SCRIPT_NAME".log
 
 _msg() {
-  local -- prefix="$SCRIPT_NAME:" msg timestamp
+  local -- prefix="$SCRIPT_NAME:" msg
 
   case "${FUNCNAME[1]}" in
     success) prefix+=" ${GREEN}✓${NC}" ;;
-    warn)    prefix+=" ${YELLOW}⚡${NC}" ;;
+    warn)    prefix+=" ${YELLOW}▲${NC}" ;;
     info)    prefix+=" ${CYAN}◉${NC}" ;;
     error)   prefix+=" ${RED}✗${NC}" ;;
     debug)   prefix+=" ${YELLOW}DEBUG${NC}:" ;;
@@ -306,10 +361,31 @@ _msg() {
     # Print to terminal with colors
     printf '%s %s\n' "$prefix" "$msg"
 
-    # Log to file without colors (strip ANSI codes)
-    timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-    printf '[%s] %s: %s\n' "$timestamp" "${FUNCNAME[1]^^}" "$msg" >> "$LOG_FILE"
+    # Log to file (no colors, builtin timestamp)
+    printf '[%(%Y-%m-%d %H:%M:%S)T] %s: %s\n' -1 "${FUNCNAME[1]^^}" "$msg" >> "$LOG_FILE"
   done
+}
+```
+
+**File logging anti-patterns:**
+
+```bash
+# ✗ Wrong - spawns subshell on every call (slow)
+log_msg() {
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" >> "$LOG_FILE"
+}
+
+# ✓ Correct - builtin timestamp, no subshell
+log_msg() {
+  printf '[%(%Y-%m-%d %H:%M:%S)T] %s\n' -1 "$*" >> "$LOG_FILE"
+}
+
+# ✓ Correct - with file locking for concurrent access
+log_msg() {
+  {
+    flock -n 9 || return 0
+    printf '[%(%Y-%m-%d %H:%M:%S)T] %s\n' -1 "$*"
+  } 9>>"$LOG_FILE"
 }
 ```
 

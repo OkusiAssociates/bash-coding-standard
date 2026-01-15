@@ -1,13 +1,13 @@
 ## Core Message Functions
 
-**Use private `_msg()` with `FUNCNAME[1]` inspection for auto-formatted, DRY messaging.**
+**Use private `_msg()` with `FUNCNAME[1]` inspection to auto-format messages; wrapper functions control verbosity and stream routing.**
 
-**Key points:**
-- `FUNCNAME[1]` detects caller â†' determines color/symbol automatically
-- Conditional: `info`/`warn`/`success` respect `VERBOSE`; `error` always shows
-- Errors to stderr (`>&2`); separates data from messages
-- `die()` takes exit code first: `die 1 'message'`
+### Rationale
+- `FUNCNAME` auto-detects caller â†' single DRY implementation
+- Conditional output via `VERBOSE`/`DEBUG` flags
+- Proper streams: errorsâ†'stderr, dataâ†'stdout (enables `data=$(./script)`)
 
+### Core Pattern
 ```bash
 _msg() {
   local -- prefix="$SCRIPT_NAME:" msg
@@ -19,15 +19,22 @@ _msg() {
   esac
   for msg in "$@"; do printf '%s %s\n' "$prefix" "$msg"; done
 }
+
+# Wrappers
 info()  { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 error() { >&2 _msg "$@"; }
-die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+die()   { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 ```
 
-**Anti-patterns:**
-- `echo "Error: ..."` â†' Use `error` function (no prefix, wrong stream)
-- Duplicate logic per function â†' Use single `_msg()` with FUNCNAME
-- `error()` to stdout â†' Must use `>&2`
-- `info()` ignoring VERBOSE â†' Always check: `((VERBOSE)) || return 0`
+### File Logging
+```bash
+# Use printf builtin (10-50x faster than $(date))
+log_msg() { printf '[%(%Y-%m-%d %H:%M:%S)T] %s\n' -1 "$*" >> "$LOG_FILE"; }
+```
+
+### Anti-Patterns
+- `echo "Error: ..."` â†' no stderr, no prefix, no color
+- `$(date ...)` in log â†' subshell per call; use `printf '%()T'`
+- `die() { error "$@"; exit 1; }` â†' no exit code param
 
 **Ref:** BCS0703

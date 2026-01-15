@@ -37,7 +37,7 @@ BSC00
 
 # Script Structure & Layout
 
-Defines the mandatory 13-step structural layout for all Bash scripts: shebang through `#fin` marker, including metadata, shopt settings, dual-purpose patterns, FHS compliance, file extensions, and bottom-up function organization (low-level utilities before high-level orchestration).
+Mandatory 13-step structural layout for all Bash scripts. Covers organization from shebang through `#fin` marker: script metadata, shopt settings, dual-purpose patterns, FHS compliance, file extensions, and bottom-up function organization (low-level utilities defined before high-level orchestration).
 
 
 ---
@@ -47,279 +47,217 @@ Defines the mandatory 13-step structural layout for all Bash scripts: shebang th
 
 ### Complete Working Example
 
-**Production-quality installation script demonstrating all 13 mandatory BCS0101 layout steps.**
-
----
-
-## Complete Example: All 13 Steps
+**Production installation script demonstrating all 13 BCS0101 layout steps.**
 
 ```bash
 #!/bin/bash
-#shellcheck disable=SC2034  # Some variables used by sourcing scripts
+#shellcheck disable=SC2034
 # Configurable installation script with dry-run mode and validation
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-# ============================================================================
 # Script Metadata
-# ============================================================================
+declare -r VERSION=2.1.420
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
-VERSION=2.1.420
-SCRIPT_PATH=$(realpath -- "$0")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- VERSION SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
-
-# ============================================================================
-# Global Variable Declarations
-# ============================================================================
-
-# Configuration (can be modified by arguments)
-declare -- PREFIX=/usr/local
-declare -- APP_NAME=myapp
-declare -- SYSTEM_USER=myapp
+# Configuration (modifiable by arguments)
+declare -- PREFIX=/usr/local APP_NAME=myapp SYSTEM_USER=myapp
 
 # Derived paths (updated when PREFIX changes)
-declare -- BIN_DIR="$PREFIX"/bin
-declare -- LIB_DIR="$PREFIX"/lib
-declare -- SHARE_DIR="$PREFIX"/share
-declare -- CONFIG_DIR=/etc/"$APP_NAME"
-declare -- LOG_DIR=/var/log/"$APP_NAME"
+declare -- BIN_DIR="$PREFIX"/bin LIB_DIR="$PREFIX"/lib SHARE_DIR="$PREFIX"/share
+declare -- CONFIG_DIR=/etc/"$APP_NAME" LOG_DIR=/var/log/"$APP_NAME"
 
-# Runtime flags
-declare -i DRY_RUN=0
-declare -i FORCE=0
-declare -i INSTALL_SYSTEMD=0
+# Runtime flags and arrays
+declare -i DRY_RUN=0 FORCE=0 INSTALL_SYSTEMD=0 VERBOSE=1
+declare -a WARNINGS=() INSTALLED_FILES=()
 
-# Accumulation arrays
-declare -a WARNINGS=()
-declare -a INSTALLED_FILES=()
-
-# ============================================================================
-# Step 8: Color Definitions
-# ============================================================================
-
+# Color Definitions
 if [[ -t 1 && -t 2 ]]; then
   declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' BOLD=$'\033[1m' NC=$'\033[0m'
 else
   declare -r RED='' GREEN='' YELLOW='' CYAN='' BOLD='' NC=''
 fi
 
-# ============================================================================
-# Step 9: Utility Functions
-# ============================================================================
-declare -i VERBOSE=1
-
+# Utility Functions
 _msg() {
   local -- prefix="$SCRIPT_NAME:" msg
   case ${FUNCNAME[1]} in
-    vecho)   : ;;
-    info)    prefix+=" ${CYAN}◉${NC}" ;;
-    warn)    prefix+=" ${YELLOW}▲${NC}" ;;
-    success) prefix+=" ${GREEN}✓${NC}" ;;
-    error)   prefix+=" ${RED}✗${NC}" ;;
-    *)       ;;
+    vecho) : ;; info) prefix+=" ${CYAN}◉${NC}" ;; warn) prefix+=" ${YELLOW}▲${NC}" ;;
+    success) prefix+=" ${GREEN}✓${NC}" ;; error) prefix+=" ${RED}✗${NC}" ;; *) ;;
   esac
   for msg in "$@"; do printf '%s %s\n' "$prefix" "$msg"; done
 }
-
 vecho() { ((VERBOSE)) || return 0; _msg "$@"; }
 info() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 warn() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 success() { ((VERBOSE)) || return 0; >&2 _msg "$@" || return 0; }
 error() { >&2 _msg "$@"; }
 die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
-yn() {
-  local -- REPLY
-  >&2 read -r -n 1 -p "$(2>&1 warn "${1:-'Continue?'}") y/n "
-  >&2 echo
-  [[ ${REPLY,,} == y ]]
-}
-
+yn() { local -- REPLY; >&2 read -r -n 1 -p "$(2>&1 warn "${1:-'Continue?'}") y/n "; >&2 echo; [[ ${REPLY,,} == y ]]; }
 noarg() { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
 
-# ============================================================================
-# Step 10: Business Logic Functions
-# ============================================================================
-
+# Business Logic Functions
 update_derived_paths() {
-  BIN_DIR="$PREFIX"/bin
-  LIB_DIR="$PREFIX"/lib
-  SHARE_DIR="$PREFIX"/share
-  CONFIG_DIR=/etc/"$APP_NAME"
-  LOG_DIR=/var/log/"$APP_NAME"
+  BIN_DIR="$PREFIX"/bin; LIB_DIR="$PREFIX"/lib; SHARE_DIR="$PREFIX"/share
+  CONFIG_DIR=/etc/"$APP_NAME"; LOG_DIR=/var/log/"$APP_NAME"
 }
 
-usage() {
-  cat <<EOF
-Usage: $SCRIPT_NAME [OPTIONS]
-
-OPTIONS:
-  -p, --prefix DIR       Installation prefix (default: /usr/local)
-  -u, --user USER        System user for service (default: myapp)
-  -n, --dry-run          Show what would be done without doing it
-  -f, --force            Overwrite existing files
-  -s, --systemd          Install systemd service unit
-  -v, --verbose          Enable verbose output
-  -h, --help             Display this help message
-  -V, --version          Display version information
-EOF
+show_help() {
+  cat <<EOT
+$SCRIPT_NAME $VERSION - Installation script
+Usage: $SCRIPT_NAME [Options]
+Options:
+  -p, --prefix DIR    Installation prefix (default: /usr/local)
+  -u, --user USER     System user (default: myapp)
+  -n, --dry-run       Show what would be done
+  -f, --force         Overwrite existing files
+  -s, --systemd       Install systemd service
+  -v/-q               Verbose/quiet    -h/--help    -V/--version
+EOT
 }
 
 check_prerequisites() {
-  local -i missing=0
-  local -- cmd
-
+  local -i missing=0; local -- cmd
   for cmd in install mkdir chmod chown; do
-    if ! command -v "$cmd" >/dev/null 2>&1; then
-      error "Required command not found ${cmd@Q}"
-      missing=1
-    fi
+    command -v "$cmd" >/dev/null 2>&1 || { error "Required command not found ${cmd@Q}"; missing=1; }
   done
-
-  if ((INSTALL_SYSTEMD)) && ! command -v systemctl >/dev/null 2>&1; then
-    error 'systemd installation requested but systemctl not found'
-    missing=1
-  fi
-
+  ((INSTALL_SYSTEMD)) && ! command -v systemctl >/dev/null 2>&1 && { error 'systemctl not found'; missing=1; }
   ((missing==0)) || die 1 'Missing required commands'
-  success 'All prerequisites satisfied'
 }
 
 validate_config() {
   [[ -n "$PREFIX" ]] || die 22 'PREFIX cannot be empty'
-  [[ "$PREFIX" =~ [[:space:]] ]] && die 22 'PREFIX cannot contain spaces'
-
-  [[ -n "$APP_NAME" ]] || die 22 'APP_NAME cannot be empty'
-  [[ "$APP_NAME" =~ ^[a-z][a-z0-9_-]*$ ]] || \
-    die 22 'Invalid APP_NAME: must start with letter, contain only lowercase, digits, dash, underscore'
-
+  [[ "$PREFIX" =~ [[:space:]] ]] && die 22 "PREFIX cannot contain spaces ${PREFIX@Q}"
+  [[ -n "$APP_NAME" && "$APP_NAME" =~ ^[a-z][a-z0-9_-]*$ ]] || die 22 'Invalid APP_NAME'
   [[ -n "$SYSTEM_USER" ]] || die 22 'SYSTEM_USER cannot be empty'
-
-  if [[ ! -d "$PREFIX" ]]; then
-    if ((FORCE)) || yn "Create PREFIX directory '$PREFIX'?"; then
-      vecho "Will create ${PREFIX@Q}"
-    else
-      die 1 'Installation cancelled'
-    fi
-  fi
-
-  success 'Configuration validated'
+  [[ -d "$PREFIX" ]] || { ((FORCE)) || yn "Create PREFIX ${PREFIX@Q}?" || die 1 'Cancelled'; }
 }
 
 create_directories() {
   local -- dir
-
   for dir in "$BIN_DIR" "$LIB_DIR" "$SHARE_DIR" "$CONFIG_DIR" "$LOG_DIR"; do
-    if ((DRY_RUN)); then
-      info "[DRY-RUN] Would create directory ${dir@Q}"
-      continue
-    fi
-
-    if [[ -d "$dir" ]]; then
-      vecho "Directory exists ${dir@Q}"
-    else
-      mkdir -p "$dir" || die 1 "Failed to create directory ${dir@Q}"
-      success "Created directory ${dir@Q}"
-    fi
+    ((DRY_RUN)) && { info "[DRY-RUN] Would create ${dir@Q}"; continue; }
+    [[ -d "$dir" ]] || mkdir -p "$dir" || die 1 "Failed to create ${dir@Q}"
   done
 }
 
 install_binaries() {
-  local -- source="$SCRIPT_DIR/bin"
-  local -- target="$BIN_DIR"
-
-  [[ -d "$source" ]] || die 2 "Source directory not found ${source@Q}"
-
-  ((DRY_RUN==0)) || {
-    info "[DRY-RUN] Would install binaries from ${source@Q} to ${target@Q}"
-    return 0
-  }
-
-  local -- file
-  local -i count=0
-
+  local -- source="$SCRIPT_DIR"/bin target=$BIN_DIR
+  [[ -d "$source" ]] || die 2 "Source not found ${source@Q}"
+  ((DRY_RUN)) && { info "[DRY-RUN] Would install binaries"; return 0; }
+  local -- file basename target_file; local -i count=0
   for file in "$source"/*; do
     [[ -f "$file" ]] || continue
-
-    local -- basename=${file##*/}
-    local -- target_file="$target/$basename"
-
-    if [[ -f "$target_file" ]] && ! ((FORCE)); then
-      warn "File exists (use --force to overwrite) ${target_file@Q}"
-      continue
-    fi
-
+    basename=${file##*/}; target_file="$target/$basename"
+    [[ -f "$target_file" ]] && ! ((FORCE)) && { warn "File exists ${target_file@Q}"; continue; }
     install -m 755 "$file" "$target_file" || die 1 "Failed to install ${basename@Q}"
-    INSTALLED_FILES+=("$target_file")
-    count+=1
-    vecho "Installed ${target_file@Q}"
+    INSTALLED_FILES+=("$target_file"); count+=1
   done
-
-  success "Installed $count binaries to ${target@Q}"
+  success "Installed $count binaries"
 }
 
-# ============================================================================
-# Step 11: main() Function
-# ============================================================================
+install_libraries() {
+  local -- source="$SCRIPT_DIR"/lib target="$LIB_DIR"/"$APP_NAME"
+  [[ -d "$source" ]] || return 0
+  ((DRY_RUN)) && { info "[DRY-RUN] Would install libraries"; return 0; }
+  mkdir -p "$target" && cp -r "$source"/* "$target"/ && chmod -R a+rX "$target" || die 1 'Library install failed'
+}
 
+generate_config() {
+  local -- config_file="$CONFIG_DIR"/"$APP_NAME".conf
+  ((DRY_RUN)) && { info "[DRY-RUN] Would generate config"; return 0; }
+  [[ -f "$config_file" ]] && ! ((FORCE)) && { warn "Config exists ${config_file@Q}"; return 0; }
+  cat > "$config_file" <<EOT
+# $APP_NAME configuration - Generated by $SCRIPT_NAME $VERSION
+[installation]
+prefix = $PREFIX
+version = $VERSION
+[paths]
+bin_dir = $BIN_DIR
+lib_dir = $LIB_DIR
+[runtime]
+user = $SYSTEM_USER
+EOT
+  chmod 644 "$config_file"
+}
+
+install_systemd_unit() {
+  ((INSTALL_SYSTEMD)) || return 0
+  local -- unit_file=/etc/systemd/system/"$APP_NAME".service
+  ((DRY_RUN)) && { info "[DRY-RUN] Would install systemd unit"; return 0; }
+  cat > "$unit_file" <<EOT
+[Unit]
+Description=$APP_NAME Service
+After=network.target
+[Service]
+Type=simple
+User=$SYSTEM_USER
+ExecStart=$BIN_DIR/$APP_NAME
+Restart=on-failure
+[Install]
+WantedBy=multi-user.target
+EOT
+  chmod 644 "$unit_file"
+  systemctl daemon-reload || warn 'Failed to reload systemd'
+}
+
+set_permissions() {
+  ((DRY_RUN)) && { info '[DRY-RUN] Would set permissions'; return 0; }
+  id "$SYSTEM_USER" >/dev/null 2>&1 && chown -R "$SYSTEM_USER":"$SYSTEM_USER" "$LOG_DIR" 2>/dev/null || \
+    warn "User ${SYSTEM_USER@Q} not found or chown failed"
+}
+
+show_summary() {
+  cat <<EOT
+${BOLD}Installation Summary${NC}
+  App: $APP_NAME $VERSION  Prefix: $PREFIX  User: $SYSTEM_USER
+  Files: ${#INSTALLED_FILES[@]}  Warnings: ${#WARNINGS[@]}
+EOT
+  ((DRY_RUN)) && echo "${CYAN}DRY-RUN - no changes made${NC}"
+}
+
+# main() Function
 main() {
   while (($#)); do
     case $1 in
-      -p|--prefix)       noarg "$@"; shift; PREFIX=$1; update_derived_paths ;;
-      -u|--user)         noarg "$@"; shift; SYSTEM_USER=$1 ;;
-      -n|--dry-run)      DRY_RUN=1 ;;
-      -f|--force)        FORCE=1 ;;
-      -s|--systemd)      INSTALL_SYSTEMD=1 ;;
-      -v|--verbose)      VERBOSE=1 ;;
-      -h|--help)         usage; return 0 ;;
-      -V|--version)      echo "$SCRIPT_NAME $VERSION"; return 0 ;;
-      -*)                die 22 "Invalid option ${1@Q} (use --help for usage)" ;;
-      *)                 die 2  "Unexpected argument ${1@Q}" ;;
+      -p|--prefix)   noarg "$@"; shift; PREFIX=$1; update_derived_paths ;;
+      -u|--user)     noarg "$@"; shift; SYSTEM_USER=$1 ;;
+      -n|--dry-run)  DRY_RUN=1 ;; -f|--force) FORCE=1 ;; -s|--systemd) INSTALL_SYSTEMD=1 ;;
+      -v|--verbose)  VERBOSE+=1 ;; -q|--quiet) VERBOSE=0 ;;
+      -V|--version)  echo "$SCRIPT_NAME $VERSION"; return 0 ;;
+      -h|--help)     show_help; return 0 ;;
+      -[punfsvqVh]*) #shellcheck disable=SC2046
+                     set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+      -*)            die 22 "Invalid option ${1@Q}" ;; *)  die 2 "Unexpected argument ${1@Q}" ;;
     esac
     shift
   done
-
-  # Make configuration readonly after argument parsing
-  readonly -- PREFIX APP_NAME SYSTEM_USER
-  readonly -- BIN_DIR LIB_DIR SHARE_DIR CONFIG_DIR LOG_DIR
+  readonly -- PREFIX APP_NAME SYSTEM_USER BIN_DIR LIB_DIR SHARE_DIR CONFIG_DIR LOG_DIR
   readonly -i VERBOSE DRY_RUN FORCE INSTALL_SYSTEMD
 
-  ((DRY_RUN==0)) || info 'DRY-RUN mode enabled - no changes will be made'
-
   info "Installing $APP_NAME $VERSION to ${PREFIX@Q}"
-
-  check_prerequisites
-  validate_config
-  create_directories
-  install_binaries
-
-  if ((DRY_RUN)); then
-    info 'Dry-run complete - review output and run without --dry-run to install'
-  else
-    success "Installation of $APP_NAME $VERSION complete!"
-  fi
+  check_prerequisites; validate_config; create_directories
+  install_binaries; install_libraries; generate_config
+  install_systemd_unit; set_permissions; show_summary
+  ((DRY_RUN)) && info 'Run without --dry-run to install' || success "Installation complete!"
 }
 
 main "$@"
-
 #fin
 ```
 
----
-
-## Key Patterns Demonstrated
+## Key Patterns
 
 | Pattern | Implementation |
 |---------|----------------|
-| **13-step structure** | Shebang �' shellcheck �' description �' strict mode �' shopt �' metadata �' globals �' colors �' utilities �' business logic �' main() �' invocation �' #fin |
-| **Progressive readonly** | Variables mutable during parsing, immutable after |
-| **Derived paths** | `update_derived_paths()` recalculates when PREFIX changes |
-| **Dry-run mode** | Every operation checks `DRY_RUN` flag before executing |
-| **Force mode** | Existing files warn unless `--force` specified |
-| **TTY-aware colors** | Conditional based on `[[ -t 1 && -t 2 ]]` |
-| **Validation first** | Prerequisites and config validated before filesystem ops |
-| **Error accumulation** | Warnings collected in array for summary reporting |
+| **Dry-run** | Every operation checks `DRY_RUN` before executing |
+| **Force mode** | Existing files warn unless `--force` |
+| **Derived paths** | `update_derived_paths()` syncs when PREFIX changes |
+| **Validation first** | Prerequisites/config validated before filesystem ops |
+| **Progressive readonly** | Variables immutable after argument parsing |
+| **Short option splitting** | `-nfv` expands to `-n -f -v` |
 
 
 ---
@@ -329,13 +267,13 @@ main "$@"
 
 ### Common Layout Anti-Patterns
 
-**Common violations of BCS0101 13-step layout with incorrect approach and correct solution.**
+Common violations of BCS0101 13-step layout pattern with incorrect and correct approaches.
 
 ---
 
 ## Anti-Patterns
 
-### ✗ Missing `set -euo pipefail`
+### ✗ Wrong: Missing `set -euo pipefail`
 
 ```bash
 #!/usr/bin/env bash
@@ -348,32 +286,40 @@ rm -rf /important/data
 cp config.txt /etc/
 ```
 
-**Problem:** Errors not caught, script continues after failures.
+**Problem:** Errors not caught, silent failures lead to corruption or incomplete operations.
 
 ### ✓ Correct: Error Handling First
 
 ```bash
 #!/usr/bin/env bash
+
+# Installation script with proper safeguards
+
 set -euo pipefail
+
 shopt -s inherit_errexit shift_verbose
 
-VERSION=1.0.0
+declare -r VERSION=1.0.0
+# ... rest of script
 ```
 
 ---
 
-### ✗ Variables Declared After Use
+### ✗ Wrong: Declaring Variables After Use
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
 main() {
-  ((VERBOSE)) && echo 'Starting...' ||:  # VERBOSE not declared!
+  # Using VERBOSE before it's declared
+  ((VERBOSE)) && echo 'Starting...' ||:
+
   process_files
 }
 
-declare -i VERBOSE=0  # Too late
+# Variables declared after main()
+declare -i VERBOSE=0
 
 main "$@"
 #fin
@@ -387,11 +333,14 @@ main "$@"
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Declare all globals up front
 declare -i VERBOSE=0
 declare -i DRY_RUN=0
 
 main() {
+  # Now safe to use
   ((VERBOSE)) && echo 'Starting...' ||:
+
   process_files
 }
 
@@ -401,28 +350,35 @@ main "$@"
 
 ---
 
-### ✗ Business Logic Before Utilities
+### ✗ Wrong: Business Logic Before Utilities
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Business logic defined first
 process_files() {
   local -- file
   for file in *.txt; do
-    [[ -f "$file" ]] || die 2 "Not a file ${file@Q}"  # die() not defined!
+    # Calling die() which isn't defined yet!
+    [[ -f "$file" ]] || die 2 "Not a file ${file@Q}"
+    echo "Processing ${file@Q}"
   done
 }
 
+# Utilities defined after business logic
 die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
-main() { process_files; }
+main() {
+  process_files
+  : ...
+}
 
 main "$@"
 #fin
 ```
 
-**Problem:** Violates bottom-up organization, harder to understand.
+**Problem:** Violates bottom-up organization; harder to understand even though bash resolves at runtime.
 
 ### ✓ Correct: Utilities Before Business Logic
 
@@ -430,16 +386,21 @@ main "$@"
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Utilities first
 die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
+# Business logic can safely call utilities
 process_files() {
   local -- file
   for file in *.txt; do
     [[ -f "$file" ]] || die 2 "Not a file ${file@Q}"
+    echo "Processing ${file@Q}"
   done
 }
 
-main() { process_files; }
+main() {
+  process_files
+}
 
 main "$@"
 #fin
@@ -447,49 +408,58 @@ main "$@"
 
 ---
 
-### ✗ No `main()` in Large Script
+### ✗ Wrong: No `main()` Function in Large Script
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION=1.0.0
+declare -r VERSION=1.0.0
+
 # ... 200 lines of functions ...
 
+# Argument parsing scattered throughout
 if [[ "$1" == '--help' ]]; then
   echo 'Usage: ...'
   exit 0
 fi
 
+# Business logic runs directly
 check_prerequisites
 validate_config
 install_files
+
 echo 'Done'
 #fin
 ```
 
-**Problem:** No clear entry point, scattered argument parsing, can't source to test functions.
+**Problem:** No clear entry point, scattered parsing, can't test individual functions by sourcing.
 
-### ✓ Correct: Use `main()` for Scripts Over 40 Lines
+### ✓ Correct: Use `main()` for Scripts Over 200 Lines
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION=1.0.0
+declare -r VERSION=1.0.0
+
+# ... 200 lines of functions ...
 
 main() {
+  # Centralized argument parsing
   while (($#)); do
     case $1 in
-      -h|--help) usage; exit 0 ;;
+      -h|--help) show_help; exit 0 ;;
       *) die 22 "Invalid argument ${1@Q}" ;;
     esac
     shift
   done
 
+  # Clear execution flow
   check_prerequisites
   validate_config
   install_files
+
   success 'Installation complete'
 }
 
@@ -499,19 +469,23 @@ main "$@"
 
 ---
 
-### ✗ Missing End Marker
+### ✗ Wrong: Missing End Marker
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
-main() { echo 'Hello, World!'; }
+declare -r VERSION=1.0.0
+
+main() {
+  echo 'Hello, World!'
+}
 
 main "$@"
-# File ends without #fin
+# File ends without #fin or #end
 ```
 
-**Problem:** No visual confirmation file is complete, harder to detect truncation.
+**Problem:** No visual confirmation of complete file, harder to detect truncation.
 
 ### ✓ Correct: Always End With `#fin`
 
@@ -519,7 +493,11 @@ main "$@"
 #!/usr/bin/env bash
 set -euo pipefail
 
-main() { echo 'Hello, World!'; }
+declare -r VERSION=1.0.0
+
+main() {
+  echo 'Hello, World!'
+}
 
 main "$@"
 #fin
@@ -527,20 +505,26 @@ main "$@"
 
 ---
 
-### ✗ Readonly Before Parsing Arguments
+### ✗ Wrong: Readonly Before Parsing Arguments
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION=1.0.0
-PREFIX=/usr/local
-readonly -- VERSION PREFIX  # Too early!
+declare -r VERSION=1.0.0
+declare -r PREFIX=/usr/local
+
+# Made readonly too early!
+readonly -- VERSION PREFIX
 
 main() {
   while (($#)); do
     case $1 in
-      --prefix) shift; PREFIX="$1" ;;  # Fails - readonly!
+      --prefix)
+        shift
+        # This will fail - PREFIX is readonly!
+        PREFIX=$1
+        ;;
     esac
     shift
   done
@@ -549,6 +533,8 @@ main() {
 main "$@"
 #fin
 ```
+
+**Problem:** Variables that need modification during parsing made readonly too early.
 
 ### ✓ Correct: Readonly After Argument Parsing
 
@@ -556,21 +542,28 @@ main "$@"
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION=1.0.0
-SCRIPT_PATH=$(realpath -- "$0")
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- VERSION SCRIPT_PATH SCRIPT_NAME  # Never change
+declare -r VERSION=1.0.0
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+declare -r SCRIPT_NAME=${SCRIPT_PATH##*/}
 
-declare -- PREFIX=/usr/local  # Modified during parsing
+declare -- PREFIX=/usr/local  # Will be modified during parsing
 
 main() {
   while (($#)); do
     case $1 in
-      --prefix) shift; PREFIX=$1 ;;
+      --prefix)
+        shift
+        PREFIX=$1  # OK - not readonly yet
+        ;;
     esac
     shift
   done
-  readonly -- PREFIX  # Now lock it
+
+  # Now make readonly after parsing complete
+  readonly -- PREFIX
+
+  # Rest of logic...
 }
 
 main "$@"
@@ -579,23 +572,35 @@ main "$@"
 
 ---
 
-### ✗ Mixing Declaration and Logic
+### ✗ Wrong: Mixing Declaration and Logic
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
+declare -r VERSION=1.0.0
+
+# Some globals
 declare -i VERBOSE=0
 
-check_something() { echo 'Checking...'; }
+# Function in the middle
+check_something() {
+  echo 'Checking...'
+}
 
-declare -- PREFIX=/usr/local  # Globals scattered!
+# More globals after function
+declare -- PREFIX=/usr/local
 declare -- CONFIG_FILE=''
 
-main() { check_something; }
+main() {
+  check_something
+}
+
 main "$@"
 #fin
 ```
+
+**Problem:** Scattered globals make it hard to see all state variables at once.
 
 ### ✓ Correct: All Globals Together
 
@@ -603,50 +608,73 @@ main "$@"
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION=1.0.0
+declare -r VERSION=1.0.0
+
+# All globals in one place
 declare -i VERBOSE=0
 declare -- PREFIX=/usr/local
 declare -- CONFIG_FILE=''
 
-check_something() { echo 'Checking...'; }
+# All functions after globals
+check_something() {
+  echo 'Checking...'
+}
 
-main() { check_something; }
+main() {
+  check_something
+}
+
 main "$@"
 #fin
 ```
 
 ---
 
-### ✗ Sourcing Without Protecting Execution
+### ✗ Wrong: Sourcing Without Protecting Execution
 
 ```bash
 #!/usr/bin/env bash
-set -euo pipefail  # Modifies caller's shell!
+# This file is meant to be sourced, but...
+
+set -euo pipefail  # Modifies caller's shell!!
 
 die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
-main "$@"  # Runs automatically when sourced!
+# Runs automatically when sourced!
+main "$@"
 #fin
 ```
+
+**Problem:** Modifies caller's shell settings and runs `main` automatically when sourced.
 
 ### ✓ Correct: Dual-Purpose Script
 
 ```bash
 #!/usr/bin/env bash
+# Only set strict mode when executed (not sourced)
 
 error() { >&2 echo "ERROR: $*"; }
+
 die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
-[[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0  # Exit if sourced
+# Only run main when executed (not sourced)
+# Fast exit if sourced
+[[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0
 
+# Now start main script
 set -euo pipefail
 
-VERSION=1.0.0
-SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- VERSION SCRIPT_PATH SCRIPT_NAME
+declare -r VERSION=1.0.0
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
+declare -r SCRIPT_NAME=${SCRIPT_PATH##*/}
 
-main() { echo 'Running main'; }
+: ...
+
+main() {
+  echo 'Running main'
+  : ...
+}
 
 main "$@"
 #fin
@@ -656,18 +684,16 @@ main "$@"
 
 ## Summary
 
-Eight anti-patterns violating BCS0101:
+Eight common BCS0101 violations:
 
-| Anti-Pattern | Consequence |
-|-------------|-------------|
-| Missing strict mode | Scripts fail silently |
-| Late declaration | Unbound variable errors |
-| Wrong function order | Violates bottom-up organization |
-| Missing main() | No testable entry point |
-| Missing end marker | Can't detect truncation |
-| Premature readonly | Breaks argument parsing |
-| Scattered declarations | Hard to see all state |
-| Unprotected sourcing | Modifies caller's shell |
+1. **Missing strict mode** - Scripts without `set -euo pipefail` fail silently
+2. **Declaration order** - Variables must be declared before use
+3. **Function organization** - Utilities before business logic
+4. **Missing main()** - Large scripts need structured entry point
+5. **Missing end marker** - Scripts must end with `#fin` or `#end`
+6. **Premature readonly** - Wait until after argument parsing
+7. **Scattered declarations** - Group all globals together
+8. **Unprotected sourcing** - Dual-purpose scripts must protect execution code
 
 
 ---
@@ -677,7 +703,7 @@ Eight anti-patterns violating BCS0101:
 
 ### Edge Cases and Variations
 
-**Subrule covering scenarios where the standard 13-step BCS0101 layout may be modified.**
+Special scenarios where the standard 13-step BCS0101 layout may be modified or simplified.
 
 ---
 
@@ -702,7 +728,7 @@ echo "Found $count files"
 
 ## Sourced Library Files
 
-**Files meant only to be sourced** skip execution parts and `set -e` (would affect caller):
+**Files meant only to be sourced** skip execution parts:
 
 ```bash
 #!/usr/bin/env bash
@@ -716,19 +742,16 @@ is_integer() { [[ "$1" =~ ^-?[0-9]+$ ]]; }
 is_valid_email() { [[ "$1" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; }
 
 # No main(), no execution
-# Just function definitions for other scripts to use
 #fin
 ```
 
 ## Scripts With External Configuration
 
-**When sourcing config files**, make readonly after sourcing:
-
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION=1.0.0
+declare -r VERSION=1.0.0
 : ...
 
 # Default configuration
@@ -743,8 +766,6 @@ fi
 
 # Now make readonly after sourcing config
 readonly -- CONFIG_FILE DATA_DIR
-
-# ... rest of script
 ```
 
 ## Platform-Specific Sections
@@ -753,7 +774,7 @@ readonly -- CONFIG_FILE DATA_DIR
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION=1.0.0
+declare -r VERSION=1.0.0
 : ...
 
 # Detect platform
@@ -781,19 +802,15 @@ case $PLATFORM in
 esac
 
 readonly -- PACKAGE_MANAGER INSTALL_CMD
-
-: ... rest of script
 ```
 
 ## Scripts With Cleanup Requirements
-
-**Trap should be set** after cleanup function is defined but before code that creates temp files:
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION=1.0.0
+declare -r VERSION=1.0.0
 : ...
 
 # Temporary files array for cleanup
@@ -812,9 +829,9 @@ cleanup() {
 
 # Set trap early, after functions are defined
 trap 'cleanup $?' SIGINT SIGTERM EXIT
-
-# ... rest of script uses TEMP_FILES
 ```
+
+**Trap should be set** after cleanup function is defined but before any code that creates temp files.
 
 ---
 
@@ -834,13 +851,15 @@ trap 'cleanup $?' SIGINT SIGTERM EXIT
 
 ### Key Principles
 
+Even when deviating, maintain these principles:
+
 1. **Safety first** - `set -euo pipefail` still comes first (unless library file)
 2. **Dependencies before usage** - Bottom-up organization still applies
 3. **Clear structure** - Readers should easily understand the flow
 4. **Minimal deviation** - Only deviate when there's clear benefit
 5. **Document reasons** - Comment why you're deviating from standard
 
-### Anti-Pattern: Arbitrary Reordering
+### Anti-Pattern: Inappropriate Deviation
 
 ```bash
 # ✗ Wrong - arbitrary reordering without reason
@@ -852,17 +871,18 @@ validate_input() { : ... }
 set -euo pipefail  # Too late!
 
 # Globals scattered
-VERSION=1.0.0
+declare -r VERSION=1.0.0
 check_system() { : ... }
 declare -- PREFIX=/usr
 ```
 
+**Correct:**
 ```bash
 # ✓ Correct - standard order maintained
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION=1.0.0
+declare -r VERSION=1.0.0
 declare -- PREFIX=/usr
 
 validate_input() { : ... }
@@ -873,13 +893,9 @@ check_system() { : ... }
 
 ## Summary
 
-**Legitimate simplifications:** Tiny scripts (<200 lines), libraries, one-off utilities
+**Legitimate edge cases:** Simplification for tiny scripts, libraries that shouldn't modify sourcing environment, external config overriding defaults, platform detection, cleanup traps.
 
-**Legitimate extensions:** External config, platform detection, cleanup traps, logging, lock files
-
-**Core principles always apply:** Error handling first, dependencies before usage, clear structure
-
-Deviate only when necessary—maintain **safety, clarity, and maintainability**.
+**Core principles remain:** Error handling first, dependencies before usage, clear predictable structure. Deviate only when necessary—maintain **safety, clarity, and maintainability**.
 
 
 ---
@@ -889,20 +905,18 @@ Deviate only when necessary—maintain **safety, clarity, and maintainability**.
 
 ## General Layouts for Standard Script
 
-**All Bash scripts follow a 13-step structural layout ensuring consistency, maintainability, and correctness. Bottom-up organization places low-level utilities before high-level orchestration, allowing each component to safely call previously defined functions.**
-
-For detailed examples: **BCS010101** (462-line example), **BCS010102** (anti-patterns), **BCS010103** (edge cases).
+**All Bash scripts follow a 13-step structural layout ensuring consistency and correctness. Bottom-up organization places low-level utilities before high-level orchestration, allowing each component to safely call previously defined functions.**
 
 ---
 
 ## Rationale
 
-1. **Predictability** - Developers know where to find components: metadata (step 6), utilities (step 9), business logic (step 10)
-2. **Safe Initialization** - Error handling configured before commands run; metadata available before functions execute
-3. **Bottom-Up Dependency Resolution** - Lower-level components defined before higher-level ones
-4. **Testing/Maintenance** - Source scripts to test functions; extract utilities for reuse
-5. **Error Prevention** - Prevents undefined functions, uninitialized variables, premature business logic
-6. **Documentation Through Structure** - Progression from infrastructure (1-8) �' implementation (9-10) �' orchestration (11-12)
+1. **Predictability** - Developers know exactly where to find components (metadata step 6, utilities step 9, business logic step 10)
+2. **Safe Initialization** - Critical infrastructure established before needed: error handling before commands, metadata before functions, globals before references
+3. **Bottom-Up Dependency Resolution** - Lower-level components defined before higher-level ones; each function can safely call any function above it
+4. **Testing/Maintenance** - Source scripts to test functions, extract utilities, understand unfamiliar code quickly
+5. **Error Prevention** - Prevents undefined functions, uninitialized variables, business logic before error handling
+6. **Production Readiness** - Includes version tracking, error handling, terminal detection, argument validation
 
 ---
 
@@ -917,8 +931,9 @@ For detailed examples: **BCS010101** (462-line example), **BCS010102** (anti-pat
 ### Step 2: ShellCheck Directives (if needed)
 ```bash
 #shellcheck disable=SC2034  # Unused variables OK (sourced by other scripts)
+#shellcheck disable=SC1091  # Don't follow sourced files
 ```
-Always include explanatory comments for disabled checks.
+**Always include explanatory comments** for disabled checks.
 
 ### Step 3: Brief Description Comment
 ```bash
@@ -933,7 +948,7 @@ set -euo pipefail
 - `set -u` - Exit on undefined variable
 - `set -o pipefail` - Pipelines fail if any command fails
 
-**Optional Bash 5 test** (immediately after, if needed):
+**MUST come before any commands.** Optional Bash 5 check:
 ```bash
 ((${BASH_VERSINFO[0]:-0} > 4)) || { >&2 echo 'error: Require Bash version >= 5'; exit 95; }
 ```
@@ -942,9 +957,9 @@ set -euo pipefail
 ```bash
 shopt -s inherit_errexit shift_verbose extglob nullglob
 ```
-- `inherit_errexit` - Subshells inherit `set -e`
+- `inherit_errexit` - Subshells inherit set -e
 - `shift_verbose` - Catches argument parsing bugs
-- `extglob` - Extended pattern matching: `@(pattern)`, `!(pattern)`
+- `extglob` - Extended patterns: `@(pattern)`, `!(pattern)`
 - `nullglob` - Empty globs expand to nothing
 
 ### Step 6: Script Metadata
@@ -954,17 +969,18 @@ declare -r VERSION=1.0.0
 declare -r SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 ```
-SC2155 safely ignored with `realpath`. On BCS systems, `realpath` may be a builtin (10x faster).
+SC2155 can be safely ignored with `realpath`. On some BCS systems `realpath` is a builtin (10x faster).
 
 ### Step 7: Global Variable Declarations
 ```bash
 declare -- PREFIX=/usr/local
 declare -- CONFIG_FILE=''
-declare -i VERBOSE=0 DRY_RUN=0 FORCE=0
+declare -i VERBOSE=0
+declare -i DRY_RUN=0
 declare -a INPUT_FILES=()
-declare -A OPTIONS=()
+declare -A CONFIG_MAP=()
 ```
-Type declarations: `-i` integers, `--` strings, `-a` indexed arrays, `-A` associative arrays.
+**Types:** `-i` integers, `--` strings, `-a` indexed arrays, `-A` associative arrays
 
 ### Step 8: Color Definitions (if terminal output)
 ```bash
@@ -974,13 +990,15 @@ else
   declare -r RED='' GREEN='' YELLOW='' CYAN='' NC=''
 fi
 ```
-Skip if script doesn't use colored output.
 
 ### Step 9: Utility Functions
 ```bash
+declare -i VERBOSE=1
+
 _msg() {
   local -- prefix="$SCRIPT_NAME:" msg
   case ${FUNCNAME[1]} in
+    vecho)   : ;;
     info)    prefix+=" ${CYAN}◉${NC}" ;;
     warn)    prefix+=" ${YELLOW}▲${NC}" ;;
     success) prefix+=" ${GREEN}✓${NC}" ;;
@@ -989,6 +1007,7 @@ _msg() {
   esac
   for msg in "$@"; do printf '%s %s\n' "$prefix" "$msg"; done
 }
+
 vecho() { ((VERBOSE)) || return 0; _msg "$@"; }
 info() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 warn() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
@@ -998,11 +1017,12 @@ die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 yn() {
   local -- REPLY
   >&2 read -r -n 1 -p "$(2>&1 warn "${1:-'Continue?'}") y/n "
-  >&2 echo; [[ ${REPLY,,} == y ]]
+  >&2 echo
+  [[ ${REPLY,,} == y ]]
 }
 ```
 
-**Simplified messaging** (no color/verbosity):
+**Simple alternative:**
 ```bash
 info() { >&2 echo "${FUNCNAME[0]}: $*"; }
 error() { >&2 echo "${FUNCNAME[0]}: $*"; }
@@ -1029,11 +1049,12 @@ install_files() {
     info "[DRY-RUN] Would install from ${source_dir@Q} to ${target_dir@Q}"
     return 0
   fi
+  [[ -d "$source_dir" ]] || die 2 "Source not found ${source_dir@Q}"
   mkdir -p "$target_dir" || die 1 "Failed to create ${target_dir@Q}"
   cp -r "$source_dir"/* "$target_dir"/
 }
 ```
-Organize bottom-up: validation �' file operations �' orchestration.
+**Organize bottom-up:** validation/file ops first, orchestration later.
 
 ### Step 11: `main()` Function
 ```bash
@@ -1042,43 +1063,47 @@ main() {
     case $1 in
       -p|--prefix)   noarg "$@"; shift; PREFIX=$1 ;;
       -v|--verbose)  VERBOSE+=1 ;;
+      -q|--quiet)    VERBOSE=0 ;;
       -n|--dry-run)  DRY_RUN=1 ;;
       -V|--version)  echo "$SCRIPT_NAME $VERSION"; return 0 ;;
-      -h|--help)     usage; return 0 ;;
-      -[pvnVh]*)     #shellcheck disable=SC2046
+      -h|--help)     show_help; return 0 ;;
+      -[pvqnVh]*)    #shellcheck disable=SC2046
                      set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;
       -*)            die 22 "Invalid option ${1@Q}" ;;
       *)             INPUT_FILES+=("$1") ;;
     esac
     shift
   done
-  readonly -- PREFIX
+  readonly -- PREFIX CONFIG_FILE
   readonly -i VERBOSE DRY_RUN
 
   check_prerequisites
   install_files "$SCRIPT_DIR"/data "$PREFIX"/share
+  success 'Installation complete'
 }
 ```
-**Required for scripts >100 lines.** Single entry point for testing/debugging.
+**Required for scripts >200 lines.** Exception: Scripts <100 lines can skip main().
 
 ### Step 12: Script Invocation
 ```bash
 main "$@"
 ```
+**ALWAYS quote `"$@"`** to preserve arguments.
 
 ### Step 13: End Marker
 ```bash
 #fin
 ```
-Or `#end`. Confirms script is complete (not truncated).
+OR `#end`. Visual confirmation script is complete (not truncated).
 
 ---
 
-## Structure Summary Tables
+## Structure Reference Tables
 
-### Executable Scripts
-| Step | Status | Element |
-|------|--------|---------|
+**Executable Scripts:** Man=Mandatory Opt=Optional Rec=Recommended
+
+| Order | Status | Step |
+|-------|--------|------|
 | 0 | Man | Shebang |
 | 1 | Opt | ShellCheck directives |
 | 2 | Opt | Description comment |
@@ -1092,42 +1117,27 @@ Or `#end`. Confirms script is complete (not truncated).
 | 10 | Rec | Business logic |
 | 11 | Rec | `main()` function |
 | 12 | Rec | `main "$@"` |
-| 13 | Man | `#end` marker |
+| 13 | Man | End marker |
 
-### Module/Library Scripts
-Skip steps 3, 5, 11, 12. Add `#end` marker.
-
-### Combined Module-Executable
-Add guard: `[[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0`
-Then repeat steps 3-13 for executable section.
+**Module/Library Scripts:** Skip steps 3,5,11,12. Step 14 for combined: `[[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0`
 
 ---
 
-## Anti-Patterns
+## Anti-Patterns (see BCS010102)
 
 1. **Missing `set -euo pipefail`** - Must be first command
-2. **Variables used before declaration** - Declare all globals in step 7
-3. **Business logic before utilities** - Utilities must exist before callers
-4. **No `main()` in large scripts** - Required for testability
+2. **Variables before declaration** - Declare all globals in step 7
+3. **Business logic before utilities** - Bottom-up order required
+4. **No main() in large scripts** - Required for >200 lines
 5. **Missing end marker** - `#fin` or `#end` mandatory
-
-See **BCS010102** for corrections.
 
 ---
 
-## Edge Cases
+## Edge Cases (see BCS010103)
 
 1. **Tiny scripts (<100 lines)** - May skip `main()`
 2. **Sourced libraries** - Skip `set -e`, `main()`, invocation
-3. **External configuration** - Add config sourcing after metadata
-
-See **BCS010103** for details.
-
----
-
-## Summary
-
-The 13-step layout guarantees safety, consistency, testability, and maintainability. For scripts >100 lines, implement all steps. For smaller scripts, steps 11-12 optional. Deviations should be rare and justified.
+3. **Combined module+executable** - Use `[[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0` separator
 
 
 ---
@@ -6754,25 +6764,20 @@ echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $*" >&2
 
 ## Core Message Functions
 
-**Implement a private `_msg()` core function using `FUNCNAME[1]` inspection to automatically format messages based on caller.**
+**Implement standard messaging functions using a private `_msg()` core that detects the calling function via `FUNCNAME` to automatically format messages.**
 
-**Rationale:**
-- **DRY/Consistent**: Single `_msg()` reused by all wrappers; impossible to pass wrong level
-- **Context-aware**: `FUNCNAME[1]` detects caller automatically (info, warn, error, etc.)
-- **Stream separation**: Errors/warnings to stderr, data to stdout (enables `data=$(./script)`)
-- **Flag control**: `VERBOSE` controls info/warn/success; `DEBUG` controls debug; `PROMPT` controls yn()
+**Rationale:** Consistent format across scripts; `FUNCNAME` inspection auto-adds prefix/color; DRY via single `_msg()` reused by all wrappers; conditional functions respect `VERBOSE`/`DEBUG`; errors/warnings to stderr, data to stdout; colors/symbols make output scannable.
 
-### FUNCNAME Array
+### FUNCNAME Inspection
+
+The `FUNCNAME` array contains the call stack: `${FUNCNAME[0]}` = current function, `${FUNCNAME[1]}` = caller. Instead of passing a parameter, inspect `FUNCNAME[1]` to auto-detect formatting.
 
 ```bash
-# FUNCNAME[0] = current function (_msg)
-# FUNCNAME[1] = calling function (determines formatting!)
-# FUNCNAME[2+] = higher call stack
-
 process_file() {
   info "Processing ${1@Q}"
   # When info() calls _msg():
-  #   FUNCNAME[1] = "info" �' cyan ◉ prefix
+  #   FUNCNAME[1] = "info"     (determines formatting)
+  #   FUNCNAME[2] = "process_file"
 }
 ```
 
@@ -6782,8 +6787,7 @@ process_file() {
 _msg() {
   local -- prefix="$SCRIPT_NAME:" msg
 
-  case ${FUNCNAME[1]} in
-    vecho)   ;;
+  case "${FUNCNAME[1]}" in
     success) prefix+=" ${GREEN}✓${NC}" ;;
     warn)    prefix+=" ${YELLOW}▲${NC}" ;;
     info)    prefix+=" ${CYAN}◉${NC}" ;;
@@ -6797,7 +6801,7 @@ _msg() {
   done
 }
 
-# Conditional (respect VERBOSE)
+# Conditional output (respects VERBOSE)
 vecho()   { ((VERBOSE)) || return 0; _msg "$@"; }
 success() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 warn()    { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
@@ -6806,20 +6810,11 @@ info()    { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 # Debug (respects DEBUG)
 debug()   { ((DEBUG)) || return 0; >&2 _msg "$@"; }
 
-# Unconditional
+# Unconditional error
 error()   { >&2 _msg "$@"; }
 
 # Error and exit
 die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
-
-# Yes/no prompt (respects PROMPT)
-yn() {
-  ((PROMPT)) || return 0
-  local -- REPLY
-  >&2 read -r -n 1 -p "$(2>&1 warn "${1:-'Continue?'}") y/n "
-  >&2 echo
-  [[ ${REPLY,,} == y ]]
-}
 ```
 
 ### Color Definitions
@@ -6835,58 +6830,63 @@ fi
 ### Flag Variables
 
 ```bash
-declare -i VERBOSE=0  # 1 = show info/warn/success
-declare -i DEBUG=0    # 1 = show debug messages
-declare -i PROMPT=1   # 0 = disable prompts (automation)
+declare -i VERBOSE=0  # Set to 1 for info/warn/success
+declare -i DEBUG=0    # Set to 1 for debug
+declare -i PROMPT=1   # Set to 0 for automation
 ```
 
-### Usage
+### Why stdout vs stderr
 
 ```bash
-info 'Starting processing...'          # Only if VERBOSE=1
-success "Installed to $PREFIX"         # Only if VERBOSE=1
-warn "Deprecated: $old_option"         # Only if VERBOSE=1
-error "Invalid file: $filename"        # Always shown
-debug "count=$count, file=$file"       # Only if DEBUG=1
-die 1 'Critical error'                 # Exit with code and message
-die 22 "File not found ${file@Q}"      # Exit code 22
-die 1                                  # Exit without message
+data=$(./script.sh)           # Gets only data, not info messages
+./script.sh 2>errors.log      # Errors to file, data to stdout
+./script.sh | process_data    # Messages visible, data piped
 ```
 
-### Variant: Log to File
+### Yes/No Prompt
 
 ```bash
-LOG_FILE=/var/log/"$SCRIPT_NAME".log
-
-_msg() {
-  local -- prefix="$SCRIPT_NAME:" msg timestamp
-
-  case "${FUNCNAME[1]}" in
-    success) prefix+=" ${GREEN}✓${NC}" ;;
-    warn)    prefix+=" ${YELLOW}⚡${NC}" ;;
-    info)    prefix+=" ${CYAN}◉${NC}" ;;
-    error)   prefix+=" ${RED}✗${NC}" ;;
-    debug)   prefix+=" ${YELLOW}DEBUG${NC}:" ;;
-    *)       ;;
-  esac
-
-  for msg in "$@"; do
-    printf '%s %s\n' "$prefix" "$msg"
-    timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-    printf '[%s] %s: %s\n' "$timestamp" "${FUNCNAME[1]^^}" "$msg" >> "$LOG_FILE"
-  done
+yn() {
+  ((PROMPT)) || return 0
+  local -- REPLY
+  >&2 read -r -n 1 -p "$(2>&1 warn "${1:-'Continue?'}") y/n "
+  >&2 echo
+  [[ ${REPLY,,} == y ]]
 }
 ```
 
-### Minimal Variants
+### File Logging
 
+Use `printf '%()T'` builtin (Bash 4.2+) instead of `$(date ...)` - 10-50x faster.
+
+**Minimal (single-process):**
 ```bash
-# No colors, no flags
+log_msg() {
+  printf '[%(%Y-%m-%d %H:%M:%S)T] %s\n' -1 "$*" >> "$LOG_FILE"
+}
+```
+
+**Concurrent-safe (multi-process):**
+```bash
+log_msg() {
+  {
+    flock -n 9 || return 0
+    printf '[%(%Y-%m-%d %H:%M:%S)T] %s\n' -1 "$*"
+  } 9>>"$LOG_FILE"
+}
+```
+
+### Function Variants
+
+**Minimal (no colors/flags):**
+```bash
 info()  { >&2 echo "$SCRIPT_NAME: $*"; }
 error() { >&2 echo "$SCRIPT_NAME: error: $*"; }
 die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+```
 
-# With VERBOSE, no colors
+**Medium (VERBOSE, no colors):**
+```bash
 declare -i VERBOSE=0
 info()  { ((VERBOSE)) && >&2 echo "$SCRIPT_NAME: $*"; return 0; }
 error() { >&2 echo "$SCRIPT_NAME: error: $*"; }
@@ -6896,42 +6896,51 @@ die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 ### Anti-Patterns
 
 ```bash
-# ✗ Wrong - echo directly (no stderr, prefix, colors, VERBOSE)
+# ✗ Wrong - using echo directly (no stderr, no prefix, no color, no VERBOSE)
 echo "Error: file not found"
 # ✓ Correct
 error 'File not found'
-
-# ✗ Wrong - duplicating logic in each function
-info() { echo "[$SCRIPT_NAME] INFO: $*"; }
-warn() { echo "[$SCRIPT_NAME] WARN: $*"; }
-# ✓ Correct - use _msg core with FUNCNAME
 
 # ✗ Wrong - errors to stdout
 error() { echo "[ERROR] $*"; }
 # ✓ Correct
 error() { >&2 _msg "$@"; }
 
-# ✗ Wrong - ignoring VERBOSE (always prints)
-info() { >&2 _msg "$@"; }
+# ✗ Wrong - ignoring VERBOSE
+info() { >&2 _msg "$@"; }  # Always prints!
 # ✓ Correct
 info() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 
-# ✗ Wrong - die without customizable exit code
+# ✗ Wrong - die without configurable exit code
 die() { error "$@"; exit 1; }
 # ✓ Correct
 die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
-# ✗ Wrong - yn() can't disable prompts
+# ✗ Wrong - spawns subshell (slow)
+log_msg() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" >> "$LOG_FILE"; }
+# ✓ Correct - builtin timestamp
+log_msg() { printf '[%(%Y-%m-%d %H:%M:%S)T] %s\n' -1 "$*" >> "$LOG_FILE"; }
+
+# ✗ Wrong - yn() can't disable for automation
 yn() { read -r -n 1 -p "$1 y/n " reply; [[ ${reply,,} == y ]]; }
-# ✓ Correct - respects PROMPT flag
-yn() { ((PROMPT)) || return 0; ...; }
+# ✓ Correct - respects PROMPT
+yn() { ((PROMPT)) || return 0; local -- REPLY; >&2 read -r -n 1 -p "$SCRIPT_NAME: $1 y/n " REPLY; >&2 echo; [[ ${REPLY,,} == y ]]; }
 ```
 
 ### Edge Cases
 
-1. **Non-terminal output**: Colors disabled via `[[ -t 1 && -t 2 ]]` check
-2. **Piping data**: `data=$(./script)` captures only stdout; messages go to stderr
-3. **Automation**: Set `PROMPT=0` to skip yn() prompts
+1. **Non-terminal output**: Check `[[ -t 1 && -t 2 ]]` before enabling colors
+2. **Concurrent logging**: Use `flock` for multi-process scripts to prevent corruption
+3. **Automation mode**: `PROMPT=0` makes `yn()` return 0 without prompting
+
+### Summary
+
+- Use `_msg()` with `FUNCNAME` inspection for DRY implementation
+- Conditional functions respect `VERBOSE`; `error()` always displays
+- Errors to stderr (`>&2`); colors conditional on terminal
+- `die()` takes exit code first: `die 1 'Error'`
+- `yn()` respects `PROMPT` for non-interactive mode
+- Use `printf '%()T'` for logging, not `$(date ...)`
 
 
 ---

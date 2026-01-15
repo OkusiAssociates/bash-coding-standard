@@ -11,13 +11,13 @@ declare -r SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Configuration
-declare -i CPU_THRESHOLD=80 MEM_THRESHOLD=80 DISK_THRESHOLD=90
-declare -i CHECK_INTERVAL=5 MAX_ITERATIONS=12
-declare -- LOG_FILE='/var/log/system-monitor.log'
-declare -- ALERT_EMAIL=''
+declare -i CPU_THRESHOLD=${CPU_THRESHOLD:-80} MEM_THRESHOLD=${MEM_THRESHOLD:-80} DISK_THRESHOLD=${DISK_THRESHOLD:-90}
+declare -i CHECK_INTERVAL=${CHECK_INTERVAL:-5} MAX_ITERATIONS=${MAX_ITERATIONS:-12}
+declare -- SM_LOG_FILE=${SM_LOG_FILE:-/var/log/system-monitor.log}
+declare -- SM_ALERT_EMAIL="${SM_ALERT_EMAIL:-}"
 
 # Global variables
-declare -i VERBOSE=1 DEBUG=0 CONTINUOUS=0 ALERT_MODE=0
+declare -i VERBOSE=1 DEBUG=${DEBUG:-0} CONTINUOUS=0 ALERT_MODE=0
 declare -i ITERATION=0
 
 # Colors (conditional on TTY)
@@ -55,9 +55,9 @@ noarg() { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
 
 # Log to file
 log_msg() {
-  local -- timestamp
-  timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-  echo "[$timestamp] $*" >> "$LOG_FILE"
+  { flock -n 9 || return 0
+    printf '[%(%Y-%m-%d %H:%M:%S)T] %s\n' -1 "$*"
+  } 9>>"$SM_LOG_FILE"
 }
 
 # Usage
@@ -121,37 +121,31 @@ parse_arguments() {
         CHECK_INTERVAL=$1
         ;;
       -n|--iterations)
-        (($# > 1)) || die 2 "Missing value for --iterations"
-        MAX_ITERATIONS=$2
-        shift
+        noarg "$@"; shift
+        MAX_ITERATIONS=$1
         ;;
       --cpu-threshold)
-        (($# > 1)) || die 2 "Missing value for --cpu-threshold"
-        CPU_THRESHOLD=$2
-        shift
+        noarg "$@"; shift
+        CPU_THRESHOLD=$1
         ;;
       --mem-threshold)
-        (($# > 1)) || die 2 "Missing value for --mem-threshold"
-        MEM_THRESHOLD=$2
-        shift
+        noarg "$@"; shift
+        MEM_THRESHOLD=$1
         ;;
       --disk-threshold)
-        (($# > 1)) || die 2 "Missing value for --disk-threshold"
-        DISK_THRESHOLD=$2
-        shift
+        noarg "$@"; shift
+        DISK_THRESHOLD=$1
         ;;
       --alert-email)
-        (($# > 1)) || die 2 "Missing value for --alert-email"
-        ALERT_EMAIL=$2
+        noarg "$@"; shift
+        SM_ALERT_EMAIL=$1
         ALERT_MODE=1
-        shift
         ;;
       --log-file)
-        (($# > 1)) || die 2 "Missing value for --log-file"
-        LOG_FILE=$2
-        shift
+        noarg "$@"; shift
+        SM_LOG_FILE=$1
         ;;
-      -[Vhvqdcin]*)     #shellcheck disable=SC2046
+      -[Vhvqdcin]*) #shellcheck disable=SC2046
         set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
       -*)
         die 22 "Unknown option ${1@Q}" ;;
@@ -168,14 +162,14 @@ get_cpu_usage() {
 
   # Use top to get CPU usage (works on most systems)
   if command -v top >/dev/null; then
-    cpu_usage=$(top -bn1 | grep "Cpu(s)" | sed "s/.*, *\([0-9.]*\)%* id.*/\1/" | awk '{print 100 - $1}')
+    cpu_usage=$(top -bn1 | grep 'Cpu(s)' | sed "s/.*, *\([0-9.]*\)%* id.*/\1/" | awk '{print 100 - $1}')
   else
     # Fallback: read from /proc/stat
     local -a cpu_stats
     IFS=' ' read -ra cpu_stats < <(grep '^cpu ' /proc/stat)
     local -i idle=${cpu_stats[4]} total=0
     for val in "${cpu_stats[@]:1}"; do
-      ((total+=val))
+      total+=val
     done
     cpu_usage=$((100 * (total - idle) / total))
   fi
@@ -193,7 +187,7 @@ get_mem_usage() {
     mem_free=$(grep '^MemFree:' /proc/meminfo | awk '{print $2}')
     mem_buffers=$(grep '^Buffers:' /proc/meminfo | awk '{print $2}')
     mem_cached=$(grep '^Cached:' /proc/meminfo | awk '{print $2}')
-    mem_used=$((mem_total - mem_free - mem_buffers - mem_cached))
+    mem_used=mem_total-mem_free-mem_buffers-mem_cached
     mem_usage=$((100 * mem_used / mem_total))
   else
     mem_usage=0
@@ -213,12 +207,10 @@ get_disk_usage() {
 
 # Get load average
 get_load_average() {
-  local -- load_avg
+  local -- load_avg='0.00'
 
   if [[ -f /proc/loadavg ]]; then
     read -r load_avg _ _ _ _ < /proc/loadavg
-  else
-    load_avg="0.00"
   fi
 
   echo "$load_avg"
@@ -230,16 +222,17 @@ check_threshold() {
   local -i current=$2 threshold=$3
   local -- color status_msg
 
-  if [[ "$current" -ge "$threshold" ]]; then
+  if ((current >= threshold)); then
     color=$RED
     status_msg=CRITICAL
     alert "$metric: ${color}${current}%${NC} (threshold: ${threshold}%)"
     log_msg "ALERT: $metric at ${current}% (threshold: ${threshold}%)"
     return 1
-  elif [[ "$current" -ge $((threshold - 10)) ]]; then
+  elif ((current >= (threshold-10))); then
     color=$YELLOW
     status_msg=WARNING
     warn "$metric: ${color}${current}%${NC} (approaching threshold)"
+    log_msg "$metric at ${current}% (approaching threshold ${threshold}%)"
     return 0
   else
     color=$GREEN
@@ -272,17 +265,17 @@ monitor_system() {
   fi
 
   # Check thresholds
-  check_threshold "CPU" "$cpu_usage" "$CPU_THRESHOLD" || ((alerts+=1))
-  check_threshold "Memory" "$mem_usage" "$MEM_THRESHOLD" || ((alerts+=1))
-  check_threshold "Disk" "$disk_usage" "$DISK_THRESHOLD" || ((alerts+=1))
+  check_threshold "CPU" "$cpu_usage" "$CPU_THRESHOLD" || alerts+=1
+  check_threshold "Memory" "$mem_usage" "$MEM_THRESHOLD" || alerts+=1
+  check_threshold "Disk" "$disk_usage" "$DISK_THRESHOLD" || alerts+=1
 
   # Summary
-  if ((alerts > 0)); then
+  if ((alerts)); then
     echo
     error "${alerts} metric(s) exceeded threshold"
 
     # Send email alert if configured
-    if ((ALERT_MODE)) && [[ -n "$ALERT_EMAIL" ]]; then
+    if ((ALERT_MODE)) && [[ -n "$SM_ALERT_EMAIL" ]]; then
       send_alert_email "$timestamp" "$cpu_usage" "$mem_usage" "$disk_usage"
     fi
 
@@ -306,9 +299,9 @@ send_alert_email() {
     return 1
   fi
 
-  local -- subject="System Alert: Resource Threshold Exceeded"
+  local -- subject='System Alert: Resource Threshold Exceeded'
   local -- body
-  body=$(cat <<EOT
+  body=$(cat <<ALERT
 System Monitor Alert
 ====================
 
@@ -324,24 +317,24 @@ Please investigate immediately.
 
 ---
 $SCRIPT_NAME $VERSION
-EOT
+ALERT
 )
 
-  echo "$body" | mail -s "$subject" "$ALERT_EMAIL"
-  log_msg "Alert email sent to $ALERT_EMAIL"
+  echo "$body" | mail -s "$subject" "$SM_ALERT_EMAIL"
+  log_msg "Alert email sent to $SM_ALERT_EMAIL"
 }
 
 # Main
 main() {
   parse_arguments "$@"
 
-  info "${BOLD}System Resource Monitor v$VERSION${NC}"
+  info "${BOLD}System Resource Monitor $VERSION${NC}"
   info "Thresholds: CPU=${CPU_THRESHOLD}% MEM=${MEM_THRESHOLD}% DISK=${DISK_THRESHOLD}%"
-  ((CONTINUOUS)) && info "Continuous mode: ${MAX_ITERATIONS} checks @ ${CHECK_INTERVAL}s interval"
+  ((CONTINUOUS==0)) || info "Continuous mode: ${MAX_ITERATIONS} checks @ ${CHECK_INTERVAL}s interval"
 
   # Create log file if needed
-  if [[ ! -f "$LOG_FILE" ]] && [[ -w "${LOG_FILE%/*}" ]]; then
-    touch "$LOG_FILE" || warn "Cannot create log file: $LOG_FILE"
+  if [[ ! -f "$SM_LOG_FILE" ]] && [[ -w "${SM_LOG_FILE%/*}" ]]; then
+    touch "$SM_LOG_FILE" || warn "Cannot create log file ${SM_LOG_FILE@Q}"
   fi
 
   # Single check mode
@@ -358,7 +351,7 @@ main() {
     fi
 
     # Sleep between checks (except last iteration)
-    if [[ "$ITERATION" -lt $((MAX_ITERATIONS - 1)) ]]; then
+    if ((ITERATION < (MAX_ITERATIONS-1))); then
       sleep "$CHECK_INTERVAL"
     fi
   done
