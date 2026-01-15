@@ -1090,7 +1090,7 @@ compress_show_statistics() {
   local -i abstract_oversized=${6:-0}
   local -i abstract_failed=${7:-0}
 
-  cat <<EOF
+  cat <<STATS
 
 ${BOLD}Compression Statistics${NC}
 $(printf '=%.0s' {1..50})
@@ -1107,7 +1107,7 @@ Abstract files (.abstract.md):
   ${YELLOW}▲${NC} Oversized:    $abstract_oversized
   ${RED}✗${NC} Failed:       $abstract_failed
 
-EOF
+STATS
 
   if ((summary_oversized + abstract_oversized > 0)); then
     warn 'Some files exceeded size limits - manual compression recommended'
@@ -1503,7 +1503,7 @@ declare -fx build_context_complete_exclude
 cmd_codes() {
   # Handle --help
   if [[ "${1:-}" == '-h' || "${1:-}" == '--help' ]]; then
-    cat <<EOF
+    cat <<CODES
 $BCS_NAME codes - List all BCS rule codes
 
 Usage: $BCS_NAME codes
@@ -1518,7 +1518,7 @@ Example output:
   BCS0103:metadata:Script Metadata
   BCS0205:readonly-after-group:Readonly After Group Declaration
 
-EOF
+CODES
     return 0
   fi
 
@@ -1720,7 +1720,7 @@ cmd_generate() {
   while (($#)); do
     case $1 in
       -h|--help)
-        cat <<'EOF'
+        cat <<'GENERATE'
 bcs generate - Regenerate BASH-CODING-STANDARD.md from data/ tree
 
 Usage: bcs generate [OPTIONS]
@@ -1768,7 +1768,7 @@ Note: When using --canonical, all four tier files are generated and the BCS/ ind
       The BCS/ index contains symlinks with BCS codes (e.g., BCS0102.complete.md) for quick reference.
       The --force flag bypasses timestamp checks and regenerates all files unconditionally.
 
-EOF
+GENERATE
         return 0
         ;;
       -t|--type)
@@ -1867,7 +1867,7 @@ EOF
       local -- file bcs_code basename_file
       local -i first_iteration=1
       for file in "${md_files[@]}"; do
-        if [[ $first_iteration -eq 1 ]]; then
+        if ((first_iteration==1)); then
           first_iteration=0
         else
           echo -en "\n\n---\n\n\f\n"
@@ -1922,7 +1922,7 @@ EOF
     { local -- file bcs_code basename_file
       local -i first_iteration=1
       for file in "${md_files[@]}"; do
-        if [[ $first_iteration -eq 1 ]]; then
+        if ((first_iteration==1)); then
           first_iteration=0
         else
           echo -en "\n\n---\n\n\f\n"
@@ -1977,7 +1977,7 @@ EOF
     { local -- file bcs_code basename_file
       local -i first_iteration=1
       for file in "${md_files[@]}"; do
-        if [[ $first_iteration -eq 1 ]]; then
+        if ((first_iteration==1)); then
           first_iteration=0
         else
           echo -en "\n\n---\n\n\f\n"
@@ -2033,7 +2033,7 @@ EOF
       local -- file bcs_code basename_file
       local -i first_iteration=1
       for file in "${md_files[@]}"; do
-        if [[ $first_iteration -eq 1 ]]; then
+        if ((first_iteration==1)); then
           first_iteration=0
         else
           echo -en "\n\n---\n\n\f\n"
@@ -2227,7 +2227,7 @@ cmd_generate_rulets() {
   while (($#)); do
     case $1 in
       -h|--help)
-        cat <<'EOF'
+        cat <<'GENERATE_RULETS'
 bcs generate-rulets - Generate rulet files from complete.md rulefiles
 
 Usage: bcs generate-rulets [OPTIONS] [CATEGORY]
@@ -2268,7 +2268,7 @@ Note:
   Each rulet includes a BCS code reference in format [BCSXXXX] showing which
   source rule it was extracted from. Use 'bcs decode BCSXXXX' to view the full rule.
 
-EOF
+GENERATE_RULETS
         return 0
         ;;
       -a|--all)
@@ -2613,7 +2613,7 @@ cmd_search() {
   while (($#)); do
     case $1 in
       -h|--help)
-        cat <<'EOF'
+        cat <<'SEARCH'
 bcs search - Search within the Bash Coding Standard
 
 Usage: bcs search [OPTIONS] PATTERN
@@ -2629,7 +2629,7 @@ Examples:
   bcs search -C 5 "declare -fx"          # Search with 5 lines of context
   bcs search "BCS0205"                   # Search for specific code reference
 
-EOF
+SEARCH
         return 0
         ;;
       -i|--ignore-case)
@@ -2942,7 +2942,7 @@ select_relevant_sections() {
 
   # System prompt for section classification
   local -- selection_prompt
-  selection_prompt=$(cat <<'EOF'
+  selection_prompt=$(cat <<'SECTIONS'
 You are a BCS section classifier. Given a bash script, identify which
 BCS sections (01-12) are relevant for compliance checking.
 
@@ -2971,7 +2971,7 @@ Section 01 is ALWAYS required (every script needs proper structure).
 
 Output ONLY comma-separated section numbers with no spaces.
 Example output: 01,02,04,06,08
-EOF
+SECTIONS
 )
 
   # Run classification using Claude in print mode
@@ -2998,7 +2998,7 @@ declare -fx select_relevant_sections
 build_validation_prompt() {
   local -- tier=${1:-abstract}
   local -- output_format=${2:-text}
-  shift 2
+  shift 2 ||:
   local -a filters=("$@")
 
   # Start with base prompt header
@@ -3196,7 +3196,7 @@ cmd_decode() {
   while (($#)); do
     case $1 in
       -h|--help)
-        cat <<'EOF'
+        cat <<'DECODE'
 bcs decode - Decode BCS code to file location
 
 Usage: bcs decode [OPTIONS] CODE [CODE...]
@@ -3243,7 +3243,7 @@ Use cases:
   bcs decode BCS0102 -p | less               # View with pager
   diff <(bcs decode BCS0102 -a -p) <(bcs decode BCS0102 -c -p)  # Compare tiers
 
-EOF
+DECODE
         return 0
         ;;
       -a|--abstract)
@@ -3303,7 +3303,7 @@ EOF
         echo "${file#"$BCS_DIR"/}"
         ;;
       basename)
-        basename "$file"
+        basename -- "$file"
         ;;
     esac
   }
@@ -3400,7 +3400,7 @@ declare -fx cmd_decode
 cmd_sections() {
   # Handle --help
   if [[ "${1:-}" == '-h' || "${1:-}" == '--help' ]]; then
-    cat <<'EOF'
+    cat <<'SECTIONS'
 bcs sections - List all sections of the Bash Coding Standard
 
 Usage: bcs sections
@@ -3417,7 +3417,7 @@ Examples:
   bcs sections              # List all sections
   bcs sections | head -3    # Show first 3 sections
 
-EOF
+SECTIONS
     return 0
   fi
 
@@ -3457,7 +3457,7 @@ declare -fx cmd_sections
 cmd_default() {
   # Handle --help
   if [[ "${1:-}" == '-h' || "${1:-}" == '--help' ]]; then
-    cat <<'EOF'
+    cat <<'DEFAULT_HELP'
 bcs default - Set or show the default tier
 
 Usage: bcs default [TIER|OPTIONS]
@@ -3481,7 +3481,7 @@ Examples:
 
 The default tier is determined by the BASH-CODING-STANDARD.md symlink target.
 
-EOF
+DEFAULT_HELP
     return 0
   fi
 
@@ -3528,7 +3528,7 @@ EOF
       # Valid tier
       ;;
     *)
-      error "Invalid tier '$new_tier'"
+      error "Invalid tier ${new_tier@Q}"
       info 'Valid tiers: complete, summary, abstract, rulet'
       return 2
       ;;
@@ -3586,7 +3586,7 @@ cmd_about() {
   while (($#)); do
     case $1 in
       -h|--help)
-        cat <<'EOF'
+        cat <<'ABOUT'
 bcs about - Display Bash Coding Standard project information
 
 Usage: bcs about [OPTIONS]
@@ -3605,7 +3605,7 @@ Examples:
   bcs about --verbose                    # Show complete information
   bcs about --json | jq -r '.version'    # Get version programmatically
 
-EOF
+ABOUT
         return 0
         ;;
       -s|--stats)
@@ -3652,7 +3652,7 @@ EOF
 
   # JSON output
   if ((show_json)); then
-    cat <<EOF
+    cat <<JSON_OUTPUT
 {
   "name": "Bash Coding Standard",
   "abbreviation": "BCS",
@@ -3682,33 +3682,33 @@ EOF
     "bash_manual": "https://www.gnu.org/software/bash/manual/bash.html"
   }
 }
-EOF
+JSON_OUTPUT
     return 0
   fi
 
   # Quote-only output
   if ((show_quote)); then
-    cat <<'EOF'
+    cat <<'QUOTE'
 
 "This isn't just a coding standard - it's a systems engineering philosophy
 applied to Bash."
                                                         -- Biksu Okusi
 
 Coding Principles:
-  • K.I.S.S. (Keep It Simple, Stupid)
+  • K.I.S.S. (Keep It Simple, Silly)
   • "The best process is no process"
   • "Everything should be made as simple as possible, but not any simpler."
 
 NOTE: Do not over-engineer scripts; functions and variables not required
 for the operation of the script should not be included and/or removed.
 
-EOF
+QUOTE
     return 0
   fi
 
   # Stats-only output
   if ((show_stats)); then
-    cat <<EOF
+    cat <<STATS
 
 === Bash Coding Standard Statistics ===
 
@@ -3730,13 +3730,13 @@ Repository:
   Subcommands:        13 (display, about, template, check, compress, codes, generate, generate-rulets, search, decode, sections, default, help)
   License:            CC BY-SA 4.0
 
-EOF
+STATS
     return 0
   fi
 
   # Links-only output
   if ((show_links)); then
-    cat <<'EOF'
+    cat <<'LINKS'
 
 === Bash Coding Standard Links ===
 
@@ -3759,12 +3759,12 @@ References:
 License:
   • CC BY-SA 4.0:                https://creativecommons.org/licenses/by-sa/4.0/
 
-EOF
+LINKS
     return 0
   fi
 
   # Default output (with verbose adding stats and links)
-  cat <<EOF
+  cat <<ABOUT
 
 Bash Coding Standard (BCS) $BCS_VERSION
 
@@ -3790,7 +3790,7 @@ Repository:    https://github.com/OkusiAssociates/bash-coding-standard
 Learn more:  bcs help
 View standard: bcs display
 
-EOF
+ABOUT
 
   # If verbose, add stats and links
   if ((show_verbose)); then
@@ -3818,7 +3818,7 @@ cmd_template() {
   while (($#)); do
     case $1 in
       -h|--help)
-        cat <<'EOF'
+        cat <<'TEMPLATES'
 bcs template - Generate BCS-compliant script templates
 
 Usage: bcs template [OPTIONS]
@@ -3869,7 +3869,7 @@ Examples:
   bcs template -t library -n mylib -o mylib.sh        # Create library template
   bcs template -t complete -n deploy -d 'Deploy application' -v '2.0.0' -o deploy.sh -x
 
-EOF
+TEMPLATES
         return 0
         ;;
       -t|--type)
@@ -4008,7 +4008,7 @@ cmd_check() {
   while (($#)); do
     case $1 in
       -h|--help)
-        cat <<'EOF'
+        cat <<'CHECK'
 bcs check - Validate bash script against BASH-CODING-STANDARD.md
 
 Usage: bcs check [OPTIONS] SCRIPT_FILE
@@ -4091,7 +4091,7 @@ Requirements:
   Requires 'claude' CLI (Claude Code) to be installed and available in PATH.
   Get Claude Code at: https://claude.ai/code
 
-EOF
+CHECK
         return 0
         ;;
 
@@ -4427,7 +4427,7 @@ cmd_compress() {
   while (($#)); do
     case $1 in
       -h|--help)
-        cat <<'EOF'
+        cat <<'COMPRESS'
 bcs compress - Compress BCS rules using Claude AI (Developer Mode)
 
 Usage: bcs compress [OPTIONS]
@@ -4578,7 +4578,7 @@ WORKFLOW:
 NOTE: This is a developer mode feature for managing custom BCS rules and
       maintaining the multi-tier documentation system.
 
-EOF
+COMPRESS
         return 0
         ;;
 
@@ -4795,7 +4795,7 @@ cmd_help() {
   fi
 
   # Show top-level help
-  cat <<'EOF'
+  cat <<'HELP'
 bcs - Bash Coding Standard toolkit
 
 Usage: bcs [COMMAND] [OPTIONS] [ARGS]
@@ -4844,7 +4844,7 @@ For detailed help on a command, use:
   bcs help COMMAND
   bcs COMMAND --help
 
-EOF
+HELP
   return 0
 }
 declare -fx cmd_help
@@ -4868,7 +4868,7 @@ cmd_display() {
   # Parse command-line arguments
   while (($#)); do
     case $1 in
-      -h|--help)    cat <<'EOF'
+      -h|--help)    cat <<'DISPLAY'
 bash-coding-standard - (bcs) Display the Bash Coding Standard
 
 Usage: bcs [OPTIONS] [SUB-COMMAND] [VIEWER_OPTIONS]
@@ -4894,7 +4894,7 @@ Examples:
   bcs -s           # Squeeze consecutive blank lines
   bcs --cat -n     # Pass -n to cat (line numbers)
   source bcs       # Load cmd_display function
-EOF
+DISPLAY
                     return 0
                     ;;
       -V|--version) echo "bcs $BCS_VERSION"
