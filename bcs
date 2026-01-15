@@ -5026,6 +5026,8 @@ fi
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
+readonly -- PATH=/usr/local/bin:/usr/bin:/bin
+
 main() {
   # Command dispatcher
   # Default to display if no arguments, otherwise use first argument as subcommand

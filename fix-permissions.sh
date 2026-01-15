@@ -6,9 +6,9 @@ set -euo pipefail
 shopt -s inherit_errexit
 
 declare -r VERSION=1.0.1
+#shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
-declare -r SCRIPT_DIR=${SCRIPT_PATH%/*}
-declare -r SCRIPT_NAME=${SCRIPT_PATH##*/}
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Configuration
 declare -r GROUP=bcs
@@ -19,9 +19,9 @@ declare -i VERBOSE=1
 
 # Terminal colors
 if [[ -t 1 && -t 2 ]]; then
-  declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' BLUE=$'\033[0;34m' NC=$'\033[0m'
+  declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' NC=$'\033[0m'
 else
-  declare -r RED='' GREEN='' YELLOW='' BLUE='' NC=''
+  declare -r RED='' GREEN='' YELLOW='' NC=''
 fi
 
 _msg() {
@@ -90,8 +90,8 @@ main() {
   find "$REPO_DIR" -type f -exec chmod 664 {} +
 
   # Set executable scripts
-  chmod 775 "$REPO_DIR"/bcs
-  [[ -f "$REPO_DIR"/testcode ]] && chmod 775 "$REPO_DIR"/testcode ||:
+  chmod 775 "$REPO_DIR"/bcs "$REPO_DIR"/bcscheck
+  [[ ! -f "$REPO_DIR"/testcode ]] || chmod 775 "$REPO_DIR"/testcode
   find "$REPO_DIR" -name "*.sh" -type f -exec chmod 775 {} +
 
   success 'Repository permissions fixed'
