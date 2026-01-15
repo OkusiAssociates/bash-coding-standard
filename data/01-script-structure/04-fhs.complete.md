@@ -124,7 +124,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
@@ -344,7 +343,7 @@ install_share="${script_dir%/bin}"/share/myorg/myproject
 /usr/share/myorg/myproject
 
 # Replace 'BASH-CODING-STANDARD.md' with your target file:
-[[ -f "$path"/config.yml ]] && { echo "$path"/config.yml; return 0; }
+[[ -f "$path"/config.yml ]] && { echo "$path"/config.yml; return 0; } ||:
 
 # Rename function to match purpose:
 find_config_file() { ... }
@@ -449,6 +448,9 @@ find_bcs_file() {
   local -a search_paths=(
     # Development: same directory as script
     "$SCRIPT_DIR"/BASH-CODING-STANDARD.md
+
+    # User install: ~/.local/usr/local/share
+    ~/.local/usr/local/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md
 
     # Local install: /usr/local/share
     /usr/local/share/yatti/bash-coding-standard/BASH-CODING-STANDARD.md
@@ -560,8 +562,8 @@ fi
 ```bash
 # If script is symlinked to /usr/local/bin, SCRIPT_DIR resolves to actual location
 # This is correct - we want the real installation directory, not the symlink location
-SCRIPT_PATH=$(realpath -- "$0")  # Resolves symlinks
-SCRIPT_DIR=${SCRIPT_PATH%/*}
+declare -r SCRIPT_PATH=$(realpath -- "$0")  # Resolves symlinks
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*}
 
 # Now SCRIPT_DIR points to actual install location, not /usr/local/bin
 ```

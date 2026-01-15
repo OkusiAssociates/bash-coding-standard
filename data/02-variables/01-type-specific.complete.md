@@ -159,9 +159,9 @@ done
 
 ```bash
 # Declare constants
-readonly -- SCRIPT_VERSION=1.0.0
-readonly -i MAX_RETRIES=3
-readonly -a ALLOWED_ACTIONS=(start stop restart status)
+declare -r SCRIPT_VERSION=1.0.0
+declare -i MAX_RETRIES=3
+declare -a ALLOWED_ACTIONS=(start stop restart status)
 
 # Attempt to modify (will fail)
 SCRIPT_VERSION=2.0.0  # bash: VERSION: readonly variable
@@ -422,12 +422,6 @@ process_data() {
   result=$(process "$temp_var")
 }
 
-# ✗ Wrong - forgetting -- separator
-declare filename='-weird'  # Interpreted as option!
-
-# ✓ Correct - use -- separator
-declare -- filename='-weird'
-
 # ✗ Wrong - scalar assignment to array variable
 declare -a files=()
 files=file.txt  # Overwrites array with scalar!
@@ -441,10 +435,10 @@ files+=(file.txt)  # Append to array
 # ✗ Wrong - using readonly without type
 readonly VAR='value'  # Type unclear
 
-# ✓ Correct - combine readonly with type
-readonly -- VAR='value'
-readonly -i COUNT=10
-readonly -a ACTIONS=(start stop)
+# ✓ Correct - use declare
+declare -r VAR='value'
+declare -ir COUNT=10
+declare -ar ACTIONS=(start stop)
 ```
 
 **Edge cases:**
@@ -522,7 +516,7 @@ echo "${my_array[@]}"  # Output: a b new element
 - **Use `declare --`** for string variables (paths, text, user input)
 - **Use `declare -a`** for indexed arrays (lists, sequences)
 - **Use `declare -A`** for associative arrays (key-value maps, configs)
-- **Use `readonly --`** for constants that shouldn't change
+- **Use `declare -r`** for constants that shouldn't change
 - **Use `local`** for ALL variables in functions (prevent global leaks)
 - **Combine modifiers** when needed: `local -i`, `local -a`, `readonly -A`
 - **Always use `--`** separator to prevent option injection

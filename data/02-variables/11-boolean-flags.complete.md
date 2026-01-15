@@ -12,7 +12,7 @@ declare -i UNINSTALL=0
 declare -i DRY_RUN=0
 
 # Test flags in conditionals using (())
-((DRY_RUN)) && info 'Dry-run mode enabled'
+((DRY_RUN)) && info 'Dry-run mode enabled' ||:
 
 if ((INSTALL_BUILTIN)); then
   install_loadable_builtins

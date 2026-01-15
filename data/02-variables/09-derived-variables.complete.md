@@ -168,16 +168,14 @@ main() {
   while (($#)); do
     case $1 in
       --prefix)
-        noarg "$@"
-        shift
+        noarg "$@"; shift
         PREFIX=$1
         # IMPORTANT: Update all derived paths when PREFIX changes
         update_derived_paths
         ;;
 
       --app-name)
-        noarg "$@"
-        shift
+        noarg "$@"; shift
         APP_NAME=$1
         # DOC_DIR depends on APP_NAME, update it
         DOC_DIR="$PREFIX"/share/doc/"$APP_NAME"
@@ -189,7 +187,7 @@ main() {
         ;;
 
       *)
-        die 22 "Invalid argument ${1@Q}"
+        die 2 "Invalid argument ${1@Q}"
         ;;
     esac
     shift
@@ -338,7 +336,7 @@ _msg() {
     warn) prefix+=" ▲" ;;
     error) prefix+=" ✗" ;;
     success) prefix+=" ✓" ;;
-    debug) prefix+=" ⋯" ;;
+    debug) prefix+=" DEBUG" ;;
     *) ;;
   esac
   for msg in "$@"; do
@@ -528,24 +526,21 @@ main() {
         ;;
 
       --prefix)
-        noarg "$@"
-        shift
+        noarg "$@"; shift
         PREFIX=$1
         # Update all derived paths when PREFIX changes
         update_derived_paths
         ;;
 
       --app-name)
-        noarg "$@"
-        shift
+        noarg "$@"; shift
         APP_NAME=$1
         # Update paths that depend on APP_NAME
         update_derived_paths
         ;;
 
       --system-user)
-        noarg "$@"
-        shift
+        noarg "$@"; shift
         SYSTEM_USER=$1
         ;;
 
@@ -569,7 +564,7 @@ main() {
         ;;
 
       *)
-        die 22 "Unexpected argument ${1@Q}"
+        die 2 "Unexpected argument ${1@Q}"
         ;;
     esac
     shift
@@ -633,7 +628,7 @@ main() {
 main() {
   case $1 in
     --prefix)
-      shift
+      noarg "$@"; shift
       PREFIX=$1
       BIN_DIR="$PREFIX"/bin     # Update derived
       LIB_DIR="$PREFIX"/lib     # Update derived
@@ -752,7 +747,7 @@ case "$(uname -s)" in
 esac
 
 # Derived from platform-specific values
-LIBRARY_NAME="lib"$APP_NAME"."$LIB_EXT"
+LIBRARY_NAME=lib"$APP_NAME"."$LIB_EXT"
 CONFIG_FILE="$CONFIG_DIR"/config.conf
 ```
 

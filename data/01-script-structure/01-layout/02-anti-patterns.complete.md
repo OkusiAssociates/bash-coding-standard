@@ -72,7 +72,7 @@ declare -i DRY_RUN=0
 
 main() {
   # Now safe to use
-  ((VERBOSE)) && echo 'Starting...' ||:
+  ((VERBOSE==0)) || echo 'Starting...'
 
   process_files
 }
@@ -150,9 +150,9 @@ main "$@"
 set -euo pipefail
 
 declare -r VERSION=1.0.0
-
-# ... 200 lines of functions ...
-
+# ...
+# ... 200 lines of code ...
+# ...
 # Argument parsing scattered throughout
 if [[ "$1" == '--help' ]]; then
   echo 'Usage: ...'
@@ -185,7 +185,8 @@ main() {
   while (($#)); do
     case $1 in
       -h|--help) show_help; exit 0 ;;
-      *) die 22 "Invalid argument ${1@Q}" ;;
+      -*)        die 22 "Invalid option ${1@Q}" ;;
+      *)         die 2 "Invalid argument ${1@Q}" ;;
     esac
     shift
   done
@@ -398,6 +399,7 @@ die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 # Now start main script
 set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 declare -r VERSION=1.0.0
 #shellcheck disable=SC2155

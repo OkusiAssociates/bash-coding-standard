@@ -98,7 +98,7 @@ declare -x TEMP_DIR=${TMPDIR:-/tmp}
 # Combined: readonly + exported
 declare -rx BUILD_ENV=production
 
-# Derived constants (readonly)
+# Derived constants (readonly); prefer declare -r
 SCRIPT_PATH=$(realpath -- "$0")
 SCRIPT_DIR=${SCRIPT_PATH%/*}
 readonly -- SCRIPT_PATH SCRIPT_DIR

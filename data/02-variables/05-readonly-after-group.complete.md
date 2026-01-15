@@ -18,15 +18,15 @@ This is the standard pattern for variables that can only be finalized after argu
 **Step 1 - Declare with defaults:**
 ```bash
 declare -i VERBOSE=0 DRY_RUN=0
-declare -- OUTPUT_FILE='' PREFIX=/usr/local
+declare -- OUTPUT_FILE='' PREFIX=${PREFIX:-/usr/local}
 ```
 
 **Step 2 - Parse and modify in main():**
 ```bash
 main() {
   while (($#)); do case $1 in
-    -v) VERBOSE+=1 ;;
-    -n) DRY_RUN=1 ;;
+    -v)       VERBOSE+=1 ;;
+    -n)       DRY_RUN=1 ;;
     --output) noarg "$@"; shift; OUTPUT_FILE=$1 ;;
     --prefix) noarg "$@"; shift; PREFIX=$1 ;;
   esac; shift; done
@@ -109,20 +109,22 @@ fi
 
 **3. Path constants group:**
 ```bash
-PREFIX=${PREFIX:-/usr/local}
-BIN_DIR="$PREFIX"/bin
-SHARE_DIR="$PREFIX"/share/myapp
-LIB_DIR="$PREFIX"/lib/myapp
-ETC_DIR="$PREFIX"/etc/myapp
+declare -- PREFIX=${PREFIX:-/usr/local}
+declare -- BIN_DIR="$PREFIX"/bin
+declare -- SHARE_DIR="$PREFIX"/share/myapp
+declare -- LIB_DIR="$PREFIX"/lib/myapp
+declare -- ETC_DIR="$PREFIX"/etc/myapp
+: ...
 readonly -- PREFIX BIN_DIR SHARE_DIR LIB_DIR ETC_DIR
 ```
 
 **4. Configuration defaults group:**
 ```bash
-DEFAULT_TIMEOUT=30
-DEFAULT_RETRIES=3
-DEFAULT_LOG_LEVEL=info
-DEFAULT_PORT=8080
+declare -i DEFAULT_TIMEOUT=30
+declare -i DEFAULT_RETRIES=3
+declare -- DEFAULT_LOG_LEVEL=info
+declare -i DEFAULT_PORT=8080
+: ...
 readonly -- DEFAULT_TIMEOUT DEFAULT_RETRIES DEFAULT_LOG_LEVEL DEFAULT_PORT
 ```
 
@@ -156,18 +158,18 @@ fi
 # Installation Paths (Group 3)
 # ============================================================================
 
-PREFIX=${PREFIX:-/usr/local}
-BIN_DIR="$PREFIX"/bin
-SHARE_DIR="$PREFIX"/share/"$SCRIPT_NAME"
+declare -- PREFIX=${PREFIX:-/usr/local}
+declare -- BIN_DIR="$PREFIX"/bin
+declare -- SHARE_DIR="$PREFIX"/share/"$SCRIPT_NAME"
 readonly -- PREFIX BIN_DIR SHARE_DIR
 
 # ============================================================================
 # Configuration (Group 4)
 # ============================================================================
 
-DEFAULT_TIMEOUT=30
-DEFAULT_RETRIES=3
-MAX_FILE_SIZE=104857600  # 100MB
+declare -i DEFAULT_TIMEOUT=30
+declare -i DEFAULT_RETRIES=3
+declare -i MAX_FILE_SIZE=104857600  # 100MB
 readonly -- DEFAULT_TIMEOUT DEFAULT_RETRIES MAX_FILE_SIZE
 
 # ============================================================================
@@ -231,6 +233,7 @@ SHARE_DIR="$PREFIX"/share
 PREFIX=${PREFIX:-/usr/local}
 BIN_DIR="$PREFIX"/bin
 SHARE_DIR="$PREFIX"/share
+: ...
 readonly -- PREFIX BIN_DIR SHARE_DIR
 
 # ✗ Wrong - forgetting -- separator
@@ -314,6 +317,8 @@ readonly -- RED GREEN NC
 # Can make arrays readonly too
 declare -a REQUIRED_COMMANDS=(git make tar)
 declare -a OPTIONAL_COMMANDS=(md2ansi pandoc)
+
+: ...
 
 # Make both arrays readonly
 readonly -a REQUIRED_COMMANDS OPTIONAL_COMMANDS

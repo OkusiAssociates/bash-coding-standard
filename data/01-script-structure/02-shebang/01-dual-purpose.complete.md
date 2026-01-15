@@ -8,6 +8,7 @@ Some scripts are designed to work both as standalone executables and as source l
 ```bash
 #!/bin/bash
 # Description of dual-purpose script
+: ...
 
 # Function definitions (available in both modes)
 my_function() {
@@ -18,7 +19,7 @@ my_function() {
 declare -fx my_function
 
 # Early return for sourced mode - stops here when sourced
-[[ ${BASH_SOURCE[0]} != "$0" ]] && return 0
+[[ ${BASH_SOURCE[0]} == "$0" ]] || return 0
 
 # -----------------------------------------------------------------------------
 # Executable code starts here (only runs when executed directly)

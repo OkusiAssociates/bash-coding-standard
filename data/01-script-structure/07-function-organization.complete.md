@@ -24,13 +24,13 @@ warn() { >&2 _msg "$@"; }
 info() { >&2 _msg "$@"; }
 error() { >&2 _msg "$@"; }
 die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
-
-# 2. Documentation functions (no dependencies)
-show_help() { ... }
-
-# 3. Helper/utility functions (used by validation and business logic)
 yn() { ... }
+
+# 2. Helper/utility functions (used by validation and business logic)
 noarg() { ... }
+
+# 3. Documentation functions (no dependencies)
+show_help() { ... }
 
 # 4. Validation functions (check prerequisites, dependencies)
 check_root() { ... }
@@ -60,11 +60,11 @@ main() {
   fi
 
   build_standalone
-  ((INSTALL_BUILTIN)) && build_builtin
+  ((INSTALL_BUILTIN==0)) || build_builtin
 
   install_standalone
   install_completions
-  ((INSTALL_BUILTIN)) && install_builtin
+  ((INSTALL_BUILTIN==0)) || install_builtin
 
   update_man_database
   show_completion_message
@@ -157,7 +157,7 @@ declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 # Global variables
 declare -i VERBOSE=0
 declare -i DRY_RUN=0
-declare -- BUILD_DIR=/tmp/build
+declare -- BUILD_DIR=${BUILD_DIR:-/tmp/build}
 
 # ============================================================================
 # Layer 1: Messaging functions
@@ -186,9 +186,22 @@ warn() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 success() { ((VERBOSE)) || return 0; >&2 _msg "$@" || return 0; }
 error() { >&2 _msg "$@"; }
 die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+yn() {
+  #((PROMPT)) || return 0
+  local -- REPLY
+  >&2 read -r -n 1 -p "$(2>&1 warn "${1:-'Continue?'}") y/n "
+  >&2 echo
+  [[ ${REPLY,,} == y ]]
+}
 
 # ============================================================================
-# Layer 2: Documentation functions
+# Layer 2: Helper/utility functions
+# ============================================================================
+
+noarg() { (($# < 2)) && die 2 "Option ${1@Q} requires an argument"; }
+
+# ============================================================================
+# Layer 3: Documentation functions
 # ============================================================================
 
 show_version() {
@@ -215,20 +228,6 @@ Examples:
   $SCRIPT_NAME -V
 EOF
 }
-
-# ============================================================================
-# Layer 3: Helper/utility functions
-# ============================================================================
-
-yn() {
-  #((PROMPT)) || return 0
-  local -- REPLY
-  >&2 read -r -n 1 -p "$(2>&1 warn "${1:-'Continue?'}") y/n "
-  >&2 echo
-  [[ ${REPLY,,} == y ]]
-}
-
-noarg() { (($# < 2)) && die 2 "Option ${1@Q} requires an argument"; }
 
 # ============================================================================
 # Layer 4: Validation functions
@@ -360,12 +359,12 @@ run_package_phase() {
 main() {
   # Parse arguments (simplified for example)
   while (($#)); do case $1 in
+    -V|--version) show_version; return 0 ;;
+    -h|--help)    show_help; return 0 ;;
     -v|--verbose) VERBOSE+=1 ;;
     -q|--quiet)   VERBOSE=0 ;;
     -n|--dry-run) DRY_RUN=1 ;;
-    -V|--version) show_version; return 0 ;;
-    -h|--help)    show_help; return 0 ;;
-    -[vqnVh]*) #shellcheck disable=SC2046 # Split combined short options: -Dv -> -D -v
+    -[Vhvqn]*) #shellcheck disable=SC2046 # Split combined short options: -Dv -> -D -v
                   set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
     -*)           die 22 "Invalid option ${1@Q}" ;;
     *)            die 2 "Unexpected argument ${1@Q}" ;;
@@ -548,9 +547,10 @@ info() { ... }
 warn() { ... }
 error() { ... }
 die() { ... }
+yn() { ... }
 
 # Source library (may define additional utilities)
-source "$SCRIPT_DIR/lib/common.sh"
+source "$SCRIPT_DIR"/lib/common.sh
 
 # Your utilities
 # (Can now use both your messaging AND library functions)

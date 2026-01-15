@@ -181,7 +181,7 @@ Note:
 
 ```bash
 # Configuration variables
-declare -- PREFIX=/usr/local
+declare -- PREFIX=${PREFIX:-/usr/local}
 declare -- CONFIG_FILE=''
 declare -- LOG_FILE=''
 
@@ -283,8 +283,8 @@ die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 yn() {
   #((PROMPT)) || return 0
   local -- REPLY
-  >&2 read -r -n 1 -p "$(2>&1 warn "${1:-'Continue?'}") y/n "
-  >&2 echo
+  read -r -n 1 -p "$SCRIPT_NAME: ${YELLOW}▲${NC} ${1:-'Continue?'} y/n "
+  echo
   [[ ${REPLY,,} == y ]]
 }
 ```
@@ -401,7 +401,7 @@ main() {
       -h|--help)     show_help; return 0 ;;
 
       -[pvqnfVh]*) #shellcheck disable=SC2046 #split up single options
-                     set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+                     set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
       -*)            die 22 "Invalid option ${1@Q}" ;;
       *)             INPUT_FILES+=("$1") ;;
     esac
@@ -520,9 +520,9 @@ Man=Mandatory Opt=Optional Rec=Recommended
 |  3 | Man | 'set -euo pipefail' | MANDATORY first command before any other commands are executed|
 |  4 | Opt | Bash 5 version test | (very rarely needed) |
 |  5 | Rec | 'shopt'|standard 'shopt' settings|
-|  6 | Rec | Script Metadata||
+|  6 | Rec | Script Metadata| (if script justifies this) |
 |  7 | Rec | Global Variable Declarations||
-|  8 | Rec | Color Definitions | (if terminal output) |
+|  8 | Rec | Color Definitions | (if terminal output, and justified) |
 |  9 | Rec | Utility Functions | (including Messaging) |
 | 10 | Rec | Business Logic Functions||
 | 11 | Rec | 'main()' | Function and Full Options/Argument Parsing|
@@ -586,7 +586,7 @@ Man=Mandatory Opt=Optional Rec=Recommended
 5. **Documents intent** - Structure itself tells you what the script does and how it works
 6. **Simplifies maintenance** - Know where everything goes, no guessing
 
-**For scripts over 100 lines**, all 13 steps should be done. **For smaller scripts**, steps 11-12 (main function) can be skipped, but all other steps remain required.
+**For scripts over 100 lines**, all 13 steps should normally be done. **For smaller scripts**, steps 11-12 (main function) can be skipped, but all other steps remain required.
 
 **When in doubt**, follow the complete 13-step structure - the benefits far outweigh the minor overhead. Every production script should follow this pattern exactly.
 

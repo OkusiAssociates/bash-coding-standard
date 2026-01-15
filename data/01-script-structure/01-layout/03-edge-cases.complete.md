@@ -13,6 +13,7 @@
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Simple file counter - only 20 lines total
 declare -i count=0
@@ -54,13 +55,14 @@ is_valid_email() { [[ "$1" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 declare -r VERSION=1.0.0
 : ...
 
 # Default configuration
-declare -- CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}"/myapp/config.sh
-declare -- DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}"/myapp
+declare -- CONFIG_FILE="${XDG_CONFIG_HOME:-"$HOME"/.config}"/myapp/config.sh
+declare -- DATA_DIR="${XDG_DATA_HOME:-"$HOME"/.local/share}"/myapp
 
 # Source config file if it exists and can be read
 if [[ -r "$CONFIG_FILE" ]]; then
@@ -81,6 +83,7 @@ readonly -- CONFIG_FILE DATA_DIR
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 declare -r VERSION=1.0.0
 : ...
@@ -121,6 +124,7 @@ readonly -- PACKAGE_MANAGER INSTALL_CMD
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 declare -r VERSION=1.0.0
 : ...
@@ -186,6 +190,7 @@ Even when deviating, maintain these principles:
 validate_input() { : ... }
 
 set -euo pipefail  # Too late!
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Globals scattered
 declare -r VERSION=1.0.0
@@ -198,6 +203,7 @@ declare -- PREFIX=/usr
 # ✓ Correct - standard order maintained
 #!/usr/bin/env bash
 set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 declare -r VERSION=1.0.0
 declare -- PREFIX=/usr

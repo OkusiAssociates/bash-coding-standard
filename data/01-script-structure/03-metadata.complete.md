@@ -36,12 +36,15 @@ declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 - **Example usage**: `echo "$SCRIPT_NAME $VERSION"`
 
 ```bash
-VERSION=1.0.0
+declare -r VERSION=1.0.0
+: ...
 
 # Display version
 show_version() {
   echo "$SCRIPT_NAME $VERSION"
 }
+
+: ...
 
 # Log with version
 info "Starting $SCRIPT_NAME $VERSION"
@@ -57,7 +60,7 @@ info "Starting $SCRIPT_NAME $VERSION"
   - **Builtin available**: A loadable builtin for realpath is available for maximum performance
 
 ```bash
-SCRIPT_PATH=$(realpath -- "$0")
+declare -r SCRIPT_PATH=$(realpath -- "$0")
 # Examples:
 # /usr/local/bin/myapp
 # /home/user/projects/app/deploy.sh
@@ -73,7 +76,7 @@ debug "Running from ${SCRIPT_PATH@Q}"
 - **Used for**: Loading companion files, finding resources relative to script
 
 ```bash
-SCRIPT_DIR=${SCRIPT_PATH%/*}
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*}
 # Examples:
 # If SCRIPT_PATH=/usr/local/bin/myapp
 # Then SCRIPT_DIR=/usr/local/bin
@@ -107,11 +110,14 @@ die() { (($# < 2)) || >&2 echo "$SCRIPT_NAME: error: ${*:2}"; exit "${1:-0}"; }
 
 # Use in help text
 show_help() {
-  cat << EOF
-Usage: $SCRIPT_NAME [OPTIONS] FILE
+  cat <<HELP
+$SCRIPT_NAME $VERSION - Process files
 
 Process FILE according to configured rules.
-EOF
+
+Usage: $SCRIPT_NAME [OPTIONS] FILE
+
+HELP
 }
 ```
 
@@ -149,7 +155,7 @@ source "$SCRIPT_DIR"/lib/validation.sh
 
 # Load configuration
 declare -- config_file="$SCRIPT_DIR"/../etc/app.conf
-[[ -f "$config_file" ]] && source "$config_file" ||:
+[[ ! -f "$config_file" ]] || source "$config_file"
 
 # Access data files
 declare -- data_dir="$SCRIPT_DIR"/../share/data
@@ -184,14 +190,14 @@ SCRIPT_DIR=$(dirname -- "$SCRIPT_PATH")
 # To detect if sourced:
 if [[ "${BASH_SOURCE[0]}" != "$0" ]]; then
   # Script is being sourced
-  SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
+  declare -r SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
 else
   # Script is being executed
-  SCRIPT_PATH=$(realpath -- "$0")
+  declare -r SCRIPT_PATH=$(realpath -- "$0")
 fi
 
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-SCRIPT_NAME=${SCRIPT_PATH##*/}
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*}
+declare -r SCRIPT_NAME=${SCRIPT_PATH##*/}
 ```
 
 **Why realpath over readlink:**
@@ -287,8 +293,8 @@ VERSION=1.0.0
 
 # ✗ Wrong - using inconsistent variable names
 SCRIPT_VERSION=1.0.0  # Should be VERSION
-SCRIPT_DIRECTORY="$SCRIPT_DIR"  # Redundant
-MY_SCRIPT_PATH="$SCRIPT_PATH"  # Non-standard
+SCRIPT_DIRECTORY=$SCRIPT_DIR  # Redundant
+MY_SCRIPT_PATH=$SCRIPT_PATH  # Non-standard
 
 # ✓ Correct - use standard names
 VERSION=1.0.0
@@ -304,7 +310,8 @@ VERSION=1.0.0  # Too late! Should be near top
 #!/bin/bash
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
-VERSION=1.0.0  # Right after shopt
+
+declare -r VERSION=1.0.0  # Right after shopt
 ```
 
 **Complete example with metadata usage:**
@@ -379,7 +386,6 @@ main() {
 }
 
 main "$@"
-
 #fin
 ```
 
