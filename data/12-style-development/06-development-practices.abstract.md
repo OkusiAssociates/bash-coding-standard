@@ -1,27 +1,28 @@
 ## Development Practices
 
-**ShellCheck is compulsory; document all `disable=` directives with rationale. End scripts with `#fin` marker.**
+**ShellCheck mandatory; end scripts with `#fin`; program defensively.**
 
-### Core Patterns
+### ShellCheck
+- **Compulsory** for all scripts: `shellcheck -x script.sh`
+- Disable only with documented reason: `#shellcheck disable=SC2155  # reason`
 
+### Script Termination
 ```bash
-#shellcheck disable=SC2046  # Intentional word splitting
-shellcheck -x myscript.sh   # Run during development
-
-: "${VERBOSE:=0}"           # Default critical vars
-[[ -n "$1" ]] || die 1 'Argument required'
-set -u                      # Guard unset variables
-
 main "$@"
 #fin
 ```
 
-### Performance & Testing
+### Defensive Programming
+```bash
+: "${VERBOSE:=0}"              # Default values
+[[ -n "$1" ]] || die 1 'Arg required'  # Validate early
+set -u                         # Guard unset vars
+```
 
-- Minimize subshells; prefer builtins over external commands
-- Use process substitution over temp files
-- Return meaningful exit codes; support debug modes
+### Performance
+Minimize subshells â†' use builtins over external commands â†' batch ops â†' process substitution over temp files.
 
-`undocumented disable=` â†' silent violations | missing `#fin` â†' incomplete script
+### Testing
+Testable functions, dependency injection, verbose/debug modes, meaningful exit codes.
 
 **Ref:** BCS1206

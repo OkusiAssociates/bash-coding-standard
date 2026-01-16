@@ -1,37 +1,41 @@
 # Short-Option Disaggregation
 
-**Split bundled options (`-abc` â†' `-a -b -c`) to follow Unix conventions.**
+**Split bundled options (`-abc` â†' `-a -b -c`) for Unix-compliant CLI parsing.**
 
-## Methods
-
-| Method | Speed | Deps | Notes |
-|--------|-------|------|-------|
-| grep | ~190/s | grep | Current standard |
-| fold | ~195/s | fold | Marginal gain |
-| **Pure Bash** | **~318/s** | None | **68% faster**, no shellcheck |
-
-## Pattern
+## Iterative Method (Recommended)
 
 ```bash
-# grep method (current standard)
--[ovnVh]*) #shellcheck disable=SC2046
-    set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
-
-# Pure bash (recommended for performance)
--[ovnVh]*)
-    local -- opt=${1:1}; local -a new_args=()
-    while ((${#opt})); do new_args+=("-${opt:0:1}"); opt=${opt:1}; done
-    set -- '' "${new_args[@]}" "${@:2}" ;;
+-[ovnVh]?*)  set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
 ```
 
-## Critical Rules
+**Pattern:** `${1:0:2}` extracts first option; `"-${1:2}"` creates remainder; `continue` reprocesses.
 
-- List valid options in pattern: `-[ovnVh]*`
-- Options with arguments must be at end of bundle or separate
-- Place before `-*)` invalid option case
+## Rationale
+
+- **53-119Ã— faster** than grep/fold (~24,000-53,000 vs ~450 iter/sec)
+- Pure bash, no external deps, no shellcheck warnings
+
+## Alternatives
+
+| Method | Speed | Notes |
+|--------|-------|-------|
+| grep | ~445/s | `set -- '' $(printf '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"` SC2046 |
+| fold | ~460/s | Same pattern with `fold -w1` |
+| bash loop | ~318/s | More verbose, no `continue` needed |
 
 ## Anti-patterns
 
-`-von output.txt` â†' `-o` captures `n` as argument (wrong order)
+```bash
+# âœ— Options with args mid-bundle
+-von file    # -o captures "n" as argument
+
+# âœ“ Args at end or separate
+-vno file    # -v -n -o file
+```
+
+## Edge Cases
+
+- List valid options explicitly: `-[ovnVh]?*` prevents unknown option disaggregation
+- Options requiring arguments must be at bundle end or separate
 
 **Ref:** BCS0805

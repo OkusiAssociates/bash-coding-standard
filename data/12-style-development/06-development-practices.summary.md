@@ -1,13 +1,13 @@
 ## Development Practices
 
 #### ShellCheck Compliance
-ShellCheck is **compulsory**. Document exceptions with `#shellcheck disable=...` and reason:
+ShellCheck is **compulsory** for all scripts. Use `#shellcheck disable=...` only for documented exceptions.
 
 ```bash
-#shellcheck disable=SC2046  # Intentional word splitting for flag expansion
-set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"
-
 shellcheck -x myscript.sh
+
+#shellcheck disable=SC2155  # Declare and assign separately is less readable here
+declare -r SCRIPT_PATH=$(realpath -- "$0")
 ```
 
 #### Script Termination
@@ -25,7 +25,9 @@ set -u
 ```
 
 #### Performance Considerations
-Minimize subshells; prefer built-in string operations; batch operations; use process substitution over temp files.
+- Minimize subshells; prefer built-in string operations over external commands
+- Batch operations; use process substitution over temp files
 
 #### Testing Support
-Make functions testable with dependency injection, verbose/debug modes, and meaningful exit codes.
+- Make functions testable with dependency injection
+- Support verbose/debug modes; return meaningful exit codes

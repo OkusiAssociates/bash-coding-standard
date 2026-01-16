@@ -1,46 +1,37 @@
 ## Standard Argument Parsing Pattern
 
-**Use `while (($#)); do case $1 in...esac; shift; done` for all argument parsing.**
+**Use `while (($#)); do case $1 in ... esac; shift; done` for all CLI parsing.**
 
 ### Core Pattern
 
 ```bash
 while (($#)); do case $1 in
-  -o|--output)  noarg "$@"; shift; output=$1 ;;
-  -v|--verbose) VERBOSE+=1 ;;
-  -V|--version) echo "$VERSION"; exit 0 ;;
-  -h|--help)    show_help; exit 0 ;;
-  -[ovVh]*)     set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
-  -*)           die 22 "Invalid option ${1@Q}" ;;
-  *)            files+=("$1") ;;
+  -o|--output)    noarg "$@"; shift; output=$1 ;;
+  -v|--verbose)   VERBOSE+=1 ;;
+  -V|--version)   echo "$VERSION"; exit 0 ;;
+  -[ovV]?*)       set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+  -*)             die 22 "Invalid option ${1@Q}" ;;
+  *)              files+=("$1") ;;
 esac; shift; done
 ```
 
-### Key Elements
+### Key Components
 
-- **Options with args**: `noarg "$@"; shift` before capturing value
-- **Flags**: Set variable directly, loop-end shift handles advancement
-- **Short bundling**: `-[opts]*` pattern splits `-vvv` â†' `-v -v -v`
-- **noarg helper**: `noarg() { (($# > 1)) || die 2 "Option ${1@Q} requires an argument"; }`
+- **`noarg()`**: `(($# > 1)) || die 2 "Option ${1@Q} requires an argument"` â†' validate before shift
+- **Bundling**: `-[opts]?*)` splits `-vvn` â†' `-v -vn` â†' `-v -v -n` iteratively
+- **Exit handlers**: `-V`, `-h` print and `exit 0` immediately
+- **Default case**: `*)` collects positional args to array
 
 ### Anti-Patterns
 
-```bash
-# âœ— Missing noarg before shift
--o|--output) shift; output=$1 ;;        # Fails silently if no arg
-
-# âœ— Missing loop-end shift
-esac; done                              # Infinite loop!
-
-# âœ“ Correct
--o|--output) noarg "$@"; shift; output=$1 ;;
-esac; shift; done
-```
+- `while [[ $# -gt 0 ]]` â†' use `while (($#))`
+- Missing `noarg "$@"` before shift â†' silent failures
+- Missing `shift` after `esac` â†' infinite loop
 
 ### Rationale
 
-- `(($#))` more efficient than `[[ $# -gt 0 ]]`
-- Case statement more readable than if/elif chains
-- Uniform shift at loop end handles all branches
+1. `(($#))` arithmetic test more efficient than `[[ ]]`
+2. Case statements more readable than if/elif chains
+3. Bundling support (`-vvn`) follows Unix conventions
 
 **Ref:** BCS0801

@@ -4,12 +4,12 @@
 ShellCheck is **compulsory** for all scripts. Use `#shellcheck disable=...` only for documented exceptions.
 
 ```bash
-# Document intentional violations with reason
-#shellcheck disable=SC2046  # Intentional word splitting for flag expansion
-set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"
-
-# Run shellcheck as part of development
+# Run shellcheck as part of development workflow
 shellcheck -x myscript.sh
+
+# Document intentional violations with reason when necessary
+#shellcheck disable=SC2155  # Declare and assign separately is less readable here
+declare -r SCRIPT_PATH=$(realpath -- "$0")
 ```
 
 #### Script Termination

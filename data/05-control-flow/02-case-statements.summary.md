@@ -1,12 +1,11 @@
 ## Case Statements
 
-**Use `case` for multi-way branching on pattern matching. More readable and efficient than if/elif chains for single-value tests. Use compact format for simple single-action cases, expanded format for multi-line logic. Always align actions consistently.**
+**Use `case` for multi-way branching on pattern matching. More readable and efficient than long `if/elif` chains. Compact format for simple single-action cases; expanded format for multi-line logic. Always align actions consistently.**
 
 **Rationale:**
-- Pattern matching: Native wildcards, alternation, character classes
-- Performance: Single evaluation vs multiple if/elif tests
-- Maintainability: Easy to add/remove/reorder cases
-- `*)` default ensures all possibilities handled
+- Clearer than if/elif for pattern-based branching; native wildcards, alternation, character classes
+- Faster than multiple if/elif tests (single evaluation); easy to add/remove/reorder cases
+- Default `*)` ensures exhaustive matching; column alignment makes structure obvious
 
 **When to use case vs if/elif:**
 
@@ -19,38 +18,30 @@ case "$action" in
   *)       die 22 "Invalid action ${action@Q}" ;;
 esac
 
-# ✓ Use case - pattern matching needed
+# ✓ Use case - pattern matching or argument parsing
 case "$filename" in
   *.txt) process_text_file ;;
   *.pdf) process_pdf_file ;;
-  *)     die 22 'Unsupported file type' ;;
 esac
 
-# ✗ Use if/elif - testing different variables or complex conditions
-if [[ ! -f "$file" ]]; then
-  die 2 "File not found ${file@Q}"
-elif [[ ! -r "$file" ]]; then
-  die 1 "File not readable ${file@Q}"
-fi
+# ✗ Use if/elif - different variables, complex conditions, numeric ranges
+if [[ ! -f "$file" ]]; then die 2 "File not found"; fi
+if ((value < 0)); then error='negative'; fi
 ```
 
 **Case expression quoting:**
 
-No quotes needed on case expression—word splitting doesn't apply:
-
 ```bash
-# ✓ CORRECT - no quotes needed
+# ✓ No quotes needed on case expression (not subject to word splitting)
 case ${1:-} in
   --help) show_help ;;
 esac
 
 # ✗ UNNECESSARY - quotes don't add value
-case "${1:-}" in
-  --help) show_help ;;
-esac
+case "${1:-}" in ...
 ```
 
-**Compact format** - single-action cases, `;;` on same line, aligned at column 14-18:
+**Compact format** - single action per case, `;;` on same line, align at column 14-18:
 
 ```bash
 while (($#)); do
@@ -69,7 +60,7 @@ while (($#)); do
 done
 ```
 
-**Expanded format** - multi-line actions, `;;` on separate line:
+**Expanded format** - multi-line actions, `;;` on separate line, blank line between cases:
 
 ```bash
 while (($#)); do
@@ -78,14 +69,17 @@ while (($#)); do
                    shift
                    PREFIX=$1
                    BIN_DIR="$PREFIX"/bin
-                   ((VERBOSE)) && info "Prefix set to: $PREFIX" ||:
                    ;;
 
-    -[bpvqVh]*) #shellcheck disable=SC2046 #split up single options
-                   set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"
+    -[bpvqVh]?*)  # Bundled short options
+                   set -- "${1:0:2}" "-${1:2}" "${@:2}"
+                   continue
                    ;;
 
-    -*)            die 22 "Invalid option ${1@Q}" ;;
+    -*)            error "Invalid option ${1@Q}"
+                   show_help
+                   exit 22
+                   ;;
   esac
   shift
 done
@@ -97,119 +91,71 @@ done
 # Literal patterns
 case "$value" in
   start) echo 'Starting...' ;;
-  stop)  echo 'Stopping...' ;;
 esac
 
 # Wildcard patterns
 case "$filename" in
-  *.txt) echo 'Text file' ;;
-  *.pdf) echo 'PDF file' ;;
-  *)     echo 'Unknown' ;;
+  *.txt)   echo 'Text file' ;;
+  ??)      echo 'Two-character' ;;    # ? = single char
+  /usr/*)  echo 'System path' ;;
 esac
 
 # Alternation (OR patterns)
 case "$option" in
-  -h|--help|help) show_help; exit 0 ;;
-  *.txt|*.md|*.rst) echo 'Text document' ;;
+  -h|--help|help)     show_help ;;
+  *.txt|*.md|*.rst)   echo 'Text document' ;;
 esac
 
-# Character classes with extglob
-shopt -s extglob
+# Character classes and extglob (requires: shopt -s extglob)
 case "$input" in
-  ?(pattern))     echo 'zero or one' ;;
-  *(pattern))     echo 'zero or more' ;;
-  +(pattern))     echo 'one or more' ;;
-  @(start|stop))  echo 'exactly one' ;;
-  !(*.tmp|*.bak)) echo 'anything except' ;;
-esac
-
-# Bracket expressions
-case "$char" in
-  [0-9])          echo 'Digit' ;;
-  [a-z])          echo 'Lowercase' ;;
-  [!a-zA-Z0-9])   echo 'Special character' ;;
+  [0-9])         echo 'Digit' ;;
+  [a-z])         echo 'Lowercase' ;;
+  [!a-zA-Z0-9])  echo 'Special character' ;;
+  test?(s))      echo 'test or tests' ;;           # ?(pat) = 0 or 1
+  log+([0-9]))   echo 'log followed by digits' ;;  # +(pat) = 1 or more
+  @(start|stop)) echo 'Valid action' ;;            # @(pat) = exactly one
+  !(*.tmp))      echo 'Not temp file' ;;           # !(pat) = except
 esac
 ```
 
 **Anti-patterns:**
 
 ```bash
-# ✗ Wrong - quoting patterns unnecessarily
-case "$value" in
-  "start") echo 'Starting...' ;;  # Don't quote literal patterns
-esac
-
-# ✓ Correct - unquoted literal patterns
-case "$value" in
-  start) echo 'Starting...' ;;
-esac
+# ✗ Wrong - quoting patterns / not quoting test variable
+case "$value" in "start") ... esac    # Don't quote literal patterns
+case $filename in *.txt) ... esac     # DO quote test variable
 
 # ✗ Wrong - using if/elif for simple pattern matching
-if [[ "$ext" == 'txt' ]]; then
-  process_text
-elif [[ "$ext" == 'pdf' ]]; then
-  process_pdf
+if [[ "$ext" == 'txt' ]]; then process_text
+elif [[ "$ext" == 'pdf' ]]; then process_pdf
 fi
+# ✓ Use case instead
 
-# ✓ Correct - case is clearer
-case "$ext" in
-  txt) process_text ;;
-  pdf) process_pdf ;;
-  *)   die 1 'Unknown type' ;;
-esac
+# ✗ Wrong - missing default case (silent failure)
+case "$action" in start) ... ;; stop) ... ;; esac
+# ✓ Always include: *) die 22 "Invalid" ;;
 
-# ✗ Wrong - missing default case
-case "$action" in
-  start) start_service ;;
-  stop)  stop_service ;;
-esac  # What if $action is 'restart'? Silent failure!
-
-# ✗ Wrong - inconsistent format mixing
+# ✗ Wrong - inconsistent format / poor alignment
 case "$opt" in
   -v) VERBOSE=1 ;;
   -o) shift
-      OUTPUT=$1
-      ;;              # Mixing compact and expanded
+      OUTPUT=$1 ;;        # Don't mix formats
 esac
 
 # ✗ Wrong - missing ;; terminator
-case "$value" in
-  start) start_service
-  stop) stop_service   # Missing ;;
-esac
+case "$value" in start) start_service stop) ... esac
 
-# ✗ Wrong - regex patterns (not supported)
-case "$input" in
-  [0-9]+) echo 'Number' ;;  # Matches single digit only!
-esac
-
-# ✓ Correct - use extglob or if with regex
-case "$input" in
-  +([0-9])) echo 'Number' ;;  # Requires extglob
-esac
+# ✗ Wrong - expecting regex (case uses glob patterns)
+case "$input" in [0-9]+) ... esac  # Matches single digit only!
+# ✓ Use extglob: +([0-9])) or use if with =~
 
 # ✗ Wrong - side effects in patterns
-case "$value" in
-  $(complex_function)) echo 'Match' ;;  # Called for every case!
-esac
-
-# ✓ Correct - evaluate once before case
-result=$(complex_function)
-case "$value" in
-  "$result") echo 'Match' ;;
-esac
+case "$value" in $(complex_function)) ... esac  # Called every case!
+# ✓ Evaluate once before case: result=$(func); case "$value" in "$result") ...
 
 # ✗ Wrong - nested case for multiple variables
-case "$var1" in
-  value1) case "$var2" in
-    value2) action ;;
-  esac ;;
-esac
-
-# ✓ Correct - use if for multiple variable tests
-if [[ "$var1" == value1 && "$var2" == value2 ]]; then
-  action
-fi
+case "$var1" in value1) case "$var2" in ... esac ;; esac
+# ✓ Use if for multiple variable tests
 ```
 
 **Edge cases:**
@@ -217,8 +163,8 @@ fi
 ```bash
 # Empty string handling
 case "$value" in
-  '')  echo 'Empty string' ;;
-  *)   echo "Value: $value" ;;
+  '')              echo 'Empty string' ;;
+  ''|' '|$'\t')    echo 'Blank or whitespace' ;;
 esac
 
 # Special characters - quote patterns
@@ -227,31 +173,19 @@ case "$filename" in
   'file [backup].txt') echo 'Match brackets' ;;
 esac
 
-# Numeric patterns (as strings)
+# Numeric patterns (treated as strings)
 case "$port" in
-  80|443)  echo 'Standard web port' ;;
-  [0-9][0-9][0-9][0-9]) echo 'Four-digit port' ;;
+  80|443)                    echo 'Web port' ;;
+  [0-9][0-9][0-9][0-9])      echo 'Four-digit port' ;;
 esac
 # For numeric comparison, use (()) instead
-
-# Return values in functions
-validate_input() {
-  local -- input=$1
-  case "$input" in
-    [a-z]*) return 0 ;;
-    [A-Z]*) return 1 ;;
-    '')     return 22 ;;
-    *)      return 1 ;;
-  esac
-}
 ```
 
 **Summary:**
-- Use case for pattern matching single variable against multiple patterns
-- Compact format: single-line actions with aligned `;;`
-- Expanded format: multi-line actions with `;;` on separate line
-- Don't quote case expression; don't quote literal patterns
-- Always include `*)` default case
-- Use `|` for alternation, `*` `?` for wildcards, extglob for advanced patterns
-- Use if/elif for multiple variables, ranges, complex conditions
-- Terminate every branch with `;;`
+- Quote test variable `case "$var" in`, don't quote literal patterns
+- Always include default `*)` case
+- Use alternation `pat1|pat2)` and wildcards `*.txt)`
+- Enable extglob for advanced patterns `@()`, `!()`, `+()`, `?()`
+- Compact format for simple flags; expanded for complex logic
+- Prefer case over if/elif for single-variable multi-value tests
+- Use if for multiple variables, ranges, complex conditions

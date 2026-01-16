@@ -83,7 +83,7 @@ test_template_complete() {
   assert_contains "$output" "debug()" "Complete has debug"
   assert_contains "$output" "yn()" "Complete has yn"
   assert_contains "$output" "show_help()" "Complete has show_help"
-  assert_contains "$output" 'case "\$1" in' "Complete has argument parsing case"
+  assert_contains "$output" 'case \$1 in' "Complete has argument parsing case"
   assert_contains "$output" "#fin" "Complete has fin marker"
 }
 

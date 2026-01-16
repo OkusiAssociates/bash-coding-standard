@@ -313,8 +313,9 @@ main() {
                   ;;
     --)           shift; break
                   ;;
-    -[nvqDVh]*) #shellcheck disable=SC2046 #split up single options
-                  set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"
+    -[nvqDVh]?*)  # Bundled short options
+                  set -- "${1:0:2}" "-${1:2}" "${@:2}"
+                  continue
                   ;;
     -*)           error "Invalid option ${1@Q}"
                   return 22

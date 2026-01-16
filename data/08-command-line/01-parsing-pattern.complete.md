@@ -18,8 +18,8 @@ while (($#)); do case $1 in
   -V|--version)   echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
   -h|--help)      show_help; exit 0 ;;
 
-  -[amLpvqVh]*) #shellcheck disable=SC2046 #split up single options
-                  set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+  -[amLpvqVh]?*)  # Bundled short options
+                  set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
   -*)             die 22 "Invalid option ${1@Q}" ;;
   *)              Paths+=("$1") ;;
 esac; shift; done
@@ -70,18 +70,18 @@ esac; shift; done
 In command argument processing loops, short option splitting should *always* be included.
 
 ```bash
--[VhamLpvq]*) #shellcheck disable=SC2046 #split up single options
-              set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+-[VhamLpvq]?*)  # Bundled short options
+              set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
 ```
 - **Purpose**: Allows `-vpL` instead of `-v -p -L`
-- **Pattern**: `-[amLpvqVh]*` matches any short option combination
-- **Mechanism**: Splits bundled options into separate arguments
-- **Example**: `-vpL file` becomes `-v -p -L file`
+- **Pattern**: `-[amLpvqVh]?*` matches option with at least one more character
+- **Mechanism**: Iteratively peels off first option, continues loop
+- **Example**: `-vpL file` → `-v -pL file` → `-v -p -L file`
 - **How it works:**
-  1. `${1:1}` - Remove leading dash (e.g., `-vpL` → `vpL`)
-  2. `grep -o .` - Split into individual characters
-  3. `printf -- "-%c "` - Add dash before each character
-  4. `set --` - Replace argument list with expanded options
+  1. `${1:0:2}` - Extract first option (dash + first char, e.g., `-v` from `-vpL`)
+  2. `"-${1:2}"` - Create remaining options with dash (e.g., `-pL`)
+  3. `${@:2}` - Preserve remaining arguments
+  4. `continue` - Restart loop to process extracted option
 
 **7. Invalid option handling:**
 ```bash
@@ -179,9 +179,8 @@ main() {
     -V|--version)   echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
     -h|--help)      show_help; exit 0 ;;
 
-    # Short option bundling support
-    -[ovnVh]*)    #shellcheck disable=SC2046
-                    set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+    # Short option bundling support (iterative method - recommended)
+    -[ovnVh]?*)     set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
     -*)             die 22 "Invalid option ${1@Q}" ;;
     *)              files+=("$1") ;;
   esac; shift; done

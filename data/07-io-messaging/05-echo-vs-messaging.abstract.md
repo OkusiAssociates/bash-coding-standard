@@ -1,44 +1,40 @@
 ## Echo vs Messaging Functions
 
-**Use messaging functions (`info`, `warn`, `error`) for statusâ†'stderr; plain `echo` for dataâ†'stdout.**
+**Use messaging functions (`info`, `warn`, `error`) for operational status â†' stderr; use `echo` for data output â†' stdout.**
 
-**Key distinction:** Messaging respects `VERBOSE` and goes to stderr. Echo always outputs to stdout for piping/capture.
+**Rationale:**
+- Stream separation: messagingâ†'stderr (user-facing), echoâ†'stdout (parseable data)
+- Verbosity: messaging respects `VERBOSE`, echo always displays
+- Pipeability: only stdout should contain data for capture/piping
 
-### When to Use Which
+**Decision matrix:**
+- Status/progress â†' messaging function
+- Data/return values â†' echo
+- Help/version â†' echo (always display)
+- Errors â†' `error()` to stderr
 
-| Output Type | Tool | Stream | Verbosity |
-|-------------|------|--------|-----------|
-| Status/progress | `info`, `warn` | stderr | Respects VERBOSE |
-| Errors | `error` | stderr | Always shows |
-| Data/results | `echo` | stdout | Always shows |
-| Help/version | `echo`/`cat` | stdout | Always shows |
-
-### Core Pattern
-
+**Example:**
 ```bash
 get_data() {
-  info "Processing..."     # Statusâ†'stderr (verbose-controlled)
-  echo "$result"           # Dataâ†'stdout (capturable)
+  info "Processing..."    # Status â†' stderr
+  echo "$result"          # Data â†' stdout
 }
-
-# Correct separation:
-output=$(get_data)         # Captures only data, sees status
+output=$(get_data)        # Captures only data
 ```
 
-### Anti-Patterns
-
+**Anti-patterns:**
 ```bash
-# âœ— Data via messaging - can't capture!
-get_value() { info "$val"; }
-x=$(get_value)  # Empty!
+# âœ— Using info() for data - can't capture
+get_email() { info "$email"; }     # Goes to stderr!
 
-# âœ— Status via echo - pollutes data stream
-process() { echo "Working..."; cat "$f"; }
+# âœ“ Use echo for data output
+get_email() { echo "$email"; }     # Capturable
 
-# âœ— Help via info() - hidden when VERBOSE=0
-show_help() { info "Usage: ..."; }
+# âœ— Echo for status - mixes with data
+echo "Processing..."               # Pollutes stdout
+
+# âœ“ Messaging for status
+info "Processing..."               # Clean separation
 ```
-
-**Rule:** Data=`echo`â†'stdout. Status=messagingâ†'stderr. Errors always stderr. Help/version always display.
 
 **Ref:** BCS0705

@@ -1,10 +1,10 @@
 ### Complete Working Example
 
-**Production script demonstrating all 13 mandatory BCS0101 layout steps.**
+**Production installation script demonstrating all 13 BCS0101 mandatory steps.**
 
 ---
 
-#### Minimal Template
+## Core Pattern (Minimal)
 
 ```bash
 #!/bin/bash
@@ -15,35 +15,45 @@ declare -r VERSION=1.0.0
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
-declare -i VERBOSE=1
-die() { (($# < 2)) || >&2 echo "$SCRIPT_NAME: ✗ ${@:2}"; exit "${1:-0}"; }
+declare -- PREFIX=/usr/local
+declare -i DRY_RUN=0 VERBOSE=1
 
 main() {
   while (($#)); do
     case $1 in
-      -h|--help) echo "Usage: $SCRIPT_NAME [options]"; return 0 ;;
-      -V|--version) echo "$VERSION"; return 0 ;;
-      -*) die 22 "Invalid option ${1@Q}" ;;
+      -n|--dry-run) DRY_RUN=1 ;;
+      -h|--help)    show_help; return 0 ;;
+      -*)           die 22 "Invalid option ${1@Q}" ;;
     esac
     shift
   done
-  # Business logic here
+  readonly PREFIX DRY_RUN VERBOSE
+  # business logic here
 }
-
 main "$@"
 #fin
 ```
 
-#### Key Patterns
+## Key Elements
 
-- **Dry-run**: Check `DRY_RUN` flag before operations �' `((DRY_RUN==0)) || { info "[DRY-RUN]..."; return 0; }`
-- **Progressive readonly**: `readonly -- VAR1 VAR2` after argument parsing
+| Step | Purpose |
+|------|---------|
+| 1-5 | Shebang, shellcheck, description, strict mode, shopt |
+| 6-7 | Metadata (VERSION, SCRIPT_*), globals |
+| 8-9 | Colors (TTY-aware), utility functions |
+| 10-11 | Business logic, main() with arg parsing |
+| 12-13 | `main "$@"`, `#fin` marker |
+
+## Critical Patterns
+
+- **Dry-run**: Check `((DRY_RUN))` before every operation
 - **Derived paths**: Update dependent vars when base changes
-- **TTY-aware colors**: `[[ -t 1 ]] && RED=$'\033[31m' || RED=''`
+- **Progressive readonly**: Lock vars after argument parsing
+- **Validation first**: Check prerequisites before filesystem ops
 
-#### Anti-patterns
+## Anti-patterns
 
+- ✗ Modifying readonly vars after `readonly` declaration
 - ✗ Missing `#fin` end marker
-- ✗ Modifying readonly vars after declaration �' `readonly: cannot unset`
 
 **Ref:** BCS010101

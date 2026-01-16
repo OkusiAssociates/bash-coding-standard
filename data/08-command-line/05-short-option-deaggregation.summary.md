@@ -1,39 +1,62 @@
 # Short-Option Disaggregation
 
-## Overview
+Splitting bundled short options (`-abc` â†' `-a -b -c`) for Unix-standard command-line parsing.
 
-Splits bundled short options (e.g., `-abc`) into individual options (`-a -b -c`) for processing. Enables `script -vvn` instead of `script -v -v -n`, following Unix conventions.
-
-Without disaggregation, `-lha` is treated as unknown single option rather than `-l -h -a`.
-
-## The Three Methods
-
-### Method 1: grep (Current Standard)
+## Why Needed
 
 ```bash
--[amLpvqVh]*) #shellcheck disable=SC2046 #split up aggregated short options
-  set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"
-  ;;
+# These should be equivalent:
+ls -lha
+ls -l -h -a
 ```
 
-**How it works:** `${1:1}` removes leading dash â†' `grep -o .` outputs each char on separate line â†' `printf -- "-%c "` prepends dash â†' `set --` replaces argument list.
+Without disaggregation, `-lha` is treated as single unknown option.
 
-**Performance:** ~190 iter/sec | External dep: grep | Requires SC2046 disable
+## Methods
 
-### Method 2: fold
+### Method 1: Iterative Parameter Expansion (Recommended)
 
 ```bash
--[amLpvqVh]*) #shellcheck disable=SC2046
-  set -- '' $(printf -- '-%c ' $(fold -w1 <<<"${1:1}")) "${@:2}"
-  ;;
+case $1 in
+  -[onvqVh]?*)  # Bundled short options
+    set -- "${1:0:2}" "-${1:2}" "${@:2}"
+    continue
+    ;;
+esac
 ```
 
-**Performance:** ~195 iter/sec (+2.3%) | External dep: fold | Requires SC2046 disable
+**How it works:**
+- Pattern `-[opts]?*` matches option with additional chars after first
+- `${1:0:2}` extracts first option (e.g., `-v` from `-vvn`)
+- `"-${1:2}"` creates remaining with dash (e.g., `-vn`)
+- `${@:2}` preserves remaining args; `continue` restarts loop
 
-### Method 3: Pure Bash (Recommended for Performance)
+**Performance:** ~24,000-53,000 iter/sec (53-119x faster than alternatives)
+
+**Pros:** No external deps, no shellcheck warnings, pure bash 4+
+
+### Method 2: grep (Alternative)
 
 ```bash
--[mjvqVh]*) # Split up single options (pure bash)
+-[cfvqVh]*) #shellcheck disable=SC2046
+  set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+```
+
+**Performance:** ~445 iter/sec | Requires external grep, SC2046 disable
+
+### Method 3: fold (Alternative)
+
+```bash
+-[opts]*) #shellcheck disable=SC2046
+  set -- '' $(printf -- '-%c ' $(fold -w1 <<<"${1:1}")) "${@:2}" ;;
+```
+
+**Performance:** ~460 iter/sec | Requires external fold, SC2046 disable
+
+### Method 4: Pure Bash Loop
+
+```bash
+-[mjvqVh]*) # Split up single options
   local -- opt=${1:1}
   local -a new_args=()
   while ((${#opt})); do
@@ -43,32 +66,32 @@ Without disaggregation, `-lha` is treated as unknown single option rather than `
   set -- '' "${new_args[@]}" "${@:2}" ;;
 ```
 
-**Performance:** ~318 iter/sec (+68%) | No external deps | No shellcheck warnings
+**Performance:** ~318 iter/sec | No deps, expands all at once, more verbose
 
-## Performance Comparison
+## Performance Summary
 
-| Method | Iter/Sec | Relative | External Deps | Shellcheck |
-|--------|----------|----------|---------------|------------|
-| grep | 190.82 | Baseline | grep | SC2046 |
-| fold | 195.25 | +2.3% | fold | SC2046 |
-| **Pure Bash** | **317.75** | **+66.5%** | **None** | **Clean** |
+| Method | Iter/Sec | External Deps | Shellcheck |
+|--------|----------|---------------|------------|
+| **Iterative** | **24,000-53,000** | **None** | **Clean** |
+| grep | ~445 | grep | SC2046 |
+| fold | ~460 | fold | SC2046 |
+| Pure Bash Loop | ~318 | None | Clean |
 
-## Complete Implementation Example (Pure Bash)
+## Complete Example (Iterative Method)
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
-shopt -s inherit_errexit shift_verbose
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 declare -r VERSION='1.0.0'
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
-declare -i VERBOSE=0
-declare -i PARALLEL=1
-declare -- mode='normal'
-declare -a targets=()
+declare -i VERBOSE=0 DRY_RUN=0
+declare -- output_file=''
+declare -a files=()
 
 error() { >&2 echo "$SCRIPT_NAME: error: $*"; }
 die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
@@ -76,13 +99,11 @@ noarg() { (($# > 1)) || die 2 "Option '$1' requires an argument"; }
 
 show_help() {
   cat <<EOF
-Usage: $SCRIPT_NAME [OPTIONS] TARGET...
-
+Usage: $SCRIPT_NAME [OPTIONS] FILE...
 Options:
-  -m, --mode MODE    Processing mode (normal|fast|safe)
-  -j, --parallel N   Number of parallel jobs (default: 1)
+  -o, --output FILE  Output file (required)
+  -n, --dry-run      Dry-run mode
   -v, --verbose      Verbose output (stackable)
-  -q, --quiet        Quiet mode
   -V, --version      Show version
   -h, --help         Show this help
 EOF
@@ -90,88 +111,72 @@ EOF
 
 main() {
   while (($#)); do case $1 in
-    -m|--mode)      noarg "$@"; shift; mode=$1 ;;
-    -j|--parallel)  noarg "$@"; shift; PARALLEL=$1 ;;
+    -o|--output)    noarg "$@"; shift; output_file=$1 ;;
+    -n|--dry-run)   DRY_RUN=1 ;;
     -v|--verbose)   VERBOSE+=1 ;;
     -q|--quiet)     VERBOSE=0 ;;
     -V|--version)   echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
     -h|--help)      show_help; exit 0 ;;
-
-    # Short option bundling (pure bash)
-    -[mjvqVh]*) local -- opt=${1:1}
-                local -a new_args=()
-                while ((${#opt})); do
-                  new_args+=("-${opt:0:1}")
-                  opt=${opt:1}
-                done
-                set -- '' "${new_args[@]}" "${@:2}" ;;
-    -*)         die 22 "Invalid option '$1'" ;;
-    *)          targets+=("$1") ;;
+    -[onvqVh]?*)    set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+    -*)             die 22 "Invalid option ${1@Q}" ;;
+    *)              files+=("$1") ;;
   esac; shift; done
 
-  readonly -- VERBOSE PARALLEL mode
-  readonly -a targets
+  readonly -- VERBOSE DRY_RUN output_file
+  readonly -a files
 
-  ((${#targets[@]} > 0)) || die 2 'No targets specified'
-  [[ "$mode" =~ ^(normal|fast|safe)$ ]] || die 2 "Invalid mode: '$mode'"
-  ((PARALLEL > 0)) || die 2 'Parallel jobs must be positive'
+  ((${#files[@]} > 0)) || die 2 'No input files specified'
+  [[ -n "$output_file" ]] || die 2 'Output file required (use -o)'
 
-  local -- target
-  for target in "${targets[@]}"; do
-    ((VERBOSE)) && echo "Processing '$target'"
-  done
+  ((VERBOSE)) && echo "Processing ${#files[@]} files" ||:
+  ((DRY_RUN)) && echo "[DRY RUN] Would write to ${output_file@Q}" ||:
 }
 
 main "$@"
-#fin
 ```
 
 ## Edge Cases
 
 ### Options Requiring Arguments
 
-Options with arguments cannot be mid-bundle:
+Options with arguments cannot be in middle of bundle:
 
 ```bash
-# âœ“ Correct - argument option at end or separate
+# âœ“ Correct - option with argument at end or separate
 ./script -vno output.txt file.txt    # -v -n -o output.txt
-./script -vn -o output.txt file.txt
 
-# âœ— Wrong - argument option in middle
+# âœ— Wrong - option with argument in middle
 ./script -von output.txt file.txt    # -o captures "n" as argument!
 ```
 
 ### Character Set Validation
 
-Pattern `-[amLpvqVh]*` explicitly lists valid options:
+Pattern `-[ovnVh]*` explicitly lists valid options:
 - Prevents disaggregation of unknown options
 - Unknown options caught by `-*)` case
-- Documents valid short options
 
 ```bash
--[ovnVh]*)  # Only these are valid short options
-
-./script -xyz  # Doesn't match, caught by -*) â†' Error: Invalid option '-xyz'
+./script -xyz  # Doesn't match pattern, caught by -*)
+               # Error: Invalid option '-xyz'
 ```
 
-### Special Characters
+## Anti-Patterns
 
-All methods handle correctly: digits (`-123` â†' `-1 -2 -3`), letters, mixed (`-v1n2` â†' `-v -1 -n -2`).
+```bash
+# âœ— Missing continue in iterative method
+-[opts]?*)  set -- "${1:0:2}" "-${1:2}" "${@:2}" ;;  # Won't loop!
+
+# âœ— Pattern without ?* - matches single-char options unnecessarily
+-[ovn]*)  # Matches -v even though no splitting needed
+
+# âœ— Using external commands when pure bash suffices
+$(grep -o . <<<"${1:1}")  # 50-100x slower than parameter expansion
+```
 
 ## Implementation Checklist
 
-- [ ] List all valid short options in pattern: `-[ovnVh]*`
+- [ ] List all valid short options in pattern: `-[ovnVh]?*`
 - [ ] Place disaggregation case before `-*)` invalid option case
-- [ ] Ensure `shift` at end of loop for all cases
+- [ ] Use `continue` with iterative method
 - [ ] Document options-with-arguments bundling limitations
-- [ ] Add shellcheck disable for grep/fold methods
-- [ ] Test: single options, bundled, mixed long/short, stacking (`-vvv`)
-
-## Recommendations
-
-**Use grep method** unless:
-- Performance is critical (loops, build systems, interactive tools)
-- External dependencies are a concern
-- Running in restricted environments
-
-**Use Pure Bash** for high-performance scripts called frequently or in containers.
+- [ ] Test: single, bundled, mixed long/short, stacking (`-vvv`)

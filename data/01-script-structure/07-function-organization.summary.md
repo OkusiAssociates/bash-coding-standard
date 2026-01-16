@@ -1,12 +1,11 @@
 ## Function Organization
 
-**Always organize functions bottom-up: lowest-level primitives first, ending with `main()` as the highest-level orchestrator.**
+**Organize functions bottom-up: lowest-level primitives first (messaging, utilities), then composition layers, ending with `main()` as the highest-level orchestrator.**
 
 **Rationale:**
-- **No Forward References**: Bash reads top-to-bottom; defining functions in dependency order ensures called functions exist before use
-- **Readability**: Readers understand primitives first, then see how they're composed
-- **Maintainability**: Clear dependency hierarchy makes it obvious where to add new functions
-- **Testability**: Low-level functions can be tested independently before higher-level compositions
+- **No Forward References**: Bash reads top-to-bottom; dependency order ensures functions exist before use
+- **Readability/Debugging**: Understanding primitives first, then compositions reduces cognitive load
+- **Maintainability/Testability**: Clear dependency hierarchy; low-level functions testable independently
 
 **Standard 7-layer organization pattern:**
 
@@ -58,7 +57,7 @@ main "$@"
 #fin
 ```
 
-**Dependency flow principle:**
+**Dependency flow diagram:**
 
 ```
 Top of file
@@ -83,34 +82,28 @@ main "$@" invocation
 
 **Layer descriptions:**
 
-| Layer | Functions | Purpose | Dependencies |
-|-------|-----------|---------|--------------|
-| 1 | `_msg()`, `info()`, `warn()`, `error()`, `die()`, `success()` | Output messages | None |
-| 2 | `show_help()`, `show_version()` | Display help/usage | May use messaging |
-| 3 | `yn()`, `noarg()`, `trim()` | Generic utilities | May use messaging |
-| 4 | `check_root()`, `check_prerequisites()`, `validate_input()` | Verify preconditions | Utilities, messaging |
-| 5 | `build_project()`, `process_file()`, `deploy_app()` | Core functionality | All lower layers |
-| 6 | `run_build_phase()`, `run_deploy_phase()`, `cleanup()` | Coordinate business logic | Business logic, validation |
-| 7 | `main()` | Top-level script flow | Can call any function |
+| Layer | Functions | Purpose | Used by |
+|-------|-----------|---------|---------|
+| 1 | `_msg()`, `info()`, `warn()`, `error()`, `die()`, `success()` | Output messages | Everything |
+| 2 | `show_help()`, `show_version()` | Display help/usage | Argument parsing, main() |
+| 3 | `yn()`, `noarg()`, `trim()` | Generic utilities | Validation, business logic |
+| 4 | `check_root()`, `check_prerequisites()`, `validate_input()` | Verify preconditions | main(), business logic |
+| 5 | `build_project()`, `process_file()`, `deploy_app()` | Core functionality | Orchestration, main() |
+| 6 | `run_build_phase()`, `run_deploy_phase()`, `cleanup()` | Coordinate operations | main() |
+| 7 | `main()` | Top-level script flow | Script invocation |
 
-**Anti-patterns to avoid:**
+**Anti-patterns:**
 
 ```bash
 # âœ— Wrong - main() at the top (forward references required)
 main() {
   build_project  # build_project not defined yet!
-  deploy_app     # deploy_app not defined yet!
 }
 build_project() { ... }
-deploy_app() { ... }
 
 # âœ“ Correct - main() at bottom
 build_project() { ... }
-deploy_app() { ... }
-main() {
-  build_project
-  deploy_app
-}
+main() { build_project; }
 
 # âœ— Wrong - business logic before utilities it calls
 process_file() {
@@ -120,28 +113,24 @@ validate_input() { ... }
 
 # âœ“ Correct - utilities before business logic
 validate_input() { ... }
-process_file() {
-  validate_input "$1"
-}
+process_file() { validate_input "$1"; }
 
 # âœ— Wrong - messaging functions scattered throughout
 info() { ... }
 build() { ... }
 warn() { ... }
 deploy() { ... }
-error() { ... }
 
 # âœ“ Correct - all messaging together at top
 info() { ... }
 warn() { ... }
 error() { ... }
-die() { ... }
 build() { ... }
 deploy() { ... }
 
 # âœ— Wrong - circular dependencies (A calls B, B calls A)
 function_a() { function_b; }
-function_b() { function_a; }  # Circular dependency!
+function_b() { function_a; }  # Circular!
 
 # âœ“ Correct - extract common logic to lower-level function
 common_logic() { ... }
@@ -149,21 +138,18 @@ function_a() { common_logic; }
 function_b() { common_logic; }
 ```
 
-**Within-layer ordering guidelines:**
+**Within-layer ordering:**
 
-| Layer | Ordering Strategy |
-|-------|-------------------|
-| 1 (Messaging) | By severity: `_msg()` â†' `info()` â†' `success()` â†' `warn()` â†' `error()` â†' `die()` |
-| 3 (Helpers) | Alphabetically or by frequency of use |
-| 4 (Validation) | By execution sequence |
-| 5 (Business Logic) | By logical workflow sequence |
+- **Layer 1 (Messaging)**: Order by severity: `_msg()` â†' `info()` â†' `success()` â†' `warn()` â†' `error()` â†' `die()`
+- **Layer 3-4 (Helpers/Validation)**: Alphabetically or by frequency of use
+- **Layer 5 (Business Logic)**: By logical workflow sequence
 
 **Edge cases:**
 
 **1. Circular dependencies:**
 ```bash
 # Extract common logic to lower layer
-shared_validation() { ... }
+shared_validation() { ... }  # Lower layer
 function_a() { shared_validation; ... }
 function_b() { shared_validation; ... }
 ```
@@ -173,20 +159,15 @@ function_b() { shared_validation; ... }
 # Place source statements after messaging layer
 info() { ... }
 warn() { ... }
-error() { ... }
-die() { ... }
-
-source "$SCRIPT_DIR"/lib/common.sh  # May define additional utilities
-
-validate_email() { ... }  # Can now use both messaging AND library functions
+source "$SCRIPT_DIR"/lib/common.sh  # After messaging
+validate_email() { ... }  # Can use both messaging AND library
 ```
 
 **3. Private functions:**
 ```bash
-# Functions prefixed with _ are private/internal
-# Place in same layer as public functions that use them
+# Prefix with _, place in same layer as public functions that use them
 _msg() { ... }  # Private core utility
 info() { >&2 _msg "$@"; }  # Public wrapper
 ```
 
-**Key principle:** Bottom-up organization mirrors how programmers think: understand primitives first, then compositions. This pattern eliminates forward reference issues and makes scripts immediately understandable.
+**Key principle:** Each function can safely call functions defined ABOVE it. Dependencies flow downwardâ€”higher functions call lower functions, never upward. This mirrors how programmers think and eliminates forward reference issues.

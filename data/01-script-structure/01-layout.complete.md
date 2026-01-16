@@ -400,8 +400,8 @@ main() {
       -V|--version)  echo "$SCRIPT_NAME $VERSION"; return 0 ;;
       -h|--help)     show_help; return 0 ;;
 
-      -[pvqnfVh]*) #shellcheck disable=SC2046 #split up single options
-                     set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+      -[pvqnfVh]?*)  # Bundled short options
+                     set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
       -*)            die 22 "Invalid option ${1@Q}" ;;
       *)             INPUT_FILES+=("$1") ;;
     esac

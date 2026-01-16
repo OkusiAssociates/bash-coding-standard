@@ -364,8 +364,8 @@ main() {
     -v|--verbose) VERBOSE+=1 ;;
     -q|--quiet)   VERBOSE=0 ;;
     -n|--dry-run) DRY_RUN=1 ;;
-    -[Vhvqn]*) #shellcheck disable=SC2046 # Split combined short options: -Dv -> -D -v
-                  set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+    -[Vhvqn]?*)  # Bundled short options
+                  set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
     -*)           die 22 "Invalid option ${1@Q}" ;;
     *)            die 2 "Unexpected argument ${1@Q}" ;;
   esac; shift; done

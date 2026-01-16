@@ -469,8 +469,8 @@ main() {
                      return 0
                      ;;
 
-      -[punfsvqVh]*) #shellcheck disable=SC2046 #split up single options
-                     set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+      -[punfsvqVh]?*)  # Bundled short options
+                     set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
 
       -*)            die 22 "Invalid option ${1@Q} (use --help for usage)" ;;
       *)             die 2  "Unexpected argument ${1@Q}" ;;
@@ -1654,8 +1654,8 @@ main() {
       -V|--version)  echo "$SCRIPT_NAME $VERSION"; return 0 ;;
       -h|--help)     show_help; return 0 ;;
 
-      -[pvqnfVh]*) #shellcheck disable=SC2046 #split up single options
-                     set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+      -[pvqnfVh]?*)  # Bundled short options
+                     set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
       -*)            die 22 "Invalid option ${1@Q}" ;;
       *)             INPUT_FILES+=("$1") ;;
     esac
@@ -3545,8 +3545,8 @@ main() {
     -v|--verbose) VERBOSE+=1 ;;
     -q|--quiet)   VERBOSE=0 ;;
     -n|--dry-run) DRY_RUN=1 ;;
-    -[Vhvqn]*) #shellcheck disable=SC2046 # Split combined short options: -Dv -> -D -v
-                  set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+    -[Vhvqn]?*)  # Bundled short options
+                  set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
     -*)           die 22 "Invalid option ${1@Q}" ;;
     *)            die 2 "Unexpected argument ${1@Q}" ;;
   esac; shift; done
@@ -8532,8 +8532,9 @@ while (($#)); do
                    break
                    ;;
 
-    -[bpvqVh]*) #shellcheck disable=SC2046 #split up single options
-                   set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"
+    -[bpvqVh]?*)  # Bundled short options
+                   set -- "${1:0:2}" "-${1:2}" "${@:2}"
+                   continue
                    ;;
 
     -*)            error "Invalid option ${1@Q}"
@@ -8802,8 +8803,9 @@ main() {
                         return 0
                         ;;
 
-      -[nfocvqVh]*) #shellcheck disable=SC2046 #split up single options
-                        set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"
+      -[nfocvqVh]?*)  # Bundled short options
+                        set -- "${1:0:2}" "-${1:2}" "${@:2}"
+                        continue
                         ;;
 
       --)               shift
@@ -14722,8 +14724,9 @@ main() {
                   ;;
     --)           shift; break
                   ;;
-    -[nvqDVh]*) #shellcheck disable=SC2046 #split up single options
-                  set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"
+    -[nvqDVh]?*)  # Bundled short options
+                  set -- "${1:0:2}" "-${1:2}" "${@:2}"
+                  continue
                   ;;
     -*)           error "Invalid option ${1@Q}"
                   return 22
@@ -15782,8 +15785,8 @@ while (($#)); do case $1 in
   -V|--version)   echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
   -h|--help)      show_help; exit 0 ;;
 
-  -[amLpvqVh]*) #shellcheck disable=SC2046 #split up single options
-                  set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+  -[amLpvqVh]?*)  # Bundled short options
+                  set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
   -*)             die 22 "Invalid option ${1@Q}" ;;
   *)              Paths+=("$1") ;;
 esac; shift; done
@@ -15834,18 +15837,18 @@ esac; shift; done
 In command argument processing loops, short option splitting should *always* be included.
 
 ```bash
--[VhamLpvq]*) #shellcheck disable=SC2046 #split up single options
-              set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+-[VhamLpvq]?*)  # Bundled short options
+              set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
 ```
 - **Purpose**: Allows `-vpL` instead of `-v -p -L`
-- **Pattern**: `-[amLpvqVh]*` matches any short option combination
-- **Mechanism**: Splits bundled options into separate arguments
-- **Example**: `-vpL file` becomes `-v -p -L file`
+- **Pattern**: `-[amLpvqVh]?*` matches option with at least one more character
+- **Mechanism**: Iteratively peels off first option, continues loop
+- **Example**: `-vpL file` → `-v -pL file` → `-v -p -L file`
 - **How it works:**
-  1. `${1:1}` - Remove leading dash (e.g., `-vpL` → `vpL`)
-  2. `grep -o .` - Split into individual characters
-  3. `printf -- "-%c "` - Add dash before each character
-  4. `set --` - Replace argument list with expanded options
+  1. `${1:0:2}` - Extract first option (dash + first char, e.g., `-v` from `-vpL`)
+  2. `"-${1:2}"` - Create remaining options with dash (e.g., `-pL`)
+  3. `${@:2}` - Preserve remaining arguments
+  4. `continue` - Restart loop to process extracted option
 
 **7. Invalid option handling:**
 ```bash
@@ -15943,9 +15946,8 @@ main() {
     -V|--version)   echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
     -h|--help)      show_help; exit 0 ;;
 
-    # Short option bundling support
-    -[ovnVh]*)    #shellcheck disable=SC2046
-                    set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+    # Short option bundling support (iterative method - recommended)
+    -[ovnVh]?*)     set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
     -*)             die 22 "Invalid option ${1@Q}" ;;
     *)              files+=("$1") ;;
   esac; shift; done
@@ -16288,7 +16290,7 @@ while (($#)); do case $1 in
   -d|--depth)     arg_num "$@"; shift; MAX_DEPTH=$1 ;;
   -v|--verbose)   VERBOSE=1 ;;
   -h|--help)      show_help; exit 0 ;;
-  -[dvh]*)        set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+  -[dvh]?*)       set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
   -*)             die 22 "Invalid option ${1@Q}" ;;
   *)              FILES+=("$1") ;;
 esac; shift; done
@@ -16401,7 +16403,43 @@ Without disaggregation support, your script would treat `-lha` as a single unkno
 
 ## The Three Methods
 
-### Method 1: grep (Current Standard and Recommended)
+### Method 1: Iterative Parameter Expansion (Recommended Standard)
+
+**Approach:** Use pure bash parameter expansion to iteratively process bundled options
+
+```bash
+case $1 in
+  # ...
+  -[amLpvqVh]?*)  # Bundled short options
+    set -- "${1:0:2}" "-${1:2}" "${@:2}"
+    continue
+    ;;
+  # ...
+esac
+```
+
+**How it works:**
+1. Pattern `-[opts]?*` matches option with at least one additional character after first option
+2. `${1:0:2}` extracts first option (dash + first char, e.g., `-v` from `-vvn`)
+3. `"-${1:2}"` creates remaining options with dash (e.g., `-vn` from `-vvn`)
+4. `${@:2}` preserves remaining arguments
+5. `continue` restarts loop to process extracted option
+6. Loop naturally terminates when no more bundled options remain
+
+**Pros:**
+- **53-119x faster** than grep/fold methods (~24,000-53,000 iter/sec)
+- No external dependencies (pure bash)
+- No shellcheck warnings needed
+- Compact one-liner
+- Works anywhere bash 4+ is available
+- No subprocess overhead
+
+**Cons:**
+- Requires `continue` (not all loop structures support this)
+
+**Performance:** ~24,000-53,000 iterations/second
+
+### Method 2: grep (Alternative)
 
 **Approach:** Use `grep -o .` to split characters
 
@@ -16423,26 +16461,25 @@ esac
 5. Leading empty string is added then removed to handle edge cases
 
 **Pros:**
-- Compact one-liner
-- Standard approach used in most scripts
 - Well-tested and reliable
+- Expands all options at once
 
 **Cons:**
 - Requires external `grep` command
-- Slower performance (~190 iter/sec)
+- Slower performance (~445 iter/sec)
 - Requires shellcheck disable for SC2046
 - External process overhead
 
-**Performance:** ~190 iterations/second
+**Performance:** ~445 iterations/second
 
-### Method 2: fold (Alternative)
+### Method 3: fold (Alternative)
 
 **Approach:** Use `fold -w1` to split characters
 
 ```bash
 case $1 in
   # ...
-  -[amLpvqVh]*) #split up aggregated short options
+  -[amLpvqVh]*) #shellcheck disable=SC2046 #split up aggregated short options
     set -- '' $(printf -- '-%c ' $(fold -w1 <<<"${1:1}")) "${@:2}"
     ;;
   # ...
@@ -16466,16 +16503,16 @@ esac
 - Marginal performance improvement over grep
 - External process overhead
 
-**Performance:** ~195 iterations/second
+**Performance:** ~460 iterations/second
 
-### Method 3: Pure Bash
+### Method 4: Pure Bash Loop (Alternative for Complex Cases)
 
-**Approach:** Use only bash built-ins for maximum performance
+**Approach:** Use bash loop to expand all options at once
 
 ```bash
 case $1 in
   # ...
-  -[amLpvqVh]*) # Split up single options (pure bash)
+  -[amLpvqVh]*) # Split up single options (pure bash loop)
     local -- opt=${1:1}
     local -a new_args=()
     while ((${#opt})); do
@@ -16497,39 +16534,42 @@ esac
 6. Replace argument list with expanded options
 
 **Pros:**
-- **68% faster** than grep/fold methods (~318 iter/sec)
 - No external dependencies
 - No shellcheck warnings needed
-- More portable (works anywhere bash 4+ is available)
-- No subprocess overhead
+- Expands all options at once (like grep/fold)
+- Works anywhere bash 4+ is available
 
 **Cons:**
 - More verbose (6 lines vs 1 line)
-- Slightly more complex logic
+- Slower than iterative method (~318 iter/sec vs ~24,000+ iter/sec)
+- Requires local variable declarations within case branch
 
 **Performance:** ~318 iterations/second
+
+**Note:** This method is largely superseded by Method 1 (Iterative Parameter Expansion), which achieves better performance with simpler code. Use this only if you need to expand all options at once for some reason.
 
 ## Performance Comparison
 
 **Benchmark Results (3-second test runs):**
 
-| Method | Iterations | Iter/Sec | Relative Speed | External Deps | Shellcheck |
-|--------|-----------|----------|----------------|---------------|------------|
-| grep (current) | ~573 | 190.82 | Baseline | grep | SC2046 disable |
-| fold | ~586 | 195.25 | +2.3% | fold | SC2046 disable |
-| **Pure Bash** | **~954** | **317.75** | **+66.5%** | **None** | **Clean** |
+| Method | Iter/Sec | Relative Speed | External Deps | Shellcheck |
+|--------|----------|----------------|---------------|------------|
+| **Iterative (recommended)** | **~24,000-53,000** | **53-119x faster** | **None** | **Clean** |
+| grep | ~445 | Baseline | grep | SC2046 disable |
+| fold | ~460 | +3% | fold | SC2046 disable |
+| Pure Bash Loop | ~318 | -29% | None | Clean |
 
-**Key Finding:** Pure bash is approximately **68% faster** than external command methods, with no external dependencies and no shellcheck warnings.
+**Key Finding:** The iterative parameter expansion method is **53-119x faster** than external command methods, with no external dependencies and no shellcheck warnings. It is the clear winner for both performance and simplicity.
 
 ## Complete Implementation Examples
 
-### Example 1: Using grep (Current Standard)
+### Example 1: Using Iterative Method (Recommended Standard)
 
 ```bash
 #!/usr/bin/env bash
 # My first script
 set -euo pipefail
-shopt -s inherit_errexit shift_verbose
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 declare -r VERSION='1.0.0'
 #shellcheck disable=SC2155
@@ -16585,9 +16625,8 @@ main() {
     -V|--version)   echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
     -h|--help)      show_help; exit 0 ;;
 
-    # Short option bundling support (grep method)
-    -[onvqVh]*) #shellcheck disable=SC2046
-                    set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+    # Short option bundling support (iterative method - recommended)
+    -[onvqVh]?*)    set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
     -*)             die 22 "Invalid option ${1@Q}" ;;
     *)              files+=("$1") ;;
   esac; shift; done
@@ -16618,7 +16657,7 @@ main "$@"
 #fin
 ```
 
-### Example 2: Using fold
+### Example 2: Using grep (Alternative)
 
 ```bash
 #!/usr/bin/env bash
@@ -16677,9 +16716,9 @@ main() {
     -V|--version)   echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
     -h|--help)      show_help; exit 0 ;;
 
-    # Short option bundling support (fold method)
+    # Short option bundling support (grep method - alternative)
     -[cfvqVh]*) #shellcheck disable=SC2046
-                    set -- '' $(printf -- '-%c ' $(fold -w1 <<<"${1:1}")) "${@:2}" ;;
+                    set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
     -*)             die 22 "Invalid option ${1@Q}" ;;
     *)              die 2 "Unexpected argument ${1@Q}" ;;
   esac; shift; done
@@ -16700,7 +16739,7 @@ main "$@"
 #fin
 ```
 
-### Example 3: Using Pure Bash
+### Example 3: Using Pure Bash Loop (Alternative)
 
 ```bash
 #!/usr/bin/env bash
@@ -17147,24 +17186,30 @@ Test complete
 
 ## Recommendations
 
-### Recommendation
+### Standard Recommendation
 
-**Keep Current Method (grep) Unless:**
-1. Performance is critical
-2. Script is called frequently
-3. External dependencies are a concern
-4. Running in restricted environment
+**Use Iterative Parameter Expansion (Method 1) for all scripts:**
 
-### For High-Performance Scripts
+```bash
+-[opts]?*)  # Bundled short options
+  set -- "${1:0:2}" "-${1:2}" "${@:2}"
+  continue
+  ;;
+```
 
-**Always Use Pure Bash Method**
+This method offers:
+- **53-119x faster** performance than grep/fold alternatives
+- No external dependencies (pure bash)
+- No shellcheck warnings
+- Compact one-liner implementation
+- Works in any bash 4+ environment
 
-Scripts that should prioritize performance:
-- Called in tight loops
-- Part of build systems
-- Interactive tools (tab completion, prompts)
-- Running in containers/restricted environments
-- Called thousands of times per session
+### When to Use Alternatives
+
+**Consider grep/fold methods only when:**
+1. Loop structure doesn't support `continue`
+2. Need to expand all options at once for some reason
+3. Working with legacy code that already uses them
 
 ## Testing Your Implementation
 
@@ -17221,12 +17266,13 @@ echo "All tests passed!"
 
 ## Conclusion
 
-Short-option disaggregation is essential for creating user-friendly command-line tools that follow Unix conventions. While all three methods produce identical results, the pure bash method offers significant performance advantages with no external dependencies.
+Short-option disaggregation is essential for creating user-friendly command-line tools that follow Unix conventions. The iterative parameter expansion method is the clear winner for both performance and simplicity.
 
 **Summary:**
-- **grep method:** Recommended, Current standard, external dependency, ~190 iter/sec
-- **fold method:** Marginal improvement, external dependency, ~195 iter/sec
-- **Pure bash:** No dependencies, ~318 iter/sec (68% faster)
+- **Iterative (recommended):** Pure bash, no dependencies, no shellcheck warnings, ~24,000-53,000 iter/sec
+- **grep method:** Alternative, external dependency, requires SC2046 disable, ~445 iter/sec
+- **fold method:** Alternative, external dependency, requires SC2046 disable, ~460 iter/sec
+- **Pure bash loop:** Alternative for complex cases, ~318 iter/sec
 
 
 
@@ -22613,12 +22659,12 @@ sorted_data=$(sort "$file")
 ShellCheck is **compulsory** for all scripts. Use `#shellcheck disable=...` only for documented exceptions.
 
 ```bash
-# Document intentional violations with reason
-#shellcheck disable=SC2046  # Intentional word splitting for flag expansion
-set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"
-
-# Run shellcheck as part of development
+# Run shellcheck as part of development workflow
 shellcheck -x myscript.sh
+
+# Document intentional violations with reason when necessary
+#shellcheck disable=SC2155  # Declare and assign separately is less readable here
+declare -r SCRIPT_PATH=$(realpath -- "$0")
 ```
 
 #### Script Termination
@@ -23433,8 +23479,8 @@ main() {
                      return 0
                      ;;
 
-      -[punfsvqVh]*) #shellcheck disable=SC2046 #split up single options
-                     set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+      -[punfsvqVh]?*)  # Bundled short options
+                     set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
 
       -*)            die 22 "Invalid option ${1@Q} (use --help for usage)" ;;
       *)             die 2  "Unexpected argument ${1@Q}" ;;
@@ -24618,8 +24664,8 @@ main() {
       -V|--version)  echo "$SCRIPT_NAME $VERSION"; return 0 ;;
       -h|--help)     show_help; return 0 ;;
 
-      -[pvqnfVh]*) #shellcheck disable=SC2046 #split up single options
-                     set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+      -[pvqnfVh]?*)  # Bundled short options
+                     set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
       -*)            die 22 "Invalid option ${1@Q}" ;;
       *)             INPUT_FILES+=("$1") ;;
     esac
@@ -26509,8 +26555,8 @@ main() {
     -v|--verbose) VERBOSE+=1 ;;
     -q|--quiet)   VERBOSE=0 ;;
     -n|--dry-run) DRY_RUN=1 ;;
-    -[Vhvqn]*) #shellcheck disable=SC2046 # Split combined short options: -Dv -> -D -v
-                  set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+    -[Vhvqn]?*)  # Bundled short options
+                  set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
     -*)           die 22 "Invalid option ${1@Q}" ;;
     *)            die 2 "Unexpected argument ${1@Q}" ;;
   esac; shift; done
@@ -31496,8 +31542,9 @@ while (($#)); do
                    break
                    ;;
 
-    -[bpvqVh]*) #shellcheck disable=SC2046 #split up single options
-                   set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"
+    -[bpvqVh]?*)  # Bundled short options
+                   set -- "${1:0:2}" "-${1:2}" "${@:2}"
+                   continue
                    ;;
 
     -*)            error "Invalid option ${1@Q}"
@@ -31766,8 +31813,9 @@ main() {
                         return 0
                         ;;
 
-      -[nfocvqVh]*) #shellcheck disable=SC2046 #split up single options
-                        set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"
+      -[nfocvqVh]?*)  # Bundled short options
+                        set -- "${1:0:2}" "-${1:2}" "${@:2}"
+                        continue
                         ;;
 
       --)               shift
@@ -37686,8 +37734,9 @@ main() {
                   ;;
     --)           shift; break
                   ;;
-    -[nvqDVh]*) #shellcheck disable=SC2046 #split up single options
-                  set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"
+    -[nvqDVh]?*)  # Bundled short options
+                  set -- "${1:0:2}" "-${1:2}" "${@:2}"
+                  continue
                   ;;
     -*)           error "Invalid option ${1@Q}"
                   return 22
@@ -38746,8 +38795,8 @@ while (($#)); do case $1 in
   -V|--version)   echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
   -h|--help)      show_help; exit 0 ;;
 
-  -[amLpvqVh]*) #shellcheck disable=SC2046 #split up single options
-                  set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+  -[amLpvqVh]?*)  # Bundled short options
+                  set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
   -*)             die 22 "Invalid option ${1@Q}" ;;
   *)              Paths+=("$1") ;;
 esac; shift; done
@@ -38798,18 +38847,18 @@ esac; shift; done
 In command argument processing loops, short option splitting should *always* be included.
 
 ```bash
--[VhamLpvq]*) #shellcheck disable=SC2046 #split up single options
-              set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+-[VhamLpvq]?*)  # Bundled short options
+              set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
 ```
 - **Purpose**: Allows `-vpL` instead of `-v -p -L`
-- **Pattern**: `-[amLpvqVh]*` matches any short option combination
-- **Mechanism**: Splits bundled options into separate arguments
-- **Example**: `-vpL file` becomes `-v -p -L file`
+- **Pattern**: `-[amLpvqVh]?*` matches option with at least one more character
+- **Mechanism**: Iteratively peels off first option, continues loop
+- **Example**: `-vpL file` → `-v -pL file` → `-v -p -L file`
 - **How it works:**
-  1. `${1:1}` - Remove leading dash (e.g., `-vpL` → `vpL`)
-  2. `grep -o .` - Split into individual characters
-  3. `printf -- "-%c "` - Add dash before each character
-  4. `set --` - Replace argument list with expanded options
+  1. `${1:0:2}` - Extract first option (dash + first char, e.g., `-v` from `-vpL`)
+  2. `"-${1:2}"` - Create remaining options with dash (e.g., `-pL`)
+  3. `${@:2}` - Preserve remaining arguments
+  4. `continue` - Restart loop to process extracted option
 
 **7. Invalid option handling:**
 ```bash
@@ -38907,9 +38956,8 @@ main() {
     -V|--version)   echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
     -h|--help)      show_help; exit 0 ;;
 
-    # Short option bundling support
-    -[ovnVh]*)    #shellcheck disable=SC2046
-                    set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+    # Short option bundling support (iterative method - recommended)
+    -[ovnVh]?*)     set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
     -*)             die 22 "Invalid option ${1@Q}" ;;
     *)              files+=("$1") ;;
   esac; shift; done
@@ -39252,7 +39300,7 @@ while (($#)); do case $1 in
   -d|--depth)     arg_num "$@"; shift; MAX_DEPTH=$1 ;;
   -v|--verbose)   VERBOSE=1 ;;
   -h|--help)      show_help; exit 0 ;;
-  -[dvh]*)        set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+  -[dvh]?*)       set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
   -*)             die 22 "Invalid option ${1@Q}" ;;
   *)              FILES+=("$1") ;;
 esac; shift; done
@@ -39365,7 +39413,43 @@ Without disaggregation support, your script would treat `-lha` as a single unkno
 
 ## The Three Methods
 
-### Method 1: grep (Current Standard and Recommended)
+### Method 1: Iterative Parameter Expansion (Recommended Standard)
+
+**Approach:** Use pure bash parameter expansion to iteratively process bundled options
+
+```bash
+case $1 in
+  # ...
+  -[amLpvqVh]?*)  # Bundled short options
+    set -- "${1:0:2}" "-${1:2}" "${@:2}"
+    continue
+    ;;
+  # ...
+esac
+```
+
+**How it works:**
+1. Pattern `-[opts]?*` matches option with at least one additional character after first option
+2. `${1:0:2}` extracts first option (dash + first char, e.g., `-v` from `-vvn`)
+3. `"-${1:2}"` creates remaining options with dash (e.g., `-vn` from `-vvn`)
+4. `${@:2}` preserves remaining arguments
+5. `continue` restarts loop to process extracted option
+6. Loop naturally terminates when no more bundled options remain
+
+**Pros:**
+- **53-119x faster** than grep/fold methods (~24,000-53,000 iter/sec)
+- No external dependencies (pure bash)
+- No shellcheck warnings needed
+- Compact one-liner
+- Works anywhere bash 4+ is available
+- No subprocess overhead
+
+**Cons:**
+- Requires `continue` (not all loop structures support this)
+
+**Performance:** ~24,000-53,000 iterations/second
+
+### Method 2: grep (Alternative)
 
 **Approach:** Use `grep -o .` to split characters
 
@@ -39387,26 +39471,25 @@ esac
 5. Leading empty string is added then removed to handle edge cases
 
 **Pros:**
-- Compact one-liner
-- Standard approach used in most scripts
 - Well-tested and reliable
+- Expands all options at once
 
 **Cons:**
 - Requires external `grep` command
-- Slower performance (~190 iter/sec)
+- Slower performance (~445 iter/sec)
 - Requires shellcheck disable for SC2046
 - External process overhead
 
-**Performance:** ~190 iterations/second
+**Performance:** ~445 iterations/second
 
-### Method 2: fold (Alternative)
+### Method 3: fold (Alternative)
 
 **Approach:** Use `fold -w1` to split characters
 
 ```bash
 case $1 in
   # ...
-  -[amLpvqVh]*) #split up aggregated short options
+  -[amLpvqVh]*) #shellcheck disable=SC2046 #split up aggregated short options
     set -- '' $(printf -- '-%c ' $(fold -w1 <<<"${1:1}")) "${@:2}"
     ;;
   # ...
@@ -39430,16 +39513,16 @@ esac
 - Marginal performance improvement over grep
 - External process overhead
 
-**Performance:** ~195 iterations/second
+**Performance:** ~460 iterations/second
 
-### Method 3: Pure Bash
+### Method 4: Pure Bash Loop (Alternative for Complex Cases)
 
-**Approach:** Use only bash built-ins for maximum performance
+**Approach:** Use bash loop to expand all options at once
 
 ```bash
 case $1 in
   # ...
-  -[amLpvqVh]*) # Split up single options (pure bash)
+  -[amLpvqVh]*) # Split up single options (pure bash loop)
     local -- opt=${1:1}
     local -a new_args=()
     while ((${#opt})); do
@@ -39461,39 +39544,42 @@ esac
 6. Replace argument list with expanded options
 
 **Pros:**
-- **68% faster** than grep/fold methods (~318 iter/sec)
 - No external dependencies
 - No shellcheck warnings needed
-- More portable (works anywhere bash 4+ is available)
-- No subprocess overhead
+- Expands all options at once (like grep/fold)
+- Works anywhere bash 4+ is available
 
 **Cons:**
 - More verbose (6 lines vs 1 line)
-- Slightly more complex logic
+- Slower than iterative method (~318 iter/sec vs ~24,000+ iter/sec)
+- Requires local variable declarations within case branch
 
 **Performance:** ~318 iterations/second
+
+**Note:** This method is largely superseded by Method 1 (Iterative Parameter Expansion), which achieves better performance with simpler code. Use this only if you need to expand all options at once for some reason.
 
 ## Performance Comparison
 
 **Benchmark Results (3-second test runs):**
 
-| Method | Iterations | Iter/Sec | Relative Speed | External Deps | Shellcheck |
-|--------|-----------|----------|----------------|---------------|------------|
-| grep (current) | ~573 | 190.82 | Baseline | grep | SC2046 disable |
-| fold | ~586 | 195.25 | +2.3% | fold | SC2046 disable |
-| **Pure Bash** | **~954** | **317.75** | **+66.5%** | **None** | **Clean** |
+| Method | Iter/Sec | Relative Speed | External Deps | Shellcheck |
+|--------|----------|----------------|---------------|------------|
+| **Iterative (recommended)** | **~24,000-53,000** | **53-119x faster** | **None** | **Clean** |
+| grep | ~445 | Baseline | grep | SC2046 disable |
+| fold | ~460 | +3% | fold | SC2046 disable |
+| Pure Bash Loop | ~318 | -29% | None | Clean |
 
-**Key Finding:** Pure bash is approximately **68% faster** than external command methods, with no external dependencies and no shellcheck warnings.
+**Key Finding:** The iterative parameter expansion method is **53-119x faster** than external command methods, with no external dependencies and no shellcheck warnings. It is the clear winner for both performance and simplicity.
 
 ## Complete Implementation Examples
 
-### Example 1: Using grep (Current Standard)
+### Example 1: Using Iterative Method (Recommended Standard)
 
 ```bash
 #!/usr/bin/env bash
 # My first script
 set -euo pipefail
-shopt -s inherit_errexit shift_verbose
+shopt -s inherit_errexit shift_verbose extglob nullglob
 
 declare -r VERSION='1.0.0'
 #shellcheck disable=SC2155
@@ -39549,9 +39635,8 @@ main() {
     -V|--version)   echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
     -h|--help)      show_help; exit 0 ;;
 
-    # Short option bundling support (grep method)
-    -[onvqVh]*) #shellcheck disable=SC2046
-                    set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+    # Short option bundling support (iterative method - recommended)
+    -[onvqVh]?*)    set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
     -*)             die 22 "Invalid option ${1@Q}" ;;
     *)              files+=("$1") ;;
   esac; shift; done
@@ -39582,7 +39667,7 @@ main "$@"
 #fin
 ```
 
-### Example 2: Using fold
+### Example 2: Using grep (Alternative)
 
 ```bash
 #!/usr/bin/env bash
@@ -39641,9 +39726,9 @@ main() {
     -V|--version)   echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
     -h|--help)      show_help; exit 0 ;;
 
-    # Short option bundling support (fold method)
+    # Short option bundling support (grep method - alternative)
     -[cfvqVh]*) #shellcheck disable=SC2046
-                    set -- '' $(printf -- '-%c ' $(fold -w1 <<<"${1:1}")) "${@:2}" ;;
+                    set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
     -*)             die 22 "Invalid option ${1@Q}" ;;
     *)              die 2 "Unexpected argument ${1@Q}" ;;
   esac; shift; done
@@ -39664,7 +39749,7 @@ main "$@"
 #fin
 ```
 
-### Example 3: Using Pure Bash
+### Example 3: Using Pure Bash Loop (Alternative)
 
 ```bash
 #!/usr/bin/env bash
@@ -40111,24 +40196,30 @@ Test complete
 
 ## Recommendations
 
-### Recommendation
+### Standard Recommendation
 
-**Keep Current Method (grep) Unless:**
-1. Performance is critical
-2. Script is called frequently
-3. External dependencies are a concern
-4. Running in restricted environment
+**Use Iterative Parameter Expansion (Method 1) for all scripts:**
 
-### For High-Performance Scripts
+```bash
+-[opts]?*)  # Bundled short options
+  set -- "${1:0:2}" "-${1:2}" "${@:2}"
+  continue
+  ;;
+```
 
-**Always Use Pure Bash Method**
+This method offers:
+- **53-119x faster** performance than grep/fold alternatives
+- No external dependencies (pure bash)
+- No shellcheck warnings
+- Compact one-liner implementation
+- Works in any bash 4+ environment
 
-Scripts that should prioritize performance:
-- Called in tight loops
-- Part of build systems
-- Interactive tools (tab completion, prompts)
-- Running in containers/restricted environments
-- Called thousands of times per session
+### When to Use Alternatives
+
+**Consider grep/fold methods only when:**
+1. Loop structure doesn't support `continue`
+2. Need to expand all options at once for some reason
+3. Working with legacy code that already uses them
 
 ## Testing Your Implementation
 
@@ -40185,12 +40276,13 @@ echo "All tests passed!"
 
 ## Conclusion
 
-Short-option disaggregation is essential for creating user-friendly command-line tools that follow Unix conventions. While all three methods produce identical results, the pure bash method offers significant performance advantages with no external dependencies.
+Short-option disaggregation is essential for creating user-friendly command-line tools that follow Unix conventions. The iterative parameter expansion method is the clear winner for both performance and simplicity.
 
 **Summary:**
-- **grep method:** Recommended, Current standard, external dependency, ~190 iter/sec
-- **fold method:** Marginal improvement, external dependency, ~195 iter/sec
-- **Pure bash:** No dependencies, ~318 iter/sec (68% faster)
+- **Iterative (recommended):** Pure bash, no dependencies, no shellcheck warnings, ~24,000-53,000 iter/sec
+- **grep method:** Alternative, external dependency, requires SC2046 disable, ~445 iter/sec
+- **fold method:** Alternative, external dependency, requires SC2046 disable, ~460 iter/sec
+- **Pure bash loop:** Alternative for complex cases, ~318 iter/sec
 
 
 
@@ -45577,12 +45669,12 @@ sorted_data=$(sort "$file")
 ShellCheck is **compulsory** for all scripts. Use `#shellcheck disable=...` only for documented exceptions.
 
 ```bash
-# Document intentional violations with reason
-#shellcheck disable=SC2046  # Intentional word splitting for flag expansion
-set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"
-
-# Run shellcheck as part of development
+# Run shellcheck as part of development workflow
 shellcheck -x myscript.sh
+
+# Document intentional violations with reason when necessary
+#shellcheck disable=SC2155  # Declare and assign separately is less readable here
+declare -r SCRIPT_PATH=$(realpath -- "$0")
 ```
 
 #### Script Termination

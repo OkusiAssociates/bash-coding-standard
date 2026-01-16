@@ -1,18 +1,15 @@
 ## Case Statements
 
-**Use `case` for multi-way branching on single value; compact format for simple actions, expanded for multi-line logic. Always include `*)` default case.**
+**Use `case` for multi-way pattern matching; prefer over if/elif chains for single-variable tests. Always include `*)` default case.**
 
-**Rationale:** Single evaluation faster than if/elif chains; native pattern matching (wildcards, alternation); easy to add/remove cases.
+**Rationale:** Pattern matching with wildcards/alternation â†' single evaluation (faster than if/elif) â†' clearer visual structure with column alignment.
 
-**When to use:** Single variable vs multiple values, pattern matching, argument parsing. Use if/elif for: multiple variables, complex conditions, numeric ranges.
+**Formats:**
+- **Compact:** Single actions on same line, align `;;` at consistent column
+- **Expanded:** Multi-line logic, `;;` on separate line with blank line after
 
-**Format:**
-- **Compact:** Single-line actions, align `;;` at column 14-18
-- **Expanded:** Action on next line indented, `;;` on separate line, blank line between cases
+**Core example:**
 
-**Quoting:** Quote test variable `case "$var" in`; don't quote case expression `case $1 in`; don't quote literal patterns `start)` not `"start")`.
-
-**Example:**
 ```bash
 while (($#)); do
   case $1 in
@@ -28,9 +25,18 @@ while (($#)); do
 done
 ```
 
+**Pattern syntax:** Literal `start)` â†' Wildcard `*.txt)` â†' Alternation `-v|--verbose)` â†' Extglob `@(a|b)` (requires `shopt -s extglob`)
+
 **Anti-patterns:**
-- Missing `*)` default â†' silent failure on unexpected values
-- Mixing compact/expanded format inconsistently â†' poor readability
-- Using `[0-9]+` expecting regex â†' case uses glob patterns, not regex
+
+```bash
+# âœ— Missing default case
+case "$action" in start) ;; stop) ;; esac  # Silent failure on unknown
+
+# âœ— Use if/elif when testing multiple variables or numeric ranges
+if [[ "$a" && "$b" ]]; then ...  # Not: nested case statements
+```
+
+**Key rules:** Quote test variable `case "$var"` â†' Don't quote patterns `start)` not `"start")` â†' Always `;;` terminator â†' Use if for complex/multi-var logic.
 
 **Ref:** BCS0502

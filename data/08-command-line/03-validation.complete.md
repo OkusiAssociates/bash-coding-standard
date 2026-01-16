@@ -213,7 +213,7 @@ while (($#)); do case $1 in
   -d|--depth)     arg_num "$@"; shift; MAX_DEPTH=$1 ;;
   -v|--verbose)   VERBOSE=1 ;;
   -h|--help)      show_help; exit 0 ;;
-  -[dvh]*)        set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
+  -[dvh]?*)       set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
   -*)             die 22 "Invalid option ${1@Q}" ;;
   *)              FILES+=("$1") ;;
 esac; shift; done

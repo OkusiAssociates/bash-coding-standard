@@ -53,11 +53,11 @@ Key principles:
 
 ### Complete Working Example
 
-**Production script demonstrating all 13 mandatory BCS0101 layout steps.**
+**Production installation script demonstrating all 13 BCS0101 mandatory steps.**
 
 ---
 
-#### Minimal Template
+## Core Pattern (Minimal)
 
 ```bash
 #!/bin/bash
@@ -68,36 +68,46 @@ declare -r VERSION=1.0.0
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
-declare -i VERBOSE=1
-die() { (($# < 2)) || >&2 echo "$SCRIPT_NAME: âœ— ${@:2}"; exit "${1:-0}"; }
+declare -- PREFIX=/usr/local
+declare -i DRY_RUN=0 VERBOSE=1
 
 main() {
   while (($#)); do
     case $1 in
-      -h|--help) echo "Usage: $SCRIPT_NAME [options]"; return 0 ;;
-      -V|--version) echo "$VERSION"; return 0 ;;
-      -*) die 22 "Invalid option ${1@Q}" ;;
+      -n|--dry-run) DRY_RUN=1 ;;
+      -h|--help)    show_help; return 0 ;;
+      -*)           die 22 "Invalid option ${1@Q}" ;;
     esac
     shift
   done
-  # Business logic here
+  readonly PREFIX DRY_RUN VERBOSE
+  # business logic here
 }
-
 main "$@"
 #fin
 ```
 
-#### Key Patterns
+## Key Elements
 
-- **Dry-run**: Check `DRY_RUN` flag before operations â†' `((DRY_RUN==0)) || { info "[DRY-RUN]..."; return 0; }`
-- **Progressive readonly**: `readonly -- VAR1 VAR2` after argument parsing
+| Step | Purpose |
+|------|---------|
+| 1-5 | Shebang, shellcheck, description, strict mode, shopt |
+| 6-7 | Metadata (VERSION, SCRIPT_*), globals |
+| 8-9 | Colors (TTY-aware), utility functions |
+| 10-11 | Business logic, main() with arg parsing |
+| 12-13 | `main "$@"`, `#fin` marker |
+
+## Critical Patterns
+
+- **Dry-run**: Check `((DRY_RUN))` before every operation
 - **Derived paths**: Update dependent vars when base changes
-- **TTY-aware colors**: `[[ -t 1 ]] && RED=$'\033[31m' || RED=''`
+- **Progressive readonly**: Lock vars after argument parsing
+- **Validation first**: Check prerequisites before filesystem ops
 
-#### Anti-patterns
+## Anti-patterns
 
+- âœ— Modifying readonly vars after `readonly` declaration
 - âœ— Missing `#fin` end marker
-- âœ— Modifying readonly vars after declaration â†' `readonly: cannot unset`
 
 **Ref:** BCS010101
 
@@ -197,48 +207,55 @@ Globals scattered between functions â†' **Wrong**: group declarations
 
 **Rule: BCS0101**
 
-## BCS0101: Script Layout
+## Script Layout
 
-**13-step bottom-up structure: infrastructure â†' utilities â†' logic â†' orchestration.**
+**All scripts follow 13-step bottom-up structure: infrastructure â†' implementation â†' orchestration.**
 
 ### Rationale
-1. **Safe init** - `set -euo pipefail` before commands; dependencies before use
-2. **Predictability** - Metadataâ†'utilitiesâ†'logicâ†'main() in fixed order
-3. **Bottom-up** - Functions call only previously defined functions
+1. **Safe initialization** - `set -euo pipefail` runs before any commands
+2. **Dependency resolution** - functions defined before they're called
+3. **Predictability** - components always in same location
 
-### 13 Steps
+### The 13 Steps
 
-| # | Element |
-|---|---------|
-| 1 | `#!/bin/bash` |
-| 2 | ShellCheck directives (opt) |
-| 3 | Brief description |
-| 4 | `set -euo pipefail` **MANDATORY** |
-| 5 | `shopt -s inherit_errexit shift_verbose extglob nullglob` |
-| 6 | Metadata: `VERSION`, `SCRIPT_PATH`, `SCRIPT_DIR`, `SCRIPT_NAME` |
-| 7 | Globals with types (`declare -i/-a/-A/--`) |
-| 8 | Colors (terminal-conditional) |
-| 9 | Utilities (`info`, `warn`, `error`, `die`) |
-| 10 | Business logic |
-| 11 | `main()` with arg parsing |
-| 12 | `main "$@"` |
-| 13 | `#fin` **MANDATORY** |
+| # | Element | Required |
+|---|---------|----------|
+| 1 | `#!/bin/bash` | âœ“ |
+| 2 | `#shellcheck` directives | opt |
+| 3 | Brief description | opt |
+| 4 | `set -euo pipefail` | âœ“ |
+| 5 | `shopt -s inherit_errexit extglob nullglob` | rec |
+| 6 | Metadata: `VERSION`, `SCRIPT_PATH/DIR/NAME` | rec |
+| 7 | Global declarations (`declare -i/-a/-A/--`) | rec |
+| 8 | Color definitions (if terminal) | opt |
+| 9 | Utility functions (messaging) | rec |
+| 10 | Business logic functions | rec |
+| 11 | `main()` with arg parsing | rec |
+| 12 | `main "$@"` | rec |
+| 13 | `#fin` or `#end` | âœ“ |
 
-### Example
+### Minimal Example
+
 ```bash
 #!/bin/bash
 set -euo pipefail
-shopt -s inherit_errexit extglob nullglob
-declare -r VERSION=1.0.0 SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
-declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
-main() { echo "$SCRIPT_NAME $VERSION"; }
+declare -r VERSION=1.0.0
+declare -i VERBOSE=0
+
+info() { ((VERBOSE)) && >&2 echo "â—‰ $*"; }
+die() { (($#<2)) || >&2 echo "âœ— ${@:2}"; exit "${1:-1}"; }
+
+main() {
+  while (($#)); do case $1 in -v) VERBOSE=1;; *) break;; esac; shift; done
+  info "Running..."
+}
 main "$@"
 #fin
 ```
 
 ### Anti-Patterns
-- Missing `set -euo pipefail` â†' undefined error behavior
-- Business logic before utilities â†' undefined function calls
+- **Missing `set -euo pipefail`** â†' errors silently ignored
+- **Business logic before utilities** â†' undefined function calls
 
 **Ref:** BCS0101
 
@@ -469,47 +486,37 @@ for f in *.txt; do rm "$f"; done
 
 **Organize functions bottom-up: primitives first, `main()` last. Dependencies flow downward only.**
 
-### Rationale
-- **No forward references**: Bash reads top-to-bottom; functions must exist before called
-- **Debugging**: Read top-down, understand dependencies immediately
-- **Testability**: Low-level functions tested independently
+**Rationale:** No forward references (Bash reads top-to-bottom); clear dependency hierarchy aids debugging/maintenance.
 
-### 7-Layer Pattern
+**7-Layer Pattern:**
+1. Messaging (`_msg`, `info`, `warn`, `error`, `die`)
+2. Documentation (`show_help`, `show_version`)
+3. Utilities (`noarg`, `yn`, `trim`)
+4. Validation (`check_root`, `check_prerequisites`)
+5. Business logic (domain operations)
+6. Orchestration (coordinate business logic)
+7. `main()` â†' `main "$@"` invocation
+
 ```bash
-# 1. Messaging: _msg(), info(), warn(), error(), die()
-# 2. Helpers: noarg(), trim()
-# 3. Documentation: show_help(), show_version()
-# 4. Validation: check_root(), check_prerequisites()
-# 5. Business logic: build_project(), process_file()
-# 6. Orchestration: run_build_phase(), cleanup()
-# 7. main() - calls all layers
+# Layer 1: Messaging (no deps)
+info() { >&2 _msg "$@"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
-main() {
-  check_prerequisites
-  run_build_phase
-}
+# Layer 4: Validation (uses messaging)
+check_deps() { command -v git || die 1 "git required"; }
+
+# Layer 5: Business logic (uses all above)
+build() { check_deps; make all; }
+
+# Layer 7: main (calls everything)
+main() { build; }
 main "$@"
 ```
 
-### Anti-patterns
-```bash
-# âœ— main() at top â†' forward references
-main() { build_project; }  # Not defined yet!
-build_project() { ... }
-
-# âœ“ main() at bottom
-build_project() { ... }
-main() { build_project; }
-
-# âœ— Circular dependencies
-func_a() { func_b; }
-func_b() { func_a; }  # Bad!
-
-# âœ“ Extract common logic
-common() { ... }
-func_a() { common; }
-func_b() { common; }
-```
+**Anti-patterns:**
+- `main()` at top â†' forward references fail
+- Circular deps (Aâ†”B) â†' extract shared logic to lower layer
+- Random/alphabetical order ignoring deps â†' breaks call chain
 
 **Ref:** BCS0107
 
@@ -1621,19 +1628,16 @@ i+=1              # Safe increment (string append works for integers)
 
 ## Case Statements
 
-**Use `case` for multi-way branching on single value; compact format for simple actions, expanded for multi-line logic. Always include `*)` default case.**
+**Use `case` for multi-way pattern matching; prefer over if/elif chains for single-variable tests. Always include `*)` default case.**
 
-**Rationale:** Single evaluation faster than if/elif chains; native pattern matching (wildcards, alternation); easy to add/remove cases.
+**Rationale:** Pattern matching with wildcards/alternation â†' single evaluation (faster than if/elif) â†' clearer visual structure with column alignment.
 
-**When to use:** Single variable vs multiple values, pattern matching, argument parsing. Use if/elif for: multiple variables, complex conditions, numeric ranges.
+**Formats:**
+- **Compact:** Single actions on same line, align `;;` at consistent column
+- **Expanded:** Multi-line logic, `;;` on separate line with blank line after
 
-**Format:**
-- **Compact:** Single-line actions, align `;;` at column 14-18
-- **Expanded:** Action on next line indented, `;;` on separate line, blank line between cases
+**Core example:**
 
-**Quoting:** Quote test variable `case "$var" in`; don't quote case expression `case $1 in`; don't quote literal patterns `start)` not `"start")`.
-
-**Example:**
 ```bash
 while (($#)); do
   case $1 in
@@ -1649,10 +1653,19 @@ while (($#)); do
 done
 ```
 
+**Pattern syntax:** Literal `start)` â†' Wildcard `*.txt)` â†' Alternation `-v|--verbose)` â†' Extglob `@(a|b)` (requires `shopt -s extglob`)
+
 **Anti-patterns:**
-- Missing `*)` default â†' silent failure on unexpected values
-- Mixing compact/expanded format inconsistently â†' poor readability
-- Using `[0-9]+` expecting regex â†' case uses glob patterns, not regex
+
+```bash
+# âœ— Missing default case
+case "$action" in start) ;; stop) ;; esac  # Silent failure on unknown
+
+# âœ— Use if/elif when testing multiple variables or numeric ranges
+if [[ "$a" && "$b" ]]; then ...  # Not: nested case statements
+```
+
+**Key rules:** Quote test variable `case "$var"` â†' Don't quote patterns `start)` not `"start")` â†' Always `;;` terminator â†' Use if for complex/multi-var logic.
 
 **Ref:** BCS0502
 
@@ -2376,46 +2389,42 @@ EOT
 
 ## Echo vs Messaging Functions
 
-**Use messaging functions (`info`, `warn`, `error`) for statusâ†'stderr; plain `echo` for dataâ†'stdout.**
+**Use messaging functions (`info`, `warn`, `error`) for operational status â†' stderr; use `echo` for data output â†' stdout.**
 
-**Key distinction:** Messaging respects `VERBOSE` and goes to stderr. Echo always outputs to stdout for piping/capture.
+**Rationale:**
+- Stream separation: messagingâ†'stderr (user-facing), echoâ†'stdout (parseable data)
+- Verbosity: messaging respects `VERBOSE`, echo always displays
+- Pipeability: only stdout should contain data for capture/piping
 
-### When to Use Which
+**Decision matrix:**
+- Status/progress â†' messaging function
+- Data/return values â†' echo
+- Help/version â†' echo (always display)
+- Errors â†' `error()` to stderr
 
-| Output Type | Tool | Stream | Verbosity |
-|-------------|------|--------|-----------|
-| Status/progress | `info`, `warn` | stderr | Respects VERBOSE |
-| Errors | `error` | stderr | Always shows |
-| Data/results | `echo` | stdout | Always shows |
-| Help/version | `echo`/`cat` | stdout | Always shows |
-
-### Core Pattern
-
+**Example:**
 ```bash
 get_data() {
-  info "Processing..."     # Statusâ†'stderr (verbose-controlled)
-  echo "$result"           # Dataâ†'stdout (capturable)
+  info "Processing..."    # Status â†' stderr
+  echo "$result"          # Data â†' stdout
 }
-
-# Correct separation:
-output=$(get_data)         # Captures only data, sees status
+output=$(get_data)        # Captures only data
 ```
 
-### Anti-Patterns
-
+**Anti-patterns:**
 ```bash
-# âœ— Data via messaging - can't capture!
-get_value() { info "$val"; }
-x=$(get_value)  # Empty!
+# âœ— Using info() for data - can't capture
+get_email() { info "$email"; }     # Goes to stderr!
 
-# âœ— Status via echo - pollutes data stream
-process() { echo "Working..."; cat "$f"; }
+# âœ“ Use echo for data output
+get_email() { echo "$email"; }     # Capturable
 
-# âœ— Help via info() - hidden when VERBOSE=0
-show_help() { info "Usage: ..."; }
+# âœ— Echo for status - mixes with data
+echo "Processing..."               # Pollutes stdout
+
+# âœ“ Messaging for status
+info "Processing..."               # Clean separation
 ```
-
-**Rule:** Data=`echo`â†'stdout. Status=messagingâ†'stderr. Errors always stderr. Help/version always display.
 
 **Ref:** BCS0705
 
@@ -2580,48 +2589,39 @@ Anti-patterns: No `getopt`/`getopts` for long options â†' use `case`; no silent 
 
 ## Standard Argument Parsing Pattern
 
-**Use `while (($#)); do case $1 in...esac; shift; done` for all argument parsing.**
+**Use `while (($#)); do case $1 in ... esac; shift; done` for all CLI parsing.**
 
 ### Core Pattern
 
 ```bash
 while (($#)); do case $1 in
-  -o|--output)  noarg "$@"; shift; output=$1 ;;
-  -v|--verbose) VERBOSE+=1 ;;
-  -V|--version) echo "$VERSION"; exit 0 ;;
-  -h|--help)    show_help; exit 0 ;;
-  -[ovVh]*)     set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
-  -*)           die 22 "Invalid option ${1@Q}" ;;
-  *)            files+=("$1") ;;
+  -o|--output)    noarg "$@"; shift; output=$1 ;;
+  -v|--verbose)   VERBOSE+=1 ;;
+  -V|--version)   echo "$VERSION"; exit 0 ;;
+  -[ovV]?*)       set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+  -*)             die 22 "Invalid option ${1@Q}" ;;
+  *)              files+=("$1") ;;
 esac; shift; done
 ```
 
-### Key Elements
+### Key Components
 
-- **Options with args**: `noarg "$@"; shift` before capturing value
-- **Flags**: Set variable directly, loop-end shift handles advancement
-- **Short bundling**: `-[opts]*` pattern splits `-vvv` â†' `-v -v -v`
-- **noarg helper**: `noarg() { (($# > 1)) || die 2 "Option ${1@Q} requires an argument"; }`
+- **`noarg()`**: `(($# > 1)) || die 2 "Option ${1@Q} requires an argument"` â†' validate before shift
+- **Bundling**: `-[opts]?*)` splits `-vvn` â†' `-v -vn` â†' `-v -v -n` iteratively
+- **Exit handlers**: `-V`, `-h` print and `exit 0` immediately
+- **Default case**: `*)` collects positional args to array
 
 ### Anti-Patterns
 
-```bash
-# âœ— Missing noarg before shift
--o|--output) shift; output=$1 ;;        # Fails silently if no arg
-
-# âœ— Missing loop-end shift
-esac; done                              # Infinite loop!
-
-# âœ“ Correct
--o|--output) noarg "$@"; shift; output=$1 ;;
-esac; shift; done
-```
+- `while [[ $# -gt 0 ]]` â†' use `while (($#))`
+- Missing `noarg "$@"` before shift â†' silent failures
+- Missing `shift` after `esac` â†' infinite loop
 
 ### Rationale
 
-- `(($#))` more efficient than `[[ $# -gt 0 ]]`
-- Case statement more readable than if/elif chains
-- Uniform shift at loop end handles all branches
+1. `(($#))` arithmetic test more efficient than `[[ ]]`
+2. Case statements more readable than if/elif chains
+3. Bundling support (`-vvn`) follows Unix conventions
 
 **Ref:** BCS0801
 
@@ -2659,44 +2659,41 @@ esac; shift; done
 **Use validation helpers to ensure option arguments exist and are valid types before processing.**
 
 ### Rationale
-- Catches `--output --verbose` (missing filename) â†' prevents next option becoming value
-- Type validation prevents late arithmetic errors (`--depth abc`)
-- `${1@Q}` provides safe quoting in error messages
+- Catches `--output --verbose` where filename is missing â†' prevents using next option as value
+- Provides immediate clear errors vs silent failures or late arithmetic crashes
 
-### Three Validators
+### Validation Helpers
 
 ```bash
-# Existence check - arg doesn't start with '-'
-noarg() { (($# > 1)) && [[ ${2:0:1} != '-' ]] || die 2 "Missing argument for option ${1@Q}"; }
-
-# Enhanced string validation
+# String arg validation (prevents -prefix as value)
 arg2() { ((${#@}-1<1)) || [[ "${2:0:1}" == '-' ]] && die 2 "${1@Q} requires argument" ||:; }
 
-# Numeric validation (integers only)
-arg_num() { ((${#@}-1<1)) || [[ ! "$2" =~ ^[0-9]+$ ]] && die 2 "${1@Q} requires a numeric argument" ||:; }
+# Numeric arg validation (integer only)
+arg_num() { ((${#@}-1<1)) || [[ ! "$2" =~ ^[0-9]+$ ]] && die 2 "${1@Q} requires numeric argument" ||:; }
+
+# Usage in case statement
+-o|--output) arg2 "$@"; shift; OUTPUT=$1 ;;
+-d|--depth)  arg_num "$@"; shift; MAX_DEPTH=$1 ;;
 ```
 
-### Usage Pattern
+### Validator Selection
 
-```bash
-while (($#)); do case $1 in
-  -o|--output) arg2 "$@"; shift; OUTPUT=$1 ;;
-  -d|--depth)  arg_num "$@"; shift; MAX_DEPTH=$1 ;;
-  -v|--verbose) VERBOSE=1 ;;
-esac; shift; done
-```
+| Validator | Use Case |
+|-----------|----------|
+| `arg2()` | String args, prevent `-` prefix |
+| `arg_num()` | Integer args only |
 
 ### Anti-Patterns
 
 ```bash
-# âœ— No validation â†' OUTPUT='--verbose'
+# âœ— No validation â†' --output --verbose makes OUTPUT='--verbose'
 -o|--output) shift; OUTPUT=$1 ;;
 
-# âœ“ Validated
--o|--output) arg2 "$@"; shift; OUTPUT=$1 ;;
+# âœ— No type check â†' --depth abc causes late arithmetic error
+-d|--depth) shift; MAX_DEPTH=$1 ;;
 ```
 
-**Critical:** Call validator BEFORE `shift` - validator inspects `$2`.
+**Critical:** Call validator BEFORE `shift` â€” validator inspects `$2`.
 
 **Ref:** BCS0803
 
@@ -2745,39 +2742,43 @@ Top-level parsing in scripts >200 lines â†' harder to test, pollutes global scop
 
 # Short-Option Disaggregation
 
-**Split bundled options (`-abc` â†' `-a -b -c`) to follow Unix conventions.**
+**Split bundled options (`-abc` â†' `-a -b -c`) for Unix-compliant CLI parsing.**
 
-## Methods
-
-| Method | Speed | Deps | Notes |
-|--------|-------|------|-------|
-| grep | ~190/s | grep | Current standard |
-| fold | ~195/s | fold | Marginal gain |
-| **Pure Bash** | **~318/s** | None | **68% faster**, no shellcheck |
-
-## Pattern
+## Iterative Method (Recommended)
 
 ```bash
-# grep method (current standard)
--[ovnVh]*) #shellcheck disable=SC2046
-    set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
-
-# Pure bash (recommended for performance)
--[ovnVh]*)
-    local -- opt=${1:1}; local -a new_args=()
-    while ((${#opt})); do new_args+=("-${opt:0:1}"); opt=${opt:1}; done
-    set -- '' "${new_args[@]}" "${@:2}" ;;
+-[ovnVh]?*)  set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
 ```
 
-## Critical Rules
+**Pattern:** `${1:0:2}` extracts first option; `"-${1:2}"` creates remainder; `continue` reprocesses.
 
-- List valid options in pattern: `-[ovnVh]*`
-- Options with arguments must be at end of bundle or separate
-- Place before `-*)` invalid option case
+## Rationale
+
+- **53-119Ã— faster** than grep/fold (~24,000-53,000 vs ~450 iter/sec)
+- Pure bash, no external deps, no shellcheck warnings
+
+## Alternatives
+
+| Method | Speed | Notes |
+|--------|-------|-------|
+| grep | ~445/s | `set -- '' $(printf '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"` SC2046 |
+| fold | ~460/s | Same pattern with `fold -w1` |
+| bash loop | ~318/s | More verbose, no `continue` needed |
 
 ## Anti-patterns
 
-`-von output.txt` â†' `-o` captures `n` as argument (wrong order)
+```bash
+# âœ— Options with args mid-bundle
+-von file    # -o captures "n" as argument
+
+# âœ“ Args at end or separate
+-vno file    # -v -n -o file
+```
+
+## Edge Cases
+
+- List valid options explicitly: `-[ovnVh]?*` prevents unknown option disaggregation
+- Options requiring arguments must be at bundle end or separate
 
 **Ref:** BCS0805
 
@@ -3775,29 +3776,30 @@ string=$(echo "$var" | tr A-Z a-z)
 
 ## Development Practices
 
-**ShellCheck is compulsory; document all `disable=` directives with rationale. End scripts with `#fin` marker.**
+**ShellCheck mandatory; end scripts with `#fin`; program defensively.**
 
-### Core Patterns
+### ShellCheck
+- **Compulsory** for all scripts: `shellcheck -x script.sh`
+- Disable only with documented reason: `#shellcheck disable=SC2155  # reason`
 
+### Script Termination
 ```bash
-#shellcheck disable=SC2046  # Intentional word splitting
-shellcheck -x myscript.sh   # Run during development
-
-: "${VERBOSE:=0}"           # Default critical vars
-[[ -n "$1" ]] || die 1 'Argument required'
-set -u                      # Guard unset variables
-
 main "$@"
 #fin
 ```
 
-### Performance & Testing
+### Defensive Programming
+```bash
+: "${VERBOSE:=0}"              # Default values
+[[ -n "$1" ]] || die 1 'Arg required'  # Validate early
+set -u                         # Guard unset vars
+```
 
-- Minimize subshells; prefer builtins over external commands
-- Use process substitution over temp files
-- Return meaningful exit codes; support debug modes
+### Performance
+Minimize subshells â†' use builtins over external commands â†' batch ops â†' process substitution over temp files.
 
-`undocumented disable=` â†' silent violations | missing `#fin` â†' incomplete script
+### Testing
+Testable functions, dependency injection, verbose/debug modes, meaningful exit codes.
 
 **Ref:** BCS1206
 
@@ -4025,11 +4027,11 @@ Key principles:
 
 ### Complete Working Example
 
-**Production script demonstrating all 13 mandatory BCS0101 layout steps.**
+**Production installation script demonstrating all 13 BCS0101 mandatory steps.**
 
 ---
 
-#### Minimal Template
+## Core Pattern (Minimal)
 
 ```bash
 #!/bin/bash
@@ -4040,36 +4042,46 @@ declare -r VERSION=1.0.0
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
-declare -i VERBOSE=1
-die() { (($# < 2)) || >&2 echo "$SCRIPT_NAME: âœ— ${@:2}"; exit "${1:-0}"; }
+declare -- PREFIX=/usr/local
+declare -i DRY_RUN=0 VERBOSE=1
 
 main() {
   while (($#)); do
     case $1 in
-      -h|--help) echo "Usage: $SCRIPT_NAME [options]"; return 0 ;;
-      -V|--version) echo "$VERSION"; return 0 ;;
-      -*) die 22 "Invalid option ${1@Q}" ;;
+      -n|--dry-run) DRY_RUN=1 ;;
+      -h|--help)    show_help; return 0 ;;
+      -*)           die 22 "Invalid option ${1@Q}" ;;
     esac
     shift
   done
-  # Business logic here
+  readonly PREFIX DRY_RUN VERBOSE
+  # business logic here
 }
-
 main "$@"
 #fin
 ```
 
-#### Key Patterns
+## Key Elements
 
-- **Dry-run**: Check `DRY_RUN` flag before operations â†' `((DRY_RUN==0)) || { info "[DRY-RUN]..."; return 0; }`
-- **Progressive readonly**: `readonly -- VAR1 VAR2` after argument parsing
+| Step | Purpose |
+|------|---------|
+| 1-5 | Shebang, shellcheck, description, strict mode, shopt |
+| 6-7 | Metadata (VERSION, SCRIPT_*), globals |
+| 8-9 | Colors (TTY-aware), utility functions |
+| 10-11 | Business logic, main() with arg parsing |
+| 12-13 | `main "$@"`, `#fin` marker |
+
+## Critical Patterns
+
+- **Dry-run**: Check `((DRY_RUN))` before every operation
 - **Derived paths**: Update dependent vars when base changes
-- **TTY-aware colors**: `[[ -t 1 ]] && RED=$'\033[31m' || RED=''`
+- **Progressive readonly**: Lock vars after argument parsing
+- **Validation first**: Check prerequisites before filesystem ops
 
-#### Anti-patterns
+## Anti-patterns
 
+- âœ— Modifying readonly vars after `readonly` declaration
 - âœ— Missing `#fin` end marker
-- âœ— Modifying readonly vars after declaration â†' `readonly: cannot unset`
 
 **Ref:** BCS010101
 
@@ -4169,48 +4181,55 @@ Globals scattered between functions â†' **Wrong**: group declarations
 
 **Rule: BCS0101**
 
-## BCS0101: Script Layout
+## Script Layout
 
-**13-step bottom-up structure: infrastructure â†' utilities â†' logic â†' orchestration.**
+**All scripts follow 13-step bottom-up structure: infrastructure â†' implementation â†' orchestration.**
 
 ### Rationale
-1. **Safe init** - `set -euo pipefail` before commands; dependencies before use
-2. **Predictability** - Metadataâ†'utilitiesâ†'logicâ†'main() in fixed order
-3. **Bottom-up** - Functions call only previously defined functions
+1. **Safe initialization** - `set -euo pipefail` runs before any commands
+2. **Dependency resolution** - functions defined before they're called
+3. **Predictability** - components always in same location
 
-### 13 Steps
+### The 13 Steps
 
-| # | Element |
-|---|---------|
-| 1 | `#!/bin/bash` |
-| 2 | ShellCheck directives (opt) |
-| 3 | Brief description |
-| 4 | `set -euo pipefail` **MANDATORY** |
-| 5 | `shopt -s inherit_errexit shift_verbose extglob nullglob` |
-| 6 | Metadata: `VERSION`, `SCRIPT_PATH`, `SCRIPT_DIR`, `SCRIPT_NAME` |
-| 7 | Globals with types (`declare -i/-a/-A/--`) |
-| 8 | Colors (terminal-conditional) |
-| 9 | Utilities (`info`, `warn`, `error`, `die`) |
-| 10 | Business logic |
-| 11 | `main()` with arg parsing |
-| 12 | `main "$@"` |
-| 13 | `#fin` **MANDATORY** |
+| # | Element | Required |
+|---|---------|----------|
+| 1 | `#!/bin/bash` | âœ“ |
+| 2 | `#shellcheck` directives | opt |
+| 3 | Brief description | opt |
+| 4 | `set -euo pipefail` | âœ“ |
+| 5 | `shopt -s inherit_errexit extglob nullglob` | rec |
+| 6 | Metadata: `VERSION`, `SCRIPT_PATH/DIR/NAME` | rec |
+| 7 | Global declarations (`declare -i/-a/-A/--`) | rec |
+| 8 | Color definitions (if terminal) | opt |
+| 9 | Utility functions (messaging) | rec |
+| 10 | Business logic functions | rec |
+| 11 | `main()` with arg parsing | rec |
+| 12 | `main "$@"` | rec |
+| 13 | `#fin` or `#end` | âœ“ |
 
-### Example
+### Minimal Example
+
 ```bash
 #!/bin/bash
 set -euo pipefail
-shopt -s inherit_errexit extglob nullglob
-declare -r VERSION=1.0.0 SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
-declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
-main() { echo "$SCRIPT_NAME $VERSION"; }
+declare -r VERSION=1.0.0
+declare -i VERBOSE=0
+
+info() { ((VERBOSE)) && >&2 echo "â—‰ $*"; }
+die() { (($#<2)) || >&2 echo "âœ— ${@:2}"; exit "${1:-1}"; }
+
+main() {
+  while (($#)); do case $1 in -v) VERBOSE=1;; *) break;; esac; shift; done
+  info "Running..."
+}
 main "$@"
 #fin
 ```
 
 ### Anti-Patterns
-- Missing `set -euo pipefail` â†' undefined error behavior
-- Business logic before utilities â†' undefined function calls
+- **Missing `set -euo pipefail`** â†' errors silently ignored
+- **Business logic before utilities** â†' undefined function calls
 
 **Ref:** BCS0101
 
@@ -4441,47 +4460,37 @@ for f in *.txt; do rm "$f"; done
 
 **Organize functions bottom-up: primitives first, `main()` last. Dependencies flow downward only.**
 
-### Rationale
-- **No forward references**: Bash reads top-to-bottom; functions must exist before called
-- **Debugging**: Read top-down, understand dependencies immediately
-- **Testability**: Low-level functions tested independently
+**Rationale:** No forward references (Bash reads top-to-bottom); clear dependency hierarchy aids debugging/maintenance.
 
-### 7-Layer Pattern
+**7-Layer Pattern:**
+1. Messaging (`_msg`, `info`, `warn`, `error`, `die`)
+2. Documentation (`show_help`, `show_version`)
+3. Utilities (`noarg`, `yn`, `trim`)
+4. Validation (`check_root`, `check_prerequisites`)
+5. Business logic (domain operations)
+6. Orchestration (coordinate business logic)
+7. `main()` â†' `main "$@"` invocation
+
 ```bash
-# 1. Messaging: _msg(), info(), warn(), error(), die()
-# 2. Helpers: noarg(), trim()
-# 3. Documentation: show_help(), show_version()
-# 4. Validation: check_root(), check_prerequisites()
-# 5. Business logic: build_project(), process_file()
-# 6. Orchestration: run_build_phase(), cleanup()
-# 7. main() - calls all layers
+# Layer 1: Messaging (no deps)
+info() { >&2 _msg "$@"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
-main() {
-  check_prerequisites
-  run_build_phase
-}
+# Layer 4: Validation (uses messaging)
+check_deps() { command -v git || die 1 "git required"; }
+
+# Layer 5: Business logic (uses all above)
+build() { check_deps; make all; }
+
+# Layer 7: main (calls everything)
+main() { build; }
 main "$@"
 ```
 
-### Anti-patterns
-```bash
-# âœ— main() at top â†' forward references
-main() { build_project; }  # Not defined yet!
-build_project() { ... }
-
-# âœ“ main() at bottom
-build_project() { ... }
-main() { build_project; }
-
-# âœ— Circular dependencies
-func_a() { func_b; }
-func_b() { func_a; }  # Bad!
-
-# âœ“ Extract common logic
-common() { ... }
-func_a() { common; }
-func_b() { common; }
-```
+**Anti-patterns:**
+- `main()` at top â†' forward references fail
+- Circular deps (Aâ†”B) â†' extract shared logic to lower layer
+- Random/alphabetical order ignoring deps â†' breaks call chain
 
 **Ref:** BCS0107
 
@@ -5593,19 +5602,16 @@ i+=1              # Safe increment (string append works for integers)
 
 ## Case Statements
 
-**Use `case` for multi-way branching on single value; compact format for simple actions, expanded for multi-line logic. Always include `*)` default case.**
+**Use `case` for multi-way pattern matching; prefer over if/elif chains for single-variable tests. Always include `*)` default case.**
 
-**Rationale:** Single evaluation faster than if/elif chains; native pattern matching (wildcards, alternation); easy to add/remove cases.
+**Rationale:** Pattern matching with wildcards/alternation â†' single evaluation (faster than if/elif) â†' clearer visual structure with column alignment.
 
-**When to use:** Single variable vs multiple values, pattern matching, argument parsing. Use if/elif for: multiple variables, complex conditions, numeric ranges.
+**Formats:**
+- **Compact:** Single actions on same line, align `;;` at consistent column
+- **Expanded:** Multi-line logic, `;;` on separate line with blank line after
 
-**Format:**
-- **Compact:** Single-line actions, align `;;` at column 14-18
-- **Expanded:** Action on next line indented, `;;` on separate line, blank line between cases
+**Core example:**
 
-**Quoting:** Quote test variable `case "$var" in`; don't quote case expression `case $1 in`; don't quote literal patterns `start)` not `"start")`.
-
-**Example:**
 ```bash
 while (($#)); do
   case $1 in
@@ -5621,10 +5627,19 @@ while (($#)); do
 done
 ```
 
+**Pattern syntax:** Literal `start)` â†' Wildcard `*.txt)` â†' Alternation `-v|--verbose)` â†' Extglob `@(a|b)` (requires `shopt -s extglob`)
+
 **Anti-patterns:**
-- Missing `*)` default â†' silent failure on unexpected values
-- Mixing compact/expanded format inconsistently â†' poor readability
-- Using `[0-9]+` expecting regex â†' case uses glob patterns, not regex
+
+```bash
+# âœ— Missing default case
+case "$action" in start) ;; stop) ;; esac  # Silent failure on unknown
+
+# âœ— Use if/elif when testing multiple variables or numeric ranges
+if [[ "$a" && "$b" ]]; then ...  # Not: nested case statements
+```
+
+**Key rules:** Quote test variable `case "$var"` â†' Don't quote patterns `start)` not `"start")` â†' Always `;;` terminator â†' Use if for complex/multi-var logic.
 
 **Ref:** BCS0502
 
@@ -6348,46 +6363,42 @@ EOT
 
 ## Echo vs Messaging Functions
 
-**Use messaging functions (`info`, `warn`, `error`) for statusâ†'stderr; plain `echo` for dataâ†'stdout.**
+**Use messaging functions (`info`, `warn`, `error`) for operational status â†' stderr; use `echo` for data output â†' stdout.**
 
-**Key distinction:** Messaging respects `VERBOSE` and goes to stderr. Echo always outputs to stdout for piping/capture.
+**Rationale:**
+- Stream separation: messagingâ†'stderr (user-facing), echoâ†'stdout (parseable data)
+- Verbosity: messaging respects `VERBOSE`, echo always displays
+- Pipeability: only stdout should contain data for capture/piping
 
-### When to Use Which
+**Decision matrix:**
+- Status/progress â†' messaging function
+- Data/return values â†' echo
+- Help/version â†' echo (always display)
+- Errors â†' `error()` to stderr
 
-| Output Type | Tool | Stream | Verbosity |
-|-------------|------|--------|-----------|
-| Status/progress | `info`, `warn` | stderr | Respects VERBOSE |
-| Errors | `error` | stderr | Always shows |
-| Data/results | `echo` | stdout | Always shows |
-| Help/version | `echo`/`cat` | stdout | Always shows |
-
-### Core Pattern
-
+**Example:**
 ```bash
 get_data() {
-  info "Processing..."     # Statusâ†'stderr (verbose-controlled)
-  echo "$result"           # Dataâ†'stdout (capturable)
+  info "Processing..."    # Status â†' stderr
+  echo "$result"          # Data â†' stdout
 }
-
-# Correct separation:
-output=$(get_data)         # Captures only data, sees status
+output=$(get_data)        # Captures only data
 ```
 
-### Anti-Patterns
-
+**Anti-patterns:**
 ```bash
-# âœ— Data via messaging - can't capture!
-get_value() { info "$val"; }
-x=$(get_value)  # Empty!
+# âœ— Using info() for data - can't capture
+get_email() { info "$email"; }     # Goes to stderr!
 
-# âœ— Status via echo - pollutes data stream
-process() { echo "Working..."; cat "$f"; }
+# âœ“ Use echo for data output
+get_email() { echo "$email"; }     # Capturable
 
-# âœ— Help via info() - hidden when VERBOSE=0
-show_help() { info "Usage: ..."; }
+# âœ— Echo for status - mixes with data
+echo "Processing..."               # Pollutes stdout
+
+# âœ“ Messaging for status
+info "Processing..."               # Clean separation
 ```
-
-**Rule:** Data=`echo`â†'stdout. Status=messagingâ†'stderr. Errors always stderr. Help/version always display.
 
 **Ref:** BCS0705
 
@@ -6552,48 +6563,39 @@ Anti-patterns: No `getopt`/`getopts` for long options â†' use `case`; no silent 
 
 ## Standard Argument Parsing Pattern
 
-**Use `while (($#)); do case $1 in...esac; shift; done` for all argument parsing.**
+**Use `while (($#)); do case $1 in ... esac; shift; done` for all CLI parsing.**
 
 ### Core Pattern
 
 ```bash
 while (($#)); do case $1 in
-  -o|--output)  noarg "$@"; shift; output=$1 ;;
-  -v|--verbose) VERBOSE+=1 ;;
-  -V|--version) echo "$VERSION"; exit 0 ;;
-  -h|--help)    show_help; exit 0 ;;
-  -[ovVh]*)     set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
-  -*)           die 22 "Invalid option ${1@Q}" ;;
-  *)            files+=("$1") ;;
+  -o|--output)    noarg "$@"; shift; output=$1 ;;
+  -v|--verbose)   VERBOSE+=1 ;;
+  -V|--version)   echo "$VERSION"; exit 0 ;;
+  -[ovV]?*)       set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+  -*)             die 22 "Invalid option ${1@Q}" ;;
+  *)              files+=("$1") ;;
 esac; shift; done
 ```
 
-### Key Elements
+### Key Components
 
-- **Options with args**: `noarg "$@"; shift` before capturing value
-- **Flags**: Set variable directly, loop-end shift handles advancement
-- **Short bundling**: `-[opts]*` pattern splits `-vvv` â†' `-v -v -v`
-- **noarg helper**: `noarg() { (($# > 1)) || die 2 "Option ${1@Q} requires an argument"; }`
+- **`noarg()`**: `(($# > 1)) || die 2 "Option ${1@Q} requires an argument"` â†' validate before shift
+- **Bundling**: `-[opts]?*)` splits `-vvn` â†' `-v -vn` â†' `-v -v -n` iteratively
+- **Exit handlers**: `-V`, `-h` print and `exit 0` immediately
+- **Default case**: `*)` collects positional args to array
 
 ### Anti-Patterns
 
-```bash
-# âœ— Missing noarg before shift
--o|--output) shift; output=$1 ;;        # Fails silently if no arg
-
-# âœ— Missing loop-end shift
-esac; done                              # Infinite loop!
-
-# âœ“ Correct
--o|--output) noarg "$@"; shift; output=$1 ;;
-esac; shift; done
-```
+- `while [[ $# -gt 0 ]]` â†' use `while (($#))`
+- Missing `noarg "$@"` before shift â†' silent failures
+- Missing `shift` after `esac` â†' infinite loop
 
 ### Rationale
 
-- `(($#))` more efficient than `[[ $# -gt 0 ]]`
-- Case statement more readable than if/elif chains
-- Uniform shift at loop end handles all branches
+1. `(($#))` arithmetic test more efficient than `[[ ]]`
+2. Case statements more readable than if/elif chains
+3. Bundling support (`-vvn`) follows Unix conventions
 
 **Ref:** BCS0801
 
@@ -6631,44 +6633,41 @@ esac; shift; done
 **Use validation helpers to ensure option arguments exist and are valid types before processing.**
 
 ### Rationale
-- Catches `--output --verbose` (missing filename) â†' prevents next option becoming value
-- Type validation prevents late arithmetic errors (`--depth abc`)
-- `${1@Q}` provides safe quoting in error messages
+- Catches `--output --verbose` where filename is missing â†' prevents using next option as value
+- Provides immediate clear errors vs silent failures or late arithmetic crashes
 
-### Three Validators
+### Validation Helpers
 
 ```bash
-# Existence check - arg doesn't start with '-'
-noarg() { (($# > 1)) && [[ ${2:0:1} != '-' ]] || die 2 "Missing argument for option ${1@Q}"; }
-
-# Enhanced string validation
+# String arg validation (prevents -prefix as value)
 arg2() { ((${#@}-1<1)) || [[ "${2:0:1}" == '-' ]] && die 2 "${1@Q} requires argument" ||:; }
 
-# Numeric validation (integers only)
-arg_num() { ((${#@}-1<1)) || [[ ! "$2" =~ ^[0-9]+$ ]] && die 2 "${1@Q} requires a numeric argument" ||:; }
+# Numeric arg validation (integer only)
+arg_num() { ((${#@}-1<1)) || [[ ! "$2" =~ ^[0-9]+$ ]] && die 2 "${1@Q} requires numeric argument" ||:; }
+
+# Usage in case statement
+-o|--output) arg2 "$@"; shift; OUTPUT=$1 ;;
+-d|--depth)  arg_num "$@"; shift; MAX_DEPTH=$1 ;;
 ```
 
-### Usage Pattern
+### Validator Selection
 
-```bash
-while (($#)); do case $1 in
-  -o|--output) arg2 "$@"; shift; OUTPUT=$1 ;;
-  -d|--depth)  arg_num "$@"; shift; MAX_DEPTH=$1 ;;
-  -v|--verbose) VERBOSE=1 ;;
-esac; shift; done
-```
+| Validator | Use Case |
+|-----------|----------|
+| `arg2()` | String args, prevent `-` prefix |
+| `arg_num()` | Integer args only |
 
 ### Anti-Patterns
 
 ```bash
-# âœ— No validation â†' OUTPUT='--verbose'
+# âœ— No validation â†' --output --verbose makes OUTPUT='--verbose'
 -o|--output) shift; OUTPUT=$1 ;;
 
-# âœ“ Validated
--o|--output) arg2 "$@"; shift; OUTPUT=$1 ;;
+# âœ— No type check â†' --depth abc causes late arithmetic error
+-d|--depth) shift; MAX_DEPTH=$1 ;;
 ```
 
-**Critical:** Call validator BEFORE `shift` - validator inspects `$2`.
+**Critical:** Call validator BEFORE `shift` â€” validator inspects `$2`.
 
 **Ref:** BCS0803
 
@@ -6717,39 +6716,43 @@ Top-level parsing in scripts >200 lines â†' harder to test, pollutes global scop
 
 ## Short-Option Disaggregation
 
-**Split bundled options (`-abc` â†' `-a -b -c`) to follow Unix conventions.**
+**Split bundled options (`-abc` â†' `-a -b -c`) for Unix-compliant CLI parsing.**
 
-## Methods
-
-| Method | Speed | Deps | Notes |
-|--------|-------|------|-------|
-| grep | ~190/s | grep | Current standard |
-| fold | ~195/s | fold | Marginal gain |
-| **Pure Bash** | **~318/s** | None | **68% faster**, no shellcheck |
-
-## Pattern
+## Iterative Method (Recommended)
 
 ```bash
-# grep method (current standard)
--[ovnVh]*) #shellcheck disable=SC2046
-    set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
-
-# Pure bash (recommended for performance)
--[ovnVh]*)
-    local -- opt=${1:1}; local -a new_args=()
-    while ((${#opt})); do new_args+=("-${opt:0:1}"); opt=${opt:1}; done
-    set -- '' "${new_args[@]}" "${@:2}" ;;
+-[ovnVh]?*)  set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
 ```
 
-## Critical Rules
+**Pattern:** `${1:0:2}` extracts first option; `"-${1:2}"` creates remainder; `continue` reprocesses.
 
-- List valid options in pattern: `-[ovnVh]*`
-- Options with arguments must be at end of bundle or separate
-- Place before `-*)` invalid option case
+## Rationale
+
+- **53-119Ã— faster** than grep/fold (~24,000-53,000 vs ~450 iter/sec)
+- Pure bash, no external deps, no shellcheck warnings
+
+## Alternatives
+
+| Method | Speed | Notes |
+|--------|-------|-------|
+| grep | ~445/s | `set -- '' $(printf '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"` SC2046 |
+| fold | ~460/s | Same pattern with `fold -w1` |
+| bash loop | ~318/s | More verbose, no `continue` needed |
 
 ## Anti-patterns
 
-`-von output.txt` â†' `-o` captures `n` as argument (wrong order)
+```bash
+# âœ— Options with args mid-bundle
+-von file    # -o captures "n" as argument
+
+# âœ“ Args at end or separate
+-vno file    # -v -n -o file
+```
+
+## Edge Cases
+
+- List valid options explicitly: `-[ovnVh]?*` prevents unknown option disaggregation
+- Options requiring arguments must be at bundle end or separate
 
 **Ref:** BCS0805
 
@@ -7747,29 +7750,30 @@ string=$(echo "$var" | tr A-Z a-z)
 
 ## Development Practices
 
-**ShellCheck is compulsory; document all `disable=` directives with rationale. End scripts with `#fin` marker.**
+**ShellCheck mandatory; end scripts with `#fin`; program defensively.**
 
-### Core Patterns
+### ShellCheck
+- **Compulsory** for all scripts: `shellcheck -x script.sh`
+- Disable only with documented reason: `#shellcheck disable=SC2155  # reason`
 
+### Script Termination
 ```bash
-#shellcheck disable=SC2046  # Intentional word splitting
-shellcheck -x myscript.sh   # Run during development
-
-: "${VERBOSE:=0}"           # Default critical vars
-[[ -n "$1" ]] || die 1 'Argument required'
-set -u                      # Guard unset variables
-
 main "$@"
 #fin
 ```
 
-### Performance & Testing
+### Defensive Programming
+```bash
+: "${VERBOSE:=0}"              # Default values
+[[ -n "$1" ]] || die 1 'Arg required'  # Validate early
+set -u                         # Guard unset vars
+```
 
-- Minimize subshells; prefer builtins over external commands
-- Use process substitution over temp files
-- Return meaningful exit codes; support debug modes
+### Performance
+Minimize subshells â†' use builtins over external commands â†' batch ops â†' process substitution over temp files.
 
-`undocumented disable=` â†' silent violations | missing `#fin` â†' incomplete script
+### Testing
+Testable functions, dependency injection, verbose/debug modes, meaningful exit codes.
 
 **Ref:** BCS1206
 

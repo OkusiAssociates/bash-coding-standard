@@ -4,64 +4,68 @@ set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Script metadata
-declare -r VERSION='{{VERSION}}'
-declare -r SCRIPT_PATH=$(realpath -e -- "$0")
-declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
+declare -r VERSION={{VERSION}}
+declare -- SCRIPT_PATH
+SCRIPT_PATH=$(realpath -e -- "$0")
+# shellcheck disable=SC2034  # SCRIPT_DIR available for user code
+declare -r SCRIPT_PATH SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
-# Global variables
+# Global variables (shellcheck: DEBUG/VERBOSE are set by options, SCRIPT_DIR available for use)
+# shellcheck disable=SC2034
 declare -i VERBOSE=1 DEBUG=0
 
-# Colors
-[[ -t 1 && -t 2 ]] && declare -r GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' RED=$'\033[0;31m' NC=$'\033[0m' || declare -r GREEN='' YELLOW='' RED='' NC=''
-readonly -- GREEN YELLOW RED NC
+# Color Definitions (shellcheck: BOLD available for use in user code)
+# shellcheck disable=SC2034
+if [[ -t 1 && -t 2 ]]; then
+  declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' BOLD=$'\033[1m' NC=$'\033[0m'
+else
+  declare -r RED='' GREEN='' YELLOW='' CYAN='' BOLD='' NC=''
+fi
 
-# Messaging functions
+# Utility Functions
 _msg() {
   local -- prefix="$SCRIPT_NAME:" msg
-  [[ "${FUNCNAME[1]}" == success ]] && prefix+=" ${GREEN}✓${NC}"
-  [[ "${FUNCNAME[1]}" == warn ]] && prefix+=" ${YELLOW}▲${NC}"
-  [[ "${FUNCNAME[1]}" == error ]] && prefix+=" ${RED}✗${NC}"
+  case ${FUNCNAME[1]} in
+    vecho) : ;;
+    info) prefix+=" ${CYAN}◉${NC}" ;;
+    warn) prefix+=" ${YELLOW}▲${NC}" ;;
+    success) prefix+=" ${GREEN}✓${NC}" ;;
+    error) prefix+=" ${RED}✗${NC}" ;;
+    *) : ;;
+  esac
   for msg in "$@"; do printf '%s %s\n' "$prefix" "$msg"; done
 }
-
-vecho() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
-success() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
-warn() { >&2 _msg "$@"; }
+vecho() { ((VERBOSE)) || return 0; _msg "$@"; }
 info() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
-debug() { ((DEBUG)) || return 0; >&2 _msg "$@"; }
+warn() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
+success() { ((VERBOSE)) || return 0; >&2 _msg "$@" || return 0; }
 error() { >&2 _msg "$@"; }
-die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
-
-yn() {
-  #((PROMPT)) || return 0
-  local -- REPLY
-  >&2 read -r -n 1 -p "$(2>&1 warn "${1:-'Continue?'}") y/n "
-  >&2 echo
-  [[ ${REPLY,,} == y ]]
-}
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+yn() { local -- REPLY; read -r -n 1 -p "$SCRIPT_NAME: ${YELLOW}▲${NC} ${1:-'Continue?'} y/n "; echo; [[ ${REPLY,,} == y ]]; }
+noarg() { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
 
 show_help() {
-  cat <<EOF
+  cat <<HELP
 Usage: $SCRIPT_NAME [OPTIONS]
 
 {{DESCRIPTION}}
 
 Options:
-  -h, --help              Show this help message
-  -V, --version           Show version information
   -v, --verbose           Enable verbose output (default)
   -q, --quiet             Disable verbose output
   -d, --debug             Enable debug output
+  -V, --version           Show version information
+  -h, --help              Show this help message
 
 Examples:
   $SCRIPT_NAME
 
-EOF
+HELP
 }
 
 main() {
   while (($#)); do
-    case "$1" in
+    case $1 in
       -h|--help)
         show_help
         exit 0
@@ -72,23 +76,26 @@ main() {
         ;;
       -v|--verbose)
         VERBOSE=1
-        shift
         ;;
       -q|--quiet)
         VERBOSE=0
-        shift
         ;;
       -d|--debug)
+        # shellcheck disable=SC2034
         DEBUG=1
-        shift
+        ;;
+      -[hVvqd]?*)  # Bundled short options
+        set -- "${1:0:2}" "-${1:2}" "${@:2}"
+        continue
         ;;
       -*)
-        die 2 "Unknown option ${1@Q}" "Try '$SCRIPT_NAME --help' for usage information"
+        die 22 "Invalid option ${1@Q}"
         ;;
       *)
-        die 2 "Unexpected argument ${1@Q}" "Try '$SCRIPT_NAME --help' for usage information"
+        die 2  "Unexpected argument ${1@Q}"
         ;;
     esac
+    shift
   done
 
   # TODO: Add implementation
