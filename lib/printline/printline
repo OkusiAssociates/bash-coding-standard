@@ -2,8 +2,8 @@
 
 printline() {
   local -i cols remaining COL=1
-  local -- row_col char="${1:-}" prefix="${2:-}"
-  [[ -z $char ]] && char='-'
+  local -- row_col char=${1:-} prefix=${2:-}
+  [[ -n $char ]] || char='-'
   char=${char:0:1}
 
   # Print prefix text if provided
@@ -31,25 +31,25 @@ printline() {
 
   # Calculate remaining columns
   remaining=$((cols - COL + 1))
-  ((remaining < 0)) && remaining=0
+  ((remaining < 0)) && remaining=0 ||:
 
   # Print the character 'remaining' times using brace expansion
-  ((remaining > 0)) && eval "printf '%.0s$char' {1..$remaining}"
+  ((remaining)) && eval "printf '%.0s$char' {1..$remaining}" ||:
   printf "\n"
 }
 declare -fx printline
 
 # Only run main if the script is being executed directly (not sourced)
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  set -euo pipefail
-  # Capture script path, avoiding SC2155
-  SCRIPT_PATH="$(readlink -en -- "$0")"
-  readonly -- SCRIPT_PATH
-  
-  #shellcheck disable=SC2034 # Used in help text
-  readonly -- SCRIPT_DIR="${SCRIPT_PATH%/*}" SCRIPT_NAME="${SCRIPT_PATH##*/}"
-  [[ ${1:-} == '-h' || ${1:-} == '--help' ]] && {
-    cat <<-EOT
+[[ "${BASH_SOURCE[0]}" == "${0}" ]] || return 0
+
+set -euo pipefail
+
+declare -r SCRIPT_PATH="$(realpath -- "$0")"
+
+#shellcheck disable=SC2034 # Used in help text
+declare -r SCRIPT_DIR="${SCRIPT_PATH%/*}" SCRIPT_NAME="${SCRIPT_PATH##*/}"
+if [[ ${1:-} == '-h' || ${1:-} == '--help' ]]; then
+  cat <<HELP
 $SCRIPT_NAME $(cat "$SCRIPT_DIR"/.version)
 
 Print a line of repeated chars from the current
@@ -67,11 +67,9 @@ examples:
   $SCRIPT_NAME '*' '# topic header '
   $SCRIPT_NAME '=' '    ## section 1 '
   $SCRIPT_NAME '-' '        ### subsection 1 '
-EOT
+HELP
   exit 0
-  }
-
-  printline "$@"
 fi
 
+printline "$@"
 #fin

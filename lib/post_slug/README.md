@@ -8,18 +8,18 @@
 
 > A consistent, cross-language slug generator for creating URL-safe and filename-safe strings from any text input.
 
-## Overview
+## 🎯 Overview
 
 **post_slug** converts any text into clean, readable slugs that are safe for URLs, filenames, and other contexts where only ASCII alphanumeric characters are allowed. With identical implementations in **Python**, **JavaScript**, **PHP**, and **Bash**, it ensures consistent output across your entire stack.
 
 ### Key Features
 
-- **Cross-language consistency** - Identical output across Python, JavaScript, PHP, and Bash
-- **Security-focused** - Input sanitization with 255-character limit to prevent DoS attacks
-- **Flexible configuration** - Customizable separator, case preservation, and length limits
-- **Zero dependencies** - Uses only built-in language features
-- **Fast and lightweight** - Optimized for performance
-- **Thoroughly tested** - Comprehensive test suite with cross-language validation
+- 🌐 **Cross-language consistency** - Identical output across Python, JavaScript, PHP, and Bash
+- 🛡️ **Security-focused** - Input sanitization with 255-character limit to prevent DoS attacks
+- 🔧 **Flexible configuration** - Customizable separator, case preservation, and length limits
+- 📦 **Zero dependencies** - Uses only built-in language features
+- ⚡ **Fast and lightweight** - Optimized for performance
+- 🧪 **Thoroughly tested** - Comprehensive test suite with cross-language validation
 
 ### Quick Example
 
@@ -32,7 +32,7 @@ slug = post_slug(title)
 # Output: "the-strange-inner-life-of-the-outsider"
 ```
 
-## Installation
+## 📦 Installation
 
 ### Python
 
@@ -74,7 +74,7 @@ source post_slug.bash
 echo 'source /path/to/post_slug.bash' >> ~/.bashrc
 ```
 
-## Usage
+## 🚀 Usage
 
 ### Basic Usage
 
@@ -222,7 +222,7 @@ done
 ```
 </details>
 
-## Advanced Features
+## 🛠️ Advanced Features
 
 ### Batch File Renaming
 
@@ -253,7 +253,7 @@ post_slug "My Document Title!"
 # Output: my-document-title
 ```
 
-## How It Works
+## 🔧 How It Works
 
 The slug generation process follows these steps:
 
@@ -284,7 +284,7 @@ To ensure consistency, manual transliteration tables ("kludges") handle edge cas
 '™' → '-TM'  # Trademark
 ```
 
-## Testing
+## 🧪 Testing
 
 ### Running Tests
 
@@ -319,7 +319,7 @@ python -m pytest unittests/test_post_slug.py
 python unittests/test_post_slug.py
 ```
 
-## Important Notes
+## ⚠️ Important Notes
 
 ### Character Set Limitations
 
@@ -349,7 +349,7 @@ post_slug("Café résumé")  # "cafe-resume"
 | Bash | 5.1 | 5.2 |
 | Node.js | 12.2 | 20.x |
 
-## Contributing
+## 🤝 Contributing
 
 We welcome contributions! Please follow these guidelines:
 
@@ -374,17 +374,17 @@ cd unittests
 ./validate_slug_scripts -q datasets/booktitles.txt
 ```
 
-## License
+## 📄 License
 
 This project is licensed under the GNU General Public License v3.0 or later - see the [LICENSE](LICENSE) file for details.
 
-## Acknowledgments
+## 🙏 Acknowledgments
 
 - Inspired by various slug generation libraries across different languages
 - Test datasets compiled from real-world content
 - Special thanks to all contributors
 
-## See Also
+## 📚 See Also
 
 - [CLAUDE.md](CLAUDE.md) - AI assistant guidelines
 - [AUDIT-EVALUATE.md](AUDIT-EVALUATE.md) - Security and code quality audit

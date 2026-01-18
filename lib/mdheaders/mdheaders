@@ -7,7 +7,7 @@ set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Script Metadata
-declare -r VERSION='1.2.1'
+declare -r VERSION=1.2.1
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -e -- "$0")
 #shellcheck disable=SC2034  # SCRIPT_DIR reserved for future use
@@ -49,7 +49,7 @@ noarg() { (($# > 1)) || die 2 "Option ${1@Q} requires an argument"; }
 
 # English pluralizer - outputs 's' unless count is 1
 # Usage: "file$(s "${#files[@]}")" → "file" or "files"
-s() { (( ${1:-1} == 1 )) || echo -n 's'; }
+s() { ((${1:-1} == 1)) || echo -n 's'; }
 
 # Process markdown content and modify header levels
 # Args:
@@ -61,8 +61,8 @@ s() { (( ${1:-1} == 1 )) || echo -n 's'; }
 # Returns: 0 on success, 1 on error
 mdh_process() {
   local -i delta=$1
-  local -- error_mode="${2:-skip}"
-  local -i quiet="${3:-0}"
+  local -- error_mode=${2:-skip}
+  local -i quiet=${3:-0}
 
   local -i in_code_block=0
   local -- fence_type=''
@@ -155,9 +155,9 @@ mdh_process() {
 # Output: transformed markdown to stdout
 # Returns: 0 on success, 1 if all headers skipped or error
 mdh_upgrade() {
-  local -i levels="${1:-1}"
-  local -- error_mode="${2:-skip}"
-  local -i quiet="${3:-0}"
+  local -i levels=${1:-1}
+  local -- error_mode=${2:-skip}
+  local -i quiet=${3:-0}
 
   if ((levels < 1)); then
     error 'Upgrade levels must be >= 1'
@@ -176,9 +176,9 @@ mdh_upgrade() {
 # Output: transformed markdown to stdout
 # Returns: 0 on success, 1 if all headers skipped or error
 mdh_downgrade() {
-  local -i levels="${1:-1}"
-  local -- error_mode="${2:-skip}"
-  local -i quiet="${3:-0}"
+  local -i levels=${1:-1}
+  local -- error_mode=${2:-skip}
+  local -i quiet=${3:-0}
 
   if ((levels < 1)); then
     error 'Downgrade levels must be >= 1'
@@ -219,7 +219,7 @@ mdh_detect_min_level() {
     if ((in_code_block == 0)) && [[ "$line" =~ ^(#+)([[:space:]]+.*)?$ ]]; then
       hashes="${BASH_REMATCH[1]}"
       level=${#hashes}
-      ((level < min_level)) && min_level=$level
+      ((level < min_level)) && min_level=$level ||:
     fi
   done
 
@@ -243,9 +243,9 @@ mdh_detect_min_level() {
 # Output: normalized markdown to stdout
 # Returns: 0 on success, 1 if no headers found or all skipped
 mdh_normalize() {
-  local -i target_level="${1:-1}"
-  local -- error_mode="${2:-skip}"
-  local -i quiet="${3:-0}"
+  local -i target_level=${1:-1}
+  local -- error_mode=${2:-skip}
+  local -i quiet=${3:-0}
 
   # Validate target level
   if ((target_level < 1 || target_level > 6)); then
@@ -300,7 +300,7 @@ mdh_normalize() {
 
 # show_usage - Display help text
 show_usage() {
-  cat <<'EOF'
+  cat <<'HELP'
 Usage: mdheaders {upgrade|downgrade|normalize|up|down|norm} [OPTIONS] FILE
 
 Manipulate markdown header levels while preserving code blocks.
@@ -340,7 +340,7 @@ Exit codes:
   2  Invalid arguments
 
 More info: https://github.com/Open-Technology-Foundation/mdheaders
-EOF
+HELP
 }
 
 # Main function
@@ -389,22 +389,22 @@ main() {
   # Parse options
   while (($#)); do case $1 in
     -l|--levels)
-      noarg "$@"; shift; levels="$1"
+      noarg "$@"; shift; levels=$1
       ;;
     --levels=*)
       levels="${1#*=}"
       ;;
     -s|--start-level)
-      noarg "$@"; shift; start_level="$1"
+      noarg "$@"; shift; start_level=$1
       ;;
     --start-level=*)
       start_level="${1#*=}"
       ;;
     -o|--output)
-      noarg "$@"; shift; output_file="$1"
+      noarg "$@"; shift; output_file=$1
       ;;
     --output=*)
-      output_file="${1#*=}"
+      output_file=${1#*=}
       ;;
     -i|--in-place)
       in_place=1
@@ -413,7 +413,7 @@ main() {
       backup_suffix='.bak'
       ;;
     --backup=*)
-      backup_suffix="${1#*=}"
+      backup_suffix=${1#*=}
       ;;
     --skip-errors)
       error_mode='skip'
@@ -428,23 +428,23 @@ main() {
       quiet=0
       ;;
     -V|--version)
-      echo "$SCRIPT_NAME $VERSION"; exit 0
+      echo "$SCRIPT_NAME $VERSION"; return 0
       ;;
     -h|--help)
       show_usage; return 0
       ;;
     -[ibqvVh]*) #shellcheck disable=SC2046 #split up bundled short options
-      set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}"
+      set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue
       ;;
     -*)
-      die 2 "Unknown option ${1@Q}"
+      die 22 "Unknown option ${1@Q}"
       ;;
     '')
       # Skip empty argument from option bundling
       ;;
     *)
       if [[ -z "$input_file" ]]; then
-        input_file="$1"
+        input_file=$1
       else
         die 2 "Multiple input files specified ${1@Q}"
       fi
@@ -465,16 +465,16 @@ main() {
   fi
 
   # Process the file
-  local -- temp_file=""
+  local -- temp_file=''
   temp_file=$(mktemp) || die 1 'Failed to create temporary file'
   trap 'rm -f "${temp_file:-}"' EXIT
 
   local -i result=0
-  if [[ "$command" == "upgrade" ]]; then
+  if [[ "$command" == upgrade ]]; then
     mdh_upgrade "$levels" "$error_mode" "$quiet" < "$input_file" > "$temp_file" || result=$?
-  elif [[ "$command" == "downgrade" ]]; then
+  elif [[ "$command" == downgrade ]]; then
     mdh_downgrade "$levels" "$error_mode" "$quiet" < "$input_file" > "$temp_file" || result=$?
-  elif [[ "$command" == "normalize" ]]; then
+  elif [[ "$command" == normalize ]]; then
     mdh_normalize "$start_level" "$error_mode" "$quiet" < "$input_file" > "$temp_file" || result=$?
   fi
 

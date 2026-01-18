@@ -14,7 +14,7 @@
 #         : hr2int 34M    # Returns: 34000000 (34 × 1000²)
 hr2int() {
   local -- num h fmt=si
-  local -- LC_ALL=C  # Set once, outside the loop
+  local -- LC_ALL=C
   while (($#)); do
     num=${1:-0}
 
@@ -35,7 +35,7 @@ hr2int() {
       fi
     fi
     numfmt --from="$fmt" "${num^^}" || { >&2 echo "${FUNCNAME[0]}: Invalid input ${1@Q}"; return 1; }
-    shift 1
+    shift
   done
   return 0
 }
@@ -87,7 +87,7 @@ declare -fx int2hr
 
 [[ ${BASH_SOURCE[0]} == "$0" ]] || return 0
 
-#/bin/bash #semantic ----------------------------------------------------------
+# Script Mode ----------------------------------------------------------
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 

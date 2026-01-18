@@ -101,8 +101,8 @@ This directory contains vendored copies of external dependencies to ensure the B
 **Used by:** Drop-in replacement for standard 'which' command
 
 **Upstream:** https://github.com/Open-Technology-Foundation/whichx
-**Git commit:** `5e9bf7351e8e880d734751df6033e39eb1e5c1f9`
-**Last synced:** 2026-01-13 12:24:47 +0800
+**Git commit:** `ee172492db66019ccf69f88fd7a52abd0aaad07e`
+**Last synced:** 2026-01-16 13:35:06 +0800
 
 **License:** GPL v3 (see LICENSES/whichx.LICENSE)
 
@@ -348,8 +348,8 @@ This directory contains vendored copies of external dependencies to ensure the B
 **Used by:** Available for general use in scripts (URL generation, file naming)
 
 **Upstream:** https://github.com/Open-Technology-Foundation/post_slug
-**Git commit:** `f132ecea3631bd1add3afc50d713b064109eae06`
-**Last synced:** 2026-01-13 14:26:19 +0800
+**Git commit:** `4bcc1c769fd2d3b541f84622fba7c937fc8805ee`
+**Last synced:** 2026-01-18 13:50:32 +0800
 
 **License:** GPL v3 (see LICENSES/post_slug.LICENSE)
 

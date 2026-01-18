@@ -1,388 +1,296 @@
-# whichx
+# which
 
-**A robust, POSIX-compliant drop-in replacement for the Unix `which` command.**
+A robust, POSIX-compliant `which` replacement for Bash.
 
-Version 2.0 | [License: GPL-3.0](LICENSE) | Bash 4.3+
+[![License: GPL-3.0](https://img.shields.io/badge/License-GPL%203.0-blue.svg)](LICENSE)
+[![Bash 4.4+](https://img.shields.io/badge/Bash-4.4%2B-green.svg)](https://www.gnu.org/software/bash/)
+[![Tests: 69 passing](https://img.shields.io/badge/Tests-69%20passing-brightgreen.svg)](tests/)
 
-```bash
-git clone https://github.com/Open-Technology-Foundation/whichx.git && cd whichx && sudo make install
-```
+**Requires Bash 4.4+** — runs on any OS with a compatible shell.
 
----
-
-## Why whichx?
-
-The standard `which` command varies significantly across Unix systems—different implementations, inconsistent exit codes, and unreliable behavior in scripts. `whichx` solves this by providing:
-
-- **Predictable exit codes** for reliable scripting (0, 1, 2, 22)
-- **Canonical path resolution** to follow symlinks to their true location
-- **True silent mode** that suppresses all output for clean conditionals
-- **POSIX-compliant PATH handling** including empty element support
-- **Consistent behavior** across all Unix/Linux systems
-
-## Quick Start
+## TL;DR
 
 ```bash
-# Install
 git clone https://github.com/Open-Technology-Foundation/whichx.git
-cd whichx
-sudo make install
-
-# Use
-whichx python3              # Find python3
-whichx -a python3           # Find ALL python3 executables in PATH
-whichx -c /usr/bin/python3  # Resolve symlinks to canonical path
-whichx -s docker || exit 1  # Silent pre-flight check
+cd whichx && sudo make install
+which -a python3
 ```
 
----
+## Why Replace which?
+
+The standard `which` command varies significantly across Unix systems:
+
+| Issue | Debian | macOS | Busybox |
+|-------|--------|-------|---------|
+| Exit code (no args) | 1 | 0 | 0 |
+| Exit code (bad option) | 2 | 1 | 1 |
+| `-s` silent mode | No | Yes | No |
+| Long options | No | No | No |
+
+This implementation provides:
+
+- **Consistent exit codes**: 0 (found), 1 (not found), 2 (no args), 22 (EINVAL)
+- **POSIX PATH compliance**: Correct handling of empty PATH elements
+- **Dual-mode execution**: Run as script OR source as function (12x faster)
+- **Canonical resolution**: Follow symlinks to actual executables
 
 ## Installation
 
-### From Source (Recommended)
+### Quick Install
 
 ```bash
 git clone https://github.com/Open-Technology-Foundation/whichx.git
-cd whichx
-sudo make install
+cd whichx && sudo make install
 ```
 
-This installs:
-- `/usr/local/bin/whichx` — the main executable
-- `/usr/local/bin/which` — symlink to whichx
-- `/usr/local/share/man/man1/whichx.1` — man page
-- `/usr/local/share/man/man1/which.1` — man page symlink
+Installs to `/usr/local/bin/which` with man page.
 
-### Custom Installation Prefix
+### Custom Prefix
 
 ```bash
-sudo make install PREFIX=/opt/local
+sudo make install PREFIX=/usr/bin
 ```
 
-### Manual Installation
+### Sourceable Install (Recommended for Interactive Use)
 
 ```bash
-sudo install -m 755 whichx /usr/local/bin/
-sudo ln -sf whichx /usr/local/bin/which
-# Optional: install man pages
-sudo install -m 644 whichx.1 /usr/local/share/man/man1/
-sudo ln -sf whichx.1 /usr/local/share/man/man1/which.1
+sudo make install-sourceable
 ```
+
+This copies the script to `/etc/profile.d/which.sh`. New shells will have `which()` as a shell function instead of calling an external process.
+
+**Why is this faster?** Each external command invocation requires fork() + exec() + bash interpreter startup (~1.6ms). A shell function runs in-process (~0.13ms). That's **12x faster**.
+
+**Note:** `/etc/profile.d/` is sourced by login shells via `/etc/profile`. Most terminal emulators start non-login shells, which source `~/.bashrc` instead. If `which` isn't available in new terminals, either:
+- Add `source /etc/profile.d/which.sh` to your `~/.bashrc`, or
+- Configure your terminal to start login shells
 
 ### Uninstall
 
 ```bash
 sudo make uninstall
+sudo make uninstall-sourceable
 ```
-
-### Requirements
-
-| Dependency | Version | Purpose |
-|------------|---------|---------|
-| bash | 4.3+ | Script interpreter |
-| realpath | any | Canonical path resolution (`-c`) |
-| grep | any | Combined option parsing |
-
----
 
 ## Usage
 
 ```
-whichx [OPTIONS] filename ...
+which [OPTIONS] [--] command ...
 ```
 
 ### Options
 
-| Short | Long | Description |
-|-------|------|-------------|
-| `-a` | `--all` | Print all matching pathnames, not just the first |
-| `-c` | `--canonical` | Resolve symlinks and print canonical paths |
-| `-s` | `--silent` | Suppress all output; exit code only |
+| Option | Long | Description |
+|--------|------|-------------|
+| `-a` | `--all` | Print all matches in PATH, not just first |
+| `-c` | `--canonical` | Resolve symlinks via realpath/readlink |
+| `-q` | `--quiet` | No output, exit code only |
+| `-s` | `--silent` | Alias for `-q` |
 | `-V` | `--version` | Print version and exit |
-| `-h` | `--help` | Display help and exit |
+| `-h` | `--help` | Print help and exit |
 
-Options can be combined: `-ac` is equivalent to `-a -c`
+Options can be combined: `-ac` equals `-a -c`
 
 ### Exit Codes
 
 | Code | Constant | Meaning |
 |------|----------|---------|
-| 0 | `EXIT_SUCCESS` | All specified commands found |
-| 1 | `EXIT_NOT_FOUND` | One or more commands not found |
-| 2 | `EXIT_USAGE_ERROR` | No arguments provided |
-| 22 | `EXIT_INVALID_OPTION` | Invalid option (EINVAL) |
+| 0 | `EXIT_SUCCESS` | All commands found |
+| 1 | `EXIT_FAILURE` | One or more not found |
+| 2 | `EXIT_USAGE` | No arguments provided |
+| 22 | `EINVAL` | Invalid option |
 
----
-
-## Examples
-
-### Basic Usage
+### Examples
 
 ```bash
-# Find a command
-$ whichx ls
-/usr/bin/ls
-
-# Find multiple commands
-$ whichx ls cat grep
-/usr/bin/ls
-/usr/bin/cat
-/usr/bin/grep
-
-# Command not found (silent, check exit code)
-$ whichx nonexistent
-$ echo $?
-1
+which ls                      # /usr/bin/ls
+which -a python3              # All python3 in PATH
+which -c /usr/bin/python3     # Resolves to /usr/bin/python3.12
+which -q docker && echo "ok"  # Silent check
+which ls cat grep             # Multiple commands
+which -- -weird-name          # Command starting with hyphen
 ```
 
-### Find All Matches (`-a`)
+## Architecture
 
-When a command exists in multiple PATH directories:
+### Dual-Mode Design
+
+The script works both as an executable and as a sourceable function:
 
 ```bash
-$ whichx -a python3
-/usr/bin/python3
-/usr/local/bin/python3
+# As executable (subprocess)
+./which ls
 
-$ whichx -a node
-/usr/bin/node
-/home/user/.nvm/versions/node/v20.0.0/bin/node
+# As sourced function (in-process)
+source ./which
+which ls
 ```
 
-### Canonical Paths (`-c`)
-
-Resolve symlinks to find the actual executable:
+This is achieved with the `BASH_SOURCE` guard:
 
 ```bash
-$ whichx python3
-/usr/bin/python3
-
-$ whichx -c python3
-/usr/bin/python3.12
-
-$ whichx -c vi
-/usr/bin/vim.basic
-```
-
-### Silent Mode (`-s`)
-
-Suppress all output for use in conditionals:
-
-```bash
-# Simple conditional
-if whichx -s docker; then
-    echo "Docker is available"
-fi
-
-# Pre-flight dependency check
-whichx -s gcc make cmake || {
-    echo "Missing build tools" >&2
-    exit 1
+which() {
+  # ... function body ...
 }
+declare -fx which
 
-# Inline conditional
-whichx -s python3 && python3 script.py || python script.py
+[[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0
+
+# --- Script mode (direct execution only) ---
+set -euo pipefail
+shopt -s inherit_errexit
+
+which_help() { ... }
+which "$@"
 ```
 
-### Combined Options
+When sourced, `BASH_SOURCE[0]` differs from `$0`, so `return 0` exits early after defining the function. When executed, they match, so the script continues to run `which "$@"`.
+
+### Strict Mode Without Pollution
+
+Traditional bash scripts use strict mode at the top, but this would pollute the sourcing shell's environment. This script solves that by placing strict mode **after** the BASH_SOURCE guard:
+
+- **Sourced**: Returns before reaching `set -euo pipefail` — caller's shell unaffected
+- **Executed**: Strict mode applies only to the subprocess
+
+### Function Structure
+
+All logic lives in a single `which()` function with:
+
+- All variables declared `local` (no namespace pollution)
+- `return` instead of `exit` (function-safe)
+- Inline PATH parsing (no helper functions to leak)
+- Conditional help: brief when sourced, full when executed
+
+### PATH Parsing
 
 ```bash
-# All matches with canonical paths
-$ whichx -ac python3
-/usr/bin/python3.12
-/usr/local/bin/python3.11
+path_str=${PATH:-}
+[[ $path_str == *: ]] && path_str+='.'  # Trailing colon = cwd
+IFS=':' read -ra path_dirs <<< "$path_str"
 
-# Silent check for all matches (useful for counting)
-whichx -as python3 && echo "At least one python3 found"
-```
-
-### Direct Path Verification
-
-Verify a specific path is executable:
-
-```bash
-$ whichx /usr/local/bin/my-script
-/usr/local/bin/my-script
-
-$ whichx ./local-tool
-./local-tool
-```
-
----
-
-## Scripting Patterns
-
-### Pre-flight Dependency Check
-
-```bash
-#!/bin/bash
-# Verify all required tools exist before running
-
-required_tools=(git curl jq docker)
-
-for tool in "${required_tools[@]}"; do
-    if ! whichx -s "$tool"; then
-        echo "Error: Required tool '$tool' not found" >&2
-        exit 1
-    fi
+for path in "${path_dirs[@]}"; do
+  [[ -n $path ]] || path='.'  # Empty element = cwd
+  # ...
 done
-
-echo "All dependencies satisfied"
 ```
 
-### Version-Aware Tool Selection
-
-```bash
-#!/bin/bash
-# Use python3 if available, fall back to python
-
-if whichx -s python3; then
-    PYTHON=$(whichx python3)
-elif whichx -s python; then
-    PYTHON=$(whichx python)
-else
-    echo "No Python interpreter found" >&2
-    exit 1
-fi
-
-"$PYTHON" my_script.py
-```
-
-### Find Canonical Path for Logging
-
-```bash
-#!/bin/bash
-# Log the actual executable being used (following symlinks)
-
-TOOL=$(whichx -c node 2>/dev/null) || {
-    echo "Node.js not found" >&2
-    exit 1
-}
-
-echo "Using: $TOOL"
-"$TOOL" --version
-```
-
----
+The `read -ra` with herestring is a common idiom, but it drops trailing empty elements. The `*:` check handles trailing colons explicitly.
 
 ## POSIX Compliance
 
-### Empty PATH Elements
-
-Per POSIX, an empty element in PATH means the current directory. `whichx` handles this correctly:
+Per POSIX, an empty element in PATH means the current directory. Many `which` implementations get this wrong.
 
 ```bash
-# Leading colon = empty first element = current directory
-$ PATH=":/usr/bin" whichx ./my-script
-./my-script
+# Leading colon = cwd searched first
+PATH=":/usr/bin" which ./script
 
-# Trailing colon = empty last element
-$ PATH="/usr/bin:" whichx ./local-tool
-./local-tool
+# Trailing colon = cwd searched last
+PATH="/usr/bin:" which ./script
 
-# Double colon = empty middle element
-$ PATH="/usr/bin::/usr/local/bin" whichx ls
-/usr/bin/ls
+# Double colon = cwd searched in middle
+PATH="/usr/bin::/usr/local/bin" which ./script
 ```
 
-Most `which` implementations handle this inconsistently or incorrectly.
+This matters for security audits and understanding command resolution.
 
-### Search Order
+## Performance
 
-`whichx` searches PATH directories in order and returns the first match (unless `-a` is specified), exactly as a POSIX shell would resolve the command.
+### Methodology
 
----
+Benchmarks run each command 1000 times, measuring wall-clock time with nanosecond precision.
 
-## Comparison with Standard `which`
+### Results
 
-| Feature | Standard `which` | `whichx` |
-|---------|:----------------:|:--------:|
-| Find executables | Yes | Yes |
-| Multiple targets | Yes | Yes |
-| Show all matches (`-a`) | Yes | Yes |
-| Canonical paths (`-c`) | No | Yes |
-| True silent mode | Partial | Yes |
-| Specific exit codes | No | Yes |
-| POSIX PATH compliance | Varies | Yes |
-| Combined short options | Varies | Yes |
-| Consistent cross-platform | No | Yes |
+| Test | which (subprocess) | which (sourced) | old.which (dash) |
+|------|-------------------|-----------------|------------------|
+| Single lookup | ~600 ops/s | ~7,500 ops/s | ~1,200 ops/s |
+| Large PATH (50 dirs) | ~500 ops/s | ~6,000 ops/s | ~1,200 ops/s |
+| Not found | ~600 ops/s | ~7,500 ops/s | ~1,200 ops/s |
 
-### Exit Code Comparison
+### Analysis
 
-| Scenario | GNU which | BSD which | whichx |
-|----------|:---------:|:---------:|:------:|
-| Found | 0 | 0 | 0 |
-| Not found | 1 | 1 | 1 |
-| No arguments | 1 | 1 | 2 |
-| Invalid option | 1 or 2 | 1 | 22 |
+**Why is subprocess mode 2x slower than dash-based which?**
 
-`whichx` uses distinct exit codes so scripts can differentiate between "command not found" and "usage error."
+Bash has more startup overhead than dash. The actual PATH searching is nearly identical, but bash's interpreter initialization dominates.
 
----
+**Why is sourced mode 12x faster?**
 
-## Development
+No fork(), no exec(), no interpreter startup. The function runs directly in the current shell's process space.
 
-### Validation
+### Run Benchmarks
 
 ```bash
-# Run shellcheck (required to pass)
-make test
-
-# Or directly
-shellcheck whichx
+make benchmark
 ```
 
-### Code Style
+## Testing
 
-This project follows the [Bash Coding Standard (BCS)](https://github.com/Open-Technology-Foundation/bash-coding-standard):
+### Run Tests
 
-- `set -euo pipefail` with full shopt settings
-- Proper variable typing (`declare -i`, `declare -a`, `declare -r`)
-- `[[ ]]` conditionals, `(( ))` arithmetic
-- Functions with documented return values
-- Consistent 2-space indentation
-
-### Project Structure
-
-```
-whichx/
-├── whichx          # Main executable (159 lines)
-├── whichx.1        # Man page (troff format)
-├── Makefile        # Install/uninstall/test targets
-├── LICENSE         # GPL-3.0
-├── README.md       # This file
-└── CLAUDE.md       # AI assistant context
+```bash
+make test         # shellcheck + functional tests
+make shellcheck   # Static analysis only
+make functional   # 69 functional tests only
 ```
 
----
+### Test Coverage
+
+- Basic operations (find, not found, multiple targets)
+- All options (`-a`, `-c`, `-q`, `-s`, `-V`, `-h`, `--long`)
+- Combined options (`-ac`, `-qa`, `-aqs`)
+- Exit codes (0, 1, 2, 22)
+- PATH edge cases (leading/trailing/double colon, empty, nonexistent dirs)
+- Input handling (absolute path, relative path, `--` separator, hyphen commands)
+- Edge cases (non-executable, directories, symlinks, broken symlinks)
+
+### Adding Tests
+
+Tests use TAP-style output. Add to `tests/test_which.sh`:
+
+```bash
+out=$("$WHICH" -a python3 2>&1); rc=$?
+assert_exit 0 $rc "description"
+assert_contains "python" "$out" "description"
+```
 
 ## Contributing
 
-Contributions are welcome! Please ensure:
+### Code Style
 
-1. Code passes `shellcheck whichx` with no warnings
-2. Changes follow the [Bash Coding Standard](https://github.com/Open-Technology-Foundation/bash-coding-standard)
-3. Update documentation if adding features
-4. Test on bash 4.3+ (the minimum supported version)
+- All variables `local` (sourceable requirement)
+- Integer variables: `local -i count=0`
+- Arrays: `local -a items=()`
+- Conditionals: `[[ ]]` never `[ ]`
+- Arithmetic: `(( ))` only
+- 2-space indentation
+- Quote all variable expansions
+- Errors to stderr: `printf >&2`
 
----
+### Requirements
+
+- Must pass `shellcheck`
+- Must pass all 69 tests
+- No new dependencies
+
+### Pull Requests
+
+1. Fork the repository
+2. Create a feature branch
+3. Make changes
+4. Run `make test`
+5. Submit PR
 
 ## License
 
-GNU General Public License v3.0 — see [LICENSE](LICENSE) for details.
+GPL-3.0-or-later — see [LICENSE](LICENSE)
 
-This is free software: you can redistribute it and/or modify it under the terms of the GPL. There is NO WARRANTY, to the extent permitted by law.
-
----
-
-## Author
-
-**Gary Dean** — [Open Technology Foundation](https://github.com/Open-Technology-Foundation)
-
----
+**Indonesian Open Technology Foundation**
+admin@yatti.id
 
 ## See Also
 
-- Man page: `man whichx`
-- [Bash Coding Standard](https://github.com/Open-Technology-Foundation/bash-coding-standard)
-- Related commands: `which(1)`, `whereis(1)`, `type(1)`, `command(1)`
+- `man which` — installed man page
+- `type(1)` — bash builtin, shows aliases/functions too
+- `command -v` — POSIX way to find commands
+- `whereis(1)` — also searches man pages and source

@@ -5,7 +5,7 @@
 set -euo pipefail
 shopt -s inherit_errexit extglob nullglob
 
-declare -r VERSION=2.0
+declare -r VERSION=2.0.0
 
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -e -- "$0")
@@ -143,8 +143,9 @@ main() {
                       targets+=("$@")
                       break
                       ;;  # End of options
-      -[acsVh]*) #shellcheck disable=SC2046  # Split combined options: -ac → -a -c
-                      set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"
+      -[acsVh]*) # Split combined options: -ac → -a -c
+                      set -- "${1:0:2}" "-${1:2}" "${@:2}"
+                      continue
                       ;;
       -*)             error "Invalid option ${1@Q}"
                       exit $EXIT_INVALID_OPTION

@@ -14,8 +14,8 @@
 # Returns: 0 on success, 1 on error
 mdh_process() {
   local -i delta=$1
-  local -- error_mode="${2:-skip}"
-  local -i quiet="${3:-0}"
+  local -- error_mode=${2:-skip}
+  local -i quiet=${3:-0}
 
   local -i in_code_block=0
   local -- fence_type=''

@@ -33,11 +33,13 @@ for path in "${shlock_paths[@]}"; do
 done
 
 if [[ -z "$SHLOCK_CMD" ]]; then
-  >&2 echo 'bcs-compliance: error: shlock not found'
-  >&2 echo 'Expected locations:'
-  >&2 echo "  - $BCS_DIR/lib/shlock/shlock (bundled)"
-  >&2 echo '  - /ai/scripts/lib/shlock/shlock (development)'
-  >&2 echo '  - shlock in PATH (system)'
+  cat >&2 <<NOT_FOUND
+bcs-compliance: error: shlock not found
+Expected locations:
+  - $BCS_DIR/lib/shlock/shlock (bundled)
+  - /ai/scripts/lib/shlock/shlock (development)
+  - shlock in PATH (system)
+NOT_FOUND
   exit 1
 fi
 readonly -- SHLOCK_CMD

@@ -45,7 +45,7 @@ declare -- VERSION='0.9.5.420' SCRIPT_NAME=trim.bash
 if (($#)); then
   case $1 in
     -h|--help)
-        cat <<EOT
+        cat <<HELP
 $SCRIPT_NAME $VERSION - Remove leading and trailing blanks
 
 Usage: trim [-e] string    # Remove leading and trailing whitespace
@@ -62,7 +62,7 @@ Examples:
   echo "  text  " | trim    # Output: "text"
 
 See also: ltrim, rtrim, trimv, trimall
-EOT
+HELP
         exit 0
         ;;
     -V|--version)

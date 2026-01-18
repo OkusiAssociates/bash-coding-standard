@@ -11,7 +11,7 @@ declare -r SCRIPT_NAME=${0##*/}
 
 # Global configuration
 declare -i TERM_WIDTH=0  # 0 means auto-detect
-declare -ir MAX_FILE_SIZE=$((10*1024*1024))  # 10MB limit
+declare -i MAX_FILE_SIZE=$((10*1024*1024))  # 10MB limit
 
 # Feature flags (associative array)
 declare -A OPTIONS=(
@@ -68,6 +68,7 @@ vecho()   { ((VERBOSE)) || return 0; _msg "$@"; }
 success() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 warn()    { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 info()    { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
+
 # Debug output with timestamp
 debug() {
   ((DEBUG)) || return 0
@@ -299,8 +300,9 @@ fi
 # Strip ANSI escape sequences from text
 # Usage: strip_ansi "text with ANSI codes"
 strip_ansi() {
+  local -- text=$1
   # Remove ANSI escape sequences: ESC [ ... letter
-  sed 's/\x1b\[[0-9;]*[a-zA-Z]//g' <<<"$1"
+  sed 's/\x1b\[[0-9;]*[a-zA-Z]//g' <<<"$text"
 }
 
 # Get visible length of text (without ANSI codes)
@@ -314,7 +316,8 @@ visible_length() {
 # Sanitize input by removing ANSI sequences
 # Usage: sanitize_ansi "user input"
 sanitize_ansi() {
-  strip_ansi "$1"
+  local -- text=$1
+  strip_ansi "$text"
 }
 
 # ================================================================================
@@ -1352,8 +1355,8 @@ parse_arguments() {
         ;;
       -[wDVht]*)
         # Split combined short options: -Dv -> -D -v
-        set -- "${1:0:2}" "-${1:2}" "${@:2}"
-        continue
+        #shellcheck disable=SC2046
+        set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"
         ;;
       -*)
         die 22 "Invalid option ${1@Q}"

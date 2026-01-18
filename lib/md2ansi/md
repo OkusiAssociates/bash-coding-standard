@@ -7,9 +7,9 @@ set -euo pipefail
 export LESS='-FXRS'
 
 # Get the directory where this script is located
-SCRIPT_DIR=$(dirname "$(readlink -en -- "$0")")
+declare -- SCRIPT_DIR=$(dirname "$(realpath -- "$0")")
 
 # Run md2ansi and pipe to less
-"$SCRIPT_DIR/md2ansi" "$@" | less
+"$SCRIPT_DIR"/md2ansi "$@" | less
 
 #fin

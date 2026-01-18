@@ -7,7 +7,7 @@ shopt -s inherit_errexit shift_verbose extglob nullglob
 ## INITIALIZATION ##
 
 # Script metadata
-declare -r VERSION='1.0.0' # 2025-10-20
+declare -r VERSION=1.0.0
 
 # Global variables
 declare -- BC errfile expression
@@ -21,7 +21,7 @@ declare -ri HISTSIZE=1000 HISTFILESIZE=2000
 
 cleanup() {
   local -i exit_code=${1:-$?}
-  ((is_terminal)) && history -w "$HISTFILE" 2>/dev/null
+  ((is_terminal)) && history -w "$HISTFILE" 2>/dev/null ||:
   rm -f "$errfile"
   return "$exit_code"
 }
@@ -41,7 +41,7 @@ process_expression() {
 
 evaluate_expression() {
   # Evaluate expression with bc and return error status
-  local -- expr="$1"
+  local -- expr=$1
   local -i exit_code=0
 
   "$BC" --mathlib <<<"$expr" 2>"$errfile"
@@ -83,7 +83,7 @@ interactive_loop() {
 }
 
 show_help() {
-  cat <<'EOT'
+  cat <<'HELP'
 bcx - terminal calculator for floating point expressions
 
 This is a wrapper script for bc (see: man bc).
@@ -115,14 +115,14 @@ Then:
   ? 23 * 42       # ✗ Incorrect on command line!
   ? 23x42         # can use x for * on command line
   ? 23 x 42       # with spaces
-EOT
+HELP
 }
 
 ## EXECUTION ##
 
 # Simple Argument parsing
-[[ ${1:-} == '-h' || ${1:-} == '--help' ]] && { show_help; exit 0; }
-[[ ${1:-} == '-V' || ${1:-} == '--version' ]] && { echo "bcx $VERSION"; exit 0; }
+[[ ${1:-} == '-h' || ${1:-} == '--help' ]] && { show_help; exit 0; } ||:
+[[ ${1:-} == '-V' || ${1:-} == '--version' ]] && { echo "bcx $VERSION"; exit 0; } ||:
 
 # Locate bc command
 declare -r BC=$(command -v bc) || { >&2 echo "bcx: ✗ 'bc' not found"; exit 1; }
@@ -134,9 +134,7 @@ declare -r errfile=$(mktemp -t bcx-error.XXXXXX) || { >&2 echo 'bcx: ✗ Cannot 
 trap 'cleanup $?' SIGINT SIGTERM EXIT
 
 # Terminal detection
-declare -i is_terminal
-[[ -t 1 ]] && is_terminal=1 || is_terminal=0
-readonly is_terminal
+[[ -t 1 ]] && declare -ir is_terminal=1 || declare -ir is_terminal=0
 
 # Check if we have an expression
 if (($#)); then
