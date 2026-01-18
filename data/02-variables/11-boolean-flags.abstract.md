@@ -1,20 +1,21 @@
 ## Boolean Flags
 
-**Use `declare -i` integers (0/1) for boolean state; test with `(())`.**
+**Use `declare -i` with 0/1 for boolean state; test with `(())`.**
 
-### Rationale
-- Arithmetic `((FLAG))` eliminates string comparison bugs
-- Integer declaration prevents accidental string assignment
+### Why
+- `(())` arithmetic returns proper exit codes (0=false, non-zero=true)
+- Integer declaration prevents string pollution
+- Explicit initialization prevents unset variable errors
 
 ### Pattern
 ```bash
 declare -i DRY_RUN=0 VERBOSE=0
-((DRY_RUN)) && info 'Dry-run mode'
-if ((VERBOSE)); then log_debug; fi
+((DRY_RUN)) && echo 'dry-run' ||:
+if ((VERBOSE)); then debug_output; fi
 ```
 
 ### Anti-patterns
-- `if [[ "$FLAG" == "true" ]]` â†' use `((FLAG))`
-- Uninitialized flags â†' always init to 0 or 1
+- `if [[ $FLAG == "true" ]]` â†’ string comparison fragile
+- `if [ $FLAG ]` â†’ fails on unset or "0" string
 
 **Ref:** BCS0211

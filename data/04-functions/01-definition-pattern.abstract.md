@@ -1,17 +1,27 @@
 ## Function Definition Pattern
 
-**Use single-line syntax for simple operations; multi-line with `local --` for complex functions.**
+**Use `fname() { }` syntax with `local` declarations at function start.**
 
+### Key Rules
+- Single-line for trivial ops: `fname() { cmd; }`
+- Multi-line: `local -i` for integers, `local --` for strings
+- Always `return "$exitcode"` with quoted variable
+
+### Rationale
+- `local` prevents variable leakage to global scope
+- Typed locals (`-i`) catch assignment errors early
+
+### Example
 ```bash
-vecho() { ((VERBOSE)) || return 0; _msg "$@"; }
-
 main() {
   local -i exitcode=0
-  local -- variable
+  local -- result
   return "$exitcode"
 }
 ```
 
-**Anti-pattern:** `local file="$1"` �' `local -- file="$1"` (always use `--` separator)
+### Anti-patterns
+- `function fname` → use `fname()` (POSIX-compatible)
+- Unquoted `return $var` → use `return "$var"`
 
 **Ref:** BCS0401

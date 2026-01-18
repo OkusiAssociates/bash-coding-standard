@@ -2,35 +2,39 @@
 
 **Always check return values explicitly—`set -e` misses pipelines, command substitution, and conditionals.**
 
-**Rationale:** Explicit checks enable contextual errors, controlled recovery, and catch failures `set -e` misses.
+### Rationale
+- `set -e` doesn't catch: pipelines (except last), conditionals, command substitution assignments
+- Explicit checks enable contextual error messages and controlled cleanup
 
-**`set -e` limitations:** Pipelines (except last), conditionals, command substitution in assignments.
-
-**Patterns:**
+### Core Patterns
 
 ```bash
-# || die pattern
-mv "$f" "$d/" || die 1 "Failed to move ${f@Q}"
+# Pattern 1: || die (concise)
+mv "$src" "$dst/" || die 1 "Failed: ${src@Q} → ${dst@Q}"
 
-# || block for cleanup
+# Pattern 2: || { } for cleanup
 mv "$tmp" "$final" || { rm -f "$tmp"; die 1 "Move failed"; }
 
-# Check command substitution
-out=$(cmd) || die 1 "cmd failed"
+# Pattern 3: Command substitution
+output=$(cmd) || die 1 'cmd failed'
 
-# PIPESTATUS for pipelines
-cat f | grep x; ((PIPESTATUS[0])) && die 1 "cat failed"
+# Pattern 4: Pipelines - use PIPESTATUS
+cat f | grep p | sort
+((PIPESTATUS[0] == 0)) || die 1 'cat failed'
 ```
 
-**Critical settings:**
+### Critical Settings
+
 ```bash
 set -euo pipefail
-shopt -s inherit_errexit  # Subshells inherit set -e
+shopt -s inherit_errexit  # Bash 4.4+: cmd subst inherits set -e
 ```
 
-**Anti-patterns:**
-- `cmd1; cmd2; if (($?))` �' checks cmd2 not cmd1
-- `output=$(failing_cmd)` without `|| die` �' silent failure
-- Generic errors `die 1 "failed"` �' no context for debugging
+### Anti-Patterns
+
+- `mv "$f" "$d"`→No check, silent failure
+- `cmd1; cmd2; (($?))`→Checks cmd2, not cmd1
+- `die 1 'failed'`→No context; use `die 1 "Failed: ${var@Q}"`
+- `out=$(cmd)` alone→Failure undetected without `|| die`
 
 **Ref:** BCS0604

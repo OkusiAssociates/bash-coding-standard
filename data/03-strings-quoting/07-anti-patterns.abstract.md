@@ -1,45 +1,35 @@
 ### Quoting Anti-Patterns
 
-**Single quotes for static text, double quotes for variables, avoid unnecessary braces.**
+**Always quote variables; use single quotes for literals, double for expansions; braces only when required.**
 
 #### Critical Anti-Patterns
 
-| Wrong | Correct | Why |
-|-------|---------|-----|
-| `"literal"` | `'literal'` | Static strings need single quotes |
-| `$var` | `"$var"` | Prevents word splitting/glob expansion |
-| `"${HOME}/bin"` | `"$HOME"/bin` | Braces only when needed |
-| `${arr[@]}` | `"${arr[@]}"` | Arrays require quotes |
+| Wrong | Correct | Issue |
+|-------|---------|-------|
+| `"literal"` | `'literal'` | Unnecessary parsing |
+| `$var` | `"$var"` | Word splitting/glob |
+| `"${HOME}/bin"` | `"$HOME"/bin` | Unnecessary braces |
+| `${arr[@]}` | `"${arr[@]}"` | Element splitting |
 
-#### When Braces ARE Required
-
+#### Braces Required For
 ```bash
-"${var:-default}"    # Default value
-"${file##*/}"        # Parameter expansion
-"${array[@]}"        # Array expansion
-"${var1}${var2}"     # Adjacent variables
+"${var:-default}"    # Parameter expansion
+"${file##*/}"        # Substring ops
+"${array[@]}"        # Arrays
+"${v1}${v2}"         # Adjacent vars
 ```
 
 #### Glob Danger
-
 ```bash
 pattern='*.txt'
-echo $pattern    # ✗ Expands to all .txt files!
-echo "$pattern"  # ✓ Outputs literal: *.txt
+echo $pattern    # ✗ Expands!
+echo "$pattern"  # ✓ Literal
 ```
 
-#### Here-doc: Quote Delimiter for Literals
-
+#### Here-doc
 ```bash
-# ✗ Variables expand unexpectedly
-cat <<EOF
-SELECT * FROM users WHERE name = "$name"
-EOF
-
-# ✓ Quoted delimiter prevents expansion
-cat <<'EOF'
-SELECT * FROM users WHERE name = ?
-EOF
+cat <<'EOF'      # ✓ Quoted = literal
+cat <<EOF        # ✗ Variables expand
 ```
 
 **Ref:** BCS0307

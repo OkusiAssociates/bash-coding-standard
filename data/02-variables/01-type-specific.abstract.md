@@ -1,37 +1,34 @@
 ## Type-Specific Declarations
 
-**Use explicit type declarations (`declare -i/-a/-A`, `declare --`, `local --`) to enforce type safety and document intent.**
+**Always use explicit type declarations (`declare -i`, `-a`, `-A`, `--`) for type safety, intent clarity, and bash's built-in type checking.**
 
-**Rationale:** Integer declarations catch non-numeric assignments (become 0). Array declarations prevent scalar overwrites. `--` separator prevents option injection.
+**Rationale:** Type safety catches errors early; explicit types document intent; arrays prevent scalar assignment bugs.
 
 **Declaration types:**
-- `-i` integers: counters, ports, exit codes â†' auto-arithmetic, type-checked
-- `--` strings: paths, text, config â†' default for text data
-- `-a` indexed arrays: lists, args â†' safe word-splitting
-- `-A` associative arrays: key-value maps â†' fast lookups (Bash 4.0+)
-- `-r` readonly: constants â†' immutable after init
-- `local` in functions: ALL function variables â†' prevents global pollution
+- `declare -i` â€” integers (counters, ports, exit codes)
+- `declare --` â€” strings (paths, text); `--` prevents option injection
+- `declare -a` â€” indexed arrays (lists)
+- `declare -A` â€” associative arrays (key-value maps)
+- `declare -r` â€” read-only constants
+- `local --`/`local -i`/`local -a` â€” function-scoped variables
 
+**Example:**
 ```bash
-declare -i count=0 port=8080
-declare -- filename=data.txt
+declare -i count=0 max_retries=3
+declare -- config_path=/etc/app.conf
 declare -a files=()
-declare -A config=([key]=value)
-declare -r VERSION=1.0.0
+declare -A CONFIG=([timeout]='30' [retries]='3')
 
 process() {
   local -- input=$1
   local -i attempts=0
-  local -a items=()
+  while ((attempts < max_retries)); do attempts+=1; done
 }
 ```
 
 **Anti-patterns:**
-```bash
-count=0              # â†' declare -i count=0
-files=file.txt       # â†' files=(file.txt) or files+=(file.txt)
-local name=$1        # â†' local -- name=$1 (prevents -n injection)
-declare CONFIG       # â†' declare -A CONFIG=() (for assoc array)
-```
+- `count=0` â†’ `declare -i count=0` (unclear intent)
+- `declare CONFIG` then `CONFIG[key]=val` â†’ `declare -A CONFIG` (creates indexed, not associative)
+- `local filename=$1` â†’ `local -- filename=$1` (option injection risk if $1 is "-n")
 
 **Ref:** BCS0201

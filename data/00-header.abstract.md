@@ -1,12 +1,12 @@
 # Bash Coding Standard
 
-**Bash 5.2+ standard. Not a compatibility guide.**
+**Bash 5.2+ standard; not a compatibility guide.**
 
 ## Principles
-- K.I.S.S. — Remove unused functions/variables
-- "Everything as simple as possible, but not simpler"
+- K.I.S.S. — No over-engineering
+- Remove unused functions/variables
 
-## Contents
+## Sections
 1. Script Structure & Layout
 2. Variable Declarations & Constants
 3. Variable Expansion & Parameter Substitution

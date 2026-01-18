@@ -1,25 +1,26 @@
 # Control Flow
 
-**Use `[[ ]]` for tests, `(( ))` for arithmetic; avoid pipes to while loops.**
+**Use `[[ ]]` for tests, `(( ))` for arithmetic; avoid pipes to while loops due to subshell variable loss.**
 
 ## Core Rules
 
 - `[[ ]]` over `[ ]` â€” safer word splitting, supports `&&`/`||`/regex
-- `(( ))` for arithmetic conditionals â€” cleaner than `[[ $x -gt 5 ]]`
-- Process substitution `< <(cmd)` over pipes â€” avoids subshell variable loss
+- `(( ))` for arithmetic conditions â€” no `$` needed inside
+- Process substitution `< <(cmd)` preserves variables vs pipe to while
+- Safe increment: `i+=1` or `((++i))` â€” avoid `((i++))` (fails at 0 with `set -e`)
 
-## Safe Arithmetic
+## Pattern
 
 ```bash
-i+=1              # Safe increment (string append works for integers)
-((i++)) || true   # Guard: ((i++)) fails with set -e when i=0
+while IFS= read -r line; do
+    ((count++)) || true  # Safe with set -e
+done < <(find . -type f)
+[[ -n $line && $line != "#"* ]] && process "$line"
 ```
 
-`((i+=1))` â†' fails when result is 0; `((i++))` â†' returns original value (fails at i=0)
+## Anti-patterns
 
-## Anti-Patterns
-
-- `cmd | while read` â†' variables lost in subshell; use `while read < <(cmd)`
-- `[ $var = "x" ]` â†' word splitting/glob issues; use `[[ $var == "x" ]]`
+- `cmd | while read` â†’ variables lost in subshell
+- `((i++))` with `set -e` â†’ exits when i=0
 
 **Ref:** BCS0500

@@ -1,40 +1,36 @@
 ## Echo vs Messaging Functions
 
-**Use messaging functions (`info`, `warn`, `error`) for operational status â†' stderr; use `echo` for data output â†' stdout.**
+**Use messaging functions (`info`, `success`, `warn`, `error`) for operational status to stderr; use `echo` for data output to stdout.**
 
 **Rationale:**
-- Stream separation: messagingâ†'stderr (user-facing), echoâ†'stdout (parseable data)
-- Verbosity: messaging respects `VERBOSE`, echo always displays
-- Pipeability: only stdout should contain data for capture/piping
+- Stream separation enables pipelines (data=stdout, status=stderr)
+- Messaging respects `VERBOSE`; `echo` always displays (critical for captures)
+- Data output must be parseable without formatting interference
 
-**Decision matrix:**
-- Status/progress â†' messaging function
-- Data/return values â†' echo
-- Help/version â†' echo (always display)
-- Errors â†' `error()` to stderr
+**Decision:** Status/progress â†’ messaging. Data/help/reports â†’ echo.
 
-**Example:**
+**Core Pattern:**
 ```bash
 get_data() {
-  info "Processing..."    # Status â†' stderr
-  echo "$result"          # Data â†' stdout
+  info "Processing..."     # stderr, verbose-controlled
+  echo "$result"           # stdout, always outputs (capturable)
 }
-output=$(get_data)        # Captures only data
+show_help() { cat <<EOT
+Usage: $SCRIPT_NAME [OPTIONS]
+EOT
+}
 ```
 
 **Anti-patterns:**
 ```bash
-# âœ— Using info() for data - can't capture
-get_email() { info "$email"; }     # Goes to stderr!
+# âœ— info() for data - goes to stderr, can't capture
+get_email() { info "$email"; }
+email=$(get_email)  # Empty!
 
-# âœ“ Use echo for data output
-get_email() { echo "$email"; }     # Capturable
-
-# âœ— Echo for status - mixes with data
-echo "Processing..."               # Pollutes stdout
-
-# âœ“ Messaging for status
-info "Processing..."               # Clean separation
+# âœ— echo for status - mixes with data in pipeline
+process() { echo "Processing..."; cat "$file"; }
 ```
+
+**Rules:** Help/version â†’ always echo. Errors â†’ always stderr (`error()`). Data functions â†’ echo only. Progress â†’ messaging functions.
 
 **Ref:** BCS0705

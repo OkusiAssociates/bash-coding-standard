@@ -1,35 +1,26 @@
 # Security Considerations
 
-**Security-first practices covering SUID/SGID prohibition, PATH lockdown, IFS safety, eval avoidance, and input sanitization.**
+**Prevent privilege escalation, command injection, and input attacks through PATH control, eval avoidance, and input sanitization.**
 
 ## Core Rules
 
-- **Never SUID/SGID** on bash scripts â†' inherent privilege escalation risk
-- **Lock PATH**: `PATH='/usr/local/bin:/usr/bin:/bin'` or validate explicitly
-- **IFS safety**: Reset to default `$' \t\n'` before word-splitting operations
-- **Avoid eval**: Injection risk; require explicit justification if unavoidable
-- **Sanitize input early**: Validate/clean user input at entry points
+- **No SUID/SGID**: Never set on bash scripts (security risk)
+- **PATH**: Lock down or validate explicitly; prevent command hijacking
+- **IFS**: Reset to default (`$' \t\n'`) to prevent word-splitting exploits
+- **eval**: Avoid; if unavoidable, document justification and sanitize all inputs
+- **Input**: Validate/sanitize user input at entry point
 
-## Rationale
-
-1. Bash scripts ignore SUID bit but SGID still exploitable via environment manipulation
-2. Unvalidated PATH enables command hijacking via malicious executables
-3. Modified IFS causes unexpected word-splitting in `read`, loops, command substitution
-
-## Example
+## Minimal Pattern
 
 ```bash
-#!/usr/bin/env bash
-set -euo pipefail
-PATH='/usr/local/bin:/usr/bin:/bin'
+readonly PATH='/usr/local/bin:/usr/bin:/bin'
 IFS=$' \t\n'
-readonly INPUT="${1:-}"
-[[ "$INPUT" =~ ^[a-zA-Z0-9_-]+$ ]] || { echo "Invalid input" >&2; exit 1; }
+[[ "$input" =~ ^[a-zA-Z0-9_-]+$ ]] || die "Invalid input"
 ```
 
 ## Anti-Patterns
 
-- `eval "$user_input"` â†' command injection
-- Trusting inherited PATH/IFS â†' environment-based attacks
+- `eval "$user_input"` â†’ injection vector
+- Unvalidated PATH â†’ command hijacking
 
 **Ref:** BCS1000

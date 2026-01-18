@@ -1,16 +1,20 @@
 ### Dependency Management
 
-**Use `command -v` to verify external dependencies exist before use, with clear error messages.**
+**Use `command -v` to check dependencies; provide clear error messages for missing tools.**
+
+---
 
 #### Rationale
 - Clear errors for missing tools vs cryptic failures
 - Enables graceful degradation with optional deps
-- Documents script requirements explicitly
+- Documents requirements explicitly
+
+---
 
 #### Dependency Check
 
 ```bash
-# Single/multiple checks
+# Single/multiple commands
 command -v curl >/dev/null || die 1 'curl required'
 
 for cmd in curl jq awk; do
@@ -23,7 +27,7 @@ done
 ```bash
 declare -i HAS_JQ=0
 command -v jq >/dev/null && HAS_JQ=1 ||:
-((HAS_JQ)) && result=$(jq -r '.f' <<<"$json")
+((HAS_JQ)) && result=$(jq -r '.field' <<<"$json")
 ```
 
 #### Version Check
@@ -32,9 +36,16 @@ command -v jq >/dev/null && HAS_JQ=1 ||:
 ((BASH_VERSINFO[0] < 5)) && die 1 "Requires Bash 5+"
 ```
 
+---
+
 #### Anti-Patterns
 
-- `which curl` â†' `command -v curl` (POSIX compliant)
-- Silent `curl "$url"` â†' Check first with helpful message
+`which curl` â†’ `command -v curl` (POSIX compliant)
+
+Silent `curl "$url"` â†’ Check first with helpful message
+
+---
+
+**See Also:** BCS0607 (Library Patterns)
 
 **Ref:** BCS0408

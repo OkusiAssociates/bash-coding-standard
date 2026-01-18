@@ -1,8 +1,8 @@
 ## Trap Handling
 
-**Use cleanup functions with trap to ensure resource cleanup on all exit paths (normal, error, signals).**
+**Use cleanup function with trap to ensure resource cleanup on exit, signals, or errors.**
 
-### Standard Pattern
+### Core Pattern
 
 ```bash
 cleanup() {
@@ -24,23 +24,17 @@ trap 'cleanup $?' SIGINT SIGTERM EXIT
 
 ### Critical Rules
 
-1. **Set trap BEFORE creating resources** â†' prevents leaks if early exit
-2. **Disable trap inside cleanup** â†' prevents recursion
-3. **Use `$?` in trap** â†' preserves original exit code
-4. **Single quotes in trap** â†' delays variable expansion
+1. **Set trap BEFORE creating resources** - prevents leaks if script exits early
+2. **Disable trap inside cleanup** - `trap - SIGINT SIGTERM EXIT` prevents recursion
+3. **Preserve exit code** - capture `$?` in trap: `trap 'cleanup $?' EXIT`
+4. **Single quotes** - `trap 'rm "$file"' EXIT` delays expansion until execution
 
 ### Anti-Patterns
 
 ```bash
-# âœ— Overwrites exit code
-trap 'rm -f "$f"; exit 0' EXIT
-# âœ“ Preserve exit code
-trap 'ec=$?; rm -f "$f"; exit $ec' EXIT
-
-# âœ— Variables expand immediately
-trap "rm -f $file" EXIT
-# âœ“ Expand at runtime
-trap 'rm -f "$file"' EXIT
+trap 'rm "$f"; exit 0' EXIT      # â†’ Always exits 0, loses real code
+trap "rm $file" EXIT             # â†’ Expands now, not at trap time
+temp=$(mktemp); trap '...' EXIT  # â†’ Set trap BEFORE mktemp
 ```
 
 **Ref:** BCS0603

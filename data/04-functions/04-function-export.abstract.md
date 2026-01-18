@@ -1,14 +1,18 @@
 ## Function Export
 
-**Use `declare -fx` to export functions for subshell access.**
+**Use `declare -fx` to export functions for subshell/subprocess access.**
 
-Required when functions must be available to: `xargs`, `find -exec`, parallel execution, or any child process.
+### Rationale
+- Subshells don't inherit functions without explicit export
+- `export -f` is equivalent but `declare -fx` is more consistent with variable exports
 
+### Example
 ```bash
 grep() { /usr/bin/grep "$@"; }
 declare -fx grep
 ```
 
-Anti-pattern: `export -f func` â†' use `declare -fx func` instead (consistent with BCS declaration style).
+### Anti-pattern
+`â†’` Defining functions without export, then wondering why subprocess can't find them
 
 **Ref:** BCS0404

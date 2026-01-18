@@ -1,37 +1,32 @@
 ### Timeout Handling
 
-**Use `timeout` command to prevent hanging on unresponsive commands; exit 124 = timeout.**
+**Prevent hangs: wrap commands with `timeout`, check exit 124 for timeout condition.**
 
-#### Rationale
-- Prevents script hangs and resource exhaustion
-- Critical for network operations and automated systems
+Exit codes: 124=timed out, 125=timeout failed, 137=SIGKILL (128+9)
 
 #### Pattern
 
 ```bash
-if timeout 30 long_running_command; then
-  success 'Completed'
-else
-  ((exit_code=$?))
-  ((exit_code == 124)) && warn 'Timed out' || error "Exit $exit_code"
+if timeout 30 long_command; then
+  echo 'Done'
+elif (($? == 124)); then
+  echo 'Timed out'
 fi
 
-# Graceful kill: TERM first, KILL after grace period
-timeout --signal=TERM --kill-after=10 60 command
+# Graceful: TERM first, KILL after 10s
+timeout --signal=TERM --kill-after=10 60 cmd
 ```
-
-**Exit codes:** 124=timeout, 125=timeout failed, 137=SIGKILL
 
 #### Built-in Timeouts
 
-```bash
-read -r -t 10 -p 'Input: ' val          # read timeout
-ssh -o ConnectTimeout=10 "$srv" cmd     # SSH timeout
-curl --connect-timeout 10 --max-time 60 "$url"
-```
+- `read -t 10` → input timeout
+- `ssh -o ConnectTimeout=10` → connection timeout
+- `curl --connect-timeout 10 --max-time 60` → request timeout
 
 #### Anti-Pattern
 
-`ssh "$srv" cmd` �' `timeout 300 ssh -o ConnectTimeout=10 "$srv" cmd`
+`ssh "$server" 'cmd'` → hangs forever. Use: `timeout 300 ssh -o ConnectTimeout=10 "$server" 'cmd'`
+
+**See Also:** BCS1105 (Exponential Backoff)
 
 **Ref:** BCS1104

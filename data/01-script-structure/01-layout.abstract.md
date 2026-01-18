@@ -1,51 +1,31 @@
-## Script Layout
+## BCS0101: Script Layout
 
-**All scripts follow 13-step bottom-up structure: infrastructure �' implementation �' orchestration.**
+**All Bash scripts follow 13-step bottom-up structure: infrastructure before implementation, utilities before business logic.**
 
 ### Rationale
-1. **Safe initialization** - `set -euo pipefail` runs before any commands
-2. **Dependency resolution** - functions defined before they're called
-3. **Predictability** - components always in same location
+- **Safe initialization**: `set -euo pipefail` runs before any commands; functions defined before called
+- **Predictability**: Standard locations—metadata step 6, utilities step 9, business step 10
+- **Error prevention**: Structure prevents undefined functions/variables classes of bugs
 
-### The 13 Steps
-
-| # | Element | Required |
-|---|---------|----------|
-| 1 | `#!/bin/bash` | ✓ |
-| 2 | `#shellcheck` directives | opt |
-| 3 | Brief description | opt |
-| 4 | `set -euo pipefail` | ✓ |
-| 5 | `shopt -s inherit_errexit extglob nullglob` | rec |
-| 6 | Metadata: `VERSION`, `SCRIPT_PATH/DIR/NAME` | rec |
-| 7 | Global declarations (`declare -i/-a/-A/--`) | rec |
-| 8 | Color definitions (if terminal) | opt |
-| 9 | Utility functions (messaging) | rec |
-| 10 | Business logic functions | rec |
-| 11 | `main()` with arg parsing | rec |
-| 12 | `main "$@"` | rec |
-| 13 | `#fin` or `#end` | ✓ |
+### 13 Steps (Executable Scripts)
+1. `#!/bin/bash` 2. ShellCheck directives 3. Description comment 4. `set -euo pipefail` (MANDATORY first command) 5. `shopt -s inherit_errexit shift_verbose extglob nullglob` 6. Metadata (`VERSION`, `SCRIPT_PATH/DIR/NAME`) 7. Global declarations 8. Colors (if terminal) 9. Utility functions 10. Business logic 11. `main()` with arg parsing 12. `main "$@"` 13. `#fin`
 
 ### Minimal Example
-
 ```bash
 #!/bin/bash
+# Brief description
 set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
 declare -r VERSION=1.0.0
-declare -i VERBOSE=0
-
-info() { ((VERBOSE)) && >&2 echo "◉ $*"; }
-die() { (($#<2)) || >&2 echo "✗ ${@:2}"; exit "${1:-1}"; }
-
-main() {
-  while (($#)); do case $1 in -v) VERBOSE=1;; *) break;; esac; shift; done
-  info "Running..."
-}
+declare -r SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
+main() { echo "Hello"; }
 main "$@"
 #fin
 ```
 
 ### Anti-Patterns
-- **Missing `set -euo pipefail`** �' errors silently ignored
-- **Business logic before utilities** �' undefined function calls
+- ✗ Missing `set -euo pipefail` → script continues after errors
+- ✗ Business logic before utilities → undefined function calls
 
 **Ref:** BCS0101

@@ -1,31 +1,35 @@
 ## Echo vs Messaging Functions
 
-**Choose between plain `echo` and messaging functions based on context, formatting, and output destination. Use messaging functions for operational status (respects verbosity), plain `echo` for data output (must always display).**
+**Choose between plain `echo` and messaging functions based on output destination and purpose. Messaging functions for operational status (stderr, respects verbosity); plain `echo` for data output (stdout, always displays).**
 
 **Rationale:**
-- **Stream Separation**: Messaging�'stderr (user-facing), `echo`�'stdout (parseable data)
+- **Stream Separation**: Messaging→stderr (user-facing), `echo`→stdout (data/parseable)
 - **Verbosity Control**: Messaging respects `VERBOSE`; `echo` always displays
-- **Script Composition**: Proper streams allow pipeline use without mixing data/status
-- **Parseability**: Plain `echo` is predictable; messaging includes formatting
+- **Script Composition**: Proper streams allow pipelines without mixing data and status
+- **Parseability**: `echo` output is predictable; messaging includes formatting/prefixes
 
 **When to use messaging functions (`info`, `success`, `warn`, `error`):**
 
 ```bash
-# Operational status updates (stderr, verbosity-controlled)
+# Operational status updates (to stderr)
 info 'Starting database backup...'
 success 'Database backup completed'
 warn 'Backup size exceeds threshold'
 error 'Database connection failed'
 
-# Diagnostic/debug output
+# Diagnostic output
 debug "Variable state: count=$count, total=$total"
 info "Using configuration file ${config_file@Q}"
+
+# Messages respecting verbosity
+info 'Checking prerequisites...'   # Only if VERBOSE=1
+error 'Configuration file not found'  # Always shown
 ```
 
 **When to use plain `echo`:**
 
 ```bash
-# 1. Data output (stdout) - functions returning values
+# 1. Data output (stdout) - must be capturable
 get_user_email() {
   local -- username=$1
   local -- email
@@ -47,53 +51,28 @@ Options:
 EOT
 }
 
-# 3. Structured reports and parseable output
-generate_report() {
-  echo 'System Report'
-  echo '============='
-  df -h
+# 3. Structured/parseable output
+list_users() {
+  local -- user
+  while IFS=: read -r user _; do
+    echo "$user"
+  done < /etc/passwd
 }
+list_users | grep '^admin' | wc -l
 
-# 4. Output that must always display (version, results)
-echo "$SCRIPT_NAME $VERSION"
+# 4. Output that must always display
+show_version() { echo "$SCRIPT_NAME $VERSION"; }
 echo "Processed $success_count files successfully"
 ```
 
 **Decision matrix:**
-- Status vs Data? Status�'messaging, Data�'echo
-- Respect verbosity? Yes�'messaging, No�'echo
-- Parsed/piped? Yes�'echo to stdout
-- Multi-line formatted? Yes�'echo/here-doc
-- Needs color/formatting? Yes�'messaging
-
-**Complete messaging functions implementation:**
 
 ```bash
-declare -i VERBOSE=1 DEBUG=0
-
-# Colors (conditional on terminal)
-if [[ -t 1 && -t 2 ]]; then
-  declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' NC=$'\033[0m'
-else
-  declare -r RED='' GREEN='' YELLOW='' CYAN='' NC=''
-fi
-
-_msg() {
-  local -- prefix="$SCRIPT_NAME:" msg
-  case ${FUNCNAME[1]} in
-    success) prefix+=" ${GREEN}✓${NC}" ;;
-    warn)    prefix+=" ${YELLOW}▲${NC}" ;;
-    info)    prefix+=" ${CYAN}◉${NC}" ;;
-    error)   prefix+=" ${RED}✗${NC}" ;;
-  esac
-  for msg in "$@"; do printf '%s %s\n' "$prefix" "$msg"; done
-}
-success() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
-warn()    { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
-info()    { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
-debug()   { ((DEBUG)) || return 0; >&2 _msg "$@"; }
-error()   { >&2 _msg "$@"; }
-die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+# Is this operational status or data?     Status→messaging  Data→echo
+# Should this respect verbosity?          Yes→messaging     No→echo
+# Will this be parsed or piped?           Yes→echo          No→messaging
+# Is this multi-line formatted output?    Yes→echo/heredoc  No→messaging
+# Does this need color/formatting?        Yes→messaging     No→echo
 ```
 
 **Anti-patterns:**
@@ -101,50 +80,57 @@ die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 ```bash
 # ✗ Wrong - using info() for data output (goes to stderr, can't capture)
 get_user_email() {
-  info "$email"  # Goes to stderr! $email is empty when captured!
+  local -- email=$1
+  info "$email"  # Goes to stderr! Can't be captured!
 }
+email=$(get_user_email alice)  # $email is empty!
 
-# ✓ Correct - use echo for data
+# ✓ Correct - use echo for data output
 get_user_email() {
+  local -- email=$1
   echo "$email"  # Goes to stdout, can be captured
 }
 
-# ✗ Wrong - echo for operational status (mixes with data stream)
+# ✗ Wrong - using echo for operational status (mixes with data)
 process_file() {
+  local -- file=$1
   echo "Processing ${file@Q}..."  # Goes to stdout - mixes with data!
   cat "$file"
 }
 
-# ✓ Correct - messaging for status, data to stdout
+# ✓ Correct - use messaging function for status
 process_file() {
-  info "Processing ${file@Q}..."  # To stderr
+  local -- file=$1
+  info "Processing ${file@Q}..."  # Goes to stderr - separated from data
   cat "$file"                     # Data to stdout
 }
 
 # ✗ Wrong - help text using info() (won't display if VERBOSE=0)
 show_help() {
   info 'Usage: script.sh [OPTIONS]'
+  info '  -v  Verbose mode'
 }
 
-# ✓ Correct - help with echo/cat (always displays)
+# ✓ Correct - help text using echo/cat
 show_help() {
   cat <<HELP
 Usage: script.sh [OPTIONS]
+  -v  Verbose mode
 HELP
 }
 
 # ✗ Wrong - error messages to stdout
 validate_input() {
   if [[ ! -f "$1" ]]; then
-    echo "File not found ${1@Q}"  # Wrong stream!
+    echo "File not found ${1@Q}"  # To stdout - wrong stream!
     return 1
   fi
 }
 
-# ✓ Correct - errors to stderr
+# ✓ Correct - error messages to stderr
 validate_input() {
   if [[ ! -f "$1" ]]; then
-    error "File not found ${1@Q}"  # Correct stream
+    error "File not found ${1@Q}"  # To stderr - correct stream
     return 1
   fi
 }
@@ -153,24 +139,31 @@ validate_input() {
 **Edge cases:**
 
 **1. Progress during data generation:**
+
 ```bash
 generate_data() {
-  info 'Generating data...'      # Progress to stderr
+  local -i i
+  info 'Generating data...'           # Progress to stderr
   for ((i=1; i<=100; i+=1)); do
-    echo "line $i"               # Data to stdout
+    echo "line $i"                    # Data to stdout
   done
-  success 'Data generation complete'  # Status to stderr
+  success 'Data generation complete'  # Completion to stderr
 }
-data=$(generate_data)  # Captures data, sees progress
+data=$(generate_data)  # Captures only data, sees progress
 ```
 
-**2. Error context with return codes:**
+**2. Error context in functions:**
+
 ```bash
 validate_config() {
   local -- config_file=$1
   if [[ ! -f "$config_file" ]]; then
     error "Config file not found ${config_file@Q}"
     return 2
+  fi
+  if [[ ! -r "$config_file" ]]; then
+    error "Config file not readable ${config_file@Q}"
+    return 5
   fi
   return 0
 }
@@ -181,13 +174,37 @@ fi
 ```
 
 **3. Logging vs user messages:**
+
 ```bash
 process_item() {
   local -- item=$1
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] Processing: $item"  # Log (stdout�'file)
-  info "Processing $item..."                                # User (stderr)
+  # Log entry (data to stdout, redirected to file)
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] Processing: $item"
+  # User message (status to stderr)
+  info "Processing $item..."
 }
 process_item "$item" >> "$log_file"
 ```
 
-**Key principle:** Stream separation enables script composition. Operational messages (how script works)�'stderr via messaging. Data output (what script produces)�'stdout via echo.
+**Testing stream separation:**
+
+```bash
+test_message_separation() {
+  local -- output
+  output=$(
+    info 'Starting process...'  # To stderr - not captured
+    echo 'data'                  # To stdout - captured
+    success 'Process complete'   # To stderr - not captured
+  )
+  [[ "$output" == 'data' ]] || die 1 "Expected 'data', got ${output@Q}"
+}
+```
+
+**Summary:**
+- **Messaging functions**: Operational status, diagnostics, user-facing messages → stderr
+- **Plain `echo`**: Data output, help text, structured reports, parseable output → stdout
+- **Verbosity**: Messaging respects `VERBOSE`; echo always displays
+- **Help/version**: Always display (echo), never verbose-dependent
+- **Errors**: Always to stderr (use `error()` or `>&2 echo`)
+
+**Key principle:** Stream separation enables script composition. Operational messages (how script works) → stderr via messaging. Data output (what script produces) → stdout via echo.

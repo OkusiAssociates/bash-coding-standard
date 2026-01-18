@@ -1,26 +1,21 @@
 ## Production Script Optimization
 
-**Remove unused functions/variables from mature production scripts.**
+**Remove all unused functions/variables before deployment.**
 
-### Why
-- Reduces size, improves clarity, eliminates maintenance burden
+### Rationale
+- Reduces script size and attack surface
+- Eliminates maintenance burden for dead code
 
 ### Pattern
 ```bash
-# Development: full toolkit
-source lib/messaging.sh  # All utilities
-
-# Production: keep only what's used
-error() { >&2 printf '%s\n' "ERROR: $*"; }
-die() { error "$@"; exit 1; }
-# Removed: info, warn, debug, yn, trim...
+# Keep only what's called:
+# ✓ error(), die() if used
+# ✗ yn(), decp(), trim() if NOT used
+# ✗ SCRIPT_DIR, DEBUG if NOT referenced
 ```
 
-### Anti-Pattern
-```bash
-# ✗ Shipping unused utilities
-declare -- PROMPT='> '    # Never used
-debug() { :; }            # Never called
-```
+### Anti-patterns
+- `source utils.sh` → using 2 of 20 functions
+- Keeping "might need later" code in production
 
 **Ref:** BCS0405

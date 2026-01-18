@@ -1,18 +1,22 @@
 ### printf Patterns
 
-**Single-quote format strings, double-quote variable arguments; prefer printf over echo -e.**
+**Single-quote format strings, double-quote variable arguments. Prefer printf over echo -e for portable escape handling.**
 
 #### Pattern
 
 ```bash
-printf '%s: %d files\n' "$name" "$count"  # Format: single, vars: double
-echo 'Static text'                         # No vars: single quotes
-printf '%s\n' "$var"                       # %s=string %d=int %f=float %%=literal
+printf '%s: %d files\n' "$name" "$count"  # Format=single, args=double
+echo 'Static text'                         # Static=single quotes
+printf '%s\n' 'literal' "$var"            # Mixed: literal single, var double
 ```
+
+#### Format Specifiers
+
+`%s` string | `%d` decimal | `%f` float | `%x` hex | `%%` literal %
 
 #### Anti-patterns
 
-- `echo -e "...\n..."` â†' Use `printf '...\n...\n'` or `$'...\n...'` (echo -e behavior varies)
-- `printf "$fmt"` â†' Format strings must be single-quoted (security, escapes)
+- `echo -e "text\n"` â†’ behavior varies across shells; use `printf 'text\n'` or `$'text\n'`
+- `printf "$var"` â†’ format string injection; use `printf '%s' "$var"`
 
 **Ref:** BCS0305

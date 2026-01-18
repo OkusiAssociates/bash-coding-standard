@@ -1,52 +1,47 @@
 ## Pipes to While Loops
 
-**Never pipe to while loops—pipes create subshells where variable assignments are lost. Use `< <(command)` or `readarray` instead.**
+**Never pipe to while loops—pipes create subshells where variable changes are lost. Use `< <(cmd)` or `readarray` instead.**
 
 ### Why It Fails
 
-Pipes spawn subshell for while body �' variable modifications discarded on exit �' counters=0, arrays=empty, no errors shown.
-
-### Rationale
-
-- Variables modified in pipe subshell don't persist to parent
-- Silent failure—script runs but produces wrong values
-- Process substitution runs loop in current shell, preserving state
+Pipes spawn subshells; variables modified inside vanish when the pipe ends. No error—just wrong values.
 
 ### Solutions
 
-**Process substitution** (most common):
+**Process substitution** (variables persist):
 ```bash
+declare -i count=0
 while IFS= read -r line; do
   count+=1
-done < <(command)
+done < <(grep ERROR "$log")
+echo "$count"  # Correct!
 ```
 
-**readarray** (collecting lines):
+**readarray** (collect lines):
 ```bash
-readarray -t lines < <(command)
+readarray -d '' -t files < <(find /data -print0)
 ```
 
-**Here-string** (variable input):
+**Here-string** (input in variable):
 ```bash
-while IFS= read -r line; do
-  count+=1
-done <<< "$input"
+while read -r line; do count+=1; done <<< "$input"
 ```
 
 ### Anti-Patterns
 
 ```bash
 # ✗ Pipe loses state
-cmd | while read -r x; do arr+=("$x"); done
-echo "${#arr[@]}"  # 0!
+cat file | while read -r l; do arr+=("$l"); done  # arr stays empty!
 
-# ✓ Process substitution preserves state
-while read -r x; do arr+=("$x"); done < <(cmd)
+# ✓ Process substitution
+while read -r l; do arr+=("$l"); done < <(cat file)
 ```
 
-### Edge Cases
+### Key Points
 
-- **Large files**: `readarray` loads all into RAM; while loop streams line-by-line
-- **Null-delimited**: Use `read -r -d ''` and `find -print0`
+- `| while` = subshell = lost variables (counters=0, arrays=empty)
+- `< <(cmd)` runs loop in current shell
+- `readarray -d ''` for null-delimited (safe filenames)
+- Silent failure—test with actual data
 
 **Ref:** BCS0504

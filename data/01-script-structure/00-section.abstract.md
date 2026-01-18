@@ -1,12 +1,7 @@
 # Script Structure & Layout
 
-**All Bash scripts follow mandatory 13-step structural layout for consistency, maintainability, and safe initialization.**
+**All Bash scripts follow mandatory 13-step structural layout for consistency, safety, and maintainability.**
 
-Core elements: shebang â†' metadata â†' shopt settings â†' dual-purpose patterns â†' FHS compliance â†' extension guidelines â†' bottom-up function organization (low-level utilities before high-level orchestration).
-
-Key principles:
-- Consistent initialization order prevents subtle bugs
-- FHS compliance ensures system integration
-- Bottom-up organization enables function dependencies
+Covers: shebang â†’ metadata â†’ shopt â†’ dual-purpose patterns â†’ FHS compliance â†’ file extensions â†’ bottom-up function organization (utilities before orchestration).
 
 **Ref:** BCS0100

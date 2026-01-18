@@ -1,31 +1,28 @@
 ### Dual-Purpose Scripts
 
-**Scripts executable AND sourceable must apply `set -euo pipefail`/`shopt` ONLY when executed directly, never when sourced.**
+**`set -euo pipefail` and `shopt` ONLY when executed directly, NEVER when sourced.** Sourcing applies settings to caller's shell, breaking their error handling.
 
-**Why:** Sourcing applies settings to caller's shell, breaking its error handling/glob behavior.
+**Pattern:** Functions first → early return for sourced → executable section with strict mode.
 
-**Pattern:**
 ```bash
 #!/bin/bash
 my_func() { local -- arg="$1"; echo "$arg"; }
 declare -fx my_func
 
-# Early return when sourced
 [[ ${BASH_SOURCE[0]} == "$0" ]] || return 0
-
-# Executable section only
+# --- Executable section ---
 set -euo pipefail
 shopt -s inherit_errexit extglob nullglob
 my_func "$@"
 ```
 
-**Rules:**
-- Functions BEFORE source detection
-- `return 0` for sourced mode (not `exit`)
-- Guard metadata: `[[ ! -v VAR ]]` for idempotence
+**Key points:**
+- `return 0` exits cleanly when sourced; execution continues when run directly
+- Guard metadata: `[[ ! -v VAR ]]` for safe re-sourcing
+- Use `return` not `exit` for errors when sourced
 
 **Anti-patterns:**
-- `set -euo pipefail` at top of dual-purpose script �' breaks caller's shell
-- Using `exit` when sourced �' terminates caller's shell
+- `set -euo pipefail` at top of dual-purpose script → breaks caller's shell
+- Missing `declare -fx` → functions unavailable to subshells when sourced
 
 **Ref:** BCS010201

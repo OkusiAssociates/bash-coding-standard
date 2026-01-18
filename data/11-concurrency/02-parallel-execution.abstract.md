@@ -1,12 +1,10 @@
 ### Parallel Execution Patterns
 
-**Execute multiple commands concurrently while tracking PIDs and collecting results.**
+**Execute multiple commands concurrently using PID arrays and wait loops.**
 
-#### Rationale
-- Significant speedup for I/O-bound tasks
-- Better resource utilization
+**Why:** I/O-bound speedup; better resource utilization; efficient batch processing.
 
-#### Basic Pattern (PID Tracking)
+#### Pattern
 
 ```bash
 declare -a pids=()
@@ -14,25 +12,21 @@ for server in "${servers[@]}"; do
   run_command "$server" &
   pids+=($!)
 done
-for pid in "${pids[@]}"; do
-  wait "$pid" || true
-done
+for pid in "${pids[@]}"; do wait "$pid" || true; done
 ```
 
-#### Output Capture Pattern
+**Output capture:** Use temp files (`mktemp -d`) per job, display in order after all complete.
 
-Use temp files per job, cleanup via trap:
+**Concurrency limit:** Track active PIDs with `kill -0`, use `wait -n` to reap completed jobs.
+
+#### Anti-Pattern
+
 ```bash
-temp_dir=$(mktemp -d); trap 'rm -rf "$temp_dir"' EXIT
+# ✗ Variable lost in subshell
+count=0; for t in "${tasks[@]}"; do { process "$t"; ((count++)); } & done
+echo "$count"  # Always 0!
+# ✓ Use temp files: echo 1 >> "$temp"/count; count=$(wc -l < "$temp"/count)
 ```
-
-#### Concurrency Limit
-
-Use `wait -n` with PID array, check `kill -0 "$pid"` to prune completed jobs.
-
-#### Anti-Patterns
-
-`count=0; { process; ((count++)); } &` �' subshell loses variable changes. Use temp files: `echo 1 >> "$temp"/count`, then `wc -l < "$temp"/count`.
 
 **See Also:** BCS1101 (Background Jobs), BCS1103 (Wait Patterns)
 

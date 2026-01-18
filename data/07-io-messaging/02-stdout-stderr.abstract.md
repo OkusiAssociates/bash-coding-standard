@@ -1,11 +1,18 @@
 ## STDOUT vs STDERR
 
-**All error messages â†' STDERR; place `>&2` at beginning for clarity.**
+**Errors â†’ STDERR; place `>&2` at command start for clarity.**
 
+### Rationale
+- Enables `2>/dev/null` filtering without losing output
+- Allows proper pipeline composition (stdout = data, stderr = diagnostics)
+
+### Pattern
 ```bash
->&2 echo "[$(date -Ins)]: $*"
+log_err() { >&2 echo "[$(date -Ins)]: $*"; }
 ```
 
-Anti-pattern: `echo "error" >&2` â†' harder to spot redirection at line end.
+### Anti-patterns
+- `echo "Error"` â†’ errors lost in stdout stream
+- `echo "msg" >&2` â†’ redirection at end less visible
 
 **Ref:** BCS0702

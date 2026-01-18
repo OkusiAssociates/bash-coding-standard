@@ -1,41 +1,49 @@
 # Short-Option Disaggregation
 
-**Split bundled options (`-abc` �' `-a -b -c`) for Unix-compliant CLI parsing.**
+**Split bundled options (`-abc` → `-a -b -c`) for Unix-compliant argument parsing.**
 
 ## Iterative Method (Recommended)
 
 ```bash
--[ovnVh]?*)  set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+-[ovnVh]?*)  # Bundled short options
+  set -- "${1:0:2}" "-${1:2}" "${@:2}"
+  continue
+  ;;
 ```
 
-**Pattern:** `${1:0:2}` extracts first option; `"-${1:2}"` creates remainder; `continue` reprocesses.
+**How:** `${1:0:2}` extracts first option; `"-${1:2}"` creates remainder with dash; `continue` reprocesses.
 
-## Rationale
+## Performance
 
-- **53-119× faster** than grep/fold (~24,000-53,000 vs ~450 iter/sec)
-- Pure bash, no external deps, no shellcheck warnings
+| Method | Iter/Sec | Dependencies | Shellcheck |
+|--------|----------|--------------|------------|
+| **Iterative** | **24K-53K** | None | Clean |
+| grep | ~445 | grep | SC2046 |
+| fold | ~460 | fold | SC2046 |
 
-## Alternatives
+**Iterative is 53-119× faster** with no external dependencies.
 
-| Method | Speed | Notes |
-|--------|-------|-------|
-| grep | ~445/s | `set -- '' $(printf '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"` SC2046 |
-| fold | ~460/s | Same pattern with `fold -w1` |
-| bash loop | ~318/s | More verbose, no `continue` needed |
-
-## Anti-patterns
+## Alternative: grep/fold
 
 ```bash
-# ✗ Options with args mid-bundle
--von file    # -o captures "n" as argument
-
-# ✓ Args at end or separate
--vno file    # -v -n -o file
+-[ovnVh]*) #shellcheck disable=SC2046
+  set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
 ```
 
-## Edge Cases
+## Critical Rules
 
-- List valid options explicitly: `-[ovnVh]?*` prevents unknown option disaggregation
-- Options requiring arguments must be at bundle end or separate
+- **Pattern must list valid options:** `-[ovnVh]?*` prevents disaggregating unknown options
+- **Options with arguments:** Must be at end of bundle or separate (`-vno out.txt` ✓, `-von out.txt` ✗)
+- Place disaggregation case **before** `-*)` invalid option handler
+
+## Anti-Patterns
+
+```bash
+# ✗ Missing continue (infinite loop)
+-[ovnVh]?*) set -- "${1:0:2}" "-${1:2}" "${@:2}" ;;
+
+# ✗ Option with arg in middle of bundle
+./script -von out.txt  # -o captures "n" as argument!
+```
 
 **Ref:** BCS0805

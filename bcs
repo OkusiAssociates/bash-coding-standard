@@ -472,14 +472,14 @@ sanitize_utf8() {
   local -- temp_file="$file".utf8tmp
 
   # Replace control characters with UTF-8 symbols
-  # Claude AI outputs valid UTF-8, so we only need to handle any stray control chars
+  # Claude AI outputs valid UTF-8, so we only need to handle stray control chars
   # 0x0c (FF)  → remove (form feed)
   # 0x13 (DC3) → ✓ (CHECK MARK)
   # 0x17 (ETB) → ✗ (BALLOT X)
   # 0x14 (DC4) → – (EN DASH)
-  # 0x92       → ' (RIGHT SINGLE QUOTATION MARK)
+  # NOTE: 0x92 NOT replaced - it's a valid UTF-8 continuation byte (e.g., → = e2 86 92)
 
-  sed 's/\x0c//g; s/\x13/✓/g; s/\x17/✗/g; s/\x14/–/g; s/\x92/'\''/g' "$file" > "$temp_file"
+  sed 's/\x0c//g; s/\x13/✓/g; s/\x17/✗/g; s/\x14/–/g' "$file" > "$temp_file"
 
   if [[ -s "$temp_file" ]]; then
     mv "$temp_file" "$file"
@@ -4038,8 +4038,10 @@ CHECK
         break
         ;;
 
-      -[sfvq]*) #shellcheck disable=SC2046 #split up single options
-        set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}";;
+      -[sfvq]*) #split up single options
+        set -- "${1:0:2}" "-${1:2}" "${@:2}"
+        continue
+        ;;
 
       -*)
         error "Invalid option ${1@Q}";
@@ -4497,8 +4499,9 @@ COMPRESS
         compress_verbose=0
         ;;
 
-      -[nvqhf]*) #shellcheck disable=SC2046
-        set -- '' $(printf -- "-%c " $(grep -o . <<<"${1:1}")) "${@:2}"
+      -[nvqhf]*)
+        set -- "${1:0:2}" "-${1:2}" "${@:2}"
+        continue
         ;;
 
       -*)
@@ -4747,17 +4750,15 @@ DISPLAY
                     ;;
       -s|--squeeze) squeeze_blanks=1
                     ;;
-      -b|--bash)
-                    force_bash=1
+      -b|--bash)    force_bash=1
                     ;;
-      -a|--md2ansi)
-                    force_md2ansi=1
+      -a|--md2ansi) force_md2ansi=1
                     ;;
-      -j|--json)
-                    force_json=1
+      -j|--json)    force_json=1
                     ;;
-      -[hVcsbaj]*) #shellcheck disable=SC2046 #split up combined short options
-                    set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}"
+      -[hVcsbaj]*) #split up combined short options
+                    set -- "${1:0:2}" "-${1:2}" "${@:2}"
+                    continue
                     ;;
       -*)           viewer_args+=("$1")
                     ;;

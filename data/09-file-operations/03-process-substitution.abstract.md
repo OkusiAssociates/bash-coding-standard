@@ -1,39 +1,37 @@
 ## Process Substitution
 
-**Use `<(cmd)` for input and `>(cmd)` for output to eliminate temp files and avoid subshell variable scope issues.**
+**Use `<(cmd)` for input and `>(cmd)` for output to treat command I/O as files, eliminating temp files and avoiding subshell variable scope issues.**
 
-**Rationale:** No temp file cleanup; preserves variables unlike pipes; enables parallel processing.
+### Key Benefits
+- **No temp files**: Data streams via FIFOs, no disk I/O
+- **Preserves scope**: Unlike pipes, variables survive while loops
+- **Parallel execution**: Multiple substitutions run simultaneously
 
-**Core patterns:**
+### Core Patterns
 
 ```bash
 # Compare outputs (no temp files)
 diff <(sort file1) <(sort file2)
 
-# Avoid subshell - variables preserved
+# Avoid subshell in while loop
 declare -i count=0
-while read -r line; do ((count+=1)); done < <(cat file)
+while read -r line; do ((count++)); done < <(cat file)
 echo "$count"  # Correct!
 
-# Populate array safely
-readarray -t files < <(find /data -type f -print0)
+# Parallel processing with tee
+cat log | tee >(grep ERROR > err.txt) >(wc -l > cnt.txt) >/dev/null
 ```
 
-**Anti-patterns:**
+### Anti-Patterns
 
 ```bash
 # âœ— Pipe to while (subshell loses variables)
 cat file | while read -r line; do count+=1; done
-echo "$count"  # Still 0!
-
-# âœ— Temp files when process sub works
-temp=$(mktemp); sort file > "$temp"; diff "$temp" other; rm "$temp"
-# â†' Use: diff <(sort file) other
+# âœ— Unquoted variables inside substitution
+diff <(sort $file1) <(sort $file2)
 ```
 
-**When NOT to use:** Simple cases where direct methods work:
-- `result=$(command)` â†' not `result=$(cat <(command))`
-- `grep pat file` â†' not `grep pat < <(cat file)`
-- `cmd <<< "$var"` â†' not `cmd < <(echo "$var")`
+â†’ Use `<<<` for simple variable input instead of `< <(echo "$var")`
+â†’ Use direct `grep pattern file` instead of `grep pattern < <(cat file)`
 
 **Ref:** BCS0903

@@ -2,29 +2,28 @@
 
 **Use `"$var"` by default; braces only when syntactically required.**
 
-#### Braces Required
-
-- **Expansion ops:** `${var##*/}` `${var:-default}` `${var:0:5}` `${var//old/new}` `${var,,}`
-- **Adjacent concat:** `${prefix}suffix` `${var1}${var2}`
-- **Arrays:** `${array[@]}` `${array[i]}` `${#array[@]}`
+#### When Braces Required
+- **Expansion ops:** `${var:-default}` `${var##*/}` `${var:0:5}` `${var//old/new}` `${var,,}`
+- **Concatenation (no separator):** `${var}suffix` `${a}${b}`
+- **Arrays:** `${arr[@]}` `${arr[i]}` `${#arr[@]}`
 - **Special:** `${10}` `${@:2}` `${!var}` `${#var}`
 
-#### No Braces (separators delimit)
+#### When Braces NOT Required
+- Standalone: `"$var"` `"$HOME"` → not `"${var}"`
+- With separators: `"$var/path"` `"$var-suffix"` → not `"${var}/path"`
 
-`"$var"` `"$HOME"` `"$PREFIX"/bin` `"$var-suffix"` `"$var.suffix"`
-
+#### Core Operations
 ```bash
-# Pattern/default/substring
-name=${path##*/}; dir=${path%/*}; val=${var:-default}
-# ✓ "$PREFIX"/bin  �' ✗ "${PREFIX}"/bin
-# ✓ "$var"         �' ✗ "${var}"
+${var##*/}      # Longest prefix removal
+${var%/*}       # Shortest suffix removal
+${var:-default} # Default if unset
+${var:0:5}      # Substring
+${var//old/new} # Replace all
+${var,,}        # Lowercase (Bash 4+)
 ```
 
-| Context | Form |
-|---------|------|
-| Standalone | `"$var"` |
-| With separator | `"$var"/path` |
-| Expansion op | `"${var%pat}"` |
-| Concat (no sep) | `"${a}${b}"` |
+#### Anti-patterns
+- `"${HOME}"` → `"$HOME"` (unnecessary braces)
+- `"${PREFIX}/bin"` → `"$PREFIX/bin"` (separator delimits)
 
 **Ref:** BCS0210

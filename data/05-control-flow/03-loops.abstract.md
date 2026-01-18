@@ -1,48 +1,44 @@
 ## Loops
 
-**Use `for` for arrays/globs/ranges, `while` for input streams/conditions. Always quote arrays `"${array[@]}"`, use process substitution `< <(cmd)` to avoid subshell scope loss.**
+**Use `for` for arrays/globs/ranges, `while` for streaming input/conditions. Always quote arrays `"${array[@]}"`, use process substitution `< <(cmd)` to avoid subshell scope loss.**
 
-### Key Patterns
+**Rationale:** Array iteration with quotes preserves element boundaries; pipe to while loses variable changes; `while ((1))` is 15-22% faster than `while true`.
 
-**For loops:** `for item in "${array[@]}"` | `for file in *.txt` | `for ((i=0; i<n; i+=1))`
-
-**While input:** `while IFS= read -r line; do ... done < file` or `< <(command)`
-
-**Infinite:** `while ((1))` (fastest) �' `while :` (POSIX) �' avoid `while true` (15-22% slower)
-
-**Arg parsing:** `while (($#)); do case $1 in ... esac; shift; done`
-
-### Core Example
+**Core patterns:**
 
 ```bash
-local -- file
-local -i count=0
+# Array iteration
+for file in "${files[@]}"; do process "$file"; done
 
-# Process command output (preserves variable scope)
-while IFS= read -r -d '' file; do
-  [[ -f "$file" ]] || continue
+# Read file/command output (preserves variables)
+while IFS= read -r line; do
   count+=1
-done < <(find . -name '*.sh' -print0)
+done < <(find . -name '*.txt')
 
-echo "Processed $count files"
+# C-style (use +=1 not ++)
+for ((i=0; i<10; i+=1)); do echo "$i"; done
+
+# Infinite loop (fastest)
+while ((1)); do work; [[ -f stop ]] && break; done
 ```
 
-### Critical Anti-Patterns
+**Anti-patterns:**
 
-| Wrong | Correct |
-|-------|---------|
-| `for f in $(ls *.txt)` | `for f in *.txt` |
-| `cat file \| while read` | `while read < file` or `< <(cat)` |
-| `for x in ${array[@]}` | `for x in "${array[@]}"` |
-| `for ((i=0;i<n;i++))` | `for ((i=0;i<n;i+=1))` |
-| `while (($# > 0))` | `while (($#))` |
-| `local x` inside loop | declare locals before loop |
+```bash
+# ✗ Pipe loses variables    → ✓ Use < <(cmd)
+cat f | while read x; do n+=1; done  # n unchanged!
 
-### Essential Rules
+# ✗ Parse ls output         → ✓ Use glob directly
+for f in $(ls *.txt); do  # for f in *.txt; do
 
-- Enable `nullglob` for glob loops (empty match = zero iterations)
-- Use `break 2` for nested loop exit (explicit level)
-- Use `IFS= read -r` always (preserves whitespace/backslashes)
-- Declare loop variables before loop, not inside
+# ✗ Unquoted array          → ✓ Quote expansion
+for x in ${arr[@]}; do    # for x in "${arr[@]}"; do
+
+# ✗ i++ fails at 0 with -e  → ✓ Use i+=1
+for ((i=0; i<10; i++))    # for ((i=0; i<10; i+=1))
+
+# ✗ Redundant comparison    → ✓ Arithmetic is truthy
+while (($# > 0)); do      # while (($#)); do
+```
 
 **Ref:** BCS0503

@@ -1,44 +1,41 @@
-## shopt Settings
+## shopt
 
-**Configure `shopt -s inherit_errexit shift_verbose extglob nullglob` for robust error handling and glob behavior.**
+**Configure shell options for robust error handling and glob behavior.**
 
-### Required Settings
+### Recommended Settings
 
-| Option | Purpose |
-|--------|---------|
+```bash
+shopt -s inherit_errexit shift_verbose extglob nullglob
+```
+
+### Critical Options
+
+| Option | Effect |
+|--------|--------|
 | `inherit_errexit` | Makes `set -e` work in `$(...)` subshells |
-| `shift_verbose` | Error on invalid shift (no silent failure) |
-| `extglob` | Extended patterns: `!(*.txt)`, `+([0-9])` |
+| `shift_verbose` | Error on shift when no args remain |
+| `extglob` | Extended patterns: `!(*.txt)`, `@(jpg|png)` |
+| `nullglob` | Unmatched glob → empty (for loops/arrays) |
+| `failglob` | Unmatched glob → error (strict mode) |
+| `globstar` | Enable `**` recursive matching (slow on deep trees) |
 
-### Glob Behavior (Choose One)
-
-- **`nullglob`** �' Unmatched glob = empty (for loops/arrays)
-- **`failglob`** �' Unmatched glob = error (strict scripts)
-
-### Why inherit_errexit is Critical
+### Why `inherit_errexit` is Critical
 
 ```bash
 set -e  # Without inherit_errexit
 result=$(false)  # Does NOT exit!
-echo 'Still runs'  # Executes
-
-shopt -s inherit_errexit
-result=$(false)  # Script exits here
+# With inherit_errexit: exits as expected
 ```
 
-### Anti-Pattern
+### `nullglob` vs Default
 
 ```bash
-# ✗ Default: unmatched glob = literal string
-for f in *.txt; do rm "$f"; done  # Tries "rm *.txt" if no match!
+# ✗ Default: unmatched glob stays literal
+for f in *.txt; do rm "$f"; done  # Tries to delete "*.txt"!
 
-# ✓ With nullglob: loop skipped if no matches
+# ✓ nullglob: unmatched → empty, loop skips
 shopt -s nullglob
-for f in *.txt; do rm "$f"; done
+for f in *.txt; do rm "$f"; done  # Safe
 ```
-
-### Optional
-
-`globstar` enables `**/*.sh` recursive matching (slow on deep trees).
 
 **Ref:** BCS0105

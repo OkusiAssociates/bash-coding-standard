@@ -1,28 +1,29 @@
 ## Development Practices
 
-**ShellCheck mandatory; end scripts with `#fin`; program defensively.**
+**ShellCheck is compulsory; end scripts with `#fin`; program defensively.**
 
-### ShellCheck
-- **Compulsory** for all scripts: `shellcheck -x script.sh`
-- Disable only with documented reason: `#shellcheck disable=SC2155  # reason`
+### Core Requirements
 
-### Script Termination
+1. **ShellCheck**: Run `shellcheck -x` on all scripts; disable only with documented reason
+2. **Termination**: End with `main "$@"` then `#fin` marker
+3. **Defensive**: Use `set -u`, validate inputs early, provide defaults
+
+### Rationale
+- ShellCheck catches 80%+ common bugs automatically
+- Markers enable tooling to verify complete scripts
+
+### Example
 ```bash
+#!/usr/bin/env bash
+set -euo pipefail
+: "${VERBOSE:=0}"
+[[ -n "${1:-}" ]] || { echo "Arg required" >&2; exit 1; }
 main "$@"
 #fin
 ```
 
-### Defensive Programming
-```bash
-: "${VERBOSE:=0}"              # Default values
-[[ -n "$1" ]] || die 1 'Arg required'  # Validate early
-set -u                         # Guard unset vars
-```
-
-### Performance
-Minimize subshells â†' use builtins over external commands â†' batch ops â†' process substitution over temp files.
-
-### Testing
-Testable functions, dependency injection, verbose/debug modes, meaningful exit codes.
+### Anti-patterns
+- `#shellcheck disable` without comment â†’ unexplained exceptions
+- Missing `set -u` â†’ silent failures from typos
 
 **Ref:** BCS1206

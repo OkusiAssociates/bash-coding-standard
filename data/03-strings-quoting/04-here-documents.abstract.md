@@ -1,40 +1,32 @@
 ### Here Documents
 
-**Quote delimiter (`<<'EOF'`) to prevent expansion; unquoted (`<<EOF`) for variable substitution.**
+**Quote delimiter (`<<'EOF'`) for literal content; unquoted (`<<EOF`) for variable expansion.**
 
-#### Delimiter Quoting
+#### Delimiter Behavior
 
 | Delimiter | Expansion | Use |
 |-----------|-----------|-----|
 | `<<EOF` | Yes | Dynamic content |
-| `<<'EOF'` | No | Literal (JSON, SQL) |
+| `<<'EOF'` | No | JSON, SQL, literals |
 
-#### Examples
+`<<-EOF` strips leading tabs (not spaces).
+
+#### Example
 
 ```bash
-# Expansion enabled
+# Variables expand
 cat <<EOF
 User: $USER
 EOF
 
-# Literal content (no expansion)
+# Literal (no expansion)
 cat <<'EOF'
-{"name": "$VAR"}
+{"key": "$VAR"}
 EOF
 ```
 
 #### Anti-Pattern
 
-```bash
-# ✗ Unquoted �' SQL injection risk
-cat <<EOF
-SELECT * FROM users WHERE name = "$name"
-EOF
-
-# ✓ Quoted for literal SQL
-cat <<'EOF'
-SELECT * FROM users WHERE name = ?
-EOF
-```
+`<<EOF` with untrusted data → SQL injection risk. Use `<<'EOF'` for literals with `$` symbols.
 
 **Ref:** BCS0304

@@ -7,6 +7,6 @@ declare -ar REQUIRED=(pandoc git md2ansi)
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 ```
 
-**Anti-pattern:** Omitting `-r` on values that should never change â†' silent bugs from accidental reassignment.
+Anti-pattern: Mutable constants â†’ `CONST=value` without `-r` allows reassignment.
 
 **Ref:** BCS0206

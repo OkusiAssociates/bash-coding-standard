@@ -1,28 +1,31 @@
 ## Constants and Environment Variables
 
-**Use `declare -r` for immutable constants; `declare -x` for child process visibility.**
+**Use `readonly`/`declare -r` for immutable values; `export`/`declare -x` for subprocess visibility.**
 
 | Attribute | `readonly` | `export` |
-|-----------|-----------|----------|
-| Prevents change | ✓ | ✗ |
+|-----------|------------|----------|
+| Prevents modification | ✓ | ✗ |
 | Subprocess access | ✗ | ✓ |
 
 **Rationale:**
-- `readonly` prevents accidental modification, signals intent
+- `readonly` prevents accidental modification of constants (VERSION, paths)
 - `export` required only when child processes need the value
-- Combine with `declare -rx` when both immutability and export needed
+- Combine with `declare -rx` for immutable exported values
 
-**Example:**
+**Pattern:**
 ```bash
-declare -r VERSION=2.1.0              # Constant (script only)
-declare -x LOG_LEVEL=${LOG_LEVEL:-INFO}  # Exported, user-overridable
-declare -rx BUILD_ENV=production      # Immutable + exported
-readonly -- SCRIPT_DIR               # Lock after calculation
+declare -r VERSION=2.1.0              # Script constant
+declare -x LOG_LEVEL=${LOG_LEVEL:-INFO}  # Env for children
+declare -rx BUILD_ENV=production      # Both: readonly + exported
+
+# Allow override then lock
+OUTPUT_DIR=${OUTPUT_DIR:-"$HOME"/output}
+readonly -- OUTPUT_DIR
 ```
 
 **Anti-patterns:**
-- `export MAX_RETRIES=3` �' Use `readonly` if children don't need it
-- `CONFIG=/etc/app.conf` without `readonly` �' Allows accidental modification
-- `readonly OUTPUT_DIR=$HOME/out` �' Blocks user override; use `${VAR:-default}` first
+- `export MAX_RETRIES=3` → Use `readonly` if children don't need it
+- `CONFIG=/etc/app.conf` (unprotected) → Use `readonly -- CONFIG=...`
+- `readonly -- VAR=default` before allowing override → Set default first, then `readonly`
 
 **Ref:** BCS0204

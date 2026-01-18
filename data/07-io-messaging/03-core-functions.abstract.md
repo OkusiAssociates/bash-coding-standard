@@ -1,13 +1,14 @@
 ## Core Message Functions
 
-**Use private `_msg()` with `FUNCNAME[1]` inspection to auto-format messages; wrapper functions control verbosity and stream routing.**
+**Use `_msg()` core with `FUNCNAME[1]` inspection for DRY, auto-formatted messaging.**
 
 ### Rationale
-- `FUNCNAME` auto-detects caller â†' single DRY implementation
-- Conditional output via `VERBOSE`/`DEBUG` flags
-- Proper streams: errorsâ†'stderr, dataâ†'stdout (enables `data=$(./script)`)
+- `FUNCNAME[1]` auto-detects caller â†’ no format params, consistent output
+- Single implementation, impossible to pass wrong level
+- Proper streams: errorsâ†’stderr, dataâ†’stdout (enables `data=$(./script)`)
 
 ### Core Pattern
+
 ```bash
 _msg() {
   local -- prefix="$SCRIPT_NAME:" msg
@@ -20,21 +21,22 @@ _msg() {
   for msg in "$@"; do printf '%s %s\n' "$prefix" "$msg"; done
 }
 
-# Wrappers
+# Conditional (VERBOSE), unconditional (error), exit (die)
 info()  { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 error() { >&2 _msg "$@"; }
 die()   { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 ```
 
-### File Logging
-```bash
-# Use printf builtin (10-50x faster than $(date))
-log_msg() { printf '[%(%Y-%m-%d %H:%M:%S)T] %s\n' -1 "$*" >> "$LOG_FILE"; }
-```
-
 ### Anti-Patterns
-- `echo "Error: ..."` â†' no stderr, no prefix, no color
-- `$(date ...)` in log â†' subshell per call; use `printf '%()T'`
-- `die() { error "$@"; exit 1; }` â†' no exit code param
+
+```bash
+# âœ— echo direct (no stderr, no prefix, no VERBOSE)
+echo "Error: failed"
+# âœ“ error 'Failed'
+
+# âœ— $(date) in log (subshell overhead)
+echo "[$(date)] $*" >> "$LOG"
+# âœ“ printf '[%(%Y-%m-%d %H:%M:%S)T] %s\n' -1 "$*" >> "$LOG"
+```
 
 **Ref:** BCS0703

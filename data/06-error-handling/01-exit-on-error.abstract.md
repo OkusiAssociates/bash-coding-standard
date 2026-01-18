@@ -1,35 +1,26 @@
 ## Exit on Error
 
-**Mandatory `set -euo pipefail` enables strict mode: exit on command failure (`-e`), undefined variables (`-u`), or pipe failures (`-o pipefail`).**
+**Always use `set -euo pipefail` at script start for strict mode.**
 
-**Why:** Catches errors immediately; prevents cascading failures; makes scripts behave like compiled languages.
+- `-e`: Exit on command failure
+- `-u`: Exit on undefined variable
+- `-o pipefail`: Pipeline fails if any command fails
 
-### Handling Expected Failures
+**Rationale:** Catches errors immediately; prevents cascading failures.
 
+**Handling expected failures:**
 ```bash
-# Allow failure
-cmd_might_fail || true
-
-# Capture in conditional (avoids set -e exit)
-if result=$(failing_cmd); then
-  echo "OK: $result"
+command_that_might_fail || true      # Allow failure
+if result=$(failing_cmd); then       # Check in conditional
+  echo "$result"
 fi
-
-# Temporary disable
-set +e; risky_cmd; set -e
+${OPTIONAL_VAR:-}                    # Safe undefined access
 ```
 
-### Critical Gotcha
+**Critical gotcha:** `result=$(failing_cmd)` exits before you can check `$result` → wrap in conditional or use `set +e`.
 
-```bash
-# ✗ Exits before check (set -e triggers on substitution)
-result=$(failing_cmd)
-[[ -n "$result" ]] && echo "$result"
-
-# ✓ Conditional protects from exit
-if result=$(failing_cmd); then echo "$result"; fi
-```
-
-**Anti-patterns:** Leaving flags disabled longer than necessary �' re-enable immediately after risky operation.
+**Anti-patterns:**
+- `set -e` after logic starts → must be at top
+- Forgetting `pipefail` → `cmd1 | cmd2` hides `cmd1` failures
 
 **Ref:** BCS0601

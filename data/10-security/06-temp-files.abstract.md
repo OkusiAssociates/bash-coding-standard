@@ -1,34 +1,31 @@
 ## Temporary File Handling
 
-**Always use `mktemp` for temp files/dirs; use EXIT trap for cleanup; never hard-code paths.**
+**Always use `mktemp` for temp files/dirs; never hard-code paths. Use EXIT trap for guaranteed cleanup.**
 
-**Rationale:** mktemp creates files atomically with secure permissions (0600/0700); EXIT trap guarantees cleanup on failure/interruption; prevents race conditions and file collisions.
+### Rationale
+- **Security**: mktemp creates files with 0600 permissions atomically
+- **Uniqueness**: Prevents collisions and race conditions
+- **Cleanup**: EXIT trap ensures removal even on failure/interruption
 
-**Pattern:**
+### Pattern
+```bash
+temp_file=$(mktemp) || die 1 'Failed to create temp file'
+trap 'rm -f "$temp_file"' EXIT
+readonly -- temp_file
+echo 'data' > "$temp_file"
+```
 
+For directories: `mktemp -d` with `rm -rf` in trap.
+
+For multiple files, use array + cleanup function:
 ```bash
 declare -a TEMP_FILES=()
-cleanup() {
-  local -- f; for f in "${TEMP_FILES[@]}"; do
-    [[ -f "$f" ]] && rm -f "$f"; [[ -d "$f" ]] && rm -rf "$f"
-  done
-}
+cleanup() { for f in "${TEMP_FILES[@]}"; do rm -rf "$f"; done; }
 trap cleanup EXIT
-
-temp=$(mktemp) || die 1 'Failed to create temp file'
-TEMP_FILES+=("$temp")
 ```
 
-**Anti-patterns:**
-
-```bash
-# ✗ Hard-coded path �' predictable, no cleanup
-temp=/tmp/myapp.txt
-
-# ✗ Multiple traps overwrite each other
-trap 'rm "$t1"' EXIT; trap 'rm "$t2"' EXIT  # t1 never cleaned!
-
-# ✓ Single cleanup function for all resources
-```
+### Anti-Patterns
+- `temp=/tmp/myapp.txt` → Predictable, collisions, no cleanup
+- `trap 'rm "$t1"' EXIT; trap 'rm "$t2"' EXIT` → Second trap overwrites first; combine: `trap 'rm -f "$t1" "$t2"' EXIT`
 
 **Ref:** BCS1006

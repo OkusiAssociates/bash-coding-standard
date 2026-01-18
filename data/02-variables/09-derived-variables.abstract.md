@@ -1,54 +1,47 @@
 ## Derived Variables
 
-**Compute variables from base values; group with section comments; update derived when base changes (especially during argument parsing).**
+**Compute variables from base values; group with section comments; update derived vars when base changes.**
 
-**Rationale:** DRY principle (single source of truth) â†' consistency when PREFIX changes â†' prevents subtle bugs from stale derived values.
+**Rationale:**
+- DRY: Single source of truthâ€”change PREFIX once, all paths update
+- Correctness: Forgetting to update derived vars after base changes causes subtle bugs
 
-**Core pattern:**
+**Pattern:**
 
 ```bash
 # Base values
 declare -- PREFIX=/usr/local APP_NAME=myapp
 
-# Derived from PREFIX and APP_NAME
+# Derived paths (update these when base changes)
 declare -- BIN_DIR="$PREFIX"/bin
 declare -- CONFIG_DIR=/etc/"$APP_NAME"
 declare -- CONFIG_FILE="$CONFIG_DIR"/config.conf
 
-# XDG fallback pattern
-declare -- CONFIG_BASE=${XDG_CONFIG_HOME:-"$HOME"/.config}
-```
-
-**Update function when base changes:**
-
-```bash
-update_derived_paths() {
+# Update function for argument parsing
+update_derived() {
   BIN_DIR="$PREFIX"/bin
-  LIB_DIR="$PREFIX"/lib
+  CONFIG_DIR=/etc/"$APP_NAME"
   CONFIG_FILE="$CONFIG_DIR"/config.conf
 }
-
-# In argument parsing:
---prefix) shift; PREFIX=$1; update_derived_paths ;;
 ```
 
 **Anti-patterns:**
 
 ```bash
-# âœ— Duplicating values instead of deriving
-BIN_DIR=/usr/local/bin   # â†' BIN_DIR="$PREFIX"/bin
+# âœ— Duplicating instead of deriving
+BIN_DIR=/usr/local/bin  # Hardcoded, won't update with PREFIX
 
-# âœ— Not updating derived when base changes
-PREFIX=$1  # BIN_DIR now wrong! â†' call update_derived_paths
+# âœ— Not updating derived vars when base changes
+--prefix) PREFIX=$1 ;;  # BIN_DIR now wrong!
 
-# âœ— Making readonly before parsing complete
-readonly BIN_DIR  # â†' readonly after all parsing done
+# âœ“ Always update derived vars
+--prefix) PREFIX=$1; update_derived ;;
 ```
 
 **Key rules:**
 - Group derived vars with `# Derived from PREFIX` comments
-- Update ALL derived vars when any base changes
-- Make readonly AFTER argument parsing complete
-- Document hardcoded exceptions (e.g., `/etc/profile.d` fixed path)
+- Use `update_derived()` function when multiple vars need updating
+- Make readonly AFTER all parsing complete
+- XDG fallbacks: `${XDG_CONFIG_HOME:-"$HOME"/.config}`
 
 **Ref:** BCS0209

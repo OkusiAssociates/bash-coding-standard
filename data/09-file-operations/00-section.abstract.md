@@ -1,23 +1,23 @@
 # File Operations
 
-**Use explicit paths, quote all variables, prefer process substitution over pipes.**
+**Safe file handling: explicit paths, proper testing, process substitution.**
 
 ## File Tests
-Always quote: `[[ -f "$file" ]]` `[[ -d "$dir" ]]` `[[ -r "$path" ]]`
+Quote variables: `[[ -f "$file" ]]`. Operators: `-e` exists, `-f` file, `-d` dir, `-r` readable, `-w` writable, `-x` executable.
 
 ## Safe Wildcards
-`rm ./*` â†' never `rm *`; explicit path prevents catastrophic deletion
+Always explicit paths â†’ `rm ./*` never `rm *`. Prevents accidental deletion in wrong directory.
 
 ## Process Substitution
+Avoid subshell variable loss: `while read -r line; do ...; done < <(command)`
+
+## Here Documents
 ```bash
-while IFS= read -r line; do
-    ((count++))
-done < <(command)
-# Variables persist (no subshell)
+cat <<'EOF'
+Multi-line content (single-quoted EOF = no expansion)
+EOF
 ```
 
-## Anti-Patterns
-- `rm *` â†' use `rm ./*`
-- `cat file | while read` â†' use `while read < <(cat file)` or `< file`
+**Anti-patterns:** `rm *` (unsafe) â†’ `rm ./*` | Unquoted `[[ -f $file ]]` â†’ `[[ -f "$file" ]]`
 
 **Ref:** BCS0900

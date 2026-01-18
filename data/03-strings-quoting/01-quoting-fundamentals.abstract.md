@@ -1,34 +1,44 @@
 ### Quoting Fundamentals
 
-**Single quotes for static strings; double quotes only when expansion needed.**
+**Single quotes for static strings; double quotes when variable expansion needed.**
 
 #### Core Rules
 
 - **Single quotes**: Static text, no parsing, `$` `\` `` ` `` literal
-- **Double quotes**: Variable expansion required
-- **Mixed**: `"Option '$1' invalid"` — literal display with variable
-- **One-word exception**: Simple alphanumeric (`a-zA-Z0-9_-.`) may be unquoted
+- **Double quotes**: When variables must expand
+- **Mixed**: `"Unknown '$1'"` → literal quotes around expanded value
+- **Unquoted**: Simple alphanumeric (`a-zA-Z0-9_-.`) allowed: `STATUS=success`
 
-```bash
-info 'Static message'           # Single: no expansion
-info "Found $count files"       # Double: expansion needed
-die 1 "Unknown option '$1'"     # Mixed: literal quotes shown
-STATUS=success                  # Unquoted: simple alphanumeric
-EMAIL='user@domain.com'         # Quoted: special char @
-```
+**Mandatory quoting**: spaces, `@`, `*`, empty strings `''`, `$`, quotes, backslashes.
 
 #### Path Concatenation
 
-Prefer separate quoting for clarity:
 ```bash
-"$PREFIX"/bin                   # Variable quoted separately
-"$dir"/"$file"                  # Clear variable boundaries
+# Preferred - explicit boundaries
+"$PREFIX"/bin
+"$SCRIPT_DIR"/data/"$filename"
+
+# Acceptable
+"$PREFIX/bin"
 ```
 
 #### Anti-Patterns
 
-- `info "Static..."` �' `info 'Static...'` (use single for static)
-- `EMAIL=user@domain.com` �' `EMAIL='user@domain.com'` (quote special chars)
-- `PATTERN=*.log` �' `PATTERN='*.log'` (quote globs)
+```bash
+# ✗ Double quotes for static
+info "Processing..."        # → info 'Processing...'
+[[ "$x" == "active" ]]      # → [[ "$x" == active ]]
+
+# ✗ Special chars unquoted
+EMAIL=user@domain.com       # → EMAIL='user@domain.com'
+```
+
+#### Quick Reference
+
+| Content | Quote | Example |
+|---------|-------|---------|
+| Static | Single | `'text'` |
+| Variable | Double | `"$var"` |
+| Special chars | Single | `'@*.txt'` |
 
 **Ref:** BCS0301

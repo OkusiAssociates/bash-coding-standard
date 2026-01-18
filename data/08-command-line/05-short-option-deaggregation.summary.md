@@ -1,24 +1,14 @@
-# Short-Option Disaggregation
+# Short-Option Disaggregation in Command-Line Processing
 
-Splitting bundled short options (`-abc` �' `-a -b -c`) for Unix-standard command-line parsing.
+## Overview
 
-## Why Needed
+Short-option disaggregation splits bundled options (`-abc`) into individual options (`-a -b -c`), enabling Unix-standard usage like `script -vvn` instead of `script -v -v -n`.
 
-```bash
-# These should be equivalent:
-ls -lha
-ls -l -h -a
-```
-
-Without disaggregation, `-lha` is treated as single unknown option.
-
-## Methods
-
-### Method 1: Iterative Parameter Expansion (Recommended)
+## Method 1: Iterative Parameter Expansion (Recommended)
 
 ```bash
 case $1 in
-  -[onvqVh]?*)  # Bundled short options
+  -[amLpvqVh]?*)  # Bundled short options
     set -- "${1:0:2}" "-${1:2}" "${@:2}"
     continue
     ;;
@@ -26,58 +16,59 @@ esac
 ```
 
 **How it works:**
-- Pattern `-[opts]?*` matches option with additional chars after first
-- `${1:0:2}` extracts first option (e.g., `-v` from `-vvn`)
-- `"-${1:2}"` creates remaining with dash (e.g., `-vn`)
-- `${@:2}` preserves remaining args; `continue` restarts loop
+1. Pattern `-[opts]?*` matches option with additional characters after first option
+2. `${1:0:2}` extracts first option (`-v` from `-vvn`)
+3. `"-${1:2}"` creates remaining options with dash (`-vn` from `-vvn`)
+4. `${@:2}` preserves remaining arguments
+5. `continue` restarts loop; terminates naturally when no bundled options remain
 
-**Performance:** ~24,000-53,000 iter/sec (53-119x faster than alternatives)
+**Advantages:** 53-119x faster (~24,000-53,000 iter/sec), no external dependencies, no shellcheck warnings, compact one-liner.
 
-**Pros:** No external deps, no shellcheck warnings, pure bash 4+
+**Limitation:** Requires `continue` (not all loop structures support this).
 
-### Method 2: grep (Alternative)
-
-```bash
--[cfvqVh]*) #shellcheck disable=SC2046
-  set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
-```
-
-**Performance:** ~445 iter/sec | Requires external grep, SC2046 disable
-
-### Method 3: fold (Alternative)
+## Method 2: grep (Alternative)
 
 ```bash
--[opts]*) #shellcheck disable=SC2046
-  set -- '' $(printf -- '-%c ' $(fold -w1 <<<"${1:1}")) "${@:2}" ;;
+-[amLpvqVh]*) #shellcheck disable=SC2046
+    set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}" ;;
 ```
 
-**Performance:** ~460 iter/sec | Requires external fold, SC2046 disable
+**Performance:** ~445 iter/sec. Requires external `grep`, SC2046 disable.
 
-### Method 4: Pure Bash Loop
+## Method 3: fold (Alternative)
 
 ```bash
--[mjvqVh]*) # Split up single options
-  local -- opt=${1:1}
-  local -a new_args=()
-  while ((${#opt})); do
-    new_args+=("-${opt:0:1}")
-    opt=${opt:1}
-  done
-  set -- '' "${new_args[@]}" "${@:2}" ;;
+-[amLpvqVh]*) #shellcheck disable=SC2046
+    set -- '' $(printf -- '-%c ' $(fold -w1 <<<"${1:1}")) "${@:2}" ;;
 ```
 
-**Performance:** ~318 iter/sec | No deps, expands all at once, more verbose
+**Performance:** ~460 iter/sec (~3% faster than grep). Requires external `fold`, SC2046 disable.
 
-## Performance Summary
+## Method 4: Pure Bash Loop (Alternative for Complex Cases)
 
-| Method | Iter/Sec | External Deps | Shellcheck |
-|--------|----------|---------------|------------|
-| **Iterative** | **24,000-53,000** | **None** | **Clean** |
-| grep | ~445 | grep | SC2046 |
-| fold | ~460 | fold | SC2046 |
-| Pure Bash Loop | ~318 | None | Clean |
+```bash
+-[amLpvqVh]*) # Split up single options (pure bash loop)
+    local -- opt=${1:1}
+    local -a new_args=()
+    while ((${#opt})); do
+      new_args+=("-${opt:0:1}")
+      opt=${opt:1}
+    done
+    set -- '' "${new_args[@]}" "${@:2}" ;;
+```
 
-## Complete Example (Iterative Method)
+**Performance:** ~318 iter/sec. No external deps, no shellcheck warnings, but more verbose. Superseded by Method 1.
+
+## Performance Comparison
+
+| Method | Iter/Sec | Relative Speed | External Deps | Shellcheck |
+|--------|----------|----------------|---------------|------------|
+| **Iterative (recommended)** | **~24,000-53,000** | **53-119x faster** | **None** | **Clean** |
+| grep | ~445 | Baseline | grep | SC2046 disable |
+| fold | ~460 | +3% | fold | SC2046 disable |
+| Pure Bash Loop | ~318 | -29% | None | Clean |
+
+## Complete Implementation Example
 
 ```bash
 #!/usr/bin/env bash
@@ -130,6 +121,11 @@ main() {
 
   ((VERBOSE)) && echo "Processing ${#files[@]} files" ||:
   ((DRY_RUN)) && echo "[DRY RUN] Would write to ${output_file@Q}" ||:
+
+  local -- file
+  for file in "${files[@]}"; do
+    ((VERBOSE > 1)) && echo "Processing ${file@Q}"
+  done
 }
 
 main "$@"
@@ -139,44 +135,73 @@ main "$@"
 
 ### Options Requiring Arguments
 
-Options with arguments cannot be in middle of bundle:
+Options with arguments cannot be in the middle of a bundle:
 
 ```bash
 # ✓ Correct - option with argument at end or separate
 ./script -vno output.txt file.txt    # -v -n -o output.txt
+./script -vn -o output.txt file.txt
 
 # ✗ Wrong - option with argument in middle
 ./script -von output.txt file.txt    # -o captures "n" as argument!
 ```
 
+**Solution:** Document that options requiring arguments should be placed at end of bundle, used separately, or use long-form (`--output`).
+
 ### Character Set Validation
 
-Pattern `-[ovnVh]*` explicitly lists valid options:
-- Prevents disaggregation of unknown options
+Pattern `-[amLpvqVh]*` explicitly lists valid options:
+- Prevents incorrect disaggregation of unknown options
 - Unknown options caught by `-*)` case
+- Documents valid short options
 
 ```bash
-./script -xyz  # Doesn't match pattern, caught by -*)
+-[ovnVh]*)  # Only -o -v -n -V -h are valid short options
+
+./script -xyz  # Doesn't match pattern, caught by -*) case
                # Error: Invalid option '-xyz'
 ```
 
-## Anti-Patterns
+### Special Characters
 
-```bash
-# ✗ Missing continue in iterative method
--[opts]?*)  set -- "${1:0:2}" "-${1:2}" "${@:2}" ;;  # Won't loop!
-
-# ✗ Pattern without ?* - matches single-char options unnecessarily
--[ovn]*)  # Matches -v even though no splitting needed
-
-# ✗ Using external commands when pure bash suffices
-$(grep -o . <<<"${1:1}")  # 50-100x slower than parameter expansion
-```
+Bash parameter expansion handles special characters correctly:
+- Digits: `-123` → `-1 -2 -3`
+- Letters: `-abc` → `-a -b -c`
+- Mixed: `-v1n2` → `-v -1 -n -2`
 
 ## Implementation Checklist
 
-- [ ] List all valid short options in pattern: `-[ovnVh]?*`
+- [ ] List all valid short options in pattern: `-[ovnVh]*`
 - [ ] Place disaggregation case before `-*)` invalid option case
-- [ ] Use `continue` with iterative method
+- [ ] Ensure `shift` happens at end of loop for all cases
 - [ ] Document options-with-arguments bundling limitations
-- [ ] Test: single, bundled, mixed long/short, stacking (`-vvv`)
+- [ ] Add shellcheck disable for grep/fold methods
+- [ ] Test: single options, bundled options, mixed long/short, stacking (`-vvv`)
+
+## Usage Examples
+
+```bash
+# Single options
+./script -v -v -n file.txt
+
+# Bundled short options
+./script -vvn file.txt
+
+# Mixed bundled and separate
+./script -vv -n file.txt
+
+# Options with arguments
+./script -vno output.txt file.txt  # -v -n -o output.txt
+
+# Long options
+./script --verbose --verbose --dry-run file.txt
+```
+
+## Recommendations
+
+**Use Iterative Parameter Expansion (Method 1) for all scripts.** It offers 53-119x faster performance, no external dependencies, no shellcheck warnings, and compact one-liner implementation.
+
+**Consider grep/fold methods only when:**
+1. Loop structure doesn't support `continue`
+2. Need to expand all options at once
+3. Working with legacy code already using them

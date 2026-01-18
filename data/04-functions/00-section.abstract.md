@@ -1,11 +1,32 @@
 # Functions
 
-**Functions use `lowercase_with_underscores`, require `main()` for scripts >200 lines, organized bottom-up.**
+**Use `lowercase_with_underscores` naming; organize bottom-up (utilitiesâ†’helpersâ†’logicâ†’`main`); scripts >200 lines require `main()` function.**
 
-**Organization:** messaging â†' helpers â†' business logic â†' `main()` (each function calls only previously defined functions).
+## Organization
 
-**Export:** Use `declare -fx func_name` for sourceable libraries.
+1. Messaging functions first
+2. Helper utilities
+3. Business logic
+4. `main()` last (calls previously defined functions)
 
-**Production:** Remove unused utility functions from mature scripts.
+## Key Patterns
+
+- Export for libraries: `declare -fx function_name`
+- Remove unused utility functions in production scripts
+
+## Minimal Example
+
+```bash
+log_info() { printf '[INFO] %s\n' "$1"; }
+validate_input() { [[ -n "$1" ]] || return 1; }
+process_data() { validate_input "$1" && log_info "Processing: $1"; }
+main() { process_data "$@"; }
+main "$@"
+```
+
+## Anti-patterns
+
+- `camelCase` or `PascalCase` naming â†’ use `snake_case`
+- Defining `main()` before helper functions â†’ bottom-up order
 
 **Ref:** BCS0400

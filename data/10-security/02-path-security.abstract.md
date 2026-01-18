@@ -2,33 +2,55 @@
 
 **Lock down PATH at script start to prevent command hijacking and trojan injection.**
 
-**Rationale:**
-- Attacker-controlled directories allow malicious binaries to replace system commands
-- Empty PATH elements (`:`, `::`, trailing `:`) resolve to current directory
-- PATH inherited from caller's environment may be malicious
+### Why
 
-**Secure PATH pattern:**
+- Attacker-controlled PATH directories execute malicious binaries instead of system commands
+- Empty elements (`::`, leading/trailing `:`) and `.` resolve to current directory
+- Inherited PATH from caller's environment may be compromised
+
+### Pattern
+
 ```bash
 #!/bin/bash
 set -euo pipefail
+
+# Set immediately after shebang/strict mode
 readonly -- PATH='/usr/local/bin:/usr/bin:/bin'
 export PATH
 ```
 
-**Validate PATH (if not resetting):**
+### Validation (if must use inherited PATH)
+
 ```bash
 [[ "$PATH" =~ \.  ]] && die 1 'PATH contains .'
-[[ "$PATH" =~ ^:|:::|:$ ]] && die 1 'PATH has empty element'
+[[ "$PATH" =~ ^:|::|:$ ]] && die 1 'PATH has empty element'
 [[ "$PATH" =~ /tmp ]] && die 1 'PATH contains /tmp'
 ```
 
-**Anti-patterns:**
-- `# No PATH setting` â†' inherits untrusted environment
-- `PATH=.:$PATH` â†' current directory searchable
-- `PATH=/tmp:$PATH` â†' world-writable dir in PATH
-- `PATH=::` or leading/trailing `:` â†' empty = current dir
-- Setting PATH late â†' commands before it use inherited PATH
+### Anti-Patterns
 
-**Key:** Set `readonly PATH` immediately after `set -euo pipefail`. Use absolute paths (`/bin/tar`) for critical commands as defense in depth.
+```bash
+# âœ— No PATH set â†’ inherits potentially malicious environment
+#!/bin/bash
+ls /etc
+
+# âœ— Current dir in PATH â†’ trojans in cwd execute
+export PATH=.:$PATH
+
+# âœ— World-writable dir â†’ attackers place trojans
+export PATH=/tmp:$PATH
+
+# âœ— Set too late â†’ commands before this use inherited PATH
+whoami
+export PATH='/usr/bin:/bin'
+```
+
+### Custom Paths
+
+```bash
+readonly -- BASE_PATH='/usr/local/bin:/usr/bin:/bin'
+export PATH="$BASE_PATH:/opt/myapp/bin"
+readonly -- PATH
+```
 
 **Ref:** BCS1002

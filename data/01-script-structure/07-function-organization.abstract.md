@@ -1,37 +1,36 @@
 ## Function Organization
 
-**Organize functions bottom-up: primitives first, `main()` last. Dependencies flow downward only.**
+**Organize functions bottom-up: primitives first → compositions → `main()` last. Dependencies flow downward only.**
 
-**Rationale:** No forward references (Bash reads top-to-bottom); clear dependency hierarchy aids debugging/maintenance.
+**Why:** No forward references (Bash reads top-to-bottom); clear dependency hierarchy; debugging reads naturally.
 
-**7-Layer Pattern:**
+**7-layer pattern:**
 1. Messaging (`_msg`, `info`, `warn`, `error`, `die`)
-2. Documentation (`show_help`, `show_version`)
-3. Utilities (`noarg`, `yn`, `trim`)
-4. Validation (`check_root`, `check_prerequisites`)
+2. Utilities (`noarg`, `trim`)
+3. Documentation (`show_help`)
+4. Validation (`check_prerequisites`)
 5. Business logic (domain operations)
 6. Orchestration (coordinate business logic)
-7. `main()` �' `main "$@"` invocation
+7. `main()` → `main "$@"` → `#fin`
 
 ```bash
-# Layer 1: Messaging (no deps)
+# Layer 1: Messaging (lowest)
+_msg() { ... }
 info() { >&2 _msg "$@"; }
 die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
-# Layer 4: Validation (uses messaging)
-check_deps() { command -v git || die 1 "git required"; }
+# Layer 4-5: Validation/Business
+check_deps() { ... }
+build() { check_deps; ... }
 
-# Layer 5: Business logic (uses all above)
-build() { check_deps; make all; }
-
-# Layer 7: main (calls everything)
-main() { build; }
+# Layer 7: main (highest)
+main() { build; deploy; }
 main "$@"
 ```
 
 **Anti-patterns:**
-- `main()` at top �' forward references fail
-- Circular deps (A↔B) �' extract shared logic to lower layer
-- Random/alphabetical order ignoring deps �' breaks call chain
+- `main()` at top → forward reference errors
+- Circular dependencies → extract common logic to lower layer
+- Scattered messaging functions → group all at top
 
 **Ref:** BCS0107

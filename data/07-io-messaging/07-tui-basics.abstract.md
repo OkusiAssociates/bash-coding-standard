@@ -1,35 +1,38 @@
 ### TUI Basics
 
-**Use terminal check `[[ -t 1 ]]` before TUI output; restore cursor on exit.**
+**Rule: BCS0707**
+
+**TUI elements require terminal detection (`[[ -t 1 ]]`) before rendering visual output.**
 
 #### Key Patterns
 
-- **Spinner**: Background process with `kill`/cleanup
-- **Progress bar**: `printf '\r[...]'` with `%*s | tr ' ' '█'`
-- **Cursor**: Hide `\033[?25l`, show `\033[?25h`, trap EXIT
-- **Clear**: Line `\033[2K\r`, screen `\033[2J\033[H`
+- **Spinner**: Background process with `kill` cleanup
+- **Progress bar**: `\r` carriage return for in-place updates
+- **Cursor control**: ANSI escapes (`\033[?25l` hide, `\033[?25h` show)
+- **Always trap**: `trap 'show_cursor' EXIT` to restore cursor
 
-#### Rationale
-
-- Visual feedback for long operations
-- Interactive menus improve UX
-
-#### Example
+#### Progress Bar
 
 ```bash
-# Progress bar with terminal check
 progress_bar() {
-  local -i cur=$1 tot=$2 w=50 f=$((cur*w/tot))
-  printf '\r[%s%s] %3d%%' \
-    "$(printf '%*s' "$f" ''|tr ' ' '█')" \
-    "$(printf '%*s' $((w-f)) ''|tr ' ' '░')" \
-    $((cur*100/tot))
+  local -i current=$1 total=$2 width=${3:-50}
+  local -i filled=$((current * width / total))
+  local bar=$(printf '%*s' "$filled" '' | tr ' ' '█')
+  bar+=$(printf '%*s' $((width - filled)) '' | tr ' ' '░')
+  printf '\r[%s] %3d%%' "$bar" $((current * 100 / total))
 }
-[[ -t 1 ]] && progress_bar 50 100 || echo '50%'
 ```
 
 #### Anti-Pattern
 
-`progress_bar 50 100` without `[[ -t 1 ]]` �' garbage output to non-terminal
+```bash
+# ✗ TUI without terminal check → garbage output
+progress_bar 50 100
+
+# ✓ Check terminal first
+[[ -t 1 ]] && progress_bar 50 100 || echo '50%'
+```
+
+**See Also:** BCS0708, BCS0701
 
 **Ref:** BCS0707

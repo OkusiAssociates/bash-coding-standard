@@ -1,40 +1,34 @@
 ## Blank Line Usage
 
-**Use single blank lines to separate logical blocks; never use multiple consecutive blanks.**
+**Use single blank lines to visually separate logical blocks.**
 
-### Guidelines
-
-- One blank between functions, logical sections, variable groups
-- One blank after section comments
-- Blanks before/after multi-line conditionals/loops
+**Guidelines:**
+- One blank between functions, logical sections, section comments, variable groups
+- Blank lines before/after multi-line conditionals/loops
+- Never multiple consecutive blanks → one is sufficient
 - No blank needed between short related statements
 
-### Pattern
-
 ```bash
+#!/bin/bash
+set -euo pipefail
+
 declare -r VERSION=1.0.0
-declare -r SCRIPT_DIR=${SCRIPT_PATH%/*}
-                                          # ← After metadata group
-# Default values                          # ← Before section comment
-declare -- PREFIX=/usr/local
-declare -i DRY_RUN=0
-                                          # ← Before function
+                                # ← After variable group
 check_prerequisites() {
   info 'Checking...'
-                                          # ← Between logical blocks
+                                # ← Between logical sections
   if ! command -v gcc &>/dev/null; then
-    die 1 'gcc not found'
+    die 1 "'gcc' not found"
   fi
 }
-                                          # ← Between functions
+                                # ← Between functions
 main() {
   check_prerequisites
 }
+
+main "$@"
 ```
 
-### Anti-Patterns
-
-- `✗` Multiple consecutive blank lines �' `✓` Single blank sufficient
-- `✗` No separation between unrelated blocks �' `✓` Add visual breaks
+**Anti-patterns:** Multiple consecutive blanks → wastes space, inconsistent separation → harder to scan
 
 **Ref:** BCS1203

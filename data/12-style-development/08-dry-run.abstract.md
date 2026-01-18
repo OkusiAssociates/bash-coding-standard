@@ -1,35 +1,31 @@
 ## Dry-Run Pattern
 
-**Implement preview mode for state-modifying operations using `DRY_RUN` flag with early-return pattern.**
+**Implement preview mode for state-modifying operations using `DRY_RUN` flag with early return.**
 
-### Implementation
+### Pattern
 
 ```bash
 declare -i DRY_RUN=0
 -n|--dry-run) DRY_RUN=1 ;;
 
-deploy() {
+func() {
   if ((DRY_RUN)); then
-    info '[DRY-RUN] Would deploy to' "$TARGET"
+    info '[DRY-RUN] Would do X'
     return 0
   fi
-  rsync -av "$SRC" "$TARGET"/
+  # actual operations
 }
 ```
 
-### Pattern
-
-1. Check `((DRY_RUN))` at function start
-2. Display `[DRY-RUN]` prefixed message via `info`
-3. `return 0` without performing operations
-4. Real operations only when flag is 0
-
 ### Key Points
 
-- **Same control flow** â†' identical function calls in both modes
-- **Safe preview** â†' verify paths/commands before execution
-- **Debug installs** â†' essential for system modification scripts
+- Check `((DRY_RUN))` at function start â†’ show `[DRY-RUN]` prefix â†’ `return 0`
+- Same control flow in both modes (identical function calls/logic paths)
+- Safe preview of destructive ops; verify paths/commands before execution
 
-**Anti-pattern:** Scattering dry-run checks throughout code â†' use function-level guards instead.
+### Anti-Patterns
+
+- `if ! ((DRY_RUN)); then ...` â†’ inverted logic obscures intent
+- Skipping dry-run for "minor" operations â†’ inconsistent preview
 
 **Ref:** BCS1208

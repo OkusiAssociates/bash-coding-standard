@@ -1,17 +1,16 @@
 ### Quoting in Conditionals
 
-**Always quote variables in conditionals.** Unquoted �' word splitting, glob expansion, empty-value errors, injection risk.
+**Always quote variables in conditionals.** Static literals: single quotes or unquoted one-word.
+
+**Why:** Unquoted vars break on spaces/globs, empty vars cause syntax errors, security risk.
 
 ```bash
-# Variables always quoted
-[[ -f "$file" ]]
-[[ "$name" == 'value' ]]
-
-# Pattern/regex: pattern UNQUOTED
-[[ "$file" == *.txt ]]           # Glob match
-[[ "$input" =~ $pattern ]]       # Regex (quoting makes literal)
+[[ -f "$file" ]]              # ✓ Variable quoted
+[[ "$action" == 'start' ]]    # ✓ Literal single-quoted
+[[ "$name" == *.txt ]]        # ✓ Glob pattern unquoted
+[[ "$input" =~ $pattern ]]    # ✓ Regex pattern unquoted
 ```
 
-**Anti-patterns:** `[[ -f $file ]]` �' breaks on spaces/globs; `[[ "$x" =~ "$pattern" ]]` �' pattern treated as literal.
+**Anti-patterns:** `[[ -f $file ]]` → breaks with spaces; `[[ "$x" =~ "$pattern" ]]` → becomes literal match.
 
 **Ref:** BCS0303

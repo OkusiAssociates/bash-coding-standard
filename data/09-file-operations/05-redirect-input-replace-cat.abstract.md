@@ -1,45 +1,37 @@
 ## Input Redirection vs Cat
 
-**Replace `cat file` with `< file` redirection to eliminate process fork overhead (3-107x speedup).**
+**Use `< file` instead of `cat file` for 3-100x speedup by eliminating fork/exec overhead.**
 
 ### Key Patterns
 
-| Context | Speedup | Technique |
-|---------|---------|-----------|
-| Command substitution | **107x** | `$(< file)` |
-| Single file to command | **3-4x** | `cmd < file` |
-| Loops | **cumulative** | Avoid repeated forks |
+| Context | Anti-pattern → Correct | Speedup |
+|---------|------------------------|---------|
+| Command substitution | `$(cat f)` → `$(< f)` | **107x** |
+| Single file input | `cat f \| cmd` → `cmd < f` | **3-4x** |
+| Loops | Multiplied savings per iteration | **10-100x** |
 
-### Core Example
+### Why
 
-```bash
-# ✓ CORRECT - 107x faster (zero processes)
-content=$(< config.json)
-errors=$(grep -c ERROR < "$logfile")
+- `cat`: fork→exec→load binary→read→exit→cleanup (7 steps)
+- `<`: open fd→read→close (3 steps, no process)
+- `$(< file)`: Bash reads directly, zero processes
 
-# ✗ AVOID - forks cat process each time
-content=$(cat config.json)
-errors=$(cat "$logfile" | grep -c ERROR)
-```
-
-### When `cat` is Required
-
-- **Multiple files**: `cat file1 file2` (syntax requirement)
-- **cat options**: `-n`, `-b`, `-A`, `-E` (no redirection equivalent)
-- **Direct output**: `< file` alone produces nothing
-
-### Anti-Patterns
+### Example
 
 ```bash
-# ✗ Does nothing - no command to consume stdin
-< /tmp/test.txt
+# CORRECT
+content=$(< "$file")
+grep ERROR < "$logfile"
 
-# ✗ Invalid syntax
-< file1.txt file2.txt
+# WRONG - forks cat process
+content=$(cat "$file")
+cat "$logfile" | grep ERROR
 ```
 
-### Why It Works
+### When cat IS Required
 
-`$(< file)` is Bash magic: shell reads file directly into substitution result with zero external processes. Regular `< file` only opens file descriptor—requires a command to consume it.
+- Multiple files: `cat f1 f2`
+- Options needed: `cat -n file`
+- Direct output (standalone `< file` produces nothing)
 
 **Ref:** BCS0905

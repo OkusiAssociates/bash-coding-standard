@@ -1,6 +1,6 @@
 ## Standard Argument Parsing Pattern
 
-**Pattern with short option bundling:**
+**Core pattern with short option bundling:**
 
 ```bash
 while (($#)); do case $1 in
@@ -25,30 +25,18 @@ while (($#)); do case $1 in
 esac; shift; done
 ```
 
-**Pattern breakdown:**
-
-| Component | Purpose |
-|-----------|---------|
-| `while (($#))` | Arithmetic test, true while arguments remain (more efficient than `[[ $# -gt 0 ]]`) |
-| `case $1 in` | Match current argument; supports multiple patterns: `-a\|--add` |
-| `noarg "$@"; shift` | Validate argument exists, then shift to capture value |
-| `VERBOSE+=1` | Enables stacking: `-vvv` = `VERBOSE=3` |
-| `-V\|--version)` | Print and exit; use `return 0` if within function |
-| `-[opts]?*)` | Bundled shorts: `-vpL` �' `-v -pL` �' `-v -p -L` |
-| `-*)` | Catch unrecognized options (exit code 22 = EINVAL) |
-| `*)` | Default: positional arguments to array |
-| `esac; shift; done` | Mandatory shift after every iteration (prevents infinite loop) |
-
-**Short option bundling mechanism:**
-```bash
--[VhamLpvq]?*)  set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
-```
-- `${1:0:2}` extracts first option (`-v` from `-vpL`)
-- `"-${1:2}"` creates remaining (`-pL`)
-- `${@:2}` preserves remaining arguments
-- `continue` restarts loop to process extracted option
+**Pattern rationale:**
+- `while (($#))` - Arithmetic test more efficient than `[[ $# -gt 0 ]]`
+- Case statement more readable than if/elif chains, supports `|` for alternatives
+- `noarg "$@"` validates argument exists before shifting
+- `VERBOSE+=1` enables stacking (`-vvv` = 3)
+- Exit options (`-V`, `-h`) need no shift
+- Short bundling: `-vpL` iteratively splits via `set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue`
+- Exit code 22 (EINVAL) for invalid options
+- Mandatory `shift` after `esac` prevents infinite loop
 
 **The `noarg` helper:**
+
 ```bash
 noarg() { (($# > 1)) || die 2 "Option ${1@Q} requires an argument"; }
 ```
@@ -65,7 +53,8 @@ declare -r VERSION=1.0.0
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
-declare -i VERBOSE=0 DRY_RUN=0
+declare -i VERBOSE=0
+declare -i DRY_RUN=0
 declare -- output_file=''
 declare -a files=()
 
@@ -85,6 +74,10 @@ Options:
   -n, --dry-run      Dry-run mode
   -V, --version      Show version
   -h, --help         Show this help
+
+Examples:
+  $SCRIPT_NAME -o output.txt file1.txt file2.txt
+  $SCRIPT_NAME -vno result.txt *.txt
 HELP
 }
 
@@ -115,6 +108,8 @@ main() {
   for file in "${files[@]}"; do
     ((VERBOSE)) && echo "Processing ${file@Q}" ||:
   done
+
+  ((VERBOSE)) && echo "Would write results to ${output_file@Q}" ||:
 }
 
 main "$@"
@@ -124,29 +119,31 @@ main "$@"
 **Anti-patterns:**
 
 ```bash
-# ✗ Wrong - using while [[ ]] instead of (())
-while [[ $# -gt 0 ]]; do  # Verbose, less efficient
+# ✗ Wrong - verbose loop test
+while [[ $# -gt 0 ]]; do
 # ✓ Correct
 while (($#)); do
 
-# ✗ Wrong - not calling noarg before shift
+# ✗ Wrong - no argument validation
 -o|--output)    shift
                 output_file=$1 ;;  # Fails if no argument!
 # ✓ Correct
 -o|--output)    noarg "$@"; shift
                 output_file=$1 ;;
 
-# ✗ Wrong - forgetting shift at loop end
-esac; done  # Infinite loop!
+# ✗ Wrong - missing shift causes infinite loop
+esac; done
 # ✓ Correct
 esac; shift; done
 
-# ✗ Wrong - using if/elif chains instead of case
+# ✗ Wrong - if/elif instead of case
 if [[ "$1" == '-v' ]] || [[ "$1" == '--verbose' ]]; then
-# ✓ Correct - use case statement
+# ✓ Correct
 case $1 in
   -v|--verbose) VERBOSE+=1 ;;
-esac
 ```
 
-**Rationale:** Consistent structure for all scripts; handles options with/without arguments and bundled shorts; validates arguments exist before use; case statement more readable than if/elif; arithmetic `(($#))` faster than `[[ ]]`; follows Unix conventions.
+**Edge cases:**
+- Short bundling with value option: `-vno output.txt` → `-v -n -o output.txt`
+- Stacked verbosity: `-vvv` sets VERBOSE=3
+- Use `return 0` instead of `exit 0` when pattern is inside a function

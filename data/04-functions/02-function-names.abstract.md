@@ -1,29 +1,15 @@
 ## Function Names
 
-**Use lowercase_with_underscores; prefix private functions with `_`.**
+**Use lowercase_underscores; prefix private functions with `_`.**
 
-### Core Pattern
-
-```bash
-process_log_file() { … }     # ✓ Public
-_validate_input() { … }      # ✓ Private (internal)
-```
-
-### Why
-
-- Matches Unix conventions (`grep`, `sed`)
-- Avoids conflicts with built-ins (all lowercase)
-- `_prefix` signals internal-only use
-
-### Anti-Patterns
+**Rationale:** Matches Unix conventions (`grep`, `sed`); avoids builtin conflicts; `_prefix` signals internal use.
 
 ```bash
-MyFunction() { … }           # ✗ CamelCase
-PROCESS_FILE() { … }         # ✗ UPPER_CASE
-my-function() { … }          # ✗ Dashes cause issues
-cd() { builtin cd "$@"; }    # ✗ Overriding built-in
+process_log_file() { …; }     # ✓ Public
+_validate_input() { …; }      # ✓ Private
+MyFunction() { …; }           # ✗ CamelCase
 ```
 
-�' Wrap built-ins with different name: `change_dir()` not `cd()`
+**Anti-patterns:** Don't override builtins (`cd()`) → use `change_dir()`. Avoid dashes (`my-function`) → use underscores.
 
 **Ref:** BCS0402

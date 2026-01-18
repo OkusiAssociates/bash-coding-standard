@@ -1,27 +1,36 @@
 # Variable Declarations & Constants
 
-**Explicit declaration with type hints ensures predictable behavior and prevents common errors.**
+**Explicit `declare` with type hints ensures predictable behavior and prevents common shell errors.**
 
 ## Core Rules
 
-- **Type declarations**: `declare -i` (integer), `declare --` (string), `declare -a` (array), `declare -A` (hash)
+- **Types**: `declare -i` (int), `declare --` (string), `declare -a` (array), `declare -A` (assoc)
 - **Naming**: `UPPER_CASE` constants, `lower_case` variables
-- **Scope**: `local` for function variables, global at script level
-- **Constants**: `readonly` or grouped `readonly VAR1 VAR2`
-- **Booleans**: Use integers (`flag=1`/`flag=0`) not strings
+- **Scope**: `local` in functions; globals at script top only
+- **Constants**: `declare -r` or `readonly` for immutables
+
+## Rationale
+
+1. Type declarations catch arithmetic errors at assignment vs runtime
+2. Explicit scoping prevents accidental global state pollution
+3. Readonly prevents silent overwrites of critical values
 
 ## Example
 
 ```bash
+declare -r VERSION="1.0.0"
 declare -i count=0
 declare -- name="value"
-readonly VERSION="1.0"
-local -i result
+
+func() {
+    local -i result=0
+    ((result = count + 1))
+}
 ```
 
 ## Anti-patterns
 
-- `count=0` â†' `declare -i count=0` (type safety)
-- `flag="true"` â†' `flag=1` (boolean as integer)
+- `count=0` â†’ `declare -i count=0` (untyped allows string assignment)
+- Global vars inside functions â†’ use `local`
 
 **Ref:** BCS0200

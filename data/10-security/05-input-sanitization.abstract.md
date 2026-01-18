@@ -1,41 +1,44 @@
 ## Input Sanitization
 
-**Validate/sanitize all user input to prevent injection and traversal attacks.**
+**Validate and sanitize all user input to prevent injection attacks and directory traversal.**
 
-### Rationale
-- Prevents command injection, directory traversal (`../../../etc/passwd`)
-- Enforces expected data types; rejects invalid input early
+**Rationale:** Prevent injection/traversal attacks; fail early on invalid input; whitelist > blacklist.
 
-### Core Patterns
-
-**Filename sanitization:**
+**Core Pattern:**
 ```bash
 sanitize_filename() {
   local -- name=$1
+  [[ -n "$name" ]] || die 22 'Empty filename'
   name="${name//\.\./}"; name="${name//\//}"
   [[ "$name" =~ ^[a-zA-Z0-9._-]+$ ]] || die 22 "Invalid: ${name@Q}"
   echo "$name"
 }
+
+validate_path() {
+  local -- real_path
+  real_path=$(realpath -e -- "$1") || die 22 "Invalid path"
+  [[ "$real_path" == "$2"* ]] || die 5 "Path outside allowed dir"
+  echo "$real_path"
+}
 ```
 
-**Path containment:** Use `realpath -e` �' verify path starts with allowed dir.
+**Critical Rules:**
+- Use `--` separator → prevents option injection (`rm -- "$file"`)
+- Whitelist validation → `[[ "$x" =~ ^[a-zA-Z0-9]+$ ]]`
+- Never `eval` user input
+- Validate type/format/range/length before use
 
-**Numeric:** `[[ "$input" =~ ^[0-9]+$ ]]` �' reject leading zeros for integers.
-
-**Whitelist choices:** Loop array, match exact �' `die` if no match.
-
-### Critical Rules
-- **Always use `--`** separator: `rm -- "$file"` prevents option injection
-- **Never use `eval`** with user input
-- **Whitelist > blacklist**: Define allowed chars, not forbidden ones
-
-### Anti-patterns
+**Anti-patterns:**
 ```bash
-# ✗ Trusting input
-rm -rf "$user_dir"  # user_dir="/" = disaster
+# ✗ Direct use without validation
+rm -rf "$user_dir"        # user_dir="/" = disaster
 
-# ✓ Validate first
-validate_path "$user_dir" "/safe/base"; rm -rf -- "$user_dir"
+# ✗ Blacklist (bypassable)
+[[ "$input" != *'rm'* ]]  # Use whitelist instead
+
+# ✓ Validate then use
+user_dir=$(validate_path "$user_dir" "/safe/base")
+rm -rf -- "$user_dir"
 ```
 
 **Ref:** BCS1005

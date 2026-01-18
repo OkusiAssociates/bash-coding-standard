@@ -1,9 +1,15 @@
 ### Reserved for Future Use
 
-**Placeholder for future variable-related topics** (nameref, indirect expansion, typed variables).
+**Placeholder for future Variables & Data Types expansion.**
 
-Do not use BCS0208 in documentation or compliance checking.
+Reserved to maintain BCS numbering sequence and prevent external reference conflicts.
 
-**Status:** Reserved
+#### Possible Future Topics
+
+- Nameref variables (`declare -n`)
+- Indirect expansion (`${!var}`)
+- Variable attributes/introspection
+
+**Status:** Reserved | Do not use in compliance checking.
 
 **Ref:** BCS0208

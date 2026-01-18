@@ -1,20 +1,24 @@
 ## Usage Documentation
 
-**Every script MUST provide `show_help()` with name, version, description, options, and examples.**
+**Provide structured `show_help()` with name, version, description, options, and examples.**
 
 ### Rationale
-- Self-documenting scripts reduce support burden
-- Consistent format enables automated help extraction
+- Users need consistent, discoverable interface documentation
+- Enables `--help` / `-h` patterns expected by Unix conventions
 
-### Required Structure
+### Template
 ```bash
 show_help() {
   cat <<EOT
 $SCRIPT_NAME $VERSION - Brief description
+
 Usage: $SCRIPT_NAME [Options] [arguments]
+
 Options:
-  -v|--verbose   Increase verbosity
-  -h|--help      This help
+  -n|--num NUM      Set num to NUM
+  -v|--verbose      Verbose output
+  -h|--help         This help
+
 Examples:
   $SCRIPT_NAME -v file.txt
 EOT
@@ -22,7 +26,7 @@ EOT
 ```
 
 ### Anti-patterns
-- `echo "Usage..."` �' Use heredoc for multiline help
-- Missing `-h|--help` option
+- Missing version/name variables → hardcoded strings break maintenance
+- No examples section → users guess at syntax
 
 **Ref:** BCS0704

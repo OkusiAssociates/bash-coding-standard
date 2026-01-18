@@ -1,33 +1,36 @@
 ### Exponential Backoff
 
-**Use exponential delay (`2^attempt`) for retry logic to handle transient failures without overwhelming services.**
+**Rule: BCS1105** â€” Implement retry logic with exponential delay for transient failures.
 
 #### Rationale
-- Prevents thundering herd on failing services
-- Enables automatic recovery from transient errors
-- Configurable max attempts and delay caps
+- Reduces load on failing services (prevents thundering herd)
+- Enables automatic recovery without manual intervention
 
 #### Pattern
 
 ```bash
 retry_with_backoff() {
-  local -i max_attempts=${1:-5} attempt=1
-  shift
-  while ((attempt <= max_attempts)); do
+  local -i max=5 attempt=1 delay
+  while ((attempt <= max)); do
     "$@" && return 0
-    sleep $((2 ** attempt))
-    ((++attempt))
+    delay=$((2 ** attempt))
+    sleep "$delay"
+    attempt+=1
   done
   return 1
 }
 ```
 
-**Enhancements:** Add `max_delay` cap; add jitter (`RANDOM % base_delay`) to prevent synchronized retries.
+**Jitter:** Add `jitter=$((RANDOM % delay))` to prevent synchronized retries.
+
+**Cap:** Use `((delay > 60)) && delay=60 ||:` to limit maximum delay.
 
 #### Anti-Patterns
 
-`sleep 5` in loop â†' `sleep $((2 ** attempt))` (fixed delay floods service)
+`while ! cmd; do sleep 5; done` â†’ Fixed delay doesn't reduce pressure
 
-`while ! cmd; do :; done` â†' `retry_with_backoff 5 cmd` (immediate retry = DoS)
+`while ! curl "$url"; do :; done` â†’ Immediate retry floods service
+
+**See Also:** BCS1104 (Timeout), BCS1101 (Background Jobs)
 
 **Ref:** BCS1105

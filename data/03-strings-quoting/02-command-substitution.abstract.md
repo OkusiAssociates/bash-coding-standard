@@ -1,30 +1,20 @@
 ### Command Substitution
 
-**Quote `$()` in strings; omit quotes for simple assignment; always quote when using result.**
+**Quote command substitution in strings; quote results when used.**
 
-#### Rules
-
-- **In strings:** `echo "Time: $(date)"` — double quotes required
-- **Simple assignment:** `VAR=$(cmd)` — no quotes needed
-- **Concatenation:** `VAR="$(cmd)".suffix` — quotes required
-- **Usage:** `echo "$VAR"` — always quote to prevent word splitting
-
-#### Example
+Variable assignment: quotes only needed with concatenation.
+- `VERSION=$(git describe)` ✓
+- `VERSION="$(git describe)".beta` ✓ (concatenation)
+- `VERSION="$(git describe)"` ✗ (unnecessary)
 
 ```bash
-# Assignment (no quotes needed)
-VERSION=$(git describe --tags 2>/dev/null || echo 'unknown')
-
-# Concatenation (quotes required)
-VERSION="$(git describe --tags)".beta
-
-# Usage (always quote)
-echo "$VERSION"
+# Assignment: no quotes needed
+result=$(command)
+# Usage: always quote to prevent word splitting
+echo "$result"
+echo "Found $(wc -l < "$file") lines"
 ```
 
-#### Anti-patterns
-
-- `VERSION="$(cmd)"` �' unnecessary quotes on simple assignment
-- `echo $result` �' word splitting occurs without quotes
+**Anti-pattern:** `echo $result` → word splitting on whitespace.
 
 **Ref:** BCS0302

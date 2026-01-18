@@ -1,12 +1,8 @@
 ## Argument Parsing Location
 
-**Place argument parsing inside `main()` for testability and scoping.**
+**Parse arguments inside `main()` rather than at top level.**
 
-### Rationale
-- Testability: call `main` with synthetic args
-- Scoping: parsing vars stay local to `main()`
-
-### Pattern
+**Why:** Testability (test `main()` with different args), local variable scoping, encapsulation. Exception: simple scripts (<200 lines) may use top-level parsing.
 
 ```bash
 main() {
@@ -18,13 +14,11 @@ main() {
     esac
     shift
   done
-  # main logic
+  # main logic here
 }
 main "$@"
 ```
 
-### Anti-Pattern
-
-Top-level parsing in scripts >200 lines â†' harder to test, pollutes global scope.
+**Anti-pattern:** Top-level parsing in complex scripts â†’ poor testability, polluted global scope.
 
 **Ref:** BCS0804

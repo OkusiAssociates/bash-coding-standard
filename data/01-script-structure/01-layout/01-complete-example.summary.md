@@ -2,6 +2,10 @@
 
 Production-quality installation script demonstrating all 13 mandatory BCS0101 layout steps.
 
+---
+
+## Complete Example: All 13 Steps
+
 ```bash
 #!/bin/bash
 #shellcheck disable=SC2034  # Some variables used by sourcing scripts
@@ -9,14 +13,18 @@ Production-quality installation script demonstrating all 13 mandatory BCS0101 la
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
+# ============================================================================
 # Script Metadata
+# ============================================================================
 
 declare -r VERSION=2.2.420
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
+# ============================================================================
 # Global Variable Declarations
+# ============================================================================
 
 # Configuration (can be modified by arguments)
 declare -- PREFIX=${PREFIX:-/usr/local}
@@ -39,7 +47,9 @@ declare -i INSTALL_SYSTEMD=0
 declare -a WARNINGS=()
 declare -a INSTALLED_FILES=()
 
+# ============================================================================
 # Step 8: Color Definitions
+# ============================================================================
 
 if [[ -t 1 && -t 2 ]]; then
   declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' BOLD=$'\033[1m' NC=$'\033[0m'
@@ -47,7 +57,9 @@ else
   declare -r RED='' GREEN='' YELLOW='' CYAN='' BOLD='' NC=''
 fi
 
+# ============================================================================
 # Step 9: Utility Functions
+# ============================================================================
 declare -i VERBOSE=1
 
 _msg() {
@@ -77,7 +89,9 @@ yn() {
 }
 noarg() { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
 
+# ============================================================================
 # Step 10: Business Logic Functions
+# ============================================================================
 
 update_derived_paths() {
   BIN_DIR="$PREFIX"/bin
@@ -115,29 +129,16 @@ check_prerequisites() {
       missing=1
     fi
   done
-  if ((INSTALL_SYSTEMD)) && ! command -v systemctl >/dev/null 2>&1; then
-    error 'systemd installation requested but systemctl not found'
-    missing=1
-  fi
   ((missing==0)) || die 1 'Missing required commands'
   success 'All prerequisites satisfied'
 }
 
 validate_config() {
   [[ -n "$PREFIX" ]] || die 1 'PREFIX cannot be empty'
-  ! [[ "$PREFIX" =~ [[:space:]] ]] \
-      || die 22 "PREFIX cannot contain spaces ${PREFIX@Q}"
+  ! [[ "$PREFIX" =~ [[:space:]] ]] || die 22 "PREFIX cannot contain spaces ${PREFIX@Q}"
   [[ -n "$APP_NAME" ]] || die 22 'APP_NAME cannot be empty'
-  [[ "$APP_NAME" =~ ^[a-z][a-z0-9_-]*$ ]] \
-      || die 22 'Invalid APP_NAME: must start with letter, contain only lowercase, digits, dash, underscore'
+  [[ "$APP_NAME" =~ ^[a-z][a-z0-9_-]*$ ]] || die 22 'Invalid APP_NAME format'
   [[ -n "$SYSTEM_USER" ]] || die 22 'SYSTEM_USER cannot be empty'
-  if [[ ! -d "$PREFIX" ]]; then
-    if ((FORCE)) || yn "Create PREFIX directory ${PREFIX@Q}?"; then
-      vecho "Will create ${PREFIX@Q}"
-    else
-      die 1 'Installation cancelled'
-    fi
-  fi
   success 'Configuration validated'
 }
 
@@ -146,11 +147,7 @@ create_directories() {
   for dir in "$BIN_DIR" "$LIB_DIR" "$SHARE_DIR" "$CONFIG_DIR" "$LOG_DIR"; do
     if ((DRY_RUN)); then
       info "[DRY-RUN] Would create directory ${dir@Q}"
-      continue
-    fi
-    if [[ -d "$dir" ]]; then
-      vecho "Directory exists ${dir@Q}"
-    else
+    elif [[ ! -d "$dir" ]]; then
       mkdir -p "$dir" || die 1 "Failed to create directory ${dir@Q}"
       success "Created directory ${dir@Q}"
     fi
@@ -160,7 +157,7 @@ create_directories() {
 install_binaries() {
   local -- source="$SCRIPT_DIR"/bin target=$BIN_DIR
   [[ -d "$source" ]] || die 2 "Source directory not found ${source@Q}"
-  ((DRY_RUN==0)) || { info "[DRY-RUN] Would install binaries from ${source@Q}"; return 0; }
+  ((DRY_RUN==0)) || { info "[DRY-RUN] Would install binaries"; return 0; }
   local -- file basename target_file
   local -i count=0
   for file in "$source"/*; do
@@ -168,96 +165,19 @@ install_binaries() {
     basename=${file##*/}
     target_file="$target"/"$basename"
     if [[ -f "$target_file" ]] && ! ((FORCE)); then
-      warn "File exists (use --force to overwrite) ${target_file@Q}"
+      warn "File exists (use --force) ${target_file@Q}"
       continue
     fi
     install -m 755 "$file" "$target_file" || die 1 "Failed to install ${basename@Q}"
     INSTALLED_FILES+=("$target_file")
     count+=1
   done
-  success "Installed $count binaries to ${target@Q}"
+  success "Installed $count binaries"
 }
 
-install_libraries() {
-  local -- source="$SCRIPT_DIR"/lib target="$LIB_DIR"/"$APP_NAME"
-  [[ -d "$source" ]] || { vecho 'No libraries to install'; return 0; }
-  ((DRY_RUN==0)) || { info "[DRY-RUN] Would install libraries"; return 0; }
-  mkdir -p "$target" || die 1 "Failed to create library directory ${target@Q}"
-  cp -r "$source"/* "$target"/ || die 1 'Library installation failed'
-  chmod -R a+rX "$target"
-  success "Installed libraries to ${target@Q}"
-}
-
-generate_config() {
-  local -- config_file="$CONFIG_DIR"/"$APP_NAME".conf
-  ((DRY_RUN==0)) || { info "[DRY-RUN] Would generate config ${config_file@Q}"; return 0; }
-  if [[ -f "$config_file" ]] && ! ((FORCE)); then
-    warn "Config file exists (use --force to overwrite) ${config_file@Q}"
-    return 0
-  fi
-  cat > "$config_file" <<CONFIG
-# $APP_NAME configuration
-[installation]
-prefix = $PREFIX
-version = $VERSION
-[paths]
-bin_dir = $BIN_DIR
-lib_dir = $LIB_DIR
-[runtime]
-user = $SYSTEM_USER
-CONFIG
-  chmod 644 "$config_file"
-  success "Generated config ${config_file@Q}"
-}
-
-install_systemd_unit() {
-  ((INSTALL_SYSTEMD)) || return 0
-  local -- unit_file=/etc/systemd/system/"$APP_NAME".service
-  if ((DRY_RUN)); then
-    info "[DRY-RUN] Would install systemd unit ${unit_file@Q}"
-    return 0
-  fi
-  cat > "$unit_file" <<UNIT
-[Unit]
-Description=$APP_NAME Service
-After=network.target
-[Service]
-Type=simple
-User=$SYSTEM_USER
-ExecStart=$BIN_DIR/$APP_NAME
-Restart=on-failure
-[Install]
-WantedBy=multi-user.target
-UNIT
-  chmod 644 "$unit_file"
-  systemctl daemon-reload || warn 'Failed to reload systemd daemon'
-  success "Installed systemd unit ${unit_file@Q}"
-}
-
-set_permissions() {
-  if ((DRY_RUN)); then
-    info '[DRY-RUN] Would set directory permissions'
-    return 0
-  fi
-  if id "$SYSTEM_USER" >/dev/null 2>&1; then
-    chown -R "$SYSTEM_USER":"$SYSTEM_USER" "$LOG_DIR" 2>/dev/null || \
-      warn "Failed to set ownership on ${LOG_DIR@Q} (may need sudo)"
-  else
-    warn "System user ${SYSTEM_USER@Q} does not exist - skipping ownership changes"
-  fi
-  success 'Permissions configured'
-}
-
-show_summary() {
-  cat <<SUMMARY
-${BOLD}Installation Summary${NC}
-  Application: $APP_NAME  Version: $VERSION  Prefix: $PREFIX
-  Files Installed: ${#INSTALLED_FILES[@]}  Warnings: ${#WARNINGS[@]}
-SUMMARY
-  ((DRY_RUN)) && echo "${CYAN}DRY-RUN - no changes made${NC}"
-}
-
+# ============================================================================
 # Step 11: main() Function
+# ============================================================================
 
 main() {
   while (($#)); do
@@ -272,7 +192,7 @@ main() {
       -V|--version)  echo "$SCRIPT_NAME $VERSION"; return 0 ;;
       -h|--help)     show_help; return 0 ;;
       -[punfsvqVh]?*) set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
-      -*)            die 22 "Invalid option ${1@Q} (use --help for usage)" ;;
+      -*)            die 22 "Invalid option ${1@Q}" ;;
       *)             die 2  "Unexpected argument ${1@Q}" ;;
     esac
     shift
@@ -282,29 +202,48 @@ main() {
   readonly -- BIN_DIR LIB_DIR SHARE_DIR CONFIG_DIR LOG_DIR
   readonly -- VERBOSE DRY_RUN FORCE INSTALL_SYSTEMD
 
-  ((DRY_RUN==0)) || info 'DRY-RUN mode enabled'
-  info "Installing $APP_NAME $VERSION to ${PREFIX@Q}"
-
   check_prerequisites
   validate_config
   create_directories
   install_binaries
-  install_libraries
-  generate_config
-  install_systemd_unit
-  set_permissions
-  show_summary
-
-  ((DRY_RUN)) && info 'Run without --dry-run to install' || success "Installation complete!"
 }
 
+# ============================================================================
 # Step 12: Script Invocation
+# ============================================================================
 
 main "$@"
 
+# ============================================================================
 # Step 13: End Marker
+# ============================================================================
 
 #fin
 ```
 
-**Key Patterns:** 13-step structure (shebangâ†'shellcheckâ†'descriptionâ†'strict modeâ†'shoptâ†'metadataâ†'globalsâ†'colorsâ†'utilitiesâ†'business logicâ†'mainâ†'invocationâ†'`#fin`) â€¢ Dry-run/force mode checks â€¢ Derived paths via `update_derived_paths()` â€¢ Progressive readonly after parsing â€¢ Validation before filesystem operations
+---
+
+## Key Patterns Demonstrated
+
+| Pattern | Implementation |
+|---------|----------------|
+| **Dry-run mode** | Every operation checks `DRY_RUN` flag before execution |
+| **Force mode** | Existing files trigger warnings unless `--force` |
+| **Derived paths** | `update_derived_paths()` called when `PREFIX` changes |
+| **Validation first** | Prerequisites/config validated before filesystem ops |
+| **Progressive readonly** | Variables become immutable after argument parsing |
+| **Bundled options** | `-vf` splits to `-v -f` via recursive `set --` |
+
+## Structural Checklist
+
+1. âœ“ Shebang + shellcheck + description + strict mode + shopt
+2. âœ“ Metadata: VERSION, SCRIPT_PATH, SCRIPT_DIR, SCRIPT_NAME (all readonly)
+3. âœ“ Globals organized: configuration, runtime flags, arrays
+4. âœ“ TTY-aware color definitions
+5. âœ“ Standard `_msg()` system with info/warn/error/success helpers
+6. âœ“ Business functions: validation â†’ action â†’ summary
+7. âœ“ Complete argument parsing with short option bundling
+8. âœ“ `main "$@"` invocation
+9. âœ“ `#fin` end marker
+
+This template demonstrates all BCS principles working together in production code.

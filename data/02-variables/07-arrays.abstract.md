@@ -1,32 +1,39 @@
 ### Arrays
 
-**Always quote array expansions `"${array[@]}"` to preserve elements and prevent word splitting.**
+**Always quote array expansions `"${array[@]}"` to preserve element boundaries and prevent word splitting.**
+
+#### Core Operations
+
+| Operation | Syntax |
+|-----------|--------|
+| Declare | `declare -a arr=()` |
+| Append | `arr+=("value")` |
+| Length | `${#arr[@]}` |
+| All | `"${arr[@]}"` |
+| Slice | `"${arr[@]:2:3}"` |
+| Assoc | `declare -A map=()` |
 
 #### Rationale
-- Element boundaries preserved regardless of content (spaces, globs)
+
+- Element boundaries preserved regardless of spaces/special chars
+- `"${array[@]}"` prevents glob expansion and word splitting
 - Safe command construction with arbitrary arguments
 
-#### Declaration & Usage
+#### Example
+
 ```bash
-declare -a files=()              # Empty indexed array
-declare -A config=()             # Associative (Bash 4.0+)
-files+=("$1")                    # Append element
-for f in "${files[@]}"; do       # Iterate (quoted!)
-  process "$f"
-done
-readarray -t lines < <(cmd)      # From command output
+declare -a cmd=(app --config "$cfg")
+((verbose)) && cmd+=(--verbose) ||:
+"${cmd[@]}"  # Execute safely
+
+readarray -t lines < <(grep pat file)
+for line in "${lines[@]}"; do process "$line"; done
 ```
 
-#### Key Operations
-| Op | Syntax |
-|----|--------|
-| Length | `${#arr[@]}` |
-| Last | `${arr[-1]}` |
-| Slice | `${arr[@]:1:3}` |
-
 #### Anti-Patterns
-- `rm ${files[@]}` â†' `rm "${files[@]}"` (quote expansion)
-- `arr=($string)` â†' `readarray -t arr <<< "$string"` (no word-split)
-- `for x in "${arr[*]}"` â†' `"${arr[@]}"` (use @ not *)
+
+- `${arr[@]}` â†’ `"${arr[@]}"` (unquoted breaks on spaces)
+- `arr=($str)` â†’ `readarray -t arr <<< "$str"` (word splitting)
+- `"${arr[*]}"` in loops â†’ `"${arr[@]}"` (single word vs multiple)
 
 **Ref:** BCS0207

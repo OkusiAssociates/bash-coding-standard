@@ -1,11 +1,11 @@
 ## Section Comments
 
-**Use simple `# Description` comments to organize code into logical groups.**
+**Use lightweight `# Description` comments (2-4 words) to group related code; reserve 80-dash separators for major divisions only.**
 
-### Format
-- `# Short description` (2-4 words, no dashes/boxes)
-- Place immediately before group; blank line after group
-- Reserve 80-dash separators for major divisions only
+### Key Points
+- Simple format: `# Default values` â†’ no dashes/boxes
+- Place immediately before group, blank line after
+- Group related variables, functions, or logical blocks
 
 ### Example
 ```bash
@@ -21,8 +21,6 @@ vecho() { ((VERBOSE)) || return 0; _msg "$@"; }
 ```
 
 ### Common Patterns
-`# Default values` | `# Derived paths` | `# Helper functions` | `# Business logic` | `# Validation`
-
-**Anti-pattern:** Heavy box-drawing or 80-dash separators for minor groupings â†' use simple `# Label` instead.
+`# Default values` `# Derived paths` `# Helper functions` `# Business logic` `# Validation`
 
 **Ref:** BCS1204

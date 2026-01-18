@@ -10,33 +10,35 @@ declare -r SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 die() { (($# < 2)) || >&2 echo "✗ ${*:2}"; exit "${1:-1}"; }
 
-show_help() {
-      cat <<HELP
-$SCRIPT_NAME $VERSION - Focussed wrapper for 'bcs check ...'
-
-Usage: $SCRIPT_NAME ['bcs check' options] BASHFILE
-
-Run 'bcs check -h' for options
-
-HELP
-}
-
 declare -- APPEND_PROMPT='
 Do a comprehensive analysis of this Bash script:
 
   - Check its compliance with the Bash Coding Standard (BCS).
   - Highlight actual coding errors.
   - List any possible improvements.
-
 '
 
 declare -a OPTS=(
-  --append-prompt "$APPEND_PROMPT"
   --tier summary
   --strict
   --add-dir "$(realpath -- "$PWD")"
   --add-dir /tmp
+  --append-prompt "$APPEND_PROMPT"
 )
+
+show_help() {
+  cat <<HELP
+$SCRIPT_NAME $VERSION - Focussed wrapper for 'bcs check ...'
+
+Usage: $SCRIPT_NAME ['bcs check' options] BASHFILE
+
+Run 'bcs check -h' for all options
+
+Pre-Set 'bcs check' Options:
+
+$(printf '    %s\n' "${OPTS[*]}")
+HELP
+}
 
 declare -- TARGET_SCRIPT=''
 

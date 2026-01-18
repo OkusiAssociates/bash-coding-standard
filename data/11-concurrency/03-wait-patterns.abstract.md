@@ -1,40 +1,24 @@
 ### Wait Patterns
 
-**Always capture exit codes from `wait` and track failures across parallel jobs.**
+**Always capture wait exit codes; use `wait -n` for first-completion processing.**
 
-#### Rationale
-- Exit codes lost without capture �' silent failures
-- Orphan processes consume resources
-- Scripts hang on failed processes without proper tracking
+**Rationale:** Ensures exit codes captured correctly, prevents hangs on failed processes.
 
-#### Pattern
+#### Patterns
 
 ```bash
-# Track multiple jobs with error collection
-declare -a pids=()
-for task in "${tasks[@]}"; do
-  process_task "$task" &
-  pids+=($!)
-done
+# Basic: capture exit code
+cmd &; wait "$!" || die 1 'failed'
 
-declare -i errors=0
-for pid in "${pids[@]}"; do
-  wait "$pid" || ((errors++))
-done
-((errors)) && die 1 "$errors jobs failed"
+# Multiple jobs with error tracking
+for pid in "${pids[@]}"; do wait "$pid" || ((errors+=1)); done
+
+# First-completion (Bash 4.3+): wait -n
 ```
 
-#### Anti-Patterns
+#### Anti-Pattern
 
-```bash
-# ✗ Exit code lost
-command &
-wait $!
-
-# ✓ Capture exit code
-command &
-wait $! || die 1 'Command failed'
-```
+`wait $!` without checking return → `wait $! || die 1 'msg'`
 
 **See Also:** BCS1101, BCS1102
 

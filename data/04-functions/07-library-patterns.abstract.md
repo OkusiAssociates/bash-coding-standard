@@ -1,45 +1,41 @@
 ### Library Patterns
 
-**Rule: BCS0407**
+**Rule:** Create sourced-only libraries with namespace prefixes and no side effects.
 
-**Libraries must prevent direct execution and define functions without side effects.**
+**Rationale:** Code reuse, consistent interfaces, testability, namespace isolation.
 
-#### Rationale
-- Code reuse across scripts with consistent interfaces
-- Namespace isolation prevents function collisions
-- Easier testing via explicit initialization
-
-#### Pattern
+#### Core Pattern
 
 ```bash
 #!/usr/bin/env bash
-# lib-validation.sh - Source only
+# lib-myapp.sh - Must be sourced
+[[ "${BASH_SOURCE[0]}" != "$0" ]] || { >&2 echo 'Must be sourced'; exit 1; }
 
-[[ "${BASH_SOURCE[0]}" != "$0" ]] || {
-  >&2 echo 'Error: Must be sourced, not executed'; exit 1
-}
+declare -rx LIB_MYAPP_VERSION=1.0.0
 
-declare -rx LIB_VALIDATION_VERSION=1.0.0
-
-valid_email() {
-  [[ $1 =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]]
-}
-declare -fx valid_email
+myapp_validate() { [[ $1 =~ ^[0-9]+$ ]]; }
+declare -fx myapp_validate
 ```
 
 #### Sourcing
 
 ```bash
 SCRIPT_DIR=${BASH_SOURCE[0]%/*}
-source "$SCRIPT_DIR"/lib-validation.sh
+source "$SCRIPT_DIR"/lib-myapp.sh
+[[ -f "$lib" ]] && source "$lib" || die 1 "Missing ${lib@Q}"
+```
 
-# With check
-[[ -f "$lib_path" ]] && source "$lib_path" || die 1 "Missing ${lib_path@Q}"
+#### Configurable Defaults
+
+```bash
+: "${CONFIG_DIR:=/etc/myapp}"  # Override before sourcing
 ```
 
 #### Anti-Patterns
 
-- `source lib.sh` with immediate side effects â†' Define functions only, use `lib_init` for initialization
-- Unprefixed functions â†' Use namespace prefix: `myapp_init`, `myapp_cleanup`
+- `source lib.sh` that modifies global state â†’ require explicit `lib_init` call
+- Unprefixed functions â†’ always use `libname_funcname` pattern
+
+**See Also:** BCS0606, BCS0608
 
 **Ref:** BCS0407

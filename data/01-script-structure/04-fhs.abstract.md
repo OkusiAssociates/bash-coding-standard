@@ -1,31 +1,32 @@
 ## FHS Preference
 
-**Follow Filesystem Hierarchy Standard for predictable file locations, multi-environment support, and package manager compatibility.**
+**Follow Filesystem Hierarchy Standard for scripts that install files or search for resourcesâ€”enables predictable locations, multi-environment support, and package manager compatibility.**
 
-**Key locations:** `/usr/local/{bin,share,lib,etc}` (local install) â†' `/usr/{bin,share}` (system) â†' `$HOME/.local/{bin,share}` (user) â†' `${XDG_CONFIG_HOME:-$HOME/.config}` (user config)
+### Rationale
+- Predictable file locations (`/usr/local/bin/`, `/usr/share/`)
+- Eliminates hardcoded paths; supports PREFIX customization
+- Works across dev, local, system, and user installs
 
-**Rationale:** Predictable paths for users/package managers; no hardcoded paths; portable across distros.
+### Key Locations
+- `/usr/local/{bin,share,lib,etc}/` â€” local installs
+- `/usr/{bin,share}/` â€” system (package manager)
+- `$HOME/.local/{bin,share}/` â€” user installs
+- `${XDG_CONFIG_HOME:-$HOME/.config}/` â€” user config
 
-**FHS search pattern:**
+### FHS Search Pattern
 ```bash
 find_data_file() {
-  local -a search_paths=(
-    "$SCRIPT_DIR"/"$1"                    # Development
-    /usr/local/share/myapp/"$1"           # Local install
-    /usr/share/myapp/"$1"                 # System install
-    "${XDG_DATA_HOME:-$HOME/.local/share}"/myapp/"$1"
-  )
-  local -- path; for path in "${search_paths[@]}"; do
-    [[ -f "$path" ]] && { echo "$path"; return 0; } ||:
-  done; return 1
+  local -a paths=("$SCRIPT_DIR"/"$1" /usr/local/share/app/"$1" /usr/share/app/"$1")
+  local p; for p in "${paths[@]}"; do [[ -f "$p" ]] && { echo "$p"; return 0; }; done
+  return 1
 }
 ```
 
-**Anti-patterns:**
-- `data=/home/user/myapp/data.txt` â†' use FHS search
-- `source /usr/local/lib/myapp/common.sh` â†' search multiple locations
-- `BIN_DIR=/usr/local/bin` â†' use `PREFIX=${PREFIX:-/usr/local}; BIN_DIR="$PREFIX"/bin`
+### Anti-Patterns
+- `source /usr/local/lib/app/x.sh` â†’ Use FHS search function
+- `BIN_DIR=/usr/local/bin` hardcoded â†’ `PREFIX=${PREFIX:-/usr/local}; BIN_DIR="$PREFIX"/bin`
 
-**When NOT FHS:** Single-user scripts, project-specific tools, containers, embedded systems.
+### When NOT to Use
+Single-user scripts, project-specific tools, containers with custom paths.
 
 **Ref:** BCS0104

@@ -1,25 +1,25 @@
 ## Exit Codes
 
-**Use consistent exit codes for predictable error handling across scripts.**
+**Use consistent exit codes; 0=success, 1=general, 2=usage, 3-25=BCS categories.**
 
 ### die() Function
 ```bash
 die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
-die 3 'File not found'
 ```
 
-### Core Codes
+### BCS Exit Codes (Key)
+
 | Code | Name | Use |
 |------|------|-----|
 | 0 | SUCCESS | OK |
 | 1 | ERR_GENERAL | Catchall |
-| 2 | ERR_USAGE | CLI error |
-| 3-7 | File ops | NOENT/ISDIR/IO/NOTDIR/EMPTY |
-| 8-10,22 | Validation | REQUIRED/RANGE/TYPE/INVAL |
-| 11-13 | Permissions | PERM/READONLY/ACCESS |
-| 14-17 | Resources | NOMEM/NOSPC/BUSY/EXIST |
-| 18-21 | Environment | NODEP/CONFIG/ENV/STATE |
-| 23-25 | Network | NETWORK/TIMEOUT/HOST |
+| 2 | ERR_USAGE | CLI usage |
+| 3 | ERR_NOENT | File not found |
+| 8 | ERR_REQUIRED | Missing arg |
+| 13 | ERR_ACCESS | Permission denied |
+| 18 | ERR_NODEP | Missing dep |
+| 22 | ERR_INVAL | Invalid arg |
+| 24 | ERR_TIMEOUT | Timeout |
 
 ### Reserved: 64-78 (sysexits), 126-127 (Bash), 128+n (signals)
 
@@ -29,8 +29,8 @@ die 3 'File not found'
 command -v jq &>/dev/null || die 18 'Missing: jq'
 ```
 
-### Anti-Patterns
-- `exit 1` for all errors â†' Use specific codes
-- Codes 64+ â†' Reserved for system use
+### Anti-patterns
+- `exit 1` for all errors â†’ loses diagnostic info
+- Codes 64+ â†’ reserved ranges
 
 **Ref:** BCS0602

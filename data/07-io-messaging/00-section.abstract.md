@@ -1,38 +1,38 @@
 # Input/Output & Messaging
 
-**Use standardized messaging functions with proper stream separation: STDOUT for data, STDERR for diagnostics.**
+**Use standardized messaging functions with proper stream separation: dataâ†’STDOUT, diagnosticsâ†’STDERR.**
 
 ## Core Functions
 
 | Function | Purpose | Stream |
 |----------|---------|--------|
-| `_msg()` | Core messaging (uses FUNCNAME) | varies |
-| `error()` | Unconditional errors | STDERR |
-| `die()` | Exit with error message | STDERR |
+| `_msg()` | Core (uses FUNCNAME) | varies |
+| `error()` | Errors | STDERR |
+| `die()` | Exit with error | STDERR |
 | `warn()` | Warnings | STDERR |
-| `info()` | Informational | STDOUT |
+| `info()` | Informational | STDERR |
 | `debug()` | Debug output | STDERR |
-| `success()` | Success messages | STDOUT |
-| `vecho()` | Verbose output | STDOUT |
+| `success()` | Success messages | STDERR |
+| `vecho()` | Verbose output | STDERR |
 | `yn()` | Yes/no prompts | STDERR |
 
-## Key Rules
+## Stream Rules
 
-- **STDERR redirect first**: `>&2 echo "error"` â†' NOT `echo "error" >&2`
-- Data output â†' STDOUT (pipeable)
-- Diagnostics/errors â†' STDERR
+- **STDOUT**: Script data/results only (pipeable)
+- **STDERR**: All diagnostics, prompts, progress
+- Place `>&2` at command start: `>&2 echo "error"`
 
 ## Example
 
 ```bash
-error() { >&2 echo "ERROR: $*"; }
-die()   { error "$@"; exit 1; }
-info()  { echo "INFO: $*"; }
+error() { >&2 printf '%s\n' "ERROR: $*"; }
+die() { error "$@"; exit 1; }
+info() { >&2 printf '%s\n' "INFO: $*"; }
 ```
 
 ## Anti-patterns
 
-- `echo "Error" >&2` â†' Use `>&2 echo "Error"` (redirect first)
-- Mixing data and diagnostics on same stream
+- `echo "Error"` â†’ `>&2 echo "Error"` (errors must go to STDERR)
+- `echo >&2 "msg"` â†’ `>&2 echo "msg"` (redirection at start)
 
 **Ref:** BCS0700

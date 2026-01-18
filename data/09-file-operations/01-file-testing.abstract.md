@@ -1,21 +1,47 @@
 ## Safe File Testing
 
-**Always quote variables and use `[[ ]]` for all file tests.**
+**Always quote variables and use `[[ ]]` for file tests.**
 
-**Key operators:** `-f` (file), `-d` (dir), `-r` (readable), `-w` (writable), `-x` (executable), `-s` (non-empty), `-e` (exists), `-L` (symlink), `-nt`/`-ot` (newer/older than), `-ef` (same inode).
+### Key Operators
 
-**Core pattern:**
+| Op | Test | Op | Test |
+|----|------|----|------|
+| `-f` | Regular file | `-r` | Readable |
+| `-d` | Directory | `-w` | Writable |
+| `-e` | Exists (any) | `-x` | Executable |
+| `-L` | Symlink | `-s` | Non-empty |
+| `-nt` | Newer than | `-ot` | Older than |
+
+### Rationale
+
+- `"$var"` prevents word splitting/glob expansion
+- `[[ ]]` more robust than `[ ]` or `test`
+- Test before use → prevents missing file errors
+
+### Pattern
+
 ```bash
-[[ -f "$file" && -r "$file" ]] || die 3 "Cannot read ${file@Q}"
+# Validate file exists and readable
+[[ -f "$file" ]] || die 2 "Not found ${file@Q}"
+[[ -r "$file" ]] || die 5 "Cannot read ${file@Q}"
+
+# Ensure writable directory
 [[ -d "$dir" ]] || mkdir -p "$dir" || die 1 "Cannot create ${dir@Q}"
-[[ "$src" -nt "$dst" ]] && cp "$src" "$dst"
+[[ -w "$dir" ]] || die 5 "Not writable ${dir@Q}"
 ```
 
-**Rationale:** Quoting prevents word splitting/glob expansion; `[[ ]]` safer than `[ ]`; test-before-use prevents runtime errors.
+### Anti-Patterns
 
-**Anti-patterns:**
-- `[[ -f $file ]]` �' `[[ -f "$file" ]]` (always quote)
-- `[ -f "$file" ]` �' `[[ -f "$file" ]]` (use `[[ ]]`)
-- `source "$config"` without test �' validate first with `|| die`
+```bash
+# ✗ Unquoted → breaks with spaces
+[[ -f $file ]]
+# ✓ Always quote
+[[ -f "$file" ]]
+
+# ✗ Silent failure
+[[ -d "$dir" ]] || mkdir "$dir"
+# ✓ Catch errors
+[[ -d "$dir" ]] || mkdir "$dir" || die 1 "Failed ${dir@Q}"
+```
 
 **Ref:** BCS0901

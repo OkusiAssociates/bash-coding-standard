@@ -3,11 +3,11 @@
 **Organize functions bottom-up: lowest-level primitives first (messaging, utilities), then composition layers, ending with `main()` as the highest-level orchestrator.**
 
 **Rationale:**
-- **No Forward References**: Bash reads top-to-bottom; dependency order ensures functions exist before use
-- **Readability/Debugging**: Understanding primitives first, then compositions reduces cognitive load
-- **Maintainability/Testability**: Clear dependency hierarchy; low-level functions testable independently
+- **No Forward References**: Bash reads top-to-bottom; dependency order ensures called functions exist before use
+- **Readability/Debugging**: Understand primitives first, then compositions; dependencies visible immediately
+- **Maintainability/Testability**: Clear hierarchy shows where to add functions; low-level functions test independently
 
-**Standard 7-layer organization pattern:**
+**Standard 7-layer pattern:**
 
 ```bash
 #!/bin/bash
@@ -57,7 +57,7 @@ main "$@"
 #fin
 ```
 
-**Dependency flow diagram:**
+**Dependency flow:**
 
 ```
 Top of file
@@ -82,20 +82,20 @@ main "$@" invocation
 
 **Layer descriptions:**
 
-| Layer | Functions | Purpose | Used by |
-|-------|-----------|---------|---------|
-| 1 | `_msg()`, `info()`, `warn()`, `error()`, `die()`, `success()` | Output messages | Everything |
-| 2 | `show_help()`, `show_version()` | Display help/usage | Argument parsing, main() |
-| 3 | `yn()`, `noarg()`, `trim()` | Generic utilities | Validation, business logic |
-| 4 | `check_root()`, `check_prerequisites()`, `validate_input()` | Verify preconditions | main(), business logic |
-| 5 | `build_project()`, `process_file()`, `deploy_app()` | Core functionality | Orchestration, main() |
-| 6 | `run_build_phase()`, `run_deploy_phase()`, `cleanup()` | Coordinate operations | main() |
-| 7 | `main()` | Top-level script flow | Script invocation |
+| Layer | Functions | Purpose | Dependencies |
+|-------|-----------|---------|--------------|
+| 1 | `_msg()`, `info()`, `warn()`, `error()`, `die()`, `success()` | Output messages | None |
+| 2 | `show_help()`, `show_version()` | Display help/usage | May use messaging |
+| 3 | `yn()`, `noarg()`, `trim()` | Generic utilities | May use messaging |
+| 4 | `check_root()`, `check_prerequisites()`, `validate_input()` | Verify preconditions | Utilities, messaging |
+| 5 | `build_project()`, `process_file()`, `deploy_app()` | Core functionality | All lower layers |
+| 6 | `run_build_phase()`, `run_deploy_phase()`, `cleanup()` | Coordinate business logic | Business logic, validation |
+| 7 | `main()` | Top-level script flow | Can call any function |
 
 **Anti-patterns:**
 
 ```bash
-# ✗ Wrong - main() at the top (forward references required)
+# ✗ Wrong - main() at top (forward references)
 main() {
   build_project  # build_project not defined yet!
 }
@@ -128,11 +128,11 @@ error() { ... }
 build() { ... }
 deploy() { ... }
 
-# ✗ Wrong - circular dependencies (A calls B, B calls A)
+# ✗ Wrong - circular dependencies
 function_a() { function_b; }
 function_b() { function_a; }  # Circular!
 
-# ✓ Correct - extract common logic to lower-level function
+# ✓ Correct - extract common logic
 common_logic() { ... }
 function_a() { common_logic; }
 function_b() { common_logic; }
@@ -140,34 +140,34 @@ function_b() { common_logic; }
 
 **Within-layer ordering:**
 
-- **Layer 1 (Messaging)**: Order by severity: `_msg()` �' `info()` �' `success()` �' `warn()` �' `error()` �' `die()`
-- **Layer 3-4 (Helpers/Validation)**: Alphabetically or by frequency of use
-- **Layer 5 (Business Logic)**: By logical workflow sequence
+- **Messaging**: Order by severity: `_msg()` → `info()` → `success()` → `warn()` → `error()` → `die()`
+- **Helpers**: Alphabetically or by frequency of use
+- **Validation**: By execution sequence (functions called early first)
+- **Business Logic**: By logical workflow (sequential steps in order)
 
 **Edge cases:**
 
-**1. Circular dependencies:**
-```bash
-# Extract common logic to lower layer
-shared_validation() { ... }  # Lower layer
-function_a() { shared_validation; ... }
-function_b() { shared_validation; ... }
-```
+**1. Circular dependencies:** Extract common logic to lower layer or restructure (often indicates design issue)
 
-**2. Sourced libraries:**
+**2. Sourced libraries:** Place `source` statements after messaging layer:
+
 ```bash
-# Place source statements after messaging layer
+# Messaging functions
 info() { ... }
-warn() { ... }
-source "$SCRIPT_DIR"/lib/common.sh  # After messaging
-validate_email() { ... }  # Can use both messaging AND library
+die() { ... }
+
+# Source library (may define additional utilities)
+source "$SCRIPT_DIR"/lib/common.sh
+
+# Your utilities (can use both messaging AND library functions)
+validate_email() { ... }
 ```
 
-**3. Private functions:**
+**3. Private functions:** Prefix with `_`, place in same layer as public functions that use them:
+
 ```bash
-# Prefix with _, place in same layer as public functions that use them
 _msg() { ... }  # Private core utility
 info() { >&2 _msg "$@"; }  # Public wrapper
 ```
 
-**Key principle:** Each function can safely call functions defined ABOVE it. Dependencies flow downward—higher functions call lower functions, never upward. This mirrors how programmers think and eliminates forward reference issues.
+**Key principle:** Bottom-up organization mirrors how programmers think: understand primitives first, then compositions. Each function can safely call functions defined ABOVE it. Dependencies flow downward, never upward.

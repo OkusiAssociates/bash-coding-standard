@@ -1,38 +1,34 @@
 ### Parameter Quoting with @Q
 
-**`${param@Q}` produces shell-quoted output safe for display—prevents injection in error messages and logs.**
+**Use `${parameter@Q}` for safe display of user input in error messages and logs.**
 
-#### Core Behavior
+#### @Q Operator
 
-| Input | `"$var"` | `${var@Q}` |
-|-------|----------|------------|
-| `$(date)` | executes | `'$(date)'` |
-| `*.txt` | literal | `'*.txt'` |
-
-#### Usage Pattern
+`${var@Q}` expands to shell-quoted value safe for display/reuse.
 
 ```bash
-# Error messages - safe display of untrusted input
-die 2 "Unknown option ${1@Q}"
-info "Processing ${file@Q}"
+name='$(rm -rf /)'
+echo "${name@Q}"  # Output: '$(rm -rf /)' (literal, safe)
 
-# Dry-run - quote array for display
-printf -v quoted '%s ' "${cmd[@]@Q}"
+# Error messages - ALWAYS use @Q
+die 2 "Unknown option ${1@Q}"
 ```
+
+#### Behavior Comparison
+
+| Input | `$var` | `${var@Q}` |
+|-------|--------|------------|
+| `$(date)` | executes | `'$(date)'` |
+| `*.txt` | globs | `'*.txt'` |
 
 #### When to Use
 
-- **Use @Q:** Error messages, logging user input, dry-run display
-- **Don't use:** Normal expansion (`"$file"`), comparisons
+**Use @Q:** Error messages, logging input, dry-run display
+**Don't use:** Normal expansion (`"$file"`), comparisons
 
 #### Anti-Patterns
 
-```bash
-# ✗ Injection risk
-die 2 "Unknown option $1"
-
-# ✓ Safe
-die 2 "Unknown option ${1@Q}"
-```
+- `die "Unknown $1"` → injection risk
+- `die "Unknown '$1'"` → still unsafe with embedded quotes
 
 **Ref:** BCS0306

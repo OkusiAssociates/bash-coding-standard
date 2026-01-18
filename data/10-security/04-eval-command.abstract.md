@@ -1,11 +1,11 @@
 ## Eval Command
 
-**Never use `eval` with untrusted input. Avoid `eval` entirely—safer alternatives exist for all common use cases.**
+**Never use `eval` with untrusted input. Avoid entirely—safer alternatives exist for all common use cases.**
 
 ### Rationale
-- **Code injection**: `eval` executes arbitrary code with full script privileges—complete system compromise
-- **Bypasses validation**: Even sanitized input can contain metacharacters enabling injection
-- **Better alternatives**: Arrays, indirect expansion, associative arrays handle all use cases safely
+- **Code injection**: Executes arbitrary code with full script privileges—complete system compromise
+- **Double expansion**: `eval "echo $var"` expands `$var` twice, executing embedded commands
+- **Unauditable**: Dynamic code construction defeats security review
 
 ### Safe Alternatives
 
@@ -15,17 +15,16 @@ eval "value=\$$var_name"
 # ✓ Indirect expansion
 echo "${!var_name}"
 
-# ✗ eval for dynamic assignment
+# ✗ eval for dynamic commands
+eval "$cmd"
+# ✓ Array execution
+declare -a cmd=(find /data -name "*.txt")
+"${cmd[@]}"
+
+# ✗ eval for variable assignment
 eval "$var_name='$value'"
 # ✓ printf -v
 printf -v "$var_name" '%s' "$value"
-
-# ✗ eval for command building
-eval "$cmd"
-# ✓ Array execution
-declare -a cmd=(find /data -type f)
-[[ -n "$pattern" ]] && cmd+=(-name "$pattern")
-"${cmd[@]}"
 
 # ✗ eval for function dispatch
 eval "${action}_function"
@@ -35,15 +34,7 @@ declare -A actions=([start]=start_fn [stop]=stop_fn)
 ```
 
 ### Anti-Patterns
-
-```bash
-# ✗ eval with user input �' `case` whitelist
-eval "$user_command"
-
-# ✗ eval in loop �' associative array dispatch
-for f in *.txt; do eval "process_${f%.txt}"; done
-```
-
-**Key principle:** If you think you need `eval`, use arrays, indirect expansion `${!var}`, or associative arrays instead.
+- `eval "$user_input"` → Use `case` whitelist or array execution
+- `eval "$var='$val'"` → Use `printf -v` or associative arrays
 
 **Ref:** BCS1004

@@ -1,31 +1,35 @@
 ### Edge Cases and Variations
 
-**Standard 13-step layout may be simplified/extended for specific scenarios.**
+**Standard 13-step layout may be modified for: tiny scripts (<200 lines), sourced libraries, external config, platform detection, cleanup traps.**
 
-#### Skip `main()` (<200 lines)
+#### When to Simplify
+- **<200 lines**: Skip `main()`, run directly
+- **Libraries**: Skip `set -e` (affects caller), skip `main()`, no execution block
+- **One-off utilities**: May skip color/verbose features
+
+#### When to Extend
+- **External config**: Source between metadata and logic; make readonly *after* sourcing
+- **Platform detection**: Add platform-specific globals after standard globals
+- **Cleanup traps**: Set trap after cleanup function, before temp file creation
+
+#### Core Example (Library)
 ```bash
 #!/usr/bin/env bash
-set -euo pipefail
-shopt -s inherit_errexit shift_verbose extglob nullglob
-for file in "$@"; do [[ ! -f "$file" ]] || ((count++)); done
+# Library - meant to be sourced, not executed
+# No set -e (affects caller), no main()
+
+is_integer() { [[ "$1" =~ ^-?[0-9]+$ ]]; }
 #fin
 ```
 
-#### Libraries (sourced files)
-Skip `set -e` (affects caller), skip `main()`, define functions only.
+#### Anti-Patterns
+- `set -euo pipefail` after functions â†’ error handling fails
+- Globals scattered between functions â†’ unpredictable state
+- Arbitrary reordering without documented reason
 
-#### Extensions
-- **Config sourcing**: After metadata, before `readonly`
-- **Platform detection**: After globals, use `case $(uname -s)`
-- **Cleanup traps**: After function defs, before temp file creation: `trap 'cleanup $?' SIGINT SIGTERM EXIT`
-
-#### Key Principles
-1. `set -euo pipefail` still first (unless library)
+#### Key Principles (Even When Deviating)
+1. Safety first (`set -euo pipefail` unless library)
 2. Dependencies before usage
-3. Document deviations
-
-#### Anti-patterns
-`set -e` after functions â†' **Wrong**: safety must come first
-Globals scattered between functions â†' **Wrong**: group declarations
+3. Document *why* deviating
 
 **Ref:** BCS010103
