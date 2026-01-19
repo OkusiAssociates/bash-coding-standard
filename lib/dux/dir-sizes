@@ -93,7 +93,7 @@ main() {
       -V|--version) echo "$SCRIPT_NAME $VERSION"; return 0 ;;
       -L|--follow)  FOLLOW_SYMLINKS=1 ;;
       -q|--quiet)   VERBOSE=0 ;;
-      -[hVLq]*) #shellcheck disable=SC2046 #split up single options
+      -[hVLq]?*) #split up single options
                     set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
       -*)           die 22 "Invalid option ${1@Q}" ;;
       *)            [[ -z "$dir" ]] || die 2 "Too many arguments ${1@Q}"

@@ -433,7 +433,7 @@ main() {
     -h|--help)
       show_usage; return 0
       ;;
-    -[ibqvVh]*) #shellcheck disable=SC2046 #split up bundled short options
+    -[ibqvVh]?*) #split up bundled short options
       set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue
       ;;
     -*)

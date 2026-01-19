@@ -1350,8 +1350,7 @@ parse_arguments() {
         (($#==0)) || INPUT_FILES+=("$@")
         break
         ;;
-      -[wDVht]*)
-        # Split combined short options: -Dv -> -D -v
+      -[wDVht]?*) # Split combined short options: -Dv -> -D -v
         set -- "${1:0:2}" "-${1:2}" "${@:2}"
         continue
         ;;

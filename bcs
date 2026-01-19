@@ -4038,7 +4038,7 @@ CHECK
         break
         ;;
 
-      -[sfvq]*) #split up single options
+      -[sfvq]?*) #split up single options
         set -- "${1:0:2}" "-${1:2}" "${@:2}"
         continue
         ;;
@@ -4499,7 +4499,7 @@ COMPRESS
         compress_verbose=0
         ;;
 
-      -[nvqhf]*)
+      -[nvqhf]?*)
         set -- "${1:0:2}" "-${1:2}" "${@:2}"
         continue
         ;;
@@ -4756,7 +4756,7 @@ DISPLAY
                     ;;
       -j|--json)    force_json=1
                     ;;
-      -[hVcsbaj]*) #split up combined short options
+      -[hVcsbaj]?*) #split up combined short options
                     set -- "${1:0:2}" "-${1:2}" "${@:2}"
                     continue
                     ;;
