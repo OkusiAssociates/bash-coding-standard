@@ -6,16 +6,16 @@ set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Script metadata
-SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Project paths
-PROJECT_DIR=$(realpath -- "$SCRIPT_DIR"/..)
-DATA_DIR="$PROJECT_DIR"/data
-BCS_CMD="$PROJECT_DIR"/bcs
-readonly -- PROJECT_DIR DATA_DIR BCS_CMD
+#shellcheck disable=SC2155
+declare -r PROJECT_DIR=$(realpath -- "$SCRIPT_DIR"/..)
+declare -r DATA_DIR="$PROJECT_DIR"/data
+#shellcheck disable=SC2034 # Reserved for future use
+declare -r BCS_CMD="$PROJECT_DIR"/bcs
 
 # Global variables
 declare -i VERBOSE=1 DRY_RUN=0 REPORT_ONLY=1
@@ -23,14 +23,10 @@ declare -- TIER=both CONTEXT_LEVEL=none CLAUDE_CMD=claude
 declare -i SUMMARY_LIMIT=10000 ABSTRACT_LIMIT=1500
 
 # Colors
-if [[ ! -v NOCOLOR ]]; then
-  if [[ -t 1 && -t 2 ]]; then
-    declare -- RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' BOLD=$'\033[1m' NC=$'\033[0m'
-  else
-    declare -- RED='' GREEN='' YELLOW='' CYAN='' BOLD='' NC=''
-  fi
-  declare -n NOCOLOR=NC
-  readonly -- RED GREEN YELLOW CYAN BOLD NC
+if [[ -t 1 && -t 2 ]]; then
+  declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' BOLD=$'\033[1m' NC=$'\033[0m'
+else
+  declare -r RED='' GREEN='' YELLOW='' CYAN='' BOLD='' NC=''
 fi
 
 # Messaging functions
@@ -53,11 +49,13 @@ info() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 warn() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 success() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 error() { >&2 _msg "$@"; }
-die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
-# Usage information
-usage() {
-  cat <<EOF
+noarg() { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
+
+# Usage
+show_help() {
+  cat <<HELP
 Usage: $SCRIPT_NAME [OPTIONS]
 
 Compress BCS rule files using Claude AI with pre-flight checks and progress reporting.
@@ -107,73 +105,47 @@ EXIT CODES:
 SEE ALSO:
   bcs compress            - Direct compression command
   bcs compress --help     - Detailed compression options
-EOF
-  exit "${1:-0}"
+HELP
 }
 
 # Parse arguments
 parse_arguments() {
   while (($#)); do
     case $1 in
-      -h|--help)
-        usage 0
-        ;;
-      -q|--quiet)
-        VERBOSE=0
-        shift
-        ;;
-      -v|--verbose)
-        VERBOSE=1
-        shift
-        ;;
-      -n|--dry-run)
-        DRY_RUN=1
-        shift
-        ;;
-      --report-only)
-        REPORT_ONLY=1
-        shift
-        ;;
-      --regenerate)
-        REPORT_ONLY=0
-        shift
-        ;;
+      -h|--help) show_help; exit 0 ;;
+      -q|--quiet) VERBOSE=0 ;;
+      -v|--verbose) VERBOSE=1 ;;
+      -n|--dry-run) DRY_RUN=1 ;;
+      --report-only) REPORT_ONLY=1 ;;
+      --regenerate) REPORT_ONLY=0 ;;
       --tier)
-        (($# > 1)) || die 2 "Missing value for --tier"
-        TIER=$2
+        noarg "$@"; shift
+        TIER=$1
         [[ "$TIER" =~ ^(summary|abstract|both)$ ]] || \
-          die 2 "Invalid tier: $TIER (must be summary, abstract, or both)"
-        shift 2
+          die 2 "Invalid tier ${TIER@Q} (must be summary, abstract, or both)"
         ;;
       --context-level)
-        (($# > 1)) || die 2 "Missing value for --context-level"
-        CONTEXT_LEVEL=$2
+        noarg "$@"; shift
+        CONTEXT_LEVEL=$1
         [[ "$CONTEXT_LEVEL" =~ ^(none|toc|abstract|summary|complete)$ ]] || \
-          die 2 "Invalid context level: $CONTEXT_LEVEL"
-        shift 2
+          die 2 "Invalid context level ${CONTEXT_LEVEL@Q}"
         ;;
       --claude-cmd)
-        (($# > 1)) || die 2 "Missing value for --claude-cmd"
-        CLAUDE_CMD=$2
-        shift 2
+        noarg "$@"; shift
+        CLAUDE_CMD=$1
         ;;
       --summary-limit)
-        (($# > 1)) || die 2 "Missing value for --summary-limit"
-        SUMMARY_LIMIT=$2
-        shift 2
+        noarg "$@"; shift
+        SUMMARY_LIMIT=$1
         ;;
       --abstract-limit)
-        (($# > 1)) || die 2 "Missing value for --abstract-limit"
-        ABSTRACT_LIMIT=$2
-        shift 2
+        noarg "$@"; shift
+        ABSTRACT_LIMIT=$1
         ;;
-      -*)
-        die 2 "Unknown option: $1"
-        ;;
-      *)
-        die 2 "Unexpected argument: $1"
-        ;;
+      -*) die 22 "Unknown option ${1@Q}" ;;
+      *) die 2 "Unexpected argument ${1@Q}" ;;
     esac
+    shift
   done
 }
 
@@ -193,7 +165,7 @@ check_claude_cli() {
 
 # Pre-flight check: Data directory
 check_data_directory() {
-  info "Checking data directory..."
+  info 'Checking data directory...'
 
   [[ -d "$DATA_DIR" ]] || {
     error "Data directory not found: $DATA_DIR"
@@ -204,7 +176,7 @@ check_data_directory() {
   local -i complete_count
   complete_count=$(find "$DATA_DIR" -type f -name "*.complete.md" | wc -l)
 
-  if [[ "$complete_count" -gt 0 ]]; then
+  if ((complete_count)); then
     success "Found $complete_count .complete.md files"
     return 0
   else
@@ -235,21 +207,21 @@ check_bcs_command() {
 # Run all pre-flight checks
 run_preflight_checks() {
   info "${BOLD}Pre-flight Checks${NC}"
-  echo ""
+  echo
 
   local -i failed=0
 
-  check_claude_cli || ((failed+=1))
-  check_data_directory || ((failed+=1))
-  check_bcs_command || ((failed+=1))
+  check_claude_cli || failed+=1
+  check_data_directory || failed+=1
+  check_bcs_command || failed+=1
 
-  echo ""
+  echo
 
-  if [[ "$failed" -gt 0 ]]; then
+  if ((failed)); then
     error "Pre-flight checks failed: $failed check(s)"
     return 1
   else
-    success "All pre-flight checks passed"
+    success 'All pre-flight checks passed'
     return 0
   fi
 }
@@ -257,7 +229,7 @@ run_preflight_checks() {
 # Report mode: list oversized files
 report_oversized_files() {
   info "${BOLD}Checking File Sizes${NC}"
-  echo ""
+  echo
 
   local -i oversized_summary=0 oversized_abstract=0
   local -- file
@@ -268,16 +240,14 @@ report_oversized_files() {
     info "Checking summary files (limit: $SUMMARY_LIMIT bytes)..."
     while IFS= read -r -d '' file; do
       size=$(stat -c%s "$file" 2>/dev/null || stat -f%z "$file" 2>/dev/null)
-      if [[ "$size" -gt "$SUMMARY_LIMIT" ]]; then
+      if ((size > SUMMARY_LIMIT)); then
         warn "  Oversized: ${file#"$DATA_DIR"/} ($size bytes)"
-        ((oversized_summary+=1))
+        oversized_summary+=1
       fi
     done < <(find "$DATA_DIR" -type f -name "*.summary.md" ! -name "00-header.summary.md" -print0 | sort -z)
 
-    if [[ "$oversized_summary" -eq 0 ]]; then
-      success "All summary files within limit"
-    fi
-    echo ""
+    ((oversized_summary)) || success 'All summary files within limit'
+    echo
   fi
 
   # Check abstract files
@@ -285,21 +255,19 @@ report_oversized_files() {
     info "Checking abstract files (limit: $ABSTRACT_LIMIT bytes)..."
     while IFS= read -r -d '' file; do
       size=$(stat -c%s "$file" 2>/dev/null || stat -f%z "$file" 2>/dev/null)
-      if [[ "$size" -gt "$ABSTRACT_LIMIT" ]]; then
+      if ((size > ABSTRACT_LIMIT)); then
         warn "  Oversized: ${file#"$DATA_DIR"/} ($size bytes)"
-        ((oversized_abstract+=1))
+        oversized_abstract+=1
       fi
     done < <(find "$DATA_DIR" -type f -name "*.abstract.md" ! -name "00-header.abstract.md" -print0 | sort -z)
 
-    if [[ "$oversized_abstract" -eq 0 ]]; then
-      success "All abstract files within limit"
-    fi
-    echo ""
+    ((oversized_abstract)) || success 'All abstract files within limit'
+    echo
   fi
 
   # Summary
   local -i total_oversized=$((oversized_summary + oversized_abstract))
-  if [[ "$total_oversized" -gt 0 ]]; then
+  if ((total_oversized)); then
     warn "${BOLD}Summary:${NC} $total_oversized oversized file(s) found"
     warn 'Run with --regenerate to compress files'
     return 1
@@ -312,9 +280,9 @@ report_oversized_files() {
 # Regenerate mode: compress all files
 regenerate_compressed_files() {
   info "${BOLD}Regenerating Compressed Files${NC}"
-  echo ""
+  echo
 
-  ((DRY_RUN)) && warn "DRY-RUN mode: No files will be modified"
+  ((DRY_RUN)) && warn 'DRY-RUN mode: No files will be modified'
 
   # Build bcs compress command
   local -a cmd=("$BCS_CMD" "compress" "--regenerate")
@@ -329,13 +297,13 @@ regenerate_compressed_files() {
   >&2 echo
 
   if ((DRY_RUN)); then
-    info "DRY-RUN: Would execute compression"
+    info 'DRY-RUN: Would execute compression'
     return 0
   fi
 
   # Execute compression
   if "${cmd[@]}"; then
-    success "Compression completed successfully"
+    success 'Compression completed successfully'
     return 0
   else
     local -i exit_code=$?
@@ -357,17 +325,17 @@ show_compression_stats() {
   echo "  Complete tier: $complete_count files"
   echo "  Summary tier:  $summary_count files"
   echo "  Abstract tier: $abstract_count files"
-  echo ""
+  echo
 
   # Average sizes
   local -i total_size avg_size
-  if [[ "$summary_count" -gt 0 ]]; then
+  if ((summary_count)); then
     total_size=$(find "$DATA_DIR" -type f -name "*.summary.md" ! -name "00-header.summary.md" -exec stat -c%s {} + 2>/dev/null | awk '{sum+=$1} END {print sum}')
     avg_size=$((total_size / summary_count))
     echo "  Average summary size: $avg_size bytes (limit: $SUMMARY_LIMIT)"
   fi
 
-  if [[ "$abstract_count" -gt 0 ]]; then
+  if ((abstract_count)); then
     total_size=$(find "$DATA_DIR" -type f -name "*.abstract.md" ! -name "00-header.abstract.md" -exec stat -c%s {} + 2>/dev/null | awk '{sum+=$1} END {print sum}')
     avg_size=$((total_size / abstract_count))
     echo "  Average abstract size: $avg_size bytes (limit: $ABSTRACT_LIMIT)"
@@ -380,19 +348,19 @@ main() {
 
   info "${BOLD}BCS Rule Compression Workflow${NC}"
   info "Data directory: $DATA_DIR"
-  info "Mode: $([[ "$REPORT_ONLY" -eq 1 ]] && echo "Report only" || echo "Regenerate")"
+  info "Mode: $( ((REPORT_ONLY)) && echo 'Report only' || echo 'Regenerate')"
   [[ "$TIER" != "both" ]] && info "Tier: $TIER"
   info "Context level: $CONTEXT_LEVEL"
-  echo ""
+  echo
 
   # Pre-flight checks (only for regenerate mode)
-  if [[ "$REPORT_ONLY" -eq 0 ]]; then
-    run_preflight_checks || die 2 "Pre-flight checks failed"
-    echo ""
+  if ((!REPORT_ONLY)); then
+    run_preflight_checks || die 2 'Pre-flight checks failed'
+    echo
   fi
 
   # Execute mode
-  if [[ "$REPORT_ONLY" -eq 1 ]]; then
+  if ((REPORT_ONLY)); then
     # Report mode
     if report_oversized_files; then
       exit 0
@@ -402,9 +370,9 @@ main() {
   else
     # Regenerate mode
     if regenerate_compressed_files; then
-      echo ""
+      echo
       show_compression_stats
-      echo ""
+      echo
       success "${BOLD}Regeneration completed successfully${NC}"
       exit 0
     else

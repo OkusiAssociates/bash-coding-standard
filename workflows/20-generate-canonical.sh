@@ -6,15 +6,15 @@ set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Script metadata
-SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Project paths
-PROJECT_DIR=$(realpath -- "$SCRIPT_DIR/..")
-BCS_CMD="$PROJECT_DIR/bcs"
-readonly -- PROJECT_DIR BCS_CMD
+#shellcheck disable=SC2155
+declare -r PROJECT_DIR=$(realpath -- "$SCRIPT_DIR"/..)
+#shellcheck disable=SC2034 # Reserved for future use
+declare -r BCS_CMD="$PROJECT_DIR"/bcs
 
 # Global variables
 declare -i VERBOSE=1 QUIET=0 VALIDATE_AFTER=0 BACKUP_BEFORE=0 UPDATE_SYMLINK=0 FORCE=0
@@ -48,11 +48,13 @@ info() { ((VERBOSE && !QUIET)) || return 0; >&2 _msg "$@"; }
 warn() { ((QUIET)) || >&2 _msg "$@"; }
 success() { ((VERBOSE && !QUIET)) || return 0; >&2 _msg "$@"; }
 error() { >&2 _msg "$@"; }
-die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
-# Usage information
-usage() {
-  cat <<EOF
+noarg() { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
+
+# Usage
+show_help() {
+  cat <<HELP
 Usage: $SCRIPT_NAME [OPTIONS]
 
 Generate canonical BCS files from data/ directory with validation and statistics.
@@ -97,60 +99,31 @@ EXIT CODES:
 SEE ALSO:
   bcs generate            - Direct generation command
   bcs generate --canonical - Generate all tiers + rebuild BCS/ index
-EOF
-  exit "${1:-0}"
+HELP
 }
 
 # Parse arguments
 parse_arguments() {
   while (($#)); do
     case $1 in
-      -h|--help)
-        usage 0
-        ;;
-      -q|--quiet)
-        QUIET=1
-        VERBOSE=0
-        shift
-        ;;
-      -v|--verbose)
-        VERBOSE=1
-        shift
-        ;;
-      --all)
-        TIER='all'
-        shift
-        ;;
+      -h|--help) show_help; exit 0 ;;
+      -q|--quiet) QUIET=1; VERBOSE=0 ;;
+      -v|--verbose) VERBOSE=1 ;;
+      --all) TIER='all' ;;
       --tier)
-        (($# > 1)) || die 2 "Missing value for --tier"
-        TIER=$2
+        noarg "$@"; shift
+        TIER=$1
         [[ "$TIER" =~ ^(complete|summary|abstract)$ ]] || \
-          die 2 "Invalid tier: $TIER (must be complete, summary, or abstract)"
-        shift 2
+          die 2 "Invalid tier ${TIER@Q} (must be complete, summary, or abstract)"
         ;;
-      --validate)
-        VALIDATE_AFTER=1
-        shift
-        ;;
-      --backup)
-        BACKUP_BEFORE=1
-        shift
-        ;;
-      --update-symlink)
-        UPDATE_SYMLINK=1
-        shift
-        ;;
-      --force)
-        FORCE=1
-        shift
-        ;;
-      -*)
-        die 2 "Unknown option: $1"
-        ;;
-      *)
-        die 2 "Unexpected argument: $1"
-        ;;
+      --validate) VALIDATE_AFTER=1 ;;
+      --backup) BACKUP_BEFORE=1 ;;
+      --update-symlink) UPDATE_SYMLINK=1 ;;
+      --force) FORCE=1 ;;
+      -*) die 22 "Unknown option ${1@Q}" ;;
+      *) die 2 "Unexpected argument ${1@Q}" ;;
     esac
+    shift
   done
 }
 
@@ -223,13 +196,13 @@ generate_tier() {
     vecho "  After:  $lines_after lines, $size_after bytes"
 
     # Show delta
-    if [[ "$size_before" -gt 0 ]]; then
+    if ((size_before)); then
       local -i delta_lines=$((lines_after - lines_before))
       local -i delta_size=$((size_after - size_before))
       local -- delta_sign_lines delta_sign_size
 
-      delta_sign_lines=$([[ "$delta_lines" -ge 0 ]] && echo "+" || echo "")
-      delta_sign_size=$([[ "$delta_size" -ge 0 ]] && echo "+" || echo "")
+      delta_sign_lines=$( ((delta_lines >= 0)) && echo '+' || echo '')
+      delta_sign_size=$( ((delta_size >= 0)) && echo '+' || echo '')
 
       vecho "  Delta:  ${delta_sign_lines}$delta_lines lines, ${delta_sign_size}$delta_size bytes"
     fi
@@ -250,40 +223,44 @@ validate_generated_file() {
 
   # Check file exists
   [[ -f "$file" ]] || {
-    error "  File not found"
+    error '  File not found'
     return 1
   }
 
   # Check file is not empty
   [[ -s "$file" ]] || {
-    error "  File is empty"
-    ((errors+=1))
+    error '  File is empty'
+    errors+=1
   }
 
   # Check starts with #
-  if ! head -1 "$file" | grep -q '^#'; then
-    warn "  Does not start with # (expected markdown heading)"
-    ((errors+=1))
+  local -- first_line
+  IFS= read -r first_line < "$file"
+  if [[ "$first_line" != \#* ]]; then
+    warn '  Does not start with # (expected markdown heading)'
+    errors+=1
   fi
 
   # Check ends with #fin
-  if ! tail -1 "$file" | grep -q '^#fin$'; then
-    warn "  Does not end with #fin marker"
-    ((errors+=1))
+  local -- last_line
+  last_line=$(tail -n 1 "$file")
+  if [[ "$last_line" != '#fin' ]]; then
+    warn '  Does not end with #fin marker'
+    errors+=1
   fi
 
   # Check for basic sections
   local -i section_count
   section_count=$(grep -c '^## ' "$file" || true)
-  if [[ "$section_count" -lt 5 ]]; then
+  if ((section_count < 5)); then
     warn "  Only $section_count sections found (expected at least 5)"
-    ((errors+=1))
+    errors+=1
   else
     success "  Found $section_count sections"
   fi
 
-  if [[ "$errors" -eq 0 ]]; then
-    success "  Validation passed"
+  if ((!errors)); then
+    success '  Validation passed'
     return 0
   else
     error "  Validation found $errors issue(s)"
@@ -323,65 +300,65 @@ main() {
 
   info "${BOLD}BCS Canonical File Generation${NC}"
   info "Project directory: $PROJECT_DIR"
-  info ""
+  echo
 
   local -i total_generated=0 total_failed=0
 
   # Generate tier(s)
   if [[ "$TIER" == "all" ]]; then
-    info "Generating all three tiers..."
-    echo ""
+    info 'Generating all three tiers...'
+    echo
 
     for tier in complete summary abstract; do
       if generate_tier "$tier"; then
-        ((total_generated+=1))
+        total_generated+=1
       else
-        ((total_failed+=1))
+        total_failed+=1
       fi
-      echo ""
+      echo
     done
 
     # Rebuild BCS/ index if all succeeded
-    if [[ "$total_failed" -eq 0 ]]; then
-      info "Rebuilding BCS/ index..."
-      if "$BCS_CMD" generate --canonical 2>&1 | grep -q "regenerat"; then
-        success "BCS/ index rebuilt"
+    if ((!total_failed)); then
+      info 'Rebuilding BCS/ index...'
+      if "$BCS_CMD" generate --canonical 2>&1 | grep -q 'regenerat'; then
+        success 'BCS/ index rebuilt'
       fi
     fi
   else
     if generate_tier "$TIER"; then
-      ((total_generated+=1))
+      total_generated+=1
     else
-      ((total_failed+=1))
+      total_failed+=1
     fi
-    echo ""
+    echo
   fi
 
   # Validation
-  if ((VALIDATE_AFTER && total_generated > 0)); then
-    info "Validating generated files..."
-    echo ""
+  if ((VALIDATE_AFTER && total_generated)); then
+    info 'Validating generated files...'
+    echo
 
     local -a files_to_validate=()
     if [[ "$TIER" == "all" ]]; then
       files_to_validate=(
-        "$PROJECT_DIR/data/BASH-CODING-STANDARD.complete.md"
-        "$PROJECT_DIR/data/BASH-CODING-STANDARD.summary.md"
-        "$PROJECT_DIR/data/BASH-CODING-STANDARD.abstract.md"
+        "$PROJECT_DIR"/data/BASH-CODING-STANDARD.complete.md
+        "$PROJECT_DIR"/data/BASH-CODING-STANDARD.summary.md
+        "$PROJECT_DIR"/data/BASH-CODING-STANDARD.abstract.md
       )
     else
-      files_to_validate=("$PROJECT_DIR/data/BASH-CODING-STANDARD.$TIER.md")
+      files_to_validate=("$PROJECT_DIR"/data/BASH-CODING-STANDARD."$TIER".md)
     fi
 
     local -i validation_failed=0
     for file in "${files_to_validate[@]}"; do
       if ! validate_generated_file "$file"; then
-        ((validation_failed+=1))
+        validation_failed+=1
       fi
-      echo ""
+      echo
     done
 
-    if [[ "$validation_failed" -gt 0 ]]; then
+    if ((validation_failed)); then
       error "Validation failed for $validation_failed file(s)"
       exit 1
     fi
@@ -390,20 +367,20 @@ main() {
   # Update symlink
   if ((UPDATE_SYMLINK)); then
     # Default to abstract tier
-    local -- symlink_target="abstract"
-    [[ "$TIER" != "all" ]] && symlink_target="$TIER"
+    local -- symlink_target=abstract
+    [[ "$TIER" != "all" ]] && symlink_target=$TIER
 
     update_symlink "$symlink_target"
-    echo ""
+    echo
   fi
 
   # Summary
   info "${BOLD}Generation Summary:${NC}"
   echo "  Generated: $total_generated"
-  [[ "$total_failed" -gt 0 ]] && echo "  Failed: $total_failed"
-  echo ""
+  ((total_failed)) && echo "  Failed: $total_failed"
+  echo
 
-  if [[ "$total_failed" -eq 0 ]]; then
+  if ((!total_failed)); then
     success "${BOLD}Generation completed successfully${NC}"
     exit 0
   else

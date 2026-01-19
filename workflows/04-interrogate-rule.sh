@@ -6,17 +6,17 @@ set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Script metadata
-SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Project paths
-PROJECT_DIR=$(realpath -- "$SCRIPT_DIR/..")
-DATA_DIR="$PROJECT_DIR/data"
-BCS_CMD="$PROJECT_DIR/bcs"
-#shellcheck disable=SC2034  # DATA_DIR reserved for consistency across workflows
-readonly -- PROJECT_DIR DATA_DIR BCS_CMD
+#shellcheck disable=SC2155
+declare -r PROJECT_DIR=$(realpath -- "$SCRIPT_DIR"/..)
+#shellcheck disable=SC2034 # Reserved for consistency across workflows
+declare -r DATA_DIR="$PROJECT_DIR"/data
+#shellcheck disable=SC2034 # Reserved for future use
+declare -r BCS_CMD="$PROJECT_DIR"/bcs
 
 # Global variables
 declare -i VERBOSE=1 QUIET=0 SHOW_CONTENT=0 SHOW_METADATA=1 SHOW_ALL_TIERS=0
@@ -50,11 +50,13 @@ info() { ((VERBOSE && !QUIET)) || return 0; >&2 _msg "$@"; }
 warn() { ((QUIET)) || >&2 _msg "$@"; }
 success() { ((VERBOSE && !QUIET)) || return 0; >&2 _msg "$@"; }
 error() { >&2 _msg "$@"; }
-die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
-# Usage information
-usage() {
-  cat <<EOF
+noarg() { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
+
+# Usage
+show_help() {
+  cat <<HELP
 Usage: $SCRIPT_NAME [OPTIONS] CODE_OR_FILE [CODE_OR_FILE ...]
 
 Interrogate/inspect BCS rules - query rule information by BCS code or file path.
@@ -102,8 +104,7 @@ EXIT CODES:
 SEE ALSO:
   bcs decode CODE         - Decode BCS codes to file locations
   bcs codes               - List all BCS codes
-EOF
-  exit "${1:-0}"
+HELP
 }
 
 # Parse arguments
@@ -112,56 +113,27 @@ parse_arguments() {
 
   while (($#)); do
     case $1 in
-      -h|--help)
-        usage 0
-        ;;
-      -q|--quiet)
-        QUIET=1
-        VERBOSE=0
-        shift
-        ;;
-      -v|--verbose)
-        VERBOSE=1
-        QUIET=0
-        shift
-        ;;
-      -p|--print)
-        SHOW_CONTENT=1
-        shift
-        ;;
-      -m|--metadata)
-        SHOW_METADATA=1
-        SHOW_CONTENT=0
-        shift
-        ;;
-      --no-metadata)
-        SHOW_METADATA=0
-        shift
-        ;;
-      --all-tiers)
-        SHOW_ALL_TIERS=1
-        shift
-        ;;
+      -h|--help) show_help; exit 0 ;;
+      -q|--quiet) QUIET=1; VERBOSE=0 ;;
+      -v|--verbose) VERBOSE=1; QUIET=0 ;;
+      -p|--print) SHOW_CONTENT=1 ;;
+      -m|--metadata) SHOW_METADATA=1; SHOW_CONTENT=0 ;;
+      --no-metadata) SHOW_METADATA=0 ;;
+      --all-tiers) SHOW_ALL_TIERS=1 ;;
       --format)
-        (($# > 1)) || die 2 "Missing value for --format"
-        OUTPUT_FORMAT=$2
+        noarg "$@"; shift
+        OUTPUT_FORMAT=$1
         [[ "$OUTPUT_FORMAT" =~ ^(text|json|markdown)$ ]] || \
-          die 2 "Invalid format: $OUTPUT_FORMAT (must be text, json, or markdown)"
-        shift 2
+          die 2 "Invalid format ${OUTPUT_FORMAT@Q} (must be text, json, or markdown)"
         ;;
-      -*)
-        die 2 "Unknown option: $1"
-        ;;
-      *)
-        codes_or_files+=("$1")
-        shift
-        ;;
+      -*) die 22 "Unknown option ${1@Q}" ;;
+      *) codes_or_files+=("$1") ;;
     esac
+    shift
   done
 
   # Validate we have at least one code/file
-  [[ "${#codes_or_files[@]}" -gt 0 ]] || \
-    die 2 "No BCS code or file path specified" "Use --help for usage information"
+  ((${#codes_or_files[@]})) || die 2 'No BCS code or file path specified' 'Use --help for usage information'
 
   # Export to be used by main
   printf '%s\0' "${codes_or_files[@]}"
@@ -368,7 +340,7 @@ EOF
 # Main function
 main() {
   # Handle help early (before process substitution to avoid subshell exit issue)
-  [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]] && usage 0
+  [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]] && { show_help; exit 0; }
 
   local -a codes_or_files
   local -- item
@@ -376,7 +348,7 @@ main() {
   # Parse arguments and get codes/files
   mapfile -t -d '' codes_or_files < <(parse_arguments "$@")
 
-  [[ "${#codes_or_files[@]}" -gt 0 ]] || die 2 "No codes or files to process"
+  ((${#codes_or_files[@]})) || die 2 'No codes or files to process'
 
   # Process each code or file
   for item in "${codes_or_files[@]}"; do
@@ -387,14 +359,14 @@ main() {
       # File path
       interrogate_by_file "$item"
     else
-      die 1 "Invalid code or file not found: $item"
+      die 1 "Invalid code or file not found: ${item@Q}"
     fi
 
     # Add separator between multiple items
     if [[ "${#codes_or_files[@]}" -gt 1 && "$OUTPUT_FORMAT" == "text" ]]; then
-      echo ""
-      echo "========================================"
-      echo ""
+      echo
+      echo '========================================'
+      echo
     fi
   done
 }

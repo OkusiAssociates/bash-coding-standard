@@ -6,15 +6,15 @@ set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Script metadata
-SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Project paths
-PROJECT_DIR=$(realpath -- "$SCRIPT_DIR/..")
-BCS_CMD="$PROJECT_DIR/bcs"
-readonly -- PROJECT_DIR BCS_CMD
+#shellcheck disable=SC2155
+declare -r PROJECT_DIR=$(realpath -- "$SCRIPT_DIR"/..)
+#shellcheck disable=SC2034 # Reserved for future use
+declare -r BCS_CMD="$PROJECT_DIR"/bcs
 
 # Global variables
 declare -i VERBOSE=1 QUIET=0 STRICT_MODE=0
@@ -48,11 +48,13 @@ info() { ((VERBOSE && !QUIET)) || return 0; >&2 _msg "$@"; }
 warn() { ((QUIET)) || >&2 _msg "$@"; }
 success() { ((VERBOSE && !QUIET)) || return 0; >&2 _msg "$@"; }
 error() { >&2 _msg "$@"; }
-die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
-# Usage information
-usage() {
-  cat <<EOF
+noarg() { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
+
+# Usage
+show_help() {
+  cat <<HELP
 Usage: $SCRIPT_NAME [OPTIONS] SCRIPT [SCRIPT ...]
 
 Check script compliance against BASH-CODING-STANDARD using 'bcs check'.
@@ -86,8 +88,7 @@ NOTES:
 
 SEE ALSO:
   bcs check SCRIPT        - Direct compliance checking
-EOF
-  exit "${1:-0}"
+HELP
 }
 
 # Parse arguments
@@ -97,49 +98,28 @@ parse_arguments() {
 
   while (($#)); do
     case $1 in
-      -h|--help)
-        usage 0
-        ;;
-      -q|--quiet)
-        QUIET=1
-        VERBOSE=0
-        shift
-        ;;
-      -v|--verbose)
-        VERBOSE=1
-        shift
-        ;;
-      --strict)
-        STRICT_MODE=1
-        shift
-        ;;
+      -h|--help) show_help; exit 0 ;;
+      -q|--quiet) QUIET=1; VERBOSE=0 ;;
+      -v|--verbose) VERBOSE=1 ;;
+      --strict) STRICT_MODE=1 ;;
       --format)
-        (($# > 1)) || die 2 "Missing value for --format"
-        OUTPUT_FORMAT=$2
+        noarg "$@"; shift
+        OUTPUT_FORMAT=$1
         [[ "$OUTPUT_FORMAT" =~ ^(text|json|markdown)$ ]] || \
-          die 2 "Invalid format: $OUTPUT_FORMAT"
-        shift 2
+          die 2 "Invalid format ${OUTPUT_FORMAT@Q}"
         ;;
       --report)
-        (($# > 1)) || die 2 "Missing value for --report"
-        REPORT_FILE=$2
-        shift 2
+        noarg "$@"; shift
+        REPORT_FILE=$1
         ;;
-      --batch)
-        batch_mode=1
-        shift
-        ;;
-      -*)
-        die 2 "Unknown option: $1"
-        ;;
-      *)
-        scripts+=("$1")
-        shift
-        ;;
+      --batch) batch_mode=1 ;;
+      -*) die 22 "Unknown option ${1@Q}" ;;
+      *) scripts+=("$1") ;;
     esac
+    shift
   done
 
-  [[ "${#scripts[@]}" -gt 0 ]] || die 2 "No scripts specified"
+  ((${#scripts[@]})) || die 2 'No scripts specified'
 
   # Export for main
   printf '%d\0' "$batch_mode"
@@ -183,27 +163,27 @@ batch_check_scripts() {
   local -i total=0 passed=0 failed=0 not_found=0
 
   info "Batch compliance checking ${#scripts[@]} script(s)..."
-  echo ""
+  echo
 
   local -a failed_scripts=() passed_scripts=()
 
   for script in "${scripts[@]}"; do
-    ((total+=1))
+    total+=1
 
     if [[ ! -f "$script" ]]; then
       warn "File not found: $script"
-      ((not_found+=1))
+      not_found+=1
       continue
     fi
 
     if check_single_script "$script" 2>&1; then
-      ((passed+=1))
+      passed+=1
       passed_scripts+=("$script")
     else
-      ((failed+=1))
+      failed+=1
       failed_scripts+=("$script")
     fi
-    echo ""
+    echo
   done
 
   # Summary
@@ -211,15 +191,15 @@ batch_check_scripts() {
   echo "  Total scripts: $total"
   echo "  ${GREEN}Passed: $passed${NC}"
   echo "  ${RED}Failed: $failed${NC}"
-  [[ "$not_found" -gt 0 ]] && echo "  ${YELLOW}Not found: $not_found${NC}"
-  echo ""
+  ((not_found)) && echo "  ${YELLOW}Not found: $not_found${NC}"
+  echo
 
-  if [[ "$failed" -gt 0 ]]; then
+  if ((failed)); then
     echo "${RED}Failed scripts:${NC}"
     for script in "${failed_scripts[@]}"; do
       echo "  - $script"
     done
-    echo ""
+    echo
   fi
 
   # Generate report if requested
@@ -228,7 +208,7 @@ batch_check_scripts() {
   fi
 
   # Exit code logic
-  if ((STRICT_MODE && failed > 0)); then
+  if ((STRICT_MODE && failed)); then
     return 1
   else
     return 0
@@ -265,7 +245,7 @@ EOF
         echo "- ✓ \`$script\`"
       done
 
-      if [[ "$failed" -gt 0 ]]; then
+      if ((failed)); then
         cat <<EOF
 
 ### Failed Scripts
@@ -323,9 +303,9 @@ EOF
         echo "  ✓ $script"
       done
 
-      if [[ "$failed" -gt 0 ]]; then
-        echo ""
-        echo "Failed Scripts:"
+      if ((failed)); then
+        echo
+        echo 'Failed Scripts:'
         for script in "${failed_ref[@]}"; do
           echo "  ✗ $script"
         done
@@ -342,7 +322,7 @@ main() {
   # Must check ALL args since --help can appear after other options
   local -- arg
   for arg in "$@"; do
-    [[ "$arg" == "-h" || "$arg" == "--help" ]] && usage 0
+    [[ "$arg" == "-h" || "$arg" == "--help" ]] && { show_help; exit 0; }
   done
 
   local -i batch_mode
@@ -354,7 +334,7 @@ main() {
     mapfile -t -d '' scripts
   } < <(parse_arguments "$@")
 
-  [[ "${#scripts[@]}" -gt 0 ]] || die 2 "No scripts to check"
+  ((${#scripts[@]})) || die 2 'No scripts to check'
 
   # Check mode
   if ((batch_mode || ${#scripts[@]} > 1)); then

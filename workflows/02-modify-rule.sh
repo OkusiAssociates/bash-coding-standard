@@ -6,15 +6,15 @@ set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # Script metadata
-SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
-SCRIPT_DIR=${SCRIPT_PATH%/*}
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly -- SCRIPT_PATH SCRIPT_DIR SCRIPT_NAME
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Project paths
-PROJECT_DIR=$(realpath -- "$SCRIPT_DIR/..")
-BCS_CMD="$PROJECT_DIR/bcs"
-readonly -- PROJECT_DIR BCS_CMD
+#shellcheck disable=SC2155
+declare -r PROJECT_DIR=$(realpath -- "$SCRIPT_DIR"/..)
+#shellcheck disable=SC2034 # Reserved for future use
+declare -r BCS_CMD="$PROJECT_DIR"/bcs
 
 # Global variables
 declare -i VERBOSE=1 QUIET=0 AUTO_COMPRESS=1 AUTO_VALIDATE=0 BACKUP=1
@@ -48,10 +48,13 @@ info() { ((VERBOSE && !QUIET)) || return 0; >&2 _msg "$@"; }
 warn() { ((QUIET)) || >&2 _msg "$@"; }
 success() { ((VERBOSE && !QUIET)) || return 0; >&2 _msg "$@"; }
 error() { >&2 _msg "$@"; }
-die() { (($# > 1)) && error "${@:2}"; exit "${1:-0}"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
-usage() {
-  cat <<EOF
+noarg() { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
+
+# Usage
+show_help() {
+  cat <<HELP
 Usage: $SCRIPT_NAME [OPTIONS] CODE_OR_FILE
 
 Modify existing BCS rule - edit .complete.md and optionally recompress.
@@ -79,8 +82,7 @@ WORKFLOW:
   3. Open in editor
   4. Recompress to .summary.md and .abstract.md (if enabled)
   5. Validate (if enabled)
-EOF
-  exit "${1:-0}"
+HELP
 }
 
 # Parse arguments
@@ -89,22 +91,22 @@ parse_arguments() {
 
   while (($#)); do
     case $1 in
-      -h|--help) usage 0 ;;
-      -q|--quiet) QUIET=1; VERBOSE=0; shift ;;
+      -h|--help) show_help; exit 0 ;;
+      -q|--quiet) QUIET=1; VERBOSE=0 ;;
       --editor)
-        (($# > 1)) || die 2 "Missing value for --editor"
-        EDITOR_CMD=$2
-        shift 2
+        noarg "$@"; shift
+        EDITOR_CMD=$1
         ;;
-      --no-compress) AUTO_COMPRESS=0; shift ;;
-      --validate) AUTO_VALIDATE=1; shift ;;
-      --no-backup) BACKUP=0; shift ;;
-      -*) die 2 "Unknown option: $1" ;;
-      *) codes_or_files+=("$1"); shift ;;
+      --no-compress) AUTO_COMPRESS=0 ;;
+      --validate) AUTO_VALIDATE=1 ;;
+      --no-backup) BACKUP=0 ;;
+      -*) die 22 "Unknown option ${1@Q}" ;;
+      *) codes_or_files+=("$1") ;;
     esac
+    shift
   done
 
-  [[ "${#codes_or_files[@]}" -gt 0 ]] || die 2 "No BCS code or file specified"
+  ((${#codes_or_files[@]})) || die 2 'No BCS code or file specified'
   printf '%s\0' "${codes_or_files[@]}"
 }
 
@@ -172,23 +174,23 @@ modify_rule() {
 
 main() {
   # Handle help early (before process substitution to avoid subshell exit issue)
-  [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]] && usage 0
+  [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]] && { show_help; exit 0; }
 
   local -a inputs
   mapfile -t -d '' inputs < <(parse_arguments "$@")
 
   info "${BOLD}Modify BCS Rule${NC}"
-  echo ""
+  echo
 
   for input in "${inputs[@]}"; do
     modify_rule "$input"
-    echo ""
+    echo
   done
 
-  info "Next steps:"
-  echo "  - Review changes: git diff"
-  echo "  - Regenerate canonical: bcs generate --canonical"
-  echo "  - Commit: git add -p && git commit"
+  info 'Next steps:'
+  echo '  - Review changes: git diff'
+  echo '  - Regenerate canonical: bcs generate --canonical'
+  echo '  - Commit: git add -p && git commit'
 }
 
 main "$@"
