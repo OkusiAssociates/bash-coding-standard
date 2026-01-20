@@ -3844,7 +3844,7 @@ cmd_check() {
   local -- claude_cmd='claude'
   local -i strict=0
   local -i skip_permissions=0
-  local -i smart_mode=1   # Default: use LLM-guided section selection
+  local -i smart_mode=0   # --smart enables LLM-guided section selection
   local -i all_sections=0 # When set, check ALL rules (no smart filtering)
 
   # === SECTION 2: Argument Parsing ===
@@ -3863,10 +3863,10 @@ Core Options:
   -q, --quiet             Suppress non-error output
 
 Filtering Options (Token Optimization):
-  --smart                 Use LLM-guided section selection (default)
+  --smart                 Enable LLM-guided section selection
                           Pre-analyzes script to select relevant rules
-  --all                   Check against ALL 101 rules (no smart filtering)
-                          Uses more tokens but most thorough
+  --all                   Check against ALL 101 rules (default)
+                          Most thorough coverage
   --codes CODE1,CODE2     Validate only specific BCS codes
                           Examples: BCS01,BCS0205 or 01,0205
   --sections N1,N2        Validate only specific sections (1-14)
