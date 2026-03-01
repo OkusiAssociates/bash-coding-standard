@@ -1,1 +1,1 @@
-../../BASH-CODING-STANDARD.md
+../../data/BASH-CODING-STANDARD.md

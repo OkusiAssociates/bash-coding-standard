@@ -1,0 +1,80 @@
+# bcs(1) bash completion
+# shellcheck shell=bash
+
+_bcs() {
+  local cur prev words cword
+  _init_completion || return
+
+  local -r subcommands='display template check codes generate help'
+
+  # Find the subcommand (first non-option word after 'bcs')
+  local subcmd='' i
+  for ((i = 1; i < cword; i++)); do
+    case ${words[i]} in
+      -*) continue ;;
+      *)  subcmd=${words[i]}; break ;;
+    esac
+  done
+
+  # Top-level: complete subcommands and global options
+  if [[ -z "$subcmd" ]]; then
+    case $cur in
+      -*)  mapfile -t COMPREPLY < <(compgen -W '-V --version -h --help' -- "$cur") ;;
+      *)   mapfile -t COMPREPLY < <(compgen -W "$subcommands" -- "$cur") ;;
+    esac
+    return
+  fi
+
+  # Per-subcommand completions
+  case $subcmd in
+    display)
+      mapfile -t COMPREPLY < <(compgen -W '-c --cat -s --squeeze -h --help' -- "$cur")
+      ;;
+
+    template)
+      case $prev in
+        -t|--type)
+          mapfile -t COMPREPLY < <(compgen -W 'minimal basic complete library' -- "$cur")
+          return
+          ;;
+        -o|--output)
+          _filedir
+          return
+          ;;
+        -n|--name|-d|--desc|-V|--version)
+          return
+          ;;
+      esac
+      mapfile -t COMPREPLY < <(compgen -W '-t --type -n --name -d --desc -V --version -o --output -x --executable -f --force -h --help' -- "$cur")
+      ;;
+
+    check)
+      case $cur in
+        -*)
+          mapfile -t COMPREPLY < <(compgen -W '-s --strict -q --quiet -h --help' -- "$cur")
+          ;;
+        *)
+          _filedir 'sh'
+          ;;
+      esac
+      ;;
+
+    codes)
+      mapfile -t COMPREPLY < <(compgen -W '-h --help' -- "$cur")
+      ;;
+
+    generate)
+      case $prev in
+        -o|--output)
+          _filedir
+          return
+          ;;
+      esac
+      mapfile -t COMPREPLY < <(compgen -W '-o --output -h --help' -- "$cur")
+      ;;
+
+    help)
+      mapfile -t COMPREPLY < <(compgen -W "$subcommands" -- "$cur")
+      ;;
+  esac
+} && complete -F _bcs bcs
