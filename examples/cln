@@ -1,0 +1,247 @@
+#!/usr/bin/env bash
+#shellcheck disable=SC2015
+# cln - Recursively clean temporary and junk files from directories
+#
+# Searches for and removes common editor backup files, crash files,
+# and other temporary files that accumulate in working directories.
+set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
+
+declare -r VERSION=1.1.0
+declare SCRIPT_PATH SCRIPT_NAME
+SCRIPT_PATH=$(realpath -e -- "$0")
+SCRIPT_NAME=${SCRIPT_PATH##*/}
+readonly SCRIPT_PATH SCRIPT_NAME
+
+# Messaging system - color-coded output with TTY detection
+# _msg: base formatter; vecho/success/warn/info/error: level-specific wrappers
+declare -i VERBOSE=1 PROMPT=1
+# Enable colors only when both stdout and stderr are terminals
+if [[ -t 1 && -t 2 ]]; then
+  declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' NC=$'\033[0m'
+else
+  declare -r RED='' GREEN='' YELLOW='' CYAN='' NC=''
+fi
+
+_msg() {
+  local -- prefix="$SCRIPT_NAME:" msg
+  case ${FUNCNAME[1]} in
+    success) prefix+=" ${GREEN}✓${NC}" ;;
+    warn)    prefix+=" ${YELLOW}▲${NC}" ;;
+    info)    prefix+=" ${CYAN}◉${NC}" ;;
+    error)   prefix+=" ${RED}✗${NC}" ;;
+    *)       ;;
+  esac
+  for msg in "$@"; do printf '%s %s\n' "$prefix" "$msg"; done
+}
+vecho() { ((VERBOSE)) || return 0; _msg "$@"; }
+success() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
+warn() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
+info() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
+error() { >&2 _msg "$@"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+
+# Utility functions
+grep() { /usr/bin/grep "$@"; }      # Use system grep to avoid alias conflicts
+find() { /usr/bin/find "$@"; }      # Use system find to avoid alias conflicts
+declare -fx grep find
+noarg() { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }  # Validate option has argument
+decp() { declare -p "$@" 2>/dev/null | sed 's/^declare -[a-zA-Z-]* //'; }  # Debug: print variable as name=value
+trim() { local -- v="$*"; v="${v#"${v%%[![:blank:]]*}"}"; echo -n "${v%"${v##*[![:blank:]]}"}"; }  # Strip whitespace
+
+# Exit handler for cleanup on SIGINT/SIGTERM/EXIT
+cleanup() {
+  local -i exitcode=${1:-0}
+  # Add cleanup logic here if needed (e.g., remove temp files)
+  exit "$exitcode"
+}
+trap 'cleanup $?' SIGINT SIGTERM EXIT
+
+show_help() {
+  cat <<HELP
+$SCRIPT_NAME $VERSION - Search for and delete junk/trash/rubbish files.
+
+Recursively removes all temporary/junk files.
+
+The following filespecs are removed by default:
+
+  ( ${DELETE_FILES[*]} )
+
+Config files (first found wins):
+  ~/.local/etc/default/cln   (user override)
+  /etc/default/cln           (system default)
+
+Usage: $SCRIPT_NAME [Options] [path ...]
+
+  'path' is a directory path to clean up. Default '.'
+
+Options:
+  -L                Follow symbolic links during search
+  -a|--add SPEC     Add file pattern to cleanup scan; can be used
+                    multiple times; SPEC can be comma-delimited
+                    $(decp add_specs)
+  -S|--set SPEC     Set/replace all file patterns (overrides config)
+                    $(decp DELETE_FILES)
+  -m|--depth N      Maximum directory depth to recurse (-1 = unlimited)
+                    $(decp max_depth)
+  -p|-n|--prompt    Prompt before deleting (default)
+  -P|-N|--no-prompt Delete files without prompting
+                    $(decp PROMPT)
+  -v|--verbose      Increase output verbosity
+  -q|--quiet        Suppress output
+                    $(decp VERBOSE)
+  -V|--version      Show version
+  -h|--help         Show this help
+
+Examples:
+  # 0) Remove all temporary files in current dir, with prompting.
+  $SCRIPT_NAME
+
+  # 1) Remove all temporary files in /home/foobar, with prompting.
+  $SCRIPT_NAME /home/foobar
+
+  # 2) Clean all temporary files quietly without prompting to
+  #    max depth of 7.
+  $SCRIPT_NAME -Pqm 7 /home/foobar /home/barfoo
+
+  # 3) Clean all temporary files without prompting to max
+  #    depth of 7 including .bak and .tmp files.
+  $SCRIPT_NAME -Pqm 7 -a '*.bak,*.tmp' /home/foobar /home/barfoo
+HELP
+}
+
+# Pluralization helper: returns 's' if count != 1
+s() { (( ${1:-1} == 1 )) || echo -n 's'; }
+
+# Default file patterns to remove (editor backups, crash files, temp files)
+declare -a DELETE_FILES=("*~" "~*" ".~*" ".*~" DEADJOE dead.letter "wget-log*")
+
+# Load patterns from config file if exists
+# Precedence: ~/.local/etc/default/cln > /etc/default/cln > hardcoded defaults
+load_config() {
+  local -a configs=(
+    "$HOME/.local/etc/default/cln"
+    "/etc/default/cln"
+  )
+  local config
+  for config in "${configs[@]}"; do
+    if [[ -f "$config" && -r "$config" ]]; then
+      mapfile -t DELETE_FILES < <(grep -v '^[[:space:]]*#' "$config" | grep -v '^[[:space:]]*$')
+      return 0
+    fi
+  done
+  return 1
+}
+
+main() {
+  # Load config file if exists (user or system)
+  load_config || true
+
+  # Default configurations
+  local -a add_specs=()
+  local -i max_depth=3
+  local -- path
+  local -a paths=()
+  local -a rm_opts=(-f)
+  local -- spec
+  local -a all_specs
+  local -a found_files
+  local -i fnd=0
+  local -a find_expr=()
+  local -a symbolic=(-P)
+
+  while (($#)); do case $1 in
+    -L)             symbolic=(-L) ;;
+    -a|--add)       noarg "$@"; shift
+                    IFS=',' read -ra ADD_SPECS <<< "$1"
+                    for spec in "${ADD_SPECS[@]}"; do
+                      spec=$(trim "$spec")
+                      [[ -n $spec ]] && add_specs+=("$spec") ||:
+                    done
+                    ;;
+    -S|--set)       noarg "$@"; shift
+                    DELETE_FILES=()
+                    IFS=',' read -ra DELETE_FILES <<< "$1"
+                    ;;
+    -m|--depth)     noarg "$@"; shift; max_depth=$1
+                    ((max_depth == -1)) && max_depth=255 ||:
+                    ;;
+    -p|-n|--prompt) PROMPT=1; VERBOSE=1 ;;
+    -P|-N|--no-prompt)
+                    PROMPT=0 ;;
+    -v|--verbose)   ((VERBOSE < 3)) && VERBOSE+=1 ;;
+    -q|--quiet)     VERBOSE=0 ;;
+
+    -V|--version)   echo "$SCRIPT_NAME $VERSION"; return 0 ;;
+    -h|--help)      show_help; return 0 ;;
+
+    --)             shift; paths+=("$@"); break ;;
+
+    -[LaSmpPNnvqVh]?*) set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+#    -[LampPNvqVhS]*) #shellcheck disable=SC2046 #split up single options
+#                    set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}";;
+
+    -*)             die 22 "Invalid option ${1@Q}" ;;
+    *)              paths+=("$1") ;;
+  esac; shift; done
+
+  # Set default path if not provided
+  ((${#paths[@]})) || paths=('.')
+  ((PROMPT)) && ((VERBOSE==0)) && VERBOSE=1 ||:
+  ((VERBOSE)) && rm_opts+=(-v) ||:
+
+  # Combine default and additional specs
+  all_specs=("${DELETE_FILES[@]}" "${add_specs[@]}")
+
+  # Build find criteria
+  for spec in "${all_specs[@]}"; do
+    find_expr+=(-name "$spec" -o)
+  done
+  # Remove the last -o
+  unset 'find_expr[${#find_expr[@]}-1]'
+
+  # Iterate over each path
+  for path in "${paths[@]}"; do
+    if [[ ! -d "$path" ]]; then
+      warn "${path@Q} is not a directory. Skipping."
+      continue
+    fi
+    vecho "Searching directory ${path@Q}, depth $max_depth"
+    ((VERBOSE>1)) && vecho "$(decp find_expr)" ||:
+    # First find matching files and store in array
+    readarray -t found_files < <(
+        find "${symbolic[@]}" "$path" \
+            -maxdepth "$max_depth" \
+            -type f \
+            \( "${find_expr[@]}" \) \
+            -print \
+            2>/dev/null || true
+          )
+    fnd=${#found_files[@]}
+    # Handle readarray quirk: single empty element means no results
+    ((fnd == 1)) && [[ -z ${found_files[0]} ]] && fnd=0
+    # Only proceed if files were found
+    if ((fnd)); then
+      if ((PROMPT)); then
+        warn "Found $fnd file$(s $fnd) to remove:"
+        warn "${found_files[@]}"
+        read -r -p "$(2>&1 warn "Remove $fnd file$(s $fnd)? Yes/All/No/Quit: ")" yn
+        case ${yn,,} in
+          q) return 0 ;;
+          n) continue ;;
+          a) PROMPT=0 ;;
+          y) ;;
+          *) continue ;;
+        esac
+      fi
+      vecho "Removing $fnd file$(s $fnd)..."
+      rm "${rm_opts[@]}" "${found_files[@]}" || true
+    else
+      vecho "No matching files found in ${path@Q}"
+    fi
+  done
+}
+
+main "$@"
+#fin
+

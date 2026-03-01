@@ -1,0 +1,1 @@
+/ai/scripts/Okusi/oknav/install.sh

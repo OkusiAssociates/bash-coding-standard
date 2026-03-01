@@ -1,0 +1,105 @@
+#!/bin/bash
+# This is a very brief description
+set -euo pipefail
+shopt -s inherit_errexit #shift_verbose extglob nullglob
+
+# Script metadata
+declare -r VERSION=1.0.0
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*}
+declare -r SCRIPT_NAME=${SCRIPT_PATH##*/}
+
+# Global variables
+declare -i VERBOSE=1 DEBUG=0
+
+# Color Definitions
+if [[ -t 1 && -t 2 ]]; then
+  declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' BOLD=$'\033[1m' NC=$'\033[0m'
+else
+  declare -r RED='' GREEN='' YELLOW='' CYAN='' BOLD='' NC=''
+fi
+
+# Utility Functions
+_msg() {
+  local -- prefix="$SCRIPT_NAME:" msg
+  case ${FUNCNAME[1]} in
+    vecho) : ;;
+    info) prefix+=" ${CYAN}◉${NC}" ;;
+    warn) prefix+=" ${YELLOW}▲${NC}" ;;
+    success) prefix+=" ${GREEN}✓${NC}" ;;
+    error) prefix+=" ${RED}✗${NC}" ;;
+    *) : ;;
+  esac
+  for msg in "$@"; do printf '%s %s\n' "$prefix" "$msg"; done
+}
+vecho() { ((VERBOSE)) || return 0; _msg "$@"; }
+info() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
+warn() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
+success() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
+error() { >&2 _msg "$@"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+yn() { local -- REPLY; read -r -n 1 -p "$SCRIPT_NAME: ${YELLOW}▲${NC} ${1:-'Continue?'} y/n "; echo; [[ ${REPLY,,} == y ]]; }
+noarg() { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
+
+show_help() {
+  cat <<HELP
+Usage: $SCRIPT_NAME [OPTIONS]
+
+{{DESCRIPTION}}
+
+Options:
+  -v, --verbose           Enable verbose output (default)
+  -q, --quiet             Disable verbose output
+  -d, --debug             Enable debug output
+  -V, --version           Show version information
+  -h, --help              Show this help message
+
+Examples:
+  $SCRIPT_NAME -V
+  $SCRIPT_NAME -q
+
+HELP
+}
+
+main() {
+  while (($#)); do
+    case $1 in
+      -h|--help)
+        show_help
+        exit 0
+        ;;
+      -V|--version)
+        echo "$SCRIPT_NAME $VERSION"
+        exit 0
+        ;;
+      -v|--verbose)
+        VERBOSE=1
+        ;;
+      -q|--quiet)
+        VERBOSE=0
+        ;;
+      -d|--debug)
+        # shellcheck disable=SC2034
+        DEBUG=1
+        ;;
+      -[hVvqd]?*)  # Bundled short options
+        set -- "${1:0:2}" "-${1:2}" "${@:2}"
+        continue
+        ;;
+      -*)
+        die 22 "Invalid option ${1@Q}"
+        ;;
+      *)
+        die 2  "Unexpected argument ${1@Q}"
+        ;;
+    esac
+    shift
+  done
+
+  # Business
+  info "Hello from $USER"
+  success 'Script completed successfully'
+}
+
+main "$@"
+#fin
