@@ -2,7 +2,25 @@
 
 **Concise, actionable coding rules for Bash 5.2+**
 
-Designed by Okusi Associates for the Indonesian Open Technology Foundation (YaTTI).
+Designed by [Okusi Associates](https://www.okusi.id) for the [Indonesian Open Technology Foundation (YaTTI)](https://www.yatti.id).
+
+Bash is a battle-tested, sophisticated programming language deployed on virtually every Unix-like system. When wielded with discipline and proper engineering principles, Bash delivers production-grade solutions for system automation, data processing, and infrastructure orchestration. This standard codifies that discipline.
+
+## Key Features
+
+- Targets Bash 5.2+ exclusively (not a compatibility standard)
+- Enforces strict error handling with `set -euo pipefail`
+- Requires explicit variable declarations with type hints
+- Mandates ShellCheck compliance
+- Defines standard utility functions for consistent messaging
+- AI-powered compliance checking via Claude
+
+## Target Audience
+
+- Human developers writing production-grade Bash scripts
+- AI assistants generating or analyzing Bash code
+- DevOps engineers and system administrators
+- Organizations needing standardized scripting guidelines
 
 ## Quick Start
 
@@ -20,9 +38,19 @@ Designed by Okusi Associates for the Indonesian Open Technology Foundation (YaTT
 ./bcs codes
 ```
 
+## Prerequisites
+
+| Requirement | Version | Check Command |
+|-------------|---------|---------------|
+| Bash | 5.2+ | `bash --version` |
+| ShellCheck | 0.8.0+ | `shellcheck --version` |
+| Claude CLI | Latest | `claude --version` (optional, for `bcs check`) |
+
 ## Installation
 
 ```bash
+git clone https://github.com/Open-Technology-Foundation/bash-coding-standard.git
+cd bash-coding-standard
 sudo make install              # Install to /usr/local (default)
 sudo make PREFIX=/usr install  # Install to /usr (system-wide)
 sudo make uninstall            # Uninstall
@@ -107,6 +135,16 @@ shellcheck -x bcs                     # Mandatory validation
 - "The best process is no process"
 - "Everything should be made as simple as possible, but not any simpler."
 
+## Related Resources
+
+- [ShellCheck](https://www.shellcheck.net/) — Static analysis tool for shell scripts
+- [Google Shell Style Guide](https://google.github.io/styleguide/shellguide.html) — Google's shell scripting conventions
+- [Bash Reference Manual](https://www.gnu.org/software/bash/manual/) — Official GNU Bash documentation
+
 ## License
 
 CC BY-SA 4.0 - See LICENSE for details.
+
+## Acknowledgments
+
+Developed by [Okusi Associates](https://www.okusi.id) for the [Indonesian Open Technology Foundation (YaTTI)](https://www.yatti.id).
