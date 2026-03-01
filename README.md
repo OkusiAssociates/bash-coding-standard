@@ -6,6 +6,12 @@ Designed by [Okusi Associates](https://www.okusi.id) for the [Indonesian Open Te
 
 Bash is a battle-tested, sophisticated programming language deployed on virtually every Unix-like system. When wielded with discipline and proper engineering principles, Bash delivers production-grade solutions for system automation, data processing, and infrastructure orchestration. This standard codifies that discipline.
 
+## Install
+
+```bash
+git clone https://github.com/Open-Technology-Foundation/bash-coding-standard.git && cd bash-coding-standard && sudo make install
+```
+
 ## Key Features
 
 - Targets Bash 5.2+ exclusively (not a compatibility standard)
@@ -55,6 +61,8 @@ sudo make install              # Install to /usr/local (default)
 sudo make PREFIX=/usr install  # Install to /usr (system-wide)
 sudo make uninstall            # Uninstall
 ```
+
+Installs the `bcs` and `bcscheck` binaries, data files, bash completions, and the `bcs(1)` manpage.
 
 ## Overview
 

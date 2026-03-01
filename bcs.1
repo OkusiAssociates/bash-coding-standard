@@ -1,0 +1,238 @@
+.\" BCS Manual Page
+.\" Generated: 2026-03-01
+.\"
+.TH BCS 1 "March 2026" "BCS 2.0.0" "User Commands"
+.\"
+.SH NAME
+bcs \- Bash Coding Standard CLI toolkit
+.\"
+.SH SYNOPSIS
+.B bcs
+.RI [ display ]
+.RI [ OPTIONS ]
+.br
+.B bcs template
+.RI [ OPTIONS ]
+.br
+.B bcs check
+.RI [ OPTIONS ]
+.I SCRIPT
+.br
+.B bcs codes
+.br
+.B bcs generate
+.RI [ OPTIONS ]
+.br
+.B bcs help
+.RI [ COMMAND ]
+.\"
+.SH DESCRIPTION
+.B bcs
+is a CLI toolkit for working with the Bash Coding Standard (BCS), a set of
+100 concise, actionable rules across 12 sections for Bash 5.2+ scripts.
+Designed by Okusi Associates for the Indonesian Open Technology Foundation
+(YaTTI), the standard targets both human programmers and AI assistants.
+.PP
+The toolkit provides six subcommands for viewing, generating templates,
+checking compliance, listing rule codes, and regenerating the standard
+document from section source files.
+.\"
+.SH COMMANDS
+.SS bcs display
+View the Bash Coding Standard document. This is the default command when
+no subcommand is specified.
+.PP
+When stdout is a terminal and
+.B md2ansi
+is available, the standard is displayed with ANSI formatting piped through
+.BR less (1).
+Otherwise, plain text output is used.
+.TP
+.BR \-c ", " \-\-cat
+Plain text output (no formatting).
+.TP
+.BR \-s ", " \-\-squeeze
+Squeeze consecutive blank lines.
+.TP
+.BR \-h ", " \-\-help
+Show display help and exit.
+.\"
+.SS bcs template
+Generate BCS-compliant script templates with placeholder substitution.
+.TP
+.BR \-t ", " \-\-type " " \fITYPE\fR
+Template type:
+.BR minimal " (~13 lines),"
+.BR basic " (~27 lines, default),"
+.BR complete " (~104 lines),"
+.BR library " (~38 lines)."
+.TP
+.BR \-n ", " \-\-name " " \fINAME\fR
+Script name for placeholders.
+.TP
+.BR \-d ", " \-\-desc " " \fITEXT\fR
+Script description.
+.TP
+.BR \-V ", " \-\-version " " \fIVER\fR
+Version string (default: 1.0.0).
+.TP
+.BR \-o ", " \-\-output " " \fIFILE\fR
+Output file (default: stdout).
+.TP
+.BR \-x ", " \-\-executable
+Make output file executable.
+.TP
+.BR \-f ", " \-\-force
+Overwrite existing files.
+.TP
+.BR \-h ", " \-\-help
+Show template help and exit.
+.\"
+.SS bcs check
+AI-powered BCS compliance checking. Analyzes a script against the full
+standard and reports violations, warnings, and suggestions with BCS rule
+codes. Requires the
+.B claude
+CLI in PATH.
+.TP
+.BR \-s ", " \-\-strict
+Treat warnings as violations.
+.TP
+.BR \-q ", " \-\-quiet
+Suppress info messages.
+.TP
+.BR \-h ", " \-\-help
+Show check help and exit.
+.\"
+.SS bcs codes
+List all BCS rule codes and titles extracted from section files. Each code
+follows the format
+.B BCS\fISSRR\fR
+where
+.I SS
+is the section number and
+.I RR
+is the rule number, both zero-padded.
+.TP
+.BR \-h ", " \-\-help
+Show codes help and exit.
+.\"
+.SS bcs generate
+Regenerate
+.I BASH\-CODING\-STANDARD.md
+from the individual section source files
+.RI ( data/[0-9]*.md ).
+A table of contents header is prepended automatically.
+.TP
+.BR \-o ", " \-\-output " " \fIFILE\fR
+Output file (default:
+.IR data/BASH\-CODING\-STANDARD.md ).
+.TP
+.BR \-h ", " \-\-help
+Show generate help and exit.
+.\"
+.SS bcs help
+Show help for a command. With no argument, shows the main help summary.
+.\"
+.SH OPTIONS
+Global options recognized before any subcommand:
+.TP
+.BR \-V ", " \-\-version
+Display version information and exit.
+.TP
+.BR \-h ", " \-\-help
+Display main help message and exit.
+.\"
+.SH EXIT STATUS
+.TP
+.B 0
+Success.
+.TP
+.B 1
+General error.
+.TP
+.B 2
+Usage error (unknown command, unexpected argument).
+.TP
+.B 3
+File not found (standard document, data directory, template, or script).
+.TP
+.B 13
+Permission denied (cannot read script file).
+.TP
+.B 18
+Missing dependency (claude CLI not found for check command).
+.TP
+.B 22
+Invalid argument or option (EINVAL).
+.\"
+.SH ENVIRONMENT
+.TP
+.B TMPDIR
+Used by the
+.B check
+subcommand for temporary working directories. Falls back to
+.IR /tmp .
+.\"
+.SH FILES
+.TP
+.I /usr/local/bin/bcs
+Installed CLI binary.
+.TP
+.I /usr/local/bin/bcscheck
+Standalone compliance checker symlink.
+.TP
+.I /usr/local/share/yatti/bash\-coding\-standard/data/
+Installed standard document and section files.
+.TP
+.I /usr/local/share/yatti/bash\-coding\-standard/data/templates/
+Script template files.
+.TP
+.I /usr/local/share/bash\-completion/completions/bcs
+Bash tab-completion script.
+.TP
+.I /usr/local/share/man/man1/bcs.1
+This manual page.
+.\"
+.SH EXAMPLES
+.TP
+.B bcs
+View the standard (formatted if terminal, plain otherwise).
+.TP
+.B bcs display \-c
+View the standard as plain text.
+.TP
+.B bcs template \-t complete
+Generate a full-featured script template to stdout.
+.TP
+.B bcs template \-t minimal \-n deploy \-o deploy.sh \-x
+Generate a minimal template, save to file, make executable.
+.TP
+.B bcs template \-t library \-n auth \-o lib\-auth.sh
+Generate a sourceable library template.
+.TP
+.B bcs check myscript.sh
+Run AI-powered compliance check on a script.
+.TP
+.B bcs check \-\-strict deploy.sh
+Strict mode: treat warnings as violations.
+.TP
+.B bcs codes
+List all 100 BCS rule codes and titles.
+.TP
+.B bcs generate
+Regenerate BASH\-CODING\-STANDARD.md from section files.
+.TP
+.B bcs help template
+Show detailed help for the template subcommand.
+.\"
+.SH SEE ALSO
+.BR bash (1),
+.BR shellcheck (1),
+.BR bcscheck (1)
+.\"
+.SH AUTHORS
+Developed by Okusi Associates for the Indonesian Open Technology Foundation (YaTTI).
+.\"
+.SH LICENSE
+Creative Commons Attribution\-ShareAlike 4.0 International (CC BY\-SA 4.0).
