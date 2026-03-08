@@ -80,14 +80,18 @@ var=$(command)                      # not var=`command`
 {1..10}                             # not $(seq 1 10)
 ```
 
-## BCS1206 ShellCheck and Development
+## BCS1206 Static Analysis Directives
 
-ShellCheck compliance is compulsory. Use `#shellcheck disable=SCxxxx` only for documented exceptions.
+ShellCheck compliance is compulsory. Use `#shellcheck disable=SCxxxx` only for documented exceptions. Similarly, use `#bcscheck disable=BCSxxxx` to suppress specific BCS rules on the next line.
 
 ```bash
-# correct — documented exception
+# correct — documented shellcheck exception
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
+
+# correct — documented bcscheck exception
+#bcscheck disable=BCS0606
+((DRY_RUN)) && info 'Dry-run mode'
 ```
 
 Always end scripts with `#fin` after `main "$@"`.

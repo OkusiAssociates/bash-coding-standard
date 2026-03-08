@@ -116,4 +116,4 @@ Support bundled short options like `-vvn` expanding to `-v -v -n`.
 
 Place bundling case before `-*)` invalid option handler and after all explicit option cases. List only valid short options in the pattern to prevent incorrect expansion.
 
-Options requiring arguments cannot be bundled mid-string: `-vno output.txt` works (`-o` is last), but `-von file` fails (`-o` captures `n`).
+Include arg-taking options in the character class. They work correctly when last in the bundle — the disaggregation peels them off as a separate `-X` flag, and `shift` in their case handler picks up the argument normally. Example: `-vno output.txt` disaggregates to `-v -n -o`, then `-o` consumes `output.txt` via `shift`. The user must place arg-taking options last; `-von file` would incorrectly disaggregate to `-v -o -n`.

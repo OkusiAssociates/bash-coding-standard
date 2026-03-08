@@ -27,7 +27,7 @@ process_file() {
 }
 ```
 
-Declare local variables at function start with proper types. Always `return` explicitly from complex functions.
+Declare local variables before use, grouped near the function top when practical. Declarations may appear mid-body (e.g., after early-return guards, inside conditionals, or between logical sections), but must not appear inside loops. Always use proper types and `return` explicitly from complex functions.
 
 ## BCS0402 Function Names
 
@@ -157,14 +157,14 @@ Source libraries with existence check:
 
 ## BCS0408 Dependency Management
 
-Use `command -v` for dependency checks, never `which`.
+Use `command -v` for dependency checks, never `which`. POSIX/coreutils commands guaranteed on any Bash 5.2+ system (e.g., `sed`, `awk`, `grep`, `cat`, `date`, `tput`, `wc`, `stty`, `mkdir`, `rm`, `cp`, `mv`) do not require checks — only verify non-standard or separately packaged tools.
 
 ```bash
-# correct
+# correct — check non-standard tools
 command -v curl >/dev/null || die 18 'curl required: apt install curl'
 
-# correct — check multiple
-for cmd in curl jq awk; do
+# correct — check multiple non-standard tools
+for cmd in curl jq pandoc; do
   command -v "$cmd" >/dev/null || die 18 "Required: ${cmd@Q}"
 done
 
@@ -175,8 +175,11 @@ command -v jq >/dev/null && HAS_JQ=1 ||:
 # correct — check bash version
 ((BASH_VERSINFO[0] >= 5 && BASH_VERSINFO[1] >= 2)) || die 1 'Requires Bash 5.2+'
 
-# wrong
-which curl >/dev/null 2>&1
+# wrong — using which
+which curl &>/dev/null
+
+# wrong — checking coreutils commands
+command -v sed >/dev/null || die 18 'sed required'
 ```
 
 Use lazy loading for expensive resources: initialize only when first needed.

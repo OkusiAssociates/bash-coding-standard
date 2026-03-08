@@ -6,7 +6,7 @@
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-export PATH=/usr/local/bin:/usr/bin:/bin
+declare -rx PATH=~/.local/bin:/usr/local/bin:/usr/bin:/bin
 
 # Script metadata
 declare -r VERSION=2.0.0
@@ -51,9 +51,9 @@ noarg()   { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
 find_bcs_md() {
   local -a search_paths=(
     "$SCRIPT_DIR"/data
-    "${SCRIPT_DIR%/bin}/share/yatti/bash-coding-standard/data"
-    /usr/local/share/yatti/bash-coding-standard/data
-    /usr/share/yatti/bash-coding-standard/data
+    "${SCRIPT_DIR%/bin}/share/yatti/BCS/data"
+    /usr/local/share/yatti/BCS/data
+    /usr/share/yatti/BCS/data
   )
   local -- path
   for path in "${search_paths[@]}"; do
@@ -69,9 +69,9 @@ find_bcs_md() {
 find_data_dir() {
   local -a search_paths=(
     "$SCRIPT_DIR"/data
-    "${SCRIPT_DIR%/bin}/share/yatti/bash-coding-standard/data"
-    /usr/local/share/yatti/bash-coding-standard/data
-    /usr/share/yatti/bash-coding-standard/data
+    "${SCRIPT_DIR%/bin}/share/yatti/BCS/data"
+    /usr/local/share/yatti/BCS/data
+    /usr/share/yatti/BCS/data
   )
   local -- path
   for path in "${search_paths[@]}"; do
@@ -133,6 +133,7 @@ ${BOLD}Usage:${NC} $SCRIPT_NAME [display] [OPTIONS]
 
 ${BOLD}Options:${NC}
   -c, --cat       Plain text output (no formatting)
+  -f, --file      Show full path to the standard document
   -s, --squeeze   Squeeze consecutive blank lines
   -h, --help      Show this help
 
@@ -160,10 +161,10 @@ ${BOLD}Options:${NC}
   -h, --help            Show this help
 
 ${BOLD}Template Types:${NC}
-  minimal     Bare essentials (~13 lines)
-  basic       Standard with metadata (~27 lines)
-  complete    Full toolkit with all utilities (~104 lines)
-  library     Sourceable library pattern (~38 lines)
+  minimal     Bare essentials (~15 lines)
+  basic       Standard with metadata (~25 lines)
+  complete    Full toolkit with all utilities (~105 lines)
+  library     Sourceable library pattern (~39 lines)
 
 ${BOLD}Examples:${NC}
   $SCRIPT_NAME template -t minimal
@@ -179,15 +180,22 @@ ${BOLD}bcs check${NC} - AI-powered BCS compliance checking
 ${BOLD}Usage:${NC} $SCRIPT_NAME check [OPTIONS] SCRIPT
 
 ${BOLD}Options:${NC}
+  -m, --model MODEL     Claude model (default: sonnet)
+  -f, --fast            Quick check using low effort
   -s, --strict          Treat warnings as violations
   -q, --quiet           Suppress info messages
   -h, --help            Show this help
 
 Requires Claude CLI (\`claude\` command) in PATH.
 
+${BOLD}Inline suppression:${NC}
+  #bcscheck disable=BCS0606    Suppress a rule for the next line
+
 ${BOLD}Examples:${NC}
   $SCRIPT_NAME check myscript.sh
   $SCRIPT_NAME check --strict deploy.sh
+  $SCRIPT_NAME check --fast myscript.sh
+  $SCRIPT_NAME check --model opus deploy.sh
 HELP
 }
 
@@ -231,9 +239,10 @@ cmd_display() {
 
   while (($#)); do case $1 in
     -c|--cat)     force_cat=1 ;;
+    -f|--file)    find_bcs_md || die 3 'BASH-CODING-STANDARD.md not found'; return 0 ;;
     -s|--squeeze) squeeze_blanks=1 ;;
     -h|--help)    show_display_help; return 0 ;;
-    -[csh]?*)     set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+    -[cfsh]?*)    set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
     -*)           die 22 "Invalid option ${1@Q}" ;;
     *)            die 2 "Unexpected argument ${1@Q}" ;;
   esac; shift; done
@@ -337,14 +346,16 @@ cmd_template() {
 # ---- Subcommand: check ----
 
 cmd_check() {
-  local -- script_file=''
-  local -i strict=0 quiet=0
+  local -- script_file='' model=sonnet
+  local -i strict=0 quiet=0 fast=0
 
   while (($#)); do case $1 in
+    -m|--model)  noarg "$@"; shift; model=$1 ;;
+    -f|--fast)   fast=1 ;;
     -s|--strict) strict=1 ;;
     -q|--quiet)  quiet=1 ;;
     -h|--help)   show_check_help; return 0 ;;
-    -[sqh]?*)    set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+    -[mfsqh]?*)  set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
     --)          shift; break ;;
     -*)          die 22 "Invalid option ${1@Q}" ;;
     *)
@@ -356,7 +367,7 @@ cmd_check() {
   [[ -n "$script_file" ]] || die 2 'No script file specified'
   [[ -f "$script_file" ]] || die 3 "Script not found ${script_file@Q}"
   [[ -r "$script_file" ]] || die 13 "Cannot read ${script_file@Q}"
-  script_file=$(realpath -- "$script_file")
+  script_file=$(realpath -e -- "$script_file")
 
   # Verify claude CLI is available
   command -v claude >/dev/null || die 18 'Claude CLI (claude) required but not found'
@@ -381,12 +392,11 @@ cmd_check() {
   cd "$check_dir"
   [[ -d /run/user/"${EUID:?}" ]] && export TMPDIR=/run/user/"${EUID:?}" ||:
 
+  local -a claude_args=(--model "$model" --system-prompt "$system_prompt")
+  ((fast)) && claude_args+=(--effort low) ||:
+
   #shellcheck disable=SC1007
-  result=$(CLAUDECODE= claude -p "$system_prompt
-
----
-
-Script to validate:
+  result=$(CLAUDECODE= claude "${claude_args[@]}" -p "Script to validate:
 
 \`\`\`bash
 $(< "$script_file")
@@ -420,6 +430,12 @@ At the end, provide a summary with:
 - Count of violations, warnings, and suggestions
 - Compliance percentage (0-100)
 - Overall assessment: COMPLIANT, NEEDS_WORK, or NON_COMPLIANT
+
+Respect inline suppression directives. When you see:
+  #bcscheck disable=BCS0101
+the next line is exempt from that specific rule. Multiple codes can be comma-separated:
+  #bcscheck disable=BCS0101,BCS0606
+Do not report suppressed rules as violations, warnings, or suggestions. Note them separately as SUPPRESSED if present.
 
 PROMPT
 

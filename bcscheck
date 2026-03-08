@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
-# bcscheck - Quick BCS compliance check wrapper
-# Convenience wrapper that calls bcs check with recommended defaults.
+# bcscheck - Strict BCS compliance checker
+# Wrapper that calls bcs check --strict --fast (warnings as violations, low effort).
 set -euo pipefail
 shopt -s inherit_errexit
 
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*}
+declare -rx PATH=~/.local/bin:/usr/local/bin:/usr/bin:/bin
+
+die() { (($# < 2)) || >&2 echo "$SCRIPT_NAME: error: ${*:2}"; exit "${1:-0}"; }
 
 # Find bcs
 declare -- BCS_CMD
@@ -15,9 +18,8 @@ if [[ -x "$SCRIPT_DIR"/bcs ]]; then
 elif command -v bcs >/dev/null; then
   BCS_CMD=$(command -v bcs)
 else
-  >&2 echo 'bcscheck: bcs command not found'
-  exit 18
+  die 18 'bcs command not found'
 fi
 
-exec "$BCS_CMD" check --strict "$@"
+exec "$BCS_CMD" check --strict --fast "$@"
 #fin

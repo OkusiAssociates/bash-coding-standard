@@ -3,7 +3,8 @@
 set -euo pipefail
 shopt -s inherit_errexit nullglob
 
-declare -r SCRIPT_PATH=$(realpath -- "$0")
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -e -- "$0")
 declare -r TEST_DIR=${SCRIPT_PATH%/*}
 
 # Colors

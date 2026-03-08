@@ -13,7 +13,6 @@ else
   printf '  %s✗%s shellcheck has findings\n' "$RED" "$NC"
   TESTS_FAILED+=1
 fi
-TESTS_RUN+=1
 
 # Test: bcscheck passes shellcheck
 begin_test 'bcscheck passes shellcheck'
@@ -24,7 +23,6 @@ else
   printf '  %s✗%s bcscheck shellcheck has findings\n' "$RED" "$NC"
   TESTS_FAILED+=1
 fi
-TESTS_RUN+=1
 
 # Test: bcs has shebang
 begin_test 'bcs has proper shebang'
@@ -97,7 +95,6 @@ else
   printf '  %s✗%s line count %d outside range [400-1000]\n' "$RED" "$NC" "$bcs_lines"
   TESTS_FAILED+=1
 fi
-TESTS_RUN+=1
 
 print_summary 'self-compliance'
 #fin

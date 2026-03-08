@@ -26,20 +26,17 @@ begin_test 'generated file has table of contents'
 assert_contains "$content" '## Contents' 'has contents section' || true
 
 # Test: generated file has all 12 sections
-begin_test 'generated file has section markers'
+begin_test 'generated file has all 12 sections'
+declare -i missing_sections=0
 for section in 'Script Structure' 'Variables' 'Strings' 'Functions' 'Control Flow' \
                'Error Handling' 'I/O' 'Command-Line' 'File Operations' 'Security' \
                'Concurrency' 'Style'; do
   if [[ "$content" != *"$section"* ]]; then
-    printf '  %s✗%s missing section: %s\n' "$RED" "$NC" "$section"
-    TESTS_FAILED+=1
-    TESTS_RUN+=1
-    continue
+    printf '    missing: %s\n' "$section"
+    missing_sections+=1
   fi
 done
-printf '  %s✓%s all 12 sections present\n' "$GREEN" "$NC"
-TESTS_PASSED+=1
-TESTS_RUN+=1
+assert_equal 0 "$missing_sections" 'all 12 sections present' || true
 
 # Test: generated file has BCS codes
 begin_test 'generated file has BCS codes'

@@ -2,14 +2,14 @@
 # shellcheck shell=bash
 
 _bcs() {
-  local cur prev words cword
+  local -- cur prev words cword
   _init_completion || return
 
   local -r subcommands='display template check codes generate help'
 
   # Find the subcommand (first non-option word after 'bcs')
-  local subcmd='' i
-  for ((i = 1; i < cword; i++)); do
+  local -- subcmd='' i
+  for ((i = 1; i < cword; i+=1)); do
     case ${words[i]} in
       -*) continue ;;
       *)  subcmd=${words[i]}; break ;;
@@ -28,7 +28,7 @@ _bcs() {
   # Per-subcommand completions
   case $subcmd in
     display)
-      mapfile -t COMPREPLY < <(compgen -W '-c --cat -s --squeeze -h --help' -- "$cur")
+      mapfile -t COMPREPLY < <(compgen -W '-c --cat -f --file -s --squeeze -h --help' -- "$cur")
       ;;
 
     template)
@@ -51,7 +51,7 @@ _bcs() {
     check)
       case $cur in
         -*)
-          mapfile -t COMPREPLY < <(compgen -W '-s --strict -q --quiet -h --help' -- "$cur")
+          mapfile -t COMPREPLY < <(compgen -W '-m --model -f --fast -s --strict -q --quiet -h --help' -- "$cur")
           ;;
         *)
           _filedir 'sh'
@@ -78,3 +78,4 @@ _bcs() {
       ;;
   esac
 } && complete -F _bcs bcs
+#fin

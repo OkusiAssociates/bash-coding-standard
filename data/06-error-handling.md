@@ -127,7 +127,7 @@ Only suppress errors when failure is expected, non-critical, and explicitly safe
 
 ```bash
 # correct — safe to suppress
-command -v optional_tool >/dev/null 2>&1
+command -v optional_tool &>/dev/null
 rm -f /tmp/optional_*
 rmdir "$maybe_empty" 2>/dev/null ||:
 
@@ -145,10 +145,15 @@ Verify system state after suppressed operations when possible.
 
 ## BCS0606 Conditional Declarations
 
-Append `||:` to `((condition)) && action` patterns under `set -e`.
+Prefer inverting the condition with `||` over `((condition)) && action ||:`.
 
 ```bash
-# correct — ||: prevents set -e exit on false condition
+# preferred — inverted condition avoids ||: entirely
+((width >= 20)) || width=20
+((padding >= 0)) || padding=0
+((color_count < 256)) || HAS_COLOR=1
+
+# acceptable — when && reads more naturally
 ((DRY_RUN)) && info 'Dry-run mode' ||:
 ((VERBOSE)) && echo "Processing $file" ||:
 ((DEBUG)) && set -x ||:
@@ -157,6 +162,6 @@ Append `||:` to `((condition)) && action` patterns under `set -e`.
 ((DRY_RUN)) && info 'Dry-run mode'
 ```
 
-A false arithmetic condition returns exit code 1, which triggers `set -e`. The `||:` makes the overall expression return 0. Use `:` over `true` (traditional shell idiom, built-in).
+A false arithmetic condition returns exit code 1, which triggers `set -e`. The inverted `||` form avoids this because the right-hand side (an assignment or command) returns 0. When `&&` reads more naturally (e.g., flag-guarded actions), append `||:` to make the expression safe. Use `:` over `true` (traditional shell idiom, built-in).
 
 Never use `||:` for critical operations that must succeed.

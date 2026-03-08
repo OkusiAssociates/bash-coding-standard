@@ -51,12 +51,13 @@ echo $result                         # unquoted usage
 
 ## BCS0303 Quoting in Conditionals
 
-Always quote variables in test expressions.
+Quote variables in test expressions. Inside `[[ ]]`, the left-hand side may be unquoted (no word splitting or globbing occurs), but quoting is still required for the right-hand side of `==`/`!=` when a literal comparison is intended.
 
 ```bash
 # correct
 [[ -f "$file" ]]
 [[ "$name" == "$expected" ]]
+[[ $name == "$expected" ]]           # unquoted left side is safe in [[ ]]
 [[ "$mode" == production ]]          # static value, quotes optional
 
 # correct — glob matching (right side unquoted)
@@ -66,7 +67,7 @@ Always quote variables in test expressions.
 [[ "$email" =~ ^[a-z]+@[a-z]+$ ]]
 
 # wrong
-[[ -f $file ]]
+[ -f $file ]                         # [ ] requires quoting
 [[ "$input" =~ "$pattern" ]]        # quoted regex won't match
 ```
 

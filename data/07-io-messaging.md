@@ -188,3 +188,21 @@ yn 'Deploy to production?' || die 0 'Cancelled'
 | `✓` | Success |
 | `✗` | Error |
 | `⚠` | Caution |
+
+## BCS0711 Combined Redirection
+
+Prefer `&>` and `&>>` over the verbose `>file 2>&1` and `>>file 2>&1` forms.
+
+```bash
+# correct — concise combined redirection
+somecommand &>/dev/null
+somecommand &>outfile
+somecommand &>>logfile
+
+# wrong — verbose combined redirection
+somecommand >/dev/null 2>&1
+somecommand >outfile 2>&1
+somecommand >>logfile 2>&1
+```
+
+Use `2>/dev/null` or `2>file` when suppressing only stderr. The `&>` operator is for combined (stdout + stderr) redirection only.

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Context
 
-The **Bash Coding Standard (BCS)** defines 100 concise, actionable rules across 12 sections for Bash 5.2+ scripts. Designed by Okusi Associates for the Indonesian Open Technology Foundation (YaTTI).
+The **Bash Coding Standard (BCS)** defines 101 concise, actionable rules across 12 sections for Bash 5.2+ scripts. Designed by Okusi Associates for the Indonesian Open Technology Foundation (YaTTI).
 
 **Target audience:** Both human programmers and AI assistants. Rules must be clear enough that AI agents don't make mistakes. Examples of core functions are deliberate and must remain. No rules should be lost or diminished.
 
@@ -21,12 +21,18 @@ shellcheck -x bcs bcscheck && ./tests/run-all-tests.sh
 ./bcs generate
 
 # Verify all BCS codes present
-./bcs codes | wc -l    # Should be 100
+./bcs codes | wc -l    # Should be 101
+
+# Or via make targets (equivalent shortcuts)
+make check    # shellcheck -x bcs bcscheck
+make test     # ./tests/run-all-tests.sh
 
 # Install / uninstall
 sudo make install
 sudo make uninstall
 ```
+
+`bcscheck` is a thin wrapper that calls `bcs check --strict --fast` — it always treats warnings as violations and uses low effort for speed.
 
 ## Architecture
 
@@ -57,7 +63,7 @@ The `bcs` script uses a `case` dispatcher in `main()`:
 |---------|---------|
 | `display` | View standard document (default when no args) |
 | `template` | Generate BCS-compliant script templates |
-| `check` | AI-powered compliance checking (requires `claude` CLI) |
+| `check` | AI-powered compliance checking (`--model sonnet` default, `--fast` for low effort) |
 | `codes` | List all BCS rule codes from section files |
 | `generate` | Concatenate section files into BASH-CODING-STANDARD.md |
 | `help` | Show help for a command |
@@ -66,19 +72,31 @@ Each subcommand follows the pattern: `cmd_NAME()` function + `show_NAME_help()` 
 
 ### Adding a New Subcommand
 
-1. Create function: `cmd_foo() { ... }; declare -fx cmd_foo`
+1. Create function: `cmd_foo() { ... }`
 2. Add help function: `show_foo_help() { ... }`
 3. Add case pattern in `main()` dispatcher
 4. Add to `cmd_help()` routing
 5. Create test file: `tests/test-subcommand-foo.sh`
 
+Every subcommand's argument loop must include an option bundling pattern for combined short options. The character class must list all short options for that subcommand:
+
+```bash
+-[tndVoxfh]?*) set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+```
+
+### `check` Subcommand Internals
+
+`cmd_check()` creates a temp directory and `cd`s into it before invoking `claude`, and clears `CLAUDECODE=`. This prevents Claude from loading the local `CLAUDE.md`, ensuring the compliance check uses only the BCS standard as its prompt context.
+
+The BCS standard is passed via `--system-prompt` (enabling prompt caching) and only the script content goes through `-p`. Defaults to `--model sonnet` for speed; use `-m/--model` to override. The `-f/--fast` flag adds `--effort low` for quick checks.
+
 ### FHS Search Path Resolution
 
 Both `find_bcs_md()` and `find_data_dir()` search in order:
-1. `$BCS_DIR/data` (development mode — script's own directory)
-2. `${BCS_DIR%/bin}/share/yatti/bash-coding-standard/data` (relative PREFIX)
-3. `/usr/local/share/yatti/bash-coding-standard/data` (local install)
-4. `/usr/share/yatti/bash-coding-standard/data` (system install)
+1. `$SCRIPT_DIR/data` (development mode — script's own directory)
+2. `${SCRIPT_DIR%/bin}/share/yatti/BCS/data` (relative PREFIX)
+3. `/usr/local/share/yatti/BCS/data` (local install)
+4. `/usr/share/yatti/BCS/data` (system install)
 
 ### Test Framework
 
@@ -126,8 +144,8 @@ info "Checking prerequisites..."     # use single quotes
 echo "${PREFIX}/bin"                  # use "$PREFIX"/bin
 # wrong — dangerous increment
 ((count++))                          # use count+=1
-# wrong — unquoted variable
-[[ -f $file ]]                       # use [[ -f "$file" ]]
+# wrong — unquoted variable in [ ]
+[ -f $file ]                         # use [ -f "$file" ] or [[ -f "$file" ]]
 # wrong — pipe to while
 command | while read -r line; do     # use < <(command)
 # wrong — local without --
@@ -138,6 +156,8 @@ if ((count > 0)); then               # use if ((count)); then
 
 ## Standard Utility Functions
 
+Functions defined in the `bcs` script itself:
+
 ```bash
 _msg()    # Core message function using FUNCNAME dispatch
 info()    # Info messages (cyan ◉), respects VERBOSE
@@ -146,15 +166,15 @@ warn()    # Warnings (yellow ▲), always shown
 error()   # Error output (red ✗), always shown
 die()     # Exit with error: die exit_code [messages...]
 noarg()   # Argument validation: noarg "$@" inside option parsing
-yn()      # Yes/no prompt
-vecho()   # Verbose output
 ```
+
+The BCS standard also defines `yn()` and `vecho()` for use in compliant scripts, but these are not used in `bcs` itself.
 
 ## Template System
 
 Placeholders: `{{NAME}}`, `{{DESCRIPTION}}`, `{{VERSION}}`
 
-Types: minimal (~13 lines), basic (~27 lines), complete (~104 lines), library (~38 lines)
+Types: minimal (~15 lines), basic (~25 lines), complete (~105 lines), library (~39 lines)
 
 ## Exit Codes
 

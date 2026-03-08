@@ -50,9 +50,12 @@ declare -r VERSION=1.0.0
 set -euo pipefail
 ```
 
-Add `shopt -s inherit_errexit shift_verbose extglob nullglob` immediately after.
+Add `shopt -s inherit_errexit` immediately after.
 
 - `inherit_errexit`: makes `set -e` work in command substitutions (critical)
+
+Where appropriate, the following setting should also be added:
+
 - `shift_verbose`: makes `shift` fail visibly when no args remain
 - `extglob`: enables `@()`, `!()`, `+()` patterns
 - `nullglob`: unmatched globs expand to nothing instead of literal string
@@ -92,6 +95,8 @@ declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 SCRIPT_PATH=$(readlink -f "$0")
 readonly SCRIPT_PATH
 ```
+
+Note: Not all scripts will require all Script Metadata variables.
 
 Use `#shellcheck disable=SC2155` before the `SCRIPT_PATH` line if needed. The failure mode (script doesn't exist) should cause immediate termination anyway.
 
@@ -197,7 +202,7 @@ main "$@"
 #fin
 ```
 
-Never define `main()` at the top. Never define business logic before the utilities it calls.
+Never define `main()` at the top. Never define business logic before the utilities it calls. In some cases, nested functions are permissible within other functions.
 
 ## BCS0108 Main Function and Script Invocation
 
@@ -222,7 +227,7 @@ Always quote `"$@"` to preserve the argument array. Scripts under 200 lines may 
 
 ## BCS0109 End Marker
 
-Every script must end with `#fin` as the mandatory final line.
+Every script must end with `#fin` or `#end` as the mandatory final line.
 
 ```bash
 # correct — last line of file
@@ -502,12 +507,13 @@ echo $result                         # unquoted usage
 
 ## BCS0303 Quoting in Conditionals
 
-Always quote variables in test expressions.
+Quote variables in test expressions. Inside `[[ ]]`, the left-hand side may be unquoted (no word splitting or globbing occurs), but quoting is still required for the right-hand side of `==`/`!=` when a literal comparison is intended.
 
 ```bash
 # correct
 [[ -f "$file" ]]
 [[ "$name" == "$expected" ]]
+[[ $name == "$expected" ]]           # unquoted left side is safe in [[ ]]
 [[ "$mode" == production ]]          # static value, quotes optional
 
 # correct — glob matching (right side unquoted)
@@ -517,7 +523,7 @@ Always quote variables in test expressions.
 [[ "$email" =~ ^[a-z]+@[a-z]+$ ]]
 
 # wrong
-[[ -f $file ]]
+[ -f $file ]                         # [ ] requires quoting
 [[ "$input" =~ "$pattern" ]]        # quoted regex won't match
 ```
 
@@ -631,7 +637,7 @@ process_file() {
 }
 ```
 
-Declare local variables at function start with proper types. Always `return` explicitly from complex functions.
+Declare local variables before use, grouped near the function top when practical. Declarations may appear mid-body (e.g., after early-return guards, inside conditionals, or between logical sections), but must not appear inside loops. Always use proper types and `return` explicitly from complex functions.
 
 ## BCS0402 Function Names
 
@@ -761,14 +767,14 @@ Source libraries with existence check:
 
 ## BCS0408 Dependency Management
 
-Use `command -v` for dependency checks, never `which`.
+Use `command -v` for dependency checks, never `which`. POSIX/coreutils commands guaranteed on any Bash 5.2+ system (e.g., `sed`, `awk`, `grep`, `cat`, `date`, `tput`, `wc`, `stty`, `mkdir`, `rm`, `cp`, `mv`) do not require checks — only verify non-standard or separately packaged tools.
 
 ```bash
-# correct
+# correct — check non-standard tools
 command -v curl >/dev/null || die 18 'curl required: apt install curl'
 
-# correct — check multiple
-for cmd in curl jq awk; do
+# correct — check multiple non-standard tools
+for cmd in curl jq pandoc; do
   command -v "$cmd" >/dev/null || die 18 "Required: ${cmd@Q}"
 done
 
@@ -779,8 +785,11 @@ command -v jq >/dev/null && HAS_JQ=1 ||:
 # correct — check bash version
 ((BASH_VERSINFO[0] >= 5 && BASH_VERSINFO[1] >= 2)) || die 1 'Requires Bash 5.2+'
 
-# wrong
-which curl >/dev/null 2>&1
+# wrong — using which
+which curl &>/dev/null
+
+# wrong — checking coreutils commands
+command -v sed >/dev/null || die 18 'sed required'
 ```
 
 Use lazy loading for expensive resources: initialize only when first needed.
@@ -1085,7 +1094,7 @@ Only suppress errors when failure is expected, non-critical, and explicitly safe
 
 ```bash
 # correct — safe to suppress
-command -v optional_tool >/dev/null 2>&1
+command -v optional_tool &>/dev/null
 rm -f /tmp/optional_*
 rmdir "$maybe_empty" 2>/dev/null ||:
 
@@ -1103,10 +1112,15 @@ Verify system state after suppressed operations when possible.
 
 ## BCS0606 Conditional Declarations
 
-Append `||:` to `((condition)) && action` patterns under `set -e`.
+Prefer inverting the condition with `||` over `((condition)) && action ||:`.
 
 ```bash
-# correct — ||: prevents set -e exit on false condition
+# preferred — inverted condition avoids ||: entirely
+((width >= 20)) || width=20
+((padding >= 0)) || padding=0
+((color_count < 256)) || HAS_COLOR=1
+
+# acceptable — when && reads more naturally
 ((DRY_RUN)) && info 'Dry-run mode' ||:
 ((VERBOSE)) && echo "Processing $file" ||:
 ((DEBUG)) && set -x ||:
@@ -1115,7 +1129,7 @@ Append `||:` to `((condition)) && action` patterns under `set -e`.
 ((DRY_RUN)) && info 'Dry-run mode'
 ```
 
-A false arithmetic condition returns exit code 1, which triggers `set -e`. The `||:` makes the overall expression return 0. Use `:` over `true` (traditional shell idiom, built-in).
+A false arithmetic condition returns exit code 1, which triggers `set -e`. The inverted `||` form avoids this because the right-hand side (an assignment or command) returns 0. When `&&` reads more naturally (e.g., flag-guarded actions), append `||:` to make the expression safe. Use `:` over `true` (traditional shell idiom, built-in).
 
 Never use `||:` for critical operations that must succeed.
 
@@ -1312,6 +1326,24 @@ yn 'Deploy to production?' || die 0 'Cancelled'
 | `✗` | Error |
 | `⚠` | Caution |
 
+## BCS0711 Combined Redirection
+
+Prefer `&>` and `&>>` over the verbose `>file 2>&1` and `>>file 2>&1` forms.
+
+```bash
+# correct — concise combined redirection
+somecommand &>/dev/null
+somecommand &>outfile
+somecommand &>>logfile
+
+# wrong — verbose combined redirection
+somecommand >/dev/null 2>&1
+somecommand >outfile 2>&1
+somecommand >>logfile 2>&1
+```
+
+Use `2>/dev/null` or `2>file` when suppressing only stderr. The `&>` operator is for combined (stdout + stderr) redirection only.
+
 ---
 
 # Section 8: Command-Line Arguments
@@ -1432,7 +1464,7 @@ Support bundled short options like `-vvn` expanding to `-v -v -n`.
 
 Place bundling case before `-*)` invalid option handler and after all explicit option cases. List only valid short options in the pattern to prevent incorrect expansion.
 
-Options requiring arguments cannot be bundled mid-string: `-vno output.txt` works (`-o` is last), but `-von file` fails (`-o` captures `n`).
+Include arg-taking options in the character class. They work correctly when last in the bundle — the disaggregation peels them off as a separate `-X` flag, and `shift` in their case handler picks up the argument normally. Example: `-vno output.txt` disaggregates to `-v -n -o`, then `-o` consumes `output.txt` via `shift`. The user must place arg-taking options last; `-von file` would incorrectly disaggregate to `-v -o -n`.
 
 ---
 
@@ -1567,11 +1599,10 @@ Secure PATH at script start to prevent command hijacking.
 
 ```bash
 # correct
-export PATH=/usr/local/bin:/usr/bin:/bin
+declare -rx PATH=~/.local/bin:/usr/local/bin:/usr/bin:/bin
 
 # correct — for production/security-critical scripts
-readonly -- PATH='/usr/local/bin:/usr/bin:/bin'
-export PATH
+declare -rx PATH=/usr/local/bin:/usr/bin:/bin
 
 # wrong — includes dangerous elements
 PATH=.:$PATH                         # current directory
@@ -1911,14 +1942,18 @@ var=$(command)                      # not var=`command`
 {1..10}                             # not $(seq 1 10)
 ```
 
-## BCS1206 ShellCheck and Development
+## BCS1206 Static Analysis Directives
 
-ShellCheck compliance is compulsory. Use `#shellcheck disable=SCxxxx` only for documented exceptions.
+ShellCheck compliance is compulsory. Use `#shellcheck disable=SCxxxx` only for documented exceptions. Similarly, use `#bcscheck disable=BCSxxxx` to suppress specific BCS rules on the next line.
 
 ```bash
-# correct — documented exception
+# correct — documented shellcheck exception
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
+
+# correct — documented bcscheck exception
+#bcscheck disable=BCS0606
+((DRY_RUN)) && info 'Dry-run mode'
 ```
 
 Always end scripts with `#fin` after `main "$@"`.

@@ -27,7 +27,6 @@ else
   printf '  %s✗%s templates directory missing\n' "$RED" "$NC"
   TESTS_FAILED+=1
 fi
-TESTS_RUN+=1
 
 # Test: all 4 template types exist
 for type in minimal basic complete library; do
@@ -38,9 +37,9 @@ done
 # Test: each section file starts with # Section N:
 begin_test 'section files have proper headers'
 declare -i good_headers=0
+declare -- first_line
 for f in "$DATA_DIR"/[0-9]*.md; do
   [[ "$(basename -- "$f")" == BASH-CODING-STANDARD.md ]] && continue
-  declare -- first_line
   IFS= read -r first_line < "$f"
   if [[ "$first_line" =~ ^#\ Section\ [0-9]+: ]]; then
     good_headers+=1
@@ -83,15 +82,15 @@ assert_equal 0 "$duplicates" 'no duplicate BCS codes' || true
 # Test: BCS codes are sequential within sections
 begin_test 'BCS codes follow section numbering'
 declare -i mismatched=0
+declare -- basename_f section_num code code_section
 for f in "$DATA_DIR"/[0-9]*.md; do
   [[ "$(basename -- "$f")" == BASH-CODING-STANDARD.md ]] && continue
-  declare -- basename_f
   basename_f=$(basename -- "$f")
-  declare -- section_num=${basename_f:0:2}
+  section_num=${basename_f:0:2}
   while IFS= read -r line; do
     if [[ "$line" =~ ^##\ (BCS[0-9]{4}) ]]; then
-      declare -- code=${BASH_REMATCH[1]}
-      declare -- code_section=${code:3:2}
+      code=${BASH_REMATCH[1]}
+      code_section=${code:3:2}
       if [[ "$code_section" != "$section_num" ]]; then
         printf '    %s in %s (expected section %s)\n' "$code" "$(basename "$f")" "$section_num"
         mismatched+=1
@@ -112,7 +111,6 @@ else
   printf '  %s✗%s line count %d outside range [1500-3000]\n' "$RED" "$NC" "$std_lines"
   TESTS_FAILED+=1
 fi
-TESTS_RUN+=1
 
 print_summary 'data-structure'
 #fin

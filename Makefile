@@ -1,6 +1,7 @@
 PREFIX ?= /usr/local
 BINDIR = $(PREFIX)/bin
-SHAREDIR = $(PREFIX)/share/yatti/bash-coding-standard
+SHAREDIR = $(PREFIX)/share/yatti/BCS
+OLDSHARE = $(PREFIX)/share/yatti/bash-coding-standard
 COMPDIR = $(PREFIX)/share/bash-completion/completions
 MANDIR = $(PREFIX)/share/man/man1
 
@@ -18,15 +19,19 @@ install: ## Install bcs to $(PREFIX)
 	install -m 644 bcs.bash_completion $(COMPDIR)/bcs
 	install -d $(MANDIR)
 	install -m 644 bcs.1 $(MANDIR)/bcs.1
+	@if [ -d $(OLDSHARE) ] && [ ! -L $(OLDSHARE) ]; then rm -rf $(OLDSHARE); fi
+	ln -sfn BCS $(OLDSHARE)
 
 uninstall: ## Uninstall bcs from $(PREFIX)
 	rm -f $(BINDIR)/bcs $(BINDIR)/bcscheck
 	rm -f $(COMPDIR)/bcs
 	rm -f $(MANDIR)/bcs.1
 	rm -rf $(SHAREDIR)
+	rm -f $(OLDSHARE)
 
-check: ## Run shellcheck on bcs
-	shellcheck -x bcs bcscheck
+check: ## Run shellcheck on all scripts
+	shellcheck -x bcs bcscheck examples/cln examples/which examples/md2ansi tests/run-all-tests.sh tests/test-*.sh
+	shellcheck bcs.bash_completion
 
 test: ## Run test suite
 	./tests/run-all-tests.sh

@@ -7,15 +7,17 @@ shopt -s inherit_errexit
 # Test framework state
 declare -i TESTS_RUN=0 TESTS_PASSED=0 TESTS_FAILED=0
 declare -- CURRENT_TEST=''
+#shellcheck disable=SC2155
 declare -r TEST_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 declare -r PROJECT_DIR=${TEST_DIR%/*}
-declare -r BCS_CMD="$PROJECT_DIR"/bcs
-declare -r DATA_DIR="$PROJECT_DIR"/data
+#shellcheck disable=SC2034  # used by test scripts that source this file
+declare -r BCS_CMD="$PROJECT_DIR"/bcs DATA_DIR="$PROJECT_DIR"/data
 
 # Colors
 if [[ -t 1 && -t 2 ]]; then
   declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' BOLD=$'\033[1m' NC=$'\033[0m'
 else
+  #shellcheck disable=SC2034
   declare -r RED='' GREEN='' YELLOW='' CYAN='' BOLD='' NC=''
 fi
 
@@ -59,7 +61,7 @@ assert_not_empty() {
 assert_success() {
   local -- msg=${1:-$CURRENT_TEST}
   shift
-  if "$@" >/dev/null 2>&1; then
+  if "$@" &>/dev/null; then
     printf '  %s✓%s %s\n' "$GREEN" "$NC" "$msg"
     TESTS_PASSED+=1
     return 0
@@ -74,7 +76,7 @@ assert_success() {
 assert_fails() {
   local -- msg=${1:-$CURRENT_TEST}
   shift
-  if "$@" >/dev/null 2>&1; then
+  if "$@" &>/dev/null; then
     printf '  %s✗%s %s (expected failure, got success)\n' "$RED" "$NC" "$msg"
     TESTS_FAILED+=1
     return 1

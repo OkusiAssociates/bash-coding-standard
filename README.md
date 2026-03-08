@@ -66,7 +66,7 @@ Installs the `bcs` and `bcscheck` binaries, data files, bash completions, and th
 
 ## Overview
 
-The Bash Coding Standard defines 100 rules across 12 sections in a single ~2,000-line document. Rules are written for both human programmers and AI assistants, with code examples for every rule.
+The Bash Coding Standard defines 101 rules across 12 sections in a single ~2,000-line document. Rules are written for both human programmers and AI assistants, with code examples for every rule.
 
 ### 12 Sections
 
@@ -101,10 +101,10 @@ The Bash Coding Standard defines 100 rules across 12 sections in a single ~2,000
 Four template types for different needs:
 
 ```bash
-./bcs template -t minimal     # Bare essentials (~13 lines)
-./bcs template -t basic       # Standard with metadata (~27 lines)
-./bcs template -t complete    # Full toolkit (~104 lines)
-./bcs template -t library     # Sourceable library (~38 lines)
+./bcs template -t minimal     # Bare essentials (~15 lines)
+./bcs template -t basic       # Standard with metadata (~25 lines)
+./bcs template -t complete    # Full toolkit (~105 lines)
+./bcs template -t library     # Sourceable library (~39 lines)
 ```
 
 ### Compliance Checking
@@ -114,7 +114,7 @@ Uses Claude AI to validate scripts against the full standard:
 ```bash
 ./bcs check myscript.sh           # Standard check
 ./bcs check --strict deploy.sh    # Treat warnings as violations
-./bcscheck myscript.sh            # Quick check wrapper
+./bcscheck myscript.sh            # Strict + fast check (--strict --fast)
 ```
 
 ## Examples
@@ -123,10 +123,8 @@ The `examples/` directory contains exemplar BCS-compliant scripts:
 
 | Script | Lines | Demonstrates |
 |--------|-------|-------------|
-| `cln` | 247 | File operations, argument parsing, arrays |
-| `data-processor.sh` | 188 | CSV processing, validation, dry-run |
-| `production-deploy.sh` | 325 | Deployment, backup, rollback |
-| `system-monitor.sh` | 365 | Monitoring, alerts, continuous mode |
+| `cln` | 250 | File operations, argument parsing, arrays |
+| `md2ansi` | 1434 | Large-scale text processing, ANSI formatting |
 | `which` | 125 | Dual-purpose script pattern |
 
 ## Testing

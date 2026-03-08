@@ -5,13 +5,24 @@ source "$(dirname "$0")"/test-helpers.sh
 echo 'Testing: help subcommand'
 
 # Test: main help
-begin_test 'main help shows usage'
 output=$("$BCS_CMD" help 2>/dev/null)
+
+begin_test 'main help mentions bcs'
 assert_contains "$output" 'bcs' 'main help mentions bcs' || true
+
+begin_test 'main help mentions display'
 assert_contains "$output" 'display' 'main help mentions display' || true
+
+begin_test 'main help mentions template'
 assert_contains "$output" 'template' 'main help mentions template' || true
+
+begin_test 'main help mentions check'
 assert_contains "$output" 'check' 'main help mentions check' || true
+
+begin_test 'main help mentions codes'
 assert_contains "$output" 'codes' 'main help mentions codes' || true
+
+begin_test 'main help mentions generate'
 assert_contains "$output" 'generate' 'main help mentions generate' || true
 
 # Test: help for each subcommand

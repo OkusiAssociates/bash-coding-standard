@@ -63,7 +63,6 @@ else
   printf '  %s✗%s file is not executable\n' "$RED" "$NC"
   TESTS_FAILED+=1
 fi
-TESTS_RUN+=1
 
 # Test: invalid template type
 begin_test 'rejects invalid template type'

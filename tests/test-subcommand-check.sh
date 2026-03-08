@@ -26,6 +26,20 @@ echo '#!/bin/bash' > "$temp2"
 assert_fails 'multiple files rejected' "$BCS_CMD" check "$temp1" "$temp2" || true
 rm -f "$temp1" "$temp2"
 
+# Test: check help includes --model
+begin_test 'check help includes --model'
+output=$("$BCS_CMD" check -h 2>/dev/null)
+assert_contains "$output" '--model' 'help mentions --model' || true
+
+# Test: check help includes --fast
+begin_test 'check help includes --fast'
+output=$("$BCS_CMD" check -h 2>/dev/null)
+assert_contains "$output" '--fast' 'help mentions --fast' || true
+
+# Test: check --model requires argument
+begin_test 'check --model requires argument'
+assert_fails 'model needs arg' "$BCS_CMD" check --model || true
+
 # Skip actual claude invocation test (requires claude CLI)
 echo '  (skipping live claude tests - requires claude CLI)'
 

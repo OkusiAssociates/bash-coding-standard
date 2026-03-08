@@ -15,10 +15,13 @@ output=$("$BCS_CMD" display -c 2>/dev/null)
 assert_contains "$output" 'BCS0101' 'cat output contains BCS0101' || true
 
 # Test: display -s squeezes blank lines
-begin_test 'display -s squeezes blanks'
+begin_test 'display -c has >100 lines'
 lines_normal=$("$BCS_CMD" display -c 2>/dev/null | wc -l)
-lines_squeezed=$("$BCS_CMD" display -cs 2>/dev/null | wc -l)
 assert_gt "$lines_normal" 100 'normal output has >100 lines' || true
+
+begin_test 'display -cs produces output'
+lines_squeezed=$("$BCS_CMD" display -cs 2>/dev/null | wc -l)
+assert_gt "$lines_squeezed" 100 'squeezed output has >100 lines' || true
 
 # Test: display help
 begin_test 'display -h shows help'

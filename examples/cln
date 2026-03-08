@@ -7,11 +7,16 @@
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
+readonly -- PATH='/usr/local/bin:/usr/bin:/bin'
+export PATH
+
 declare -r VERSION=1.1.0
-declare SCRIPT_PATH SCRIPT_NAME
-SCRIPT_PATH=$(realpath -e -- "$0")
-SCRIPT_NAME=${SCRIPT_PATH##*/}
-readonly SCRIPT_PATH SCRIPT_NAME
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+declare -r SCRIPT_NAME=${SCRIPT_PATH##*/}
+
+# Default file patterns to remove (editor backups, crash files, temp files)
+declare -a DELETE_FILES=('*~' '~*' '.~*' '.*~' DEADJOE dead.letter 'wget-log*')
 
 # Messaging system - color-coded output with TTY detection
 # _msg: base formatter; vecho/success/warn/info/error: level-specific wrappers
@@ -36,26 +41,16 @@ _msg() {
 }
 vecho() { ((VERBOSE)) || return 0; _msg "$@"; }
 success() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
-warn() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 info() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
+warn() { >&2 _msg "$@"; }
 error() { >&2 _msg "$@"; }
 die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
-
-# Utility functions
-grep() { /usr/bin/grep "$@"; }      # Use system grep to avoid alias conflicts
-find() { /usr/bin/find "$@"; }      # Use system find to avoid alias conflicts
-declare -fx grep find
-noarg() { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }  # Validate option has argument
-decp() { declare -p "$@" 2>/dev/null | sed 's/^declare -[a-zA-Z-]* //'; }  # Debug: print variable as name=value
-trim() { local -- v="$*"; v="${v#"${v%%[![:blank:]]*}"}"; echo -n "${v%"${v##*[![:blank:]]}"}"; }  # Strip whitespace
-
-# Exit handler for cleanup on SIGINT/SIGTERM/EXIT
-cleanup() {
-  local -i exitcode=${1:-0}
-  # Add cleanup logic here if needed (e.g., remove temp files)
-  exit "$exitcode"
+yn() {
+  local -- REPLY
+  read -r -n 1 -p "$(>&2 echo -n "$SCRIPT_NAME: ${YELLOW}▲${NC} ${1:-Continue?} y/n ")"
+  echo
+  [[ "${REPLY,,}" == y ]]
 }
-trap 'cleanup $?' SIGINT SIGTERM EXIT
 
 show_help() {
   cat <<HELP
@@ -110,20 +105,35 @@ Examples:
 HELP
 }
 
+# Utility functions
+grep() { /usr/bin/grep "$@"; }
+find() { /usr/bin/find "$@"; }
+declare -fx grep find
+noarg() { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }  # Validate option has argument
+decp() { declare -p "$@" 2>/dev/null | sed 's/^declare -[a-zA-Z-]* //'; }  # Debug: print variable as name=value
+trim() { local -- v="$*"; v="${v#"${v%%[![:blank:]]*}"}"; echo -n "${v%"${v##*[![:blank:]]}"}"; }  # Strip whitespace
+
 # Pluralization helper: returns 's' if count != 1
 s() { (( ${1:-1} == 1 )) || echo -n 's'; }
 
-# Default file patterns to remove (editor backups, crash files, temp files)
-declare -a DELETE_FILES=("*~" "~*" ".~*" ".*~" DEADJOE dead.letter "wget-log*")
+# Exit handler for cleanup on SIGINT/SIGTERM/EXIT
+cleanup() {
+  local -i exitcode=${1:-$?}
+  trap - SIGINT SIGTERM EXIT
+  # Add cleanup logic here if needed (e.g., remove temp files)
+  #:
+  exit "$exitcode"
+}
+trap 'cleanup $?' SIGINT SIGTERM EXIT
 
 # Load patterns from config file if exists
 # Precedence: ~/.local/etc/default/cln > /etc/default/cln > hardcoded defaults
 load_config() {
   local -a configs=(
     "$HOME/.local/etc/default/cln"
-    "/etc/default/cln"
+    /etc/default/cln
   )
-  local config
+  local -- config
   for config in "${configs[@]}"; do
     if [[ -f "$config" && -r "$config" ]]; then
       mapfile -t DELETE_FILES < <(grep -v '^[[:space:]]*#' "$config" | grep -v '^[[:space:]]*$')
@@ -144,8 +154,8 @@ main() {
   local -a paths=()
   local -a rm_opts=(-f)
   local -- spec
-  local -a all_specs
-  local -a found_files
+  local -a all_specs=() add_specs_raw=()
+  local -a found_files=()
   local -i fnd=0
   local -a find_expr=()
   local -a symbolic=(-P)
@@ -153,10 +163,10 @@ main() {
   while (($#)); do case $1 in
     -L)             symbolic=(-L) ;;
     -a|--add)       noarg "$@"; shift
-                    IFS=',' read -ra ADD_SPECS <<< "$1"
-                    for spec in "${ADD_SPECS[@]}"; do
+                    IFS=',' read -ra add_specs_raw <<< "$1"
+                    for spec in "${add_specs_raw[@]}"; do
                       spec=$(trim "$spec")
-                      [[ -n $spec ]] && add_specs+=("$spec") ||:
+                      [[ -z "$spec" ]] || add_specs+=("$spec")
                     done
                     ;;
     -S|--set)       noarg "$@"; shift
@@ -169,7 +179,7 @@ main() {
     -p|-n|--prompt) PROMPT=1; VERBOSE=1 ;;
     -P|-N|--no-prompt)
                     PROMPT=0 ;;
-    -v|--verbose)   ((VERBOSE < 3)) && VERBOSE+=1 ;;
+    -v|--verbose)   VERBOSE+=1 ;;
     -q|--quiet)     VERBOSE=0 ;;
 
     -V|--version)   echo "$SCRIPT_NAME $VERSION"; return 0 ;;
@@ -178,8 +188,6 @@ main() {
     --)             shift; paths+=("$@"); break ;;
 
     -[LaSmpPNnvqVh]?*) set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
-#    -[LampPNvqVhS]*) #shellcheck disable=SC2046 #split up single options
-#                    set -- '' $(printf -- '-%c ' $(grep -o . <<<"${1:1}")) "${@:2}";;
 
     -*)             die 22 "Invalid option ${1@Q}" ;;
     *)              paths+=("$1") ;;
@@ -187,7 +195,9 @@ main() {
 
   # Set default path if not provided
   ((${#paths[@]})) || paths=('.')
-  ((PROMPT)) && ((VERBOSE==0)) && VERBOSE=1 ||:
+  ((PROMPT)) && ((!VERBOSE)) && VERBOSE=1 ||:
+  readonly -- VERBOSE PROMPT
+
   ((VERBOSE)) && rm_opts+=(-v) ||:
 
   # Combine default and additional specs
@@ -198,7 +208,7 @@ main() {
     find_expr+=(-name "$spec" -o)
   done
   # Remove the last -o
-  unset 'find_expr[${#find_expr[@]}-1]'
+  unset 'find_expr[-1]'
 
   # Iterate over each path
   for path in "${paths[@]}"; do
@@ -219,23 +229,16 @@ main() {
           )
     fnd=${#found_files[@]}
     # Handle readarray quirk: single empty element means no results
-    ((fnd == 1)) && [[ -z ${found_files[0]} ]] && fnd=0
+    ((fnd == 1)) && [[ -z "${found_files[0]}" ]] && fnd=0 ||:
     # Only proceed if files were found
     if ((fnd)); then
       if ((PROMPT)); then
         warn "Found $fnd file$(s $fnd) to remove:"
         warn "${found_files[@]}"
-        read -r -p "$(2>&1 warn "Remove $fnd file$(s $fnd)? Yes/All/No/Quit: ")" yn
-        case ${yn,,} in
-          q) return 0 ;;
-          n) continue ;;
-          a) PROMPT=0 ;;
-          y) ;;
-          *) continue ;;
-        esac
+        yn "Remove $fnd file$(s $fnd)?" || continue
       fi
       vecho "Removing $fnd file$(s $fnd)..."
-      rm "${rm_opts[@]}" "${found_files[@]}" || true
+      rm "${rm_opts[@]}" -- "${found_files[@]}" || true
     else
       vecho "No matching files found in ${path@Q}"
     fi

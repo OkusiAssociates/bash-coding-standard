@@ -25,11 +25,10 @@ Secure PATH at script start to prevent command hijacking.
 
 ```bash
 # correct
-export PATH=/usr/local/bin:/usr/bin:/bin
+declare -rx PATH=~/.local/bin:/usr/local/bin:/usr/bin:/bin
 
 # correct — for production/security-critical scripts
-readonly -- PATH='/usr/local/bin:/usr/bin:/bin'
-export PATH
+declare -rx PATH=/usr/local/bin:/usr/bin:/bin
 
 # wrong — includes dangerous elements
 PATH=.:$PATH                         # current directory

@@ -20,9 +20,12 @@ declare -r VERSION=1.0.0
 set -euo pipefail
 ```
 
-Add `shopt -s inherit_errexit shift_verbose extglob nullglob` immediately after.
+Add `shopt -s inherit_errexit` immediately after.
 
 - `inherit_errexit`: makes `set -e` work in command substitutions (critical)
+
+Where appropriate, the following setting should also be added:
+
 - `shift_verbose`: makes `shift` fail visibly when no args remain
 - `extglob`: enables `@()`, `!()`, `+()` patterns
 - `nullglob`: unmatched globs expand to nothing instead of literal string
@@ -62,6 +65,8 @@ declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 SCRIPT_PATH=$(readlink -f "$0")
 readonly SCRIPT_PATH
 ```
+
+Note: Not all scripts will require all Script Metadata variables.
 
 Use `#shellcheck disable=SC2155` before the `SCRIPT_PATH` line if needed. The failure mode (script doesn't exist) should cause immediate termination anyway.
 
@@ -167,7 +172,7 @@ main "$@"
 #fin
 ```
 
-Never define `main()` at the top. Never define business logic before the utilities it calls.
+Never define `main()` at the top. Never define business logic before the utilities it calls. In some cases, nested functions are permissible within other functions.
 
 ## BCS0108 Main Function and Script Invocation
 
@@ -192,7 +197,7 @@ Always quote `"$@"` to preserve the argument array. Scripts under 200 lines may 
 
 ## BCS0109 End Marker
 
-Every script must end with `#fin` as the mandatory final line.
+Every script must end with `#fin` or `#end` as the mandatory final line.
 
 ```bash
 # correct — last line of file
