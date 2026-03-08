@@ -84,6 +84,24 @@ declare -- msg_count
 msg_count=$(grep -c '_msg\|info()\|error()\|die()' "$BCS_CMD" || true)
 assert_gt "$msg_count" 3 'has messaging functions' || true
 
+# Test: BCS_SEARCH_PATHS shared array exists
+begin_test 'bcs has BCS_SEARCH_PATHS array'
+declare -- paths_count
+paths_count=$(grep -c 'BCS_SEARCH_PATHS' "$BCS_CMD" || true)
+assert_gt "$paths_count" 2 'BCS_SEARCH_PATHS declared and referenced' || true
+
+# Test: cmd_check has cleanup trap
+begin_test 'cmd_check has cleanup trap'
+declare -- trap_count
+trap_count=$(grep -c 'trap.*RETURN' "$BCS_CMD" || true)
+assert_gt "$trap_count" 0 'has trap RETURN for cleanup' || true
+
+# Test: noarg() function exists
+begin_test 'bcs has noarg function'
+declare -- noarg_count
+noarg_count=$(grep -c 'noarg()' "$BCS_CMD" || true)
+assert_gt "$noarg_count" 0 'has noarg() function' || true
+
 # Test: line count is reasonable
 begin_test 'bcs line count is reasonable'
 declare -i bcs_lines

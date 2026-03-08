@@ -40,6 +40,34 @@ assert_contains "$output" '--fast' 'help mentions --fast' || true
 begin_test 'check --model requires argument'
 assert_fails 'model needs arg' "$BCS_CMD" check --model || true
 
+# Test: check help includes --strict
+begin_test 'check help includes --strict'
+output=$("$BCS_CMD" check -h 2>/dev/null)
+assert_contains "$output" '--strict' 'help mentions --strict' || true
+
+# Test: check help includes --quiet
+begin_test 'check help includes --quiet'
+output=$("$BCS_CMD" check -h 2>/dev/null)
+assert_contains "$output" '--quiet' 'help mentions --quiet' || true
+
+# Test: check rejects unreadable file
+begin_test 'check rejects unreadable file'
+unreadable=$(mktemp --suffix=.sh)
+echo '#!/bin/bash' > "$unreadable"
+chmod 000 "$unreadable"
+assert_fails 'unreadable file' "$BCS_CMD" check "$unreadable" || true
+rm -f "$unreadable"
+
+# Test: option bundling -sf
+begin_test 'option bundling -sf parsed'
+# -sf should not error on option parsing (will fail on missing file, not option)
+err=$("$BCS_CMD" check -sf 2>&1 || true)
+assert_not_contains "$err" 'Invalid option' '-sf bundling parsed correctly' || true
+
+# Test: -- separator works
+begin_test '-- separator works'
+assert_fails '-- then nonexistent' "$BCS_CMD" check -- /nonexistent/file.sh || true
+
 # Skip actual claude invocation test (requires claude CLI)
 echo '  (skipping live claude tests - requires claude CLI)'
 

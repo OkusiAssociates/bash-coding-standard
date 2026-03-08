@@ -51,6 +51,21 @@ begin_test '-V shows version'
 output=$("$BCS_CMD" -V 2>/dev/null)
 assert_matches "$output" '^bcs [0-9]+\.[0-9]+\.[0-9]+$' '-V version format' || true
 
+# Test: version matches source VERSION
+begin_test 'version matches source'
+output=$("$BCS_CMD" --version 2>/dev/null)
+source_version=$(grep -m1 'VERSION=' "$BCS_CMD" | head -1 | sed "s/.*VERSION=//; s/'//g")
+assert_contains "$output" "$source_version" "version $source_version in output" || true
+
+# Test: help mentions all 6 subcommands
+begin_test 'help lists all 6 subcommands'
+output=$("$BCS_CMD" help 2>/dev/null)
+declare -i missing_cmds=0
+for cmd in display template check codes generate help; do
+  [[ "$output" == *"$cmd"* ]] || missing_cmds+=1
+done
+assert_equal 0 "$missing_cmds" 'all 6 subcommands in help' || true
+
 # Test: unknown command
 begin_test 'unknown command fails'
 assert_fails 'unknown command' "$BCS_CMD" foobar || true

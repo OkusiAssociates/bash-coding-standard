@@ -117,6 +117,36 @@ assert_matches() {
   fi
 }
 
+# Assert output does NOT contain string
+assert_not_contains() {
+  local -- haystack=$1 needle=$2 msg=${3:-$CURRENT_TEST}
+  if [[ "$haystack" != *"$needle"* ]]; then
+    printf '  %s✓%s %s\n' "$GREEN" "$NC" "$msg"
+    TESTS_PASSED+=1
+    return 0
+  else
+    printf '  %s✗%s %s\n' "$RED" "$NC" "$msg"
+    printf '    should not contain: %s\n' "${needle@Q}"
+    TESTS_FAILED+=1
+    return 1
+  fi
+}
+
+# Assert numeric less-than
+assert_lt() {
+  local -i actual=$1 threshold=$2
+  local -- msg=${3:-"$actual < $threshold"}
+  if ((actual < threshold)); then
+    printf '  %s✓%s %s\n' "$GREEN" "$NC" "$msg"
+    TESTS_PASSED+=1
+    return 0
+  else
+    printf '  %s✗%s %s (got %d)\n' "$RED" "$NC" "$msg" "$actual"
+    TESTS_FAILED+=1
+    return 1
+  fi
+}
+
 # Assert file exists
 assert_file_exists() {
   local -- file=$1 msg=${2:-"file exists: $1"}

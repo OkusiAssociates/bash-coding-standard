@@ -53,5 +53,33 @@ begin_test 'default generates to data/BASH-CODING-STANDARD.md'
 "$BCS_CMD" generate 2>/dev/null
 assert_file_exists "$DATA_DIR"/BASH-CODING-STANDARD.md 'default output exists' || true
 
+# Test: idempotency (generate twice, same output)
+begin_test 'generate is idempotent'
+temp_a=$(mktemp --suffix=.md)
+temp_b=$(mktemp --suffix=.md)
+"$BCS_CMD" generate -o "$temp_a" 2>/dev/null
+"$BCS_CMD" generate -o "$temp_b" 2>/dev/null
+if diff -q "$temp_a" "$temp_b" >/dev/null 2>&1; then
+  printf '  %s✓%s generate produces identical output twice\n' "$GREEN" "$NC"
+  TESTS_PASSED+=1
+else
+  printf '  %s✗%s generate output differs between runs\n' "$RED" "$NC"
+  TESTS_FAILED+=1
+fi
+rm -f "$temp_a" "$temp_b"
+
+# Test: generated output matches current BASH-CODING-STANDARD.md
+begin_test 'generated matches current standard'
+temp_regen=$(mktemp --suffix=.md)
+"$BCS_CMD" generate -o "$temp_regen" 2>/dev/null
+if diff -q "$temp_regen" "$DATA_DIR"/BASH-CODING-STANDARD.md >/dev/null 2>&1; then
+  printf '  %s✓%s regenerated matches current standard\n' "$GREEN" "$NC"
+  TESTS_PASSED+=1
+else
+  printf '  %s✗%s regenerated differs from current standard\n' "$RED" "$NC"
+  TESTS_FAILED+=1
+fi
+rm -f "$temp_regen"
+
 print_summary 'generate'
 #fin
