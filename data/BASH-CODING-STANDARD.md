@@ -2078,3 +2078,92 @@ decp() { declare -p "$@" 2>/dev/null | sed 's/^declare -[a-zA-Z-]* //'; }
 # Pluralization
 s() { (( ${1:-1} == 1 )) || echo -n 's'; }
 ```
+
+## BCS1212 Makefile Installation
+
+Bash projects that install to the system must include a Makefile. The Makefile must be non-interactive, silent by default (no banners or colour output), and idempotent.
+
+### Required Targets
+
+```
+install     Install all project files
+uninstall   Remove all installed files
+check       Verify installation (commands found in PATH)
+test        Run project test suite (if tests exist)
+help        Show targets and variables
+```
+
+`all` should alias `help`, not `install` — accidental `make` must never modify the system.
+
+### Required Variables
+
+```makefile
+PREFIX  ?= /usr/local
+BINDIR  ?= $(PREFIX)/bin
+MANDIR  ?= $(PREFIX)/share/man/man1
+COMPDIR ?= /etc/bash_completion.d
+DESTDIR ?=
+```
+
+`DESTDIR` enables staged installs for packaging (`make DESTDIR=/tmp/pkg install`). Never hardcode paths — always use variables.
+
+### Installation Rules
+
+- Use `install(1)`, not `cp` + `chmod`.
+- Use `install -d` for directory creation.
+- Executables: `install -m 755`.
+- Data files (manpages, completions, libraries): `install -m 644`.
+- Symlinks: `ln -sf`.
+- If the project contains manpages (`.1`, `.8`, etc.), the `install` target must install them.
+- If the project contains bash completion files, the `install` target must install them (skip gracefully if `COMPDIR` does not exist).
+- `uninstall` must remove everything `install` creates.
+- `check` must verify installed commands are callable. Skip `check` when `DESTDIR` is set (staged installs).
+
+### Template
+
+```makefile
+PREFIX  ?= /usr/local
+BINDIR  ?= $(PREFIX)/bin
+MANDIR  ?= $(PREFIX)/share/man/man1
+COMPDIR ?= /etc/bash_completion.d
+DESTDIR ?=
+
+.PHONY: all install uninstall check test help
+
+all: help
+
+install:
+	install -d $(DESTDIR)$(BINDIR)
+	install -m 755 myscript $(DESTDIR)$(BINDIR)/myscript
+	@# Manpages (if present)
+	install -d $(DESTDIR)$(MANDIR)
+	install -m 644 myscript.1 $(DESTDIR)$(MANDIR)/myscript.1
+	@# Bash completion (if present, skip if dir missing)
+	@if [ -d $(DESTDIR)$(COMPDIR) ]; then \
+	  install -m 644 .bash_completion $(DESTDIR)$(COMPDIR)/myscript; \
+	fi
+	@if [ -z "$(DESTDIR)" ]; then $(MAKE) --no-print-directory check; fi
+
+uninstall:
+	rm -f $(DESTDIR)$(BINDIR)/myscript
+	rm -f $(DESTDIR)$(MANDIR)/myscript.1
+	rm -f $(DESTDIR)$(COMPDIR)/myscript
+
+check:
+	@command -v myscript >/dev/null 2>&1 \
+	  && echo 'myscript: OK' \
+	  || echo 'myscript: NOT FOUND (check PATH)'
+
+test:
+	cd tests && ./run_all_tests.sh
+
+help:
+	@echo 'Usage: make [target]'
+	@echo ''
+	@echo 'Targets:'
+	@echo '  install     Install to $(PREFIX)'
+	@echo '  uninstall   Remove installed files'
+	@echo '  check       Verify installation'
+	@echo '  test        Run test suite'
+	@echo '  help        Show this message'
+```
