@@ -1,41 +1,66 @@
-PREFIX ?= /usr/local
-BINDIR = $(PREFIX)/bin
-SHAREDIR = $(PREFIX)/share/yatti/BCS
-OLDSHARE = $(PREFIX)/share/yatti/bash-coding-standard
-COMPDIR = $(PREFIX)/share/bash-completion/completions
-MANDIR = $(PREFIX)/share/man/man1
+# Makefile - Install BCS (Bash Coding Standard)
+# BCS1212 compliant
 
-.PHONY: install uninstall help check test
+PREFIX   ?= /usr/local
+BINDIR   ?= $(PREFIX)/bin
+MANDIR   ?= $(PREFIX)/share/man/man1
+SHAREDIR ?= $(PREFIX)/share/yatti/BCS
+COMPDIR  ?= /etc/bash_completion.d
+DESTDIR  ?=
 
-install: ## Install bcs to $(PREFIX)
-	install -d $(BINDIR)
-	install -d $(SHAREDIR)/data/templates
-	install -d $(COMPDIR)
-	install -m 755 bcs $(BINDIR)/bcs
-	install -m 755 bcscheck $(BINDIR)/bcscheck
-	install -m 644 data/BASH-CODING-STANDARD.md $(SHAREDIR)/data/
-	install -m 644 data/[0-9]*.md $(SHAREDIR)/data/
-	install -m 644 data/templates/*.sh.template $(SHAREDIR)/data/templates/
-	install -m 644 bcs.bash_completion $(COMPDIR)/bcs
-	install -d $(MANDIR)
-	install -m 644 bcs.1 $(MANDIR)/bcs.1
-	@if [ -d $(OLDSHARE) ] && [ ! -L $(OLDSHARE) ]; then rm -rf $(OLDSHARE); fi
-	ln -sfn BCS $(OLDSHARE)
+.PHONY: all install uninstall check test help
 
-uninstall: ## Uninstall bcs from $(PREFIX)
-	rm -f $(BINDIR)/bcs $(BINDIR)/bcscheck
-	rm -f $(COMPDIR)/bcs
-	rm -f $(MANDIR)/bcs.1
-	rm -rf $(SHAREDIR)
-	rm -f $(OLDSHARE)
+all: help
 
-check: ## Run shellcheck on all scripts
-	shellcheck -x bcs bcscheck examples/cln examples/which examples/md2ansi tests/run-all-tests.sh tests/test-*.sh
-	shellcheck bcs.bash_completion
+install:
+	install -d $(DESTDIR)$(BINDIR)
+	install -m 755 bcs $(DESTDIR)$(BINDIR)/bcs
+	install -m 755 bcscheck $(DESTDIR)$(BINDIR)/bcscheck
+	install -d $(DESTDIR)$(SHAREDIR)/data/templates
+	install -m 644 data/BASH-CODING-STANDARD.md $(DESTDIR)$(SHAREDIR)/data/
+	install -m 644 data/[0-9]*.md $(DESTDIR)$(SHAREDIR)/data/
+	install -m 644 data/templates/*.sh.template $(DESTDIR)$(SHAREDIR)/data/templates/
+	install -d $(DESTDIR)$(MANDIR)
+	install -m 644 bcs.1 $(DESTDIR)$(MANDIR)/bcs.1
+	@if [ -d $(DESTDIR)$(COMPDIR) ]; then \
+	  install -m 644 bcs.bash_completion $(DESTDIR)$(COMPDIR)/bcs; \
+	fi
+	@if [ -d $(DESTDIR)$(PREFIX)/share/yatti/bash-coding-standard ] \
+	    && [ ! -L $(DESTDIR)$(PREFIX)/share/yatti/bash-coding-standard ]; then \
+	  rm -rf $(DESTDIR)$(PREFIX)/share/yatti/bash-coding-standard; \
+	fi
+	@ln -sfn BCS $(DESTDIR)$(PREFIX)/share/yatti/bash-coding-standard 2>/dev/null || true
+	@if [ -z "$(DESTDIR)" ]; then $(MAKE) --no-print-directory check; fi
 
-test: ## Run test suite
+uninstall:
+	rm -f $(DESTDIR)$(BINDIR)/bcs
+	rm -f $(DESTDIR)$(BINDIR)/bcscheck
+	rm -f $(DESTDIR)$(MANDIR)/bcs.1
+	rm -f $(DESTDIR)$(COMPDIR)/bcs
+	rm -rf $(DESTDIR)$(SHAREDIR)
+	rm -f $(DESTDIR)$(PREFIX)/share/yatti/bash-coding-standard
+
+check:
+	@command -v bcs >/dev/null 2>&1 \
+	  && echo 'bcs: OK' \
+	  || echo 'bcs: NOT FOUND (check PATH)'
+	@command -v bcscheck >/dev/null 2>&1 \
+	  && echo 'bcscheck: OK' \
+	  || echo 'bcscheck: NOT FOUND (check PATH)'
+
+test:
 	./tests/run-all-tests.sh
 
-help: ## Show this help
-	@grep -E '^[a-zA-Z_-]+:.*## ' $(MAKEFILE_LIST) | \
-		awk 'BEGIN {FS = ":.*## "}; {printf "  %-15s %s\n", $$1, $$2}'
+help:
+	@echo 'Usage: make [target]'
+	@echo ''
+	@echo 'Targets:'
+	@echo '  install     Install to $(PREFIX)'
+	@echo '  uninstall   Remove installed files'
+	@echo '  check       Verify installation'
+	@echo '  test        Run test suite'
+	@echo '  help        Show this message'
+	@echo ''
+	@echo 'Install from GitHub:'
+	@echo '  git clone https://github.com/Open-Technology-Foundation/BCS.git'
+	@echo '  cd BCS && sudo make install'
