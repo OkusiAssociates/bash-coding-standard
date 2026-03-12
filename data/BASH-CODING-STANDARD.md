@@ -1350,7 +1350,7 @@ Use `2>/dev/null` or `2>file` when suppressing only stderr. The `&>` operator is
 
 ## BCS0800 Section Overview
 
-Use `while (($#)); do case $1 in ... esac; shift; done` as the standard argument parsing pattern. This section covers parsing, option bundling, validation, and version output.
+Use `while (($#)); do case $1 in ... esac; shift; done` as the standard argument parsing pattern. This section covers parsing, standard options, option bundling, validation, and version output.
 
 ## BCS0801 Standard Parsing Pattern
 
@@ -1465,6 +1465,67 @@ Support bundled short options like `-vvn` expanding to `-v -v -n`.
 Place bundling case before `-*)` invalid option handler and after all explicit option cases. List only valid short options in the pattern to prevent incorrect expansion.
 
 Include arg-taking options in the character class. They work correctly when last in the bundle — the disaggregation peels them off as a separate `-X` flag, and `shift` in their case handler picks up the argument normally. Example: `-vno output.txt` disaggregates to `-v -n -o`, then `-o` consumes `output.txt` via `shift`. The user must place arg-taking options last; `-von file` would incorrectly disaggregate to `-v -o -n`.
+
+## BCS0806 Standard Options
+
+Use consistent option letters and variable names across all BCS-compliant scripts. Never reassign a standard letter to a different purpose.
+
+**Strongly Recommended** — include in every script that uses options:
+
+| Short | Long | Variable | Default | Purpose |
+|-------|------|----------|---------|---------|
+| `-V` | `--version` | — | — | Print version and exit |
+| `-h` | `--help` | — | — | Print help and exit |
+
+**Recommended** — include when the script produces output or performs actions:
+
+| Short | Long | Variable | Default | Purpose |
+|-------|------|----------|---------|---------|
+| `-v` | `--verbose` | `VERBOSE` | `1` | Enable verbose output |
+| `-q` | `--quiet` | `VERBOSE` | `0` | Suppress informational output |
+
+**Optional** — use when the script needs these capabilities:
+
+| Short | Long | Variable | Default | Purpose |
+|-------|------|----------|---------|---------|
+| `-n` | `--dry-run` | `DRY_RUN` | `0` or `1` | Preview without changes |
+| `-N` | `--not-dry-run` | `DRY_RUN` | `0` | Execute changes (cancels dry-run) |
+| `-f` | `--force` | `FORCE` | `0` | Skip confirmation prompts |
+| `-D` | `--debug` | `DEBUG` | `0` | Enable debug output |
+| `-p` | `--port` | `PORT` | varies | Network port |
+| `-P` | `--prefix` | `PREFIX` | varies | Installation prefix |
+
+Key rules:
+- **Never reassign** a standard letter to a different purpose — `-v` is always verbose, never version
+- **Toggle pairs:** `-n`/`-N` and `-v`/`-q` are complementary toggles sharing a variable
+- **DRY_RUN=1 default** for destructive scripts — require `-N` to execute; use `DRY_RUN=0` for non-destructive scripts
+- **Use `declare -i`** for all flag variables: `declare -i VERBOSE=1 DRY_RUN=0 DEBUG=0 FORCE=0`
+
+```bash
+# correct — standard options with consistent letters and variables
+declare -i VERBOSE=1 DRY_RUN=0 DEBUG=0 FORCE=0
+
+while (($#)); do case $1 in
+  -v|--verbose)     VERBOSE=1 ;;
+  -q|--quiet)       VERBOSE=0 ;;
+  -n|--dry-run)     DRY_RUN=1 ;;
+  -N|--not-dry-run) DRY_RUN=0 ;;
+  -f|--force)       FORCE=1 ;;
+  -D|--debug)       DEBUG=1 ;;
+  -V|--version)     echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
+  -h|--help)        show_help; exit 0 ;;
+  --)               shift; break ;;
+  -[vqnNfDVh]?*)   set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+  -*)               die 22 "Invalid option ${1@Q}" ;;
+  *)                FILES+=("$1") ;;
+esac; shift; done
+
+# wrong — reassigned letters
+-d|--debug)         # -d is not standard for debug; use -D
+-v|--version)       # -v is verbose, never version; use -V
+```
+
+See also: BCS0701 (message control flags), BCS0802 (version output format), BCS1207 (verbose pattern), BCS1208 (dry-run pattern).
 
 ---
 

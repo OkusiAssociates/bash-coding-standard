@@ -53,7 +53,7 @@ Usage: $SCRIPT_NAME [OPTIONS]
 Options:
   -v, --verbose           Enable verbose output (default)
   -q, --quiet             Disable verbose output
-  -d, --debug             Enable debug output
+  -D, --debug             Enable debug output
   -V, --version           Show version information
   -h, --help              Show this help message
 
@@ -81,7 +81,7 @@ main() {
       -q|--quiet)
         VERBOSE=0
         ;;
-      -d|--debug)
+      -D|--debug)
         #shellcheck disable=SC2034
         DEBUG=1
         ;;
@@ -89,7 +89,7 @@ main() {
         shift
         break
         ;;
-      -[hVvqd]?*)  # Bundled short options
+      -[hVvqD]?*)  # Bundled short options
         set -- "${1:0:2}" "-${1:2}" "${@:2}"
         continue
         ;;

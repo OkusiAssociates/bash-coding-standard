@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Context
 
-The **Bash Coding Standard (BCS)** defines 101 concise, actionable rules across 12 sections for Bash 5.2+ scripts. Designed by Okusi Associates for the Indonesian Open Technology Foundation (YaTTI).
+The **Bash Coding Standard (BCS)** defines 103 concise, actionable rules across 12 sections for Bash 5.2+ scripts. Designed by Okusi Associates for the Indonesian Open Technology Foundation (YaTTI).
 
 **Target audience:** Both human programmers and AI assistants. Rules must be clear enough that AI agents don't make mistakes. Examples of core functions are deliberate and must remain. No rules should be lost or diminished.
 
@@ -21,7 +21,7 @@ shellcheck -x bcs bcscheck && ./tests/run-all-tests.sh
 ./bcs generate
 
 # Verify all BCS codes present
-./bcs codes | wc -l    # Should be 101
+./bcs codes | wc -l    # Should be 103
 
 # Or via make targets (equivalent shortcuts)
 make check    # shellcheck -x bcs bcscheck
