@@ -6,7 +6,7 @@ shopt -s inherit_errexit
 
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
-declare -r SCRIPT_DIR=${SCRIPT_PATH%/*}
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 declare -rx PATH=~/.local/bin:/usr/local/bin:/usr/bin:/bin
 
 die() { (($# < 2)) || >&2 echo "$SCRIPT_NAME: error: ${*:2}"; exit "${1:-0}"; }

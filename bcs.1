@@ -29,7 +29,7 @@ bcs \- Bash Coding Standard CLI toolkit
 .SH DESCRIPTION
 .B bcs
 is a CLI toolkit for working with the Bash Coding Standard (BCS), a set of
-101 concise, actionable rules across 12 sections for Bash 5.2+ scripts.
+103 concise, actionable rules across 12 sections for Bash 5.2+ scripts.
 Designed by Okusi Associates for the Indonesian Open Technology Foundation
 (YaTTI), the standard targets both human programmers and AI assistants.
 .PP
@@ -51,6 +51,9 @@ Otherwise, plain text output is used.
 .BR \-c ", " \-\-cat
 Plain text output (no formatting).
 .TP
+.BR \-f ", " \-\-file
+Show full path to the standard document.
+.TP
 .BR \-s ", " \-\-squeeze
 Squeeze consecutive blank lines.
 .TP
@@ -64,7 +67,7 @@ Generate BCS-compliant script templates with placeholder substitution.
 Template type:
 .BR minimal " (~15 lines),"
 .BR basic " (~25 lines, default),"
-.BR complete " (~105 lines),"
+.BR complete " (~112 lines),"
 .BR library " (~39 lines)."
 .TP
 .BR \-n ", " \-\-name " " \fINAME\fR
@@ -94,6 +97,12 @@ standard and reports violations, warnings, and suggestions with BCS rule
 codes. Requires the
 .B claude
 CLI in PATH.
+.TP
+.BR \-m ", " \-\-model " " \fIMODEL\fR
+Claude model to use (default: sonnet).
+.TP
+.BR \-f ", " \-\-fast
+Quick check using low effort.
 .TP
 .BR \-s ", " \-\-strict
 Treat warnings as violations.
@@ -180,15 +189,15 @@ subcommand for temporary working directories. Falls back to
 Installed CLI binary.
 .TP
 .I /usr/local/bin/bcscheck
-Standalone compliance checker symlink.
+Standalone compliance checker (calls bcs check \-\-strict \-\-fast).
 .TP
-.I /usr/local/share/yatti/bash\-coding\-standard/data/
+.I /usr/local/share/yatti/BCS/data/
 Installed standard document and section files.
 .TP
-.I /usr/local/share/yatti/bash\-coding\-standard/data/templates/
+.I /usr/local/share/yatti/BCS/data/templates/
 Script template files.
 .TP
-.I /usr/local/share/bash\-completion/completions/bcs
+.I /etc/bash_completion.d/bcs
 Bash tab-completion script.
 .TP
 .I /usr/local/share/man/man1/bcs.1
@@ -218,7 +227,7 @@ Run AI-powered compliance check on a script.
 Strict mode: treat warnings as violations.
 .TP
 .B bcs codes
-List all 101 BCS rule codes and titles.
+List all BCS rule codes and titles.
 .TP
 .B bcs generate
 Regenerate BASH\-CODING\-STANDARD.md from section files.
