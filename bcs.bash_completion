@@ -28,7 +28,7 @@ _bcs() {
   # Per-subcommand completions
   case $subcmd in
     display)
-      mapfile -t COMPREPLY < <(compgen -W '-c --cat -f --file -s --squeeze -h --help' -- "$cur")
+      mapfile -t COMPREPLY < <(compgen -W '-c --cat -f --file -s --squeeze -S --symlink -h --help' -- "$cur")
       ;;
 
     template)

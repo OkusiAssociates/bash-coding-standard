@@ -34,6 +34,9 @@ git clone https://github.com/Open-Technology-Foundation/bash-coding-standard.git
 # View the standard
 ./bcs
 
+# Symlink the standard into your project directory
+./bcs display --symlink
+
 # Generate a BCS-compliant script
 ./bcs template -t complete -n deploy -d 'Deploy script' -o deploy.sh -x
 
@@ -89,7 +92,7 @@ The Bash Coding Standard defines 101 rules across 12 sections in a single ~2,000
 
 | Command | Purpose |
 |---------|---------|
-| `bcs display` | View the standard document (default) |
+| `bcs display` | View the standard document (default); `--symlink` to link into cwd |
 | `bcs template` | Generate BCS-compliant script templates |
 | `bcs check` | AI-powered compliance checking (requires Claude CLI) |
 | `bcs codes` | List all BCS rule codes |

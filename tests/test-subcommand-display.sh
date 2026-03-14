@@ -57,6 +57,19 @@ begin_test 'option bundling -cf works'
 bundled_path=$("$BCS_CMD" display -cf 2>/dev/null)
 assert_contains "$bundled_path" 'BASH-CODING-STANDARD.md' '-cf bundling works' || true
 
+# Test: --symlink creates symlink
+begin_test 'display --symlink creates symlink'
+tmpdir=$(mktemp -d)
+(cd "$tmpdir" && "$BCS_CMD" display --symlink &>/dev/null)
+if [[ -L "$tmpdir"/BASH-CODING-STANDARD.md ]]; then
+  printf '  %s✓%s --symlink creates symlink\n' "$GREEN" "$NC"
+  TESTS_PASSED+=1
+else
+  printf '  %s✗%s --symlink did not create symlink\n' "$RED" "$NC"
+  TESTS_FAILED+=1
+fi
+rm -rf "$tmpdir"
+
 # Test: invalid option
 begin_test 'display rejects invalid options'
 assert_fails 'rejects --invalid' "$BCS_CMD" display --invalid || true

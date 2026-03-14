@@ -129,6 +129,7 @@ ${BOLD}Options:${NC}
   -c, --cat       Plain text output (no formatting)
   -f, --file      Show full path to the standard document
   -s, --squeeze   Squeeze consecutive blank lines
+  -S, --symlink   Symlink BASH-CODING-STANDARD.md into current directory
   -h, --help      Show this help
 
 When stdout is a terminal and md2ansi is available, the standard is
@@ -235,8 +236,15 @@ cmd_display() {
     -c|--cat)     force_cat=1 ;;
     -f|--file)    find_bcs_md || die 3 'BASH-CODING-STANDARD.md not found'; return 0 ;;
     -s|--squeeze) squeeze_blanks=1 ;;
+    -S|--symlink)
+      local -- bcs_file
+      bcs_file=$(find_bcs_md) || die 3 'BASH-CODING-STANDARD.md not found'
+      ln -sf "$bcs_file" .
+      info 'Symlinked BASH-CODING-STANDARD.md → '"$bcs_file"
+      return 0
+      ;;
     -h|--help)    show_display_help; return 0 ;;
-    -[cfsh]?*)    set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+    -[cfshS]?*)   set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
     -*)           die 22 "Invalid option ${1@Q}" ;;
     *)            die 2 "Unexpected argument ${1@Q}" ;;
   esac; shift; done
