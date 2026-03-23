@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#shellcheck disable=SC2015
+#shellcheck disable=SC2015  # BCS pattern: ((cond)) && action ||:
 # cln - Recursively clean temporary and junk files from directories
 #
 # Searches for and removes common editor backup files, crash files,
@@ -7,11 +7,10 @@
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-readonly -- PATH='/usr/local/bin:/usr/bin:/bin'
-export PATH
+declare -rx PATH='/usr/local/bin:/usr/bin:/bin'
 
 declare -r VERSION=1.1.0
-#shellcheck disable=SC2155
+#shellcheck disable=SC2155  # exit-on-error catches realpath failures
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_NAME=${SCRIPT_PATH##*/}
 
@@ -19,38 +18,41 @@ declare -r SCRIPT_NAME=${SCRIPT_PATH##*/}
 declare -a DELETE_FILES=('*~' '~*' '.~*' '.*~' DEADJOE dead.letter 'wget-log*')
 
 # Messaging system - color-coded output with TTY detection
-# _msg: base formatter; vecho/success/warn/info/error: level-specific wrappers
+# _msg: base formatter; vecho/warn/error: level wrappers; die: fatal exit; yn: yes/no prompt
 declare -i VERBOSE=1 PROMPT=1
 # Enable colors only when both stdout and stderr are terminals
 if [[ -t 1 && -t 2 ]]; then
-  declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' NC=$'\033[0m'
+  declare -r RED=$'\033[0;31m' YELLOW=$'\033[0;33m' NC=$'\033[0m'
 else
-  declare -r RED='' GREEN='' YELLOW='' CYAN='' NC=''
+  declare -r RED='' YELLOW='' NC=''
 fi
 
 _msg() {
   local -- prefix="$SCRIPT_NAME:" msg
   case ${FUNCNAME[1]} in
-    success) prefix+=" ${GREEN}✓${NC}" ;;
     warn)    prefix+=" ${YELLOW}▲${NC}" ;;
-    info)    prefix+=" ${CYAN}◉${NC}" ;;
     error)   prefix+=" ${RED}✗${NC}" ;;
     *)       ;;
   esac
   for msg in "$@"; do printf '%s %s\n' "$prefix" "$msg"; done
 }
 vecho() { ((VERBOSE)) || return 0; _msg "$@"; }
-success() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
-info() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 warn() { >&2 _msg "$@"; }
 error() { >&2 _msg "$@"; }
 die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 yn() {
   local -- REPLY
-  read -r -n 1 -p "$(>&2 echo -n "$SCRIPT_NAME: ${YELLOW}▲${NC} ${1:-Continue?} y/n ")"
+  printf '%s ' "$SCRIPT_NAME: ${YELLOW}▲${NC} ${1:-Continue?} y/n" >&2
+  read -r -n 1
   echo
   [[ "${REPLY,,}" == y ]]
 }
+
+noarg() { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }  # Validate option has argument
+decp() { declare -p "$@" 2>/dev/null | sed 's/^declare -[a-zA-Z-]* //'; }  # Print variable as name=value (help display & debug)
+
+# Pluralization helper: returns 's' if count != 1
+s() { (( ${1:-1} == 1 )) || echo -n 's'; }
 
 show_help() {
   cat <<HELP
@@ -105,27 +107,6 @@ Examples:
 HELP
 }
 
-# Utility functions
-grep() { /usr/bin/grep "$@"; }
-find() { /usr/bin/find "$@"; }
-declare -fx grep find
-noarg() { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }  # Validate option has argument
-decp() { declare -p "$@" 2>/dev/null | sed 's/^declare -[a-zA-Z-]* //'; }  # Debug: print variable as name=value
-trim() { local -- v="$*"; v="${v#"${v%%[![:blank:]]*}"}"; echo -n "${v%"${v##*[![:blank:]]}"}"; }  # Strip whitespace
-
-# Pluralization helper: returns 's' if count != 1
-s() { (( ${1:-1} == 1 )) || echo -n 's'; }
-
-# Exit handler for cleanup on SIGINT/SIGTERM/EXIT
-cleanup() {
-  local -i exitcode=${1:-$?}
-  trap - SIGINT SIGTERM EXIT
-  # Add cleanup logic here if needed (e.g., remove temp files)
-  #:
-  exit "$exitcode"
-}
-trap 'cleanup $?' SIGINT SIGTERM EXIT
-
 # Load patterns from config file if exists
 # Precedence: ~/.local/etc/default/cln > /etc/default/cln > hardcoded defaults
 load_config() {
@@ -136,7 +117,7 @@ load_config() {
   local -- config
   for config in "${configs[@]}"; do
     if [[ -f "$config" && -r "$config" ]]; then
-      mapfile -t DELETE_FILES < <(grep -v '^[[:space:]]*#' "$config" | grep -v '^[[:space:]]*$')
+      mapfile -t DELETE_FILES < <(grep -vE '^[[:space:]]*(#|$)' "$config")
       return 0
     fi
   done
@@ -165,21 +146,28 @@ main() {
     -a|--add)       noarg "$@"; shift
                     IFS=',' read -ra add_specs_raw <<< "$1"
                     for spec in "${add_specs_raw[@]}"; do
-                      spec=$(trim "$spec")
+                      spec="${spec#"${spec%%[![:blank:]]*}"}"; spec="${spec%"${spec##*[![:blank:]]}"}"
                       [[ -z "$spec" ]] || add_specs+=("$spec")
                     done
                     ;;
     -S|--set)       noarg "$@"; shift
+                    local -a set_specs_raw=()
+                    IFS=',' read -ra set_specs_raw <<< "$1"
                     DELETE_FILES=()
-                    IFS=',' read -ra DELETE_FILES <<< "$1"
+                    for spec in "${set_specs_raw[@]}"; do
+                      spec="${spec#"${spec%%[![:blank:]]*}"}"; spec="${spec%"${spec##*[![:blank:]]}"}"
+                      [[ -n "$spec" ]] && DELETE_FILES+=("$spec")
+                    done
                     ;;
-    -m|--depth)     noarg "$@"; shift; max_depth=$1
-                    ((max_depth == -1)) && max_depth=255 ||:
+    -m|--depth)     noarg "$@"; shift
+                    [[ "$1" =~ ^-?[0-9]+$ ]] || die 22 "Option '-m|--depth' requires a numeric argument, got ${1@Q}"
+                    max_depth=$1
+                    ((max_depth != -1)) || max_depth=255
                     ;;
     -p|-n|--prompt) PROMPT=1; VERBOSE=1 ;;
     -P|-N|--no-prompt)
                     PROMPT=0 ;;
-    -v|--verbose)   VERBOSE+=1 ;;
+    -v|--verbose)   ((VERBOSE < 3)) && VERBOSE+=1 ||:  ;;
     -q|--quiet)     VERBOSE=0 ;;
 
     -V|--version)   echo "$SCRIPT_NAME $VERSION"; return 0 ;;
@@ -202,6 +190,7 @@ main() {
 
   # Combine default and additional specs
   all_specs=("${DELETE_FILES[@]}" "${add_specs[@]}")
+  ((${#all_specs[@]})) || die 22 "No file patterns specified"
 
   # Build find criteria
   for spec in "${all_specs[@]}"; do

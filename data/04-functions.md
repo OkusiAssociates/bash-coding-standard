@@ -61,7 +61,7 @@ main() {
   esac; shift; done
 
   # Make parsed variables readonly
-  readonly -- VERBOSE DRY_RUN
+  readonly VERBOSE DRY_RUN
 
   # Business logic
   process_files
@@ -107,9 +107,8 @@ my_function() {
   local -- name=$1
   echo "Hello, $name"
 }
-declare -fx my_function
 
-[[ ${BASH_SOURCE[0]} == "$0" ]] || return 0
+[[ ${BASH_SOURCE[0]} == "$0" ]] || { declare -fx my_function; return 0; }
 
 # --- Script mode only ---
 set -euo pipefail

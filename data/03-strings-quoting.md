@@ -18,6 +18,8 @@ VAR=''
 
 # wrong — double quotes for static string
 info "Checking prerequisites..."
+EMAIL="user@domain.com"
+VAR=""
 ```
 
 One-word alphanumeric literals (`a-zA-Z0-9_-./`) may be unquoted: `STATUS=success`, `[[ "$level" == INFO ]]`. When in doubt, quote everything.
@@ -67,7 +69,7 @@ Quote variables in test expressions. Inside `[[ ]]`, the left-hand side may be u
 [[ "$email" =~ ^[a-z]+@[a-z]+$ ]]
 
 # wrong
-[ -f $file ]                         # [ ] requires quoting
+[ -f $file ]                         # [ ] requires quoting, should never use [ ... ] in any case
 [[ "$input" =~ "$pattern" ]]        # quoted regex won't match
 ```
 

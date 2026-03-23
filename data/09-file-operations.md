@@ -16,7 +16,7 @@ Always quote variables in file tests and use `[[ ]]`.
 [[ -s "$logfile" ]] || warn 'Log file is empty'
 
 # correct — timestamp comparison
-[[ "$source" -nt "$destination" ]] && cp "$source" "$destination"
+[[ "$source" -nt "$destination" ]] && cp "$source" "$destination" ||:
 
 # wrong
 [[ -f $file ]]                       # unquoted variable

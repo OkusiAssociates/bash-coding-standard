@@ -119,7 +119,7 @@ Use exponential backoff for retries. Never use fixed delays.
 
 ```bash
 # correct
-declare -i attempt=1 max_attempts=5 delay max_delay=60
+declare -i attempt=1 max_attempts=5 delay max_delay=60 jitter
 
 while ((attempt <= max_attempts)); do
   if try_operation; then
@@ -130,7 +130,7 @@ while ((attempt <= max_attempts)); do
   ((delay > max_delay)) && delay=$max_delay ||:
 
   # Add jitter to prevent thundering herd
-  local -i jitter=$((RANDOM % delay))
+  jitter=$((RANDOM % delay))
   sleep $((delay + jitter))
 
   attempt+=1

@@ -91,7 +91,7 @@ declare -r SCRIPT_PATH=$(realpath -- "$0")
 
 # correct — documented bcscheck exception
 #bcscheck disable=BCS0606
-((DRY_RUN)) && info 'Dry-run mode'
+((DRY_RUN)) && info 'Dry-run mode' ||:
 ```
 
 Always end scripts with `#fin` after `main "$@"`.

@@ -18,7 +18,7 @@ Use `[[ ]]` for string and file tests, `(())` for arithmetic. Never use `[ ]`. T
 
 # correct — pattern matching
 [[ "$file" == *.txt ]]               # glob
-[[ "$input" =~ ^[0-9]+$ ]]          # regex
+[[ "$input" =~ ^[0-9]+$ ]]           # regex
 
 # correct — short-circuit
 [[ -f "$file" ]] && source "$file"
@@ -39,7 +39,7 @@ Use `case` for multi-way branching on a single variable.
 case ${1:-} in
   start)          start_service ;;
   stop)           stop_service ;;
-  -h|--help|help) show_help ;;
+  help|-h|--help) show_help ;;
   *.txt|*.md)     process_text "$1" ;;
   -*)             die 22 "Invalid option ${1@Q}" ;;
   *)              die 2 "Unknown command ${1@Q}" ;;

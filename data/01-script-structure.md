@@ -6,16 +6,16 @@ Every BCS-compliant script follows a mandatory 13-step structure. Scripts must b
 
 ## BCS0101 Strict Mode
 
-`set -euo pipefail` is mandatory and must be the first command after shebang, comments, and shellcheck directives.
+`set -euo pipefail` is *mandatory* before script execution starts, and must be the first executable command after shebang, comments, and shellcheck directives.
 
 ```bash
 # correct
-#!/usr/bin/env bash
+#!/usr/bin/bash
 # Brief description
 set -euo pipefail
 
 # wrong — strict mode after variable declarations
-#!/usr/bin/env bash
+#!/usr/bin/bash
 declare -r VERSION=1.0.0
 set -euo pipefail
 ```
@@ -24,7 +24,7 @@ Add `shopt -s inherit_errexit` immediately after.
 
 - `inherit_errexit`: makes `set -e` work in command substitutions (critical)
 
-Where appropriate, the following setting should also be added:
+**When appropriate**, the following setting should also be added:
 
 - `shift_verbose`: makes `shift` fail visibly when no args remain
 - `extglob`: enables `@()`, `!()`, `+()` patterns
@@ -34,7 +34,7 @@ Choose `failglob` instead of `nullglob` for strict scripts where unmatched globs
 
 ## BCS0102 Shebang
 
-First line must be a shebang. Three acceptable forms:
+First line of any script must be a shebang. Three acceptable forms:
 
 ```bash
 #!/bin/bash           # known Linux systems
@@ -42,10 +42,12 @@ First line must be a shebang. Three acceptable forms:
 #!/usr/bin/env bash   # maximum portability
 ```
 
-Follow with optional `#shellcheck` directives, then a brief description comment.
+*Any* one of these shebangs are acceptable.
+
+Follow with optional `#shellcheck` or `#bcscheck` directives, then a brief description comment.
 
 ```bash
-#!/bin/bash
+#!/usr/bin/bash
 #shellcheck disable=SC2015
 # myscript - brief description of what this script does
 set -euo pipefail
@@ -58,10 +60,12 @@ Declare metadata immediately after `shopt`. Use `realpath` (not `readlink`).
 ```bash
 # correct
 declare -r VERSION=1.0.0
+#shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # wrong — readlink, separate readonly
+#shellcheck disable=SC2155
 SCRIPT_PATH=$(readlink -f "$0")
 readonly SCRIPT_PATH
 ```
@@ -184,7 +188,7 @@ main() {
   while (($#)); do case $1 in
     -v|--verbose) VERBOSE=1 ;;
   esac; shift; done
-  readonly -- VERBOSE DRY_RUN
+  readonly VERBOSE DRY_RUN
 
   # Business logic here
 }
@@ -197,13 +201,16 @@ Always quote `"$@"` to preserve the argument array. Scripts under 200 lines may 
 
 ## BCS0109 End Marker
 
-Every script must end with `#fin` or `#end` as the mandatory final line.
+Every script must end with `#fin\n` OR `#end\n` as the mandatory final line.
 
 ```bash
 # correct — last line of file
 main "$@"
 #fin
 
+```
+
+```bash
 # wrong — missing end marker, or extra content after
 main "$@"
 ```
@@ -216,15 +223,17 @@ Scripts requiring cleanup must define the cleanup function and set the trap befo
 
 ```bash
 # correct
+declare -- TEMP_DIR
+#...
 cleanup() {
   local -i exitcode=${1:-$?}
   trap - SIGINT SIGTERM EXIT
-  [[ -n "${temp_dir:-}" ]] && rm -rf "$temp_dir"
+  [[ -z "${TEMP_DIR:-}" ]] || rm -rf "$TEMP_DIR"
   exit "$exitcode"
 }
 trap 'cleanup $?' SIGINT SIGTERM EXIT
-
-temp_dir=$(mktemp -d)
+#...
+TEMP_DIR=$(mktemp -d)
 ```
 
 Always disable traps inside the cleanup function to prevent recursion.

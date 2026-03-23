@@ -36,16 +36,16 @@ Every BCS-compliant script follows a mandatory 13-step structure. Scripts must b
 
 ## BCS0101 Strict Mode
 
-`set -euo pipefail` is mandatory and must be the first command after shebang, comments, and shellcheck directives.
+`set -euo pipefail` is *mandatory* before script execution starts, and must be the first executable command after shebang, comments, and shellcheck directives.
 
 ```bash
 # correct
-#!/usr/bin/env bash
+#!/usr/bin/bash
 # Brief description
 set -euo pipefail
 
 # wrong — strict mode after variable declarations
-#!/usr/bin/env bash
+#!/usr/bin/bash
 declare -r VERSION=1.0.0
 set -euo pipefail
 ```
@@ -54,7 +54,7 @@ Add `shopt -s inherit_errexit` immediately after.
 
 - `inherit_errexit`: makes `set -e` work in command substitutions (critical)
 
-Where appropriate, the following setting should also be added:
+**When appropriate**, the following setting should also be added:
 
 - `shift_verbose`: makes `shift` fail visibly when no args remain
 - `extglob`: enables `@()`, `!()`, `+()` patterns
@@ -64,7 +64,7 @@ Choose `failglob` instead of `nullglob` for strict scripts where unmatched globs
 
 ## BCS0102 Shebang
 
-First line must be a shebang. Three acceptable forms:
+First line of any script must be a shebang. Three acceptable forms:
 
 ```bash
 #!/bin/bash           # known Linux systems
@@ -72,10 +72,12 @@ First line must be a shebang. Three acceptable forms:
 #!/usr/bin/env bash   # maximum portability
 ```
 
-Follow with optional `#shellcheck` directives, then a brief description comment.
+*Any* one of these shebangs are acceptable.
+
+Follow with optional `#shellcheck` or `#bcscheck` directives, then a brief description comment.
 
 ```bash
-#!/bin/bash
+#!/usr/bin/bash
 #shellcheck disable=SC2015
 # myscript - brief description of what this script does
 set -euo pipefail
@@ -88,10 +90,12 @@ Declare metadata immediately after `shopt`. Use `realpath` (not `readlink`).
 ```bash
 # correct
 declare -r VERSION=1.0.0
+#shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # wrong — readlink, separate readonly
+#shellcheck disable=SC2155
 SCRIPT_PATH=$(readlink -f "$0")
 readonly SCRIPT_PATH
 ```
@@ -214,7 +218,7 @@ main() {
   while (($#)); do case $1 in
     -v|--verbose) VERBOSE=1 ;;
   esac; shift; done
-  readonly -- VERBOSE DRY_RUN
+  readonly VERBOSE DRY_RUN
 
   # Business logic here
 }
@@ -227,13 +231,16 @@ Always quote `"$@"` to preserve the argument array. Scripts under 200 lines may 
 
 ## BCS0109 End Marker
 
-Every script must end with `#fin` or `#end` as the mandatory final line.
+Every script must end with `#fin\n` OR `#end\n` as the mandatory final line.
 
 ```bash
 # correct — last line of file
 main "$@"
 #fin
 
+```
+
+```bash
 # wrong — missing end marker, or extra content after
 main "$@"
 ```
@@ -246,15 +253,17 @@ Scripts requiring cleanup must define the cleanup function and set the trap befo
 
 ```bash
 # correct
+declare -- TEMP_DIR
+#...
 cleanup() {
   local -i exitcode=${1:-$?}
   trap - SIGINT SIGTERM EXIT
-  [[ -n "${temp_dir:-}" ]] && rm -rf "$temp_dir"
+  [[ -z "${TEMP_DIR:-}" ]] || rm -rf "$TEMP_DIR"
   exit "$exitcode"
 }
 trap 'cleanup $?' SIGINT SIGTERM EXIT
-
-temp_dir=$(mktemp -d)
+#...
+TEMP_DIR=$(mktemp -d)
 ```
 
 Always disable traps inside the cleanup function to prevent recursion.
@@ -313,7 +322,7 @@ Without `local`, variables become global, overwrite same-named variables, persis
 
 ```bash
 # correct
-readonly -- MAX_RETRIES=3              # UPPER_CASE for constants/globals
+readonly MAX_RETRIES=3              # UPPER_CASE for constants/globals
 declare -i VERBOSE=1                   # UPPER_CASE for global state
 
 process_log_file() {                   # lower_case for functions
@@ -336,7 +345,7 @@ Use `readonly` for values that never change. Use `declare -x` for variables need
 
 ```bash
 # correct
-readonly -- CONFIG_DIR=/etc/myapp
+readonly CONFIG_DIR=/etc/myapp
 declare -x DATABASE_URL='postgres://localhost/mydb'
 declare -rx BUILD_ENV=production     # readonly + exported
 
@@ -362,10 +371,10 @@ For other variable groups, declare first, then make readonly in a batch:
 declare -- PREFIX=/usr/local
 declare -- BIN_DIR="$PREFIX"/bin
 declare -- SHARE_DIR="$PREFIX"/share/myapp
-readonly -- PREFIX BIN_DIR SHARE_DIR
+readonly PREFIX BIN_DIR SHARE_DIR
 
 # wrong — readonly before parsing complete
-readonly -- VERBOSE=1    # can't change during arg parsing
+readonly VERBOSE=1    # can't change during arg parsing
 ```
 
 Three-step workflow: (1) declare with defaults, (2) parse/modify in main, (3) readonly after parsing.
@@ -474,6 +483,8 @@ VAR=''
 
 # wrong — double quotes for static string
 info "Checking prerequisites..."
+EMAIL="user@domain.com"
+VAR=""
 ```
 
 One-word alphanumeric literals (`a-zA-Z0-9_-./`) may be unquoted: `STATUS=success`, `[[ "$level" == INFO ]]`. When in doubt, quote everything.
@@ -523,7 +534,7 @@ Quote variables in test expressions. Inside `[[ ]]`, the left-hand side may be u
 [[ "$email" =~ ^[a-z]+@[a-z]+$ ]]
 
 # wrong
-[ -f $file ]                         # [ ] requires quoting
+[ -f $file ]                         # [ ] requires quoting, should never use [ ... ] in any case
 [[ "$input" =~ "$pattern" ]]        # quoted regex won't match
 ```
 
@@ -671,7 +682,7 @@ main() {
   esac; shift; done
 
   # Make parsed variables readonly
-  readonly -- VERBOSE DRY_RUN
+  readonly VERBOSE DRY_RUN
 
   # Business logic
   process_files
@@ -717,9 +728,8 @@ my_function() {
   local -- name=$1
   echo "Hello, $name"
 }
-declare -fx my_function
 
-[[ ${BASH_SOURCE[0]} == "$0" ]] || return 0
+[[ ${BASH_SOURCE[0]} == "$0" ]] || { declare -fx my_function; return 0; }
 
 # --- Script mode only ---
 set -euo pipefail
@@ -816,7 +826,7 @@ Use `[[ ]]` for string and file tests, `(())` for arithmetic. Never use `[ ]`. T
 
 # correct — pattern matching
 [[ "$file" == *.txt ]]               # glob
-[[ "$input" =~ ^[0-9]+$ ]]          # regex
+[[ "$input" =~ ^[0-9]+$ ]]           # regex
 
 # correct — short-circuit
 [[ -f "$file" ]] && source "$file"
@@ -837,7 +847,7 @@ Use `case` for multi-way branching on a single variable.
 case ${1:-} in
   start)          start_service ;;
   stop)           stop_service ;;
-  -h|--help|help) show_help ;;
+  help|-h|--help) show_help ;;
   *.txt|*.md)     process_text "$1" ;;
   -*)             die 22 "Invalid option ${1@Q}" ;;
   *)              die 2 "Unknown command ${1@Q}" ;;
@@ -1038,15 +1048,18 @@ Install cleanup traps early, before creating any resources.
 
 ```bash
 # correct
+declare -- TEMP_FILE
+#...
 cleanup() {
   local -i exitcode=${1:-$?}
   trap - SIGINT SIGTERM EXIT         # prevent recursion
-  [[ -n "${temp_file:-}" ]] && rm -f "$temp_file"
+  [[ -z "${TEMP_FILE:-}" ]] || rm -f "$TEMP_FILE"
   exit "$exitcode"
 }
 trap 'cleanup $?' SIGINT SIGTERM EXIT
-
-temp_file=$(mktemp)
+#...
+TEMP_FILE=$(mktemp)
+readonly TEMP_FILE
 ```
 
 Use single quotes for trap commands to delay variable expansion. Use `||:` for cleanup operations that might fail.
@@ -1155,12 +1168,15 @@ declare -i VERBOSE=1 PROMPT=1 DEBUG=0
 # correct — status to stderr, data to stdout
 info 'Processing files...'           # → stderr (via messaging function)
 echo "$result"                       # → stdout (data output)
+printf '%s\n' "$result"              # → stdout (data output)
 
 # correct — place >&2 at the BEGINNING
 >&2 echo 'error: something failed'
+>&2 printf '%s\n' 'error: something failed'
 
 # wrong — >&2 at end (works but harder to spot)
 echo 'error: something failed' >&2
+printf '%s\n' 'error: something failed' >&2
 ```
 
 Stream separation enables: `data=$(./script.sh)` captures only data, `./script.sh 2>errors.log` separates errors, `./script.sh | process` pipes data while showing messages.
@@ -1206,18 +1222,20 @@ Structure help text with sections. Use heredoc with `cat`.
 ```bash
 show_help() {
   cat <<HELP
+$SCRIPT_NAME $VERSION - a brief description of the script
+
 Usage: $SCRIPT_NAME [OPTIONS] FILE [FILE ...]
 
-Brief description of what the script does.
+A more detailed description of what the script does.
 
-OPTIONS:
+Options:
   -n, --dry-run           Dry run mode
   -v, --verbose           Verbose output (default)
   -q, --quiet             Quiet mode
   -V, --version           Show version
   -h, --help              Show this help
 
-EXAMPLES:
+Examples:
   $SCRIPT_NAME file.txt
   $SCRIPT_NAME --dry-run *.csv
 HELP
@@ -1237,7 +1255,10 @@ error 'Connection failed'
 # correct — echo for data and help
 echo "$result"                       # data output
 echo "$SCRIPT_NAME $VERSION"         # version output
-cat <<HELP ... HELP                  # help text
+# help text
+cat <<HELP
+...
+HELP
 
 # correct — functions returning data use echo
 get_value() {
@@ -1263,8 +1284,10 @@ else
   declare -r RED='' GREEN='' YELLOW='' CYAN='' NC=''
 fi
 
-# extended set (add when needed)
-# BLUE=$'\033[0;34m' MAGENTA=$'\033[0;35m' BOLD=$'\033[1m'
+# extended set (add only when needed)
+declare -r BLUE=$'\033[0;34m' MAGENTA=$'\033[0;35m'
+declare -r BOLD=$'\033[1m' ITALIC=$'\033[3m'
+declare -r UNDERLINE=$'\033[4m' DIM=$'\033[2m' REVERSE=$'\033[7m'
 ```
 
 Never scatter inline color declarations across scripts. Centralize in a single declaration block.
@@ -1429,7 +1452,7 @@ main() {
   while (($#)); do case $1 in
     # ...
   esac; shift; done
-  readonly -- VERBOSE DRY_RUN OUTPUT
+  readonly VERBOSE DRY_RUN OUTPUT
 
   process_files
 }
@@ -1447,10 +1470,10 @@ Make variables readonly after parsing completes.
 Support bundled short options like `-vvn` expanding to `-v -v -n`.
 
 ```bash
-# correct — disaggregation pattern (list valid short options explicitly)
+# correct — recommended disaggregation pattern (list valid short options explicitly)
 -[vqnoVh]?*) set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
 
-# correct — pure bash method (68% faster, no external deps)
+# correct — pure bash method (68% faster, no external deps); only use if speed is absolutely essential
 -[vqnoVh]?*)
   local -- opt=${1:1}
   local -a new_args=()
@@ -1514,8 +1537,8 @@ while (($#)); do case $1 in
   -D|--debug)       DEBUG=1 ;;
   -V|--version)     echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
   -h|--help)        show_help; exit 0 ;;
-  --)               shift; break ;;
-  -[vqnNfDVh]?*)   set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+  --)               shift; FILES+=("$@"); break ;;
+  -[vqnNfDVh]?*)    set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
   -*)               die 22 "Invalid option ${1@Q}" ;;
   *)                FILES+=("$1") ;;
 esac; shift; done
@@ -1547,7 +1570,7 @@ Always quote variables in file tests and use `[[ ]]`.
 [[ -s "$logfile" ]] || warn 'Log file is empty'
 
 # correct — timestamp comparison
-[[ "$source" -nt "$destination" ]] && cp "$source" "$destination"
+[[ "$source" -nt "$destination" ]] && cp "$source" "$destination" ||:
 
 # wrong
 [[ -f $file ]]                       # unquoted variable
@@ -1896,7 +1919,7 @@ Use exponential backoff for retries. Never use fixed delays.
 
 ```bash
 # correct
-declare -i attempt=1 max_attempts=5 delay max_delay=60
+declare -i attempt=1 max_attempts=5 delay max_delay=60 jitter
 
 while ((attempt <= max_attempts)); do
   if try_operation; then
@@ -1907,7 +1930,7 @@ while ((attempt <= max_attempts)); do
   ((delay > max_delay)) && delay=$max_delay ||:
 
   # Add jitter to prevent thundering herd
-  local -i jitter=$((RANDOM % delay))
+  jitter=$((RANDOM % delay))
   sleep $((delay + jitter))
 
   attempt+=1
@@ -2014,7 +2037,7 @@ declare -r SCRIPT_PATH=$(realpath -- "$0")
 
 # correct — documented bcscheck exception
 #bcscheck disable=BCS0606
-((DRY_RUN)) && info 'Dry-run mode'
+((DRY_RUN)) && info 'Dry-run mode' ||:
 ```
 
 Always end scripts with `#fin` after `main "$@"`.

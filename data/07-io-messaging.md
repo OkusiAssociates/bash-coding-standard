@@ -18,12 +18,15 @@ declare -i VERBOSE=1 PROMPT=1 DEBUG=0
 # correct — status to stderr, data to stdout
 info 'Processing files...'           # → stderr (via messaging function)
 echo "$result"                       # → stdout (data output)
+printf '%s\n' "$result"              # → stdout (data output)
 
 # correct — place >&2 at the BEGINNING
 >&2 echo 'error: something failed'
+>&2 printf '%s\n' 'error: something failed'
 
 # wrong — >&2 at end (works but harder to spot)
 echo 'error: something failed' >&2
+printf '%s\n' 'error: something failed' >&2
 ```
 
 Stream separation enables: `data=$(./script.sh)` captures only data, `./script.sh 2>errors.log` separates errors, `./script.sh | process` pipes data while showing messages.
@@ -69,18 +72,20 @@ Structure help text with sections. Use heredoc with `cat`.
 ```bash
 show_help() {
   cat <<HELP
+$SCRIPT_NAME $VERSION - a brief description of the script
+
 Usage: $SCRIPT_NAME [OPTIONS] FILE [FILE ...]
 
-Brief description of what the script does.
+A more detailed description of what the script does.
 
-OPTIONS:
+Options:
   -n, --dry-run           Dry run mode
   -v, --verbose           Verbose output (default)
   -q, --quiet             Quiet mode
   -V, --version           Show version
   -h, --help              Show this help
 
-EXAMPLES:
+Examples:
   $SCRIPT_NAME file.txt
   $SCRIPT_NAME --dry-run *.csv
 HELP
@@ -100,7 +105,10 @@ error 'Connection failed'
 # correct — echo for data and help
 echo "$result"                       # data output
 echo "$SCRIPT_NAME $VERSION"         # version output
-cat <<HELP ... HELP                  # help text
+# help text
+cat <<HELP
+...
+HELP
 
 # correct — functions returning data use echo
 get_value() {
@@ -126,8 +134,10 @@ else
   declare -r RED='' GREEN='' YELLOW='' CYAN='' NC=''
 fi
 
-# extended set (add when needed)
-# BLUE=$'\033[0;34m' MAGENTA=$'\033[0;35m' BOLD=$'\033[1m'
+# extended set (add only when needed)
+declare -r BLUE=$'\033[0;34m' MAGENTA=$'\033[0;35m'
+declare -r BOLD=$'\033[1m' ITALIC=$'\033[3m'
+declare -r UNDERLINE=$'\033[4m' DIM=$'\033[2m' REVERSE=$'\033[7m'
 ```
 
 Never scatter inline color declarations across scripts. Centralize in a single declaration block.

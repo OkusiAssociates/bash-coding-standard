@@ -81,7 +81,7 @@ main() {
   while (($#)); do case $1 in
     # ...
   esac; shift; done
-  readonly -- VERBOSE DRY_RUN OUTPUT
+  readonly VERBOSE DRY_RUN OUTPUT
 
   process_files
 }
@@ -99,10 +99,10 @@ Make variables readonly after parsing completes.
 Support bundled short options like `-vvn` expanding to `-v -v -n`.
 
 ```bash
-# correct — disaggregation pattern (list valid short options explicitly)
+# correct — recommended disaggregation pattern (list valid short options explicitly)
 -[vqnoVh]?*) set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
 
-# correct — pure bash method (68% faster, no external deps)
+# correct — pure bash method (68% faster, no external deps); only use if speed is absolutely essential
 -[vqnoVh]?*)
   local -- opt=${1:1}
   local -a new_args=()
@@ -166,8 +166,8 @@ while (($#)); do case $1 in
   -D|--debug)       DEBUG=1 ;;
   -V|--version)     echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
   -h|--help)        show_help; exit 0 ;;
-  --)               shift; break ;;
-  -[vqnNfDVh]?*)   set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+  --)               shift; FILES+=("$@"); break ;;
+  -[vqnNfDVh]?*)    set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
   -*)               die 22 "Invalid option ${1@Q}" ;;
   *)                FILES+=("$1") ;;
 esac; shift; done

@@ -71,15 +71,18 @@ Install cleanup traps early, before creating any resources.
 
 ```bash
 # correct
+declare -- TEMP_FILE
+#...
 cleanup() {
   local -i exitcode=${1:-$?}
   trap - SIGINT SIGTERM EXIT         # prevent recursion
-  [[ -n "${temp_file:-}" ]] && rm -f "$temp_file"
+  [[ -z "${TEMP_FILE:-}" ]] || rm -f "$TEMP_FILE"
   exit "$exitcode"
 }
 trap 'cleanup $?' SIGINT SIGTERM EXIT
-
-temp_file=$(mktemp)
+#...
+TEMP_FILE=$(mktemp)
+readonly TEMP_FILE
 ```
 
 Use single quotes for trap commands to delay variable expansion. Use `||:` for cleanup operations that might fail.

@@ -31,14 +31,25 @@ begin_test 'check help includes --model'
 output=$("$BCS_CMD" check -h 2>/dev/null)
 assert_contains "$output" '--model' 'help mentions --model' || true
 
-# Test: check help includes --fast
-begin_test 'check help includes --fast'
+# Test: check help includes --effort
+begin_test 'check help includes --effort'
 output=$("$BCS_CMD" check -h 2>/dev/null)
-assert_contains "$output" '--fast' 'help mentions --fast' || true
+assert_contains "$output" '--effort' 'help mentions --effort' || true
 
 # Test: check --model requires argument
 begin_test 'check --model requires argument'
 assert_fails 'model needs arg' "$BCS_CMD" check --model || true
+
+# Test: check --effort requires argument
+begin_test 'check --effort requires argument'
+assert_fails 'effort needs arg' "$BCS_CMD" check --effort || true
+
+# Test: check rejects invalid effort level
+begin_test 'check rejects invalid effort level'
+temp=$(mktemp --suffix=.sh)
+echo '#!/bin/bash' > "$temp"
+assert_fails 'invalid effort rejected' "$BCS_CMD" check --effort bogus "$temp" || true
+rm -f "$temp"
 
 # Test: check help includes --strict
 begin_test 'check help includes --strict'
@@ -58,11 +69,11 @@ chmod 000 "$unreadable"
 assert_fails 'unreadable file' "$BCS_CMD" check "$unreadable" || true
 rm -f "$unreadable"
 
-# Test: option bundling -sf
-begin_test 'option bundling -sf parsed'
-# -sf should not error on option parsing (will fail on missing file, not option)
-err=$("$BCS_CMD" check -sf 2>&1 || true)
-assert_not_contains "$err" 'Invalid option' '-sf bundling parsed correctly' || true
+# Test: option bundling -se
+begin_test 'option bundling -se parsed'
+# -se should not error on option parsing (will fail on missing effort arg, not option)
+err=$("$BCS_CMD" check -se 2>&1 || true)
+assert_not_contains "$err" 'Invalid option' '-se bundling parsed correctly' || true
 
 # Test: -- separator works
 begin_test '-- separator works'

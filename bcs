@@ -9,23 +9,29 @@ shopt -s inherit_errexit shift_verbose extglob nullglob
 declare -rx PATH=~/.local/bin:/usr/local/bin:/usr/bin:/bin
 
 # Script metadata
-declare -r VERSION=2.0.0
+declare -r VERSION=2.0.1
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -e -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Global variables
-declare -i VERBOSE=1
+declare -i VERBOSE=${VERBOSE:-1}
+
 declare -ra BCS_SEARCH_PATHS=(
   "$SCRIPT_DIR"/data
   "${SCRIPT_DIR%/bin}/share/yatti/BCS/data"
-  /usr/local/share/yatti/BCS/data
+  "${PREFIX:-/usr/local}"/share/yatti/BCS/data
   /usr/share/yatti/BCS/data
 )
 
+declare -ar VALID_MODELS=(haiku sonnet opus)
+declare -ar VALID_EFFORTS=(low medium high max)
+declare -ar VALID_TEMPLATES=(minimal basic complete library)
+
 # Color definitions
 if [[ -t 1 && -t 2 ]]; then
-  declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' BOLD=$'\033[1m' NC=$'\033[0m'
+  declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' \
+             CYAN=$'\033[0;36m' BOLD=$'\033[1m' NC=$'\033[0m'
 else
   declare -r RED='' GREEN='' YELLOW='' CYAN='' BOLD='' NC=''
 fi
@@ -51,45 +57,6 @@ error()   { >&2 _msg "$@"; }
 die()     { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 noarg()   { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
 
-# ---- Path resolution ----
-
-# Find BASH-CODING-STANDARD.md using FHS-compliant search
-find_bcs_md() {
-  local -- path
-  for path in "${BCS_SEARCH_PATHS[@]}"; do
-    if [[ -f "$path"/BASH-CODING-STANDARD.md ]]; then
-      echo "$path"/BASH-CODING-STANDARD.md
-      return 0
-    fi
-  done
-  return 1
-}
-
-# Find data directory containing section files
-find_data_dir() {
-  local -- path
-  for path in "${BCS_SEARCH_PATHS[@]}"; do
-    if [[ -d "$path" ]]; then
-      echo "$path"
-      return 0
-    fi
-  done
-  return 1
-}
-
-# Find md2ansi for formatted output
-find_md2ansi() {
-  local -a search_paths=(
-    "$SCRIPT_DIR"/examples/md2ansi
-    "$SCRIPT_DIR"/lib/md2ansi
-  )
-  local -- path
-  for path in "${search_paths[@]}"; do
-    [[ -x "$path" ]] && { echo "$path"; return 0; } ||:
-  done
-  command -v md2ansi 2>/dev/null # Returns 0 if no error
-}
-
 # ---- Help functions ----
 
 show_main_help() {
@@ -107,7 +74,9 @@ ${BOLD}Commands:${NC}
   help        Show help for a command
 
 ${BOLD}Global Options:${NC}
-  -V, --version   Show version
+  -v, --verbose   Verbose output (default)
+  -q, --quiet     No verbose output
+  -V, --version   Show version $VERSION
   -h, --help      Show this help
 
 ${BOLD}Examples:${NC}
@@ -145,12 +114,12 @@ ${BOLD}bcs template${NC} - Generate BCS-compliant script templates
 ${BOLD}Usage:${NC} $SCRIPT_NAME template [OPTIONS]
 
 ${BOLD}Options:${NC}
-  -t, --type TYPE       Template type: minimal, basic, complete, library
+  -t, --type TYPE       Template type (minimal, ${BOLD}basic${NC}, complete, library)
                         (default: basic)
   -n, --name NAME       Script name for placeholders
   -d, --desc TEXT       Script description
-  -V, --version VER     Version string (default: 1.0.0)
-  -o, --output FILE     Output file (default: stdout)
+  -V, --version VER     Version string (default: ${BOLD}1.0.0${NC})
+  -o, --output FILE     Output file (default: ${BOLD}stdout${NC})
   -x, --executable      Make output file executable
   -f, --force           Overwrite existing files
   -h, --help            Show this help
@@ -175,9 +144,10 @@ ${BOLD}bcs check${NC} - AI-powered BCS compliance checking
 ${BOLD}Usage:${NC} $SCRIPT_NAME check [OPTIONS] SCRIPT
 
 ${BOLD}Options:${NC}
-  -m, --model MODEL     Claude model (default: sonnet)
-  -f, --fast            Quick check using low effort
+  -m, --model MODEL     Claude model (${BOLD}haiku${NC}, sonnet, opus)
+  -e, --effort LEVEL    Effort level (${BOLD}low${NC}, medium, high, max)
   -s, --strict          Treat warnings as violations
+  -S, --no-strict       Don't treat warnings as violations
   -q, --quiet           Suppress info messages
   -h, --help            Show this help
 
@@ -189,7 +159,7 @@ ${BOLD}Inline suppression:${NC}
 ${BOLD}Examples:${NC}
   $SCRIPT_NAME check myscript.sh
   $SCRIPT_NAME check --strict deploy.sh
-  $SCRIPT_NAME check --fast myscript.sh
+  $SCRIPT_NAME check --effort low myscript.sh
   $SCRIPT_NAME check --model opus deploy.sh
 HELP
 }
@@ -219,7 +189,7 @@ ${BOLD}bcs generate${NC} - Regenerate BASH-CODING-STANDARD.md from section files
 ${BOLD}Usage:${NC} $SCRIPT_NAME generate [OPTIONS]
 
 ${BOLD}Options:${NC}
-  -o, --output FILE   Output file (default: data/BASH-CODING-STANDARD.md)
+  -o, --output FILE   Output file (default: ${BOLD}data/BASH-CODING-STANDARD.md${NC})
   -h, --help          Show this help
 
 Concatenates all data/[0-9]*.md section files into a single standard
@@ -227,33 +197,74 @@ document with a table of contents header.
 HELP
 }
 
+# ---- Path resolution helpers ----
+
+# Find BASH-CODING-STANDARD.md using FHS-compliant search
+_find_bcs_md() {
+  local -- path
+  for path in "${BCS_SEARCH_PATHS[@]}"; do
+    if [[ -f "$path"/BASH-CODING-STANDARD.md ]]; then
+      echo "$path"/BASH-CODING-STANDARD.md
+      return 0
+    fi
+  done
+  return 1
+}
+
+# Find data directory containing section files
+_find_data_dir() {
+  local -- path
+  for path in "${BCS_SEARCH_PATHS[@]}"; do
+    if [[ -d "$path" ]]; then
+      echo "$path"
+      return 0
+    fi
+  done
+  return 1
+}
+
+# Find md2ansi for formatted output
+_find_md2ansi() {
+  local -a search_paths=(
+    "$SCRIPT_DIR"/examples/md2ansi
+    "$SCRIPT_DIR"/lib/md2ansi
+  )
+  local -- path
+  for path in "${search_paths[@]}"; do
+    [[ -x "$path" ]] && { echo "$path"; return 0; } ||:
+  done
+  command -v md2ansi 2>/dev/null # Falls through to PATH search; non-zero = not found
+}
+
 # ---- Subcommand: display ----
 
 cmd_display() {
   local -i force_cat=0 squeeze_blanks=0
+  local -- bcs_file
 
   while (($#)); do case $1 in
     -c|--cat)     force_cat=1 ;;
-    -f|--file)    find_bcs_md || die 3 'BASH-CODING-STANDARD.md not found'; return 0 ;;
+    -f|--file)    _find_bcs_md || die 3 'BASH-CODING-STANDARD.md not found'; return 0 ;;
     -s|--squeeze) squeeze_blanks=1 ;;
     -S|--symlink)
-      local -- bcs_file
-      bcs_file=$(find_bcs_md) || die 3 'BASH-CODING-STANDARD.md not found'
+      bcs_file=$(_find_bcs_md) || die 3 'BASH-CODING-STANDARD.md not found'
       ln -sf "$bcs_file" .
-      info 'Symlinked BASH-CODING-STANDARD.md → '"$bcs_file"
+      info "Symlinked BASH-CODING-STANDARD.md → $bcs_file"
       return 0
       ;;
+    -v|--verbose) VERBOSE=1 ;;
+    -q|--quiet)   VERBOSE=0 ;;
     -h|--help)    show_display_help; return 0 ;;
-    -[cfshS]?*)   set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+    --)           shift; break ;;
+    -[cfsSvqh]?*) set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
     -*)           die 22 "Invalid option ${1@Q}" ;;
     *)            die 2 "Unexpected argument ${1@Q}" ;;
   esac; shift; done
 
-  local -- bcs_file
-  bcs_file=$(find_bcs_md) || die 3 'BASH-CODING-STANDARD.md not found'
+  bcs_file=$(_find_bcs_md) || die 3 'BASH-CODING-STANDARD.md not found'
 
   local -a cat_opts=()
-  ((squeeze_blanks)) && cat_opts+=(-s) ||:
+  ((squeeze_blanks==0)) || cat_opts+=(-s)
 
   if ((force_cat)); then
     cat "${cat_opts[@]}" -- "$bcs_file"
@@ -263,7 +274,7 @@ cmd_display() {
   # Try md2ansi for formatted output if terminal
   if [[ -t 1 ]]; then
     local -- md2ansi_cmd
-    md2ansi_cmd=$(find_md2ansi) || md2ansi_cmd=''
+    md2ansi_cmd=$(_find_md2ansi) || md2ansi_cmd=''
     if [[ -n "$md2ansi_cmd" ]]; then
       "$md2ansi_cmd" -- "$bcs_file" | less -FXRS
       return 0
@@ -276,6 +287,7 @@ cmd_display() {
 
 # ---- Subcommand: template ----
 
+#bcscheck disable=BCS0806
 cmd_template() {
   local -- template_type=basic
   local -- script_name=''
@@ -286,24 +298,24 @@ cmd_template() {
   local -i force_overwrite=0
 
   while (($#)); do case $1 in
-    -t|--type)     noarg "$@"; shift; template_type=$1 ;;
-    -n|--name)     noarg "$@"; shift; script_name=$1 ;;
-    -d|--desc)     noarg "$@"; shift; description=$1 ;;
-    -V|--version)  noarg "$@"; shift; version=$1 ;;
-    -o|--output)   noarg "$@"; shift; output_file=$1 ;;
+    -t|--type)       noarg "$@"; shift; template_type=$1
+                     [[ " ${VALID_TEMPLATES[*]} " == *" $template_type "* ]] || \
+                       die 22 "Invalid template type ${template_type@Q} (valid: minimal, basic, complete, library)"
+                     ;;
+    -n|--name)       noarg "$@"; shift; script_name=$1 ;;
+    -d|--desc)       noarg "$@"; shift; description=$1 ;;
+    -V|--version)    noarg "$@"; shift; version=$1 ;;
+    -o|--output)     noarg "$@"; shift; output_file=$1 ;;
     -x|--executable) make_executable=1 ;;
-    -f|--force)    force_overwrite=1 ;;
-    -h|--help)     show_template_help; return 0 ;;
-    -[tndVoxfh]?*) set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
-    -*)            die 22 "Invalid option ${1@Q}" ;;
-    *)             die 2 "Unexpected argument ${1@Q}" ;;
+    -f|--force)      force_overwrite=1 ;;
+    -v|--verbose)    VERBOSE=1 ;;
+    -q|--quiet)      VERBOSE=0 ;;
+    -h|--help)       show_template_help; return 0 ;;
+    --)              shift; break ;;
+    -[tndVoxfvqh]?*) set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+    -*)              die 22 "Invalid option ${1@Q}" ;;
+    *)               die 2 "Unexpected argument ${1@Q}" ;;
   esac; shift; done
-
-  # Validate template type
-  case $template_type in
-    minimal|basic|complete|library) ;;
-    *) die 22 "Invalid template type ${template_type@Q} (valid: minimal, basic, complete, library)" ;;
-  esac
 
   # Determine script name from output file if not specified
   if [[ -z "$script_name" ]]; then
@@ -316,7 +328,7 @@ cmd_template() {
 
   # Find template file
   local -- data_dir
-  data_dir=$(find_data_dir) || die 3 'Data directory not found'
+  data_dir=$(_find_data_dir) || die 3 'Data directory not found'
   local -- template_file="$data_dir"/templates/"$template_type".sh.template
   [[ -f "$template_file" ]] || die 3 "Template not found ${template_file@Q}"
 
@@ -348,25 +360,33 @@ cmd_template() {
 # ---- Subcommand: check ----
 
 cmd_check() {
-  local -- script_file='' model=sonnet
-  local -i strict=0 quiet=0 fast=0
+  local -- script_file='' model=haiku effort=low
+  local -i strict=0
+  local -ar onoff=(off on)
 
   while (($#)); do case $1 in
-    -m|--model)  noarg "$@"; shift; model=$1 ;;
-    -f|--fast)   fast=1 ;;
-    -s|--strict) strict=1 ;;
-    -q|--quiet)  quiet=1 ;;
-    -h|--help)   show_check_help; return 0 ;;
-    -[mfsqh]?*)  set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
-    --)          shift; break ;;
-    -*)          die 22 "Invalid option ${1@Q}" ;;
-    *)
-      [[ -z "$script_file" ]] || die 2 'Only one script file allowed'
-      script_file=$1
+    -m|--model)     noarg "$@"; shift; model=$1
+                    [[ " ${VALID_MODELS[*]} " == *" $model "* ]] || die 22 "Invalid model ${model@Q}"
+                    ;;
+    -e|--effort)    noarg "$@"; shift; effort=$1
+                    [[ " ${VALID_EFFORTS[*]} " == *" $effort "* ]] || die 22 "Invalid effort ${effort@Q}"
+                    ;;
+    -s|--strict)    strict=1 ;;
+    -S|--no-strict) strict=0 ;;
+    -v|--verbose)   VERBOSE=1 ;;
+    -q|--quiet)     VERBOSE=0 ;;
+    -h|--help)      show_check_help; return 0 ;;
+    --)             shift; [[ -n "${1:-}" ]] && { script_file=$1; shift; }; break ;;
+    -[mesSvqh]?*)   set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+    -*)             die 22 "Invalid option ${1@Q}" ;;
+    *)              [[ -z "$script_file" ]] || die 2 'Only one script file allowed'
+                    script_file=$1
       ;;
   esac; shift; done
 
   [[ -n "$script_file" ]] || die 2 'No script file specified'
+  [[ -z "$effort" || "$effort" =~ ^(low|medium|high|max)$ ]] \
+    || die 22 "Invalid effort level ${effort@Q} (must be low, medium, high, or max)"
   [[ -f "$script_file" ]] || die 3 "Script not found ${script_file@Q}"
   [[ -r "$script_file" ]] || die 13 "Cannot read ${script_file@Q}"
   script_file=$(realpath -e -- "$script_file")
@@ -376,80 +396,51 @@ cmd_check() {
 
   # Find the standard document
   local -- bcs_file
-  bcs_file=$(find_bcs_md) || die 3 'BASH-CODING-STANDARD.md not found'
+  bcs_file=$(_find_bcs_md) || die 3 'BASH-CODING-STANDARD.md not found'
 
-  # Build the system prompt
-  local -- system_prompt
-  system_prompt=$(build_check_prompt "$bcs_file" "$strict")
+  # Build prompt using @file references — lets Claude CLI load files natively
+  local -- prompt="You are a Bash script compliance validator.
+
+Analyze @$script_file against the Bash Coding Standard defined in @$bcs_file.
+
+For each finding, report:
+- The BCS code (e.g., BCS0101)
+- Severity: VIOLATION or WARNING
+- The specific line(s) affected
+- What is wrong and how to fix it
+
+At the end, provide a summary table.
+
+Respect inline suppression: eg, #bcscheck disable=BCS0101 exempts the next line/block."
+
+  ((strict)) && prompt+=$'\nSTRICT MODE: Treat all warnings as violations.' ||:
 
   # Run compliance check
-  ((quiet)) || info "Checking ${script_file@Q} against BCS..."
+  ((!VERBOSE)) || info "Checking ${script_file@Q} against BCS..." \
+                       "Using model ${model@Q}, effort ${effort@Q}, strict ${onoff[strict]@Q}"
   local -- result
   local -i exit_code=0
 
   # cd to clean temp dir — prevents claude from loading local CLAUDE.md
-  local -- original_dir=$PWD
   local -- check_dir
-  check_dir=$(mktemp -d -t 'bcs-XXXXX')
-  #shellcheck disable=SC2064  # Intentional: expand $original_dir and $check_dir at definition time
-  trap "cd '$original_dir' 2>/dev/null; rm -rf '$check_dir'" RETURN
+  check_dir=$(mktemp -d -t 'bcs-XXXXX') || die 1 'Failed to create temp dir'
+  #bcscheck disable=BCS0603
+  #shellcheck disable=SC2064
+  trap "cd '$PWD' 2>/dev/null; rm -rf '$check_dir'" RETURN
   cd "$check_dir"
-  [[ -d /run/user/"${EUID:?}" ]] && export TMPDIR=/run/user/"${EUID:?}" ||:
+  [[ -d /run/user/"$EUID" ]] && declare -x TMPDIR=/run/user/"$EUID" ||:
 
-  local -a claude_args=(--model "$model" --system-prompt "$system_prompt")
-  ((fast)) && claude_args+=(--effort low) ||:
+  local -a claude_args=(--model "$model")
+  [[ -n "$effort" ]] && claude_args+=(--effort "$effort") ||:
 
   #shellcheck disable=SC1007
-  result=$(CLAUDECODE= claude "${claude_args[@]}" -p "Script to validate:
-
-\`\`\`bash
-$(< "$script_file")
-\`\`\`" 2>/dev/null) || exit_code=$?
+  result=$(CLAUDECODE= claude "${claude_args[@]}" -p "$prompt" 2>/dev/null) || exit_code=$?
 
   if [[ -n "$result" ]]; then
     echo "$result"
   fi
 
   return "$exit_code"
-}
-
-# Build the system prompt for compliance checking
-build_check_prompt() {
-  local -- bcs_file=$1
-  local -i strict=${2:-0}
-
-  cat <<'PROMPT'
-You are a Bash script compliance validator for the Bash Coding Standard (BCS).
-
-Analyze the provided script against the BCS rules below. For each finding, report:
-- The BCS code (e.g., BCS0101)
-- Whether it is a VIOLATION, WARNING, or SUGGESTION
-- The specific line(s) affected
-- What is wrong and how to fix it
-
-At the end, provide a summary with:
-- Count of violations, warnings, and suggestions
-- Compliance percentage (0-100)
-- Overall assessment: COMPLIANT, NEEDS_WORK, or NON_COMPLIANT
-
-Respect inline suppression directives. When you see:
-  #bcscheck disable=BCS0101
-the next line is exempt from that specific rule. Multiple codes can be comma-separated:
-  #bcscheck disable=BCS0101,BCS0606
-Do not report suppressed rules as violations, warnings, or suggestions. Note them separately as SUPPRESSED if present.
-
-PROMPT
-
-  if ((strict)); then
-    echo 'STRICT MODE: Treat all warnings as violations.'
-    echo ''
-  fi
-
-  echo '---'
-  echo ''
-  echo '# Bash Coding Standard (BCS) Rules'
-  echo ''
-  cat -- "$bcs_file"
 }
 
 # ---- Subcommand: codes ----
@@ -463,7 +454,7 @@ cmd_codes() {
   esac; shift; done
 
   local -- data_dir
-  data_dir=$(find_data_dir) || die 3 'Data directory not found'
+  data_dir=$(_find_data_dir) || die 3 'Data directory not found'
 
   # Extract all ## BCS#### headers from section files
   local -- line code title
@@ -483,15 +474,18 @@ cmd_generate() {
   local -- output_file=''
 
   while (($#)); do case $1 in
-    -o|--output) noarg "$@"; shift; output_file=$1 ;;
-    -h|--help)   show_generate_help; return 0 ;;
-    -[oh]?*)     set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
-    -*)          die 22 "Invalid option ${1@Q}" ;;
-    *)           die 2 "Unexpected argument ${1@Q}" ;;
+    -o|--output)   noarg "$@"; shift; output_file=$1 ;;
+    -v|--verbose)  VERBOSE=1 ;;
+    -q|--quiet)    VERBOSE=0 ;;
+    -h|--help)     show_generate_help; return 0 ;;
+    --)            shift; break ;;
+    -[ovqh]?*)     set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+    -*)            die 22 "Invalid option ${1@Q}" ;;
+    *)             die 2 "Unexpected argument ${1@Q}" ;;
   esac; shift; done
 
   local -- data_dir
-  data_dir=$(find_data_dir) || die 3 'Data directory not found'
+  data_dir=$(_find_data_dir) || die 3 'Data directory not found'
 
   # Default output location
   [[ -n "$output_file" ]] || output_file="$data_dir"/BASH-CODING-STANDARD.md
@@ -511,19 +505,19 @@ cmd_generate() {
   {
     # Header
     echo '# Bash Coding Standard (BCS)'
-    echo ''
+    echo
     echo '**Concise, actionable coding rules for Bash 5.2+**'
-    echo ''
+    echo
     echo 'Designed by Okusi Associates for the Indonesian Open Technology Foundation (YaTTI).'
     echo 'Target audience: both human programmers and AI assistants.'
-    echo ''
+    echo
     echo '## Coding Principles'
     echo '- K.I.S.S.'
     echo '- "The best process is no process"'
     echo '- "Everything should be made as simple as possible, but not any simpler."'
-    echo ''
+    echo
     echo '**Critical:** Do not over-engineer scripts; remove unused functions and variables.'
-    echo ''
+    echo
     echo '## Contents'
     echo '1. Script Structure & Layout'
     echo '2. Variables & Data Types'
@@ -537,9 +531,9 @@ cmd_generate() {
     echo '10. Security'
     echo '11. Concurrency & Jobs'
     echo '12. Style & Development'
-    echo ''
+    echo
     echo '---'
-    echo ''
+    echo
 
     # Concatenate section files
     local -i first=1
@@ -547,9 +541,9 @@ cmd_generate() {
       if ((first)); then
         first=0
       else
-        echo ''
+        echo
         echo '---'
-        echo ''
+        echo
       fi
       cat -- "$section_file"
     done
@@ -582,26 +576,33 @@ cmd_help() {
 # ---- Main dispatcher ----
 
 main() {
-  local -- subcmd
+  local -- subcmd=display
 
-  if (($#)); then
-    subcmd=$1
+  while (($#)); do
+    case $1 in
+      -V|--version)
+        echo "$SCRIPT_NAME $VERSION"
+        return 0 ;;
+      -h|--help)
+        show_main_help
+        return 0 ;;
+      -v|--verbose)
+        VERBOSE=1 ;;
+      -q|--quiet)
+        VERBOSE=0 ;;
+      --)
+        shift; break ;;
+      -[vqVh]?*)  set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+       # Any other options means it's for subcmd 'display'
+       -*)
+         break ;;
+       *)
+         subcmd=${1,,}
+         shift
+         break ;;
+    esac
     shift
-  else
-    subcmd=display
-  fi
-
-  # Handle global options
-  case $subcmd in
-    -V|--version)
-      echo "$SCRIPT_NAME $VERSION"
-      return 0
-      ;;
-    -h|--help)
-      show_main_help
-      return 0
-      ;;
-  esac
+  done
 
   # Dispatch to subcommand
   case $subcmd in
@@ -611,15 +612,7 @@ main() {
     codes)    cmd_codes "$@" ;;
     generate) cmd_generate "$@" ;;
     help)     cmd_help "$@" ;;
-    -*)
-      # Treat unknown dash options as display options
-      cmd_display "$subcmd" "$@"
-      ;;
-    *)
-      error "Unknown command ${subcmd@Q}"
-      show_main_help
-      return 2
-      ;;
+    *)        die 2 "Unknown command ${subcmd@Q}" ;;
   esac
 }
 

@@ -50,7 +50,7 @@ Without `local`, variables become global, overwrite same-named variables, persis
 
 ```bash
 # correct
-readonly -- MAX_RETRIES=3              # UPPER_CASE for constants/globals
+readonly MAX_RETRIES=3              # UPPER_CASE for constants/globals
 declare -i VERBOSE=1                   # UPPER_CASE for global state
 
 process_log_file() {                   # lower_case for functions
@@ -73,7 +73,7 @@ Use `readonly` for values that never change. Use `declare -x` for variables need
 
 ```bash
 # correct
-readonly -- CONFIG_DIR=/etc/myapp
+readonly CONFIG_DIR=/etc/myapp
 declare -x DATABASE_URL='postgres://localhost/mydb'
 declare -rx BUILD_ENV=production     # readonly + exported
 
@@ -99,10 +99,10 @@ For other variable groups, declare first, then make readonly in a batch:
 declare -- PREFIX=/usr/local
 declare -- BIN_DIR="$PREFIX"/bin
 declare -- SHARE_DIR="$PREFIX"/share/myapp
-readonly -- PREFIX BIN_DIR SHARE_DIR
+readonly PREFIX BIN_DIR SHARE_DIR
 
 # wrong — readonly before parsing complete
-readonly -- VERBOSE=1    # can't change during arg parsing
+readonly VERBOSE=1    # can't change during arg parsing
 ```
 
 Three-step workflow: (1) declare with defaults, (2) parse/modify in main, (3) readonly after parsing.

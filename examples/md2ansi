@@ -4,14 +4,12 @@
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-declare -rx PATH=/usr/local/bin:/usr/bin:/bin
+export PATH=/usr/local/bin:/usr/bin:/bin
 export PS4='+ ${BASH_SOURCE##*/}:${LINENO}:${FUNCNAME[0]:+${FUNCNAME[0]}():} '
 
 # Script metadata
 declare -r VERSION=1.0.1
-#shellcheck disable=SC2155
-declare -r SCRIPT_PATH=$(realpath -e -- "$0")
-declare -r SCRIPT_NAME=${SCRIPT_PATH##*/}
+declare -r SCRIPT_NAME=${0##*/}
 
 # Global configuration
 declare -i TERM_WIDTH=0  # 0 means auto-detect
@@ -130,11 +128,11 @@ validate_file_size() {
   local -i max_size=$2
   local -i file_size
 
-  [[ -f "$filepath" ]] || die 1 "File not found ${filepath@Q}"
-  [[ -r "$filepath" ]] || die 1 "Cannot read file ${filepath@Q}"
+  [[ -f "$filepath" ]] || die 3 "File not found ${filepath@Q}"
+  [[ -r "$filepath" ]] || die 13 "Cannot read file ${filepath@Q}"
 
   # Check if it's a directory
-  [[ ! -d "$filepath" ]] || die 1 "${filepath@Q} is a directory, not a file"
+  [[ ! -d "$filepath" ]] || die 3 "${filepath@Q} is a directory, not a file"
 
   # Get file size in bytes
   file_size=$(stat -c '%s' "$filepath" 2>/dev/null || echo 0)
@@ -173,7 +171,7 @@ install_signal_handlers() {
 # Usage: noarg "$1" "$2" (checks if $2 exists and doesn't start with -)
 noarg() {
   if (($# < 2)) || [[ ${2:0:1} == '-' ]]; then
-    die 22 "Missing argument for option ${1@Q}"
+    die 8 "Missing argument for option ${1@Q}"
   fi
   return 0
 }
