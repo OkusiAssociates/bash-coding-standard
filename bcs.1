@@ -104,8 +104,8 @@ CLI in PATH.
 .BR \-m ", " \-\-model " " \fIMODEL\fR
 Claude model to use (default: sonnet).
 .TP
-.BR \-f ", " \-\-fast
-Quick check using low effort.
+.BR \-e ", " \-\-effort " " \fILEVEL\fR
+Effort level: low, medium, high, or max.
 .TP
 .BR \-s ", " \-\-strict
 Treat warnings as violations.
@@ -192,7 +192,7 @@ subcommand for temporary working directories. Falls back to
 Installed CLI binary.
 .TP
 .I /usr/local/bin/bcscheck
-Standalone compliance checker (calls bcs check \-\-strict \-\-fast).
+Standalone compliance checker (calls bcs check \-\-strict \-\-effort low).
 .TP
 .I /usr/local/share/yatti/BCS/data/
 Installed standard document and section files.

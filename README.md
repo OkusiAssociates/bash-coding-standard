@@ -117,7 +117,8 @@ Uses Claude AI to validate scripts against the full standard:
 ```bash
 ./bcs check myscript.sh           # Standard check
 ./bcs check --strict deploy.sh    # Treat warnings as violations
-./bcscheck myscript.sh            # Strict + fast check (--strict --fast)
+./bcs check --effort low myscript.sh  # Quick low-effort check
+./bcscheck myscript.sh            # Strict + low effort (--strict --effort low)
 ```
 
 ## Examples
