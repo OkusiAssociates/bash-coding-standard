@@ -237,3 +237,55 @@ TEMP_DIR=$(mktemp -d)
 ```
 
 Always disable traps inside the cleanup function to prevent recursion.
+
+## BCS0111 Configuration File Loading
+
+Use `read_conf()` to source the first matching `.conf` file from a priority-ordered search path. User configuration overrides system defaults.
+
+```bash
+# correct — standard read_conf() function
+read_conf() {
+  local -- conf_file=''
+  local -a search_paths=(
+    "${XDG_CONFIG_HOME:-$HOME/.config}"/"$SCRIPT_NAME"/"$SCRIPT_NAME".conf
+    /etc/"$SCRIPT_NAME"/"$SCRIPT_NAME".conf
+    /etc/"$SCRIPT_NAME".conf
+    /usr/local/etc/"$SCRIPT_NAME"/"$SCRIPT_NAME".conf
+    /usr/share/"$SCRIPT_NAME"/"$SCRIPT_NAME".conf
+    /usr/lib/"$SCRIPT_NAME"/"$SCRIPT_NAME".conf
+  )
+
+  for conf_file in "${search_paths[@]}"; do
+    if [[ -f "$conf_file" ]]; then
+      # shellcheck source=/dev/null
+      source "$conf_file"
+      return 0
+    fi
+  done
+
+  return 1
+}
+```
+
+Search path priority (first match wins):
+
+1. `$XDG_CONFIG_HOME/name/name.conf` — user config (XDG standard)
+2. `/etc/name/name.conf` — system config (directory)
+3. `/etc/name.conf` — system config (flat file)
+4. `/usr/local/etc/name/name.conf` — locally-installed defaults
+5. `/usr/share/name/name.conf` — package-provided defaults
+6. `/usr/lib/name/name.conf` — library-provided defaults
+
+Call `read_conf` early in `main()`, before argument parsing if config values set defaults, or after parsing if CLI options should override config:
+
+```bash
+# correct — config sets defaults, CLI overrides
+main() {
+  read_conf ||:
+  while (($#)); do case $1 in
+    # options override config values...
+  esac; shift; done
+}
+```
+
+Configuration files are sourced as Bash — they execute in the calling shell's context. Only source config files from trusted locations with appropriate permissions.

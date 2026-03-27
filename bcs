@@ -430,7 +430,7 @@ Respect inline suppression: eg, #bcscheck disable=BCS0101 exempts the next line/
   cd "$check_dir"
   [[ -d /run/user/"$EUID" ]] && declare -x TMPDIR=/run/user/"$EUID" ||:
 
-  local -a claude_args=(--model "$model")
+  local -a claude_args=(--model "$model" --permission-mode bypassPermissions)
   [[ -n "$effort" ]] && claude_args+=(--effort "$effort") ||:
 
   #shellcheck disable=SC1007

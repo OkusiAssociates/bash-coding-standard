@@ -43,15 +43,15 @@ Never trust inherited IFS values.
 
 ```bash
 # correct — one-line IFS for single command
-IFS=',' read -ra fields <<< "$csv_data"
+IFS=',' read -ar fields <<< "$csv_data"
 
 # correct — subshell isolation
-( IFS=','; read -ra fields <<< "$data" )
+( IFS=','; read -ar fields <<< "$data" )
 
 # correct — local scoping in functions
 parse_csv() {
   local -- IFS=','
-  read -ra fields <<< "$1"
+  read -ar fields <<< "$1"
 }
 
 # correct — null-delimited input
