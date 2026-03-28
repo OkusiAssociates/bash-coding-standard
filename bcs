@@ -24,15 +24,19 @@ declare -ra BCS_SEARCH_PATHS=(
   /usr/share/yatti/BCS/data
 )
 
-declare -ar VALID_MODELS=(haiku sonnet opus)
+declare -ar VALID_MODELS=(fast balanced thorough)
 declare -ar VALID_EFFORTS=(low medium high max)
 declare -ar VALID_TEMPLATES=(minimal basic complete library)
-declare -ar VALID_BACKENDS=(auto claude ollama anthropic openai)
+declare -ar VALID_BACKENDS=(auto claude ollama anthropic google openai)
 
 # Model-tier to concrete API model mapping per backend
-declare -Ar ANTHROPIC_MODELS=([haiku]=claude-haiku-4-5-20251001 [sonnet]=claude-sonnet-4-6 [opus]=claude-opus-4-6)
-declare -Ar OLLAMA_MODELS=([haiku]=qwen3.5:9b [sonnet]=qwen3.5:14b [opus]=qwen3.5:14b)
-declare -Ar OPENAI_MODELS=([haiku]=gpt-4o-mini [sonnet]=gpt-4o [opus]=gpt-4o)
+declare -Ar ANTHROPIC_MODELS=([fast]=claude-haiku-4-5-20251001 [balanced]=claude-sonnet-4-6 [thorough]=claude-opus-4-6)
+declare -Ar OLLAMA_MODELS=([fast]=qwen3.5:9b [balanced]=qwen3.5:14b [thorough]=qwen3.5:14b)
+declare -Ar GOOGLE_MODELS=([fast]=gemini-2.5-flash-lite [balanced]=gemini-2.5-flash [thorough]=gemini-2.5-pro)
+declare -Ar OPENAI_MODELS=([fast]=gpt-4o-mini [balanced]=gpt-5.4-mini [thorough]=gpt-5.4)
+
+# Prefer GOOGLE_API_KEY over GEMINI_API_KEY; unset GEMINI_API_KEY if both set
+[[ -z "${GOOGLE_API_KEY:-}" || -z "${GEMINI_API_KEY:-}" ]] || unset GEMINI_API_KEY
 
 # Effort-level to max output tokens mapping for API backends
 declare -Ar EFFORT_TOKENS=([low]=4096 [medium]=8192 [high]=16384 [max]=32768)
@@ -178,8 +182,8 @@ ${BOLD}bcs check${NC} - AI-powered BCS compliance checking
 ${BOLD}Usage:${NC} $SCRIPT_NAME check [OPTIONS] SCRIPT
 
 ${BOLD}Options:${NC}
-  -b, --backend BACKEND   LLM backend (${BOLD}auto${NC}, claude, ollama, anthropic, openai)
-  -m, --model MODEL       Quality tier (${BOLD}haiku${NC}, sonnet, opus)
+  -b, --backend BACKEND   LLM backend (${BOLD}auto${NC}, claude, ollama, anthropic, google, openai)
+  -m, --model MODEL       Quality tier (${BOLD}fast${NC}, balanced, thorough)
   -e, --effort LEVEL      Analysis depth (${BOLD}low${NC}, medium, high, max)
   -s, --strict            Treat warnings as violations
   -S, --no-strict         Don't treat warnings as violations
@@ -187,10 +191,11 @@ ${BOLD}Options:${NC}
   -h, --help              Show this help
 
 ${BOLD}Backends:${NC}
-  auto        Auto-detect: ollama, anthropic, openai, claude (default)
+  auto        Auto-detect: ollama, anthropic, google, openai, claude (default)
   claude      Claude CLI (\`claude\` command)
   ollama      Local Ollama server (default: localhost:11434)
   anthropic   Anthropic Messages API (requires ANTHROPIC_API_KEY)
+  google      Google Gemini API (requires GOOGLE_API_KEY or GEMINI_API_KEY)
   openai      OpenAI Chat API (requires OPENAI_API_KEY)
 
 ${BOLD}Effort Levels:${NC}
@@ -211,6 +216,8 @@ ${BOLD}Environment / Config Variables:${NC}
   BCS_OLLAMA_MODEL   Override Ollama model selection
   OLLAMA_HOST        Ollama server address (default: localhost:11434)
   ANTHROPIC_API_KEY  Anthropic API key (for anthropic backend)
+  GOOGLE_API_KEY     Google API key (for google backend)
+  GEMINI_API_KEY     Alternative Google key (GOOGLE_API_KEY takes priority)
   OPENAI_API_KEY     OpenAI API key (for openai backend)
 
 ${BOLD}Inline suppression:${NC}
@@ -220,7 +227,7 @@ ${BOLD}Examples:${NC}
   $SCRIPT_NAME check myscript.sh
   $SCRIPT_NAME check --backend ollama myscript.sh
   $SCRIPT_NAME check --effort high --strict deploy.sh
-  $SCRIPT_NAME check --model opus -e max deploy.sh
+  $SCRIPT_NAME check --model thorough -e max deploy.sh
 HELP
 }
 
@@ -298,11 +305,12 @@ _find_md2ansi() {
 
 # ---- LLM backend functions ----
 
-# Auto-detect available LLM backend (ollama → anthropic → openai → claude)
+# Auto-detect available LLM backend (ollama → anthropic → google → openai → claude)
 _detect_backend() {
   local -- host=${OLLAMA_HOST:-localhost:11434}
   curl -sf --connect-timeout 2 "http://$host/api/tags" &>/dev/null && { echo ollama; return 0; } ||:
   [[ -n "${ANTHROPIC_API_KEY:-}" ]] && { echo anthropic; return 0; } ||:
+  [[ -n "${GOOGLE_API_KEY:-${GEMINI_API_KEY:-}}" ]] && { echo google; return 0; } ||:
   [[ -n "${OPENAI_API_KEY:-}" ]] && { echo openai; return 0; } ||:
   command -v claude &>/dev/null && { echo claude; return 0; } ||:
   return 1
@@ -388,7 +396,7 @@ _llm_openai() {
     --argjson max_tokens "$max_tokens" \
     --arg system "$sys" \
     --arg user "$usr" \
-    '{model: $model, max_tokens: $max_tokens,
+    '{model: $model, max_completion_tokens: $max_tokens,
       messages: [{role: "system", content: $system}, {role: "user", content: $user}]}') \
     || die 1 'Failed to build JSON payload'
 
@@ -405,6 +413,40 @@ _llm_openai() {
 
   jq -r '.choices[0].message.content // empty' <<< "$body"
   echo "___TOKENS___ $(jq -r '"in=\(.usage.prompt_tokens // 0) out=\(.usage.completion_tokens // 0)"' <<< "$body")"
+}
+
+# LLM backend: Google Gemini API
+_llm_google() {
+  local -- model=$1 effort=$2 sys=$3 usr=$4
+  local -- api_key=${GOOGLE_API_KEY:-${GEMINI_API_KEY:-}}
+  [[ -n "$api_key" ]] || die 18 'GOOGLE_API_KEY or GEMINI_API_KEY not set'
+  local -- api_model=${GOOGLE_MODELS[$model]}
+  local -i max_tokens=${EFFORT_TOKENS[$effort]}
+
+  local -- payload
+  payload=$(jq -n \
+    --argjson max_tokens "$max_tokens" \
+    --arg system "$sys" \
+    --arg user "$usr" \
+    '{systemInstruction: {parts: [{text: $system}]},
+      contents: [{role: "user", parts: [{text: $user}]}],
+      generationConfig: {maxOutputTokens: $max_tokens}}') \
+    || die 1 'Failed to build JSON payload'
+
+  local -- url="https://generativelanguage.googleapis.com/v1beta/models/$api_model:generateContent"
+  local -- raw body
+  local -i http_code
+  raw=$(curl -s --max-time 300 -w $'\n%{http_code}' \
+    -H 'Content-Type: application/json' \
+    -H 'x-goog-api-key: '"$api_key" \
+    -d "$payload" \
+    "$url") || die 5 'Google API connection failed'
+  http_code=${raw##*$'\n'}
+  body=${raw%$'\n'"$http_code"}
+  ((http_code >= 200 && http_code < 300)) || die 5 "Google API error (HTTP $http_code)"
+
+  jq -r '.candidates[0].content.parts[0].text // empty' <<< "$body"
+  echo "___TOKENS___ $(jq -r '"in=\(.usageMetadata.promptTokenCount // 0) out=\(.usageMetadata.candidatesTokenCount // 0)"' <<< "$body")"
 }
 
 # LLM backend: Claude CLI (original implementation, preserves @file references)
@@ -569,7 +611,7 @@ cmd_template() {
 # ---- Subcommand: check ----
 
 cmd_check() {
-  local -- script_file='' model=${BCS_MODEL:-haiku} effort=${BCS_EFFORT:-low} backend=${BCS_BACKEND:-auto}
+  local -- script_file='' model=${BCS_MODEL:-fast} effort=${BCS_EFFORT:-low} backend=${BCS_BACKEND:-auto}
   local -i strict=${BCS_STRICT:-0}
   local -ar onoff=(off on)
 
@@ -663,6 +705,7 @@ $numbered_script"
 
     case $backend in
       anthropic) result=$(_llm_anthropic "$model" "$effort" "$sys_prompt" "$usr_prompt") || exit_code=$? ;;
+      google)    result=$(_llm_google "$model" "$effort" "$sys_prompt" "$usr_prompt") || exit_code=$? ;;
       ollama)    result=$(_llm_ollama "$model" "$effort" "$sys_prompt" "$usr_prompt") || exit_code=$? ;;
       openai)    result=$(_llm_openai "$model" "$effort" "$sys_prompt" "$usr_prompt") || exit_code=$? ;;
     esac

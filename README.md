@@ -114,27 +114,39 @@ Four template types for different needs:
 ### Compliance Checking
 
 Uses LLM-powered analysis to validate scripts against the full standard.
-Supports multiple backends: Ollama (local), Anthropic API, OpenAI API, and Claude CLI.
-Auto-detects the first available backend.
+Supports multiple backends: Ollama (local), Anthropic API, Google Gemini API,
+OpenAI API, and Claude CLI. Auto-detects the first available backend.
 
 ```bash
 ./bcs check myscript.sh                      # Auto-detect backend
 ./bcs check --backend ollama myscript.sh     # Use local Ollama
 ./bcs check --backend anthropic myscript.sh  # Use Anthropic API
+./bcs check --backend google myscript.sh     # Use Google Gemini API
+./bcs check --backend openai myscript.sh     # Use OpenAI API
 ./bcs check --strict deploy.sh               # Treat warnings as violations
 ./bcs check --effort high myscript.sh        # Thorough analysis
-./bcs check --model sonnet -e max deploy.sh  # Higher quality + exhaustive
+./bcs check --model thorough -e max deploy.sh # Higher quality + exhaustive
 ./bcscheck myscript.sh                       # Convenience shim for bcs check
 ```
+
+### Backends and Model Tiers
+
+The `-m` flag selects an abstract quality tier mapped to concrete models per backend:
+
+| Tier | Ollama | Anthropic | Google | OpenAI |
+|------|--------|-----------|--------|--------|
+| fast | qwen3.5:9b | claude-haiku-4-5 | gemini-2.5-flash-lite | gpt-4o-mini |
+| balanced | qwen3.5:14b | claude-sonnet-4-6 | gemini-2.5-flash | gpt-5.4-mini |
+| thorough | qwen3.5:14b | claude-opus-4-6 | gemini-2.5-pro | gpt-5.4 |
 
 ### Configuration
 
 Defaults can be set in `~/.config/bcs/bcs.conf` (sourced as bash):
 
 ```bash
-BCS_BACKEND=ollama        # Default backend
-BCS_MODEL=sonnet          # Default quality tier
-BCS_EFFORT=medium         # Default analysis depth
+BCS_BACKEND=ollama        # auto, claude, ollama, anthropic, google, openai
+BCS_MODEL=balanced        # fast, balanced, thorough
+BCS_EFFORT=medium         # low, medium, high, max
 ```
 
 See `bcs.conf.sample` for all options. CLI flags override config file settings.

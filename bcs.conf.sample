@@ -4,11 +4,11 @@
 # This file is sourced as bash. CLI flags override these settings.
 # See: bcs check --help
 
-# Default LLM backend: auto, claude, ollama, anthropic, openai
+# Default LLM backend: auto, claude, ollama, anthropic, google, openai
 #BCS_BACKEND=auto
 
-# Default quality tier: haiku, sonnet, opus
-#BCS_MODEL=haiku
+# Default quality tier: fast, balanced, thorough
+#BCS_MODEL=fast
 
 # Default analysis depth: low, medium, high, max
 #BCS_EFFORT=low
@@ -21,4 +21,8 @@
 
 # Ollama server address
 #OLLAMA_HOST=localhost:11434
+
+# Google API key (GOOGLE_API_KEY takes priority over GEMINI_API_KEY)
+#GOOGLE_API_KEY=
+#GEMINI_API_KEY=
 #fin

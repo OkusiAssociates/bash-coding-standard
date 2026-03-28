@@ -63,7 +63,7 @@ The `bcs` script uses a `case` dispatcher in `main()`:
 |---------|---------|
 | `display` | View standard document (default when no args) |
 | `template` | Generate BCS-compliant script templates |
-| `check` | AI-powered compliance checking (`--model sonnet` default, `--fast` for low effort) |
+| `check` | AI-powered compliance checking (`--model fast` default, multi-backend) |
 | `codes` | List all BCS rule codes from section files |
 | `generate` | Concatenate section files into BASH-CODING-STANDARD.md |
 | `help` | Show help for a command |
@@ -86,9 +86,11 @@ Every subcommand's argument loop must include an option bundling pattern for com
 
 ### `check` Subcommand Internals
 
-`cmd_check()` creates a temp directory and `cd`s into it before invoking `claude`, and clears `CLAUDECODE=`. This prevents Claude from loading the local `CLAUDE.md`, ensuring the compliance check uses only the BCS standard as its prompt context.
+`cmd_check()` supports multiple LLM backends: Ollama, Anthropic API, Google Gemini API, OpenAI API, and Claude CLI. Auto-detection tries backends in order: ollama, anthropic, google, openai, claude. The `-b/--backend` flag overrides.
 
-The BCS standard is passed via `--system-prompt` (enabling prompt caching) and only the script content goes through `-p`. Defaults to `--model sonnet` for speed; use `-m/--model` to override. The `-f/--fast` flag adds `--effort low` for quick checks.
+For API backends (non-claude), the BCS standard is passed as the system prompt and the numbered script content goes in the user message. For the Claude CLI backend, the original `@file` reference approach is preserved (temp dir + `CLAUDECODE=` clearing).
+
+Model tiers (`-m fast|balanced|thorough`) map to concrete models per backend. Effort levels (`-e low|medium|high|max`) control both prompt guidance and output token budget. Configuration defaults via `~/.config/bcs/bcs.conf` (BCS0111 pattern).
 
 ### FHS Search Path Resolution
 

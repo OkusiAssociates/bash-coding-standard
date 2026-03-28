@@ -106,14 +106,15 @@ LLM backend:
 .BR claude ","
 .BR ollama ","
 .BR anthropic ","
+.BR google ","
 .BR openai "."
-Auto-detection order: ollama, anthropic, openai, claude.
+Auto-detection order: ollama, anthropic, google, openai, claude.
 .TP
 .BR \-m ", " \-\-model " " \fIMODEL\fR
 Quality tier:
-.BR haiku " (default, fast),"
-.BR sonnet " (balanced),"
-.BR opus " (thorough)."
+.BR fast " (default),"
+.BR balanced ","
+.BR thorough "."
 Each backend maps these tiers to appropriate concrete models.
 .TP
 .BR \-e ", " \-\-effort " " \fILEVEL\fR
@@ -226,11 +227,11 @@ CLI flags take precedence.
 .TP
 .B BCS_BACKEND
 Default LLM backend for the check subcommand (auto, claude, ollama,
-anthropic, openai). Overridden by
+anthropic, google, openai). Overridden by
 .BR \-b .
 .TP
 .B BCS_MODEL
-Default quality tier (haiku, sonnet, opus). Overridden by
+Default quality tier (fast, balanced, thorough). Overridden by
 .BR \-m .
 .TP
 .B BCS_EFFORT
@@ -249,6 +250,20 @@ Ollama server address (default: localhost:11434).
 .TP
 .B ANTHROPIC_API_KEY
 Anthropic API key for the anthropic backend.
+.TP
+.B GOOGLE_API_KEY
+Google API key for the google (Gemini) backend.
+.TP
+.B GEMINI_API_KEY
+Alternative Google key. If both
+.B GOOGLE_API_KEY
+and
+.B GEMINI_API_KEY
+are set,
+.B GEMINI_API_KEY
+is unset and
+.B GOOGLE_API_KEY
+is used.
 .TP
 .B OPENAI_API_KEY
 OpenAI API key for the openai backend.
