@@ -97,18 +97,38 @@ Show template help and exit.
 .SS bcs check
 AI-powered BCS compliance checking. Analyzes a script against the full
 standard and reports violations, warnings, and suggestions with BCS rule
-codes. Requires the
-.B claude
-CLI in PATH.
+codes. Supports multiple LLM backends: local Ollama, Anthropic API, OpenAI
+API, and Claude CLI. Auto-detects available backends when none is specified.
+.TP
+.BR \-b ", " \-\-backend " " \fIBACKEND\fR
+LLM backend:
+.BR auto " (default),"
+.BR claude ","
+.BR ollama ","
+.BR anthropic ","
+.BR openai "."
+Auto-detection order: ollama, anthropic, openai, claude.
 .TP
 .BR \-m ", " \-\-model " " \fIMODEL\fR
-Claude model to use (default: sonnet).
+Quality tier:
+.BR haiku " (default, fast),"
+.BR sonnet " (balanced),"
+.BR opus " (thorough)."
+Each backend maps these tiers to appropriate concrete models.
 .TP
 .BR \-e ", " \-\-effort " " \fILEVEL\fR
-Effort level: low, medium, high, or max.
+Analysis depth:
+.BR low " (default, clear violations only),"
+.BR medium " (violations and significant warnings),"
+.BR high " (all violations and warnings),"
+.BR max " (exhaustive line-by-line audit)."
+Controls both the prompt guidance and output token budget.
 .TP
 .BR \-s ", " \-\-strict
 Treat warnings as violations.
+.TP
+.BR \-S ", " \-\-no\-strict
+Don't treat warnings as violations (default).
 .TP
 .BR \-q ", " \-\-quiet
 Suppress info messages.
@@ -172,18 +192,71 @@ File not found (standard document, data directory, template, or script).
 .B 13
 Permission denied (cannot read script file).
 .TP
+.B 5
+I/O error (API connection or request failure).
+.TP
 .B 18
-Missing dependency (claude CLI not found for check command).
+Missing dependency (no LLM backend available, or required tool not found).
 .TP
 .B 22
 Invalid argument or option (EINVAL).
 .\"
+.SH CONFIGURATION
+.B bcs
+reads configuration from the first matching file (BCS0111 search order):
+.PP
+.RS
+.I ~/.config/bcs/bcs.conf
+.br
+.I /etc/bcs/bcs.conf
+.br
+.I /etc/bcs.conf
+.br
+.I /usr/local/etc/bcs/bcs.conf
+.RE
+.PP
+The file is sourced as Bash. CLI flags override config file settings.
+See
+.I bcs.conf.sample
+for all available variables.
+.\"
 .SH ENVIRONMENT
+These variables can be set in the config file or environment.
+CLI flags take precedence.
+.TP
+.B BCS_BACKEND
+Default LLM backend for the check subcommand (auto, claude, ollama,
+anthropic, openai). Overridden by
+.BR \-b .
+.TP
+.B BCS_MODEL
+Default quality tier (haiku, sonnet, opus). Overridden by
+.BR \-m .
+.TP
+.B BCS_EFFORT
+Default analysis depth (low, medium, high, max). Overridden by
+.BR \-e .
+.TP
+.B BCS_STRICT
+Treat warnings as violations (0 or 1). Overridden by
+.BR \-s / \-S .
+.TP
+.B BCS_OLLAMA_MODEL
+Override the Ollama model name instead of using the tier-based default.
+.TP
+.B OLLAMA_HOST
+Ollama server address (default: localhost:11434).
+.TP
+.B ANTHROPIC_API_KEY
+Anthropic API key for the anthropic backend.
+.TP
+.B OPENAI_API_KEY
+OpenAI API key for the openai backend.
 .TP
 .B TMPDIR
 Used by the
 .B check
-subcommand for temporary working directories. Falls back to
+subcommand (claude backend) for temporary working directories. Falls back to
 .IR /tmp .
 .\"
 .SH FILES
@@ -224,7 +297,10 @@ Generate a minimal template, save to file, make executable.
 Generate a sourceable library template.
 .TP
 .B bcs check myscript.sh
-Run AI-powered compliance check on a script.
+Run AI-powered compliance check (auto-detects backend).
+.TP
+.B bcs check \-\-backend ollama myscript.sh
+Check using local Ollama server.
 .TP
 .B bcs check \-\-strict deploy.sh
 Strict mode: treat warnings as violations.

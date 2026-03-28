@@ -27,6 +27,15 @@ declare -ra BCS_SEARCH_PATHS=(
 declare -ar VALID_MODELS=(haiku sonnet opus)
 declare -ar VALID_EFFORTS=(low medium high max)
 declare -ar VALID_TEMPLATES=(minimal basic complete library)
+declare -ar VALID_BACKENDS=(auto claude ollama anthropic openai)
+
+# Model-tier to concrete API model mapping per backend
+declare -Ar ANTHROPIC_MODELS=([haiku]=claude-haiku-4-5-20251001 [sonnet]=claude-sonnet-4-6 [opus]=claude-opus-4-6)
+declare -Ar OLLAMA_MODELS=([haiku]=qwen3.5:9b [sonnet]=qwen3.5:14b [opus]=qwen3.5:14b)
+declare -Ar OPENAI_MODELS=([haiku]=gpt-4o-mini [sonnet]=gpt-4o [opus]=gpt-4o)
+
+# Effort-level to max output tokens mapping for API backends
+declare -Ar EFFORT_TOKENS=([low]=4096 [medium]=8192 [high]=16384 [max]=32768)
 
 # Color definitions
 if [[ -t 1 && -t 2 ]]; then
@@ -56,6 +65,31 @@ warn()    { >&2 _msg "$@"; }
 error()   { >&2 _msg "$@"; }
 die()     { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 noarg()   { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
+
+# ---- Configuration ----
+
+# BCS0111: Load first matching conf file (user overrides system)
+read_conf() {
+  local -- conf_file
+  local -a search_paths=(
+    "${XDG_CONFIG_HOME:-$HOME/.config}"/"$SCRIPT_NAME"/"$SCRIPT_NAME".conf
+    /etc/"$SCRIPT_NAME"/"$SCRIPT_NAME".conf
+    /etc/"$SCRIPT_NAME".conf
+    /usr/local/etc/"$SCRIPT_NAME"/"$SCRIPT_NAME".conf
+  )
+
+  for conf_file in "${search_paths[@]}"; do
+    if [[ -f "$conf_file" ]]; then
+      #shellcheck source=/dev/null
+      source "$conf_file"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+read_conf ||:
 
 # ---- Help functions ----
 
@@ -144,23 +178,49 @@ ${BOLD}bcs check${NC} - AI-powered BCS compliance checking
 ${BOLD}Usage:${NC} $SCRIPT_NAME check [OPTIONS] SCRIPT
 
 ${BOLD}Options:${NC}
-  -m, --model MODEL     Claude model (${BOLD}haiku${NC}, sonnet, opus)
-  -e, --effort LEVEL    Effort level (${BOLD}low${NC}, medium, high, max)
-  -s, --strict          Treat warnings as violations
-  -S, --no-strict       Don't treat warnings as violations
-  -q, --quiet           Suppress info messages
-  -h, --help            Show this help
+  -b, --backend BACKEND   LLM backend (${BOLD}auto${NC}, claude, ollama, anthropic, openai)
+  -m, --model MODEL       Quality tier (${BOLD}haiku${NC}, sonnet, opus)
+  -e, --effort LEVEL      Analysis depth (${BOLD}low${NC}, medium, high, max)
+  -s, --strict            Treat warnings as violations
+  -S, --no-strict         Don't treat warnings as violations
+  -q, --quiet             Suppress info messages
+  -h, --help              Show this help
 
-Requires Claude CLI (\`claude\` command) in PATH.
+${BOLD}Backends:${NC}
+  auto        Auto-detect: ollama, anthropic, openai, claude (default)
+  claude      Claude CLI (\`claude\` command)
+  ollama      Local Ollama server (default: localhost:11434)
+  anthropic   Anthropic Messages API (requires ANTHROPIC_API_KEY)
+  openai      OpenAI Chat API (requires OPENAI_API_KEY)
+
+${BOLD}Effort Levels:${NC}
+  low         Clear violations only (fast, concise)
+  medium      Violations and significant warnings
+  high        All violations and warnings (thorough)
+  max         Exhaustive line-by-line audit
+
+${BOLD}Configuration:${NC}
+  Settings can be placed in ~/.config/bcs/bcs.conf (sourced as bash).
+  CLI flags override config file settings; config overrides env vars.
+
+${BOLD}Environment / Config Variables:${NC}
+  BCS_BACKEND        Default backend (overridden by -b)
+  BCS_MODEL          Default quality tier (overridden by -m)
+  BCS_EFFORT         Default analysis depth (overridden by -e)
+  BCS_STRICT         Treat warnings as violations: 0 or 1
+  BCS_OLLAMA_MODEL   Override Ollama model selection
+  OLLAMA_HOST        Ollama server address (default: localhost:11434)
+  ANTHROPIC_API_KEY  Anthropic API key (for anthropic backend)
+  OPENAI_API_KEY     OpenAI API key (for openai backend)
 
 ${BOLD}Inline suppression:${NC}
   #bcscheck disable=BCS0606    Suppress a rule for the next line
 
 ${BOLD}Examples:${NC}
   $SCRIPT_NAME check myscript.sh
-  $SCRIPT_NAME check --strict deploy.sh
-  $SCRIPT_NAME check --effort low myscript.sh
-  $SCRIPT_NAME check --model opus deploy.sh
+  $SCRIPT_NAME check --backend ollama myscript.sh
+  $SCRIPT_NAME check --effort high --strict deploy.sh
+  $SCRIPT_NAME check --model opus -e max deploy.sh
 HELP
 }
 
@@ -234,6 +294,155 @@ _find_md2ansi() {
     [[ -x "$path" ]] && { echo "$path"; return 0; } ||:
   done
   command -v md2ansi 2>/dev/null # Falls through to PATH search; non-zero = not found
+}
+
+# ---- LLM backend functions ----
+
+# Auto-detect available LLM backend (ollama → anthropic → openai → claude)
+_detect_backend() {
+  local -- host=${OLLAMA_HOST:-localhost:11434}
+  curl -sf --connect-timeout 2 "http://$host/api/tags" &>/dev/null && { echo ollama; return 0; } ||:
+  [[ -n "${ANTHROPIC_API_KEY:-}" ]] && { echo anthropic; return 0; } ||:
+  [[ -n "${OPENAI_API_KEY:-}" ]] && { echo openai; return 0; } ||:
+  command -v claude &>/dev/null && { echo claude; return 0; } ||:
+  return 1
+}
+
+# LLM backend: Anthropic Messages API
+_llm_anthropic() {
+  local -- model=$1 effort=$2 sys=$3 usr=$4
+  [[ -n "${ANTHROPIC_API_KEY:-}" ]] || die 18 'ANTHROPIC_API_KEY not set'
+  local -- api_model=${ANTHROPIC_MODELS[$model]}
+  local -i max_tokens=${EFFORT_TOKENS[$effort]}
+
+  local -- payload
+  payload=$(jq -n \
+    --arg model "$api_model" \
+    --argjson max_tokens "$max_tokens" \
+    --arg system "$sys" \
+    --arg user "$usr" \
+    '{model: $model, max_tokens: $max_tokens, system: $system,
+      messages: [{role: "user", content: $user}]}') || die 1 'Failed to build JSON payload'
+
+  local -- raw body
+  local -i http_code
+  raw=$(curl -s --max-time 300 -w $'\n%{http_code}' \
+    -H 'Content-Type: application/json' \
+    -H 'x-api-key: '"$ANTHROPIC_API_KEY" \
+    -H 'anthropic-version: 2023-06-01' \
+    -d "$payload" \
+    'https://api.anthropic.com/v1/messages') || die 5 'Anthropic API connection failed'
+  http_code=${raw##*$'\n'}
+  body=${raw%$'\n'"$http_code"}
+  ((http_code >= 200 && http_code < 300)) || die 5 "Anthropic API error (HTTP $http_code)"
+
+  info "Tokens: $(jq -r '"in=\(.usage.input_tokens) out=\(.usage.output_tokens)"' <<< "$body")"
+  jq -r '.content[0].text // empty' <<< "$body"
+}
+
+# LLM backend: Ollama chat API
+_llm_ollama() {
+  local -- model=$1 effort=$2 sys=$3 usr=$4
+  local -- ollama_model=${BCS_OLLAMA_MODEL:-${OLLAMA_MODELS[$model]}}
+  local -- ollama_host=${OLLAMA_HOST:-localhost:11434}
+  local -i num_predict=${EFFORT_TOKENS[$effort]}
+
+  local -- payload
+  payload=$(jq -n \
+    --arg model "$ollama_model" \
+    --argjson num_predict "$num_predict" \
+    --arg system "$sys" \
+    --arg user "$usr" \
+    '{model: $model, stream: false, options: {num_predict: $num_predict},
+      messages: [{role: "system", content: $system}, {role: "user", content: $user}]}') \
+    || die 1 'Failed to build JSON payload'
+
+  local -- raw body
+  local -i http_code
+  raw=$(curl -s --max-time 600 -w $'\n%{http_code}' \
+    -H 'Content-Type: application/json' \
+    -d "$payload" \
+    "http://$ollama_host/api/chat") || die 5 'Ollama API connection failed'
+  http_code=${raw##*$'\n'}
+  body=${raw%$'\n'"$http_code"}
+  ((http_code >= 200 && http_code < 300)) || die 5 "Ollama API error (HTTP $http_code)"
+
+  info "Tokens: $(jq -r '"in=\(.prompt_eval_count) out=\(.eval_count)"' <<< "$body")"
+  local -- content
+  content=$(jq -r '.message.content // empty' <<< "$body")
+  # Strip <think>...</think> tags from qwen3 models
+  [[ "$content" != *'</think>'* ]] || { content=${content##*</think>}; content=${content#$'\n'}; }
+  echo "$content"
+}
+
+# LLM backend: OpenAI chat completions API
+_llm_openai() {
+  local -- model=$1 effort=$2 sys=$3 usr=$4
+  [[ -n "${OPENAI_API_KEY:-}" ]] || die 18 'OPENAI_API_KEY not set'
+  local -- api_model=${OPENAI_MODELS[$model]}
+  local -i max_tokens=${EFFORT_TOKENS[$effort]}
+
+  local -- payload
+  payload=$(jq -n \
+    --arg model "$api_model" \
+    --argjson max_tokens "$max_tokens" \
+    --arg system "$sys" \
+    --arg user "$usr" \
+    '{model: $model, max_tokens: $max_tokens,
+      messages: [{role: "system", content: $system}, {role: "user", content: $user}]}') \
+    || die 1 'Failed to build JSON payload'
+
+  local -- raw body
+  local -i http_code
+  raw=$(curl -s --max-time 300 -w $'\n%{http_code}' \
+    -H 'Content-Type: application/json' \
+    -H 'Authorization: Bearer '"$OPENAI_API_KEY" \
+    -d "$payload" \
+    'https://api.openai.com/v1/chat/completions') || die 5 'OpenAI API connection failed'
+  http_code=${raw##*$'\n'}
+  body=${raw%$'\n'"$http_code"}
+  ((http_code >= 200 && http_code < 300)) || die 5 "OpenAI API error (HTTP $http_code)"
+
+  info "Tokens: $(jq -r '"in=\(.usage.prompt_tokens) out=\(.usage.completion_tokens)"' <<< "$body")"
+  jq -r '.choices[0].message.content // empty' <<< "$body"
+}
+
+# LLM backend: Claude CLI (original implementation, preserves @file references)
+#bcscheck disable=BCS0603
+_llm_claude_cli() {
+  local -- model=$1 effort=$2 bcs_file=$3 script_file=$4
+  local -i strict=$5
+  command -v claude &>/dev/null || die 18 'Claude CLI required for claude backend'
+
+  local -- prompt="You are a Bash script compliance validator.
+
+Analyze @$script_file against the Bash Coding Standard defined in @$bcs_file.
+
+For each finding, report:
+- The BCS code (e.g., BCS0101)
+- Severity: VIOLATION or WARNING
+- The specific line(s) affected
+- What is wrong and how to fix it
+
+At the end, provide a summary table.
+
+Respect inline suppression: eg, #bcscheck disable=BCS0101 exempts the next line/block."
+
+  ((strict)) && prompt+=$'\nSTRICT MODE: Treat all warnings as violations.' ||:
+
+  # cd to clean temp dir — prevents claude from loading local CLAUDE.md
+  local -- check_dir
+  check_dir=$(mktemp -d -t 'bcs-XXXXX') || die 1 'Failed to create temp dir'
+  #shellcheck disable=SC2064
+  trap "cd '$PWD' 2>/dev/null; rm -rf '$check_dir'" RETURN
+  cd "$check_dir"
+  [[ -d /run/user/"$EUID" ]] && declare -x TMPDIR=/run/user/"$EUID" ||:
+
+  local -a claude_args=(--model "$model" --permission-mode bypassPermissions)
+  [[ -n "$effort" ]] && claude_args+=(--effort "$effort") ||:
+
+  #shellcheck disable=SC1007
+  CLAUDECODE= claude "${claude_args[@]}" -p "$prompt" 2>/dev/null
 }
 
 # ---- Subcommand: display ----
@@ -360,11 +569,14 @@ cmd_template() {
 # ---- Subcommand: check ----
 
 cmd_check() {
-  local -- script_file='' model=haiku effort=low
-  local -i strict=0
+  local -- script_file='' model=${BCS_MODEL:-haiku} effort=${BCS_EFFORT:-low} backend=${BCS_BACKEND:-auto}
+  local -i strict=${BCS_STRICT:-0}
   local -ar onoff=(off on)
 
   while (($#)); do case $1 in
+    -b|--backend)   noarg "$@"; shift; backend=$1
+                    [[ " ${VALID_BACKENDS[*]} " == *" $backend "* ]] || die 22 "Invalid backend ${backend@Q}"
+                    ;;
     -m|--model)     noarg "$@"; shift; model=$1
                     [[ " ${VALID_MODELS[*]} " == *" $model "* ]] || die 22 "Invalid model ${model@Q}"
                     ;;
@@ -377,7 +589,7 @@ cmd_check() {
     -q|--quiet)     VERBOSE=0 ;;
     -h|--help)      show_check_help; return 0 ;;
     --)             shift; [[ -n "${1:-}" ]] && { script_file=$1; shift; }; break ;;
-    -[mesSvqh]?*)   set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+    -[bmesSvqh]?*)  set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
     -*)             die 22 "Invalid option ${1@Q}" ;;
     *)              [[ -z "$script_file" ]] || die 2 'Only one script file allowed'
                     script_file=$1
@@ -385,61 +597,77 @@ cmd_check() {
   esac; shift; done
 
   [[ -n "$script_file" ]] || die 2 'No script file specified'
-  [[ -z "$effort" || "$effort" =~ ^(low|medium|high|max)$ ]] \
-    || die 22 "Invalid effort level ${effort@Q} (must be low, medium, high, or max)"
   [[ -f "$script_file" ]] || die 3 "Script not found ${script_file@Q}"
   [[ -r "$script_file" ]] || die 13 "Cannot read ${script_file@Q}"
   script_file=$(realpath -e -- "$script_file")
 
-  # Verify claude CLI is available
-  command -v claude >/dev/null || die 18 'Claude CLI (claude) required but not found'
+  # Auto-detect backend if needed
+  [[ "$backend" != auto ]] || backend=$(_detect_backend) \
+    || die 18 'No LLM backend available (start Ollama, set ANTHROPIC_API_KEY/OPENAI_API_KEY, or install claude CLI)'
+
+  # Verify curl+jq for API backends
+  if [[ "$backend" != claude ]]; then
+    local -- dep
+    for dep in curl jq; do
+      command -v "$dep" &>/dev/null || die 18 "Required tool: ${dep@Q}"
+    done
+  fi
 
   # Find the standard document
   local -- bcs_file
   bcs_file=$(_find_bcs_md) || die 3 'BASH-CODING-STANDARD.md not found'
 
-  # Build prompt using @file references — lets Claude CLI load files natively
-  local -- prompt="You are a Bash script compliance validator.
-
-Analyze @$script_file against the Bash Coding Standard defined in @$bcs_file.
-
-For each finding, report:
-- The BCS code (e.g., BCS0101)
-- Severity: VIOLATION or WARNING
-- The specific line(s) affected
-- What is wrong and how to fix it
-
-At the end, provide a summary table.
-
-Respect inline suppression: eg, #bcscheck disable=BCS0101 exempts the next line/block."
-
-  ((strict)) && prompt+=$'\nSTRICT MODE: Treat all warnings as violations.' ||:
-
-  # Run compliance check
   ((!VERBOSE)) || info "Checking ${script_file@Q} against BCS..." \
-                       "Using model ${model@Q}, effort ${effort@Q}, strict ${onoff[strict]@Q}"
+                       "Backend ${backend@Q}, model ${model@Q}, effort ${effort@Q}, strict ${onoff[strict]@Q}"
+
   local -- result
   local -i exit_code=0
 
-  # cd to clean temp dir — prevents claude from loading local CLAUDE.md
-  local -- check_dir
-  check_dir=$(mktemp -d -t 'bcs-XXXXX') || die 1 'Failed to create temp dir'
-  #bcscheck disable=BCS0603
-  #shellcheck disable=SC2064
-  trap "cd '$PWD' 2>/dev/null; rm -rf '$check_dir'" RETURN
-  cd "$check_dir"
-  [[ -d /run/user/"$EUID" ]] && declare -x TMPDIR=/run/user/"$EUID" ||:
+  if [[ "$backend" == claude ]]; then
+    result=$(_llm_claude_cli "$model" "$effort" "$bcs_file" "$script_file" "$strict") || exit_code=$?
+  else
+    # Build prompts for API backends
+    local -- sys_prompt usr_prompt numbered_script effort_guidance
+    sys_prompt=$(< "$bcs_file")
 
-  local -a claude_args=(--model "$model" --permission-mode bypassPermissions)
-  [[ -n "$effort" ]] && claude_args+=(--effort "$effort") ||:
+    # Prepend line numbers so the model can reference lines accurately
+    numbered_script=$(nl -ba -w4 -s': ' -- "$script_file")
 
-  #shellcheck disable=SC1007
-  result=$(CLAUDECODE= claude "${claude_args[@]}" -p "$prompt" 2>/dev/null) || exit_code=$?
+    # Effort-level-specific guidance
+    case $effort in
+      low)    effort_guidance='Report only clear VIOLATION findings. Be concise.' ;;
+      medium) effort_guidance='Report VIOLATIONs and significant WARNINGs.' ;;
+      high)   effort_guidance='Report all VIOLATIONs and WARNINGs. Be thorough.' ;;
+      max)    effort_guidance='Exhaustive line-by-line audit. Report every finding.' ;;
+    esac
 
-  if [[ -n "$result" ]]; then
-    echo "$result"
+    usr_prompt="Analyze the following numbered script against the Bash Coding Standard in your system context.
+
+Rules:
+- VIOLATION: Rule is clearly broken. WARNING: Debatable or minor style issue.
+- Only report actual deviations. Do NOT report passing rules or observations.
+- Only report findings about the script content provided. Do NOT assume anything about project structure, files, or resources you cannot see.
+- Inline suppression: If a comment \`#bcscheck disable=BCSxxxx\` appears on the line immediately before code, do NOT report rule BCSxxxx for that line.
+- Line numbers are provided — reference them exactly.
+
+$effort_guidance"
+    ((strict)) && usr_prompt+=$'\nSTRICT MODE: Treat all WARNINGs as VIOLATIONs.' ||:
+    usr_prompt+="
+
+For each finding report: BCS code, severity, line number(s), what is wrong, how to fix it.
+End with a summary table: | BCS Code | Severity | Line(s) | Description |
+
+--- Script to analyze ---
+$numbered_script"
+
+    case $backend in
+      anthropic) result=$(_llm_anthropic "$model" "$effort" "$sys_prompt" "$usr_prompt") || exit_code=$? ;;
+      ollama)    result=$(_llm_ollama "$model" "$effort" "$sys_prompt" "$usr_prompt") || exit_code=$? ;;
+      openai)    result=$(_llm_openai "$model" "$effort" "$sys_prompt" "$usr_prompt") || exit_code=$? ;;
+    esac
   fi
 
+  [[ -z "$result" ]] || echo "$result"
   return "$exit_code"
 }
 

@@ -50,17 +50,22 @@ _bcs() {
 
     check)
       case $prev in
+        -b|--backend)
+          mapfile -t COMPREPLY < <(compgen -W 'auto claude ollama anthropic openai' -- "$cur")
+          return
+          ;;
         -e|--effort)
           mapfile -t COMPREPLY < <(compgen -W 'low medium high max' -- "$cur")
           return
           ;;
         -m|--model)
+          mapfile -t COMPREPLY < <(compgen -W 'haiku sonnet opus' -- "$cur")
           return
           ;;
       esac
       case $cur in
         -*)
-          mapfile -t COMPREPLY < <(compgen -W '-m --model -e --effort -s --strict -q --quiet -h --help' -- "$cur")
+          mapfile -t COMPREPLY < <(compgen -W '-b --backend -m --model -e --effort -s --strict -q --quiet -h --help' -- "$cur")
           ;;
         *)
           _filedir 'sh'

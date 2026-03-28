@@ -19,7 +19,7 @@ git clone https://github.com/Open-Technology-Foundation/bash-coding-standard.git
 - Requires explicit variable declarations with type hints
 - Mandates ShellCheck compliance
 - Defines standard utility functions for consistent messaging
-- AI-powered compliance checking via Claude
+- AI-powered compliance checking via multiple LLM backends
 
 ## Target Audience
 
@@ -53,7 +53,8 @@ git clone https://github.com/Open-Technology-Foundation/bash-coding-standard.git
 |-------------|---------|---------------|
 | Bash | 5.2+ | `bash --version` |
 | ShellCheck | 0.8.0+ | `shellcheck --version` |
-| Claude CLI | Latest | `claude --version` (optional, for `bcs check`) |
+| curl + jq | Any | `curl --version && jq --version` (for `bcs check` API backends) |
+| Claude CLI | Latest | `claude --version` (optional, for `bcs check --backend claude`) |
 
 ## Installation
 
@@ -69,7 +70,7 @@ Installs the `bcs` and `bcscheck` binaries, data files, bash completions, and th
 
 ## Overview
 
-The Bash Coding Standard defines 101 rules across 12 sections in a single ~2,000-line document. Rules are written for both human programmers and AI assistants, with code examples for every rule.
+The Bash Coding Standard defines 104 rules across 12 sections in a single ~2,300-line document. Rules are written for both human programmers and AI assistants, with code examples for every rule.
 
 ### 12 Sections
 
@@ -94,7 +95,7 @@ The Bash Coding Standard defines 101 rules across 12 sections in a single ~2,000
 |---------|---------|
 | `bcs display` | View the standard document (default); `--symlink` to link into cwd |
 | `bcs template` | Generate BCS-compliant script templates |
-| `bcs check` | AI-powered compliance checking (requires Claude CLI) |
+| `bcs check` | AI-powered compliance checking (multi-backend) |
 | `bcs codes` | List all BCS rule codes |
 | `bcs generate` | Regenerate standard from section files |
 | `bcs help` | Show help for commands |
@@ -112,14 +113,31 @@ Four template types for different needs:
 
 ### Compliance Checking
 
-Uses Claude AI to validate scripts against the full standard:
+Uses LLM-powered analysis to validate scripts against the full standard.
+Supports multiple backends: Ollama (local), Anthropic API, OpenAI API, and Claude CLI.
+Auto-detects the first available backend.
 
 ```bash
-./bcs check myscript.sh           # Standard check
-./bcs check --strict deploy.sh    # Treat warnings as violations
-./bcs check --effort low myscript.sh  # Quick low-effort check
-./bcscheck myscript.sh            # Strict + low effort (--strict --effort low)
+./bcs check myscript.sh                      # Auto-detect backend
+./bcs check --backend ollama myscript.sh     # Use local Ollama
+./bcs check --backend anthropic myscript.sh  # Use Anthropic API
+./bcs check --strict deploy.sh               # Treat warnings as violations
+./bcs check --effort high myscript.sh        # Thorough analysis
+./bcs check --model sonnet -e max deploy.sh  # Higher quality + exhaustive
+./bcscheck myscript.sh                       # Strict + low effort shortcut
 ```
+
+### Configuration
+
+Defaults can be set in `~/.config/bcs/bcs.conf` (sourced as bash):
+
+```bash
+BCS_BACKEND=ollama        # Default backend
+BCS_MODEL=sonnet          # Default quality tier
+BCS_EFFORT=medium         # Default analysis depth
+```
+
+See `bcs.conf.sample` for all options. CLI flags override config file settings.
 
 ## Examples
 

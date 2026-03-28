@@ -1,0 +1,24 @@
+# bcs.conf — BCS toolkit configuration
+# Install to: ~/.config/bcs/bcs.conf
+#
+# This file is sourced as bash. CLI flags override these settings.
+# See: bcs check --help
+
+# Default LLM backend: auto, claude, ollama, anthropic, openai
+#BCS_BACKEND=auto
+
+# Default quality tier: haiku, sonnet, opus
+#BCS_MODEL=haiku
+
+# Default analysis depth: low, medium, high, max
+#BCS_EFFORT=low
+
+# Treat warnings as violations: 0 or 1
+#BCS_STRICT=0
+
+# Override Ollama model name (instead of tier-based mapping)
+#BCS_OLLAMA_MODEL=qwen3.5:14b
+
+# Ollama server address
+#OLLAMA_HOST=localhost:11434
+#fin

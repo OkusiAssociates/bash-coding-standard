@@ -79,8 +79,42 @@ assert_not_contains "$err" 'Invalid option' '-se bundling parsed correctly' || t
 begin_test '-- separator works'
 assert_fails '-- then nonexistent' "$BCS_CMD" check -- /nonexistent/file.sh || true
 
-# Skip actual claude invocation test (requires claude CLI)
-echo '  (skipping live claude tests - requires claude CLI)'
+# Test: check help includes --backend
+begin_test 'check help includes --backend'
+output=$("$BCS_CMD" check -h 2>/dev/null)
+assert_contains "$output" '--backend' 'help mentions --backend' || true
+
+# Test: check --backend requires argument
+begin_test 'check --backend requires argument'
+assert_fails 'backend needs arg' "$BCS_CMD" check --backend || true
+
+# Test: check rejects invalid backend
+begin_test 'check rejects invalid backend'
+temp=$(mktemp --suffix=.sh)
+echo '#!/bin/bash' > "$temp"
+assert_fails 'invalid backend rejected' "$BCS_CMD" check --backend bogus "$temp" || true
+rm -f "$temp"
+
+# Test: option bundling -bs parsed
+begin_test 'option bundling -bs parsed'
+err=$("$BCS_CMD" check -bs 2>&1 || true)
+assert_not_contains "$err" 'Invalid option' '-bs bundling parsed correctly' || true
+
+# Test: check help shows all backends
+begin_test 'check help shows backend list'
+output=$("$BCS_CMD" check -h 2>/dev/null)
+assert_contains "$output" 'ollama' 'help mentions ollama' || true
+assert_contains "$output" 'anthropic' 'help mentions anthropic' || true
+assert_contains "$output" 'openai' 'help mentions openai' || true
+
+# Test: check help shows environment variables
+begin_test 'check help shows env vars'
+output=$("$BCS_CMD" check -h 2>/dev/null)
+assert_contains "$output" 'BCS_BACKEND' 'help mentions BCS_BACKEND' || true
+assert_contains "$output" 'ANTHROPIC_API_KEY' 'help mentions ANTHROPIC_API_KEY' || true
+
+# Skip actual LLM invocation tests (requires running backend)
+echo '  (skipping live LLM tests - requires running backend)'
 
 print_summary 'check'
 #fin
