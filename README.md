@@ -124,7 +124,7 @@ Auto-detects the first available backend.
 ./bcs check --strict deploy.sh               # Treat warnings as violations
 ./bcs check --effort high myscript.sh        # Thorough analysis
 ./bcs check --model sonnet -e max deploy.sh  # Higher quality + exhaustive
-./bcscheck myscript.sh                       # Strict + low effort shortcut
+./bcscheck myscript.sh                       # Convenience shim for bcs check
 ```
 
 ### Configuration

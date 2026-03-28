@@ -336,8 +336,8 @@ _llm_anthropic() {
   body=${raw%$'\n'"$http_code"}
   ((http_code >= 200 && http_code < 300)) || die 5 "Anthropic API error (HTTP $http_code)"
 
-  info "Tokens: $(jq -r '"in=\(.usage.input_tokens) out=\(.usage.output_tokens)"' <<< "$body")"
   jq -r '.content[0].text // empty' <<< "$body"
+  echo "___TOKENS___ $(jq -r '"in=\(.usage.input_tokens // 0) out=\(.usage.output_tokens // 0)"' <<< "$body")"
 }
 
 # LLM backend: Ollama chat API
@@ -367,12 +367,12 @@ _llm_ollama() {
   body=${raw%$'\n'"$http_code"}
   ((http_code >= 200 && http_code < 300)) || die 5 "Ollama API error (HTTP $http_code)"
 
-  info "Tokens: $(jq -r '"in=\(.prompt_eval_count) out=\(.eval_count)"' <<< "$body")"
   local -- content
   content=$(jq -r '.message.content // empty' <<< "$body")
   # Strip <think>...</think> tags from qwen3 models
   [[ "$content" != *'</think>'* ]] || { content=${content##*</think>}; content=${content#$'\n'}; }
   echo "$content"
+  echo "___TOKENS___ $(jq -r '"in=\(.prompt_eval_count // 0) out=\(.eval_count // 0)"' <<< "$body")"
 }
 
 # LLM backend: OpenAI chat completions API
@@ -403,8 +403,8 @@ _llm_openai() {
   body=${raw%$'\n'"$http_code"}
   ((http_code >= 200 && http_code < 300)) || die 5 "OpenAI API error (HTTP $http_code)"
 
-  info "Tokens: $(jq -r '"in=\(.usage.prompt_tokens) out=\(.usage.completion_tokens)"' <<< "$body")"
   jq -r '.choices[0].message.content // empty' <<< "$body"
+  echo "___TOKENS___ $(jq -r '"in=\(.usage.prompt_tokens // 0) out=\(.usage.completion_tokens // 0)"' <<< "$body")"
 }
 
 # LLM backend: Claude CLI (original implementation, preserves @file references)
@@ -622,6 +622,7 @@ cmd_check() {
 
   local -- result
   local -i exit_code=0
+  SECONDS=0
 
   if [[ "$backend" == claude ]]; then
     result=$(_llm_claude_cli "$model" "$effort" "$bcs_file" "$script_file" "$strict") || exit_code=$?
@@ -667,7 +668,15 @@ $numbered_script"
     esac
   fi
 
+  # Extract token sentinel from result (API backends only)
+  local -- _llm_tokens=''
+  if [[ "$result" == *'___TOKENS___ '* ]]; then
+    _llm_tokens=${result##*___TOKENS___ }
+    result=${result%$'\n___TOKENS___ '*}
+  fi
+
   [[ -z "$result" ]] || echo "$result"
+  ((!VERBOSE)) || info "Tokens: $_llm_tokens" "Elapsed: ${SECONDS}s"
   return "$exit_code"
 }
 

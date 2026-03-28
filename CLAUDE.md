@@ -32,7 +32,7 @@ sudo make install
 sudo make uninstall
 ```
 
-`bcscheck` is a thin wrapper that calls `bcs check --strict --fast` — it always treats warnings as violations and uses low effort for speed.
+`bcscheck` is a convenience shim that calls `bcs check` — all defaults (backend, model, effort, strict) are configured via `~/.config/bcs/bcs.conf`.
 
 ## Architecture
 

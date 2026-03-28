@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# bcscheck - Strict BCS compliance checker
-# Wrapper that calls bcs check --strict (warnings as violations)
+# bcscheck - BCS compliance checker convenience shim
+# Passes all arguments to bcs check; defaults via ~/.config/bcs/bcs.conf
 set -euo pipefail
 shopt -s inherit_errexit
 
@@ -21,5 +21,5 @@ else
   die 18 'bcs command not found'
 fi
 
-exec "$BCS_CMD" check --strict --effort low "$@"
+exec "$BCS_CMD" check "$@"
 #fin
