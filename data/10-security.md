@@ -100,14 +100,14 @@ Validate and sanitize all user input. Use whitelist over blacklist.
 
 ```bash
 # correct — validate integer
-[[ "$input" =~ ^-?[0-9]+$ ]] || die 22 "Invalid integer: ${input@Q}"
+[[ $input =~ ^-?[0-9]+$ ]] || die 22 "Invalid integer: ${input@Q}"
 
 # correct — validate path within allowed directory
 real_path=$(realpath -e -- "$path")
-[[ "$real_path" == "$allowed_dir"* ]] || die 13 'Path traversal blocked'
+[[ $real_path == "$allowed_dir"* ]] || die 13 'Path traversal blocked'
 
 # correct — sanitize filename
-[[ "$name" =~ ^[a-zA-Z0-9._-]+$ ]] || die 22 "Invalid filename ${name@Q}"
+[[ $name =~ ^[a-zA-Z0-9._-]+$ ]] || die 22 "Invalid filename ${name@Q}"
 
 # correct — always use -- before file arguments
 rm -- "$user_file"

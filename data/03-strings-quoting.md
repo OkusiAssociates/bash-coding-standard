@@ -53,35 +53,35 @@ echo $result                         # unquoted usage
 
 ## BCS0303 Quoting in Conditionals
 
-Quote variables in test expressions. Inside `[[ ]]`, the left-hand side may be unquoted (no word splitting or globbing occurs), but quoting is still required for the right-hand side of `==`/`!=` when a literal comparison is intended.
+Inside `[[ ]]`, **no word splitting or pathname expansion occurs** — variables are safe unquoted in any position. Quoting only matters for the right-hand side of `==`/`!=` (where it controls pattern vs literal matching) and `=~` (where it disables regex).
 
 ```bash
-# correct
-[[ -f "$file" ]]
-[[ "$name" == "$expected" ]]
-[[ $name == "$expected" ]]           # unquoted left side is safe in [[ ]]
-[[ "$mode" == production ]]          # static value, quotes optional
+# correct — all unquoted forms are safe inside [[ ]]
+[[ -f $file ]]
+[[ -d $dir && -r $dir ]]
+[[ $name == "$expected" ]]           # quoted RHS: literal comparison
+[[ $mode == production ]]            # static value, quotes optional
 
 # correct — glob matching (right side unquoted)
-[[ "$filename" == *.txt ]]
+[[ $filename == *.txt ]]
 
-# correct — regex (pattern unquoted)
-[[ "$email" =~ ^[a-z]+@[a-z]+$ ]]
+# correct — regex (right side unquoted)
+[[ $email =~ ^[a-z]+@[a-z]+$ ]]
 
 # wrong
-[ -f $file ]                         # [ ] requires quoting, should never use [ ... ] in any case
-[[ "$input" =~ "$pattern" ]]        # quoted regex won't match
+[ -f $file ]                         # **never** use [ ]; it requires quoting
+[[ $input =~ "$pattern" ]]           # quoted regex disables matching
 ```
 
 ## BCS0304 Here Documents
 
-Use quoted delimiter `<<'EOF'` for literal content. Use unquoted delimiter `<<EOF` for variable expansion.
+Use quoted delimiter `<<'EOF'` for literal content. Use unquoted delimiter `<<EOF` for variable expansion. Use descriptive names for the delimiter.
 
 ```bash
 # correct — no expansion needed
-cat <<'EOT'
+cat <<'VARS'
 Variables like $HOME are literal text.
-EOT
+VARS
 
 # correct — expansion needed
 cat <<EOT
@@ -90,9 +90,9 @@ EOT
 
 # correct — indented (strips leading tabs, not spaces)
 if true; then
-	cat <<-EOT
+	cat <<-CONTENT
 	indented content
-	EOT
+	CONTENT
 fi
 ```
 
@@ -135,7 +135,7 @@ Never use `@Q` for normal variable expansion or comparisons.
 ```bash
 # wrong — double quotes for static strings
 info "Starting backup..."           # use single quotes
-echo "${HOME}/bin"                   # unnecessary braces
+echo "${HOME}/bin"                  # unnecessary braces
 
 # wrong — unquoted variables
 echo $result

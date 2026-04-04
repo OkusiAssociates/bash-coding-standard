@@ -108,6 +108,6 @@ If -o is supplied with no option-name, the values of the current options are pri
 
 --  If no arguments follow, the positional parameters are unset. Otherwise, the positional parameters are set to the args, even if some begin with -.
 
--  Signal the end of options, causing all remaining args to be assigned to the positional parameters. The -x and -v options are turned off. If there are no args, the positional parameters remain unchanged.
+`-`  Signal the end of options, causing all remaining args to be assigned to the positional parameters. The -x and -v options are turned off. If there are no args, the positional parameters remain unchanged.
 
 Options are off by default unless otherwise noted. Using + rather than - causes these options to be turned off. The options can also be specified as arguments to an invocation of the shell. The current set of options may be found in $-. The return status is always true unless an invalid option is encountered.

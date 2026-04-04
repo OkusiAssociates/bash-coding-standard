@@ -14,7 +14,7 @@ $  The last word. Usually the last argument, but expands to the zeroth word if t
 
 x-y  A range of words; -y abbreviates 0-y.
 
-*  All of the words but the zeroth. Synonym for 1-$. It is not an error to use * if there is just one word in the event; the empty string is returned in that case.
+`*`  All of the words but the zeroth. Synonym for 1-$. It is not an error to use * if there is just one word in the event; the empty string is returned in that case.
 
 x*  Abbreviates x-$.
 

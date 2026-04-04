@@ -76,7 +76,7 @@ declare -- TEMP_FILE
 cleanup() {
   local -i exitcode=${1:-$?}
   trap - SIGINT SIGTERM EXIT         # prevent recursion
-  [[ -z "${TEMP_FILE:-}" ]] || rm -f "$TEMP_FILE"
+  [[ -z ${TEMP_FILE:-} ]] || rm -f "$TEMP_FILE"
   exit "$exitcode"
 }
 trap 'cleanup $?' SIGINT SIGTERM EXIT

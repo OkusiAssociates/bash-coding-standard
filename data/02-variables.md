@@ -2,7 +2,7 @@
 
 ## BCS0200 Section Overview
 
-All variables must have explicit type declarations. This section covers declaration patterns, scoping, naming conventions, arrays, parameter expansion, and boolean flags.
+**All variables must have explicit type declarations.** This section covers declaration patterns, scoping, naming conventions, arrays, parameter expansion, and boolean flags.
 
 ## BCS0201 Type-Specific Declarations
 
@@ -11,10 +11,10 @@ Use explicit type declarations to make variable intent clear.
 ```bash
 # correct
 declare -i count=0           # integer
-declare -- filename=''       # string
+declare -- filename=''       # string (semantic; see note)
 declare -a files=()          # indexed array
 declare -A config=()         # associative array
-declare -r VERSION=1.0.0     # readonly constant
+declare -r VERSION=1.0.0     # readonly constant string
 local -- path=$1             # local string
 local -i retval=0            # local integer
 
@@ -23,7 +23,7 @@ count=0
 local filename=$1
 ```
 
-The `--` separator prevents option injection if a variable name starts with `-`.
+The `--` separator for string variable types is **purely semantic** -- it signals a conscious variable type choice, completing the pattern alongside `-i`, `-a`, and `-A`.
 
 ## BCS0202 Variable Scoping
 
@@ -50,11 +50,11 @@ Without `local`, variables become global, overwrite same-named variables, persis
 
 ```bash
 # correct
-readonly MAX_RETRIES=3              # UPPER_CASE for constants/globals
-declare -i VERBOSE=1                   # UPPER_CASE for global state
+readonly MAX_RETRIES=3                # UPPER_CASE for constants/globals
+declare -i VERBOSE=1                  # UPPER_CASE for global state
 
-process_log_file() {                   # lower_case for functions
-  local -- file_count=0                # lower_case for locals
+process_log_file() {                  # lower_case for functions
+  local -- file_count=0               # lower_case for locals
 }
 
 _validate_input() { :; }              # underscore prefix for private functions

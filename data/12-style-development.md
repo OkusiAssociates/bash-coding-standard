@@ -29,7 +29,7 @@ declare -r PROFILE_DIR=/etc/profile.d
 # Set verbose to 1
 VERBOSE=1
 # Check if file exists
-[[ -f "$file" ]]
+[[ -f $file ]]
 ```
 
 Use standard documentation icons: `◉` (info), `⦿` (debug), `▲` (warn), `✓` (success), `✗` (error).
@@ -100,7 +100,7 @@ Use defensive programming:
 
 ```bash
 : "${VERBOSE:=0}"                    # default critical variables
-[[ -n "$1" ]] || die 2 'Argument required'
+[[ -n $1 ]] || die 2 'Argument required'
 ```
 
 Minimize subshells, use built-in string operations, batch operations, use process substitution over temp files.
@@ -153,7 +153,7 @@ declare -i TEST_MODE=${TEST_MODE:-0}
 # correct — assert function
 assert() {
   local -- expected=$1 actual=$2 msg=${3:-assertion}
-  [[ "$expected" == "$actual" ]] || {
+  [[ $expected == "$actual" ]] || {
     error "FAIL: $msg: expected ${expected@Q}, got ${actual@Q}"
     return 1
   }

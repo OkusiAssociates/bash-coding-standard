@@ -253,8 +253,9 @@ example, it looks for the variable BASH_ENV in the environment, expands
 its value if it appears there, and uses the expanded value as the name
 of a file to read and execute.
 Bash behaves as if the following command were executed: if [[ -n
-$BASH_ENV ]]; then . \[dq]$BASH_ENV\[rq]; fi but the value of the PATH
-variable is not used to search for the filename.
+$BASH_ENV ]]; then .
+\[lq]$BASH_ENV\[rq]; fi but the value of the PATH variable is not used
+to search for the filename.
 .PP
 When bash detects it is being run with standard input connected to a
 network connection (e.g., via sshd), it reads and executes commands from
@@ -893,8 +894,8 @@ expanded, it must be enclosed in braces (see EXPANSION).
 The shell treats several parameters specially.
 These parameters may only be referenced; assignment to them is not
 allowed.
-.IP \[bu] 2
-Expands to the positional parameters, starting from one.
+.PP
+\f[V]*\f[R] Expands to the positional parameters, starting from one.
 When not within double quotes, each positional parameter expands to a
 separate word subject to further word splitting and pathname expansion.
 When within double quotes, expands to a single word with the value of
@@ -904,36 +905,41 @@ the first character of IFS.
 If IFS is unset, the parameters are separated by spaces.
 If IFS is null, the parameters are joined without separators.
 .PP
-\[at] Expands to the positional parameters, starting from one.
+\f[V]\[at]\f[R] Expands to the positional parameters, starting from one.
 In contexts where word splitting is performed, each positional parameter
 expands to a separate word; if not within double quotes, these words are
 subject to word splitting.
 In contexts where word splitting is not performed, expands to a single
 word with each positional parameter separated by a space.
 When within double quotes, each parameter expands to a separate word.
-That is, \[lq]$\[at]\[rq] is equivalent to \[lq]$1\[rq]
-\[lq]$2\[dq] .... If the double-quoted expansion occurs within a word, the expansion of the first parameter is joined with the beginning part of the original word, and the expansion of the last parameter is joined with the last part of the original word. When there are no positional parameters, \[dq]$\[at]\[rq]
-and $\[at] expand to nothing (they are removed).
-.SH Expands to the number of positional parameters in decimal.
+That is, \[lq]$\[at]\[rq] is equivalent to \[lq]$1\[rq] \[lq]$2\[rq]
+\&....
+If the double-quoted expansion occurs within a word, the expansion of
+the first parameter is joined with the beginning part of the original
+word, and the expansion of the last parameter is joined with the last
+part of the original word.
+When there are no positional parameters, \[lq]$\[at]\[rq] and $\[at]
+expand to nothing (they are removed).
 .PP
-?
-Expands to the exit status of the most recently executed foreground
-pipeline.
-.IP \[bu] 2
-Expands to the current option flags as specified upon invocation, by the
-set builtin, or those set by the shell itself (such as the -i option).
+\f[V]#\f[R] Expands to the number of positional parameters in decimal.
 .PP
-$ Expands to the process ID of the shell.
+\f[V]?\f[R] Expands to the exit status of the most recently executed
+foreground pipeline.
+.PP
+\f[V]-\f[R] Expands to the current option flags as specified upon
+invocation, by the set builtin, or those set by the shell itself (such
+as the -i option).
+.PP
+\f[V]$\f[R] Expands to the process ID of the shell.
 In a subshell, expands to the process ID of the current shell, not the
 subshell.
 .PP
-!
-Expands to the process ID of the job most recently placed into the
-background, whether executed as an asynchronous command or using the bg
-builtin.
+\f[V]!\f[R] Expands to the process ID of the job most recently placed
+into the background, whether executed as an asynchronous command or
+using the bg builtin.
 .PP
-0 Expands to the name of the shell or shell script, set at shell
-initialization.
+\f[V]0\f[R] Expands to the name of the shell or shell script, set at
+shell initialization.
 If bash is invoked with a file of commands, $0 is set to the name of
 that file.
 If bash is started with the -c option, $0 is set to the first argument
@@ -1467,9 +1473,10 @@ to zero, the shell disables mail checking.
 MAILPATH A colon-separated list of filenames to be checked for mail.
 The message to be printed when mail arrives in a particular file may be
 specified by separating the filename from the message with a ?.
-When used in the text of the message,
-$_ expands to the name of the current mailfile. Example: MAILPATH=\[aq]/var/mail/bfox?\[dq]You have mail\[dq]:\[ti]/shell-mail?\[dq]$_
-has mail!\[lq]\[cq]
+When used in the text of the message, $_ expands to the name of the
+current mailfile.
+Example: MAILPATH=`/var/mail/bfox?\[lq]You have
+mail\[rq]:\[ti]/shell-mail?\[lq]$_ has mail!\[rq]'
 .PP
 Bash can be configured to supply a default value for this variable
 (there is no value by default), but the location of the user mail files
@@ -1758,9 +1765,9 @@ removal).
 Only brace expansion, word splitting, and pathname expansion can
 increase the number of words of the expansion; other expansions expand a
 single word to a single word.
-The only exceptions to this are the expansions of
-\[lq]$\[at]\[dq] and \[dq]${name[\[at]]}\[rq], and, in most cases, $*
-and ${name[*]} as explained above (see PARAMETERS).
+The only exceptions to this are the expansions of \[lq]$\[at]\[rq] and
+\[lq]${name[\[at]]}\[rq], and, in most cases, $* and ${name[*]} as
+explained above (see PARAMETERS).
 .IP \[bu] 2
 Brace Expansion
 .IP \[bu] 2
@@ -2284,8 +2291,8 @@ The special pattern characters must be quoted if they are to be matched
 literally.
 .PP
 The special pattern characters have the following meanings:
-.IP \[bu] 2
-Matches any string, including the null string.
+.PP
+\f[V]*\f[R] Matches any string, including the null string.
 When the globstar shell option is enabled and * is used in a pathname
 expansion context, two adjacent \f[I]s used as a single pattern match
 all files and zero or more directories and subdirectories.
@@ -2793,23 +2800,18 @@ The following list of operators is grouped into levels of
 equal-precedence operators, listed in order of decreasing precedence.
 .PP
 id++ id\[en] variable post-increment and post-decrement
-\[bu] .RS 2
-.IP \[bu] 2
-unary minus and plus
-.RE
+.PP
+\f[V]- +\f[R] unary minus and plus
 .PP
 ++id \[en]id variable pre-increment and pre-decrement
 .PP
-!
-\[ti] logical and bitwise negation
+\f[V]! \[ti]\f[R] logical and bitwise negation
 .PP
-** exponentiation
-.IP \[bu] 2
-/ % multiplication, division, remainder
-\[bu] .RS 2
-.IP \[bu] 2
-addition, subtraction
-.RE
+\f[V]**\f[R] exponentiation
+.PP
+\f[V]* / %\f[R] multiplication, division, remainder
+.PP
+\f[V]+ -\f[R] addition, subtraction
 .PP
 << >> left and right bitwise shifts
 .PP
@@ -3941,8 +3943,8 @@ search, if the search string begins with a character that is part of a
 word.
 .PP
 x-y A range of words; -y abbreviates 0-y.
-.IP \[bu] 2
-All of the words but the zeroth.
+.PP
+\f[V]*\f[R] All of the words but the zeroth.
 Synonym for 1-$.
 It is not an error to use * if there is just one word in the event; the
 empty string is returned in that case.
@@ -5490,9 +5492,9 @@ The DEBUG and RETURN traps are normally not inherited in such cases.
 \[en] If no arguments follow, the positional parameters are unset.
 Otherwise, the positional parameters are set to the args, even if some
 begin with -.
-.IP \[bu] 2
-Signal the end of options, causing all remaining args to be assigned to
-the positional parameters.
+.PP
+\f[V]-\f[R] Signal the end of options, causing all remaining args to be
+assigned to the positional parameters.
 The -x and -v options are turned off.
 If there are no args, the positional parameters remain unchanged.
 .PP

@@ -2,7 +2,7 @@
 
 ## BCS0100 Section Overview
 
-Every BCS-compliant script follows a mandatory 13-step structure. Scripts must be self-contained, predictable, and safe. This section defines the canonical ordering and required elements.
+Every BCS-compliant script follows a 13-step structure. Scripts must be self-contained, predictable, and safe. This section defines the canonical ordering and required elements.
 
 ## BCS0101 Strict Mode
 
@@ -11,8 +11,10 @@ Every BCS-compliant script follows a mandatory 13-step structure. Scripts must b
 ```bash
 # correct
 #!/usr/bin/bash
-# Brief description
+#shellcheck disable=SC???? # (optional)
+# Brief description (recommended)
 set -euo pipefail
+shopt -s inherit_errexit
 
 # wrong — strict mode after variable declarations
 #!/usr/bin/bash
@@ -24,7 +26,7 @@ Add `shopt -s inherit_errexit` immediately after.
 
 - `inherit_errexit`: makes `set -e` work in command substitutions (critical)
 
-**When appropriate**, the following setting should also be added:
+**When appropriate**, the following setting could also be added:
 
 - `shift_verbose`: makes `shift` fail visibly when no args remain
 - `extglob`: enables `@()`, `!()`, `+()` patterns
@@ -37,9 +39,9 @@ Choose `failglob` instead of `nullglob` for strict scripts where unmatched globs
 First line of any script must be a shebang. Three acceptable forms:
 
 ```bash
-#!/bin/bash           # known Linux systems
-#!/usr/bin/bash       # BSD systems
-#!/usr/bin/env bash   # maximum portability
+#!/usr/bin/bash       # Preferred for Linux systems
+#!/bin/bash           # Acceptable
+#!/usr/bin/env bash   # Maximum portability
 ```
 
 *Any* one of these shebangs are acceptable.
@@ -51,11 +53,16 @@ Follow with optional `#shellcheck` or `#bcscheck` directives, then a brief descr
 #shellcheck disable=SC2015
 # myscript - brief description of what this script does
 set -euo pipefail
+shopt -s inherit_errexit
 ```
 
 ## BCS0103 Script Metadata
 
 Declare metadata immediately after `shopt`. Use `realpath` (not `readlink`).
+
+Standard metavars are VERSION, SCRIPT_PATH, SCRIPT_DIR, SCRIPT_NAME
+
+**Note:** Not all scripts will require all Script Metadata variables.
 
 ```bash
 # correct
@@ -70,9 +77,7 @@ SCRIPT_PATH=$(readlink -f "$0")
 readonly SCRIPT_PATH
 ```
 
-Note: Not all scripts will require all Script Metadata variables.
-
-Use `#shellcheck disable=SC2155` before the `SCRIPT_PATH` line if needed. The failure mode (script doesn't exist) should cause immediate termination anyway.
+Use `#shellcheck disable=SC2155` before the `SCRIPT_PATH` line. The failure mode (command doesn't exist) should cause immediate termination anyway.
 
 ## BCS0104 FHS Compliance
 
@@ -87,7 +92,7 @@ local -a search_paths=(
   /usr/share/myapp/data
 )
 for dir in "${search_paths[@]}"; do
-  [[ -d "$dir" ]] && { DATA_DIR="$dir"; break; }
+  [[ -d $dir ]] && { DATA_DIR="$dir"; break; }
 done
 ```
 
@@ -129,7 +134,7 @@ Always check BOTH stdout AND stderr: `[[ -t 1 && -t 2 ]]`.
 
 ## BCS0106 File Extensions and Dual-Purpose Scripts
 
-Executables: `.sh` extension or no extension. Globally available executables via PATH must have no extension. Libraries must have `.sh` extension and should not be executable.
+Executables: `.sh` extension or no extension. Globally available executables via PATH must have no extension. Libraries must have `.sh` or `.bash` extension and should not be executable.
 
 **Dual-purpose scripts** (can be sourced or executed):
 
@@ -168,7 +173,10 @@ Organize functions bottom-up in 7 layers:
 # correct — bottom-up, each function calls only previously defined functions
 _msg() { :; }
 info() { _msg "$@"; }
-show_help() { cat <<HELP ... HELP; }
+show_help() { cat <<HELP
+...
+HELP
+}
 validate_input() { :; }
 process_file() { validate_input "$1"; }
 main() { process_file "$@"; }
@@ -180,17 +188,21 @@ Never define `main()` at the top. Never define business logic before the utiliti
 
 ## BCS0108 Main Function and Script Invocation
 
-Use `main()` for scripts over ~200 lines. Parse arguments in `main()`, then make configuration variables readonly after parsing.
+Generally, use `main()` for scripts over ~200 lines. Parse arguments within `main()`, then make configuration variables readonly after parsing.
 
 ```bash
 # correct
 main() {
   while (($#)); do case $1 in
-    -v|--verbose) VERBOSE=1 ;;
+    -n|--dry-run)     DRY_RUN=1 ;;
+    -N|--not-dry-run) DRY_RUN=0 ;;
+    -v|--verbose)     VERBOSE=1 ;;
+    -q|--quiet)       VERBOSE=0 ;;
   esac; shift; done
   readonly VERBOSE DRY_RUN
 
   # Business logic here
+  : ...
 }
 
 main "$@"
@@ -228,7 +240,7 @@ declare -- TEMP_DIR
 cleanup() {
   local -i exitcode=${1:-$?}
   trap - SIGINT SIGTERM EXIT
-  [[ -z "${TEMP_DIR:-}" ]] || rm -rf "$TEMP_DIR"
+  [[ -z ${TEMP_DIR:-} ]] || rm -rf "$TEMP_DIR"
   exit "$exitcode"
 }
 trap 'cleanup $?' SIGINT SIGTERM EXIT
@@ -256,7 +268,7 @@ read_conf() {
   )
 
   for conf_file in "${search_paths[@]}"; do
-    if [[ -f "$conf_file" ]]; then
+    if [[ -f $conf_file ]]; then
       # shellcheck source=/dev/null
       source "$conf_file"
       return 0
@@ -284,6 +296,7 @@ main() {
   read_conf ||:
   while (($#)); do case $1 in
     # options override config values...
+    : ...
   esac; shift; done
 }
 ```

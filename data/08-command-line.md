@@ -68,7 +68,7 @@ Validate required arguments after parsing:
 
 ```bash
 ((${#FILES[@]})) || die 2 'No input files specified'
-[[ "$mode" =~ ^(normal|fast|safe)$ ]] || die 22 "Invalid mode ${mode@Q}"
+[[ $mode =~ ^(normal|fast|safe)$ ]] || die 22 "Invalid mode ${mode@Q}"
 ```
 
 ## BCS0804 Parsing Location

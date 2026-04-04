@@ -15,7 +15,7 @@ Any character that appears in a pattern, other than the special pattern characte
 
 The special pattern characters have the following meanings:
 
-*  Matches any string, including the null string. When the globstar shell option is enabled and * is used in a pathname expansion context, two adjacent *s used as a single pattern match all files and zero or more directories and subdirectories. If followed by a /, two adjacent *s match only directories and subdirectories.
+`*`  Matches any string, including the null string. When the globstar shell option is enabled and * is used in a pathname expansion context, two adjacent *s used as a single pattern match all files and zero or more directories and subdirectories. If followed by a /, two adjacent *s match only directories and subdirectories.
 
 ?  Matches any single character.
 

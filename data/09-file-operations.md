@@ -6,24 +6,19 @@ Safe file testing, wildcard expansion, process substitution, here documents, and
 
 ## BCS0901 Safe File Testing
 
-Always quote variables in file tests and use `[[ ]]`.
+Use `[[ ]]` for all file tests. Always include filenames in error messages for debugging.
 
 ```bash
 # correct
-[[ -f "$file" ]] || die 3 "Not found ${file@Q}"
-[[ -f "$file" && -r "$file" ]] || die 5 "Cannot read ${file@Q}"
-[[ -d "$dir" ]] || mkdir -p "$dir" || die 1 "Cannot create ${dir@Q}"
-[[ -s "$logfile" ]] || warn 'Log file is empty'
-
-# correct — timestamp comparison
-[[ "$source" -nt "$destination" ]] && cp "$source" "$destination" ||:
+[[ -f $file ]] || die 3 "Not found ${file@Q}"
+[[ -f $file && -r $file ]] || die 5 "Cannot read ${file@Q}"
+[[ -d $dir ]] || mkdir -p "$dir" || die 1 "Cannot create ${dir@Q}"
+[[ -s $logfile ]] || warn 'Log file is empty'
+[[ $source -nt $destination ]] && cp "$source" "$destination" ||:
 
 # wrong
-[[ -f $file ]]                       # unquoted variable
 [ -f "$file" ]                       # old test syntax
 ```
-
-Always include filenames in error messages for debugging.
 
 ## BCS0902 Wildcard Expansion
 

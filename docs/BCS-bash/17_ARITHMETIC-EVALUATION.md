@@ -5,22 +5,22 @@ The shell allows arithmetic expressions to be evaluated under certain circumstan
 id++ id--
  variable post-increment and post-decrement
 
-- +
+`- +`
  unary minus and plus
 
 ++id --id
  variable pre-increment and pre-decrement
 
-! ~
+`! ~`
  logical and bitwise negation
 
-**
+`**`
  exponentiation
 
-* / %
+`* / %`
  multiplication, division, remainder
 
-+ -
+`+ -`
  addition, subtraction
 
 << >>

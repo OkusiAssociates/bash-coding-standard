@@ -8,8 +8,8 @@ Use `[[ ]]` for string and file tests, `(())` for arithmetic. Never use `[ ]`. T
 
 ```bash
 # correct — [[ ]] for strings/files, (()) for arithmetic
-[[ -f "$file" ]]
-[[ "$name" == "$expected" ]]
+[[ -f $file ]]
+[[ $name == "$expected" ]]
 ((count > 5))
 
 # correct — arithmetic truthiness
@@ -17,11 +17,11 @@ Use `[[ ]]` for string and file tests, `(())` for arithmetic. Never use `[ ]`. T
 ((VERBOSE)) || return 0
 
 # correct — pattern matching
-[[ "$file" == *.txt ]]               # glob
-[[ "$input" =~ ^[0-9]+$ ]]           # regex
+[[ $file == *.txt ]]                 # glob
+[[ $input =~ ^[0-9]+$ ]]             # regex
 
 # correct — short-circuit
-[[ -f "$file" ]] && source "$file"
+[[ -f $file ]] && source "$file"
 command -v curl >/dev/null || die 18 'curl required'
 
 # wrong

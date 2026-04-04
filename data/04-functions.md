@@ -17,7 +17,7 @@ process_file() {
   local -- filename=$1
   local -i line_count=0
 
-  [[ -f "$filename" ]] || return 1
+  [[ -f $filename ]] || return 1
 
   while IFS= read -r line; do
     line_count+=1
@@ -151,7 +151,7 @@ Libraries should only define functions, not have side effects on source. Allow c
 Source libraries with existence check:
 
 ```bash
-[[ -f "$lib_path" ]] && source "$lib_path" || die 1 "Missing library ${lib_path}"
+[[ -f $lib_path ]] && source "$lib_path" || die 1 "Missing library ${lib_path}"
 ```
 
 ## BCS0408 Dependency Management
