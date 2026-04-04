@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 # test-subcommand-generate.sh - Tests for bcs generate subcommand
+set -euo pipefail
+shopt -s inherit_errexit
+#shellcheck source-path=SCRIPTDIR source=test-helpers.sh
 source "$(dirname "$0")"/test-helpers.sh
 
 echo 'Testing: generate subcommand'

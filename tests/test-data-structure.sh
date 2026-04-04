@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 # test-data-structure.sh - Validate data directory structure and BCS codes
+set -euo pipefail
+shopt -s inherit_errexit
+#shellcheck source-path=SCRIPTDIR source=test-helpers.sh
 source "$(dirname "$0")"/test-helpers.sh
 
 echo 'Testing: data structure validation'
@@ -37,14 +40,14 @@ done
 # Test: each section file starts with # Section N:
 begin_test 'section files have proper headers'
 declare -i good_headers=0
-declare -- first_line
+declare -- first_line f
 for f in "$DATA_DIR"/[0-9]*.md; do
-  [[ "$(basename -- "$f")" == BASH-CODING-STANDARD.md ]] && continue
+  [[ "${f##*/}" == BASH-CODING-STANDARD.md ]] && continue
   IFS= read -r first_line < "$f"
   if [[ "$first_line" =~ ^#\ Section\ [0-9]+: ]]; then
     good_headers+=1
   else
-    printf '    bad header in %s: %s\n' "$(basename "$f")" "$first_line"
+    printf '    bad header in %s: %s\n' "${f##*/}" "$first_line"
   fi
 done
 assert_equal 12 "$good_headers" 'all 12 section files have proper headers' || true
@@ -53,11 +56,11 @@ assert_equal 12 "$good_headers" 'all 12 section files have proper headers' || tr
 begin_test 'every section has BCS codes'
 declare -i sections_with_codes=0
 for f in "$DATA_DIR"/[0-9]*.md; do
-  [[ "$(basename -- "$f")" == BASH-CODING-STANDARD.md ]] && continue
+  [[ "${f##*/}" == BASH-CODING-STANDARD.md ]] && continue
   if grep -q '^## BCS[0-9]' "$f"; then
     sections_with_codes+=1
   else
-    printf '    no BCS codes in %s\n' "$(basename "$f")"
+    printf '    no BCS codes in %s\n' "${f##*/}"
   fi
 done
 assert_equal 12 "$sections_with_codes" 'all sections have BCS codes' || true
@@ -82,17 +85,17 @@ assert_equal 0 "$duplicates" 'no duplicate BCS codes' || true
 # Test: BCS codes are sequential within sections
 begin_test 'BCS codes follow section numbering'
 declare -i mismatched=0
-declare -- basename_f section_num code code_section
+declare -- basename_f section_num code code_section line
 for f in "$DATA_DIR"/[0-9]*.md; do
-  [[ "$(basename -- "$f")" == BASH-CODING-STANDARD.md ]] && continue
-  basename_f=$(basename -- "$f")
+  basename_f=${f##*/}
+  [[ "$basename_f" == BASH-CODING-STANDARD.md ]] && continue
   section_num=${basename_f:0:2}
   while IFS= read -r line; do
     if [[ "$line" =~ ^##\ (BCS[0-9]{4}) ]]; then
       code=${BASH_REMATCH[1]}
       code_section=${code:3:2}
       if [[ "$code_section" != "$section_num" ]]; then
-        printf '    %s in %s (expected section %s)\n' "$code" "$(basename "$f")" "$section_num"
+        printf '    %s in %s (expected section %s)\n' "$code" "$basename_f" "$section_num"
         mismatched+=1
       fi
     fi

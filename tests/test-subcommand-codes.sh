@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 # test-subcommand-codes.sh - Tests for bcs codes subcommand
+set -euo pipefail
+shopt -s inherit_errexit
+#shellcheck source-path=SCRIPTDIR source=test-helpers.sh
 source "$(dirname "$0")"/test-helpers.sh
 
 echo 'Testing: codes subcommand'
@@ -39,9 +42,9 @@ for i in 01 02 03 04 05 06 07 08 09 10 11 12; do
 done
 assert_equal 12 "$sections_found" 'all 12 sections have codes' || true
 
-# Test: exact code count is 103
-begin_test 'exactly 103 BCS codes'
-assert_equal 103 "$code_count" "exactly 103 codes (got $code_count)" || true
+# Test: exact code count is 104
+begin_test 'exactly 104 BCS codes'
+assert_equal 104 "$code_count" "exactly 104 codes (got $code_count)" || true
 
 # Test: codes are in ascending order
 begin_test 'codes are in ascending order'

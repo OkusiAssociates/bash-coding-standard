@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 # test-self-compliance.sh - Verify bcs script follows its own standard
+set -euo pipefail
+shopt -s inherit_errexit
+#shellcheck source-path=SCRIPTDIR source=test-helpers.sh
 source "$(dirname "$0")"/test-helpers.sh
 
 echo 'Testing: self-compliance'
@@ -24,11 +27,11 @@ else
   TESTS_FAILED+=1
 fi
 
-# Test: bcs has shebang
+# Test: bcs has shebang (any of 3 BCS0102-valid forms)
 begin_test 'bcs has proper shebang'
 declare -- first_line
 IFS= read -r first_line < "$BCS_CMD"
-assert_equal '#!/usr/bin/env bash' "$first_line" 'proper shebang' || true
+assert_matches "$first_line" '^#!(/usr)?/bin/(env )?bash$' 'BCS0102-valid shebang' || true
 
 # Test: bcs has set -euo pipefail
 begin_test 'bcs has strict mode'

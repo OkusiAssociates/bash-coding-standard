@@ -21,10 +21,12 @@ echo '=============='
 echo
 
 # Run each test file
+declare -- test_file basename_f test_name
 for test_file in "$TEST_DIR"/test-*.sh; do
-  [[ "$(basename -- "$test_file")" == test-helpers.sh ]] && continue
+  basename_f=${test_file##*/}
+  [[ "$basename_f" == test-helpers.sh ]] && continue
 
-  test_name=$(basename -- "$test_file" .sh)
+  test_name=${basename_f%.sh}
   echo "${BOLD}Running: $test_name${NC}"
   total_suites+=1
 
