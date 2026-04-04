@@ -9,3 +9,4 @@ __pycache__/
 examples/exemplar-code/
 UPGRADE-PLAN.md
 CLAUDE.md
+AUDIT-*.md
