@@ -11,13 +11,13 @@ declare -rx PATH=~/.local/bin:/usr/local/bin:/usr/bin:/bin
 # Script metadata
 declare -r VERSION=2.0.1
 #shellcheck disable=SC2155
-declare -r SCRIPT_PATH=$(realpath -e -- "$0")
+declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Global variables
-declare -i VERBOSE=${VERBOSE:-1}
+declare -i VERBOSE=1
 
-declare -ra BCS_SEARCH_PATHS=(
+declare -ar BCS_SEARCH_PATHS=(
   "$SCRIPT_DIR"/data
   "${SCRIPT_DIR%/bin}/share/yatti/BCS/data"
   "${PREFIX:-/usr/local}"/share/yatti/BCS/data
@@ -30,13 +30,10 @@ declare -ar VALID_TEMPLATES=(minimal basic complete library)
 declare -ar VALID_BACKENDS=(auto claude ollama anthropic google openai)
 
 # Model-tier to concrete API model mapping per backend
-declare -Ar ANTHROPIC_MODELS=([fast]=claude-haiku-4-5-20251001 [balanced]=claude-sonnet-4-6 [thorough]=claude-opus-4-6)
+declare -Ar ANTHROPIC_MODELS=([fast]=claude-haiku-4-5 [balanced]=claude-sonnet-4-6 [thorough]=claude-opus-4-6)
 declare -Ar OLLAMA_MODELS=([fast]=qwen3.5:9b [balanced]=qwen3.5:14b [thorough]=qwen3.5:14b)
 declare -Ar GOOGLE_MODELS=([fast]=gemini-2.5-flash-lite [balanced]=gemini-2.5-flash [thorough]=gemini-2.5-pro)
 declare -Ar OPENAI_MODELS=([fast]=gpt-4o-mini [balanced]=gpt-5.4-mini [thorough]=gpt-5.4)
-
-# Prefer GOOGLE_API_KEY over GEMINI_API_KEY; unset GEMINI_API_KEY if both set
-[[ -z "${GOOGLE_API_KEY:-}" || -z "${GEMINI_API_KEY:-}" ]] || unset GEMINI_API_KEY
 
 # Effort-level to max output tokens mapping for API backends
 declare -Ar EFFORT_TOKENS=([low]=4096 [medium]=8192 [high]=16384 [max]=32768)
@@ -83,7 +80,7 @@ read_conf() {
   )
 
   for conf_file in "${search_paths[@]}"; do
-    if [[ -f "$conf_file" ]]; then
+    if [[ -f $conf_file ]]; then
       #shellcheck source=/dev/null
       source "$conf_file"
       return 0
@@ -92,8 +89,6 @@ read_conf() {
 
   return 1
 }
-
-read_conf ||:
 
 # ---- Help functions ----
 
@@ -270,7 +265,7 @@ HELP
 _find_bcs_md() {
   local -- path
   for path in "${BCS_SEARCH_PATHS[@]}"; do
-    if [[ -f "$path"/BASH-CODING-STANDARD.md ]]; then
+    if [[ -f $path/BASH-CODING-STANDARD.md ]]; then
       echo "$path"/BASH-CODING-STANDARD.md
       return 0
     fi
@@ -282,7 +277,7 @@ _find_bcs_md() {
 _find_data_dir() {
   local -- path
   for path in "${BCS_SEARCH_PATHS[@]}"; do
-    if [[ -d "$path" ]]; then
+    if [[ -d $path ]]; then
       echo "$path"
       return 0
     fi
@@ -298,7 +293,7 @@ _find_md2ansi() {
   )
   local -- path
   for path in "${search_paths[@]}"; do
-    [[ -x "$path" ]] && { echo "$path"; return 0; } ||:
+    [[ -x $path ]] && { echo "$path"; return 0; } ||:
   done
   command -v md2ansi 2>/dev/null # Falls through to PATH search; non-zero = not found
 }
@@ -309,9 +304,9 @@ _find_md2ansi() {
 _detect_backend() {
   local -- host=${OLLAMA_HOST:-localhost:11434}
   curl -sf --connect-timeout 2 "http://$host/api/tags" &>/dev/null && { echo ollama; return 0; } ||:
-  [[ -n "${ANTHROPIC_API_KEY:-}" ]] && { echo anthropic; return 0; } ||:
-  [[ -n "${GOOGLE_API_KEY:-${GEMINI_API_KEY:-}}" ]] && { echo google; return 0; } ||:
-  [[ -n "${OPENAI_API_KEY:-}" ]] && { echo openai; return 0; } ||:
+  [[ -n ${ANTHROPIC_API_KEY:-} ]] && { echo anthropic; return 0; } ||:
+  [[ -n ${GOOGLE_API_KEY:-${GEMINI_API_KEY:-}} ]] && { echo google; return 0; } ||:
+  [[ -n ${OPENAI_API_KEY:-} ]] && { echo openai; return 0; } ||:
   command -v claude &>/dev/null && { echo claude; return 0; } ||:
   return 1
 }
@@ -319,7 +314,7 @@ _detect_backend() {
 # LLM backend: Anthropic Messages API
 _llm_anthropic() {
   local -- model=$1 effort=$2 sys=$3 usr=$4
-  [[ -n "${ANTHROPIC_API_KEY:-}" ]] || die 18 'ANTHROPIC_API_KEY not set'
+  [[ -n ${ANTHROPIC_API_KEY:-} ]] || die 18 'ANTHROPIC_API_KEY not set'
   local -- api_model=${ANTHROPIC_MODELS[$model]}
   local -i max_tokens=${EFFORT_TOKENS[$effort]}
 
@@ -378,7 +373,7 @@ _llm_ollama() {
   local -- content
   content=$(jq -r '.message.content // empty' <<< "$body")
   # Strip <think>...</think> tags from qwen3 models
-  [[ "$content" != *'</think>'* ]] || { content=${content##*</think>}; content=${content#$'\n'}; }
+  [[ $content != *'</think>'* ]] || { content=${content##*</think>}; content=${content#$'\n'}; }
   echo "$content"
   echo "___TOKENS___ $(jq -r '"in=\(.prompt_eval_count // 0) out=\(.eval_count // 0)"' <<< "$body")"
 }
@@ -386,7 +381,7 @@ _llm_ollama() {
 # LLM backend: OpenAI chat completions API
 _llm_openai() {
   local -- model=$1 effort=$2 sys=$3 usr=$4
-  [[ -n "${OPENAI_API_KEY:-}" ]] || die 18 'OPENAI_API_KEY not set'
+  [[ -n ${OPENAI_API_KEY:-} ]] || die 18 'OPENAI_API_KEY not set'
   local -- api_model=${OPENAI_MODELS[$model]}
   local -i max_tokens=${EFFORT_TOKENS[$effort]}
 
@@ -419,7 +414,7 @@ _llm_openai() {
 _llm_google() {
   local -- model=$1 effort=$2 sys=$3 usr=$4
   local -- api_key=${GOOGLE_API_KEY:-${GEMINI_API_KEY:-}}
-  [[ -n "$api_key" ]] || die 18 'GOOGLE_API_KEY or GEMINI_API_KEY not set'
+  [[ -n $api_key ]] || die 18 'GOOGLE_API_KEY or GEMINI_API_KEY not set'
   local -- api_model=${GOOGLE_MODELS[$model]}
   local -i max_tokens=${EFFORT_TOKENS[$effort]}
 
@@ -450,11 +445,12 @@ _llm_google() {
 }
 
 # LLM backend: Claude CLI (original implementation, preserves @file references)
-#bcscheck disable=BCS0603
 _llm_claude_cli() {
   local -- model=$1 effort=$2 bcs_file=$3 script_file=$4
   local -i strict=$5
   command -v claude &>/dev/null || die 18 'Claude CLI required for claude backend'
+
+  model=${ANTHROPIC_MODELS[$model]}
 
   local -- prompt="You are a Bash script compliance validator.
 
@@ -475,13 +471,14 @@ Respect inline suppression: eg, #bcscheck disable=BCS0101 exempts the next line/
   # cd to clean temp dir — prevents claude from loading local CLAUDE.md
   local -- check_dir
   check_dir=$(mktemp -d -t 'bcs-XXXXX') || die 1 'Failed to create temp dir'
+  #bcscheck disable=BCS0603
   #shellcheck disable=SC2064
   trap "cd '$PWD' 2>/dev/null; rm -rf '$check_dir'" RETURN
   cd "$check_dir"
   [[ -d /run/user/"$EUID" ]] && declare -x TMPDIR=/run/user/"$EUID" ||:
 
   local -a claude_args=(--model "$model" --permission-mode bypassPermissions)
-  [[ -n "$effort" ]] && claude_args+=(--effort "$effort") ||:
+  [[ -n $effort ]] && claude_args+=(--effort "$effort") ||:
 
   #shellcheck disable=SC1007
   CLAUDECODE= claude "${claude_args[@]}" -p "$prompt" 2>/dev/null
@@ -515,7 +512,7 @@ cmd_display() {
   bcs_file=$(_find_bcs_md) || die 3 'BASH-CODING-STANDARD.md not found'
 
   local -a cat_opts=()
-  ((squeeze_blanks==0)) || cat_opts+=(-s)
+  ((!squeeze_blanks)) || cat_opts+=(-s)
 
   if ((force_cat)); then
     cat "${cat_opts[@]}" -- "$bcs_file"
@@ -526,7 +523,7 @@ cmd_display() {
   if [[ -t 1 ]]; then
     local -- md2ansi_cmd
     md2ansi_cmd=$(_find_md2ansi) || md2ansi_cmd=''
-    if [[ -n "$md2ansi_cmd" ]]; then
+    if [[ -n $md2ansi_cmd ]]; then
       "$md2ansi_cmd" -- "$bcs_file" | less -FXRS
       return 0
     fi
@@ -538,7 +535,6 @@ cmd_display() {
 
 # ---- Subcommand: template ----
 
-#bcscheck disable=BCS0806
 cmd_template() {
   local -- template_type=basic
   local -- script_name=''
@@ -555,6 +551,7 @@ cmd_template() {
                      ;;
     -n|--name)       noarg "$@"; shift; script_name=$1 ;;
     -d|--desc)       noarg "$@"; shift; description=$1 ;;
+    #bcscheck disable=BCS0806
     -V|--version)    noarg "$@"; shift; version=$1 ;;
     -o|--output)     noarg "$@"; shift; output_file=$1 ;;
     -x|--executable) make_executable=1 ;;
@@ -569,8 +566,8 @@ cmd_template() {
   esac; shift; done
 
   # Determine script name from output file if not specified
-  if [[ -z "$script_name" ]]; then
-    if [[ -n "$output_file" ]]; then
+  if [[ -z $script_name ]]; then
+    if [[ -n $output_file ]]; then
       script_name=${output_file##*/}; script_name=${script_name%.sh}
     else
       script_name=script
@@ -581,11 +578,11 @@ cmd_template() {
   local -- data_dir
   data_dir=$(_find_data_dir) || die 3 'Data directory not found'
   local -- template_file="$data_dir"/templates/"$template_type".sh.template
-  [[ -f "$template_file" ]] || die 3 "Template not found ${template_file@Q}"
+  [[ -f $template_file ]] || die 3 "Template not found ${template_file@Q}"
 
   # Check output file
-  if [[ -n "$output_file" && -f "$output_file" ]] && ! ((force_overwrite)); then
-    die 1 "Output file already exists ${output_file@Q} (use -f to overwrite)"
+  if [[ -n $output_file && -f $output_file ]] && ! ((force_overwrite)); then
+    die 22 "Output file already exists ${output_file@Q} (use -f to overwrite)"
   fi
 
   # Read and substitute placeholders
@@ -596,7 +593,7 @@ cmd_template() {
   content=${content//\{\{VERSION\}\}/$version}
 
   # Write output
-  if [[ -n "$output_file" ]]; then
+  if [[ -n $output_file ]]; then
     printf '%s\n' "$content" > "$output_file"
     info "Generated $template_type template ${output_file@Q}"
     if ((make_executable)); then
@@ -630,25 +627,25 @@ cmd_check() {
     -v|--verbose)   VERBOSE=1 ;;
     -q|--quiet)     VERBOSE=0 ;;
     -h|--help)      show_check_help; return 0 ;;
-    --)             shift; [[ -n "${1:-}" ]] && { script_file=$1; shift; }; break ;;
+    --)             shift; [[ -n ${1:-} ]] && { script_file=$1; shift; }; break ;;
     -[bmesSvqh]?*)  set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
     -*)             die 22 "Invalid option ${1@Q}" ;;
-    *)              [[ -z "$script_file" ]] || die 2 'Only one script file allowed'
+    *)              [[ -z $script_file ]] || die 2 'Only one script file allowed'
                     script_file=$1
       ;;
   esac; shift; done
 
-  [[ -n "$script_file" ]] || die 2 'No script file specified'
-  [[ -f "$script_file" ]] || die 3 "Script not found ${script_file@Q}"
-  [[ -r "$script_file" ]] || die 13 "Cannot read ${script_file@Q}"
+  [[ -n $script_file ]] || die 2 'No script file specified'
+  [[ -f $script_file ]] || die 3 "Script not found ${script_file@Q}"
+  [[ -r $script_file ]] || die 13 "Cannot read ${script_file@Q}"
   script_file=$(realpath -e -- "$script_file")
 
   # Auto-detect backend if needed
-  [[ "$backend" != auto ]] || backend=$(_detect_backend) \
+  [[ $backend != auto ]] || backend=$(_detect_backend) \
     || die 18 'No LLM backend available (start Ollama, set ANTHROPIC_API_KEY/OPENAI_API_KEY, or install claude CLI)'
 
   # Verify curl+jq for API backends
-  if [[ "$backend" != claude ]]; then
+  if [[ $backend != claude ]]; then
     local -- dep
     for dep in curl jq; do
       command -v "$dep" &>/dev/null || die 18 "Required tool: ${dep@Q}"
@@ -660,13 +657,13 @@ cmd_check() {
   bcs_file=$(_find_bcs_md) || die 3 'BASH-CODING-STANDARD.md not found'
 
   ((!VERBOSE)) || info "Checking ${script_file@Q} against BCS..." \
-                       "Backend ${backend@Q}, model ${model@Q}, effort ${effort@Q}, strict ${onoff[strict]@Q}"
+                       "bcs check --backend ${backend@Q} --model ${model@Q} --effort ${effort@Q} --strict ${onoff[strict]@Q} ${script_file@Q}"
 
   local -- result
   local -i exit_code=0
   SECONDS=0
 
-  if [[ "$backend" == claude ]]; then
+  if [[ $backend == claude ]]; then
     result=$(_llm_claude_cli "$model" "$effort" "$bcs_file" "$script_file" "$strict") || exit_code=$?
   else
     # Build prompts for API backends
@@ -713,12 +710,12 @@ $numbered_script"
 
   # Extract token sentinel from result (API backends only)
   local -- _llm_tokens=''
-  if [[ "$result" == *'___TOKENS___ '* ]]; then
+  if [[ $result == *'___TOKENS___ '* ]]; then
     _llm_tokens=${result##*___TOKENS___ }
     result=${result%$'\n___TOKENS___ '*}
   fi
 
-  [[ -z "$result" ]] || echo "$result"
+  [[ -z $result ]] || echo "$result"
   ((!VERBOSE)) || info "Tokens: $_llm_tokens" "Elapsed: ${SECONDS}s"
   return "$exit_code"
 }
@@ -740,7 +737,7 @@ cmd_codes() {
   local -- line code title
   while IFS= read -r line; do
     # Match lines like: ## BCS0102 Shebang
-    if [[ "$line" =~ ^##\ (BCS[0-9]+)\ (.+)$ ]]; then
+    if [[ $line =~ ^##\ (BCS[0-9]+)\ (.+)$ ]]; then
       code=${BASH_REMATCH[1]}
       title=${BASH_REMATCH[2]}
       printf '%s %s\n' "$code" "$title"
@@ -768,13 +765,13 @@ cmd_generate() {
   data_dir=$(_find_data_dir) || die 3 'Data directory not found'
 
   # Default output location
-  [[ -n "$output_file" ]] || output_file="$data_dir"/BASH-CODING-STANDARD.md
+  [[ -n $output_file ]] || output_file="$data_dir"/BASH-CODING-STANDARD.md
 
   # Count section files
   local -a section_files=()
   local -- section_file
   for section_file in "$data_dir"/[0-9]*.md; do
-    [[ "${section_file##*/}" == BASH-CODING-STANDARD.md ]] && continue ||:
+    [[ ${section_file##*/} == BASH-CODING-STANDARD.md ]] && continue ||:
     section_files+=("$section_file")
   done
 
@@ -837,10 +834,7 @@ cmd_generate() {
 # ---- Subcommand: help ----
 
 cmd_help() {
-  if ! (($#)); then
-    show_main_help
-    return 0
-  fi
+  (($#)) || { show_main_help; return 0; }
 
   case $1 in
     display)  show_display_help ;;
@@ -856,7 +850,12 @@ cmd_help() {
 # ---- Main dispatcher ----
 
 main() {
+  read_conf ||:
+
   local -- subcmd=display
+
+  # Prefer GOOGLE_API_KEY over GEMINI_API_KEY; unset GEMINI_API_KEY if both set
+  [[ -z ${GOOGLE_API_KEY:-} || -z ${GEMINI_API_KEY:-} ]] || unset GEMINI_API_KEY
 
   while (($#)); do
     case $1 in
@@ -874,12 +873,12 @@ main() {
         shift; break ;;
       -[vqVh]?*)  set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
        # Any other options means it's for subcmd 'display'
-       -*)
-         break ;;
-       *)
-         subcmd=${1,,}
-         shift
-         break ;;
+      -*)
+        break ;;
+      *)
+        subcmd=${1,,}
+        shift
+        break ;;
     esac
     shift
   done

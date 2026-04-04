@@ -49,7 +49,7 @@ HELP
 
   # POSIX: trailing colon means current directory — guard for read -ra
   local _path="${PATH:-}"
-  [[ $_path == *: ]] && _path+=':'
+  [[ $_path != *: ]] || _path+=':'
   IFS=':' read -ra path_dirs <<< "$_path"
 
   for target in "${targets[@]}"; do
@@ -57,7 +57,7 @@ HELP
 
     # Paths containing / bypass PATH search
     if [[ $target == */* ]]; then
-      if [[ -f "$target" && -x "$target" ]]; then
+      if [[ -f $target && -x $target ]]; then
         if ((canonical)); then
           if resolved=$(realpath -- "$target" 2>/dev/null); then
             ((silent)) || printf '%s\n' "$resolved"
@@ -79,7 +79,7 @@ HELP
       [[ -n $path ]] || path='.'
       full_path="${path%/}"/"$target"
 
-      if [[ -f "$full_path" && -x "$full_path" ]]; then
+      if [[ -f $full_path && -x $full_path ]]; then
         if ((canonical)); then
           if resolved=$(realpath -- "$full_path" 2>/dev/null); then
             ((silent)) || printf '%s\n' "$resolved"

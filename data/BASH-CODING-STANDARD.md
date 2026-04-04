@@ -2020,7 +2020,7 @@ Code formatting, comments, development practices, debugging, dry-run patterns, a
 
 ```
 - 2 spaces for indentation (never tabs)
-- Lines under 100 characters (except URLs/paths)
+- Lines under 120 characters (except URLs/paths)
 - Use \ for line continuation
 ```
 

@@ -13,7 +13,7 @@ die() { (($# < 2)) || >&2 echo "$SCRIPT_NAME: error: ${*:2}"; exit "${1:-0}"; }
 
 # Find bcs
 declare -- BCS_CMD
-if [[ -x "$SCRIPT_DIR"/bcs ]]; then
+if [[ -x $SCRIPT_DIR/bcs ]]; then
   BCS_CMD="$SCRIPT_DIR"/bcs
 elif command -v bcs >/dev/null; then
   BCS_CMD=$(command -v bcs)

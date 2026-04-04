@@ -4,11 +4,12 @@
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
-export PATH=/usr/local/bin:/usr/bin:/bin
-export PS4='+ ${BASH_SOURCE##*/}:${LINENO}:${FUNCNAME[0]:+${FUNCNAME[0]}():} '
+declare -rx PATH=/usr/local/bin:/usr/bin:/bin
+declare -rx PS4='+ ${BASH_SOURCE##*/}:${LINENO}:${FUNCNAME[0]:+${FUNCNAME[0]}():} '
 
 # Script metadata
 declare -r VERSION=1.0.1
+#bcscheck disable=BCS0103
 declare -r SCRIPT_NAME=${0##*/}
 
 # Global configuration
@@ -70,6 +71,7 @@ error() { >&2 _msg "$@"; }
 die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 # Debug output with timestamp
+#bcscheck disable=BCS0703
 debug() {
   ((DEBUG)) || return 0
   local -- timestamp msg
@@ -78,7 +80,6 @@ debug() {
     >&2 printf '[%s] %s⦿%s %s\n' "$timestamp" "$YELLOW" "$NC" "$msg"
   done
 }
-
 
 # --------------------------------------------------------------------------------
 # Terminal detection functions
@@ -128,17 +129,17 @@ validate_file_size() {
   local -i max_size=$2
   local -i file_size
 
-  [[ -f "$filepath" ]] || die 3 "File not found ${filepath@Q}"
-  [[ -r "$filepath" ]] || die 13 "Cannot read file ${filepath@Q}"
+  [[ -f $filepath ]] || die 3 "File not found ${filepath@Q}"
+  [[ -r $filepath ]] || die 13 "Cannot read file ${filepath@Q}"
 
   # Check if it's a directory
-  [[ ! -d "$filepath" ]] || die 3 "${filepath@Q} is a directory, not a file"
+  [[ ! -d $filepath ]] || die 4 "${filepath@Q} is a directory, not a file"
 
   # Get file size in bytes
   file_size=$(stat -c '%s' "$filepath" 2>/dev/null || echo 0)
 
   if ((file_size > max_size)); then
-    die 1 "File too large: $file_size bytes (maximum: $max_size bytes / 10MB)"
+    die 9 "File too large: $file_size bytes (maximum: $max_size bytes / 10MB)"
   fi
 
   debug "File size validation passed: $file_size bytes"
@@ -155,13 +156,6 @@ cleanup() {
   # Reset terminal to clean state
   [[ -z ${ANSI_RESET:-} ]] || printf '%s' "$ANSI_RESET"
   exit "$exitcode"
-}
-
-# Install signal handlers
-install_signal_handlers() {
-  trap 'cleanup $?' EXIT
-  trap 'cleanup 130' INT
-  trap 'cleanup 143' TERM
 }
 
 # --------------------------------------------------------------------------------
@@ -967,6 +961,36 @@ _align_cell() {
 
 # --------------------------------------------------------------------------------
 # Main markdown parser
+# --------------------------------------------------------------------------------
+# Footnote rendering
+
+# Render collected footnotes at end of document
+render_footnotes() {
+  local -- ref_id footnote_text formatted_text
+
+  echo
+  printf '%s%s%s\n' "$COLOR_H2" "Footnotes:" "$ANSI_RESET"
+  echo
+
+  for ref_id in "${FOOTNOTE_REFS[@]}"; do
+    if [[ -n ${FOOTNOTES[$ref_id]:-} ]]; then
+      footnote_text=${FOOTNOTES[$ref_id]}
+      formatted_text=$(colorize_line "$footnote_text")
+      printf '%s[%s%s^%s%s%s]: %s%s\n' \
+        "$COLOR_TEXT" \
+        "$ANSI_BOLD" "$ANSI_DIM" "$ref_id" "$ANSI_RESET" "$COLOR_TEXT" \
+        "$formatted_text" \
+        "$ANSI_RESET"
+    else
+      # Reference without definition
+      printf '%s[%s%s^%s%s%s]: %sMissing footnote definition%s\n' \
+        "$COLOR_TEXT" \
+        "$ANSI_BOLD" "$ANSI_DIM" "$ref_id" "$ANSI_RESET" "$COLOR_TEXT" \
+        "${ANSI_ITALIC}" \
+        "$ANSI_RESET"
+    fi
+  done
+}
 
 # Parse markdown line array and produce ANSI output
 # Usage: parse_markdown lines_array_name
@@ -1174,37 +1198,6 @@ parse_markdown() {
   fi
 }
 
-# --------------------------------------------------------------------------------
-# Footnote rendering
-
-# Render collected footnotes at end of document
-render_footnotes() {
-  local -- ref_id footnote_text formatted_text
-
-  echo
-  printf '%s%s%s\n' "$COLOR_H2" "Footnotes:" "$ANSI_RESET"
-  echo
-
-  for ref_id in "${FOOTNOTE_REFS[@]}"; do
-    if [[ -n ${FOOTNOTES[$ref_id]:-} ]]; then
-      footnote_text=${FOOTNOTES[$ref_id]}
-      formatted_text=$(colorize_line "$footnote_text")
-      printf '%s[%s%s^%s%s%s]: %s%s\n' \
-        "$COLOR_TEXT" \
-        "$ANSI_BOLD" "$ANSI_DIM" "$ref_id" "$ANSI_RESET" "$COLOR_TEXT" \
-        "$formatted_text" \
-        "$ANSI_RESET"
-    else
-      # Reference without definition
-      printf '%s[%s%s^%s%s%s]: %sMissing footnote definition%s\n' \
-        "$COLOR_TEXT" \
-        "$ANSI_BOLD" "$ANSI_DIM" "$ref_id" "$ANSI_RESET" "$COLOR_TEXT" \
-        "${ANSI_ITALIC}" \
-        "$ANSI_RESET"
-    fi
-  done
-}
-
 # ================================================================================
 # Main Script Functions
 # ================================================================================
@@ -1266,7 +1259,7 @@ HELP
 }
 
 # Argument parsing
-
+#bcscheck disable=BCS0804
 parse_arguments() {
   while (($#)); do
     case $1 in
@@ -1275,7 +1268,7 @@ parse_arguments() {
         shift
         [[ $1 =~ ^[0-9]+$ ]] || die 22 "Invalid width ${1@Q}"
         TERM_WIDTH=$1
-        ((TERM_WIDTH >= 20 && TERM_WIDTH <= 500)) || die 22 "Width must be between 20 and 500"
+        ((TERM_WIDTH >= 20 && TERM_WIDTH <= 500)) || die 22 'Width must be between 20 and 500'
         ;;
       -D|--debug)
         DEBUG=1
@@ -1351,9 +1344,9 @@ process_file() {
     validate_file_size "$filepath" "$MAX_FILE_SIZE"
 
     # Read file into array, handling encoding issues
-    while IFS= read -r line || [[ -n "$line" ]]; do
+    while IFS= read -r line || [[ -n $line ]]; do
       # Skip shebang to prevent treating it as markdown content
-      if ((${#lines[@]} == 0)) && [[ "$line" =~ ^\#! ]]; then
+      if ((${#lines[@]} == 0)) && [[ $line =~ ^\#! ]]; then
         continue
       fi
       lines+=("$line")
@@ -1364,12 +1357,12 @@ process_file() {
     local -i byte_count=0
 
     # Read stdin with size limit
-    while IFS= read -r line || [[ -n "$line" ]]; do
+    while IFS= read -r line || [[ -n $line ]]; do
       byte_count+=${#line}
       byte_count+=1  # Account for newline
 
       if ((byte_count > MAX_FILE_SIZE)); then
-        die 1 "Input from stdin exceeds maximum size: $MAX_FILE_SIZE bytes (10MB)"
+        die 9 "Input from stdin exceeds maximum size: $MAX_FILE_SIZE bytes (10MB)"
       fi
 
       # Skip shebang to prevent treating it as markdown content
@@ -1389,7 +1382,8 @@ process_file() {
 # Main function
 
 main() {
-  install_signal_handlers
+  # Install signal handlers
+  trap 'cleanup $?' SIGINT SIGTERM EXIT
 
   # Parse command-line arguments
   parse_arguments "$@"
