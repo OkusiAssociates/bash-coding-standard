@@ -1,0 +1,49 @@
+System Information
+==================
+Date: 2026-03-30T21:21:16+08:00
+Hostname: okusi
+Bash Version: 5.2.21(1)-release
+CPU: 13th Gen Intel(R) Core(TM) i9-13900HX
+Kernel: 6.17.0-19-generic
+Runs per test: 30
+
+Starting benchmarks...
+
+Test: Empty loop with counter break (100K) (iterations: 100000)
+while ((1)) - Mean: 0.084s, Median: 0.084s, StdDev: 0.002s
+while :     - Mean: 0.096s, Median: 0.096s, StdDev: 0.002s
+while true  - Mean: 0.104s, Median: 0.103s, StdDev: 0.003s
+Fastest: while ((1))
+
+Test: Empty loop with counter break (1M) (iterations: 1000000)
+while ((1)) - Mean: 0.852s, Median: 0.853s, StdDev: 0.017s
+while :     - Mean: 0.970s, Median: 0.974s, StdDev: 0.026s
+while true  - Mean: 1.039s, Median: 1.045s, StdDev: 0.028s
+Fastest: while ((1))
+
+Test: Empty loop with counter break (5M) (iterations: 5000000)
+while ((1)) - Mean: 4.175s, Median: 4.200s, StdDev: 0.091s
+while :     - Mean: 4.782s, Median: 4.813s, StdDev: 0.116s
+while true  - Mean: 5.089s, Median: 5.058s, StdDev: 0.102s
+Fastest: while ((1))
+
+Test: Loop with arithmetic work (1M) (iterations: 1000000)
+while ((1)) - Mean: 1.409s, Median: 1.415s, StdDev: 0.033s
+while :     - Mean: 1.519s, Median: 1.533s, StdDev: 0.035s
+while true  - Mean: 1.584s, Median: 1.584s, StdDev: 0.037s
+Fastest: while ((1))
+
+Benchmark Complete!
+===================
+
+Detailed results saved to: benchmark-results-20260330-212116.txt
+
+Analysis and Recommendation:
+----------------------------
+See results above for performance comparison.
+
+For BCS guideline consideration:
+- If while ((1)) is consistently faster: Recommend for performance-critical code
+- If while : is faster or equivalent: Recommend for better POSIX compatibility
+- If difference is < 5%: Recommend while : for readability and tradition
+
