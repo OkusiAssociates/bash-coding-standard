@@ -1,0 +1,3 @@
+### logout
+
+Exit a login shell.

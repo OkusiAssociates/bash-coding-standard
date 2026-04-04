@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>15_declare.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">15_declare.md</h1>
+</header>
+<h3 id="declare">declare</h3>
+<p>declare [-aAfFgiIlnrtux] [-p] [name[=value] ...] typeset
+[-aAfFgiIlnrtux] [-p] [name[=value] ...]</p>
+<p>Declare variables and give them attributes. If no names are given,
+display variable values. The -p option displays the attributes and
+values of each name. When -p is used with name arguments, additional
+options other than -f and -F are ignored. When -p is supplied without
+name arguments, it displays the attributes and values of all variables
+having the attributes specified by the additional options. If no other
+options are supplied with -p, declare displays the attributes and values
+of all shell variables.</p>
+<p>The -f option restricts the display to shell functions. The -F option
+inhibits the display of function definitions; only the function name and
+attributes are printed. If the extdebug shell option is enabled using
+shopt, the source file name and line number where each name is defined
+are also displayed. -F implies -f.</p>
+<p>The -g option forces variables to be created or modified at the
+global scope, even when declare is executed in a shell function. It is
+ignored in all other cases. The -I option causes local variables to
+inherit the attributes (except the nameref attribute) and value of any
+existing variable with the same name at a surrounding scope. If there is
+no existing variable, the local variable is initially unset.</p>
+<p>The following options restrict output to variables with the specified
+attribute or assign attributes to variables:</p>
+<p>-a Each name is an indexed array variable.</p>
+<p>-A Each name is an associative array variable.</p>
+<p>-f Use function names only.</p>
+<p>-i The variable is treated as an integer; arithmetic evaluation is
+performed when the variable is assigned a value.</p>
+<p>-l When the variable is assigned a value, all upper-case characters
+are converted to lower-case. The upper-case attribute is disabled.</p>
+<p>-n Give each name the nameref attribute, making it a name reference
+to another variable. That other variable is defined by the value of
+name. All references, assignments, and attribute modifications to name,
+except those using or changing the -n attribute itself, are performed on
+the variable referenced by name&#39;s value. The nameref attribute cannot be
+applied to array variables.</p>
+<p>-r Make names readonly. These names cannot then be assigned values by
+subsequent assignment statements or unset.</p>
+<p>-t Give each name the trace attribute. Traced functions inherit the
+DEBUG and RETURN traps from the calling shell. The trace attribute has
+no special meaning for variables.</p>
+<p>-u When the variable is assigned a value, all lower-case characters
+are converted to upper-case. The lower-case attribute is disabled.</p>
+<p>-x Mark names for export to subsequent commands via the
+environment.</p>
+<p>Using + instead of - turns off the attribute, with the exceptions
+that +a and +A may not be used to destroy array variables and +r will
+not remove the readonly attribute. When used in a function, declare and
+typeset make each name local, as with the local command, unless the -g
+option is supplied. If a variable name is followed by =value, the value
+of the variable is set to value. When using -a or -A and the compound
+assignment syntax to create array variables, additional attributes do
+not take effect until subsequent assignments.</p>
+<p>Returns 0 unless an invalid option is encountered, an attempt is made
+to define a function using -f foo=bar, an attempt is made to assign a
+value to a readonly variable, an attempt is made to assign a value to an
+array variable without using the compound assignment syntax, one of the
+names is not a valid shell variable name, an attempt is made to turn off
+readonly status for a readonly variable, an attempt is made to turn off
+array status for an array variable, or an attempt is made to display a
+non-existent function with -f.</p>
+<p style="margin:0.8em 0"><a href="index.html">[← Back]</a></p>
+</body>
+</html>

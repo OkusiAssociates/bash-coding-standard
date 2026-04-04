@@ -66,7 +66,7 @@ sudo make PREFIX=/usr install  # Install to /usr (system-wide)
 sudo make uninstall            # Uninstall
 ```
 
-Installs the `bcs` and `bcscheck` binaries, data files, bash completions, and the `bcs(1)` manpage.
+Installs the `bcs` and `bcscheck` binaries, data files, bash completions, and the `bcs(1)` and `BCS-bash(1)` manpages.
 
 ## Overview
 
@@ -174,6 +174,16 @@ shellcheck -x bcs                     # Mandatory validation
 - K.I.S.S.
 - "The best process is no process"
 - "Everything should be made as simple as possible, but not any simpler."
+
+## Bash 5.2 Reference (Strict Mode)
+
+BCS includes a rewritten Bash 5.2 reference manpage tailored for strict-mode scripting. It removes legacy syntax (backtick substitution, `[ ]` tests), POSIX compatibility modes, and `sh`-emulation caveats — leaving a clean, modern reference that assumes `set -euo pipefail` and `[[ ]]` throughout.
+
+```bash
+man BCS-bash    # View the reference (also: man bcs-bash)
+```
+
+The reference source lives in `docs/BCS-bash/` as structured Markdown files mirroring the original bash(1) man page sections.
 
 ## Related Resources
 

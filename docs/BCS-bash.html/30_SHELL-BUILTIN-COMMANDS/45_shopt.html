@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>45_shopt.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">45_shopt.md</h1>
+</header>
+<h3 id="shopt">shopt</h3>
+<p>shopt [-pqsu] [-o] [optname ...]</p>
+<p>Toggle settings controlling optional shell behavior. The settings are
+those listed here, or, with -o, those available via set -o. With no
+options or with -p, all settable options are displayed with their
+current state; if optnames are supplied, output is restricted to those
+options. The -p option formats output as reusable input.</p>
+<p>-s Enable (set) each optname.</p>
+<p>-u Disable (unset) each optname.</p>
+<p>-q Suppress normal output (quiet mode); the return status indicates
+whether the optname is set or unset. With multiple optnames, the return
+status is zero only if all are enabled.</p>
+<p>-o Restrict optname values to those defined for set -o.</p>
+<p>If -s or -u is used with no optname arguments, shopt shows only those
+options which are set or unset, respectively. Unless otherwise noted,
+shopt options are disabled (unset) by default.</p>
+<p>The return status when listing options is zero if all optnames are
+enabled, non-zero otherwise. When setting or unsetting options, the
+return status is zero unless an optname is not a valid shell option.</p>
+<p>The list of shopt options:</p>
+<p>assoc_expand_once Suppress multiple evaluation of associative array
+subscripts during arithmetic expression evaluation, while executing
+builtins that can perform variable assignments, and while executing
+builtins that perform array dereferencing.</p>
+<p>autocd A command name that is the name of a directory is executed as
+if it were the argument to cd. Interactive shells only.</p>
+<p>cdable_vars An argument to cd that is not a directory is assumed to
+be the name of a variable whose value is the directory to change to.</p>
+<p>cdspell Minor errors in the spelling of a directory component in a cd
+command are corrected. The errors checked for are transposed characters,
+a missing character, and one character too many. If a correction is
+found, the corrected filename is printed and the command proceeds.
+Interactive shells only.</p>
+<p>checkhash Bash checks that a command found in the hash table exists
+before trying to execute it. If a hashed command no longer exists, a
+normal path search is performed.</p>
+<p>checkjobs Bash lists the status of any stopped and running jobs
+before exiting an interactive shell. If any jobs are running, the exit
+is deferred until a second exit is attempted without an intervening
+command (see JOB CONTROL). The shell always postpones exiting if any
+jobs are stopped.</p>
+<p>checkwinsize Bash checks the window size after each external
+(non-builtin) command and, if necessary, updates the values of LINES and
+COLUMNS. Enabled by default.</p>
+<p>cmdhist Bash attempts to save all lines of a multiple-line command in
+the same history entry, allowing easy re-editing of multi-line commands.
+Enabled by default, but only has an effect if command history is enabled
+(see HISTORY).</p>
+<p>complete_fullquote Bash quotes all shell metacharacters in filenames
+and directory names when performing completion. If not set, bash removes
+metacharacters such as the dollar sign from the set of characters that
+will be quoted in completed filenames when these metacharacters appear
+in shell variable references in words to be completed. This means that
+dollar signs in variable names that expand to directories will not be
+quoted; however, any dollar signs appearing in filenames will not be
+quoted either. Active only when bash is using backslashes to quote
+completed filenames. Enabled by default.</p>
+<p>direxpand Bash replaces directory names with the results of word
+expansion when performing filename completion, changing the contents of
+the readline editing buffer. If not set, bash attempts to preserve what
+the user typed.</p>
+<p>dirspell Bash attempts spelling correction on directory names during
+word completion if the directory name initially supplied does not
+exist.</p>
+<p>dotglob Include filenames beginning with a . in the results of
+pathname expansion. The filenames . and .. must always be matched
+explicitly, even if dotglob is set.</p>
+<p>execfail A non-interactive shell will not exit if it cannot execute
+the file specified as an argument to exec. An interactive shell does not
+exit if exec fails.</p>
+<p>expand_aliases Aliases are expanded as described in ALIASES. Enabled
+by default for interactive shells.</p>
+<p>extdebug If set at shell invocation or in a shell startup file, the
+debugger profile is executed before the shell starts, identical to the
+--debugger option.</p>
+<p>If set after invocation, behavior intended for use by debuggers is
+enabled: 1) The -F option to declare displays the source file name and
+line number corresponding to each function name supplied as an argument.
+2) If the command run by the DEBUG trap returns a non-zero value, the
+next command is skipped. 3) If the command run by the DEBUG trap returns
+a value of 2 and the shell is executing in a subroutine (a shell
+function or a script executed by . or source), the shell simulates a
+call to return. 4) BASH_ARGC and BASH_ARGV are updated as described in
+their variable definitions. 5) Function tracing is enabled: command
+substitution, shell functions, and subshells invoked with ( command )
+inherit the DEBUG and RETURN traps. 6) Error tracing is enabled: command
+substitution, shell functions, and subshells invoked with ( command )
+inherit the ERR trap.</p>
+<p>extglob Enable the extended pattern matching features described in
+Pathname Expansion.</p>
+<p>extquote $&#39;string&#39; and $&quot;string&quot; quoting is performed within
+${parameter} expansions enclosed in double quotes. Enabled by
+default.</p>
+<p>failglob Patterns which fail to match filenames during pathname
+expansion result in an expansion error.</p>
+<p>force_fignore The suffixes specified by the FIGNORE shell variable
+cause words to be ignored when performing word completion even if the
+ignored words are the only possible completions. See FIGNORE in Shell
+Variables. Enabled by default.</p>
+<p>globasciiranges Range expressions used in pattern matching bracket
+expressions (see Pattern Matching) behave as if in the traditional C
+locale when performing comparisons. The current locale&#39;s collating
+sequence is not taken into account, so b will not collate between A and
+B, and upper-case and lower-case ASCII characters will collate
+together.</p>
+<p>globskipdots Pathname expansion will never match the filenames . and
+.., even if the pattern begins with a dot. Enabled by default.</p>
+<p>globstar The pattern ** used in a pathname expansion context matches
+all files and zero or more directories and subdirectories. If the
+pattern is followed by a /, only directories and subdirectories
+match.</p>
+<p>gnu_errfmt Shell error messages are written in the standard GNU error
+message format.</p>
+<p>histappend The history list is appended to the file named by HISTFILE
+when the shell exits, rather than overwriting the file.</p>
+<p>histreedit If readline is being used, a user is given the opportunity
+to re-edit a failed history substitution.</p>
+<p>histverify If readline is being used, the results of history
+substitution are not immediately passed to the shell parser. Instead,
+the resulting line is loaded into the readline editing buffer, allowing
+further modification.</p>
+<p>hostcomplete If readline is being used, bash attempts to perform
+hostname completion when a word containing a @ is being completed (see
+Completing in READLINE). Enabled by default.</p>
+<p>huponexit Bash sends SIGHUP to all jobs when an interactive login
+shell exits.</p>
+<p>inherit_errexit Command substitution inherits the value of the
+errexit option, instead of unsetting it in the subshell environment.
+Under strict-mode bash, this option should always be enabled.</p>
+<p>interactive_comments Allow a word beginning with # to cause that word
+and all remaining characters on that line to be ignored in an
+interactive shell (see COMMENTS). Enabled by default.</p>
+<p>lastpipe If job control is not active, the shell runs the last
+command of a pipeline not executed in the background in the current
+shell environment.</p>
+<p>lithist If the cmdhist option is enabled, multi-line commands are
+saved to the history with embedded newlines rather than using semicolon
+separators where possible.</p>
+<p>localvar_inherit Local variables inherit the value and attributes of
+a variable of the same name that exists at a previous scope before any
+new value is assigned. The nameref attribute is not inherited.</p>
+<p>localvar_unset Calling unset on local variables in previous function
+scopes marks them so subsequent lookups find them unset until that
+function returns. This is identical to the behavior of unsetting local
+variables at the current function scope.</p>
+<p>login_shell The shell sets this option if it is started as a login
+shell (see INVOCATION). The value may not be changed.</p>
+<p>mailwarn If a file that bash is checking for mail has been accessed
+since the last time it was checked, the message &quot;The mail in mailfile
+has been read&quot; is displayed.</p>
+<p>no_empty_cmd_completion If readline is being used, bash will not
+attempt to search PATH for possible completions when completion is
+attempted on an empty line.</p>
+<p>nocaseglob Bash matches filenames in a case-insensitive fashion when
+performing pathname expansion (see Pathname Expansion).</p>
+<p>nocasematch Bash matches patterns in a case-insensitive fashion when
+performing matching while executing case or [[ conditional commands,
+when performing pattern substitution word expansions, or when filtering
+possible completions as part of programmable completion.</p>
+<p>noexpand_translation Bash encloses the translated results of $&quot;...&quot;
+quoting in single quotes instead of double quotes. If the string is not
+translated, this has no effect.</p>
+<p>nullglob Patterns which match no files (see Pathname Expansion)
+expand to a null string, rather than themselves.</p>
+<p>patsub_replacement Bash expands occurrences of &amp; in the
+replacement string of pattern substitution to the text matched by the
+pattern, as described in Parameter Expansion. Enabled by default.</p>
+<p>progcomp The programmable completion facilities (see Programmable
+Completion) are enabled. Enabled by default.</p>
+<p>progcomp_alias If programmable completion is enabled, bash treats a
+command name that has no completions as a possible alias and attempts
+alias expansion. If it has an alias, bash attempts programmable
+completion using the command word resulting from the expanded alias.</p>
+<p>promptvars Prompt strings undergo parameter expansion, command
+substitution, arithmetic expansion, and quote removal after being
+expanded as described in PROMPTING. Enabled by default.</p>
+<p>restricted_shell The shell sets this option if it is started in
+restricted mode (see RESTRICTED SHELL). The value may not be changed.
+This is not reset when the startup files are executed, allowing the
+startup files to discover whether or not a shell is restricted.</p>
+<p>shift_verbose The shift builtin prints an error message when the
+shift count exceeds the number of positional parameters.</p>
+<p>sourcepath The . (source) builtin uses the value of PATH to find the
+directory containing the file supplied as an argument. Enabled by
+default.</p>
+<p>varredir_close The shell automatically closes file descriptors
+assigned using the {varname} redirection syntax (see REDIRECTION)
+instead of leaving them open when the command completes.</p>
+<p>xpg_echo The echo builtin expands backslash-escape sequences by
+default.</p>
+<p style="margin:0.8em 0"><a href="index.html">[← Back]</a></p>
+</body>
+</html>

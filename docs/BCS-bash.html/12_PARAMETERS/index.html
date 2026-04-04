@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>index.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">index.md</h1>
+</header>
+<h2 id="parameters">PARAMETERS</h2>
+<p>A parameter is an entity that stores values. It can be a name, a
+number, or one of the special characters listed below under Special
+Parameters. A variable is a parameter denoted by a name. A variable has
+a value and zero or more attributes. Attributes are assigned using the
+declare builtin command (see declare below in SHELL BUILTIN
+COMMANDS).</p>
+<p>A parameter is set if it has been assigned a value. The null string
+is a valid value. Once a variable is set, it may be unset only by using
+the unset builtin command (see SHELL BUILTIN COMMANDS below).</p>
+<p>A variable may be assigned to by a statement of the form</p>
+<p>name=[value]</p>
+<p>If value is not given, the variable is assigned the null string. All
+values undergo tilde expansion, parameter and variable expansion,
+command substitution, arithmetic expansion, and quote removal (see
+EXPANSION below). If the variable has its integer attribute set, then
+value is evaluated as an arithmetic expression even if the $((...))
+expansion is not used (see Arithmetic Expansion below). Word splitting
+and pathname expansion are not performed. Assignment statements may also
+appear as arguments to the alias, declare, typeset, export, readonly,
+and local builtin commands (declaration commands).</p>
+<p>In the context where an assignment statement is assigning a value to
+a shell variable or array index, the += operator can be used to append
+to or add to the variable&#39;s previous value. This includes arguments to
+builtin commands such as declare that accept assignment statements
+(declaration commands). When += is applied to a variable for which the
+integer attribute has been set, value is evaluated as an arithmetic
+expression and added to the variable&#39;s current value, which is also
+evaluated. When += is applied to an array variable using compound
+assignment (see Arrays below), the variable&#39;s value is not unset (as it
+is when using =), and new values are appended to the array beginning at
+one greater than the array&#39;s maximum index (for indexed arrays) or added
+as additional key-value pairs in an associative array. When applied to a
+string-valued variable, value is expanded and appended to the variable&#39;s
+value.</p>
+<p>A variable can be assigned the nameref attribute using the -n option
+to the declare or local builtin commands (see the descriptions of
+declare and local below) to create a nameref, or a reference to another
+variable. This allows variables to be manipulated indirectly. Whenever
+the nameref variable is referenced, assigned to, unset, or has its
+attributes modified (other than using or changing the nameref attribute
+itself), the operation is actually performed on the variable specified
+by the nameref variable&#39;s value. A nameref is commonly used within shell
+functions to refer to a variable whose name is passed as an argument to
+the function. For instance, if a variable name is passed to a shell
+function as its first argument, running declare -n ref=$1 inside the
+function creates a nameref variable ref whose value is the variable name
+passed as the first argument. References and assignments to ref, and
+changes to its attributes, are treated as references, assignments, and
+attribute modifications to the variable whose name was passed as $1. If
+the control variable in a for loop has the nameref attribute, the list
+of words can be a list of shell variables, and a name reference will be
+established for each word in the list, in turn, when the loop is
+executed. Array variables cannot be given the nameref attribute.
+However, nameref variables can reference array variables and subscripted
+array variables. Namerefs can be unset using the -n option to the unset
+builtin. Otherwise, if unset is executed with the name of a nameref
+variable as an argument, the variable referenced by the nameref variable
+will be unset.</p>
+<hr />
+<ul>
+<li><a href="01_Positional-Parameters.html">Positional
+Parameters</a></li>
+<li><a href="02_Special-Parameters.html">Special Parameters</a></li>
+<li><a href="03_Shell-Variables.html">Shell Variables</a></li>
+<li><a href="04_Arrays.html">Arrays</a></li>
+</ul>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

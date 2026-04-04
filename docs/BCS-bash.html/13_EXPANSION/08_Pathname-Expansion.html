@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>08_Pathname-Expansion.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">08_Pathname-Expansion.md</h1>
+</header>
+<h3 id="pathname-expansion">Pathname Expansion</h3>
+<p>After word splitting, unless the -f option has been set, bash scans
+each word for the characters *, ?, and [. If one of these characters
+appears and is not quoted, the word is regarded as a pattern and
+replaced with an alphabetically sorted list of filenames matching the
+pattern (see Pattern Matching). If no matching filenames are found and
+the nullglob shell option is not enabled, the word is left unchanged. If
+nullglob is set and no matches are found, the word is removed. If the
+failglob shell option is set and no matches are found, an error message
+is printed and the command is not executed. If the nocaseglob shell
+option is enabled, the match is performed without regard to the case of
+alphabetic characters.</p>
+<p>When using range expressions like [a-z], letters of the other case
+may be included depending on the setting of LC_COLLATE. When a pattern
+is used for pathname expansion, the character . at the start of a name
+or immediately following a slash must be matched explicitly, unless the
+dotglob shell option is set. To match the filenames . and .., the
+pattern must begin with . (for example, .?), even if dotglob is set. If
+the globskipdots shell option is enabled, the filenames . and .. are
+never matched, even if the pattern begins with a dot. When not matching
+pathnames, the . character is not treated specially. When matching a
+pathname, the slash character must always be matched explicitly by a
+slash in the pattern, but in other matching contexts it can be matched
+by a special pattern character as described in Pattern Matching. See the
+shopt builtin for descriptions of the nocaseglob, nullglob,
+globskipdots, failglob, and dotglob shell options.</p>
+<p>The GLOBIGNORE shell variable restricts the set of filenames matching
+a pattern. If GLOBIGNORE is set, each matching filename that also
+matches one of the patterns in GLOBIGNORE is removed from the list of
+matches. If the nocaseglob option is set, the matching against
+GLOBIGNORE patterns is performed without regard to case.</p>
+<p>The filenames . and .. are always ignored when GLOBIGNORE is set and
+not null. However, setting GLOBIGNORE to a non-null value enables the
+dotglob shell option, so all other filenames beginning with . will
+match. To restore the behavior of ignoring filenames beginning with a
+dot, include .* as one of the patterns in GLOBIGNORE. The dotglob option
+is disabled when GLOBIGNORE is unset. The pattern matching honors the
+setting of the extglob shell option.</p>
+<h4 id="pattern-matching">Pattern Matching</h4>
+<p>Any character that appears in a pattern, other than the special
+pattern characters described here, matches itself. The NUL character may
+not occur in a pattern. A backslash escapes the following character; the
+escaping backslash is discarded when matching. The special pattern
+characters must be quoted if they are to be matched literally.</p>
+<p>The special pattern characters have the following meanings:</p>
+<ul>
+<li>Matches any string, including the null string. When the globstar
+shell option is enabled and * is used in a pathname expansion context,
+two adjacent *s used as a single pattern match all files and zero or
+more directories and subdirectories. If followed by a /, two adjacent *s
+match only directories and subdirectories.</li>
+</ul>
+<p>? Matches any single character.</p>
+<p>[...] Matches any one of the enclosed characters. A pair of
+characters separated by a hyphen denotes a range expression; any
+character that falls between those two characters, inclusive, using the
+current locale&#39;s collating sequence and character set, is matched. If
+the first character following the [ is a ! or a ^ then any character not
+enclosed is matched. The sorting order of characters in range
+expressions, and the characters included in the range, are determined by
+the current locale and the values of the LC_COLLATE or LC_ALL shell
+variables, if set. To obtain the traditional interpretation of range
+expressions where [a-d] is equivalent to [abcd], set LC_ALL to C or
+enable the globasciiranges shell option. A - may be matched by including
+it as the first or last character in the set. A ] may be matched by
+including it as the first character in the set.</p>
+<p>Within [ and ], character classes can be specified using the syntax
+[:class:], where class is one of the following classes defined in the
+POSIX standard: alnum alpha ascii blank cntrl digit graph lower print
+punct space upper word xdigit. A character class matches any character
+belonging to that class. The word character class matches letters,
+digits, and the character _.</p>
+<p>Within [ and ], an equivalence class can be specified using the
+syntax [=c=], which matches all characters with the same collation
+weight (as defined by the current locale) as the character c.</p>
+<p>Within [ and ], the syntax [.symbol.] matches the collating symbol
+symbol.</p>
+<p>If the extglob shell option is enabled using shopt, the shell
+recognizes several extended pattern matching operators. In the following
+description, a pattern-list is a list of one or more patterns separated
+by a |. Composite patterns may be formed using one or more of the
+following sub-patterns:</p>
+<p>?(pattern-list) Matches zero or one occurrence of the given
+patterns</p>
+<p>*(pattern-list) Matches zero or more occurrences of the given
+patterns</p>
+<p>+(pattern-list) Matches one or more occurrences of the given
+patterns</p>
+<p>@(pattern-list) Matches one of the given patterns</p>
+<p>!(pattern-list) Matches anything except one of the given patterns</p>
+<p>The extglob option changes the behavior of the parser, since the
+parentheses are normally treated as operators with syntactic meaning. To
+ensure that extended matching patterns are parsed correctly, make sure
+extglob is enabled before parsing constructs containing the patterns,
+including shell functions and command substitutions.</p>
+<p>When matching filenames, the dotglob shell option determines the set
+of filenames that are tested. When dotglob is enabled, the set includes
+all files beginning with ., but . and .. must still be matched by a
+pattern or sub-pattern that begins with a dot. When dotglob is disabled,
+the set does not include any filenames beginning with . unless the
+pattern or sub-pattern begins with a dot. The . character only has a
+special meaning when matching filenames.</p>
+<p>Complicated extended pattern matching against long strings is slow,
+especially when the patterns contain alternations and the strings
+contain multiple matches. Using separate matches against shorter
+strings, or using arrays of strings instead of a single long string, may
+be faster.</p>
+<p style="margin:0.8em 0"><a href="index.html">[← Back]</a></p>
+</body>
+</html>

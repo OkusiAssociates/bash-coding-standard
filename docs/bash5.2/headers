@@ -1,0 +1,153 @@
+#!/bin/bash
+echo "DO NOT RUN"; exit 1
+set -euo pipefail
+
+# Split bash.text (man bash dump) into per-section markdown files with index.
+# Sections with subsections become directories; others stay as flat files.
+# SHELL BUILTIN COMMANDS uses blank-line heuristic for per-builtin splitting.
+
+declare -A skip_sections=([COPYRIGHT]=1 ['SEE ALSO']=1 [AUTHORS]=1 ['BUG REPORTS']=1 [BUGS]=1)
+declare -A dir_sections=(
+  ['SHELL GRAMMAR']=1 ['PARAMETERS']=1 ['EXPANSION']=1
+  ['REDIRECTION']=1 ['READLINE']=1 ['HISTORY EXPANSION']=1
+  ['SHELL BUILTIN COMMANDS']=1
+)
+
+declare -- head headfile='' text rawline
+declare -i count=0 skip_section=0
+declare -- secdir=''
+declare -- sec_index=''
+declare -i subcount=0 in_builtins=0 prev_blank=0
+
+# Clean previous output (NN_* files and dirs, plus index.md)
+rm -rf [0-3][0-9]_* index.md
+
+declare -- indexfile=index.md
+printf '%s\n\n' '# BASH 5.2.21' >"$indexfile"
+
+while IFS= read -r rawline; do
+  text=$rawline
+
+  # Blank line tracking
+  if [[ -z $text ]]; then
+    prev_blank=1
+    [[ $skip_section -eq 0 && -n $headfile ]] && printf '\n' >>"$headfile"
+    continue
+  fi
+
+  # Column-0 header (top-level section)
+  if [[ ${text:0:1} =~ [A-Z] ]]; then
+    prev_blank=0
+    [[ ${text:0:3} == 'GNU' ]] && break ||:
+
+    if [[ -v skip_sections[$text] ]]; then
+      skip_section=1; headfile=''; secdir=''; in_builtins=0; continue
+    fi
+    skip_section=0
+
+    count+=1
+    head=$text
+    subcount=0
+
+    if [[ -v dir_sections[$text] ]]; then
+      # Directory section
+      printf -v secdir '%0.2d_%s' $count "${head// /-}"
+      mkdir -p "$secdir"
+      sec_index=$secdir/index.md
+      headfile=$sec_index
+      printf '%s\n' "- [$(printf '%0.2d' $count) $head]($secdir/index.md)" >>"$indexfile"
+      printf '%s\n\n' "## $head" >"$sec_index"
+
+      if [[ $text == 'SHELL BUILTIN COMMANDS' ]]; then
+        in_builtins=1
+      else
+        in_builtins=0
+      fi
+    else
+      # Flat file
+      secdir=''
+      sec_index=''
+      in_builtins=0
+      printf -v headfile '%0.2d_%s.md' $count "${head// /-}"
+      printf '%s\n' "- [$(printf '%0.2d' $count) $head]($headfile)" >>"$indexfile"
+      printf '%s\n\n' "## $head" >"$headfile"
+    fi
+    continue
+  fi
+
+  [[ $skip_section -eq 1 || -z $headfile ]] && continue
+
+  # Sub-section header (3-space indent + uppercase start)
+  if [[ $text =~ ^'   '[A-Z] ]]; then
+    prev_blank=0
+    if [[ -n $secdir ]]; then
+      subcount+=1
+      [[ $subcount -eq 1 ]] && printf '%s\n' '---' >>"$sec_index"
+      declare -- subname=${text:3}
+      declare -- subfile
+      printf -v subfile '%s/%0.2d_%s.md' "$secdir" $subcount "${subname// /-}"
+      headfile=$subfile
+      printf '%s\n\n' "### $subname" >"$subfile"
+      printf '%s\n' "- [${subname}](${subfile##*/})" >>"$sec_index"
+    else
+      printf '\n### %s\n\n' "${text:3}" >>"$headfile"
+    fi
+    continue
+  fi
+
+  # Body text: convert tabs to spaces and strip 7-char indent
+  text=${text//$'\t'/        }
+  text=${text:7}
+
+  # Builtin entry detection (SHELL BUILTIN COMMANDS only)
+  if [[ $in_builtins -eq 1 ]]; then
+    declare -i new_builtin=0
+    declare -- cmd_name=''
+
+    if [[ $subcount -eq 0 && $text =~ ^': ' ]]; then
+      # First entry (:) has no preceding blank line
+      new_builtin=1
+      cmd_name='colon'
+    elif [[ $prev_blank -eq 1 ]]; then
+      # After a blank line: 7-space+non-space in raw, or tab+non-space
+      if [[ $rawline =~ ^'       '[^\ ] || $rawline =~ ^$'\t'[^$'\t '] ]]; then
+        new_builtin=1
+        # Extract first word for filename (read handles leading whitespace)
+        declare -- firstword
+        read -r firstword _ <<< "$text"
+        # Special-case names
+        case $firstword in
+          ':')  cmd_name='colon' ;;
+          '.')  cmd_name='dot-source' ;;
+          '[')  cmd_name='test-bracket' ;;
+          *)    cmd_name=$firstword ;;
+        esac
+      fi
+    fi
+
+    if [[ $new_builtin -eq 1 ]]; then
+      subcount+=1
+      [[ $subcount -eq 1 ]] && printf '%s\n' '---' >>"$sec_index"
+      declare -- subfile
+      printf -v subfile '%s/%0.2d_%s.md' "$secdir" $subcount "$cmd_name"
+      headfile=$subfile
+      printf '%s\n' "### $cmd_name" >"$subfile"
+      printf '%s\n' "- [${cmd_name}](${subfile##*/})" >>"$sec_index"
+    fi
+  fi
+
+  prev_blank=0
+
+  # Sub-sub-header detection (e.g. "Pattern Matching")
+  if [[ $text =~ ^[A-Z][a-z]+' '[A-Z][a-z]+$ ]]; then
+    printf '\n#### %s\n\n' "$text" >>"$headfile"
+    continue
+  fi
+
+  # Collapse runs of 3+ spaces to a single space
+  while [[ $text == *'   '* ]]; do text=${text//   / }; done
+
+  printf '%s\n' "$text" >>"$headfile"
+done < bash.text
+
+#fin

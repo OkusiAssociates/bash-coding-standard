@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>04_Readline-Variables.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">04_Readline-Variables.md</h1>
+</header>
+<h3 id="readline-variables">Readline Variables</h3>
+<p>Readline has variables that can be used to further customize its
+behavior. A variable may be set in the inputrc file with a statement of
+the form</p>
+<p>set variable-name value</p>
+<p>or using the bind builtin.</p>
+<p>Except where noted, readline variables can take the values On or Off
+(without regard to case). Unrecognized variable names are ignored. When
+a variable value is read, empty or null values, &quot;on&quot; (case-insensitive),
+and &quot;1&quot; are equivalent to On. All other values are equivalent to Off.
+The variables and their default values are:</p>
+<p>active-region-start-color A string variable that controls the text
+color and background when displaying the text in the active region (see
+enable-active-region). This string must not take up any physical
+character positions on the display, so it should consist only of
+terminal escape sequences. It is output to the terminal before
+displaying the text in the active region. Reset to the default value
+whenever the terminal type changes. The default is the string that puts
+the terminal in standout mode, as obtained from the terminal&#39;s terminfo
+description. A sample value might be &quot;\e[01;33m&quot;.</p>
+<p>active-region-end-color A string variable that undoes the effects of
+active-region-start-color and restores normal terminal display
+appearance after displaying text in the active region. This string must
+not take up any physical character positions on the display, so it
+should consist only of terminal escape sequences. It is output to the
+terminal after displaying the text in the active region. Reset to the
+default value whenever the terminal type changes. The default is the
+string that restores the terminal from standout mode, as obtained from
+the terminal&#39;s terminfo description. A sample value might be
+&quot;\e[0m&quot;.</p>
+<p>bell-style (audible) Controls what happens when readline wants to
+ring the terminal bell. If set to none, readline never rings the bell.
+If set to visible, readline uses a visible bell if one is available. If
+set to audible, readline attempts to ring the terminal&#39;s bell.</p>
+<p>bind-tty-special-chars (On) If set to On, readline attempts to bind
+the control characters treated specially by the kernel&#39;s terminal driver
+to their readline equivalents.</p>
+<p>blink-matching-paren (Off) If set to On, readline attempts to briefly
+move the cursor to an opening parenthesis when a closing parenthesis is
+inserted.</p>
+<p>colored-completion-prefix (Off) If set to On, when listing
+completions, readline displays the common prefix of the set of possible
+completions using a different color. The color definitions are taken
+from the value of the LS_COLORS environment variable. If there is a
+color definition in LS_COLORS for the custom suffix
+&quot;readline-colored-completion-prefix&quot;, readline uses this color for the
+common prefix instead of its default.</p>
+<p>colored-stats (Off) If set to On, readline displays possible
+completions using different colors to indicate their file type. The
+color definitions are taken from the value of the LS_COLORS environment
+variable.</p>
+<p>comment-begin (&quot;#&quot;) The string inserted when the readline
+insert-comment command is executed. This command is bound to M-# in
+emacs mode and to # in vi command mode.</p>
+<p>completion-display-width (-1) The number of screen columns used to
+display possible matches when performing completion. Ignored if less
+than 0 or greater than the terminal screen width. A value of 0 causes
+matches to be displayed one per line. The default value is -1.</p>
+<p>completion-ignore-case (Off) If set to On, readline performs filename
+matching and completion in a case-insensitive fashion.</p>
+<p>completion-map-case (Off) If set to On, and completion-ignore-case is
+enabled, readline treats hyphens (-) and underscores (_) as equivalent
+when performing case-insensitive filename matching and completion.</p>
+<p>completion-prefix-display-length (0) The length in characters of the
+common prefix of a list of possible completions that is displayed
+without modification. When set to a value greater than zero, common
+prefixes longer than this value are replaced with an ellipsis when
+displaying possible completions.</p>
+<p>completion-query-items (100) Determines when the user is queried
+about viewing the number of possible completions generated by the
+possible-completions command. May be set to any integer value greater
+than or equal to zero. If the number of possible completions is greater
+than or equal to this value, readline asks whether the user wishes to
+view them; otherwise they are simply listed. A zero value means readline
+never asks; negative values are treated as zero.</p>
+<p>convert-meta (On) If set to On, readline converts characters with the
+eighth bit set to an ASCII key sequence by stripping the eighth bit and
+prefixing an escape character (using escape as the meta prefix). The
+default is On, but readline sets it to Off if the locale contains
+eight-bit characters. Dependent on the LC_CTYPE locale category, and may
+change if the locale is changed.</p>
+<p>disable-completion (Off) If set to On, readline inhibits word
+completion. Completion characters are inserted into the line as if they
+had been mapped to self-insert.</p>
+<p>echo-control-characters (On) When set to On, on operating systems
+that support it, readline echoes a character corresponding to a signal
+generated from the keyboard.</p>
+<p>editing-mode (emacs) Controls whether readline begins with a set of
+key bindings similar to Emacs or vi. Can be set to either emacs or
+vi.</p>
+<p>emacs-mode-string (@) If the show-mode-in-prompt variable is enabled,
+this string is displayed immediately before the last line of the primary
+prompt when emacs editing mode is active. The value is expanded like a
+key binding, so the standard set of meta- and control prefixes and
+backslash escape sequences is available. Use the \1 and \2 escapes to
+begin and end sequences of non-printing characters, which can be used to
+embed a terminal control sequence into the mode string.</p>
+<p>enable-active-region (On) The point is the current cursor position,
+and mark refers to a saved cursor position. The text between the point
+and mark is the region. When set to On, readline allows certain commands
+to designate the region as active. When the region is active, readline
+highlights the text using the value of active-region-start-color, which
+defaults to the string that enables the terminal&#39;s standout mode. The
+active region shows the text inserted by bracketed-paste and any
+matching text found by incremental and non-incremental history
+searches.</p>
+<p>enable-bracketed-paste (On) When set to On, readline configures the
+terminal to insert each paste into the editing buffer as a single string
+of characters, instead of treating each character as if it had been read
+from the keyboard. This prevents readline from executing any editing
+commands bound to key sequences appearing in the pasted text.</p>
+<p>enable-keypad (Off) When set to On, readline tries to enable the
+application keypad when it is called. Some systems need this to enable
+the arrow keys.</p>
+<p>enable-meta-key (On) When set to On, readline tries to enable any
+meta modifier key the terminal claims to support when it is called. On
+many terminals, the meta key is used to send eight-bit characters.</p>
+<p>expand-tilde (Off) If set to On, tilde expansion is performed when
+readline attempts word completion.</p>
+<p>history-preserve-point (Off) If set to On, the history code attempts
+to place point at the same location on each history line retrieved with
+previous-history or next-history.</p>
+<p>history-size (unset) Set the maximum number of history entries saved
+in the history list. If set to zero, any existing history entries are
+deleted and no new entries are saved. If set to a value less than zero,
+the number of history entries is not limited. By default, the number of
+history entries is set to the value of the HISTSIZE shell variable. If
+an attempt is made to set history-size to a non-numeric value, the
+maximum number of history entries is set to 500.</p>
+<p>horizontal-scroll-mode (Off) When set to On, readline uses a single
+line for display, scrolling the input horizontally on a single screen
+line when it becomes longer than the screen width rather than wrapping
+to a new line. Automatically enabled for terminals of height 1.</p>
+<p>input-meta (Off) If set to On, readline enables eight-bit input (it
+does not strip the eighth bit from the characters it reads), regardless
+of what the terminal claims it can support. The name meta-flag is a
+synonym for this variable. The default is Off, but readline sets it to
+On if the locale contains eight-bit characters. Dependent on the
+LC_CTYPE locale category, and may change if the locale is changed.</p>
+<p>isearch-terminators (&quot;C-[C-J&quot;) The string of characters that should
+terminate an incremental search without subsequently executing the
+character as a command. If this variable has not been given a value, the
+characters ESC and C-J terminate an incremental search.</p>
+<p>keymap (emacs) Set the current readline keymap. The valid keymap
+names are emacs, emacs-standard, emacs-meta, emacs-ctlx, vi, vi-command,
+and vi-insert. vi is equivalent to vi-command; emacs is equivalent to
+emacs-standard. The default value is emacs; the value of editing-mode
+also affects the default keymap.</p>
+<p>keyseq-timeout (500) Specifies the duration readline will wait for a
+character when reading an ambiguous key sequence (one that can form a
+complete key sequence using the input read so far, or can take
+additional input to complete a longer key sequence). If no input is
+received within the timeout, readline uses the shorter but complete key
+sequence. The value is specified in milliseconds, so a value of 1000
+means readline waits one second for additional input. If set to a value
+less than or equal to zero, or to a non-numeric value, readline waits
+until another key is pressed to decide which key sequence to
+complete.</p>
+<p>mark-directories (On) If set to On, completed directory names have a
+slash appended.</p>
+<p>mark-modified-lines (Off) If set to On, history lines that have been
+modified are displayed with a preceding asterisk (*).</p>
+<p>mark-symlinked-directories (Off) If set to On, completed names which
+are symbolic links to directories have a slash appended (subject to the
+value of mark-directories).</p>
+<p>match-hidden-files (On) When set to On, readline matches files whose
+names begin with a . (hidden files) when performing filename completion.
+If set to Off, the leading . must be supplied by the user in the
+filename to be completed.</p>
+<p>menu-complete-display-prefix (Off) If set to On, menu completion
+displays the common prefix of the list of possible completions (which
+may be empty) before cycling through the list.</p>
+<p>output-meta (Off) If set to On, readline displays characters with the
+eighth bit set directly rather than as a meta-prefixed escape sequence.
+The default is Off, but readline sets it to On if the locale contains
+eight-bit characters. Dependent on the LC_CTYPE locale category, and may
+change if the locale is changed.</p>
+<p>page-completions (On) If set to On, readline uses an internal
+more-like pager to display a screenful of possible completions at a
+time.</p>
+<p>print-completions-horizontally (Off) If set to On, readline displays
+completions with matches sorted horizontally in alphabetical order,
+rather than down the screen.</p>
+<p>revert-all-at-newline (Off) If set to On, readline undoes all changes
+to history lines before returning when accept-line is executed. By
+default, history lines may be modified and retain individual undo lists
+across calls to readline.</p>
+<p>show-all-if-ambiguous (Off) Alters the default behavior of the
+completion functions. If set to On, words which have more than one
+possible completion cause the matches to be listed immediately instead
+of ringing the bell.</p>
+<p>show-all-if-unmodified (Off) Similar to show-all-if-ambiguous. If set
+to On, words which have more than one possible completion without any
+possible partial completion (the possible completions share no common
+prefix) cause the matches to be listed immediately instead of ringing
+the bell.</p>
+<p>show-mode-in-prompt (Off) If set to On, adds a string to the
+beginning of the prompt indicating the editing mode: emacs, vi command,
+or vi insertion. The mode strings are user-settable (e.g.,
+emacs-mode-string).</p>
+<p>skip-completed-text (Off) If set to On, alters the default completion
+behavior when inserting a single match into the line. Only active when
+performing completion in the middle of a word. If enabled, readline does
+not insert characters from the completion that match characters after
+point in the word being completed, so portions of the word following the
+cursor are not duplicated.</p>
+<p>vi-cmd-mode-string ((cmd)) If the show-mode-in-prompt variable is
+enabled, this string is displayed immediately before the last line of
+the primary prompt when vi editing mode is active and in command mode.
+The value is expanded like a key binding, so the standard set of meta-
+and control prefixes and backslash escape sequences is available. Use
+the \1 and \2 escapes to begin and end sequences of non-printing
+characters, which can be used to embed a terminal control sequence into
+the mode string.</p>
+<p>vi-ins-mode-string ((ins)) If the show-mode-in-prompt variable is
+enabled, this string is displayed immediately before the last line of
+the primary prompt when vi editing mode is active and in insertion mode.
+The value is expanded like a key binding, so the standard set of meta-
+and control prefixes and backslash escape sequences is available. Use
+the \1 and \2 escapes to begin and end sequences of non-printing
+characters, which can be used to embed a terminal control sequence into
+the mode string.</p>
+<p>visible-stats (Off) If set to On, a character denoting a file&#39;s type
+as reported by stat(2) is appended to the filename when listing possible
+completions.</p>
+<p style="margin:0.8em 0"><a href="index.html">[← Back]</a></p>
+</body>
+</html>

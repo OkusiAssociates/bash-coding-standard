@@ -17,8 +17,8 @@ declare -ri RUNS_PER_TEST=30
 declare -a ITERATION_COUNTS=(100000 1000000 5000000)
 
 # Output files
-declare -r RESULTS_FILE="docs/benchmark-results-$(date +%Y%m%d-%H%M%S).txt"
-declare -r SUMMARY_FILE="docs/benchmark-summary-$(date +%Y%m%d-%H%M%S).txt"
+declare -r RESULTS_FILE="benchmark-results-$(date +%Y%m%d-%H%M%S).txt"
+declare -r SUMMARY_FILE="benchmark-summary-$(date +%Y%m%d-%H%M%S).txt"
 
 # Test results storage
 declare -a times_while_double_paren
@@ -112,7 +112,7 @@ run_benchmark_double_paren_with_work() {
   sum=0
   while ((1)); do
     ((i++)) || break
-    ((sum += i))
+    sum+=i
   done
 
   end=${EPOCHREALTIME/./}
@@ -133,7 +133,7 @@ run_benchmark_colon_with_work() {
   sum=0
   while :; do
     ((i++)) || break
-    ((sum += i))
+    sum+=i
   done
 
   end=${EPOCHREALTIME/./}
@@ -154,7 +154,7 @@ run_benchmark_true_with_work() {
   sum=0
   while true; do
     ((i++)) || break
-    ((sum += i))
+    sum+=i
   done
 
   end=${EPOCHREALTIME/./}
@@ -172,7 +172,7 @@ calculate_statistics() {
 
   # Calculate mean
   for val in "${values[@]}"; do
-    ((sum += val))
+    sum+=val
   done
   mean=$((sum / count))
 
@@ -347,6 +347,7 @@ EOT
   print_system_info
   echo "Starting benchmarks..."
   echo
+  true
 } | tee "$RESULTS_FILE"
 
 # Test 1: Empty loop with counter break (100K iterations)

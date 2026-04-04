@@ -22,6 +22,8 @@ install:
 	install -m 644 data/templates/*.sh.template $(DESTDIR)$(SHAREDIR)/data/templates/
 	install -d $(DESTDIR)$(MANDIR)
 	install -m 644 bcs.1 $(DESTDIR)$(MANDIR)/bcs.1
+	install -m 644 docs/BCS-bash.1 $(DESTDIR)$(MANDIR)/BCS-bash.1
+	ln -sfn BCS-bash.1 $(DESTDIR)$(MANDIR)/bcs-bash.1
 	@if [ -d $(DESTDIR)$(COMPDIR) ]; then \
 	  install -m 644 bcs.bash_completion $(DESTDIR)$(COMPDIR)/bcs; \
 	fi
@@ -36,6 +38,8 @@ uninstall:
 	rm -f $(DESTDIR)$(BINDIR)/bcs
 	rm -f $(DESTDIR)$(BINDIR)/bcscheck
 	rm -f $(DESTDIR)$(MANDIR)/bcs.1
+	rm -f $(DESTDIR)$(MANDIR)/BCS-bash.1
+	rm -f $(DESTDIR)$(MANDIR)/bcs-bash.1
 	rm -f $(DESTDIR)$(COMPDIR)/bcs
 	rm -rf $(DESTDIR)$(SHAREDIR)
 	rm -f $(DESTDIR)$(PREFIX)/share/yatti/bash-coding-standard

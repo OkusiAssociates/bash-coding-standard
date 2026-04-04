@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>03_Parameter-Expansion.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">03_Parameter-Expansion.md</h1>
+</header>
+<h3 id="parameter-expansion">Parameter Expansion</h3>
+<p>The $ character introduces parameter expansion, command substitution,
+or arithmetic expansion. The parameter name or symbol to be expanded may
+be enclosed in braces, which are optional but protect the variable from
+characters immediately following it that could be interpreted as part of
+the name.</p>
+<p>When braces are used, the matching ending brace is the first } not
+escaped by a backslash or within a quoted string, and not within an
+embedded arithmetic expansion, command substitution, or parameter
+expansion.</p>
+<p>${parameter} The value of parameter is substituted. Braces are
+required when parameter is a positional parameter with more than one
+digit, or when parameter is followed by a character that is not to be
+interpreted as part of its name. The parameter is a shell parameter (see
+PARAMETERS) or an array reference (see Arrays).</p>
+<p>If the first character of parameter is an exclamation point (!) and
+parameter is not a nameref, it introduces a level of indirection. Bash
+uses the value formed by expanding the rest of parameter as the new
+parameter; this value is then expanded and used in the rest of the
+expansion rather than the expansion of the original parameter. This is
+known as indirect expansion. The value is subject to tilde expansion,
+parameter expansion, command substitution, and arithmetic expansion.</p>
+<p>If parameter is a nameref, this expands to the name of the parameter
+referenced by parameter instead of performing the complete indirect
+expansion. The exceptions are the expansions of ${!prefix*} and
+${!name[@]}. The exclamation point must immediately follow the left
+brace to introduce indirection.</p>
+<p>In each of the cases that follow, word is subject to tilde expansion,
+parameter expansion, command substitution, and arithmetic expansion.</p>
+<p>When not performing substring expansion, using the forms documented
+here (e.g., :-), bash tests for a parameter that is unset or null.
+Omitting the colon results in a test only for a parameter that is
+unset.</p>
+<p>${parameter:-word} Use Default Values. If parameter is unset or null,
+the expansion of word is substituted. Otherwise the value of parameter
+is substituted.</p>
+<p>${parameter:=word} Assign Default Values. If parameter is unset or
+null, the expansion of word is assigned to parameter and the value of
+parameter is then substituted. Positional parameters and special
+parameters may not be assigned to in this way.</p>
+<p>${parameter:?word} Display Error if Null or Unset. If parameter is
+null or unset, the expansion of word (or a default message if word is
+not present) is written to standard error and the shell exits if it is
+not interactive. Otherwise the value of parameter is substituted.</p>
+<p>${parameter:+word} Use Alternate Value. If parameter is null or
+unset, nothing is substituted. Otherwise the expansion of word is
+substituted.</p>
+<p>${parameter:offset} ${parameter:offset:length} Substring Expansion.
+Expands to up to length characters of the value of parameter starting at
+the character specified by offset. If parameter is @ or *, an indexed
+array subscripted by @ or *, or an associative array name, the results
+differ as described in the paragraphs that follow. If length is omitted,
+expands to the substring from offset to the end of the value. Both
+length and offset are arithmetic expressions (see ARITHMETIC
+EVALUATION).</p>
+<p>If offset evaluates to a number less than zero, the value is used as
+an offset in characters from the end of the value of parameter. If
+length evaluates to a number less than zero, it is interpreted as an
+offset from the end of the value rather than a character count, and the
+expansion is the characters between the two offsets. A negative offset
+must be separated from the colon by at least one space to avoid being
+confused with the :- expansion.</p>
+<p>If parameter is @ or *, the result is length positional parameters
+beginning at offset. A negative offset is taken relative to one greater
+than the greatest positional parameter, so an offset of -1 evaluates to
+the last positional parameter. It is an expansion error if length
+evaluates to a number less than zero.</p>
+<p>If parameter is an indexed array name subscripted by @ or *, the
+result is the length members of the array beginning with
+${parameter[offset]}. A negative offset is taken relative to one greater
+than the maximum index of the specified array. It is an expansion error
+if length evaluates to a number less than zero.</p>
+<p>Substring expansion applied to an associative array produces
+undefined results.</p>
+<p>Substring indexing is zero-based unless the positional parameters are
+used, in which case indexing starts at 1 by default. If offset is 0 and
+the positional parameters are used, $0 is prefixed to the list.</p>
+<p>${!prefix*} ${!prefix@} Names matching prefix. Expands to the names
+of variables whose names begin with prefix, separated by the first
+character of IFS. When @ is used and the expansion appears within double
+quotes, each variable name expands to a separate word.</p>
+<p>${!name[@]} ${!name[*]} List of array keys. If name is an array
+variable, expands to the list of array indices (keys) assigned in name.
+If name is not an array, expands to 0 if name is set and null otherwise.
+When @ is used and the expansion appears within double quotes, each key
+expands to a separate word.</p>
+<p>${#parameter} Parameter length. Substitutes the length in characters
+of the value of parameter. If parameter is * or @, the value substituted
+is the number of positional parameters. If parameter is an array name
+subscripted by * or @, the value substituted is the number of elements
+in the array. If parameter is an indexed array name subscripted by a
+negative number, that number is interpreted as relative to one greater
+than the maximum index of parameter, so negative indices count back from
+the end of the array and an index of -1 references the last element.</p>
+<p>${parameter#word} ${parameter##word} Remove matching prefix pattern.
+The word is expanded to produce a pattern as in pathname expansion and
+matched against the expanded value of parameter using the rules in
+Pattern Matching. If the pattern matches the beginning of the value of
+parameter, the result is the expanded value with the shortest matching
+pattern (the # case) or the longest matching pattern (the ## case)
+deleted. If parameter is @ or *, the pattern removal operation is
+applied to each positional parameter in turn and the expansion is the
+resultant list. If parameter is an array variable subscripted with @ or
+*, the operation is applied to each member of the array in turn and the
+expansion is the resultant list.</p>
+<p>${parameter%word} ${parameter%%word} Remove matching suffix pattern.
+The word is expanded to produce a pattern as in pathname expansion and
+matched against the expanded value of parameter using the rules in
+Pattern Matching. If the pattern matches a trailing portion of the
+expanded value of parameter, the result is the expanded value with the
+shortest matching pattern (the % case) or the longest matching pattern
+(the %% case) deleted. If parameter is @ or *, the pattern removal
+operation is applied to each positional parameter in turn and the
+expansion is the resultant list. If parameter is an array variable
+subscripted with @ or *, the operation is applied to each member of the
+array in turn and the expansion is the resultant list.</p>
+<p>${parameter/pattern/string} ${parameter//pattern/string}
+${parameter/#pattern/string} ${parameter/%pattern/string} Pattern
+substitution. The pattern is expanded to produce a pattern as in
+pathname expansion. Parameter is expanded and the longest match of
+pattern against its value is replaced with string. The string undergoes
+tilde expansion, parameter and variable expansion, arithmetic expansion,
+command and process substitution, and quote removal. The match is
+performed using the rules in Pattern Matching.</p>
+<p>In the first form, only the first match is replaced. If there are two
+slashes separating parameter and pattern (the second form), all matches
+of pattern are replaced with string. If pattern is preceded by # (the
+third form), it must match at the beginning of the expanded value of
+parameter. If pattern is preceded by % (the fourth form), it must match
+at the end of the expanded value of parameter. If the expansion of
+string is null, matches of pattern are deleted. If string is null,
+matches of pattern are deleted and the / following pattern may be
+omitted.</p>
+<p>If the patsub_replacement shell option is enabled using shopt, any
+unquoted instances of &amp; in string are replaced with the matching
+portion of pattern.</p>
+<p>Quoting any part of string inhibits replacement in the expansion of
+the quoted portion, including replacement strings stored in shell
+variables. Backslash escapes &amp; in string; the backslash is removed
+to permit a literal &amp; in the replacement string. Backslash can also
+escape a backslash; \ results in a literal backslash in the replacement.
+Take care if string is double-quoted to avoid unwanted interactions
+between the backslash and double-quoting, since backslash has special
+meaning within double quotes. Pattern substitution performs the check
+for unquoted &amp; after expanding string, so quote any occurrences of
+&amp; intended as literal characters in the replacement and leave
+unquoted any instances of &amp; intended for substitution.</p>
+<p>If the nocasematch shell option is enabled, the match is performed
+without regard to case. If parameter is @ or *, the substitution
+operation is applied to each positional parameter in turn and the
+expansion is the resultant list. If parameter is an array variable
+subscripted with @ or *, the operation is applied to each member of the
+array in turn and the expansion is the resultant list.</p>
+<p>${parameter^pattern} ${parameter^^pattern} ${parameter,pattern}
+${parameter,,pattern} Case modification. Modifies the case of alphabetic
+characters in parameter. The pattern is expanded to produce a pattern as
+in pathname expansion. Each character in the expanded value of parameter
+is tested against pattern, and if it matches, its case is converted. The
+pattern should not attempt to match more than one character.</p>
+<p>The ^ operator converts lowercase letters matching pattern to
+uppercase; the , operator converts matching uppercase letters to
+lowercase. The ^^ and ,, expansions convert each matched character in
+the expanded value; the ^ and , expansions convert only the first
+character. If pattern is omitted, it is treated as ?, which matches
+every character.</p>
+<p>If parameter is @ or *, the case modification operation is applied to
+each positional parameter in turn and the expansion is the resultant
+list. If parameter is an array variable subscripted with @ or *, the
+operation is applied to each member of the array in turn and the
+expansion is the resultant list.</p>
+<p>${parameter@operator} Parameter transformation. The expansion is
+either a transformation of the value of parameter or information about
+parameter itself, depending on the value of operator. Each operator is a
+single letter:</p>
+<p>U Converts lowercase alphabetic characters to uppercase. u Converts
+the first character to uppercase, if it is alphabetic. L Converts
+uppercase alphabetic characters to lowercase. Q Quotes the value in a
+format that can be reused as input. E Expands backslash escape sequences
+as with the $&#39;...&#39; quoting mechanism. P Expands the value as if it were
+a prompt string (see PROMPTING). A Produces a string in the form of an
+assignment statement or declare command that, if evaluated, would
+recreate parameter with its attributes and value. K Produces a
+possibly-quoted version of the value, except that indexed and
+associative arrays are printed as a sequence of quoted key-value pairs
+(see Arrays). a Produces a string of flag values representing
+parameter&#39;s attributes. k Like K, but expands the keys and values of
+indexed and associative arrays to separate words after word
+splitting.</p>
+<p>If parameter is @ or *, the operation is applied to each positional
+parameter in turn and the expansion is the resultant list. If parameter
+is an array variable subscripted with @ or *, the operation is applied
+to each member of the array in turn and the expansion is the resultant
+list.</p>
+<p>The result of the expansion is subject to word splitting and pathname
+expansion.</p>
+<p style="margin:0.8em 0"><a href="index.html">[← Back]</a></p>
+</body>
+</html>

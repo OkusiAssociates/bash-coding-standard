@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>03_Shell-Variables.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">03_Shell-Variables.md</h1>
+</header>
+<h3 id="shell-variables">Shell Variables</h3>
+<p>The following variables are set by the shell:</p>
+<p>_ At shell startup, set to the pathname used to invoke the shell or
+shell script, as passed in the environment or argument list.</p>
+<p>Subsequently, expands to the last argument to the previous simple
+command executed in the foreground, after expansion.</p>
+<p>Also set to the full pathname used to invoke each command executed,
+and placed in the environment exported to that command.</p>
+<p>When checking mail, holds the name of the mail file currently being
+checked.</p>
+<p>BASH Expands to the full filename used to invoke this instance of
+bash.</p>
+<p>BASHOPTS A colon-separated list of enabled shell options. Each word
+is a valid argument for the -s option to the shopt builtin. The options
+appearing in BASHOPTS are those reported as on by shopt. If this
+variable is in the environment when bash starts up, each option in the
+list is enabled before reading any startup files. Read-only.</p>
+<p>BASHPID Expands to the process ID of the current bash process. This
+differs from $$ in certain circumstances, such as subshells that do not
+require bash to be re-initialized. Assignments have no effect. Loses its
+special properties if unset.</p>
+<p>BASH_ALIASES An associative array whose members correspond to the
+internal alias list maintained by the alias builtin. Elements added to
+this array appear in the alias list; however, unsetting array elements
+does not currently remove aliases from the alias list. Loses its special
+properties if unset.</p>
+<p>BASH_ARGC An array whose values are the number of parameters in each
+frame of the current bash execution call stack. The number of parameters
+to the current subroutine (shell function or script executed with . or
+source) is at the top of the stack. When a subroutine is executed, the
+number of parameters passed is pushed onto BASH_ARGC. The shell sets
+BASH_ARGC only in extended debugging mode (see the extdebug option to
+shopt). Setting extdebug after the shell has started executing a script,
+or referencing this variable when extdebug is not set, may result in
+inconsistent values.</p>
+<p>BASH_ARGV An array containing all of the parameters in the current
+bash execution call stack. The final parameter of the last subroutine
+call is at the top of the stack; the first parameter of the initial call
+is at the bottom. When a subroutine is executed, the parameters supplied
+are pushed onto BASH_ARGV. The shell sets BASH_ARGV only in extended
+debugging mode (see the extdebug option to shopt). Setting extdebug
+after the shell has started executing a script, or referencing this
+variable when extdebug is not set, may result in inconsistent
+values.</p>
+<p>BASH_ARGV0 When referenced, expands to the name of the shell or shell
+script (identical to $0; see the description of special parameter 0).
+Assignment to BASH_ARGV0 causes the value to also be assigned to $0.
+Loses its special properties if unset.</p>
+<p>BASH_CMDS An associative array whose members correspond to the
+internal hash table of commands maintained by the hash builtin. Elements
+added to this array appear in the hash table; however, unsetting array
+elements does not currently remove command names from the hash table.
+Loses its special properties if unset.</p>
+<p>BASH_COMMAND The command currently being executed or about to be
+executed, unless the shell is executing a command as the result of a
+trap, in which case it is the command executing at the time of the trap.
+Loses its special properties if unset.</p>
+<p>BASH_EXECUTION_STRING The command argument to the -c invocation
+option.</p>
+<p>BASH_LINENO An array whose members are the line numbers in source
+files where each corresponding member of FUNCNAME was invoked. <span class="math inline">${BASH_LINENO[$i]} is the line number in the source
+file ($</span>{BASH_SOURCE[$i+1]}) where ${FUNCNAME[$i]} was called (or
+${BASH_LINENO[$i-1]} if referenced within another shell function). Use
+LINENO to obtain the current line number.</p>
+<p>BASH_LOADABLES_PATH A colon-separated list of directories in which
+the shell looks for dynamically loadable builtins specified by the
+enable command.</p>
+<p>BASH_REMATCH An array whose members are assigned by the =~ binary
+operator to the [[ conditional command. The element with index 0 is the
+portion of the string matching the entire regular expression. The
+element with index n is the portion of the string matching the nth
+parenthesized subexpression.</p>
+<p>BASH_SOURCE An array whose members are the source filenames where the
+corresponding shell function names in the FUNCNAME array are defined.
+The shell function ${FUNCNAME[$i]} is defined in the file
+${BASH_SOURCE[$i]} and called from ${BASH_SOURCE[$i+1]}.</p>
+<p>BASH_SUBSHELL Incremented by one within each subshell or subshell
+environment when the shell begins executing in that environment. The
+initial value is 0. Loses its special properties if unset.</p>
+<p>BASH_VERSINFO A readonly array whose members hold version information
+for this instance of bash. The values assigned to the array members are:
+BASH_VERSINFO[0] The major version number (the release).
+BASH_VERSINFO[1] The minor version number (the version).
+BASH_VERSINFO[2] The patch level. BASH_VERSINFO[3] The build version.
+BASH_VERSINFO[4] The release status (e.g., beta1). BASH_VERSINFO[5] The
+value of MACHTYPE.</p>
+<p>BASH_VERSION Expands to a string describing the version of this
+instance of bash.</p>
+<p>COMP_CWORD An index into ${COMP_WORDS} of the word containing the
+current cursor position. Available only in programmable completion
+functions.</p>
+<p>COMP_KEY The key (or final key of a key sequence) used to invoke the
+current completion function.</p>
+<p>COMP_LINE The current command line. Available only in programmable
+completion functions and external commands.</p>
+<p>COMP_POINT The index of the current cursor position relative to the
+beginning of the current command. If the cursor is at the end of the
+current command, this equals ${#COMP_LINE}. Available only in
+programmable completion functions and external commands.</p>
+<p>COMP_TYPE An integer corresponding to the type of completion
+attempted that caused a completion function to be called: TAB normal
+completion ? listing completions after successive tabs ! listing
+alternatives on partial word completion @ listing completions if the
+word is not unmodified % menu completion Available only in programmable
+completion functions and external commands.</p>
+<p>COMP_WORDBREAKS The set of characters that the readline library
+treats as word separators when performing word completion. Loses its
+special properties if unset.</p>
+<p>COMP_WORDS An array consisting of the individual words in the current
+command line. The line is split into words as readline would split it,
+using COMP_WORDBREAKS. Available only in programmable completion
+functions.</p>
+<p>COPROC An array created to hold the file descriptors for output from
+and input to an unnamed coprocess (see Coprocesses).</p>
+<p>DIRSTACK An array containing the current contents of the directory
+stack. Directories appear in the order displayed by the dirs builtin.
+Assigning to members of this array modifies directories already in the
+stack, but the pushd and popd builtins must be used to add and remove
+directories. Assignment does not change the current directory. Loses its
+special properties if unset.</p>
+<p>EPOCHREALTIME Each time this parameter is referenced, expands to the
+number of seconds since the Unix Epoch as a floating point value with
+micro-second granularity. Assignments are ignored. Loses its special
+properties if unset.</p>
+<p>EPOCHSECONDS Each time this parameter is referenced, expands to the
+number of seconds since the Unix Epoch. Assignments are ignored. Loses
+its special properties if unset.</p>
+<p>EUID Expands to the effective user ID of the current user,
+initialized at shell startup. Read-only.</p>
+<p>FUNCNAME An array containing the names of all shell functions
+currently in the execution call stack. The element with index 0 is the
+name of any currently-executing shell function. The bottom-most element
+(the one with the highest index) is &quot;main&quot;. This variable exists only
+when a shell function is executing. Assignments have no effect. Loses
+its special properties if unset.</p>
+<p>This variable can be used with BASH_LINENO and BASH_SOURCE. Each
+element of FUNCNAME has corresponding elements in BASH_LINENO and
+BASH_SOURCE to describe the call stack. For instance, ${FUNCNAME[$i]}
+was called from the file ${BASH_SOURCE[$i+1]} at line number
+${BASH_LINENO[$i]}. The caller builtin displays the current call stack
+using this information.</p>
+<p>GROUPS An array containing the list of groups of which the current
+user is a member. Assignments have no effect. Loses its special
+properties if unset.</p>
+<p>HISTCMD The history number, or index in the history list, of the
+current command. Assignments are ignored. Loses its special properties
+if unset.</p>
+<p>HOSTNAME Automatically set to the name of the current host.</p>
+<p>HOSTTYPE Automatically set to a string that uniquely describes the
+type of machine on which bash is executing. The default is
+system-dependent.</p>
+<p>LINENO Each time this parameter is referenced, the shell substitutes
+a decimal number representing the current sequential line number
+(starting with 1) within a script or function. When not in a script or
+function, the value is not guaranteed to be meaningful. Loses its
+special properties if unset.</p>
+<p>MACHTYPE Automatically set to a string that fully describes the
+system type on which bash is executing, in the standard GNU
+cpu-company-system format. The default is system-dependent.</p>
+<p>MAPFILE An array created to hold the text read by the mapfile builtin
+when no variable name is supplied.</p>
+<p>OLDPWD The previous working directory as set by the cd command.</p>
+<p>OPTARG The value of the last option argument processed by the getopts
+builtin.</p>
+<p>OPTIND The index of the next argument to be processed by the getopts
+builtin.</p>
+<p>OSTYPE Automatically set to a string that describes the operating
+system on which bash is executing. The default is system-dependent.</p>
+<p>PIPESTATUS An array containing a list of exit status values from the
+processes in the most-recently-executed foreground pipeline (which may
+contain only a single command).</p>
+<p>PPID The process ID of the shell&#39;s parent. Read-only.</p>
+<p>PWD The current working directory as set by the cd command.</p>
+<p>RANDOM Each time this parameter is referenced, expands to a random
+integer between 0 and 32767. Assigning a value to RANDOM initializes
+(seeds) the sequence of random numbers. Loses its special properties if
+unset.</p>
+<p>READLINE_ARGUMENT Any numeric argument given to a readline command
+defined using bind -x when it was invoked.</p>
+<p>READLINE_LINE The contents of the readline line buffer, for use with
+bind -x.</p>
+<p>READLINE_MARK The position of the mark (saved insertion point) in the
+readline line buffer, for use with bind -x. The characters between the
+insertion point and the mark are often called the region.</p>
+<p>READLINE_POINT The position of the insertion point in the readline
+line buffer, for use with bind -x.</p>
+<p>REPLY Set to the line of input read by the read builtin when no
+arguments are supplied.</p>
+<p>SECONDS Each time this parameter is referenced, expands to the number
+of seconds since shell invocation. If a value is assigned, the value
+returned upon subsequent references is the number of seconds since the
+assignment plus the value assigned. The number of seconds at shell
+invocation and the current time are always determined by querying the
+system clock. Loses its special properties if unset.</p>
+<p>SHELLOPTS A colon-separated list of enabled shell options. Each word
+is a valid argument for the -o option to the set builtin. The options
+appearing in SHELLOPTS are those reported as on by set -o. If this
+variable is in the environment when bash starts up, each option in the
+list is enabled before reading any startup files. Read-only.</p>
+<p>SHLVL Incremented by one each time an instance of bash is
+started.</p>
+<p>SRANDOM Expands to a 32-bit pseudo-random number each time it is
+referenced. The random number generator is not linear on systems that
+support /dev/urandom or arc4random, so each returned number has no
+relationship to the numbers preceding it. The generator cannot be
+seeded, so assignments have no effect. Loses its special properties if
+unset.</p>
+<p>UID Expands to the user ID of the current user, initialized at shell
+startup. Read-only.</p>
+<p>The following variables are used by the shell. In some cases, bash
+assigns a default value to a variable; these cases are noted below.</p>
+<p>BASH_ENV If set when bash is executing a shell script, its value is
+interpreted as a filename containing commands to initialize the shell,
+as in ~/.bashrc. The value is subjected to parameter expansion, command
+substitution, and arithmetic expansion before being interpreted as a
+filename. PATH is not used to search for the resultant filename.</p>
+<p>BASH_XTRACEFD If set to an integer corresponding to a valid file
+descriptor, bash writes the trace output generated when set -x is
+enabled to that file descriptor. The file descriptor is closed when
+BASH_XTRACEFD is unset or assigned a new value. Unsetting BASH_XTRACEFD
+or assigning it the empty string causes trace output to be sent to
+standard error. Note that setting BASH_XTRACEFD to 2 (the standard error
+file descriptor) and then unsetting it will result in standard error
+being closed.</p>
+<p>CDPATH The search path for the cd command. A colon-separated list of
+directories in which the shell looks for destination directories
+specified by cd. A sample value is &quot;.:~:/usr&quot;.</p>
+<p>CHILD_MAX Sets the number of exited child status values for the shell
+to remember. Bash will not allow this value to be decreased below the
+system minimum, and there is a maximum value (currently 8192) that this
+may not exceed. The minimum value is system-dependent.</p>
+<p>COLUMNS Used by the select compound command to determine the terminal
+width when printing selection lists. Automatically set if the
+checkwinsize option is enabled or in an interactive shell upon receipt
+of a SIGWINCH.</p>
+<p>COMPREPLY An array from which bash reads the possible completions
+generated by a shell function invoked by the programmable completion
+facility. Each array element contains one possible completion.</p>
+<p>EMACS If bash finds this variable in the environment when the shell
+starts with value &quot;t&quot;, it assumes the shell is running in an Emacs shell
+buffer and disables line editing.</p>
+<p>EXECIGNORE A colon-separated list of shell patterns (see Pattern
+Matching) defining filenames to be ignored by command search using PATH.
+Files whose full pathnames match one of these patterns are not
+considered executable files for the purposes of completion and command
+execution via PATH lookup.</p>
+<p>This does not affect the behavior of [[. Full pathnames in the
+command hash table are not subject to EXECIGNORE. Use this variable to
+ignore shared library files that have the executable bit set but are not
+executable files. The pattern matching honors the setting of the extglob
+shell option.</p>
+<p>FCEDIT The default editor for the fc builtin.</p>
+<p>FIGNORE A colon-separated list of suffixes to ignore when performing
+filename completion. A filename whose suffix matches one of the entries
+in FIGNORE is excluded from the list of matched filenames. A sample
+value is &quot;.o:~&quot; (quoting is needed when assigning a value to this
+variable, which contains tildes).</p>
+<p>FUNCNEST If set to a numeric value greater than 0, defines a maximum
+function nesting level. Function invocations that exceed this nesting
+level cause the current command to abort.</p>
+<p>GLOBIGNORE A colon-separated list of patterns defining the set of
+filenames to be ignored by pathname expansion. If a filename matched by
+a pathname expansion pattern also matches one of the patterns in
+GLOBIGNORE, it is removed from the list of matches.</p>
+<p>HISTCONTROL A colon-separated list of values controlling how commands
+are saved on the history list.</p>
+<p>ignorespace: lines beginning with a space character are not
+saved.</p>
+<p>ignoredups: lines matching the previous history entry are not
+saved.</p>
+<p>ignoreboth: shorthand for ignorespace and ignoredups.</p>
+<p>erasedups: all previous lines matching the current line are removed
+from the history list before that line is saved.</p>
+<p>Any value not in the above list is ignored. If HISTCONTROL is unset
+or does not include a valid value, all lines read by the shell parser
+are saved on the history list, subject to HISTIGNORE. The second and
+subsequent lines of a multi-line compound command are not tested and are
+added to the history regardless of HISTCONTROL.</p>
+<p>HISTFILE The name of the file in which command history is saved (see
+HISTORY). The default value is ~/.bash_history. If unset, the command
+history is not saved when a shell exits.</p>
+<p>HISTFILESIZE The maximum number of lines contained in the history
+file. When this variable is assigned a value, the history file is
+truncated, if necessary, to contain no more than that number of lines by
+removing the oldest entries. The history file is also truncated to this
+size after writing it when a shell exits. If the value is 0, the history
+file is truncated to zero size. Non-numeric values and numeric values
+less than zero inhibit truncation. The shell sets the default value to
+the value of HISTSIZE after reading any startup files.</p>
+<p>HISTIGNORE A colon-separated list of patterns used to decide which
+command lines should be saved on the history list. Each pattern is
+anchored at the beginning of the line and must match the complete line
+(no implicit * is appended). Each pattern is tested against the line
+after the checks specified by HISTCONTROL are applied.</p>
+<p>In addition to normal shell pattern matching characters, &amp;
+matches the previous history line. The &amp; may be escaped using a
+backslash; the backslash is removed before attempting a match. The
+second and subsequent lines of a multi-line compound command are not
+tested and are added to the history regardless of HISTIGNORE. The
+pattern matching honors the setting of the extglob shell option.</p>
+<p>HISTSIZE The number of commands to remember in the command history
+(see HISTORY). If the value is 0, commands are not saved in the history
+list. Numeric values less than zero result in every command being saved
+(there is no limit). The shell sets the default value to 500 after
+reading any startup files.</p>
+<p>HISTTIMEFORMAT If set and not null, its value is used as a format
+string for strftime(3) to print the time stamp associated with each
+history entry displayed by the history builtin. If set, time stamps are
+written to the history file so they may be preserved across shell
+sessions. This uses the history comment character to distinguish
+timestamps from other history lines.</p>
+<p>HOME The home directory of the current user; the default argument for
+the cd builtin. Also used when performing tilde expansion.</p>
+<p>HOSTFILE Contains the name of a file in the same format as /etc/hosts
+that should be read when the shell needs to complete a hostname. The
+list of possible hostname completions may be changed while the shell is
+running; the next time hostname completion is attempted after the value
+is changed, bash adds the contents of the new file to the existing
+list.</p>
+<p>If HOSTFILE is set but has no value, or does not name a readable
+file, bash attempts to read /etc/hosts to obtain the list of possible
+hostname completions.</p>
+<p>When HOSTFILE is unset, the hostname list is cleared.</p>
+<p>IFS The Internal Field Separator used for word splitting after
+expansion and to split lines into words with the read builtin. The
+default value is <space><tab><newline>.</p>
+<p>IGNOREEOF Controls the action of an interactive shell on receipt of
+an EOF character as the sole input. If set, the value is the number of
+consecutive EOF characters which must be typed as the first characters
+on an input line before bash exits. If the variable exists but does not
+have a numeric value, or has no value, the default value is 10. If it
+does not exist, EOF signifies the end of input to the shell.</p>
+<p>INPUTRC The filename for the readline startup file, overriding the
+default of ~/.inputrc (see READLINE).</p>
+<p>INSIDE_EMACS If this variable appears in the environment when the
+shell starts, bash assumes it is running inside an Emacs shell buffer
+and may disable line editing, depending on the value of TERM.</p>
+<p>LANG Used to determine the locale category for any category not
+specifically selected with a variable starting with LC_.</p>
+<p>LC_ALL Overrides the value of LANG and any other LC_ variable
+specifying a locale category.</p>
+<p>LC_COLLATE Determines the collation order used when sorting the
+results of pathname expansion, and determines the behavior of range
+expressions, equivalence classes, and collating sequences within
+pathname expansion and pattern matching.</p>
+<p>LC_CTYPE Determines the interpretation of characters and the behavior
+of character classes within pathname expansion and pattern matching.</p>
+<p>LC_MESSAGES Determines the locale used to translate double-quoted
+strings preceded by a $.</p>
+<p>LC_NUMERIC Determines the locale category used for number
+formatting.</p>
+<p>LC_TIME Determines the locale category used for data and time
+formatting.</p>
+<p>LINES Used by the select compound command to determine the column
+length for printing selection lists. Automatically set if the
+checkwinsize option is enabled or in an interactive shell upon receipt
+of a SIGWINCH.</p>
+<p>MAIL If set to a file or directory name and MAILPATH is not set, bash
+informs the user of the arrival of mail in the specified file or
+Maildir-format directory.</p>
+<p>MAILCHECK Specifies how often (in seconds) bash checks for mail. The
+default is 60 seconds. When it is time to check for mail, the shell does
+so before displaying the primary prompt. If unset, or set to a value
+that is not a number greater than or equal to zero, the shell disables
+mail checking.</p>
+<p>MAILPATH A colon-separated list of filenames to be checked for mail.
+The message to be printed when mail arrives in a particular file may be
+specified by separating the filename from the message with a ?. When
+used in the text of the message, <span class="math inline">$_ expands to
+the name of the current mailfile. Example: MAILPATH=&#39;/var/mail/bfox?&quot;You
+have mail&quot;:~/shell-mail?&quot;$</span>_ has mail!&quot;&#39;</p>
+<p>Bash can be configured to supply a default value for this variable
+(there is no value by default), but the location of the user mail files
+that it uses is system dependent (e.g., /var/mail/$USER).</p>
+<p>OPTERR If set to the value 1, bash displays error messages generated
+by the getopts builtin. OPTERR is initialized to 1 each time the shell
+is invoked or a shell script is executed.</p>
+<p>PATH The search path for commands. A colon-separated list of
+directories in which the shell looks for commands (see COMMAND
+EXECUTION).</p>
+<p>A zero-length (null) directory name indicates the current directory.
+A null directory name may appear as two adjacent colons, or as an
+initial or trailing colon. The default path is system-dependent, and is
+set by the administrator who installs bash. A common value is
+&quot;/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin&quot;.</p>
+<p>PROMPT_COMMAND If set and is an array, the value of each set element
+is executed as a command prior to issuing each primary prompt. If set
+but not an array, its value is used as a command to execute instead.</p>
+<p>PROMPT_DIRTRIM If set to a number greater than zero, the value is
+used as the number of trailing directory components to retain when
+expanding the \w and \W prompt string escapes (see PROMPTING).
+Characters removed are replaced with an ellipsis.</p>
+<p>PS0 Expanded (see PROMPTING) and displayed by interactive shells
+after reading a command and before the command is executed.</p>
+<p>PS1 Expanded (see PROMPTING) and used as the primary prompt string.
+The default value is &quot;\s-\v$ &quot;.</p>
+<p>PS2 Expanded as with PS1 and used as the secondary prompt string. The
+default is &quot;&gt; &quot;.</p>
+<p>PS3 Used as the prompt for the select command (see SHELL
+GRAMMAR).</p>
+<p>PS4 Expanded as with PS1 and printed before each command bash
+displays during an execution trace. The first character of the expanded
+value is replicated multiple times, as necessary, to indicate multiple
+levels of indirection. The default is &quot;+ &quot;.</p>
+<p>SHELL Expands to the full pathname to the shell. If not set when the
+shell starts, bash assigns the full pathname of the current user&#39;s login
+shell.</p>
+<p>TIMEFORMAT Used as a format string specifying how the timing
+information for pipelines prefixed with the time reserved word should be
+displayed. The % character introduces an escape sequence that is
+expanded to a time value or other information. The escape sequences and
+their meanings are as follows; the braces denote optional portions.</p>
+<p>%% A literal %. %[p][l]R The elapsed time in seconds. %[p][l]U The
+number of CPU seconds spent in user mode. %[p][l]S The number of CPU
+seconds spent in system mode. %P The CPU percentage, computed as (%U +
+%S) / %R.</p>
+<p>The optional p is a digit specifying the precision, the number of
+fractional digits after a decimal point. A value of 0 causes no decimal
+point or fraction to be output. At most three places after the decimal
+point may be specified; values of p greater than 3 are changed to 3. If
+p is not specified, the value 3 is used.</p>
+<p>The optional l specifies a longer format, including minutes, of the
+form MMmSS.FFs. The value of p determines whether or not the fraction is
+included.</p>
+<p>If this variable is not set, bash acts as if it had the value
+$&#39;\nreal\t%3lR\nuser\t%3lU\nsys\t%3lS&#39;. If the value is null, no timing
+information is displayed. A trailing newline is added when the format
+string is displayed.</p>
+<p>TMOUT If set to a value greater than zero, TMOUT is treated as the
+default timeout for the read builtin. The select command terminates if
+input does not arrive after TMOUT seconds when input is coming from a
+terminal. In an interactive shell, the value is interpreted as the
+number of seconds to wait for a line of input after issuing the primary
+prompt. Bash terminates after waiting for that number of seconds if a
+complete line of input does not arrive.</p>
+<p>TMPDIR If set, bash uses its value as the name of a directory in
+which bash creates temporary files for the shell&#39;s use.</p>
+<p>auto_resume Controls how the shell interacts with the user and job
+control. If set, single word simple commands without redirections are
+treated as candidates for resumption of an existing stopped job. There
+is no ambiguity allowed; if there is more than one job beginning with
+the string typed, the job most recently accessed is selected. The name
+of a stopped job, in this context, is the command line used to start
+it.</p>
+<p>If set to the value exact, the string supplied must match the name of
+a stopped job exactly.</p>
+<p>If set to substring, the string supplied needs to match a substring
+of the name of a stopped job. This provides functionality analogous to
+the %? job identifier (see JOB CONTROL).</p>
+<p>If set to any other value, the supplied string must be a prefix of a
+stopped job&#39;s name; this provides functionality analogous to the %string
+job identifier.</p>
+<p>histchars The two or three characters which control history expansion
+and tokenization (see HISTORY EXPANSION).</p>
+<p>The first character is the history expansion character, which signals
+the start of a history expansion, normally !.</p>
+<p>The second character is the quick substitution character, used as
+shorthand for re-running the previous command entered, substituting one
+string for another in the command. The default is ^.</p>
+<p>The optional third character indicates that the remainder of the line
+is a comment when found as the first character of a word, normally #.
+The history comment character causes history substitution to be skipped
+for the remaining words on the line. It does not necessarily cause the
+shell parser to treat the rest of the line as a comment.</p>
+<p style="margin:0.8em 0"><a href="index.html">[← Back]</a></p>
+</body>
+</html>
