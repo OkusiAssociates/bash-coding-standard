@@ -2317,3 +2317,29 @@ help:
 	@echo '  test        Run test suite'
 	@echo '  help        Show this message'
 ```
+
+## BCS1213 Date and Time Formatting
+
+Prefer `printf '%()T'` (Bash 5.0+ builtin strftime) over `$(date)` for date/time formatting — avoids fork overhead (~28x faster in benchmarks).
+
+```bash
+# correct — builtin, no fork
+printf '%(%Y-%m-%d)T\n' "$EPOCHSECONDS"
+printf '%(%Y-%m-%d %H:%M:%S)T\n' -1       # -1 = now
+
+# correct — builtin, capture to variable (no subshell)
+printf -v today '%(%Y-%m-%d)T' -1
+
+# correct — UTC via TZ prefix
+TZ=UTC printf '%(%Y-%m-%d %H:%M:%S)T\n' -1
+
+# wrong — forks external process on every call
+today=$(date +'%Y-%m-%d')
+
+# wrong — forks + unnecessary EPOCHSECONDS round-trip
+date -d "@$EPOCHSECONDS" +'%Y-%m-%d'
+```
+
+Use `$EPOCHSECONDS` for integer epoch timestamps (second precision) and `$EPOCHREALTIME` for microsecond precision. Both are Bash builtins — no fork required.
+
+`date(1)` is acceptable when `printf '%()T'` cannot provide the needed format (e.g., `date -d 'next Monday'` for relative date arithmetic).

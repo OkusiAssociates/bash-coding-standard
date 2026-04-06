@@ -42,9 +42,9 @@ for i in 01 02 03 04 05 06 07 08 09 10 11 12; do
 done
 assert_equal 12 "$sections_found" 'all 12 sections have codes' || true
 
-# Test: exact code count is 104
-begin_test 'exactly 104 BCS codes'
-assert_equal 104 "$code_count" "exactly 104 codes (got $code_count)" || true
+# Test: exact code count is 105
+begin_test 'exactly 105 BCS codes'
+assert_equal 105 "$code_count" "exactly 105 codes (got $code_count)" || true
 
 # Test: codes are in ascending order
 begin_test 'codes are in ascending order'
