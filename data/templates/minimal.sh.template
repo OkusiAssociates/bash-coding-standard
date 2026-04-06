@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/bash
 # {{DESCRIPTION}}
 set -euo pipefail
 shopt -s inherit_errexit
@@ -9,6 +9,7 @@ die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 main() {
   # TODO: Add implementation
   echo 'Hello from {{NAME}}'
+
 }
 
 main "$@"

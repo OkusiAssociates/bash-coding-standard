@@ -1,0 +1,62 @@
+System Information
+==================
+Date: 2026-04-06T12:34:01+08:00
+Hostname: okusi
+Bash Version: 5.2.21(1)-release
+CPU: 13th Gen Intel(R) Core(TM) i9-13900HX
+Kernel: 6.17.0-20-generic
+Runs per test: 10
+
+Starting benchmarks...
+
+Test: Date formatting (100) (iterations: 100)
+printf %()T  - Mean: 0.002s, Median: 0.002s, StdDev: 0.001s
+date command - Mean: 0.085s, Median: 0.084s, StdDev: 0.003s
+Fastest: printf %()T (39.2x)
+
+Test: Date formatting (1K) (iterations: 1000)
+printf %()T  - Mean: 0.015s, Median: 0.015s, StdDev: 0.001s
+date command - Mean: 0.818s, Median: 0.814s, StdDev: 0.009s
+Fastest: printf %()T (54.5x)
+
+Test: Date formatting (5K) (iterations: 5000)
+printf %()T  - Mean: 0.070s, Median: 0.071s, StdDev: 0.002s
+date command - Mean: 4.078s, Median: 4.071s, StdDev: 0.035s
+Fastest: printf %()T (58.0x)
+
+Test: Variable assignment (100) (iterations: 100)
+printf %()T  - Mean: 0.002s, Median: 0.002s, StdDev: 0.000s
+date command - Mean: 0.101s, Median: 0.101s, StdDev: 0.001s
+Fastest: printf %()T (52.7x)
+
+Test: Variable assignment (1K) (iterations: 1000)
+printf %()T  - Mean: 0.013s, Median: 0.013s, StdDev: 0.001s
+date command - Mean: 1.002s, Median: 1.001s, StdDev: 0.008s
+Fastest: printf %()T (75.5x)
+
+Test: Variable assignment (5K) (iterations: 5000)
+printf %()T  - Mean: 0.062s, Median: 0.061s, StdDev: 0.003s
+date command - Mean: 4.997s, Median: 4.996s, StdDev: 0.016s
+Fastest: printf %()T (81.1x)
+
+Benchmark Complete
+==================
+
+Detailed results saved to: benchmark-results-date-2026-04-06_12:34:01.txt
+
+Analysis:
+---------
+printf '%(%F)T' uses Bash's built-in strftime -- no fork, no exec.
+date(1) forks a subprocess for every invocation.
+
+For BCS guideline consideration:
+- printf %()T is the preferred method for date formatting in Bash 5.2+
+- date(1) is necessary only when printf %()T lacks a needed format
+
+Note on caching:
+After the first date(1) invocation, the kernel page cache, dentry/inode
+cache, and Bash path hash table keep the binary warm -- subsequent calls
+avoid page faults and PATH lookups. These results therefore reflect
+warm-cache conditions, favourable to date(1). Cold invocations (e.g.,
+first call in a new shell) would show an even larger gap.
+

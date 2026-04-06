@@ -33,6 +33,8 @@ Key rules:
 - For exit options (`--help`, `--version`): use `exit 0`, no shift needed
 - Use `continue` after option disaggregation to re-process expanded options
 
+See also: [Argument Processing Reference](../benchmarks/args-processing-reference.md) — comparison of BCS while/case, getopts, GNU getopt, and simple while/case with benchmark data.
+
 ## BCS0802 Version Output
 
 Format: `scriptname X.Y.Z` without the word "version".

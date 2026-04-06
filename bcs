@@ -779,38 +779,40 @@ cmd_generate() {
 
   info "Generating standard from ${#section_files[@]} section files..."
 
-  {
-    # Header
-    echo '# Bash Coding Standard (BCS)'
-    echo
-    echo '**Concise, actionable coding rules for Bash 5.2+**'
-    echo
-    echo 'Designed by Okusi Associates for the Indonesian Open Technology Foundation (YaTTI).'
-    echo 'Target audience: both human programmers and AI assistants.'
-    echo
-    echo '## Coding Principles'
-    echo '- K.I.S.S.'
-    echo '- "The best process is no process"'
-    echo '- "Everything should be made as simple as possible, but not any simpler."'
-    echo
-    echo '**Critical:** Do not over-engineer scripts; remove unused functions and variables.'
-    echo
-    echo '## Contents'
-    echo '1. Script Structure & Layout'
-    echo '2. Variables & Data Types'
-    echo '3. Strings & Quoting'
-    echo '4. Functions & Libraries'
-    echo '5. Control Flow'
-    echo '6. Error Handling'
-    echo '7. I/O & Messaging'
-    echo '8. Command-Line Arguments'
-    echo '9. File Operations'
-    echo '10. Security'
-    echo '11. Concurrency & Jobs'
-    echo '12. Style & Development'
-    echo
-    echo '---'
-    echo
+  { cat <<'GENERATE'
+# Bash Coding Standard (BCS)
+
+**Concise, actionable coding rules for Bash 5.2+**
+
+Designed by Okusi Associates for the Indonesian Open Technology Foundation (YaTTI).
+Target audience: both human programmers and AI assistants.
+
+Companion reference: [Bash 5.2 Reference (Strict Mode)](../docs/BCS-bash/index.md) — the `bash(1)` man page rewritten for BCS assumptions (`set -euo pipefail`, `[[ ]]` only, no POSIX compat).
+
+## Coding Principles
+- K.I.S.S.
+- "The best process is no process"
+- "Everything should be made as simple as possible, but not any simpler."
+
+**Critical:** Do not over-engineer scripts; remove unused functions and variables.
+
+## Contents
+1. Script Structure & Layout
+2. Variables & Data Types
+3. Strings & Quoting
+4. Functions & Libraries
+5. Control Flow
+6. Error Handling
+7. I/O & Messaging
+8. Command-Line Arguments
+9. File Operations
+10. Security
+11. Concurrency & Jobs
+12. Style & Development
+
+---
+
+GENERATE
 
     # Concatenate section files
     local -i first=1
@@ -825,6 +827,11 @@ cmd_generate() {
       cat -- "$section_file"
     done
   } > "$output_file"
+
+  # Resolve relative markdown links to absolute paths
+  local -- bcs_root
+  bcs_root=$(realpath -- "$data_dir/..")
+  sed -i "s|](\\.\\.\/|](${bcs_root}/|g" "$output_file"
 
   local -i line_count
   line_count=$(wc -l < "$output_file")

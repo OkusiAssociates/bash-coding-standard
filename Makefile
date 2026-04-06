@@ -20,6 +20,10 @@ install:
 	install -m 644 data/BASH-CODING-STANDARD.md $(DESTDIR)$(SHAREDIR)/data/
 	install -m 644 data/[0-9]*.md $(DESTDIR)$(SHAREDIR)/data/
 	install -m 644 data/templates/*.sh.template $(DESTDIR)$(SHAREDIR)/data/templates/
+	rsync -a --exclude='CLAUDE.md' --exclude='.claude/' docs/ $(DESTDIR)$(SHAREDIR)/docs/
+	rsync -a benchmarks/ $(DESTDIR)$(SHAREDIR)/benchmarks/
+	install -d $(DESTDIR)$(SHAREDIR)/examples
+	find examples/ -maxdepth 1 -type f -exec install -m 755 {} $(DESTDIR)$(SHAREDIR)/examples/ \;
 	install -d $(DESTDIR)$(MANDIR)
 	install -m 644 bcs.1 $(DESTDIR)$(MANDIR)/bcs.1
 	install -m 644 docs/BCS-bash.1 $(DESTDIR)$(MANDIR)/BCS-bash.1

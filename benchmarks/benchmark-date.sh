@@ -1,5 +1,5 @@
 #!/usr/bin/bash
-# shellcheck disable=SC2209
+# shellcheck disable=SC2209,SC2034
 # benchmark-date.sh - Performance comparison of date formatting methods
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
@@ -17,7 +17,7 @@ declare -i RUNS_PER_TEST=10
 
 # Output files
 #shellcheck disable=SC2155
-declare -r RESULTS_FILE=benchmark-results-date-"$(printf '%(%Y-%m-%d_%H-%M-%S)T')".txt
+declare -r RESULTS_FILE=benchmark-results-date-"$(printf '%(%F_%T)T')".txt
 
 # Test results storage
 declare -a times_printf_builtin
@@ -42,17 +42,16 @@ EOF
 }
 
 run_benchmark_printf() {
-  # Benchmark: printf '%(%Y-%m-%d)T\n' "$EPOCHSECONDS" (builtin)
+  # Benchmark: printf '%(%F)T\n' "$EPOCHSECONDS" (builtin)
   local -ri iterations=$1
-  local -i i
-  local -- start end elapsed
+  local -i i start end elapsed
 
   start=${EPOCHREALTIME/./}
 
   i=-$iterations
   while ((1)); do
     ((i++)) || break
-    printf '%(%Y-%m-%d)T\n' "$EPOCHSECONDS" >/dev/null
+    printf '%(%F)T' "$EPOCHSECONDS" >/dev/null
   done
 
   end=${EPOCHREALTIME/./}
@@ -62,7 +61,7 @@ run_benchmark_printf() {
 }
 
 run_benchmark_date() {
-  # Benchmark: date -d "@$EPOCHSECONDS" +'%Y-%m-%d' (external)
+  # Benchmark: date -d "@$EPOCHSECONDS" +'%F' (external)
   local -ri iterations=$1
   local -i i
   local -- start end elapsed
@@ -72,7 +71,47 @@ run_benchmark_date() {
   i=-$iterations
   while ((1)); do
     ((i++)) || break
-    date -d "@$EPOCHSECONDS" +'%Y-%m-%d' >/dev/null
+    date -d "@$EPOCHSECONDS" +'%F' >/dev/null
+  done
+
+  end=${EPOCHREALTIME/./}
+  elapsed=$((end - start))
+
+  echo "$elapsed"
+}
+
+run_benchmark_printf_var() {
+  # Benchmark: printf -v var '%(%F)T' (builtin, no subshell)
+  local -ri iterations=$1
+  local -i i start end elapsed
+  local -- var
+
+  start=${EPOCHREALTIME/./}
+
+  i=-$iterations
+  while ((1)); do
+    ((i++)) || break
+    printf -v var '%(%F)T'
+  done
+
+  end=${EPOCHREALTIME/./}
+  elapsed=$((end - start))
+
+  echo "$elapsed"
+}
+
+run_benchmark_date_var() {
+  # Benchmark: var=$(date +'%F') (external + subshell)
+  local -ri iterations=$1
+  local -i i
+  local -- var start end elapsed
+
+  start=${EPOCHREALTIME/./}
+
+  i=-$iterations
+  while ((1)); do
+    ((i++)) || break
+    var=$(date +'%F')
   done
 
   end=${EPOCHREALTIME/./}
@@ -139,12 +178,12 @@ run_test_series() {
   times_date_external=()
 
   # Run benchmarks
-  for ((run=1; run<=RUNS_PER_TEST; run++)); do
-    printf "\rRun %2d/%d: Testing printf builtin..." "$run" "$RUNS_PER_TEST"
+  for ((run=1; run<=RUNS_PER_TEST; run+=1)); do
+    printf '\rRun %2d/%d: Testing printf builtin...' "$run" "$RUNS_PER_TEST"
     result=$($func_printf "$iterations")
     times_printf_builtin+=("$result")
 
-    printf "\rRun %2d/%d: Testing date command...  " "$run" "$RUNS_PER_TEST"
+    printf '\rRun %2d/%d: Testing date command...  ' "$run" "$RUNS_PER_TEST"
     result=$($func_date "$iterations")
     times_date_external+=("$result")
   done
@@ -209,8 +248,10 @@ show_help() {
 benchmark-date.sh - Performance comparison of date formatting methods
 
 Compares the performance of:
-  - printf '%(%Y-%m-%d)T' "$EPOCHSECONDS"   (Bash builtin)
-  - date -d "@$EPOCHSECONDS" +'%Y-%m-%d'    (external command)
+  - printf '%(%F)T' "$EPOCHSECONDS"   (Bash builtin)
+  - date -d "@$EPOCHSECONDS" +'%F'    (external command)
+  - printf -v var '%(%F)T'            (builtin, no subshell)
+  - var=$(date +'%F')                 (external + subshell)
 
 Usage: benchmark-date.sh [OPTIONS]
 
@@ -239,19 +280,19 @@ main() {
     case $1 in
       -h|--help)    show_help 0 ;;
       -V|--version) echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
-      -i) custom_iterations=${2:?'-i requires a number'}; shift ;;
-      -r) RUNS_PER_TEST=${2:?'-r requires a number'}; shift ;;
-      -[hV]?*) set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
-      --) shift; break ;;
-      -*) echo "$SCRIPT_NAME: unknown option: $1" >&2; show_help 2 ;;
-      *)  echo "$SCRIPT_NAME: unexpected argument: $1" >&2; show_help 2 ;;
+      -i)           custom_iterations=${2:?'-i requires a number'}; shift ;;
+      -r)           RUNS_PER_TEST=${2:?'-r requires a number'}; shift ;;
+      -[irhV]?*)    set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+      --)           shift; break ;;
+      -*)           >&2 echo "$SCRIPT_NAME: unknown option ${1@Q}"; show_help 2 ;;
+      *)            >&2 echo "$SCRIPT_NAME: unexpected argument ${1@Q}"; show_help 2 ;;
     esac
     shift
   done
+  readonly RUNS_PER_TEST
 
   # Print header
-  {
-    print_system_info
+  { print_system_info
     echo 'Starting benchmarks...'
     echo
     true
@@ -263,8 +304,14 @@ main() {
       "$custom_iterations" \
       run_benchmark_printf \
       run_benchmark_date
+
+    run_test_series \
+      "Variable assignment (${custom_iterations})" \
+      "$custom_iterations" \
+      run_benchmark_printf_var \
+      run_benchmark_date_var
   else
-    # Default test matrix (small counts — date forks per call)
+    # Default test matrix (small counts -- date forks per call)
     run_test_series \
       'Date formatting (100)' \
       100 \
@@ -282,6 +329,24 @@ main() {
       5000 \
       run_benchmark_printf \
       run_benchmark_date
+
+    run_test_series \
+      'Variable assignment (100)' \
+      100 \
+      run_benchmark_printf_var \
+      run_benchmark_date_var
+
+    run_test_series \
+      'Variable assignment (1K)' \
+      1000 \
+      run_benchmark_printf_var \
+      run_benchmark_date_var
+
+    run_test_series \
+      'Variable assignment (5K)' \
+      5000 \
+      run_benchmark_printf_var \
+      run_benchmark_date_var
   fi
 
   # Generate summary
@@ -293,12 +358,19 @@ Detailed results saved to: $RESULTS_FILE
 
 Analysis:
 ---------
-printf '%(%Y-%m-%d)T' uses Bash's built-in strftime — no fork, no exec.
+printf '%(%F)T' uses Bash's built-in strftime -- no fork, no exec.
 date(1) forks a subprocess for every invocation.
 
 For BCS guideline consideration:
 - printf %()T is the preferred method for date formatting in Bash 5.2+
 - date(1) is necessary only when printf %()T lacks a needed format
+
+Note on caching:
+After the first date(1) invocation, the kernel page cache, dentry/inode
+cache, and Bash path hash table keep the binary warm -- subsequent calls
+avoid page faults and PATH lookups. These results therefore reflect
+warm-cache conditions, favourable to date(1). Cold invocations (e.g.,
+first call in a new shell) would show an even larger gap.
 
 SUMMARY
   } | tee -a "$RESULTS_FILE"

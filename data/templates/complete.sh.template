@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/bash
 # {{DESCRIPTION}}
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
@@ -8,7 +8,7 @@ declare -rx PATH=~/.local/bin:/usr/local/bin:/usr/bin:/bin
 # Script metadata
 declare -r VERSION='{{VERSION}}'
 #shellcheck disable=SC2155
-declare -r SCRIPT_PATH=$(realpath -e -- "$0")
+declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*}
 declare -r SCRIPT_NAME=${SCRIPT_PATH##*/}
 
@@ -37,25 +37,32 @@ _msg() {
 }
 vecho() { ((VERBOSE)) || return 0; _msg "$@"; }
 info() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
-warn() { >&2 _msg "$@"; }
 success() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
+warn() { >&2 _msg "$@"; }
 error() { >&2 _msg "$@"; }
 die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
-yn() { local -- REPLY; read -r -n 1 -p "$SCRIPT_NAME: ${YELLOW}▲${NC} ${1:-'Continue?'} y/n "; echo; [[ ${REPLY,,} == y ]]; }
+yn() {
+  local -- REPLY
+  read -r -n 1 -p "$SCRIPT_NAME: ${YELLOW}▲${NC} ${1:-'Continue?'} y/n "
+  >&2 echo
+  [[ ${REPLY,,} == y ]]
+}
 noarg() { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
 
 show_help() {
   cat <<HELP
+$SCRIPT_NAME $VERSION -- {{DESCRIPTION}}
+
 Usage: $SCRIPT_NAME [OPTIONS]
 
-{{DESCRIPTION}}
+
 
 Options:
-  -v, --verbose           Enable verbose output (default)
-  -q, --quiet             Disable verbose output
-  -D, --debug             Enable debug output
-  -V, --version           Show version information
-  -h, --help              Show this help message
+  -v, --verbose   Enable verbose output (default)
+  -q, --quiet     Disable verbose output
+  -D, --debug     Enable debug output
+  -V, --version   Show version information
+  -h, --help      Show this help message
 
 Examples:
   $SCRIPT_NAME -V
@@ -97,7 +104,7 @@ main() {
         die 22 "Invalid option ${1@Q}"
         ;;
       *)
-        die 2  "Unexpected argument ${1@Q}"
+        die 2 "Unexpected argument ${1@Q}"
         ;;
     esac
     shift

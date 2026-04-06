@@ -5,6 +5,8 @@
 Designed by Okusi Associates for the Indonesian Open Technology Foundation (YaTTI).
 Target audience: both human programmers and AI assistants.
 
+Companion reference: [Bash 5.2 Reference (Strict Mode)](/ai/scripts/Okusi/BCS/docs/BCS-bash/index.md) — the `bash(1)` man page rewritten for BCS assumptions (`set -euo pipefail`, `[[ ]]` only, no POSIX compat).
+
 ## Coding Principles
 - K.I.S.S.
 - "The best process is no process"
@@ -968,7 +970,45 @@ for file in ./*.txt; do process "$file"; done
 for file in ./*.txt; do local -- file; done
 ```
 
-Use `while ((1))` for infinite loops (fastest). Use `break N` for nested loops.
+Use `while ((1))` for infinite loops — it is pure arithmetic evaluation with no command lookup or dispatch, making it the fastest construct (~14% faster than `while :`, ~21% faster than `while true` at 1M iterations).
+
+```bash
+# correct — arithmetic evaluation, fastest
+while ((1)); do
+  process_item || break
+done
+
+# acceptable — special builtin, POSIX-compatible
+while :; do
+  process_item || break
+done
+
+# wrong — unquoted variable expansion as command (fragile, dangerous)
+running=true
+while $running; do
+  running=false
+done
+
+# wrong — unnecessary string comparison on constants
+while [[ 1 == 1 ]]; do
+  break
+done
+```
+
+The flag-variable pattern (`while $running`) executes the variable content as a command — if it contains anything other than `true` or `false`, arbitrary code runs. Use arithmetic flags instead:
+
+```bash
+# correct — arithmetic flag, safe
+local -i running=1
+while ((running)); do
+  # ...
+  running=0
+done
+```
+
+Use `break N` for nested loops (`break 2` exits two enclosing levels).
+
+See also: [While Loops Reference](/ai/scripts/Okusi/BCS/benchmarks/while-loops-reference.md) — full benchmark data and analysis of `while ((1))` vs `while :` vs `while true`.
 
 ## BCS0504 Process Substitution
 
@@ -1474,6 +1514,8 @@ Key rules:
 - For boolean flags: just set, no extra shift needed
 - For exit options (`--help`, `--version`): use `exit 0`, no shift needed
 - Use `continue` after option disaggregation to re-process expanded options
+
+See also: [Argument Processing Reference](/ai/scripts/Okusi/BCS/benchmarks/args-processing-reference.md) — comparison of BCS while/case, getopts, GNU getopt, and simple while/case with benchmark data.
 
 ## BCS0802 Version Output
 
@@ -2324,17 +2366,19 @@ Prefer `printf '%()T'` (Bash 5.0+ builtin strftime) over `$(date)` for date/time
 
 ```bash
 # correct — builtin, no fork
-printf '%(%Y-%m-%d)T\n' "$EPOCHSECONDS"
-printf '%(%Y-%m-%d %H:%M:%S)T\n' -1       # -1 = now
+printf '%(%F)T' "$EPOCHSECONDS"
+printf '%(%Y-%m-%d)T' -1
+printf '%(%F %T)T' "$EPOCHSECONDS"
+printf '%(%A %F %H:%M)T'
 
 # correct — builtin, capture to variable (no subshell)
-printf -v today '%(%Y-%m-%d)T' -1
+printf -v today '%(%F)T'
 
 # correct — UTC via TZ prefix
-TZ=UTC printf '%(%Y-%m-%d %H:%M:%S)T\n' -1
+TZ=UTC printf '%(%F %T)T'
 
 # wrong — forks external process on every call
-today=$(date +'%Y-%m-%d')
+today=$(date +'%F %T')
 
 # wrong — forks + unnecessary EPOCHSECONDS round-trip
 date -d "@$EPOCHSECONDS" +'%Y-%m-%d'
@@ -2343,3 +2387,5 @@ date -d "@$EPOCHSECONDS" +'%Y-%m-%d'
 Use `$EPOCHSECONDS` for integer epoch timestamps (second precision) and `$EPOCHREALTIME` for microsecond precision. Both are Bash builtins — no fork required.
 
 `date(1)` is acceptable when `printf '%()T'` cannot provide the needed format (e.g., `date -d 'next Monday'` for relative date arithmetic).
+
+See also: [Date Formatting Reference](/ai/scripts/Okusi/BCS/benchmarks/date-printf-reference.md) — full `date` → `printf '%()T'` equivalence table with examples.

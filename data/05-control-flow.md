@@ -95,7 +95,45 @@ for file in ./*.txt; do process "$file"; done
 for file in ./*.txt; do local -- file; done
 ```
 
-Use `while ((1))` for infinite loops (fastest). Use `break N` for nested loops.
+Use `while ((1))` for infinite loops — it is pure arithmetic evaluation with no command lookup or dispatch, making it the fastest construct (~14% faster than `while :`, ~21% faster than `while true` at 1M iterations).
+
+```bash
+# correct — arithmetic evaluation, fastest
+while ((1)); do
+  process_item || break
+done
+
+# acceptable — special builtin, POSIX-compatible
+while :; do
+  process_item || break
+done
+
+# wrong — unquoted variable expansion as command (fragile, dangerous)
+running=true
+while $running; do
+  running=false
+done
+
+# wrong — unnecessary string comparison on constants
+while [[ 1 == 1 ]]; do
+  break
+done
+```
+
+The flag-variable pattern (`while $running`) executes the variable content as a command — if it contains anything other than `true` or `false`, arbitrary code runs. Use arithmetic flags instead:
+
+```bash
+# correct — arithmetic flag, safe
+local -i running=1
+while ((running)); do
+  # ...
+  running=0
+done
+```
+
+Use `break N` for nested loops (`break 2` exits two enclosing levels).
+
+See also: [While Loops Reference](../benchmarks/while-loops-reference.md) — full benchmark data and analysis of `while ((1))` vs `while :` vs `while true`.
 
 ## BCS0504 Process Substitution
 

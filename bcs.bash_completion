@@ -68,7 +68,7 @@ _bcs() {
           mapfile -t COMPREPLY < <(compgen -W '-b --backend -m --model -e --effort -s --strict -q --quiet -h --help' -- "$cur")
           ;;
         *)
-          _filedir 'sh'
+          _filedir
           ;;
       esac
       ;;

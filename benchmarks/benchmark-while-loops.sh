@@ -17,7 +17,7 @@ declare -i RUNS_PER_TEST=30
 
 # Output files
 #shellcheck disable=SC2155
-declare -r RESULTS_FILE=benchmark-results-while-"$(printf '%(%Y-%m-%d_%H-%M-%S)T')".txt
+declare -r RESULTS_FILE=benchmark-results-while-"$(printf '%(%F_%T)T')".txt
 
 # Test results storage
 declare -a times_while_double_paren

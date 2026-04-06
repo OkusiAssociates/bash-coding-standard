@@ -1,6 +1,6 @@
 System Information
 ==================
-Date: 2026-04-06T08:55:28+08:00
+Date: 2026-04-06T12:35:53+08:00
 Hostname: okusi
 Bash Version: 5.2.21(1)-release
 CPU: 13th Gen Intel(R) Core(TM) i9-13900HX
@@ -10,33 +10,33 @@ Runs per test: 30
 Starting benchmarks...
 
 Test: Empty loop with counter break (100K) (iterations: 100000)
-while ((1)) - Mean: 0.087s, Median: 0.083s, StdDev: 0.007s
-while :     - Mean: 0.099s, Median: 0.095s, StdDev: 0.008s
-while true  - Mean: 0.104s, Median: 0.101s, StdDev: 0.007s
+while ((1)) - Mean: 0.093s, Median: 0.093s, StdDev: 0.003s
+while :     - Mean: 0.106s, Median: 0.104s, StdDev: 0.005s
+while true  - Mean: 0.113s, Median: 0.112s, StdDev: 0.004s
 Fastest: while ((1))
 
 Test: Empty loop with counter break (1M) (iterations: 1000000)
-while ((1)) - Mean: 0.836s, Median: 0.838s, StdDev: 0.014s
-while :     - Mean: 0.944s, Median: 0.935s, StdDev: 0.021s
-while true  - Mean: 1.016s, Median: 1.012s, StdDev: 0.023s
+while ((1)) - Mean: 0.890s, Median: 0.891s, StdDev: 0.030s
+while :     - Mean: 1.013s, Median: 1.016s, StdDev: 0.040s
+while true  - Mean: 1.079s, Median: 1.080s, StdDev: 0.036s
 Fastest: while ((1))
 
 Test: Empty loop with counter break (2M) (iterations: 2000000)
-while ((1)) - Mean: 1.670s, Median: 1.661s, StdDev: 0.034s
-while :     - Mean: 1.895s, Median: 1.894s, StdDev: 0.045s
-while true  - Mean: 2.037s, Median: 2.034s, StdDev: 0.044s
+while ((1)) - Mean: 1.755s, Median: 1.758s, StdDev: 0.046s
+while :     - Mean: 1.999s, Median: 1.988s, StdDev: 0.055s
+while true  - Mean: 2.164s, Median: 2.176s, StdDev: 0.072s
 Fastest: while ((1))
 
 Test: Loop with arithmetic work (1M) (iterations: 1000000)
-while ((1)) - Mean: 1.399s, Median: 1.394s, StdDev: 0.037s
-while :     - Mean: 1.504s, Median: 1.491s, StdDev: 0.030s
-while true  - Mean: 1.572s, Median: 1.569s, StdDev: 0.031s
+while ((1)) - Mean: 1.465s, Median: 1.463s, StdDev: 0.071s
+while :     - Mean: 1.563s, Median: 1.540s, StdDev: 0.071s
+while true  - Mean: 1.665s, Median: 1.663s, StdDev: 0.067s
 Fastest: while ((1))
 
 Benchmark Complete
 ==================
 
-Detailed results saved to: benchmark-results-while-2026-04-06 08:55:28.txt
+Detailed results saved to: benchmark-results-while-2026-04-06_12:35:53.txt
 
 Analysis and Recommendation:
 ----------------------------
