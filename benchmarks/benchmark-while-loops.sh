@@ -1,4 +1,5 @@
 #!/usr/bin/bash
+# shellcheck disable=SC2209
 # benchmark-while-loops.sh - Performance comparison of while loop constructs
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
@@ -8,17 +9,15 @@ shopt -s inherit_errexit shift_verbose extglob nullglob
 ##
 
 # Script metadata
-declare -r VERSION='1.1.0' # 2025-10-20 - Added while true comparison
-declare -r SCRIPT_NAME="${0##*/}"
+declare -r VERSION=1.1.0 # 2025-10-20 - Added while true comparison
+declare -r SCRIPT_NAME=${0##*/}
 
 # Configuration
-declare -ri ITERATIONS_DEFAULT=1000000
-declare -ri RUNS_PER_TEST=30
-declare -a ITERATION_COUNTS=(100000 1000000 5000000)
+declare -i RUNS_PER_TEST=30
 
 # Output files
-declare -r RESULTS_FILE="benchmark-results-$(date +%Y%m%d-%H%M%S).txt"
-declare -r SUMMARY_FILE="benchmark-summary-$(date +%Y%m%d-%H%M%S).txt"
+#shellcheck disable=SC2155
+declare -r RESULTS_FILE=benchmark-results-while-"$(printf '%(%Y-%m-%d_%H-%M-%S)T')".txt
 
 # Test results storage
 declare -a times_while_double_paren
@@ -177,7 +176,7 @@ calculate_statistics() {
   mean=$((sum / count))
 
   # Calculate median
-  IFS=$'\n' sorted=($(sort -n <<<"${values[*]}"))
+  readarray -t sorted < <(printf '%s\n' "${values[@]}" | sort -n)
   if ((count % 2 == 0)); then
     median=$(( (sorted[count/2-1] + sorted[count/2]) / 2 ))
   else
@@ -215,7 +214,7 @@ run_test_series() {
   local -- result
 
   echo "Running test: $test_name (iterations: $iterations, runs: $RUNS_PER_TEST)"
-  echo "========================================================================"
+  echo '========================================================================'
 
   # Clear result arrays
   times_while_double_paren=()
@@ -236,7 +235,7 @@ run_test_series() {
     result=$($func_true "$iterations")
     times_while_true+=("$result")
   done
-  printf "\rRun %2d/%d: Complete!                \n" "$RUNS_PER_TEST" "$RUNS_PER_TEST"
+  printf '\rRun %2d/%d: Complete!                \n' "$RUNS_PER_TEST" "$RUNS_PER_TEST"
 
   # Calculate statistics
   local -a stats_dp stats_colon stats_true
@@ -247,9 +246,9 @@ run_test_series() {
   # Display results
   echo
   echo "Results for: $test_name"
-  echo "-------------------------------------------"
-  printf "%-20s %15s %15s %15s\n" "Construct" "Mean" "Median" "StdDev"
-  printf "%-20s %15s %15s %15s\n" "while ((1))" \
+  echo '-------------------------------------------'
+  printf '%-20s %15s %15s %15s\n' Construct Mean Median StdDev
+  printf '%-20s %15s %15s %15s\n' "while ((1))" \
     "$(format_time "${stats_dp[0]}")" \
     "$(format_time "${stats_dp[1]}")" \
     "$(format_time "${stats_dp[2]}")"
@@ -264,16 +263,16 @@ run_test_series() {
 
   # Find fastest construct
   local -i fastest_time=${stats_dp[0]}
-  local -- fastest_name="while ((1))"
+  local -- fastest_name='while ((1))'
 
   if ((stats_colon[0] < fastest_time)); then
     fastest_time=${stats_colon[0]}
-    fastest_name="while :"
+    fastest_name='while :'
   fi
 
   if ((stats_true[0] < fastest_time)); then
     fastest_time=${stats_true[0]}
-    fastest_name="while true"
+    fastest_name='while true'
   fi
 
   # Calculate percentage differences from fastest
@@ -283,14 +282,14 @@ run_test_series() {
   diff_true=$(( (stats_true[0] - fastest_time) * 100 / fastest_time ))
 
   printf "\n◉ Fastest: %s\n" "$fastest_name"
-  if [[ $fastest_name != "while ((1))" ]]; then
-    printf "  - while ((1)) is %d%% slower\n" "$diff_dp"
+  if [[ $fastest_name != 'while ((1))' ]]; then
+    printf '  - while ((1)) is %d%% slower\n' "$diff_dp"
   fi
-  if [[ $fastest_name != "while :" ]]; then
-    printf "  - while : is %d%% slower\n" "$diff_colon"
+  if [[ $fastest_name != 'while :' ]]; then
+    printf '  - while : is %d%% slower\n' "$diff_colon"
   fi
-  if [[ $fastest_name != "while true" ]]; then
-    printf "  - while true is %d%% slower\n" "$diff_true"
+  if [[ $fastest_name != 'while true' ]]; then
+    printf '  - while true is %d%% slower\n' "$diff_true"
   fi
 
   echo
@@ -298,8 +297,7 @@ run_test_series() {
   echo
 
   # Save to results file
-  {
-    echo "Test: $test_name (iterations: $iterations)"
+  { echo "Test: $test_name (iterations: $iterations)"
     echo "while ((1)) - Mean: $(format_time "${stats_dp[0]}"), Median: $(format_time "${stats_dp[1]}"), StdDev: $(format_time "${stats_dp[2]}")"
     echo "while :     - Mean: $(format_time "${stats_colon[0]}"), Median: $(format_time "${stats_colon[1]}"), StdDev: $(format_time "${stats_colon[2]}")"
     echo "while true  - Mean: $(format_time "${stats_true[0]}"), Median: $(format_time "${stats_true[1]}"), StdDev: $(format_time "${stats_true[2]}")"
@@ -309,7 +307,7 @@ run_test_series() {
 }
 
 show_help() {
-  cat <<'EOT'
+  cat <<'HELP'
 benchmark-while-loops.sh - Performance comparison of while loop constructs
 
 Compares the performance of:
@@ -322,15 +320,13 @@ Usage: benchmark-while-loops.sh [OPTIONS]
 Options:
   -h, --help       Show this help message
   -V, --version    Show version information
-  -i NUM           Number of iterations (default: 1000000)
+  -i NUM           Override iteration count (default: 100K/1M/5M matrix)
   -r NUM           Number of runs per test (default: 30)
 
 Output:
-  Results are saved to docs/:
-    - benchmark-results-TIMESTAMP.txt (detailed results)
-    - benchmark-summary-TIMESTAMP.txt (summary and recommendation)
+  benchmark-results-while-TIMESTAMP.txt (detailed results with summary)
 
-EOT
+HELP
   exit "${1:-0}"
 }
 
@@ -338,69 +334,100 @@ EOT
 ## EXECUTION
 ##
 
-# Argument parsing
-[[ ${1:-} == '-h' || ${1:-} == '--help' ]] && show_help 0
-[[ ${1:-} == '-V' || ${1:-} == '--version' ]] && { echo "$SCRIPT_NAME $VERSION"; exit 0; }
+main() {
+  local -i custom_iterations=0
 
-# Print header
-{
-  print_system_info
-  echo "Starting benchmarks..."
+  # Argument parsing
+  while (($#)); do
+    case $1 in
+      -h|--help)    show_help 0 ;;
+      -V|--version) echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
+      -i)           custom_iterations=${2:?'-i requires a number'}; shift ;;
+      -r)           RUNS_PER_TEST=${2:?'-r requires a number'}; shift ;;
+      -[irhV]?*)    set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+      --)           shift; break ;;
+      -*)           echo "$SCRIPT_NAME: unknown option: $1" >&2; show_help 2 ;;
+      *)            echo "$SCRIPT_NAME: unexpected argument: $1" >&2; show_help 2 ;;
+    esac
+    shift
+  done
+
+  # Print header
+  { print_system_info
+    echo 'Starting benchmarks...'
+    echo
+    true
+  } | tee "$RESULTS_FILE"
+
+  if ((custom_iterations)); then
+    # Single iteration count: one empty-loop test + one with-work test
+    run_test_series \
+      "Empty loop with counter break (${custom_iterations})" \
+      "$custom_iterations" \
+      run_benchmark_double_paren \
+      run_benchmark_colon \
+      run_benchmark_true
+
+    run_test_series \
+      "Loop with arithmetic work (${custom_iterations})" \
+      "$custom_iterations" \
+      run_benchmark_double_paren_with_work \
+      run_benchmark_colon_with_work \
+      run_benchmark_true_with_work
+  else
+    # Default test matrix
+    run_test_series \
+      'Empty loop with counter break (100K)' \
+      100000 \
+      run_benchmark_double_paren \
+      run_benchmark_colon \
+      run_benchmark_true
+
+    run_test_series \
+      'Empty loop with counter break (1M)' \
+      1000000 \
+      run_benchmark_double_paren \
+      run_benchmark_colon \
+      run_benchmark_true
+
+    run_test_series \
+      'Empty loop with counter break (2M)' \
+      2000000 \
+      run_benchmark_double_paren \
+      run_benchmark_colon \
+      run_benchmark_true
+
+    run_test_series \
+      'Loop with arithmetic work (1M)' \
+      1000000 \
+      run_benchmark_double_paren_with_work \
+      run_benchmark_colon_with_work \
+      run_benchmark_true_with_work
+  fi
+
+  # Generate summary
+  { cat <<SUMMARY
+Benchmark Complete
+==================
+
+Detailed results saved to: $RESULTS_FILE
+
+Analysis and Recommendation:
+----------------------------
+See results above for performance comparison.
+
+For BCS guideline consideration:
+- If while ((1)) is consistently faster: Recommend for performance-critical code
+- If while : is faster or equivalent: Recommend for better POSIX compatibility
+- If difference is < 5%: Recommend while : for readability and tradition
+
+SUMMARY
+  } | tee -a "$RESULTS_FILE"
+
   echo
-  true
-} | tee "$RESULTS_FILE"
+  echo "Results saved to ${RESULTS_FILE@Q}"
+}
 
-# Test 1: Empty loop with counter break (100K iterations)
-run_test_series \
-  "Empty loop with counter break (100K)" \
-  100000 \
-  run_benchmark_double_paren \
-  run_benchmark_colon \
-  run_benchmark_true
-
-# Test 2: Empty loop with counter break (1M iterations)
-run_test_series \
-  "Empty loop with counter break (1M)" \
-  1000000 \
-  run_benchmark_double_paren \
-  run_benchmark_colon \
-  run_benchmark_true
-
-# Test 3: Empty loop with counter break (5M iterations)
-run_test_series \
-  "Empty loop with counter break (5M)" \
-  5000000 \
-  run_benchmark_double_paren \
-  run_benchmark_colon \
-  run_benchmark_true
-
-# Test 4: Loop with work inside (1M iterations)
-run_test_series \
-  "Loop with arithmetic work (1M)" \
-  1000000 \
-  run_benchmark_double_paren_with_work \
-  run_benchmark_colon_with_work \
-  run_benchmark_true_with_work
-
-# Generate summary
-{
-  echo "Benchmark Complete!"
-  echo "==================="
-  echo
-  echo "Detailed results saved to: $RESULTS_FILE"
-  echo
-  echo "Analysis and Recommendation:"
-  echo "----------------------------"
-  echo "See results above for performance comparison."
-  echo
-  echo "For BCS guideline consideration:"
-  echo "- If while ((1)) is consistently faster: Recommend for performance-critical code"
-  echo "- If while : is faster or equivalent: Recommend for better POSIX compatibility"
-  echo "- If difference is < 5%: Recommend while : for readability and tradition"
-  echo
-} | tee -a "$RESULTS_FILE"
-
-echo
-echo "Results saved to: $RESULTS_FILE"
+main "$@"
 
 #fin

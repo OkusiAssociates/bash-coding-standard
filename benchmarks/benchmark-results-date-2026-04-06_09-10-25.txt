@@ -1,0 +1,40 @@
+System Information
+==================
+Date: 2026-04-06T09:10:25+08:00
+Hostname: okusi
+Bash Version: 5.2.21(1)-release
+CPU: 13th Gen Intel(R) Core(TM) i9-13900HX
+Kernel: 6.17.0-20-generic
+Runs per test: 10
+
+Starting benchmarks...
+
+Test: Date formatting (100) (iterations: 100)
+printf %()T  - Mean: 0.003s, Median: 0.003s, StdDev: 0.000s
+date command - Mean: 0.086s, Median: 0.086s, StdDev: 0.003s
+Fastest: printf %()T (32.6x)
+
+Test: Date formatting (1K) (iterations: 1000)
+printf %()T  - Mean: 0.015s, Median: 0.015s, StdDev: 0.001s
+date command - Mean: 0.798s, Median: 0.798s, StdDev: 0.012s
+Fastest: printf %()T (51.9x)
+
+Test: Date formatting (5K) (iterations: 5000)
+printf %()T  - Mean: 0.068s, Median: 0.067s, StdDev: 0.002s
+date command - Mean: 3.936s, Median: 3.945s, StdDev: 0.034s
+Fastest: printf %()T (58.3x)
+
+Benchmark Complete
+==================
+
+Detailed results saved to: benchmark-results-date-2026-04-06_09-10-25.txt
+
+Analysis:
+---------
+printf '%(%Y-%m-%d)T' uses Bash's built-in strftime — no fork, no exec.
+date(1) forks a subprocess for every invocation.
+
+For BCS guideline consideration:
+- printf %()T is the preferred method for date formatting in Bash 5.2+
+- date(1) is necessary only when printf %()T lacks a needed format
+
