@@ -33,7 +33,7 @@ declare -ar VALID_BACKENDS=(auto claude ollama anthropic google openai)
 declare -Ar ANTHROPIC_MODELS=([fast]=claude-haiku-4-5 [balanced]=claude-sonnet-4-6 [thorough]=claude-opus-4-6)
 declare -Ar OLLAMA_MODELS=([fast]=qwen3.5:9b [balanced]=qwen3.5:14b [thorough]=qwen3.5:14b)
 declare -Ar GOOGLE_MODELS=([fast]=gemini-2.5-flash-lite [balanced]=gemini-2.5-flash [thorough]=gemini-2.5-pro)
-declare -Ar OPENAI_MODELS=([fast]=gpt-4o-mini [balanced]=gpt-5.4-mini [thorough]=gpt-5.4)
+declare -Ar OPENAI_MODELS=([fast]=gpt-4.1-mini [balanced]=gpt-5.4-mini [thorough]=gpt-5.4)
 
 # Effort-level to max output tokens mapping for API backends
 declare -Ar EFFORT_TOKENS=([low]=4096 [medium]=8192 [high]=16384 [max]=32768)

@@ -135,7 +135,7 @@ The `-m` flag selects an abstract quality tier mapped to concrete models per bac
 
 | Tier | Ollama | Anthropic | Google | OpenAI |
 |------|--------|-----------|--------|--------|
-| fast | qwen3.5:9b | claude-haiku-4-5 | gemini-2.5-flash-lite | gpt-4o-mini |
+| fast | qwen3.5:9b | claude-haiku-4-5 | gemini-2.5-flash-lite | gpt-4.1-mini |
 | balanced | qwen3.5:14b | claude-sonnet-4-6 | gemini-2.5-flash | gpt-5.4-mini |
 | thorough | qwen3.5:14b | claude-opus-4-6 | gemini-2.5-pro | gpt-5.4 |
 
