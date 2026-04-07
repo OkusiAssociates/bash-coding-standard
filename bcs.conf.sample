@@ -16,8 +16,34 @@
 # Treat warnings as violations: 0 or 1
 #BCS_STRICT=0
 
-# Override Ollama model name (instead of tier-based mapping)
+# Override model for all tiers (per backend)
 #BCS_OLLAMA_MODEL=qwen3.5:14b
+#BCS_ANTHROPIC_MODEL=claude-sonnet-4-6
+#BCS_GOOGLE_MODEL=gemini-2.5-flash
+#BCS_OPENAI_MODEL=gpt-5.4
+
+# Override individual tier mappings (advanced — arrays are sourced as bash)
+# Defaults shown; uncomment and change as needed.
+#ANTHROPIC_MODELS[fast]=claude-haiku-4-5
+#ANTHROPIC_MODELS[balanced]=claude-sonnet-4-6
+#ANTHROPIC_MODELS[thorough]=claude-opus-4-6
+
+#OLLAMA_MODELS[fast]=qwen3.5:9b
+#OLLAMA_MODELS[balanced]=qwen3.5:14b
+#OLLAMA_MODELS[thorough]=qwen3.5:14b
+
+#GOOGLE_MODELS[fast]=gemini-2.5-flash-lite
+#GOOGLE_MODELS[balanced]=gemini-2.5-flash
+#GOOGLE_MODELS[thorough]=gemini-2.5-pro
+
+#OPENAI_MODELS[fast]=gpt-4.1-mini
+#OPENAI_MODELS[balanced]=gpt-5.4-mini
+#OPENAI_MODELS[thorough]=gpt-5.4
+
+#EFFORT_TOKENS[low]=4096
+#EFFORT_TOKENS[medium]=8192
+#EFFORT_TOKENS[high]=32768
+#EFFORT_TOKENS[max]=65536
 
 # Ollama server address
 #OLLAMA_HOST=localhost:11434

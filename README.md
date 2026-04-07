@@ -147,9 +147,12 @@ Defaults can be set in `~/.config/bcs/bcs.conf` (sourced as bash):
 BCS_BACKEND=ollama        # auto, claude, ollama, anthropic, google, openai
 BCS_MODEL=balanced        # fast, balanced, thorough
 BCS_EFFORT=medium         # low, medium, high, max
+
+# Override model for a specific backend (bypasses tier mapping)
+BCS_OPENAI_MODEL=gpt-5.4
 ```
 
-See `bcs.conf.sample` for all options. CLI flags override config file settings.
+See `bcs.conf.sample` for all options including per-tier array overrides. CLI flags override config file settings.
 
 ## Examples
 

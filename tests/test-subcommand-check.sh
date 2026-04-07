@@ -128,6 +128,21 @@ begin_test 'check help mentions ANTHROPIC_API_KEY'
 output=$("$BCS_CMD" check -h 2>/dev/null)
 assert_contains "$output" 'ANTHROPIC_API_KEY' 'help mentions ANTHROPIC_API_KEY' || true
 
+# Test: check help shows BCS_ANTHROPIC_MODEL env var
+begin_test 'check help mentions BCS_ANTHROPIC_MODEL'
+output=$("$BCS_CMD" check -h 2>/dev/null)
+assert_contains "$output" 'BCS_ANTHROPIC_MODEL' 'help mentions BCS_ANTHROPIC_MODEL' || true
+
+# Test: check help shows BCS_GOOGLE_MODEL env var
+begin_test 'check help mentions BCS_GOOGLE_MODEL'
+output=$("$BCS_CMD" check -h 2>/dev/null)
+assert_contains "$output" 'BCS_GOOGLE_MODEL' 'help mentions BCS_GOOGLE_MODEL' || true
+
+# Test: check help shows BCS_OPENAI_MODEL env var
+begin_test 'check help mentions BCS_OPENAI_MODEL'
+output=$("$BCS_CMD" check -h 2>/dev/null)
+assert_contains "$output" 'BCS_OPENAI_MODEL' 'help mentions BCS_OPENAI_MODEL' || true
+
 # Skip actual LLM invocation tests (requires running backend)
 echo '  (skipping live LLM tests - requires running backend)'
 

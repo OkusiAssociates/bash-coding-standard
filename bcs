@@ -30,13 +30,13 @@ declare -ar VALID_TEMPLATES=(minimal basic complete library)
 declare -ar VALID_BACKENDS=(auto claude ollama anthropic google openai)
 
 # Model-tier to concrete API model mapping per backend
-declare -Ar ANTHROPIC_MODELS=([fast]=claude-haiku-4-5 [balanced]=claude-sonnet-4-6 [thorough]=claude-opus-4-6)
-declare -Ar OLLAMA_MODELS=([fast]=qwen3.5:9b [balanced]=qwen3.5:14b [thorough]=qwen3.5:14b)
-declare -Ar GOOGLE_MODELS=([fast]=gemini-2.5-flash-lite [balanced]=gemini-2.5-flash [thorough]=gemini-2.5-pro)
-declare -Ar OPENAI_MODELS=([fast]=gpt-4.1-mini [balanced]=gpt-5.4-mini [thorough]=gpt-5.4)
+declare -A ANTHROPIC_MODELS=([fast]=claude-haiku-4-5 [balanced]=claude-sonnet-4-6 [thorough]=claude-opus-4-6)
+declare -A OLLAMA_MODELS=([fast]=qwen3.5:9b [balanced]=qwen3.5:14b [thorough]=qwen3.5:14b)
+declare -A GOOGLE_MODELS=([fast]=gemini-2.5-flash-lite [balanced]=gemini-2.5-flash [thorough]=gemini-2.5-pro)
+declare -A OPENAI_MODELS=([fast]=gpt-4.1-mini [balanced]=gpt-5.4-mini [thorough]=gpt-5.4)
 
 # Effort-level to max output tokens mapping for API backends
-declare -Ar EFFORT_TOKENS=([low]=4096 [medium]=8192 [high]=16384 [max]=32768)
+declare -A EFFORT_TOKENS=([low]=4096 [medium]=8192 [high]=32768 [max]=65536)
 
 # Color definitions
 if [[ -t 1 && -t 2 ]]; then
@@ -209,6 +209,9 @@ ${BOLD}Environment / Config Variables:${NC}
   BCS_EFFORT         Default analysis depth (overridden by -e)
   BCS_STRICT         Treat warnings as violations: 0 or 1
   BCS_OLLAMA_MODEL   Override Ollama model selection
+  BCS_ANTHROPIC_MODEL  Override Anthropic model selection
+  BCS_GOOGLE_MODEL     Override Google model selection
+  BCS_OPENAI_MODEL     Override OpenAI model selection
   OLLAMA_HOST        Ollama server address (default: localhost:11434)
   ANTHROPIC_API_KEY  Anthropic API key (for anthropic backend)
   GOOGLE_API_KEY     Google API key (for google backend)
@@ -315,7 +318,7 @@ _detect_backend() {
 _llm_anthropic() {
   local -- model=$1 effort=$2 sys=$3 usr=$4
   [[ -n ${ANTHROPIC_API_KEY:-} ]] || die 18 'ANTHROPIC_API_KEY not set'
-  local -- api_model=${ANTHROPIC_MODELS[$model]}
+  local -- api_model=${BCS_ANTHROPIC_MODEL:-${ANTHROPIC_MODELS[$model]}}
   local -i max_tokens=${EFFORT_TOKENS[$effort]}
 
   local -- payload
@@ -390,7 +393,7 @@ _llm_ollama() {
 _llm_openai() {
   local -- model=$1 effort=$2 sys=$3 usr=$4
   [[ -n ${OPENAI_API_KEY:-} ]] || die 18 'OPENAI_API_KEY not set'
-  local -- api_model=${OPENAI_MODELS[$model]}
+  local -- api_model=${BCS_OPENAI_MODEL:-${OPENAI_MODELS[$model]}}
   local -i max_tokens=${EFFORT_TOKENS[$effort]}
 
   local -- payload
@@ -427,7 +430,7 @@ _llm_google() {
   local -- model=$1 effort=$2 sys=$3 usr=$4
   local -- api_key=${GOOGLE_API_KEY:-${GEMINI_API_KEY:-}}
   [[ -n $api_key ]] || die 18 'GOOGLE_API_KEY or GEMINI_API_KEY not set'
-  local -- api_model=${GOOGLE_MODELS[$model]}
+  local -- api_model=${BCS_GOOGLE_MODEL:-${GOOGLE_MODELS[$model]}}
   local -i max_tokens=${EFFORT_TOKENS[$effort]}
 
   local -- payload
@@ -466,7 +469,7 @@ _llm_claude_cli() {
   local -i strict=$5
   command -v claude &>/dev/null || die 18 'Claude CLI required for claude backend'
 
-  model=${ANTHROPIC_MODELS[$model]}
+  model=${BCS_ANTHROPIC_MODEL:-${ANTHROPIC_MODELS[$model]}}
 
   local -- prompt="You are a Bash script compliance validator.
 
