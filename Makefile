@@ -20,8 +20,12 @@ install:
 	install -m 644 data/BASH-CODING-STANDARD.md $(DESTDIR)$(SHAREDIR)/data/
 	install -m 644 data/[0-9]*.md $(DESTDIR)$(SHAREDIR)/data/
 	install -m 644 data/templates/*.sh.template $(DESTDIR)$(SHAREDIR)/data/templates/
-	rsync -a --exclude='CLAUDE.md' --exclude='.claude/' docs/ $(DESTDIR)$(SHAREDIR)/docs/
-	rsync -a benchmarks/ $(DESTDIR)$(SHAREDIR)/benchmarks/
+	install -d $(DESTDIR)$(SHAREDIR)/docs
+	cp -a docs/. $(DESTDIR)$(SHAREDIR)/docs/
+	rm -f $(DESTDIR)$(SHAREDIR)/docs/CLAUDE.md
+	rm -rf $(DESTDIR)$(SHAREDIR)/docs/.claude
+	install -d $(DESTDIR)$(SHAREDIR)/benchmarks
+	cp -a benchmarks/. $(DESTDIR)$(SHAREDIR)/benchmarks/
 	install -d $(DESTDIR)$(SHAREDIR)/examples
 	find examples/ -maxdepth 1 -type f -exec install -m 755 {} $(DESTDIR)$(SHAREDIR)/examples/ \;
 	install -d $(DESTDIR)$(MANDIR)

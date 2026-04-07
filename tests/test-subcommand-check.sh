@@ -103,17 +103,29 @@ begin_test 'option bundling -bs parsed'
 err=$("$BCS_CMD" check -bs 2>&1 || true)
 assert_not_contains "$err" 'Invalid option' '-bs bundling parsed correctly' || true
 
-# Test: check help shows all backends
-begin_test 'check help shows backend list'
+# Test: check help shows ollama backend
+begin_test 'check help mentions ollama'
 output=$("$BCS_CMD" check -h 2>/dev/null)
 assert_contains "$output" 'ollama' 'help mentions ollama' || true
+
+# Test: check help shows anthropic backend
+begin_test 'check help mentions anthropic'
+output=$("$BCS_CMD" check -h 2>/dev/null)
 assert_contains "$output" 'anthropic' 'help mentions anthropic' || true
+
+# Test: check help shows openai backend
+begin_test 'check help mentions openai'
+output=$("$BCS_CMD" check -h 2>/dev/null)
 assert_contains "$output" 'openai' 'help mentions openai' || true
 
-# Test: check help shows environment variables
-begin_test 'check help shows env vars'
+# Test: check help shows BCS_BACKEND env var
+begin_test 'check help mentions BCS_BACKEND'
 output=$("$BCS_CMD" check -h 2>/dev/null)
 assert_contains "$output" 'BCS_BACKEND' 'help mentions BCS_BACKEND' || true
+
+# Test: check help shows ANTHROPIC_API_KEY env var
+begin_test 'check help mentions ANTHROPIC_API_KEY'
+output=$("$BCS_CMD" check -h 2>/dev/null)
 assert_contains "$output" 'ANTHROPIC_API_KEY' 'help mentions ANTHROPIC_API_KEY' || true
 
 # Skip actual LLM invocation tests (requires running backend)

@@ -70,7 +70,7 @@ Installs the `bcs` and `bcscheck` binaries, data files, bash completions, and th
 
 ## Overview
 
-The Bash Coding Standard defines 104 rules across 12 sections in a single ~2,300-line document. Rules are written for both human programmers and AI assistants, with code examples for every rule.
+The Bash Coding Standard defines 105 rules across 12 sections in a single ~2,300-line document. Rules are written for both human programmers and AI assistants, with code examples for every rule.
 
 ### 12 Sections
 
