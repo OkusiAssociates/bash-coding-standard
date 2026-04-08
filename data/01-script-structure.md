@@ -1,4 +1,4 @@
-# Section 1: Script Structure & Layout
+# Section 01: Script Structure & Layout
 
 ## BCS0100 Section Overview
 
@@ -156,7 +156,8 @@ my_function() {
 }
 declare -fx my_function
 
-[[ ${BASH_SOURCE[0]} == "$0" ]] || return 0
+# --- source fence ---
+return 0 2>/dev/null ||:
 
 # --- Script mode only below ---
 set -euo pipefail

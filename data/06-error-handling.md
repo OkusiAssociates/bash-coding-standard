@@ -1,4 +1,4 @@
-# Section 6: Error Handling
+# Section 06: Error Handling
 
 ## BCS0600 Section Overview
 

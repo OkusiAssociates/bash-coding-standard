@@ -1,4 +1,4 @@
-# Section 2: Variables & Data Types
+# Section 02: Variables & Data Types
 
 ## BCS0200 Section Overview
 

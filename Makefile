@@ -16,10 +16,10 @@ install:
 	install -d $(DESTDIR)$(BINDIR)
 	install -m 755 bcs $(DESTDIR)$(BINDIR)/bcs
 	install -m 755 bcscheck $(DESTDIR)$(BINDIR)/bcscheck
-	install -d $(DESTDIR)$(SHAREDIR)/data/templates
 	install -m 644 data/BASH-CODING-STANDARD.md $(DESTDIR)$(SHAREDIR)/data/
 	install -m 644 data/[0-9]*.md $(DESTDIR)$(SHAREDIR)/data/
-	install -m 644 data/templates/*.sh.template $(DESTDIR)$(SHAREDIR)/data/templates/
+	install -d $(DESTDIR)$(SHAREDIR)/examples/templates
+	install -m 644 examples/templates/*.sh.template $(DESTDIR)$(SHAREDIR)/examples/templates/
 	install -d $(DESTDIR)$(SHAREDIR)/docs
 	cp -a docs/. $(DESTDIR)$(SHAREDIR)/docs/
 	rm -f $(DESTDIR)$(SHAREDIR)/docs/CLAUDE.md

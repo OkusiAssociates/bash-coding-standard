@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 #shellcheck disable=SC2015
 # bcs - Bash Coding Standard CLI toolkit
-# BCS-compliant script with 6 subcommands for viewing, generating,
-# and checking compliance with the Bash Coding Standard.
+# Six subcommands for viewing, generating, and checking compliance with the Bash Coding Standard.
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
@@ -487,17 +486,17 @@ Respect inline suppression: eg, #bcscheck disable=BCS0101 exempts the next line/
 
   ((strict)) && prompt+=$'\nSTRICT MODE: Treat all warnings as violations.' ||:
 
-  # cd to clean temp dir — prevents claude from loading local CLAUDE.md
+  # cd to clean temp dir -- prevents claude from loading local CLAUDE.md
   local -- check_dir
   check_dir=$(mktemp -d -t 'bcs-XXXXX') || die 1 'Failed to create temp dir'
   #bcscheck disable=BCS0603
   #shellcheck disable=SC2064
   trap "cd '$PWD' 2>/dev/null; rm -rf '$check_dir'" RETURN
   cd "$check_dir"
-  [[ -d /run/user/"$EUID" ]] && declare -x TMPDIR=/run/user/"$EUID" ||:
+  [[ ! -d /run/user/"$EUID" ]] || declare -x TMPDIR=/run/user/"$EUID"
 
   local -a claude_args=(--model "$model" --permission-mode bypassPermissions)
-  [[ -n $effort ]] && claude_args+=(--effort "$effort") ||:
+  [[ -z $effort ]] || claude_args+=(--effort "$effort")
 
   #shellcheck disable=SC1007
   CLAUDECODE= claude "${claude_args[@]}" -p "$prompt" 2>/dev/null
@@ -596,7 +595,7 @@ cmd_template() {
   # Find template file
   local -- data_dir
   data_dir=$(_find_data_dir) || die 3 'Data directory not found'
-  local -- template_file="$data_dir"/templates/"$template_type".sh.template
+  local -- template_file="${data_dir%/data}"/examples/templates/"$template_type".sh.template
   [[ -f $template_file ]] || die 3 "Template not found ${template_file@Q}"
 
   # Check output file
@@ -707,7 +706,7 @@ Rules:
 - Only report actual deviations. Do NOT report passing rules or observations.
 - Only report findings about the script content provided. Do NOT assume anything about project structure, files, or resources you cannot see.
 - Inline suppression: If a comment \`#bcscheck disable=BCSxxxx\` appears on the line immediately before code, do NOT report rule BCSxxxx for that line.
-- Line numbers are provided — reference them exactly.
+- Line numbers are provided -- reference them exactly.
 
 $effort_guidance"
     ((strict)) && usr_prompt+=$'\nSTRICT MODE: Treat all WARNINGs as VIOLATIONs.' ||:
@@ -798,42 +797,7 @@ cmd_generate() {
 
   info "Generating standard from ${#section_files[@]} section files..."
 
-  { cat <<'GENERATE'
-# Bash Coding Standard (BCS)
-
-**Concise, actionable coding rules for Bash 5.2+**
-
-Designed by Okusi Associates for the Indonesian Open Technology Foundation (YaTTI).
-Target audience: both human programmers and AI assistants.
-
-Companion reference: [Bash 5.2 Reference (Strict Mode)](../docs/BCS-bash/index.md) — the `bash(1)` man page rewritten for BCS assumptions (`set -euo pipefail`, `[[ ]]` only, no POSIX compat).
-
-## Coding Principles
-- K.I.S.S.
-- "The best process is no process"
-- "Everything should be made as simple as possible, but not any simpler."
-
-**Critical:** Do not over-engineer scripts; remove unused functions and variables.
-
-## Contents
-1. Script Structure & Layout
-2. Variables & Data Types
-3. Strings & Quoting
-4. Functions & Libraries
-5. Control Flow
-6. Error Handling
-7. I/O & Messaging
-8. Command-Line Arguments
-9. File Operations
-10. Security
-11. Concurrency & Jobs
-12. Style & Development
-
----
-
-GENERATE
-
-    # Concatenate section files
+  {
     local -i first=1
     for section_file in "${section_files[@]}"; do
       if ((first)); then
@@ -845,12 +809,16 @@ GENERATE
       fi
       cat -- "$section_file"
     done
-  } > "$output_file"
+  } > "$output_file".tmp
+  mv -f -- "$output_file".tmp "$output_file"
 
   # Resolve relative markdown links to absolute paths
   local -- bcs_root
   bcs_root=$(realpath -- "$data_dir/..")
   sed -i "s|](\\.\\.\/|](${bcs_root}/|g" "$output_file"
+
+  # Make it readonly so that users do not confuse this document with the rules sections
+  chmod 444 "$output_file"
 
   local -i line_count
   line_count=$(wc -l < "$output_file")

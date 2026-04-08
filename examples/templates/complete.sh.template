@@ -9,8 +9,7 @@ declare -rx PATH=~/.local/bin:/usr/local/bin:/usr/bin:/bin
 declare -r VERSION='{{VERSION}}'
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
-declare -r SCRIPT_DIR=${SCRIPT_PATH%/*}
-declare -r SCRIPT_NAME=${SCRIPT_PATH##*/}
+declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Global variables
 declare -i VERBOSE=1 DEBUG=0
@@ -53,9 +52,9 @@ show_help() {
   cat <<HELP
 $SCRIPT_NAME $VERSION -- {{DESCRIPTION}}
 
-Usage: $SCRIPT_NAME [OPTIONS]
+Usage: $SCRIPT_NAME [OPTIONS] ARG
 
-
+  ARG     Argument
 
 Options:
   -v, --verbose   Enable verbose output (default)
@@ -72,6 +71,7 @@ HELP
 }
 
 main() {
+
   while (($#)); do
     case $1 in
       -h|--help)
@@ -111,7 +111,7 @@ main() {
   done
 
   # Business
-  info "Hello from $USER"
+  info "Hello from ${USER@Q}"
   success 'Script completed successfully'
 }
 

@@ -1,4 +1,4 @@
-# Section 8: Command-Line Arguments
+# Section 08: Command-Line Arguments
 
 ## BCS0800 Section Overview
 

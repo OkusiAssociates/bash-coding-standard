@@ -1,4 +1,4 @@
-# Section 7: I/O & Messaging
+# Section 07: I/O & Messaging
 
 ## BCS0700 Section Overview
 

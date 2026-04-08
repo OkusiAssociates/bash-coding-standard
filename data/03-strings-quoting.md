@@ -1,4 +1,4 @@
-# Section 3: Strings & Quoting
+# Section 03: Strings & Quoting
 
 ## BCS0300 Section Overview
 

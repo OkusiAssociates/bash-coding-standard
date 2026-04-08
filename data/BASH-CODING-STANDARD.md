@@ -1,36 +1,39 @@
 # Bash Coding Standard (BCS)
 
-**Concise, actionable coding rules for Bash 5.2+**
+**Concise, actionable coding rules for BCS Bash 5.2+**
 
 Designed by Okusi Associates for the Indonesian Open Technology Foundation (YaTTI).
 Target audience: both human programmers and AI assistants.
 
-Companion reference: [Bash 5.2 Reference (Strict Mode)](/ai/scripts/Okusi/BCS/docs/BCS-bash/index.md) — the `bash(1)` man page rewritten for BCS assumptions (`set -euo pipefail`, `[[ ]]` only, no POSIX compat).
+[BCS Bash 5.2 Reference](/ai/scripts/Okusi/BCS/docs/BCS-bash/index.md) -- the `bash(1)` man page rewritten for BCS assumptions (`set -euo pipefail`, `[[ ]]` only, no POSIX compat, etc).
+
+[Example exemplar BCS-compliant scripts directory](/ai/scripts/Okusi/BCS/examples/)
+
+Templates for new scripts: [complete.sh.template](/ai/scripts/Okusi/BCS/examples/templates/complete.sh.template), [basic.sh.template](/ai/scripts/Okusi/BCS/examples/templates/basic.sh.template), [minimal.sh.template](/ai/scripts/Okusi/BCS/examples/templates/minimal.sh.template), [library.sh.template](/ai/scripts/Okusi/BCS/examples/templates/library.sh.template)
 
 ## Coding Principles
 - K.I.S.S.
 - "The best process is no process"
 - "Everything should be made as simple as possible, but not any simpler."
-
-**Critical:** Do not over-engineer scripts; remove unused functions and variables.
+- **Critical:** Do not over-engineer scripts; **remove unused functions and variables**
 
 ## Contents
-1. Script Structure & Layout
-2. Variables & Data Types
-3. Strings & Quoting
-4. Functions & Libraries
-5. Control Flow
-6. Error Handling
-7. I/O & Messaging
-8. Command-Line Arguments
-9. File Operations
+01. Script Structure & Layout
+02. Variables & Data Types
+03. Strings & Quoting
+04. Functions & Libraries
+05. Control Flow
+06. Error Handling
+07. I/O & Messaging
+08. Command-Line Arguments
+09. File Operations
 10. Security
 11. Concurrency & Jobs
 12. Style & Development
 
 ---
 
-# Section 1: Script Structure & Layout
+# Section 01: Script Structure & Layout
 
 ## BCS0100 Section Overview
 
@@ -188,7 +191,8 @@ my_function() {
 }
 declare -fx my_function
 
-[[ ${BASH_SOURCE[0]} == "$0" ]] || return 0
+# --- source fence ---
+return 0 2>/dev/null ||:
 
 # --- Script mode only below ---
 set -euo pipefail
@@ -349,7 +353,7 @@ Configuration files are sourced as Bash — they execute in the calling shell's 
 
 ---
 
-# Section 2: Variables & Data Types
+# Section 02: Variables & Data Types
 
 ## BCS0200 Section Overview
 
@@ -542,7 +546,7 @@ Make derived variables readonly only after all parsing and derivation is complet
 
 ---
 
-# Section 3: Strings & Quoting
+# Section 03: Strings & Quoting
 
 ## BCS0300 Section Overview
 
@@ -698,7 +702,7 @@ Use braces only when required: `${var:-default}`, `${file##*/}`, `${array[@]}`, 
 
 ---
 
-# Section 4: Functions & Libraries
+# Section 04: Functions & Libraries
 
 ## BCS0400 Section Overview
 
@@ -808,6 +812,7 @@ my_function() {
   echo "Hello, $name"
 }
 
+# --- source fence ---
 [[ ${BASH_SOURCE[0]} == "$0" ]] || { declare -fx my_function; return 0; }
 
 # --- Script mode only ---
@@ -850,7 +855,7 @@ Pure libraries must reject direct execution.
 ```bash
 # correct — library pattern
 [[ ${BASH_SOURCE[0]} != "$0" ]] || {
-  >&2 echo 'Error: must be sourced'
+  >&2 echo "Error: ${0@Q} must be sourced"
   exit 1
 }
 
@@ -902,7 +907,7 @@ Use lazy loading for expensive resources: initialize only when first needed.
 
 ---
 
-# Section 5: Control Flow
+# Section 05: Control Flow
 
 ## BCS0500 Section Overview
 
@@ -1109,7 +1114,7 @@ fi
 
 ---
 
-# Section 6: Error Handling
+# Section 06: Error Handling
 
 ## BCS0600 Section Overview
 
@@ -1282,7 +1287,7 @@ Never use `||:` for critical operations that must succeed.
 
 ---
 
-# Section 7: I/O & Messaging
+# Section 07: I/O & Messaging
 
 ## BCS0700 Section Overview
 
@@ -1509,7 +1514,7 @@ Use `2>/dev/null` or `2>file` when suppressing only stderr. The `&>` operator is
 
 ---
 
-# Section 8: Command-Line Arguments
+# Section 08: Command-Line Arguments
 
 ## BCS0800 Section Overview
 
@@ -1694,7 +1699,7 @@ See also: BCS0701 (message control flags), BCS0802 (version output format), BCS1
 
 ---
 
-# Section 9: File Operations
+# Section 09: File Operations
 
 ## BCS0900 Section Overview
 

@@ -1,4 +1,4 @@
-# Section 4: Functions & Libraries
+# Section 04: Functions & Libraries
 
 ## BCS0400 Section Overview
 
@@ -108,6 +108,7 @@ my_function() {
   echo "Hello, $name"
 }
 
+# --- source fence ---
 [[ ${BASH_SOURCE[0]} == "$0" ]] || { declare -fx my_function; return 0; }
 
 # --- Script mode only ---
@@ -150,7 +151,7 @@ Pure libraries must reject direct execution.
 ```bash
 # correct — library pattern
 [[ ${BASH_SOURCE[0]} != "$0" ]] || {
-  >&2 echo 'Error: must be sourced'
+  >&2 echo "Error: ${0@Q} must be sourced"
   exit 1
 }
 

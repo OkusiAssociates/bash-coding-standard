@@ -21,9 +21,9 @@ assert_equal 12 "$found" 'all 12 section files present' || true
 begin_test 'BASH-CODING-STANDARD.md exists'
 assert_file_exists "$DATA_DIR"/BASH-CODING-STANDARD.md || true
 
-# Test: templates directory exists
+# Test: examples/templates directory exists
 begin_test 'templates directory exists'
-if [[ -d "$DATA_DIR"/templates ]]; then
+if [[ -d "$PROJECT_DIR"/examples/templates ]]; then
   printf '  %s✓%s templates directory exists\n' "$GREEN" "$NC"
   TESTS_PASSED+=1
 else
@@ -34,7 +34,7 @@ fi
 # Test: all 4 template types exist
 for type in minimal basic complete library; do
   begin_test "template $type exists"
-  assert_file_exists "$DATA_DIR"/templates/"$type".sh.template "$type template exists" || true
+  assert_file_exists "$PROJECT_DIR"/examples/templates/"$type".sh.template "$type template exists" || true
 done
 
 # Test: each section file starts with # Section N:
@@ -43,6 +43,7 @@ declare -i good_headers=0
 declare -- first_line f
 for f in "$DATA_DIR"/[0-9]*.md; do
   [[ "${f##*/}" == BASH-CODING-STANDARD.md ]] && continue
+  [[ "${f##*/}" == 00-* ]] && continue
   IFS= read -r first_line < "$f"
   if [[ "$first_line" =~ ^#\ Section\ [0-9]+: ]]; then
     good_headers+=1
@@ -57,6 +58,7 @@ begin_test 'every section has BCS codes'
 declare -i sections_with_codes=0
 for f in "$DATA_DIR"/[0-9]*.md; do
   [[ "${f##*/}" == BASH-CODING-STANDARD.md ]] && continue
+  [[ "${f##*/}" == 00-* ]] && continue
   if grep -q '^## BCS[0-9]' "$f"; then
     sections_with_codes+=1
   else
@@ -89,6 +91,7 @@ declare -- basename_f section_num code code_section line
 for f in "$DATA_DIR"/[0-9]*.md; do
   basename_f=${f##*/}
   [[ "$basename_f" == BASH-CODING-STANDARD.md ]] && continue
+  [[ "$basename_f" == 00-* ]] && continue
   section_num=${basename_f:0:2}
   while IFS= read -r line; do
     if [[ "$line" =~ ^##\ (BCS[0-9]{4}) ]]; then

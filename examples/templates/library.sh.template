@@ -2,12 +2,14 @@
 # {{DESCRIPTION}}
 # This is a sourceable library script
 
+# --- already-sourced fence ---
+[[ ! -v {{NAME}}_VERSION ]] || return 0
 # Library metadata
-declare -x {{NAME}}_VERSION='{{VERSION}}'
-declare -x {{NAME}}_PATH
-{{NAME}}_PATH=$(realpath -- "${BASH_SOURCE[0]}")
-declare -x {{NAME}}_DIR=${{{NAME}}_PATH%/*}
-readonly -- {{NAME}}_VERSION {{NAME}}_PATH {{NAME}}_DIR
+declare -rx {{NAME}}_VERSION='{{VERSION}}'
+
+#shellcheck disable=SC2155
+declare -rx {{NAME}}_PATH=$(realpath -- "${BASH_SOURCE[0]}")
+declare -rx {{NAME}}_DIR=${{{NAME}}_PATH%/*}
 
 # Messaging functions (library prefix)
 {{NAME}}_msg() {
@@ -21,7 +23,7 @@ declare -fx {{NAME}}_error
 
 # Example library function
 {{NAME}}_hello() {
-  local -- name="${1:-World}"
+  local -- name=${1:-World}
   echo "Hello, $name from {{NAME}} library!"
 }
 declare -fx {{NAME}}_hello
@@ -35,5 +37,4 @@ declare -fx {{NAME}}_init
 
 # Auto-initialize on source
 {{NAME}}_init
-
 #fin
