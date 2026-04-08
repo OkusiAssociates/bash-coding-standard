@@ -99,16 +99,33 @@ Keep only functions and variables the script actually needs. Remove unused globa
 
 ## BCS0406 Dual-Purpose Scripts
 
-For scripts that can be sourced or executed, define functions before strict mode.
+For scripts that can be sourced or executed, define functions before the source fence and strict mode after it. Either fence pattern is acceptable:
 
 ```bash
-# correct
+# correct — BASH_SOURCE fence with conditional export
 my_function() {
   local -- name=$1
   echo "Hello, $name"
 }
 
 [[ ${BASH_SOURCE[0]} == "$0" ]] || { declare -fx my_function; return 0; }
+
+# --- Script mode only ---
+set -euo pipefail
+shopt -s inherit_errexit
+my_function "$@"
+#fin
+```
+
+```bash
+# correct — return 0 fence (export unconditionally before fence)
+my_function() {
+  local -- name=$1
+  echo "Hello, $name"
+}
+declare -fx my_function
+
+return 0 2>/dev/null ||:
 
 # --- Script mode only ---
 set -euo pipefail

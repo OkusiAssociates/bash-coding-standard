@@ -136,10 +136,20 @@ Always check BOTH stdout AND stderr: `[[ -t 1 && -t 2 ]]`.
 
 Executables: `.sh` extension or no extension. Globally available executables via PATH must have no extension. Libraries must have `.sh` or `.bash` extension and should not be executable.
 
-**Dual-purpose scripts** (can be sourced or executed):
+**Dual-purpose scripts** (can be sourced or executed) use a source fence to separate library functions from script mode. Either fence pattern is acceptable:
 
 ```bash
-# correct — functions first, then sourced check, then strict mode
+# correct — BASH_SOURCE fence (supports conditional actions in the guard)
+[[ ${BASH_SOURCE[0]} == "$0" ]] || return 0
+
+# correct — return 0 fence (single builtin, also valid in POSIX sh)
+return 0 2>/dev/null ||:
+```
+
+Define functions above the fence, strict mode and mainline below:
+
+```bash
+# correct — dual-purpose script
 my_function() {
   local -- name=$1
   echo "Hello, $name"
@@ -156,6 +166,8 @@ my_function "$@"
 ```
 
 Never apply `set -euo pipefail` when sourced — it alters the calling shell's environment.
+
+See also: [Source Guard Reference](../benchmarks/source-guard-reference.md) — full comparison of source fence mechanisms with benchmark data.
 
 ## BCS0107 Function Organization
 
