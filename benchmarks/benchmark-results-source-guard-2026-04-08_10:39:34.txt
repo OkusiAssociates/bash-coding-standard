@@ -1,0 +1,65 @@
+System Information
+==================
+Date: 2026-04-08T10:39:34+08:00
+Hostname: okusi
+Bash Version: 5.2.21(1)-release
+CPU: 13th Gen Intel(R) Core(TM) i9-13900HX
+Kernel: 6.17.0-20-generic
+Runs per test: 10
+
+Starting benchmarks...
+
+Test: Source guard (100) (iterations: 100)
+BASH_SOURCE check    - Mean: 0.003s, Median: 0.003s, StdDev: 0.001s
+return trick         - Mean: 0.004s, Median: 0.004s, StdDev: 0.001s
+(return 0) subshell  - Mean: 0.071s, Median: 0.071s, StdDev: 0.005s
+Fastest: BASH_SOURCE check
+
+Test: Source guard (1K) (iterations: 1000)
+BASH_SOURCE check    - Mean: 0.020s, Median: 0.022s, StdDev: 0.005s
+return trick         - Mean: 0.019s, Median: 0.021s, StdDev: 0.005s
+(return 0) subshell  - Mean: 0.488s, Median: 0.538s, StdDev: 0.100s
+Fastest: return trick
+
+Test: Source guard (5K) (iterations: 5000)
+BASH_SOURCE check    - Mean: 0.057s, Median: 0.058s, StdDev: 0.005s
+return trick         - Mean: 0.049s, Median: 0.047s, StdDev: 0.004s
+(return 0) subshell  - Mean: 2.528s, Median: 2.593s, StdDev: 0.205s
+Fastest: return trick
+
+Benchmark Complete
+==================
+
+Detailed results saved to: benchmark-results-source-guard-2026-04-08_10:39:34.txt
+
+Methods tested (each sources a file with a dummy function + guard):
+  1. BASH_SOURCE check   -- [[ ${BASH_SOURCE[0]} == "$0" ]] (BCS0106)
+  2. return trick        -- return 0 2>/dev/null ||:
+  3. (return 0) subshell -- (return 0 2>/dev/null) && return 0
+
+Each iteration: open file, parse, define function, evaluate guard,
+return to caller. This measures the full realistic cost of sourcing
+a library with a source guard.
+
+Analysis:
+---------
+All three methods carry the same baseline cost of file I/O, parsing,
+and function definition. The difference lies in the guard mechanism.
+
+The BASH_SOURCE comparison is a pure string operation -- variable
+expansion plus [[ == ]] evaluation -- requiring no command dispatch,
+no redirect setup, and no subshell.
+
+The return trick ('return 0 2>/dev/null ||:') succeeds immediately
+when sourced, but adds redirect setup on the return builtin. The
+redirect is wasted work since return produces no output on success.
+
+The subshell idiom forks a child process to test whether return
+succeeds, then issues a second return in the parent. Two operations
+where one suffices, plus the fork overhead.
+
+For BCS guideline consideration:
+- [[ ${BASH_SOURCE[0]} == "$0" ]] is the recommended pattern (BCS0106)
+- 'return 0 2>/dev/null ||:' is clever but obscure
+- '(return 0 2>/dev/null)' should never be used in production code
+
