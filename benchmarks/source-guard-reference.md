@@ -5,14 +5,20 @@ executed directly. BCS mandates the `BASH_SOURCE` check. See BCS0106, BCS0406.
 
 ## Quick Comparison
 
-| Feature                 | BASH_SOURCE check | return trick | (return 0) subshell |
+| Feature                 | BASH_SOURCE check | return 0 guard | (return 0) subshell |
 |-------------------------|:-:|:-:|:-:|
-| Readable intent         | ✓ | ✗ | ✗ |
 | Pure Bash (no fork)     | ✓ | ✓ | ✗ |
 | Works in functions      | ✓ | ✗ | ✗ |
+| Dual-purpose support    | ✓ | ✗ | ✗ |
 | POSIX sh compatible     | ✗ | ✓ | ✓ |
-| Performance (relative)  | Fastest | ~2-3x slower | ~50-100x slower |
+| Performance (sourced)   | ~13% slower | Fastest | ~56x slower |
 | BCS recommended         | ✓ | ✗ | ✗ |
+
+Percentages from benchmark sourcing files with a dummy function + guard
+at 10K iterations (i9-13900HX, Bash 5.2.21). The return 0 guard is a
+single builtin that succeeds immediately when sourced. The BASH_SOURCE
+check requires variable expansion plus string comparison -- more work
+per call, though still sub-microsecond. The subshell forks per call.
 
 ## BCS Pattern: BASH_SOURCE Check (BCS0106)
 
@@ -52,7 +58,7 @@ The `declare -fx` exports functions to child processes when sourced.
 
 Inverts the test -- prevents direct execution of library files.
 
-## Alternative: return Trick
+## Alternative: return 0 Guard
 
 ```bash
 return 0 2>/dev/null ||:
@@ -68,16 +74,15 @@ from killing the script after the failed return.
 If sourced, `return 0` succeeds and the script returns to the caller --
 code below the line never runs.
 
-**Limitations:**
-- Obscure intent -- readers must understand the `return`-at-top-level trick
+**Characteristics:**
+- Intent is non-obvious -- readers must understand that `return` behaves
+  differently at top-level vs inside a function
 - Cannot be used inside a function (where `return` always succeeds)
-- Three operations per call: command dispatch, redirect, error recovery
-- No way to export functions before returning (the return happens immediately)
-- Error message generation adds hidden overhead even when suppressed
-
-**Why BCS avoids it:** clever but opaque. The `BASH_SOURCE` check states
-its intent directly and supports the dual-purpose pattern where functions
-are defined above the guard.
+- On the sourced path, the redirect is unused overhead (`return 0` produces
+  no output when it succeeds)
+- No way to define or export functions before returning -- the return
+  happens immediately, so there is no "library zone" above the guard
+- Works in POSIX sh where `BASH_SOURCE` is not available
 
 ## Alternative: Subshell Test
 
@@ -94,11 +99,14 @@ In a sourced context, `return` succeeds (exit status 0). When executed
 directly, `return` fails (exit status 1). The subshell isolates the side
 effect -- a successful return exits only the subshell, not the caller.
 
-**Why it is worst of all:**
-- Forks a child process on every call (~50-100x slower in benchmarks)
-- Doesn't actually return -- only detects, requires a separate `return` or `exit`
+**Characteristics:**
+- Forks a child process on every call (~56x slower than the return 0
+  guard in benchmarks sourcing real files at 10K iterations)
+- Does not actually return -- only detects, so a separate `return` or
+  `exit` is needed afterward
 - Two-step: detect then act, versus the single-step BASH_SOURCE guard
-- The fork cost is per-call, unlike a one-time guard at script startup
+  or single-step return 0 guard
+- Works in POSIX sh where `BASH_SOURCE` is not available
 
 ## How BASH_SOURCE Works
 
@@ -192,7 +200,7 @@ main "$@"               # sourcing this file runs main() immediately
   mechanism, not to influence real-world script choice.
 - `BASH_SOURCE` is a Bash extension (also available in zsh as a
   compatibility feature). It is not available in POSIX sh, dash, or ash.
-- The return trick works in POSIX sh where `BASH_SOURCE` does not exist.
+- The return 0 guard works in POSIX sh where `BASH_SOURCE` does not exist.
   For scripts that must run under `/bin/sh`, it is the only option.
 - BCS targets Bash 5.2+ exclusively and does not require POSIX
   compatibility, so `BASH_SOURCE` is always available.

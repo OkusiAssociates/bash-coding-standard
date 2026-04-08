@@ -388,18 +388,20 @@ Analysis:
 All three methods carry the same baseline cost of file I/O, parsing,
 and function definition. The difference lies in the guard mechanism.
 
-The BASH_SOURCE comparison is a pure string operation -- variable
-expansion plus [[ == ]] evaluation -- no command dispatch, no
-redirect setup, no subshell.
+The return 0 guard ('return 0 2>/dev/null ||:') is the fastest method
+when sourced. On the sourced path, 'return 0' is a single builtin
+that succeeds immediately -- execution returns to the caller with no
+further evaluation. The redirect is set up but never used (return
+produces no output on success); even so, the total cost is minimal.
 
-The return 0 guard ('return 0 2>/dev/null ||:') succeeds immediately
-when sourced, but sets up a stderr redirect on the return builtin.
-On the sourced path, return produces no output, so the redirect is
-unused overhead.
+The BASH_SOURCE comparison requires three operations: expand
+\${BASH_SOURCE[0]}, expand "\$0", then evaluate [[ == ]] as a string
+comparison. Each is fast, but together they are measurably slower
+than a single successful return (~13% at 10K iterations).
 
 The subshell guard forks a child process to test whether return
 succeeds, then issues a second return in the parent. Two operations
-where one suffices, plus fork overhead per call.
+where one suffices, plus fork overhead per call (~56x slower).
 
 SUMMARY
   } | tee -a "$RESULTS_FILE"
