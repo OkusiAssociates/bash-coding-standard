@@ -83,7 +83,7 @@ declare -A data
 data["$key"]="$value"
 
 # correct — case for dispatch
-case "$action" in
+case $action in
   start) start_fn ;;
   stop)  stop_fn ;;
 esac

@@ -10,7 +10,7 @@ Error handling covers strict mode, exit codes, traps, return value checking, and
 
 ```bash
 # correct — allow expected failures
-command_that_might_fail || true
+command_that_might_fail ||:
 if command_that_might_fail; then
   process_result
 fi

@@ -9,11 +9,11 @@ Use `while (($#)); do case $1 in ... esac; shift; done` as the standard argument
 ```bash
 # correct
 while (($#)); do case $1 in
-  -v|--verbose) VERBOSE+=1 ;;
+  -v|--verbose) VERBOSE=1 ;;
   -q|--quiet)   VERBOSE=0 ;;
   -n|--dry-run) DRY_RUN=1 ;;
   -o|--output)  noarg "$@"; shift; OUTPUT=$1 ;;
-  -V|--version) echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
+  -V|--version) printf '%s %s\n' "$SCRIPT_NAME" "$VERSION"; exit 0 ;;
   -h|--help)    show_help; exit 0 ;;
   --)           shift; FILES+=("$@"); break ;;
   -[vqnoVh]?*)  set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
@@ -122,7 +122,7 @@ Include arg-taking options in the character class. They work correctly when last
 
 ## BCS0806 Standard Options
 
-Use consistent option letters and variable names across all BCS-compliant scripts. Never reassign a standard letter to a different purpose.
+Use consistent option letters and variable names across all BCS-compliant scripts. Avoid reassign a standard letter to a different purpose.
 
 **Strongly Recommended** — include in every script that uses options:
 
@@ -150,7 +150,7 @@ Use consistent option letters and variable names across all BCS-compliant script
 | `-P` | `--prefix` | `PREFIX` | varies | Installation prefix |
 
 Key rules:
-- **Never reassign** a standard letter to a different purpose — `-v` is always verbose, never version
+- **Avoid reassigning** a standard letter to a different purpose — `-v` is always verbose, never version
 - **Toggle pairs:** `-n`/`-N` and `-v`/`-q` are complementary toggles sharing a variable
 - **DRY_RUN=1 default** for destructive scripts — require `-N` to execute; use `DRY_RUN=0` for non-destructive scripts
 - **Use `declare -i`** for all flag variables: `declare -i VERBOSE=1 DRY_RUN=0 DEBUG=0 FORCE=0`

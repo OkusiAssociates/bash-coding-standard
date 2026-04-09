@@ -222,7 +222,7 @@ Common helper functions:
 noarg() { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
 
 # Trim whitespace
-trim() { local -- v="$*"; v="${v#"${v%%[![:blank:]]*}"}"; echo -n "${v%"${v##*[![:blank:]]}"}" ; }
+trim() { local -- v="$*"; v=${v#"${v%%[![:blank:]]*}"}; echo -n "${v%"${v##*[![:blank:]]}"}" ; }
 
 # Debug variable display
 decp() { declare -p "$@" 2>/dev/null | sed 's/^declare -[a-zA-Z-]* //'; }

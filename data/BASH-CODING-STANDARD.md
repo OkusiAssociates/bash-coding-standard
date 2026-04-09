@@ -146,7 +146,7 @@ Declare all global variables up front with explicit types.
 ```bash
 # correct
 declare -i VERBOSE=1 DEBUG=0 DRY_RUN=0
-declare -- OUTPUT_DIR='./output'
+declare -- OUTPUT_DIR=./output
 declare -a FILES=()
 
 # wrong — no type, scattered declarations
@@ -221,13 +221,18 @@ Organize functions bottom-up in 7 layers:
 # correct — bottom-up, each function calls only previously defined functions
 _msg() { :; }
 info() { _msg "$@"; }
+
 show_help() { cat <<HELP
 ...
 HELP
 }
+
 validate_input() { :; }
+
 process_file() { validate_input "$1"; }
+
 main() { process_file "$@"; }
+
 main "$@"
 #fin
 ```
@@ -275,7 +280,7 @@ main "$@"
 main "$@"
 ```
 
-The end marker confirms the file is complete and not truncated.
+The #end marker simply confirms the file is complete and not truncated.
 
 ## BCS0110 Cleanup and Traps
 
@@ -592,7 +597,7 @@ Use double quotes when strings include command substitution.
 
 ```bash
 # correct
-echo "Current time: $(date +%T)"
+echo "Current time: $(printf '%(%T)T')"
 result=$(git describe --tags)        # simple assignment, quotes optional
 VERSION="$(git describe)".beta       # concatenation needs quotes
 echo "$result"                       # always quote when using
@@ -802,7 +807,7 @@ debug() { :; }       # DEBUG never set in this script
 
 # wrong — declaring unused color/flag variables
 declare -r GREEN=$'\033[0;32m'       # no success() function uses it
-declare -i DEBUG=0                    # no debug() function exists
+declare -i DEBUG=0                   # no debug() function exists
 ```
 
 Keep only functions and variables the script actually needs. Remove unused globals too.
@@ -829,13 +834,14 @@ my_function "$@"
 ```
 
 ```bash
-# correct — return 0 fence (export unconditionally before fence)
+# correct — 'return 0' source fence (export unconditionally before fence)
 my_function() {
   local -- name=$1
   echo "Hello, $name"
 }
 declare -fx my_function
 
+# --- source fence ---
 return 0 2>/dev/null ||:
 
 # --- Script mode only ---
@@ -1132,7 +1138,7 @@ Error handling covers strict mode, exit codes, traps, return value checking, and
 
 ```bash
 # correct — allow expected failures
-command_that_might_fail || true
+command_that_might_fail ||:
 if command_that_might_fail; then
   process_result
 fi
@@ -1337,10 +1343,10 @@ Implement `_msg()` as the core function using `FUNCNAME[1]` dispatch.
 _msg() {
   local -- prefix="$SCRIPT_NAME:" msg
   case ${FUNCNAME[1]} in
-    success) prefix+=" ${GREEN}✓${NC}" ;;
-    warn)    prefix+=" ${YELLOW}▲${NC}" ;;
-    info)    prefix+=" ${CYAN}◉${NC}" ;;
-    error)   prefix+=" ${RED}✗${NC}" ;;
+    success) prefix+=" $GREEN✓$NC" ;;
+    warn)    prefix+=" $YELLOW▲$NC" ;;
+    info)    prefix+=" $CYAN◉$NC" ;;
+    error)   prefix+=" $RED✗$NC" ;;
     debug)   prefix+=" DEBUG:" ;;
     *)       ;;
   esac
@@ -1477,7 +1483,7 @@ trap 'get_terminal_size' WINCH
 cols=$(tput cols 2>/dev/null || echo 80)
 
 # correct — check Unicode support
-[[ "${LC_ALL:-${LC_CTYPE:-${LANG:-}}}" == *UTF-8* ]]
+[[ ${LC_ALL:-${LC_CTYPE:-${LANG:-}}} == *UTF-8* ]]
 ```
 
 Never hardcode terminal width. Provide graceful fallbacks for limited terminals.
@@ -1487,8 +1493,9 @@ Never hardcode terminal width. Provide graceful fallbacks for limited terminals.
 ```bash
 yn() {
   local -- REPLY
-  read -r -n 1 -p "$(>&2 echo -n "$SCRIPT_NAME: ${YELLOW}▲${NC} ${1:-Continue?} y/n ")"
-  echo
+  >&2 echo -n "$SCRIPT_NAME: $YELLOW▲$NC ${1:-Continue?} y/n"
+  read -r -n 1
+  >&2 echo
   [[ ${REPLY,,} == y ]]
 }
 
@@ -1538,11 +1545,11 @@ Use `while (($#)); do case $1 in ... esac; shift; done` as the standard argument
 ```bash
 # correct
 while (($#)); do case $1 in
-  -v|--verbose) VERBOSE+=1 ;;
+  -v|--verbose) VERBOSE=1 ;;
   -q|--quiet)   VERBOSE=0 ;;
   -n|--dry-run) DRY_RUN=1 ;;
   -o|--output)  noarg "$@"; shift; OUTPUT=$1 ;;
-  -V|--version) echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
+  -V|--version) printf '%s %s\n' "$SCRIPT_NAME" "$VERSION"; exit 0 ;;
   -h|--help)    show_help; exit 0 ;;
   --)           shift; FILES+=("$@"); break ;;
   -[vqnoVh]?*)  set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
@@ -1651,7 +1658,7 @@ Include arg-taking options in the character class. They work correctly when last
 
 ## BCS0806 Standard Options
 
-Use consistent option letters and variable names across all BCS-compliant scripts. Never reassign a standard letter to a different purpose.
+Use consistent option letters and variable names across all BCS-compliant scripts. Avoid reassign a standard letter to a different purpose.
 
 **Strongly Recommended** — include in every script that uses options:
 
@@ -1679,7 +1686,7 @@ Use consistent option letters and variable names across all BCS-compliant script
 | `-P` | `--prefix` | `PREFIX` | varies | Installation prefix |
 
 Key rules:
-- **Never reassign** a standard letter to a different purpose — `-v` is always verbose, never version
+- **Avoid reassigning** a standard letter to a different purpose — `-v` is always verbose, never version
 - **Toggle pairs:** `-n`/`-N` and `-v`/`-q` are complementary toggles sharing a variable
 - **DRY_RUN=1 default** for destructive scripts — require `-N` to execute; use `DRY_RUN=0` for non-destructive scripts
 - **Use `declare -i`** for all flag variables: `declare -i VERBOSE=1 DRY_RUN=0 DEBUG=0 FORCE=0`
@@ -1896,7 +1903,7 @@ declare -A data
 data["$key"]="$value"
 
 # correct — case for dispatch
-case "$action" in
+case $action in
   start) start_fn ;;
   stop)  stop_fn ;;
 esac
@@ -2006,15 +2013,15 @@ trap 'rm -rf "$temp_dir"' EXIT
 declare -a pids=()
 
 for server in "${servers[@]}"; do
-  check_server "$server" > "$temp_dir/$server.out" 2>&1 &
+  check_server "$server" > "$temp_dir"/"$server".out 2>&1 &
   pids+=($!)
 done
 
 # Wait and display in order
 for server in "${servers[@]}"; do
-  wait "${pids[0]}" || true
+  wait "${pids[0]}" ||:
   pids=("${pids[@]:1}")
-  cat "$temp_dir/$server.out"
+  cat "$temp_dir"/$server".out
 done
 ```
 
@@ -2323,7 +2330,7 @@ Common helper functions:
 noarg() { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
 
 # Trim whitespace
-trim() { local -- v="$*"; v="${v#"${v%%[![:blank:]]*}"}"; echo -n "${v%"${v##*[![:blank:]]}"}" ; }
+trim() { local -- v="$*"; v=${v#"${v%%[![:blank:]]*}"}; echo -n "${v%"${v##*[![:blank:]]}"}" ; }
 
 # Debug variable display
 decp() { declare -p "$@" 2>/dev/null | sed 's/^declare -[a-zA-Z-]* //'; }

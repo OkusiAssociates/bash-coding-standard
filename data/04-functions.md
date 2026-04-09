@@ -96,7 +96,7 @@ debug() { :; }       # DEBUG never set in this script
 
 # wrong — declaring unused color/flag variables
 declare -r GREEN=$'\033[0;32m'       # no success() function uses it
-declare -i DEBUG=0                    # no debug() function exists
+declare -i DEBUG=0                   # no debug() function exists
 ```
 
 Keep only functions and variables the script actually needs. Remove unused globals too.
@@ -123,13 +123,14 @@ my_function "$@"
 ```
 
 ```bash
-# correct — return 0 fence (export unconditionally before fence)
+# correct — 'return 0' source fence (export unconditionally before fence)
 my_function() {
   local -- name=$1
   echo "Hello, $name"
 }
 declare -fx my_function
 
+# --- source fence ---
 return 0 2>/dev/null ||:
 
 # --- Script mode only ---

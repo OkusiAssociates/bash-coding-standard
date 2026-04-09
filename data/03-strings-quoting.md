@@ -42,7 +42,7 @@ Use double quotes when strings include command substitution.
 
 ```bash
 # correct
-echo "Current time: $(date +%T)"
+echo "Current time: $(printf '%(%T)T')"
 result=$(git describe --tags)        # simple assignment, quotes optional
 VERSION="$(git describe)".beta       # concatenation needs quotes
 echo "$result"                       # always quote when using

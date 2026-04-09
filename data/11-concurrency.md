@@ -51,15 +51,15 @@ trap 'rm -rf "$temp_dir"' EXIT
 declare -a pids=()
 
 for server in "${servers[@]}"; do
-  check_server "$server" > "$temp_dir/$server.out" 2>&1 &
+  check_server "$server" > "$temp_dir"/"$server".out 2>&1 &
   pids+=($!)
 done
 
 # Wait and display in order
 for server in "${servers[@]}"; do
-  wait "${pids[0]}" || true
+  wait "${pids[0]}" ||:
   pids=("${pids[@]:1}")
-  cat "$temp_dir/$server.out"
+  cat "$temp_dir"/$server".out
 done
 ```
 

@@ -39,10 +39,10 @@ Implement `_msg()` as the core function using `FUNCNAME[1]` dispatch.
 _msg() {
   local -- prefix="$SCRIPT_NAME:" msg
   case ${FUNCNAME[1]} in
-    success) prefix+=" ${GREEN}✓${NC}" ;;
-    warn)    prefix+=" ${YELLOW}▲${NC}" ;;
-    info)    prefix+=" ${CYAN}◉${NC}" ;;
-    error)   prefix+=" ${RED}✗${NC}" ;;
+    success) prefix+=" $GREEN✓$NC" ;;
+    warn)    prefix+=" $YELLOW▲$NC" ;;
+    info)    prefix+=" $CYAN◉$NC" ;;
+    error)   prefix+=" $RED✗$NC" ;;
     debug)   prefix+=" DEBUG:" ;;
     *)       ;;
   esac
@@ -179,7 +179,7 @@ trap 'get_terminal_size' WINCH
 cols=$(tput cols 2>/dev/null || echo 80)
 
 # correct — check Unicode support
-[[ "${LC_ALL:-${LC_CTYPE:-${LANG:-}}}" == *UTF-8* ]]
+[[ ${LC_ALL:-${LC_CTYPE:-${LANG:-}}} == *UTF-8* ]]
 ```
 
 Never hardcode terminal width. Provide graceful fallbacks for limited terminals.
@@ -189,8 +189,9 @@ Never hardcode terminal width. Provide graceful fallbacks for limited terminals.
 ```bash
 yn() {
   local -- REPLY
-  read -r -n 1 -p "$(>&2 echo -n "$SCRIPT_NAME: ${YELLOW}▲${NC} ${1:-Continue?} y/n ")"
-  echo
+  >&2 echo -n "$SCRIPT_NAME: $YELLOW▲$NC ${1:-Continue?} y/n"
+  read -r -n 1
+  >&2 echo
   [[ ${REPLY,,} == y ]]
 }
 

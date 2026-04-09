@@ -111,7 +111,7 @@ Declare all global variables up front with explicit types.
 ```bash
 # correct
 declare -i VERBOSE=1 DEBUG=0 DRY_RUN=0
-declare -- OUTPUT_DIR='./output'
+declare -- OUTPUT_DIR=./output
 declare -a FILES=()
 
 # wrong — no type, scattered declarations
@@ -186,13 +186,18 @@ Organize functions bottom-up in 7 layers:
 # correct — bottom-up, each function calls only previously defined functions
 _msg() { :; }
 info() { _msg "$@"; }
+
 show_help() { cat <<HELP
 ...
 HELP
 }
+
 validate_input() { :; }
+
 process_file() { validate_input "$1"; }
+
 main() { process_file "$@"; }
+
 main "$@"
 #fin
 ```
@@ -240,7 +245,7 @@ main "$@"
 main "$@"
 ```
 
-The end marker confirms the file is complete and not truncated.
+The #end marker simply confirms the file is complete and not truncated.
 
 ## BCS0110 Cleanup and Traps
 
