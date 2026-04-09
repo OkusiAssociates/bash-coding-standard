@@ -1,7 +1,7 @@
 .\" BCS Manual Page
-.\" Generated: 2026-03-01
+.\" Generated: 2026-04-09
 .\"
-.TH BCS 1 "March 2026" "BCS 2.0.1" "User Commands"
+.TH BCS 1 "April 2026" "BCS 2.0.1" "User Commands"
 .\"
 .SH NAME
 bcs \- Bash Coding Standard CLI toolkit
@@ -70,7 +70,7 @@ Generate BCS-compliant script templates with placeholder substitution.
 Template type:
 .BR minimal " (~15 lines),"
 .BR basic " (~25 lines, default),"
-.BR complete " (~112 lines),"
+.BR complete " (~119 lines),"
 .BR library " (~39 lines)."
 .TP
 .BR \-n ", " \-\-name " " \fINAME\fR
@@ -98,7 +98,8 @@ Show template help and exit.
 AI-powered BCS compliance checking. Analyzes a script against the full
 standard and reports violations, warnings, and suggestions with BCS rule
 codes. Supports multiple LLM backends: local Ollama, Anthropic API, OpenAI
-API, and Claude CLI. Auto-detects available backends when none is specified.
+API, Google Gemini API, and Claude CLI. Auto-detects available backends when
+none is specified.
 .TP
 .BR \-b ", " \-\-backend " " \fIBACKEND\fR
 LLM backend:
@@ -108,7 +109,7 @@ LLM backend:
 .BR anthropic ","
 .BR google ","
 .BR openai "."
-Auto-detection order: ollama, anthropic, google, openai, claude.
+Auto-detection order: ollama, anthropic, openai, google, claude.
 .TP
 .BR \-m ", " \-\-model " " \fIMODEL\fR
 Quality tier:
@@ -298,7 +299,10 @@ Installed standard document and section files.
 Script template files.
 .TP
 .I /etc/bash_completion.d/bcs
-Bash tab-completion script.
+Bash tab-completion for bcs.
+.TP
+.I /etc/bash_completion.d/bcscheck
+Bash tab-completion for bcscheck.
 .TP
 .I /usr/local/share/man/man1/bcs.1
 This manual page.

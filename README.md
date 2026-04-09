@@ -70,7 +70,7 @@ Installs the `bcs` and `bcscheck` binaries, data files, bash completions, and th
 
 ## Overview
 
-The Bash Coding Standard defines 105 rules across 12 sections in a single ~2,300-line document. Rules are written for both human programmers and AI assistants, with code examples for every rule.
+The Bash Coding Standard defines 105 rules across 12 sections in a single ~2,500-line document. Rules are written for both human programmers and AI assistants, with code examples for every rule.
 
 ### 12 Sections
 
@@ -107,7 +107,7 @@ Four template types for different needs:
 ```bash
 bcs template -t minimal     # Bare essentials (~15 lines)
 bcs template -t basic       # Standard with metadata (~25 lines)
-bcs template -t complete    # Full toolkit (~105 lines)
+bcs template -t complete    # Full toolkit (~119 lines)
 bcs template -t library     # Sourceable library (~39 lines)
 ```
 
@@ -172,7 +172,12 @@ For most users, `--backend anthropic -m balanced -e medium` (or configure these 
 
 ### Configuration
 
-Defaults can be set in `~/.config/bcs/bcs.conf` (sourced as bash):
+Config file search order (first match wins, sourced as bash):
+
+1. `~/.config/bcs/bcs.conf` (user — XDG standard)
+2. `/etc/bcs/bcs.conf` (system — directory)
+3. `/etc/bcs.conf` (system — flat file)
+4. `/usr/local/etc/bcs/bcs.conf` (local install)
 
 ```bash
 BCS_BACKEND=ollama        # auto, claude, ollama, anthropic, google, openai
@@ -191,9 +196,9 @@ The `examples/` directory contains exemplar BCS-compliant scripts:
 
 | Script | Lines | Demonstrates |
 |--------|-------|-------------|
-| `cln` | 250 | File operations, argument parsing, arrays |
-| `md2ansi` | 1434 | Large-scale text processing, ANSI formatting |
-| `which` | 125 | Dual-purpose script pattern |
+| `cln` | 246 | File operations, argument parsing, arrays |
+| `md2ansi` | 1428 | Large-scale text processing, ANSI formatting |
+| `which` | 111 | Dual-purpose script pattern |
 
 ## Testing
 
