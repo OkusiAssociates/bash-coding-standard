@@ -53,8 +53,16 @@ bcs codes
 |-------------|---------|---------------|
 | Bash | 5.2+ | `bash --version` |
 | ShellCheck | 0.8.0+ | `shellcheck --version` |
-| curl + jq | Any | `curl --version && jq --version` (for `bcs check` API backends) |
-| Claude CLI | Latest | `claude --version` (optional, for `bcs check --backend claude`) |
+
+The `bcs check` subcommand requires an LLM backend. At least one of the following:
+
+| Backend | Requirement | Notes |
+|---------|-------------|-------|
+| Anthropic API | `ANTHROPIC_API_KEY` + curl + jq | Recommended — best accuracy/speed ratio |
+| Google Gemini API | `GOOGLE_API_KEY` + curl + jq | `thorough` tier recommended |
+| OpenAI API | `OPENAI_API_KEY` + curl + jq | `thorough` tier recommended |
+| Ollama (local) | Running Ollama server | No API key needed; quality depends on model/hardware |
+| Claude Code CLI | `claude` installed | Optional — highest quality but slowest (2-24 min) |
 
 ## Installation
 
