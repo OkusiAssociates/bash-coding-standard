@@ -34,6 +34,7 @@ install:
 	ln -sfn BCS-bash.1 $(DESTDIR)$(MANDIR)/bcs-bash.1
 	@if [ -d $(DESTDIR)$(COMPDIR) ]; then \
 	  install -m 644 bcs.bash_completion $(DESTDIR)$(COMPDIR)/bcs; \
+	  install -m 644 bcscheck.bash_completion $(DESTDIR)$(COMPDIR)/bcscheck; \
 	fi
 	@if [ -d $(DESTDIR)$(PREFIX)/share/yatti/bash-coding-standard ] \
 	    && [ ! -L $(DESTDIR)$(PREFIX)/share/yatti/bash-coding-standard ]; then \
@@ -49,6 +50,7 @@ uninstall:
 	rm -f $(DESTDIR)$(MANDIR)/BCS-bash.1
 	rm -f $(DESTDIR)$(MANDIR)/bcs-bash.1
 	rm -f $(DESTDIR)$(COMPDIR)/bcs
+	rm -f $(DESTDIR)$(COMPDIR)/bcscheck
 	rm -rf $(DESTDIR)$(SHAREDIR)
 	rm -f $(DESTDIR)$(PREFIX)/share/yatti/bash-coding-standard
 

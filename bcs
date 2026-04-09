@@ -29,13 +29,13 @@ declare -ar VALID_TEMPLATES=(minimal basic complete library)
 declare -ar VALID_BACKENDS=(auto claude ollama anthropic google openai)
 
 # Model-tier to concrete API model mapping per backend
-declare -A ANTHROPIC_MODELS=([fast]=claude-haiku-4-5 [balanced]=claude-sonnet-4-6 [thorough]=claude-opus-4-6)
-declare -A OLLAMA_MODELS=([fast]=qwen3.5:9b [balanced]=qwen3.5:14b [thorough]=qwen3.5:14b)
-declare -A GOOGLE_MODELS=([fast]=gemini-2.5-flash-lite [balanced]=gemini-2.5-flash [thorough]=gemini-2.5-pro)
-declare -A OPENAI_MODELS=([fast]=gpt-4.1-mini [balanced]=gpt-5.4-mini [thorough]=gpt-5.4)
+declare -Ar ANTHROPIC_MODELS=([fast]=claude-haiku-4-5 [balanced]=claude-sonnet-4-6 [thorough]=claude-opus-4-6)
+declare -Ar OLLAMA_MODELS=([fast]=qwen3.5:9b [balanced]=qwen3.5:14b [thorough]=qwen3.5:14b)
+declare -Ar GOOGLE_MODELS=([fast]=gemini-2.5-flash-lite [balanced]=gemini-2.5-flash [thorough]=gemini-2.5-pro)
+declare -Ar OPENAI_MODELS=([fast]=gpt-4.1-mini [balanced]=gpt-5.4-mini [thorough]=gpt-5.4)
 
 # Effort-level to max output tokens mapping for API backends
-declare -A EFFORT_TOKENS=([low]=4000 [medium]=8000 [high]=32000 [max]=64000)
+declare -Ar EFFORT_TOKENS=([low]=4000 [medium]=8000 [high]=32000 [max]=64000)
 
 # Color definitions
 if [[ -t 1 && -t 2 ]]; then
@@ -199,7 +199,11 @@ ${BOLD}Effort Levels:${NC}
   max         Exhaustive line-by-line audit
 
 ${BOLD}Configuration:${NC}
-  Settings can be placed in ~/.config/bcs/bcs.conf (sourced as bash).
+  Config file search order (first match wins, sourced as bash):
+    ~/.config/bcs/bcs.conf       (user — XDG standard)
+    /etc/bcs/bcs.conf            (system — directory)
+    /etc/bcs.conf                (system — flat file)
+    /usr/local/etc/bcs/bcs.conf  (local install)
   CLI flags override config file settings; config overrides env vars.
 
 ${BOLD}Environment / Config Variables:${NC}
@@ -459,7 +463,11 @@ _llm_google() {
   fi
 
   jq -r '.candidates[0].content.parts[0].text // empty' <<< "$body"
-  echo "___TOKENS___ $(jq -r '"in=\(.usageMetadata.promptTokenCount // 0) out=\(.usageMetadata.candidatesTokenCount // 0)"' <<< "$body")"
+  local -- tkn
+  tkn=$(jq -r \
+    '"in=\(.usageMetadata.promptTokenCount // 0) out=\(.usageMetadata.candidatesTokenCount // 0)"' \
+    <<< "$body")
+  echo "___TOKENS___ $tkn"
 }
 
 # LLM backend: Claude CLI (original implementation, preserves @file references)
@@ -673,8 +681,9 @@ cmd_check() {
   local -- bcs_file
   bcs_file=$(_find_bcs_md) || die 3 'BASH-CODING-STANDARD.md not found'
 
-  ((!VERBOSE)) || info "Checking ${script_file@Q} against BCS..." \
-                       "bcs check --backend ${backend@Q} --model ${model@Q} --effort ${effort@Q} --strict ${onoff[strict]@Q} ${script_file@Q}"
+  local -- check_cmd="bcs check --backend ${backend@Q} --model ${model@Q}"
+  check_cmd+=" --effort ${effort@Q} --strict ${onoff[strict]@Q} ${script_file@Q}"
+  ((!VERBOSE)) || info "Checking ${script_file@Q} against BCS..." "$check_cmd"
 
   local -- result
   local -i exit_code=0
@@ -698,6 +707,7 @@ cmd_check() {
       max)    effort_guidance='Exhaustive line-by-line audit. Report every finding.' ;;
     esac
 
+    #bcscheck disable=BCS1201 — LLM prompt prose; wrapping degrades instruction quality
     usr_prompt="Analyze the following numbered script against the Bash Coding Standard in your system context.
 
 Rules:
@@ -798,9 +808,8 @@ cmd_generate() {
 
   info "Generating standard from ${#section_files[@]} section files..."
 
-  {
-    local -i first=1
-    for section_file in "${section_files[@]}"; do
+  local -i first=1
+  { for section_file in "${section_files[@]}"; do
       if ((first)); then
         first=0
       else
@@ -816,6 +825,9 @@ cmd_generate() {
   # Resolve relative markdown links to absolute paths
   local -- bcs_root
   bcs_root=$(realpath -- "$data_dir/..")
+  bcs_root=${bcs_root//\\/\\\\}   # escape backslashes
+  bcs_root=${bcs_root//|/\\|}     # escape sed delimiter
+  bcs_root=${bcs_root//&/\\&}     # escape sed back-reference
   sed -i "s|](\\.\\.\/|](${bcs_root}/|g" "$output_file"
 
   # Make it readonly so that users do not confuse this document with the rules sections

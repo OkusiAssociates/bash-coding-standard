@@ -1,0 +1,32 @@
+# bcscheck(1) bash completion — mirrors 'bcs check' options
+# shellcheck shell=bash
+
+_bcscheck() {
+  local -- cur prev words cword
+  _init_completion || return
+
+  case $prev in
+    -b|--backend)
+      mapfile -t COMPREPLY < <(compgen -W 'auto claude ollama anthropic google openai' -- "$cur")
+      return
+      ;;
+    -e|--effort)
+      mapfile -t COMPREPLY < <(compgen -W 'low medium high max' -- "$cur")
+      return
+      ;;
+    -m|--model)
+      mapfile -t COMPREPLY < <(compgen -W 'fast balanced thorough' -- "$cur")
+      return
+      ;;
+  esac
+
+  case $cur in
+    -*)
+      mapfile -t COMPREPLY < <(compgen -W '-b --backend -m --model -e --effort -s --strict -q --quiet -h --help' -- "$cur")
+      ;;
+    *)
+      _filedir
+      ;;
+  esac
+} && complete -F _bcscheck bcscheck
+#fin
