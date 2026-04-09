@@ -16,6 +16,7 @@ install:
 	install -d $(DESTDIR)$(BINDIR)
 	install -m 755 bcs $(DESTDIR)$(BINDIR)/bcs
 	install -m 755 bcscheck $(DESTDIR)$(BINDIR)/bcscheck
+	install -d $(DESTDIR)$(SHAREDIR)/data
 	install -m 644 data/BASH-CODING-STANDARD.md $(DESTDIR)$(SHAREDIR)/data/
 	install -m 644 data/[0-9]*.md $(DESTDIR)$(SHAREDIR)/data/
 	install -d $(DESTDIR)$(SHAREDIR)/examples/templates
