@@ -43,7 +43,7 @@ declare -i good_headers=0
 declare -- first_line f
 for f in "$DATA_DIR"/[0-9]*.md; do
   [[ "${f##*/}" == BASH-CODING-STANDARD.md ]] && continue
-  [[ "${f##*/}" == 00-* ]] && continue
+  [[ "${f##*/}" == 00-* || "${f##*/}" == 99-* ]] && continue
   IFS= read -r first_line < "$f"
   if [[ "$first_line" =~ ^#\ Section\ [0-9]+: ]]; then
     good_headers+=1
@@ -58,7 +58,7 @@ begin_test 'every section has BCS codes'
 declare -i sections_with_codes=0
 for f in "$DATA_DIR"/[0-9]*.md; do
   [[ "${f##*/}" == BASH-CODING-STANDARD.md ]] && continue
-  [[ "${f##*/}" == 00-* ]] && continue
+  [[ "${f##*/}" == 00-* || "${f##*/}" == 99-* ]] && continue
   if grep -q '^## BCS[0-9]' "$f"; then
     sections_with_codes+=1
   else
@@ -91,7 +91,7 @@ declare -- basename_f section_num code code_section line
 for f in "$DATA_DIR"/[0-9]*.md; do
   basename_f=${f##*/}
   [[ "$basename_f" == BASH-CODING-STANDARD.md ]] && continue
-  [[ "$basename_f" == 00-* ]] && continue
+  [[ "$basename_f" == 00-* || "$basename_f" == 99-* ]] && continue
   section_num=${basename_f:0:2}
   while IFS= read -r line; do
     if [[ "$line" =~ ^##\ (BCS[0-9]{4}) ]]; then

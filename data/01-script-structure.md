@@ -315,3 +315,5 @@ main() {
 ```
 
 Configuration files are sourced as Bash — they execute in the calling shell's context. Only source config files from trusted locations with appropriate permissions.
+
+The `source`-based pattern is the standard approach. Scripts that intentionally use alternative methods (e.g., `readarray` for line-delimited data, or restricted parsing for security) should document the deviation. Similarly, scripts may adjust the search path order (e.g., adding `/etc/default/name`) provided the help text documents the actual paths used.

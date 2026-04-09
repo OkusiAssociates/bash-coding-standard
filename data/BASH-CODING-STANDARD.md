@@ -351,6 +351,8 @@ main() {
 
 Configuration files are sourced as Bash — they execute in the calling shell's context. Only source config files from trusted locations with appropriate permissions.
 
+The `source`-based pattern is the standard approach. Scripts that intentionally use alternative methods (e.g., `readarray` for line-delimited data, or restricted parsing for security) should document the deviation. Similarly, scripts may adjust the search path order (e.g., adding `/etc/default/name`) provided the help text documents the actual paths used.
+
 ---
 
 # Section 02: Variables & Data Types
@@ -790,13 +792,17 @@ declare -fx grep find
 
 ## BCS0405 Production Optimization
 
-Remove unused utility functions from production scripts.
+Remove unused utility functions from production scripts. **This rule takes precedence over template completeness** — do not add functions, variables, or color definitions from reference templates (BCS0703, BCS0706, BCS0701) unless the script actually uses them.
 
 ```bash
 # wrong — keeping unused functions
 yn() { :; }          # never called in this script
 trim() { :; }        # never called in this script
 debug() { :; }       # DEBUG never set in this script
+
+# wrong — declaring unused color/flag variables
+declare -r GREEN=$'\033[0;32m'       # no success() function uses it
+declare -i DEBUG=0                    # no debug() function exists
 ```
 
 Keep only functions and variables the script actually needs. Remove unused globals too.
@@ -1272,16 +1278,19 @@ Prefer inverting the condition with `||` over `((condition)) && action ||:`.
 ((padding >= 0)) || padding=0
 ((color_count < 256)) || HAS_COLOR=1
 
-# acceptable — when && reads more naturally
+# acceptable — when && reads more naturally (flag-guarded actions)
 ((DRY_RUN)) && info 'Dry-run mode' ||:
 ((VERBOSE)) && echo "Processing $file" ||:
 ((DEBUG)) && set -x ||:
+((VERBOSE < 3)) && VERBOSE+=1 ||:
 
 # wrong — exits script when condition is false under set -e
 ((DRY_RUN)) && info 'Dry-run mode'
 ```
 
-A false arithmetic condition returns exit code 1, which triggers `set -e`. The inverted `||` form avoids this because the right-hand side (an assignment or command) returns 0. When `&&` reads more naturally (e.g., flag-guarded actions), append `||:` to make the expression safe. Use `:` over `true` (traditional shell idiom, built-in).
+A false arithmetic condition returns exit code 1, which triggers `set -e`. The inverted `||` form avoids this because the right-hand side (an assignment or command) returns 0. When `&&` reads more naturally (e.g., flag-guarded actions), append `||:` to make the expression safe. The `||:` catches failure from **the entire chain**, including a false arithmetic condition — not just the final command. Use `:` over `true` (traditional shell idiom, built-in).
+
+**Severity guide:** missing `||:` on a `&&` chain is a VIOLATION (script exits unexpectedly). Using `&&...||:` instead of the inverted `||` form is a style preference, not a violation — both are correct when `||:` is present.
 
 Never use `||:` for critical operations that must succeed.
 
@@ -1353,6 +1362,8 @@ Rules:
 - `info()`, `success()`, `vecho()` respect VERBOSE flag
 - `debug()` respects DEBUG flag
 - `die()` takes exit code as first argument
+
+The above is the **reference set**. Per BCS0405, scripts should only include the messaging functions they actually call — omitting unused functions (e.g., `success()`, `debug()`, `vecho()`) is correct, not a violation.
 
 ## BCS0704 Usage Documentation
 
@@ -1434,6 +1445,8 @@ else
       BLUE='' MAGENTA='' BOLD='' ITALIC='' UNDERLINE='' DIM='' REVERSE=''
 fi
 ```
+
+Per BCS0405, declare only the colors the script actually uses. A script with no `success()` function does not need `GREEN`. Both branches of the `if`/`else` must declare the same set of variables.
 
 Never scatter inline color declarations across scripts. Centralize in a single declaration block.
 
@@ -2170,17 +2183,31 @@ var=$(command)                      # not var=`command`
 
 ## BCS1206 Static Analysis Directives
 
-ShellCheck compliance is compulsory. Use `#shellcheck disable=SCxxxx` only for documented exceptions. Similarly, use `#bcscheck disable=BCSxxxx` to suppress specific BCS rules on the next line.
+ShellCheck compliance is compulsory. Use `#shellcheck disable=SCxxxx` only for documented exceptions. Similarly, use `#bcscheck disable=BCSxxxx` to suppress specific BCS rules.
+
+Suppression scope follows ShellCheck conventions — the directive covers the **next command**, which may be a single line or a brace/block group:
 
 ```bash
+# correct — suppresses the next line
+#bcscheck disable=BCS0606
+((DRY_RUN)) && info 'Dry-run mode' ||:
+
+# correct — suppresses a block (same as shellcheck)
+#bcscheck disable=BCS0806
+{
+  -p|-n|--prompt) PROMPT=1; VERBOSE=1 ;;
+  -P|-N|--no-prompt) PROMPT=0 ;;
+}
+
 # correct — documented shellcheck exception
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
-
-# correct — documented bcscheck exception
-#bcscheck disable=BCS0606
-((DRY_RUN)) && info 'Dry-run mode' ||:
 ```
+
+**Severity definitions** for `bcs check` findings:
+
+- **VIOLATION**: Code is incorrect, unsafe, or clearly breaks a mandatory (MUST/SHALL) rule.
+- **WARNING**: Style deviation, SHOULD/RECOMMENDED level, or intentional design choice that deviates from a reference pattern.
 
 Always end scripts with `#fin` after `main "$@"`.
 
@@ -2423,3 +2450,64 @@ Use `$EPOCHSECONDS` for integer epoch timestamps (second precision) and `$EPOCHR
 `date(1)` is acceptable when `printf '%()T'` cannot provide the needed format (e.g., `date -d 'next Monday'` for relative date arithmetic).
 
 See also: [Date Formatting Reference](/ai/scripts/Okusi/BCS/benchmarks/date-printf-reference.md) — full `date` → `printf '%()T'` equivalence table with examples.
+
+---
+
+# Compliance Checking Reference
+
+This section summarises key rules that are frequently misapplied during automated compliance checking. It does not introduce new rules — it reinforces existing ones.
+
+## Severity
+
+- **VIOLATION**: Code is incorrect, unsafe, or clearly breaks a mandatory (MUST/SHALL) rule.
+- **WARNING**: Style deviation, SHOULD/RECOMMENDED level, or intentional design choice that deviates from a reference pattern.
+
+When a rule says "prefer X over Y", using Y is a WARNING at most — not a VIOLATION.
+
+## Production Optimization Takes Precedence (BCS0405)
+
+Reference implementations in BCS0703, BCS0706, and BCS0701 show the full messaging suite, color set, and flag set. These are templates — not mandatory checklists. Per BCS0405:
+
+- Do NOT flag missing functions (`success()`, `debug()`, `vecho()`) the script never calls
+- Do NOT flag missing colors (`GREEN`) the script never references
+- Do NOT flag missing flags (`DEBUG`) the script never tests
+- Do NOT add unused code to satisfy a template
+
+A script that defines only the functions, colors, and flags it actually uses is **more** compliant than one that carries dead code from a template.
+
+## Conditional Safety — `||:` Present Means Safe (BCS0606)
+
+```bash
+# acceptable — ||: catches failure from the ENTIRE chain
+((VERBOSE)) && echo 'verbose' ||:
+((cond)) && action1 && action2 ||:
+```
+
+Missing `||:` on a `&&` chain under `set -e` is a VIOLATION. Using `&&...||:` instead of the inverted `||` form is a style preference — both are correct.
+
+## Suppression Directives
+
+`#bcscheck disable=BCSxxxx` follows ShellCheck conventions — it suppresses the **next command**, which may be a single line or a brace/block group. A suppressed finding is not a finding. Do not report it, discuss it, or note it "for completeness."
+
+## Reference Patterns Are Not Mandates
+
+Rules like BCS0709 (`yn()`), BCS0111 (`read_conf()`), and BCS1211 (utility functions) show reference implementations. Functionally equivalent alternatives are acceptable. Intentional deviations documented in comments or help text are not violations.
+
+## Inline IFS Is Already Scoped
+
+```bash
+# correct — IFS is scoped to this single read command (no global side-effect)
+IFS=',' read -ra fields <<< "$csv_data"
+IFS='|' read -ra cells <<< "$line"
+IFS=$'\037' read -ra parts <<< "$row"
+```
+
+The `IFS=value command` form modifies IFS only for the duration of that command. This is NOT an unlocalized IFS modification and does NOT require `local -- IFS` or subshell isolation. Do not flag this pattern as a violation.
+
+## Common Non-Issues
+
+- `SCRIPT_DIR` omitted when unused (BCS0103 note: "Not all scripts will require all Script Metadata variables")
+- `return 0` from `main()` instead of `exit 0` — functionally equivalent for non-sourced scripts (WARNING at most, not VIOLATION)
+- Config search paths adjusted from the BCS0111 reference order — acceptable when documented in help text
+- `local` declarations between logical sections within a function — permitted by BCS0401 ("Declarations may appear mid-body... between logical sections"), only prohibited inside loops
+- Option bundling includes arg-taking options — BCS0805 documents that the user must place arg-taking options last in a bundle; this is the user's responsibility, not a script defect

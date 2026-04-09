@@ -5,13 +5,13 @@
 # See: bcs check --help
 
 # Default LLM backend: auto, claude, ollama, anthropic, google, openai
-#BCS_BACKEND=auto
+BCS_BACKEND=anthropic
 
 # Default quality tier: fast, balanced, thorough
-#BCS_MODEL=fast
+BCS_MODEL=balanced
 
 # Default analysis depth: low, medium, high, max
-#BCS_EFFORT=low
+BCS_EFFORT=medium
 
 # Treat warnings as violations: 0 or 1
 #BCS_STRICT=0

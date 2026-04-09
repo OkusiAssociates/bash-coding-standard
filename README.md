@@ -32,19 +32,19 @@ git clone https://github.com/Open-Technology-Foundation/bash-coding-standard.git
 
 ```bash
 # View the standard
-./bcs
+bcs
 
-# Symlink the standard into your project directory
-./bcs display --symlink
+# Symlink the standard into your current directory
+bcs -S
 
 # Generate a BCS-compliant script
-./bcs template -t complete -n deploy -d 'Deploy script' -o deploy.sh -x
+bcs template -t complete -n deploy -d 'Deploy script' -o deploy.sh -x
 
 # Check a script for compliance
-./bcs check myscript.sh
+bcs check myscript.sh
 
 # List all BCS rule codes
-./bcs codes
+bcs codes
 ```
 
 ## Prerequisites
@@ -105,10 +105,10 @@ The Bash Coding Standard defines 105 rules across 12 sections in a single ~2,300
 Four template types for different needs:
 
 ```bash
-./bcs template -t minimal     # Bare essentials (~15 lines)
-./bcs template -t basic       # Standard with metadata (~25 lines)
-./bcs template -t complete    # Full toolkit (~105 lines)
-./bcs template -t library     # Sourceable library (~39 lines)
+bcs template -t minimal     # Bare essentials (~15 lines)
+bcs template -t basic       # Standard with metadata (~25 lines)
+bcs template -t complete    # Full toolkit (~105 lines)
+bcs template -t library     # Sourceable library (~39 lines)
 ```
 
 ### Compliance Checking
@@ -118,15 +118,15 @@ Supports multiple backends: Ollama (local), Anthropic API, Google Gemini API,
 OpenAI API, and Claude CLI. Auto-detects the first available backend.
 
 ```bash
-./bcs check myscript.sh                      # Auto-detect backend
-./bcs check --backend ollama myscript.sh     # Use local Ollama
-./bcs check --backend anthropic myscript.sh  # Use Anthropic API
-./bcs check --backend google myscript.sh     # Use Google Gemini API
-./bcs check --backend openai myscript.sh     # Use OpenAI API
-./bcs check --strict deploy.sh               # Treat warnings as violations
-./bcs check --effort high myscript.sh        # Thorough analysis
-./bcs check --model thorough -e max deploy.sh # Higher quality + exhaustive
-./bcscheck myscript.sh                       # Convenience shim for bcs check
+bcs check myscript.sh                      # Auto-detect backend
+bcs check --backend ollama myscript.sh     # Use local Ollama
+bcs check --backend anthropic myscript.sh  # Use Anthropic API
+bcs check --backend google myscript.sh     # Use Google Gemini API
+bcs check --backend openai myscript.sh     # Use OpenAI API
+bcs check --strict deploy.sh               # Treat warnings as violations
+bcs check --effort high myscript.sh        # Thorough analysis
+bcs check --model thorough -e max deploy.sh # Higher quality + exhaustive
+bcscheck myscript.sh                       # Convenience shim for bcs check
 ```
 
 ### Backends and Model Tiers
@@ -138,6 +138,37 @@ The `-m` flag selects an abstract quality tier mapped to concrete models per bac
 | fast | qwen3.5:9b | claude-haiku-4-5 | gemini-2.5-flash-lite | gpt-4.1-mini |
 | balanced | qwen3.5:14b | claude-sonnet-4-6 | gemini-2.5-flash | gpt-5.4-mini |
 | thorough | qwen3.5:14b | claude-opus-4-6 | gemini-2.5-pro | gpt-5.4 |
+
+### Recommended Settings
+
+Not all backend/tier/effort combinations produce equally reliable results. Based on accuracy testing across multiple scripts:
+
+| Use Case | Recommended Setting | Notes |
+|----------|-------------------|-------|
+| **Daily development** | `--backend anthropic -m balanced -e medium` | Best accuracy: zero false positives in testing |
+| **Pre-commit review** | `--backend anthropic -m balanced -e high` | More findings, still very accurate |
+| **Quick sanity check** | `-m fast -e low` | Fast and cheap; expect some noise |
+| **Thorough audit** | `--backend anthropic -m thorough -e high` | Near-zero false positives, comprehensive |
+| **Pre-release audit** | `--backend claude -m thorough -e medium` | Highest quality; finds issues others miss (slow: 2-8 min) |
+
+**Backend accuracy ranking** (from accuracy testing against known-compliant scripts):
+
+1. **Claude CLI** — Highest accuracy with unique findings other backends miss (unused variables, function ordering violations, redundant wrappers). Zero false positives at balanced/thorough tiers. Tradeoff: **very slow** (2-24 minutes per check). Best for final audits before release.
+2. **Anthropic API** — Best speed/accuracy ratio. The `balanced` tier produces zero false positives with good coverage in under a minute. Recommended for daily development.
+3. **OpenAI API** — Good at the `thorough` tier (`high`/`max` effort). Lower tiers invent rule codes and misread code logic. The `thorough-max` combination is the best non-Anthropic API option.
+4. **Google API** — The `thorough` tier at `medium` effort is reliable. Lower tiers over-report, frequently flag correct code as violations, and can produce empty or truncated output. The `fast` tier is not recommended.
+5. **Ollama** — Quality depends heavily on the local model and hardware. Good for offline/private use.
+
+**Effort levels** control analysis depth and output token budget:
+
+| Effort | Behaviour |
+|--------|-----------|
+| `low` | Only clear violations. Concise output. |
+| `medium` | Violations and significant warnings. Good default. |
+| `high` | All violations and warnings. Thorough. |
+| `max` | Exhaustive line-by-line audit. Expensive and slow. |
+
+For most users, `--backend anthropic -m balanced -e medium` (or configure these as defaults in `bcs.conf`) provides the best balance of accuracy, speed, and cost.
 
 ### Configuration
 

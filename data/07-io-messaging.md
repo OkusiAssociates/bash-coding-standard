@@ -65,6 +65,8 @@ Rules:
 - `debug()` respects DEBUG flag
 - `die()` takes exit code as first argument
 
+The above is the **reference set**. Per BCS0405, scripts should only include the messaging functions they actually call — omitting unused functions (e.g., `success()`, `debug()`, `vecho()`) is correct, not a violation.
+
 ## BCS0704 Usage Documentation
 
 Structure help text with sections. Use heredoc with `cat`.
@@ -145,6 +147,8 @@ else
       BLUE='' MAGENTA='' BOLD='' ITALIC='' UNDERLINE='' DIM='' REVERSE=''
 fi
 ```
+
+Per BCS0405, declare only the colors the script actually uses. A script with no `success()` function does not need `GREEN`. Both branches of the `if`/`else` must declare the same set of variables.
 
 Never scatter inline color declarations across scripts. Centralize in a single declaration block.
 

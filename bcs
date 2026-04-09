@@ -35,7 +35,7 @@ declare -A GOOGLE_MODELS=([fast]=gemini-2.5-flash-lite [balanced]=gemini-2.5-fla
 declare -A OPENAI_MODELS=([fast]=gpt-4.1-mini [balanced]=gpt-5.4-mini [thorough]=gpt-5.4)
 
 # Effort-level to max output tokens mapping for API backends
-declare -A EFFORT_TOKENS=([low]=4096 [medium]=8192 [high]=32768 [max]=65536)
+declare -A EFFORT_TOKENS=([low]=4000 [medium]=8000 [high]=32000 [max]=64000)
 
 # Color definitions
 if [[ -t 1 && -t 2 ]]; then
@@ -50,10 +50,10 @@ fi
 _msg() {
   local -- prefix="$SCRIPT_NAME:" msg
   case ${FUNCNAME[1]} in
-    success) prefix+=" ${GREEN}✓${NC}" ;;
-    warn)    prefix+=" ${YELLOW}▲${NC}" ;;
-    info)    prefix+=" ${CYAN}◉${NC}" ;;
-    error)   prefix+=" ${RED}✗${NC}" ;;
+    success) prefix+=" $GREEN✓$NC" ;;
+    warn)    prefix+=" $YELLOW▲$NC" ;;
+    info)    prefix+=" $CYAN◉$NC" ;;
+    error)   prefix+=" $RED✗$NC" ;;
     *)       ;;
   esac
   for msg in "$@"; do printf '%s %s\n' "$prefix" "$msg"; done
@@ -302,13 +302,13 @@ _find_md2ansi() {
 
 # ---- LLM backend functions ----
 
-# Auto-detect available LLM backend (ollama → anthropic → google → openai → claude)
+# Auto-detect available LLM backend (ollama → anthropic → openai → google → claude)
 _detect_backend() {
   local -- host=${OLLAMA_HOST:-localhost:11434}
   curl -sf --connect-timeout 2 "http://$host/api/tags" &>/dev/null && { echo ollama; return 0; } ||:
   [[ -n ${ANTHROPIC_API_KEY:-} ]] && { echo anthropic; return 0; } ||:
-  [[ -n ${GOOGLE_API_KEY:-${GEMINI_API_KEY:-}} ]] && { echo google; return 0; } ||:
   [[ -n ${OPENAI_API_KEY:-} ]] && { echo openai; return 0; } ||:
+  [[ -n ${GOOGLE_API_KEY:-${GEMINI_API_KEY:-}} ]] && { echo google; return 0; } ||:
   command -v claude &>/dev/null && { echo claude; return 0; } ||:
   return 1
 }
@@ -512,12 +512,11 @@ cmd_display() {
     -c|--cat)     force_cat=1 ;;
     -f|--file)    _find_bcs_md || die 3 'BASH-CODING-STANDARD.md not found'; return 0 ;;
     -s|--squeeze) squeeze_blanks=1 ;;
-    -S|--symlink)
-      bcs_file=$(_find_bcs_md) || die 3 'BASH-CODING-STANDARD.md not found'
-      ln -sf "$bcs_file" .
-      info "Symlinked BASH-CODING-STANDARD.md → $bcs_file"
-      return 0
-      ;;
+    -S|--symlink) bcs_file=$(_find_bcs_md) || die 3 'BASH-CODING-STANDARD.md not found'
+                  ln -sf "$bcs_file" .
+                  info "Symlinked BASH-CODING-STANDARD.md → $bcs_file"
+                  return 0
+                  ;;
     -v|--verbose) VERBOSE=1 ;;
     -q|--quiet)   VERBOSE=0 ;;
     -h|--help)    show_display_help; return 0 ;;
@@ -626,7 +625,7 @@ cmd_template() {
 # ---- Subcommand: check ----
 
 cmd_check() {
-  local -- script_file='' model=${BCS_MODEL:-fast} effort=${BCS_EFFORT:-low} backend=${BCS_BACKEND:-auto}
+  local -- script_file='' model=${BCS_MODEL:-balanced} effort=${BCS_EFFORT:-medium} backend=${BCS_BACKEND:-auto}
   local -i strict=${BCS_STRICT:-0}
   local -ar onoff=(off on)
 
@@ -702,10 +701,12 @@ cmd_check() {
     usr_prompt="Analyze the following numbered script against the Bash Coding Standard in your system context.
 
 Rules:
-- VIOLATION: Rule is clearly broken. WARNING: Debatable or minor style issue.
-- Only report actual deviations. Do NOT report passing rules or observations.
+- VIOLATION: Code is incorrect, unsafe, or clearly breaks a mandatory rule. WARNING: Style deviation or intentional design choice that deviates from a reference pattern.
+- Only report actual deviations. Do NOT report passing rules, observations, or findings you then retract. If analysis shows no violation, omit it entirely.
 - Only report findings about the script content provided. Do NOT assume anything about project structure, files, or resources you cannot see.
-- Inline suppression: If a comment \`#bcscheck disable=BCSxxxx\` appears on the line immediately before code, do NOT report rule BCSxxxx for that line.
+- BCS0405 precedence: Do NOT flag missing functions, variables, or colors from reference templates (BCS0703, BCS0706, BCS0701) if the script does not use them. Unused code must be removed, not added.
+- BCS0606: \`((cond)) && action ||:\` with \`||:\` present is acceptable for flag-guarded actions — it is NOT a violation. Only flag if \`||:\` is missing entirely.
+- Inline suppression: \`#bcscheck disable=BCSxxxx\` suppresses the next command or block (same scope as shellcheck directives). Do NOT report the suppressed rule for that scope.
 - Line numbers are provided -- reference them exactly.
 
 $effort_guidance"

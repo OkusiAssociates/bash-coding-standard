@@ -156,15 +156,18 @@ Prefer inverting the condition with `||` over `((condition)) && action ||:`.
 ((padding >= 0)) || padding=0
 ((color_count < 256)) || HAS_COLOR=1
 
-# acceptable — when && reads more naturally
+# acceptable — when && reads more naturally (flag-guarded actions)
 ((DRY_RUN)) && info 'Dry-run mode' ||:
 ((VERBOSE)) && echo "Processing $file" ||:
 ((DEBUG)) && set -x ||:
+((VERBOSE < 3)) && VERBOSE+=1 ||:
 
 # wrong — exits script when condition is false under set -e
 ((DRY_RUN)) && info 'Dry-run mode'
 ```
 
-A false arithmetic condition returns exit code 1, which triggers `set -e`. The inverted `||` form avoids this because the right-hand side (an assignment or command) returns 0. When `&&` reads more naturally (e.g., flag-guarded actions), append `||:` to make the expression safe. Use `:` over `true` (traditional shell idiom, built-in).
+A false arithmetic condition returns exit code 1, which triggers `set -e`. The inverted `||` form avoids this because the right-hand side (an assignment or command) returns 0. When `&&` reads more naturally (e.g., flag-guarded actions), append `||:` to make the expression safe. The `||:` catches failure from **the entire chain**, including a false arithmetic condition — not just the final command. Use `:` over `true` (traditional shell idiom, built-in).
+
+**Severity guide:** missing `||:` on a `&&` chain is a VIOLATION (script exits unexpectedly). Using `&&...||:` instead of the inverted `||` form is a style preference, not a violation — both are correct when `||:` is present.
 
 Never use `||:` for critical operations that must succeed.

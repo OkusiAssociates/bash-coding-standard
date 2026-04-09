@@ -82,17 +82,31 @@ var=$(command)                      # not var=`command`
 
 ## BCS1206 Static Analysis Directives
 
-ShellCheck compliance is compulsory. Use `#shellcheck disable=SCxxxx` only for documented exceptions. Similarly, use `#bcscheck disable=BCSxxxx` to suppress specific BCS rules on the next line.
+ShellCheck compliance is compulsory. Use `#shellcheck disable=SCxxxx` only for documented exceptions. Similarly, use `#bcscheck disable=BCSxxxx` to suppress specific BCS rules.
+
+Suppression scope follows ShellCheck conventions — the directive covers the **next command**, which may be a single line or a brace/block group:
 
 ```bash
+# correct — suppresses the next line
+#bcscheck disable=BCS0606
+((DRY_RUN)) && info 'Dry-run mode' ||:
+
+# correct — suppresses a block (same as shellcheck)
+#bcscheck disable=BCS0806
+{
+  -p|-n|--prompt) PROMPT=1; VERBOSE=1 ;;
+  -P|-N|--no-prompt) PROMPT=0 ;;
+}
+
 # correct — documented shellcheck exception
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
-
-# correct — documented bcscheck exception
-#bcscheck disable=BCS0606
-((DRY_RUN)) && info 'Dry-run mode' ||:
 ```
+
+**Severity definitions** for `bcs check` findings:
+
+- **VIOLATION**: Code is incorrect, unsafe, or clearly breaks a mandatory (MUST/SHALL) rule.
+- **WARNING**: Style deviation, SHOULD/RECOMMENDED level, or intentional design choice that deviates from a reference pattern.
 
 Always end scripts with `#fin` after `main "$@"`.
 

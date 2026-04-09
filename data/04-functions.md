@@ -86,13 +86,17 @@ declare -fx grep find
 
 ## BCS0405 Production Optimization
 
-Remove unused utility functions from production scripts.
+Remove unused utility functions from production scripts. **This rule takes precedence over template completeness** — do not add functions, variables, or color definitions from reference templates (BCS0703, BCS0706, BCS0701) unless the script actually uses them.
 
 ```bash
 # wrong — keeping unused functions
 yn() { :; }          # never called in this script
 trim() { :; }        # never called in this script
 debug() { :; }       # DEBUG never set in this script
+
+# wrong — declaring unused color/flag variables
+declare -r GREEN=$'\033[0;32m'       # no success() function uses it
+declare -i DEBUG=0                    # no debug() function exists
 ```
 
 Keep only functions and variables the script actually needs. Remove unused globals too.
