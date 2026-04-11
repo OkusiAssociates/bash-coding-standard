@@ -106,7 +106,15 @@ LLM backend:
 .BR anthropic ","
 .BR google ","
 .BR openai "."
-Auto-detection order: ollama, anthropic, openai, google, claude.
+With a tier keyword, auto-detection probes backends in order
+(ollama, anthropic, openai, google, claude) and selects the first available.
+With a direct model name (via
+.BR \-m ")"
+it instead sniffs the vendor from the name:
+.BR claude\-* " \(-> anthropic,"
+.BR gemini\-* " \(-> google,"
+.BR gpt\-* / o#\-* " \(-> openai,"
+anything else \(-> ollama.
 .TP
 .BR \-m ", " \-\-model " " \fIMODEL\fR
 Quality tier or concrete model ID. Tier keywords

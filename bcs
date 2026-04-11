@@ -180,7 +180,10 @@ ${BOLD}Options:$NC
   -h, --help              Show this help
 
 ${BOLD}Backends:$NC
-  auto        Auto-detect: ollama, anthropic, google, openai, claude (default)
+  auto        Auto-detect (default): with a tier keyword, probes ollama,
+              anthropic, google, openai, claude in order; with a direct
+              model name, sniffs vendor from the name (claude-* → anthropic,
+              gemini-* → google, gpt-*/o#-* → openai, else → ollama)
   claude      Claude CLI (\`claude\` command)
   ollama      Local Ollama server (default: localhost:11434)
   anthropic   Anthropic Messages API (requires ANTHROPIC_API_KEY)
@@ -312,6 +315,18 @@ _detect_backend() {
   [[ -n ${GOOGLE_API_KEY:-${GEMINI_API_KEY:-}} ]] && { echo google; return 0; } ||:
   command -v claude &>/dev/null && { echo claude; return 0; } ||:
   return 1
+}
+
+# Sniff backend from a direct model name. Only used when backend=auto and
+# the user passed a concrete model ID rather than a tier keyword.
+# Matches vendor prefixes; anything unrecognised falls back to ollama.
+_sniff_backend() {
+  case $1 in
+    claude-*)      echo anthropic ;;
+    gemini-*)      echo google ;;
+    gpt-*|o[0-9]*) echo openai ;;
+    *)             echo ollama ;;
+  esac
 }
 
 # LLM backend: Anthropic Messages API
@@ -628,11 +643,11 @@ cmd_template() {
 
 cmd_check() {
   local -- script_file='' model=${BCS_MODEL:-balanced} effort=${BCS_EFFORT:-medium} backend=${BCS_BACKEND:-auto}
-  local -i strict=${BCS_STRICT:-0}
+  local -i strict=${BCS_STRICT:-0} backend_cli=0
   local -ar onoff=(off on)
 
   while (($#)); do case $1 in
-    -b|--backend)   noarg "$@"; shift; backend=$1
+    -b|--backend)   noarg "$@"; shift; backend=$1; backend_cli=1
                     [[ " ${VALID_BACKENDS[*]} " == *" $backend "* ]] || die 22 "Invalid backend ${backend@Q}"
                     ;;
     -m|--model)     noarg "$@"; shift; model=$1 ;;
@@ -657,9 +672,20 @@ cmd_check() {
   [[ -r $script_file ]] || die 13 "Cannot read ${script_file@Q}"
   script_file=$(realpath -e -- "$script_file")
 
-  # Auto-detect backend if needed
-  [[ $backend != auto ]] || backend=$(_detect_backend) \
-    || die 18 'No LLM backend available (start Ollama, set ANTHROPIC_API_KEY/OPENAI_API_KEY, or install claude CLI)'
+  # Resolve backend. A direct (non-tier) model name overrides a config-set
+  # backend via sniff — unless the user explicitly passed -b, in which case
+  # respect their choice and let the backend surface any incompatibility.
+  if [[ $model != @(fast|balanced|thorough) ]] && ((!backend_cli)); then
+    local -- sniffed
+    sniffed=$(_sniff_backend "$model")
+    if [[ $backend != "$sniffed" ]]; then
+      info "Inferred backend ${sniffed@Q} from model ${model@Q} (was ${backend@Q})"
+      backend=$sniffed
+    fi
+  elif [[ $backend == auto ]]; then
+    backend=$(_detect_backend) \
+      || die 18 'No LLM backend available (start Ollama, set ANTHROPIC_API_KEY/OPENAI_API_KEY, or install claude CLI)'
+  fi
 
   # Verify curl+jq for API backends
   if [[ $backend != claude ]]; then
