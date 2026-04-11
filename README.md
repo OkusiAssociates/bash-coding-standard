@@ -61,7 +61,7 @@ The `bcs check` subcommand requires an LLM backend. At least one of the followin
 | Anthropic API | `ANTHROPIC_API_KEY` + curl + jq | Recommended — best accuracy/speed ratio |
 | Google Gemini API | `GOOGLE_API_KEY` + curl + jq | `thorough` tier recommended |
 | OpenAI API | `OPENAI_API_KEY` + curl + jq | `thorough` tier recommended |
-| Ollama (local) | Running Ollama server | No API key needed; quality depends on model/hardware |
+| Ollama (local or cloud) | Running Ollama server | No API key for local; `ollama signin` for cloud (e.g. `minimax-m2:cloud`) |
 | Claude Code CLI | `claude` installed | Optional — highest quality but slowest (2-24 min) |
 
 ## Installation

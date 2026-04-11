@@ -21,7 +21,6 @@ declare -ar BCS_SEARCH_PATHS=(
   /usr/share/yatti/BCS/data
 )
 
-declare -ar VALID_MODELS=(fast balanced thorough)
 declare -ar VALID_EFFORTS=(low medium high max)
 declare -ar VALID_TEMPLATES=(minimal basic complete library)
 declare -ar VALID_BACKENDS=(auto claude ollama anthropic google openai)
@@ -173,10 +172,10 @@ ${BOLD}Usage:$NC $SCRIPT_NAME check [OPTIONS] SCRIPT
 
 ${BOLD}Options:$NC
   -b, --backend BACKEND   LLM backend (${BOLD}auto$NC, claude, ollama, anthropic, google, openai)
-  -m, --model MODEL       Quality tier (${BOLD}fast$NC, balanced, thorough)
+  -m, --model MODEL       Quality tier or model name (${BOLD}fast$NC, balanced, thorough, or e.g. claude-opus-4-6)
   -e, --effort LEVEL      Analysis depth (${BOLD}low$NC, medium, high, max)
   -s, --strict            Treat warnings as violations
-  -S, --no-strict         Don't treat warnings as violations
+  -S, --no-strict         Don't treat warnings as violations (${BOLD}default$NC)
   -q, --quiet             Suppress info messages
   -h, --help              Show this help
 
@@ -204,22 +203,22 @@ ${BOLD}Configuration:$NC
   CLI flags override config file settings; config overrides env vars.
 
 ${BOLD}Environment / Config Variables:$NC
-  BCS_BACKEND        Default backend (overridden by -b)
-  BCS_MODEL          Default quality tier (overridden by -m)
-  BCS_EFFORT         Default analysis depth (overridden by -e)
-  BCS_STRICT         Treat warnings as violations: 0 or 1
-  BCS_OLLAMA_MODEL   Override Ollama model selection
-  BCS_ANTHROPIC_MODEL  Override Anthropic model selection
-  BCS_GOOGLE_MODEL     Override Google model selection
-  BCS_OPENAI_MODEL     Override OpenAI model selection
-  OLLAMA_HOST        Ollama server address (default: localhost:11434)
-  ANTHROPIC_API_KEY  Anthropic API key (for anthropic backend)
-  GOOGLE_API_KEY     Google API key (for google backend)
-  GEMINI_API_KEY     Alternative Google key (GOOGLE_API_KEY takes priority)
-  OPENAI_API_KEY     OpenAI API key (for openai backend)
+  BCS_BACKEND         Default backend (overridden by -b)
+  BCS_MODEL           Default quality tier (overridden by -m)
+  BCS_EFFORT          Default analysis depth (overridden by -e)
+  BCS_STRICT          Treat warnings as violations: 0 or 1
+  BCS_OLLAMA_MODEL    Override Ollama model (supports :cloud tags, e.g. minimax-m2:cloud)
+  BCS_ANTHROPIC_MODEL Override Anthropic model selection
+  BCS_GOOGLE_MODEL    Override Google model selection
+  BCS_OPENAI_MODEL    Override OpenAI model selection
+  OLLAMA_HOST         Ollama server address (default: localhost:11434)
+  ANTHROPIC_API_KEY   Anthropic API key (for anthropic backend)
+  GOOGLE_API_KEY      Google API key (for google backend)
+  GEMINI_API_KEY      Alternative Google key (GOOGLE_API_KEY takes priority)
+  OPENAI_API_KEY      OpenAI API key (for openai backend)
 
 ${BOLD}Inline suppression:$NC
-  #bcscheck disable=BCS0606    Suppress a rule for the next line
+  #bcscheck disable=BCS0606  # Suppress a rule for the next line or block
 
 ${BOLD}Examples:$NC
   $SCRIPT_NAME check myscript.sh
@@ -244,6 +243,7 @@ ${BOLD}Example Output:$NC
   BCS0101 Strict Mode
   BCS0102 Shebang
   BCS0103 Script Metadata
+  [...]
 HELP
 }
 
@@ -257,8 +257,8 @@ ${BOLD}Options:$NC
   -o, --output FILE   Output file (default: ${BOLD}data/BASH-CODING-STANDARD.md$NC)
   -h, --help          Show this help
 
-Concatenates all data/[0-9]*.md section files into a single standard
-document with a table of contents header.
+Concatenates all data/[0-9]*.md section files into a single
+BASH-CODING-STANDARD.md document.
 HELP
 }
 
@@ -318,7 +318,7 @@ _detect_backend() {
 _llm_anthropic() {
   local -- model=$1 effort=$2 sys=$3 usr=$4
   [[ -n ${ANTHROPIC_API_KEY:-} ]] || die 18 'ANTHROPIC_API_KEY not set'
-  local -- api_model=${BCS_ANTHROPIC_MODEL:-${ANTHROPIC_MODELS[$model]}}
+  local -- api_model=${BCS_ANTHROPIC_MODEL:-${ANTHROPIC_MODELS[$model]:-$model}}
   local -i max_tokens=${EFFORT_TOKENS[$effort]}
 
   local -- payload
@@ -353,7 +353,7 @@ _llm_anthropic() {
 # LLM backend: Ollama chat API
 _llm_ollama() {
   local -- model=$1 effort=$2 sys=$3 usr=$4
-  local -- ollama_model=${BCS_OLLAMA_MODEL:-${OLLAMA_MODELS[$model]}}
+  local -- ollama_model=${BCS_OLLAMA_MODEL:-${OLLAMA_MODELS[$model]:-$model}}
   local -- ollama_host=${OLLAMA_HOST:-localhost:11434}
   local -i num_predict=${EFFORT_TOKENS[$effort]}
 
@@ -393,7 +393,7 @@ _llm_ollama() {
 _llm_openai() {
   local -- model=$1 effort=$2 sys=$3 usr=$4
   [[ -n ${OPENAI_API_KEY:-} ]] || die 18 'OPENAI_API_KEY not set'
-  local -- api_model=${BCS_OPENAI_MODEL:-${OPENAI_MODELS[$model]}}
+  local -- api_model=${BCS_OPENAI_MODEL:-${OPENAI_MODELS[$model]:-$model}}
   local -i max_tokens=${EFFORT_TOKENS[$effort]}
 
   local -- payload
@@ -430,7 +430,7 @@ _llm_google() {
   local -- model=$1 effort=$2 sys=$3 usr=$4
   local -- api_key=${GOOGLE_API_KEY:-${GEMINI_API_KEY:-}}
   [[ -n $api_key ]] || die 18 'GOOGLE_API_KEY or GEMINI_API_KEY not set'
-  local -- api_model=${BCS_GOOGLE_MODEL:-${GOOGLE_MODELS[$model]}}
+  local -- api_model=${BCS_GOOGLE_MODEL:-${GOOGLE_MODELS[$model]:-$model}}
   local -i max_tokens=${EFFORT_TOKENS[$effort]}
 
   local -- payload
@@ -473,7 +473,7 @@ _llm_claude_cli() {
   local -i strict=$5
   command -v claude &>/dev/null || die 18 'Claude CLI required for claude backend'
 
-  model=${BCS_ANTHROPIC_MODEL:-${ANTHROPIC_MODELS[$model]}}
+  model=${BCS_ANTHROPIC_MODEL:-${ANTHROPIC_MODELS[$model]:-$model}}
 
   local -- prompt="You are a Bash script compliance validator.
 
@@ -635,9 +635,7 @@ cmd_check() {
     -b|--backend)   noarg "$@"; shift; backend=$1
                     [[ " ${VALID_BACKENDS[*]} " == *" $backend "* ]] || die 22 "Invalid backend ${backend@Q}"
                     ;;
-    -m|--model)     noarg "$@"; shift; model=$1
-                    [[ " ${VALID_MODELS[*]} " == *" $model "* ]] || die 22 "Invalid model ${model@Q}"
-                    ;;
+    -m|--model)     noarg "$@"; shift; model=$1 ;;
     -e|--effort)    noarg "$@"; shift; effort=$1
                     [[ " ${VALID_EFFORTS[*]} " == *" $effort "* ]] || die 22 "Invalid effort ${effort@Q}"
                     ;;

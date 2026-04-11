@@ -109,11 +109,20 @@ LLM backend:
 Auto-detection order: ollama, anthropic, openai, google, claude.
 .TP
 .BR \-m ", " \-\-model " " \fIMODEL\fR
-Quality tier:
+Quality tier or concrete model ID. Tier keywords
 .BR fast " (default),"
-.BR balanced ","
-.BR thorough "."
-Each backend maps these tiers to appropriate concrete models.
+.BR balanced ", and"
+.BR thorough
+are mapped per-backend to appropriate models; any other value is passed through
+to the selected backend unchanged, e.g.
+.BR claude\-opus\-4\-6 ","
+.BR gemini\-2.5\-pro ", or"
+.BR minimax\-m2:cloud "."
+The
+.B BCS_<BACKEND>_MODEL
+environment variables still take precedence over
+.B \-m
+when set.
 .TP
 .BR \-e ", " \-\-effort " " \fILEVEL\fR
 Analysis depth:

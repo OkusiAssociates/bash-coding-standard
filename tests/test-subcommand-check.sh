@@ -54,6 +54,13 @@ echo '#!/bin/bash' > "$temp"
 assert_fails 'invalid effort rejected' "$BCS_CMD" check --effort bogus "$temp" || true
 rm -f "$temp"
 
+# Test: check accepts arbitrary --model pass-through
+# Use -h to short-circuit before any backend call; we only exercise the parser.
+# A direct model name must NOT error at the argparse stage.
+begin_test 'accepts arbitrary --model pass-through'
+assert_success 'direct model name accepted' \
+  "$BCS_CMD" check -m claude-opus-4-6 -h || true
+
 # Test: check help includes --strict
 begin_test 'check help includes --strict'
 output=$("$BCS_CMD" check -h 2>/dev/null)
