@@ -54,9 +54,6 @@ Plain text output (no formatting).
 .BR \-f ", " \-\-file
 Show full path to the standard document.
 .TP
-.BR \-s ", " \-\-squeeze
-Squeeze consecutive blank lines.
-.TP
 .BR \-S ", " \-\-symlink
 Symlink BASH-CODING-STANDARD.md into the current directory.
 .TP
@@ -205,19 +202,21 @@ Invalid argument or option (EINVAL).
 .\"
 .SH CONFIGURATION
 .B bcs
-reads configuration from the first matching file (BCS0111 search order):
+sources configuration files as Bash in cascade order (BCS0111). Later files
+override earlier ones key-by-key, so a user file may set only the values it
+wants to change and inherit the rest from system defaults:
 .PP
 .RS
-.I ~/.config/bcs/bcs.conf
+.I /etc/bcs.conf
 .br
 .I /etc/bcs/bcs.conf
 .br
-.I /etc/bcs.conf
-.br
 .I /usr/local/etc/bcs/bcs.conf
+.br
+.I ~/.config/bcs/bcs.conf
 .RE
 .PP
-The file is sourced as Bash. CLI flags override config file settings.
+CLI flags override config file settings; config overrides environment variables.
 See
 .I bcs.conf.sample
 for all available variables.

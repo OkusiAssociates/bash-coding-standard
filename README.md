@@ -180,12 +180,14 @@ For most users, `--backend anthropic -m balanced -e medium` (or configure these 
 
 ### Configuration
 
-Config file search order (first match wins, sourced as bash):
+Config files are sourced as bash in cascade order (later files override earlier):
 
-1. `~/.config/bcs/bcs.conf` (user — XDG standard)
+1. `/etc/bcs.conf` (system — flat file)
 2. `/etc/bcs/bcs.conf` (system — directory)
-3. `/etc/bcs.conf` (system — flat file)
-4. `/usr/local/etc/bcs/bcs.conf` (local install)
+3. `/usr/local/etc/bcs/bcs.conf` (local install)
+4. `~/.config/bcs/bcs.conf` (user — XDG standard)
+
+Any file may set a subset of values; keys it doesn't touch inherit from earlier layers. This lets a user override a single setting without re-declaring every default.
 
 ```bash
 BCS_BACKEND=ollama        # auto, claude, ollama, anthropic, google, openai
@@ -196,7 +198,7 @@ BCS_EFFORT=medium         # low, medium, high, max
 BCS_OPENAI_MODEL=gpt-5.4
 ```
 
-See `bcs.conf.sample` for all options including per-tier array overrides. CLI flags override config file settings.
+See `bcs.conf.sample` for all options including per-tier array overrides. CLI flags override config file settings; config overrides environment variables.
 
 ## Examples
 

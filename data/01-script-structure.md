@@ -58,14 +58,12 @@ shopt -s inherit_errexit
 
 ## BCS0103 Script Metadata
 
-Declare metadata immediately after `shopt`. Use `realpath` (not `readlink`).
+Declare metadata immediately after `shopt`. Use `realpath` (not `readlink`) by default.
 
-Standard metavars are VERSION, SCRIPT_PATH, SCRIPT_DIR, SCRIPT_NAME
-
-**Note:** Not all scripts will require all Script Metadata variables.
+Standard metavars are VERSION, SCRIPT_PATH, SCRIPT_DIR, SCRIPT_NAME. Not all scripts need all four.
 
 ```bash
-# correct
+# correct — handles every install pattern, including symlinked wrappers
 declare -r VERSION=1.0.0
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
@@ -270,43 +268,45 @@ Always disable traps inside the cleanup function to prevent recursion.
 
 ## BCS0111 Configuration File Loading
 
-Use `read_conf()` to source the first matching `.conf` file from a priority-ordered search path. User configuration overrides system defaults.
+Use `read_conf()` to cascade-source `.conf` files from a priority-ordered search path. System files load first, user files last, so user settings override system defaults key-by-key. Missing files are skipped silently.
 
 ```bash
-# correct — standard read_conf() function
+# correct — standard read_conf() function (cascade mode)
 read_conf() {
   local -- conf_file=''
+  local -i loaded=0
   local -a search_paths=(
-    "${XDG_CONFIG_HOME:-$HOME/.config}"/"$SCRIPT_NAME"/"$SCRIPT_NAME".conf
-    /etc/"$SCRIPT_NAME"/"$SCRIPT_NAME".conf
-    /etc/"$SCRIPT_NAME".conf
-    /usr/local/etc/"$SCRIPT_NAME"/"$SCRIPT_NAME".conf
-    /usr/share/"$SCRIPT_NAME"/"$SCRIPT_NAME".conf
     /usr/lib/"$SCRIPT_NAME"/"$SCRIPT_NAME".conf
+    /usr/share/"$SCRIPT_NAME"/"$SCRIPT_NAME".conf
+    /usr/local/etc/"$SCRIPT_NAME"/"$SCRIPT_NAME".conf
+    /etc/"$SCRIPT_NAME".conf
+    /etc/"$SCRIPT_NAME"/"$SCRIPT_NAME".conf
+    "${XDG_CONFIG_HOME:-$HOME/.config}"/"$SCRIPT_NAME"/"$SCRIPT_NAME".conf
   )
 
   for conf_file in "${search_paths[@]}"; do
-    if [[ -f $conf_file ]]; then
-      # shellcheck source=/dev/null
-      source "$conf_file"
-      return 0
-    fi
+    [[ -f $conf_file ]] || continue
+    # shellcheck source=/dev/null
+    source "$conf_file"
+    loaded+=1
   done
 
-  return 1
+  ((loaded))
 }
 ```
 
-Search path priority (first match wins):
+Cascade order (later entries override earlier):
 
-1. `$XDG_CONFIG_HOME/name/name.conf` — user config (XDG standard)
-2. `/etc/name/name.conf` — system config (directory)
-3. `/etc/name.conf` — system config (flat file)
-4. `/usr/local/etc/name/name.conf` — locally-installed defaults
-5. `/usr/share/name/name.conf` — package-provided defaults
-6. `/usr/lib/name/name.conf` — library-provided defaults
+1. `/usr/lib/name/name.conf` — library-provided defaults
+2. `/usr/share/name/name.conf` — package-provided defaults
+3. `/usr/local/etc/name/name.conf` — locally-installed defaults
+4. `/etc/name.conf` — system config (flat file)
+5. `/etc/name/name.conf` — system config (directory)
+6. `$XDG_CONFIG_HOME/name/name.conf` — user config (XDG standard)
 
-Call `read_conf` early in `main()`, before argument parsing if config values set defaults, or after parsing if CLI options should override config:
+Because each file is sourced in the current shell, any variable assignments in a later file override earlier ones while unset keys inherit from earlier layers. This lets a user override one setting without re-declaring all defaults.
+
+`read_conf` returns success when at least one file was loaded, failure when none matched. Call it early in `main()`, before argument parsing if config values set defaults, or after parsing if CLI options should override config:
 
 ```bash
 # correct — config sets defaults, CLI overrides
@@ -319,6 +319,6 @@ main() {
 }
 ```
 
-Configuration files are sourced as Bash — they execute in the calling shell's context. Only source config files from trusted locations with appropriate permissions.
+Configuration files are sourced as Bash — they execute in the calling shell's context. Only source config files from trusted locations with appropriate permissions. Cascading increases attack surface linearly in the number of search paths, so never add user-writable paths to scripts that may run with elevated privileges.
 
-The `source`-based pattern is the standard approach. Scripts that intentionally use alternative methods (e.g., `readarray` for line-delimited data, or restricted parsing for security) should document the deviation. Similarly, scripts may adjust the search path order (e.g., adding `/etc/default/name`) provided the help text documents the actual paths used.
+The cascade `source`-based pattern is the standard approach. Scripts that intentionally use alternative methods (e.g., first-match-wins semantics, `readarray` for line-delimited data, or restricted parsing for security) should document the deviation. Similarly, scripts may adjust the search path order (e.g., adding `/etc/default/name`) provided the help text documents the actual paths used.

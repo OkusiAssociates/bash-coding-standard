@@ -14,8 +14,6 @@ declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Global variables
-declare -i VERBOSE=1
-
 declare -ar BCS_SEARCH_PATHS=(
   "$SCRIPT_DIR"/data
   "${SCRIPT_DIR%/bin}/share/yatti/BCS/data"
@@ -46,6 +44,7 @@ else
 fi
 
 # ---- Messaging functions ----
+declare -i VERBOSE=1
 
 _msg() {
   local -- prefix="$SCRIPT_NAME:" msg
@@ -68,36 +67,34 @@ noarg()   { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
 
 # ---- Configuration ----
 
-# BCS0111: Load first matching conf file (user overrides system)
+# Load all conf files (cascade: system first, user overrides system)
 read_conf() {
   local -- conf_file
+  local -i loaded=0
   local -a search_paths=(
-    "${XDG_CONFIG_HOME:-$HOME/.config}"/"$SCRIPT_NAME"/"$SCRIPT_NAME".conf
-    /etc/"$SCRIPT_NAME"/"$SCRIPT_NAME".conf
     /etc/"$SCRIPT_NAME".conf
+    /etc/"$SCRIPT_NAME"/"$SCRIPT_NAME".conf
     /usr/local/etc/"$SCRIPT_NAME"/"$SCRIPT_NAME".conf
+    "${XDG_CONFIG_HOME:-$HOME/.config}"/"$SCRIPT_NAME"/"$SCRIPT_NAME".conf
   )
-
   for conf_file in "${search_paths[@]}"; do
-    if [[ -f $conf_file ]]; then
-      #shellcheck source=/dev/null
-      source "$conf_file"
-      return 0
-    fi
+    [[ -f $conf_file ]] || continue
+    #shellcheck source=/dev/null
+    source "$conf_file"
+    loaded+=1
   done
-
-  return 1
+  ((loaded))
 }
 
 # ---- Help functions ----
 
 show_main_help() {
   cat <<HELP
-${BOLD}bcs${NC} $VERSION - Bash Coding Standard CLI toolkit
+${BOLD}bcs$NC $VERSION - Bash Coding Standard CLI toolkit
 
-${BOLD}Usage:${NC} $SCRIPT_NAME [COMMAND] [OPTIONS]
+${BOLD}Usage:$NC $SCRIPT_NAME [COMMAND] [OPTIONS]
 
-${BOLD}Commands:${NC}
+${BOLD}Commands:$NC
   display     View the standard document (default)
   template    Generate a BCS-compliant script template
   check       AI-powered compliance checking
@@ -105,13 +102,13 @@ ${BOLD}Commands:${NC}
   generate    Regenerate standard from section files
   help        Show help for a command
 
-${BOLD}Global Options:${NC}
+${BOLD}Global Options:$NC
   -v, --verbose   Verbose output (default)
   -q, --quiet     No verbose output
   -V, --version   Show version $VERSION
   -h, --help      Show this help
 
-${BOLD}Examples:${NC}
+${BOLD}Examples:$NC
   $SCRIPT_NAME                           View the standard
   $SCRIPT_NAME template -t complete      Generate a complete template
   $SCRIPT_NAME check myscript.sh         Check script compliance
@@ -122,14 +119,13 @@ HELP
 
 show_display_help() {
   cat <<HELP
-${BOLD}bcs display${NC} - View the Bash Coding Standard
+${BOLD}bcs display$NC - View the Bash Coding Standard
 
-${BOLD}Usage:${NC} $SCRIPT_NAME [display] [OPTIONS]
+${BOLD}Usage:$NC $SCRIPT_NAME [display] [OPTIONS]
 
-${BOLD}Options:${NC}
+${BOLD}Options:$NC
   -c, --cat       Plain text output (no formatting)
   -f, --file      Show full path to the standard document
-  -s, --squeeze   Squeeze consecutive blank lines
   -S, --symlink   Symlink BASH-CODING-STANDARD.md into current directory
   -h, --help      Show this help
 
@@ -141,28 +137,28 @@ HELP
 
 show_template_help() {
   cat <<HELP
-${BOLD}bcs template${NC} - Generate BCS-compliant script templates
+${BOLD}bcs template$NC - Generate BCS-compliant script templates
 
-${BOLD}Usage:${NC} $SCRIPT_NAME template [OPTIONS]
+${BOLD}Usage:$NC $SCRIPT_NAME template [OPTIONS]
 
-${BOLD}Options:${NC}
-  -t, --type TYPE       Template type (minimal, ${BOLD}basic${NC}, complete, library)
+${BOLD}Options:$NC
+  -t, --type TYPE       Template type (minimal, ${BOLD}basic$NC, complete, library)
                         (default: basic)
   -n, --name NAME       Script name for placeholders
   -d, --desc TEXT       Script description
-  -V, --version VER     Version string (default: ${BOLD}1.0.0${NC})
-  -o, --output FILE     Output file (default: ${BOLD}stdout${NC})
+  -V, --version VER     Version string (default: ${BOLD}1.0.0$NC)
+  -o, --output FILE     Output file (default: ${BOLD}stdout$NC)
   -x, --executable      Make output file executable
   -f, --force           Overwrite existing files
   -h, --help            Show this help
 
-${BOLD}Template Types:${NC}
+${BOLD}Template Types:$NC
   minimal     Bare essentials (~15 lines)
   basic       Standard with metadata (~25 lines)
   complete    Full toolkit with all utilities (~112 lines)
   library     Sourceable library pattern (~39 lines)
 
-${BOLD}Examples:${NC}
+${BOLD}Examples:$NC
   $SCRIPT_NAME template -t minimal
   $SCRIPT_NAME template -t complete -n deploy -d 'Deploy script' -o deploy.sh -x
   $SCRIPT_NAME template -t library -n auth -o lib-auth.sh
@@ -171,20 +167,20 @@ HELP
 
 show_check_help() {
   cat <<HELP
-${BOLD}bcs check${NC} - AI-powered BCS compliance checking
+${BOLD}bcs check$NC - AI-powered BCS compliance checking
 
-${BOLD}Usage:${NC} $SCRIPT_NAME check [OPTIONS] SCRIPT
+${BOLD}Usage:$NC $SCRIPT_NAME check [OPTIONS] SCRIPT
 
-${BOLD}Options:${NC}
-  -b, --backend BACKEND   LLM backend (${BOLD}auto${NC}, claude, ollama, anthropic, google, openai)
-  -m, --model MODEL       Quality tier (${BOLD}fast${NC}, balanced, thorough)
-  -e, --effort LEVEL      Analysis depth (${BOLD}low${NC}, medium, high, max)
+${BOLD}Options:$NC
+  -b, --backend BACKEND   LLM backend (${BOLD}auto$NC, claude, ollama, anthropic, google, openai)
+  -m, --model MODEL       Quality tier (${BOLD}fast$NC, balanced, thorough)
+  -e, --effort LEVEL      Analysis depth (${BOLD}low$NC, medium, high, max)
   -s, --strict            Treat warnings as violations
   -S, --no-strict         Don't treat warnings as violations
   -q, --quiet             Suppress info messages
   -h, --help              Show this help
 
-${BOLD}Backends:${NC}
+${BOLD}Backends:$NC
   auto        Auto-detect: ollama, anthropic, google, openai, claude (default)
   claude      Claude CLI (\`claude\` command)
   ollama      Local Ollama server (default: localhost:11434)
@@ -192,21 +188,22 @@ ${BOLD}Backends:${NC}
   google      Google Gemini API (requires GOOGLE_API_KEY or GEMINI_API_KEY)
   openai      OpenAI Chat API (requires OPENAI_API_KEY)
 
-${BOLD}Effort Levels:${NC}
+${BOLD}Effort Levels:$NC
   low         Clear violations only (fast, concise)
   medium      Violations and significant warnings
   high        All violations and warnings (thorough)
   max         Exhaustive line-by-line audit
 
-${BOLD}Configuration:${NC}
-  Config file search order (first match wins, sourced as bash):
-    ~/.config/bcs/bcs.conf       (user — XDG standard)
-    /etc/bcs/bcs.conf            (system — directory)
+${BOLD}Configuration:$NC
+  Config files are sourced as bash in cascade order (later overrides earlier):
     /etc/bcs.conf                (system — flat file)
+    /etc/bcs/bcs.conf            (system — directory)
     /usr/local/etc/bcs/bcs.conf  (local install)
+    ~/.config/bcs/bcs.conf       (user — XDG standard)
+  Any file may set a subset of values; unset keys inherit from earlier layers.
   CLI flags override config file settings; config overrides env vars.
 
-${BOLD}Environment / Config Variables:${NC}
+${BOLD}Environment / Config Variables:$NC
   BCS_BACKEND        Default backend (overridden by -b)
   BCS_MODEL          Default quality tier (overridden by -m)
   BCS_EFFORT         Default analysis depth (overridden by -e)
@@ -221,10 +218,10 @@ ${BOLD}Environment / Config Variables:${NC}
   GEMINI_API_KEY     Alternative Google key (GOOGLE_API_KEY takes priority)
   OPENAI_API_KEY     OpenAI API key (for openai backend)
 
-${BOLD}Inline suppression:${NC}
+${BOLD}Inline suppression:$NC
   #bcscheck disable=BCS0606    Suppress a rule for the next line
 
-${BOLD}Examples:${NC}
+${BOLD}Examples:$NC
   $SCRIPT_NAME check myscript.sh
   $SCRIPT_NAME check --backend ollama myscript.sh
   $SCRIPT_NAME check --effort high --strict deploy.sh
@@ -234,16 +231,16 @@ HELP
 
 show_codes_help() {
   cat <<HELP
-${BOLD}bcs codes${NC} - List all BCS rule codes
+${BOLD}bcs codes$NC - List all BCS rule codes
 
-${BOLD}Usage:${NC} $SCRIPT_NAME codes [OPTIONS]
+${BOLD}Usage:$NC $SCRIPT_NAME codes [OPTIONS]
 
-${BOLD}Options:${NC}
+${BOLD}Options:$NC
   -h, --help    Show this help
 
 Lists all BCS rule codes and titles extracted from section files.
 
-${BOLD}Example Output:${NC}
+${BOLD}Example Output:$NC
   BCS0101 Strict Mode
   BCS0102 Shebang
   BCS0103 Script Metadata
@@ -252,12 +249,12 @@ HELP
 
 show_generate_help() {
   cat <<HELP
-${BOLD}bcs generate${NC} - Regenerate BASH-CODING-STANDARD.md from section files
+${BOLD}bcs generate$NC - Regenerate BASH-CODING-STANDARD.md from section files
 
-${BOLD}Usage:${NC} $SCRIPT_NAME generate [OPTIONS]
+${BOLD}Usage:$NC $SCRIPT_NAME generate [OPTIONS]
 
-${BOLD}Options:${NC}
-  -o, --output FILE   Output file (default: ${BOLD}data/BASH-CODING-STANDARD.md${NC})
+${BOLD}Options:$NC
+  -o, --output FILE   Output file (default: ${BOLD}data/BASH-CODING-STANDARD.md$NC)
   -h, --help          Show this help
 
 Concatenates all data/[0-9]*.md section files into a single standard
@@ -309,7 +306,7 @@ _find_md2ansi() {
 # Auto-detect available LLM backend (ollama → anthropic → openai → google → claude)
 _detect_backend() {
   local -- host=${OLLAMA_HOST:-localhost:11434}
-  curl -sf --connect-timeout 2 "http://$host/api/tags" &>/dev/null && { echo ollama; return 0; } ||:
+  curl -sf --connect-timeout 2 http://"$host"/api/tags &>/dev/null && { echo ollama; return 0; } ||:
   [[ -n ${ANTHROPIC_API_KEY:-} ]] && { echo anthropic; return 0; } ||:
   [[ -n ${OPENAI_API_KEY:-} ]] && { echo openai; return 0; } ||:
   [[ -n ${GOOGLE_API_KEY:-${GEMINI_API_KEY:-}} ]] && { echo google; return 0; } ||:
@@ -446,7 +443,7 @@ _llm_google() {
       generationConfig: {maxOutputTokens: $max_tokens}}') \
     || die 1 'Failed to build JSON payload'
 
-  local -- url="https://generativelanguage.googleapis.com/v1beta/models/$api_model:generateContent"
+  local -- url=https://generativelanguage.googleapis.com/v1beta/models/"$api_model":generateContent
   local -- raw body
   local -i http_code
   raw=$(curl -s --max-time 300 -w $'\n%{http_code}' \
@@ -513,13 +510,12 @@ Respect inline suppression: eg, #bcscheck disable=BCS0101 exempts the next line/
 # ---- Subcommand: display ----
 
 cmd_display() {
-  local -i force_cat=0 squeeze_blanks=0
+  local -i force_cat=0
   local -- bcs_file
 
   while (($#)); do case $1 in
     -c|--cat)     force_cat=1 ;;
     -f|--file)    _find_bcs_md || die 3 'BASH-CODING-STANDARD.md not found'; return 0 ;;
-    -s|--squeeze) squeeze_blanks=1 ;;
     -S|--symlink) bcs_file=$(_find_bcs_md) || die 3 'BASH-CODING-STANDARD.md not found'
                   ln -sf "$bcs_file" .
                   info "Symlinked BASH-CODING-STANDARD.md → $bcs_file"
@@ -529,7 +525,7 @@ cmd_display() {
     -q|--quiet)   VERBOSE=0 ;;
     -h|--help)    show_display_help; return 0 ;;
     --)           shift; break ;;
-    -[cfsSvqh]?*) set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+    -[cfSvqh]?*)  set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
     -*)           die 22 "Invalid option ${1@Q}" ;;
     *)            die 2 "Unexpected argument ${1@Q}" ;;
   esac; shift; done
@@ -537,8 +533,6 @@ cmd_display() {
   bcs_file=$(_find_bcs_md) || die 3 'BASH-CODING-STANDARD.md not found'
 
   local -a cat_opts=()
-  ((!squeeze_blanks)) || cat_opts+=(-s)
-
   if ((force_cat)); then
     cat "${cat_opts[@]}" -- "$bcs_file"
     return 0
@@ -657,7 +651,7 @@ cmd_check() {
     -*)             die 22 "Invalid option ${1@Q}" ;;
     *)              [[ -z $script_file ]] || die 2 'Only one script file allowed'
                     script_file=$1
-      ;;
+                    ;;
   esac; shift; done
 
   [[ -n $script_file ]] || die 2 'No script file specified'
@@ -813,9 +807,7 @@ cmd_generate() {
       if ((first)); then
         first=0
       else
-        echo
-        echo '---'
-        echo
+        printf '\n---\n\n'
       fi
       cat -- "$section_file"
     done
@@ -866,26 +858,15 @@ main() {
 
   while (($#)); do
     case $1 in
-      -V|--version)
-        echo "$SCRIPT_NAME $VERSION"
-        return 0 ;;
-      -h|--help)
-        show_main_help
-        return 0 ;;
-      -v|--verbose)
-        VERBOSE=1 ;;
-      -q|--quiet)
-        VERBOSE=0 ;;
-      --)
-        shift; break ;;
-      -[vqVh]?*)  set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+      -V|--version)  printf '%s %s\n' "$SCRIPT_NAME" "$VERSION"; return 0 ;;
+      -h|--help)     show_main_help; return 0 ;;
+      -v|--verbose)  VERBOSE=1 ;;
+      -q|--quiet)    VERBOSE=0 ;;
+      --)            shift; break ;;
+      -[Vhvq]?*)     set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
        # Any other options means it's for subcmd 'display'
-      -*)
-        break ;;
-      *)
-        subcmd=${1,,}
-        shift
-        break ;;
+      -*)            break ;;
+      *)             subcmd=${1,,}; shift; break ;;
     esac
     shift
   done
