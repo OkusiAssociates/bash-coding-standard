@@ -89,46 +89,64 @@ assert_not_contains "$err" 'Invalid option' '-se bundling parsed correctly' || t
 begin_test '-- separator works'
 assert_fails '-- then nonexistent' "$BCS_CMD" check -- /nonexistent/file.sh || true
 
-# Test: check help includes --backend
-begin_test 'check help includes --backend'
-output=$("$BCS_CMD" check -h 2>/dev/null)
-assert_contains "$output" '--backend' 'help mentions --backend' || true
-
-# Test: check --backend requires argument
-begin_test 'check --backend requires argument'
-assert_fails 'backend needs arg' "$BCS_CMD" check --backend || true
-
-# Test: check rejects invalid backend
-begin_test 'check rejects invalid backend'
+# Test: -b/--backend is gone — accepting it must error
+begin_test '-b/--backend removed from parser'
 temp=$(mktemp --suffix=.sh)
 echo '#!/bin/bash' > "$temp"
-assert_fails 'invalid backend rejected' "$BCS_CMD" check --backend bogus "$temp" || true
+err=$("$BCS_CMD" check -b anthropic "$temp" 2>&1 || true)
+assert_contains "$err" 'Invalid option' '-b rejected as invalid option' || true
 rm -f "$temp"
 
-# Test: option bundling -bs parsed
-begin_test 'option bundling -bs parsed'
-err=$("$BCS_CMD" check -bs 2>&1 || true)
-assert_not_contains "$err" 'Invalid option' '-bs bundling parsed correctly' || true
+# Test: --backend is gone from help
+begin_test '--backend absent from help'
+output=$("$BCS_CMD" check -h 2>/dev/null)
+assert_not_contains "$output" '--backend' 'help omits --backend' || true
 
-# Test: check help shows ollama backend
+# Test: claude-code sentinel parses
+begin_test 'claude-code sentinel parses'
+assert_success 'claude-code accepted' \
+  "$BCS_CMD" check -m claude-code -h || true
+
+# Test: claude-code:<model> variant parses
+begin_test 'claude-code:MODEL variant parses'
+assert_success 'claude-code:claude-opus-4-6 accepted' \
+  "$BCS_CMD" check -m claude-code:claude-opus-4-6 -h || true
+
+# Test: claude-code:fast tier variant parses
+begin_test 'claude-code:fast tier parses'
+assert_success 'claude-code:fast accepted' \
+  "$BCS_CMD" check -m claude-code:fast -h || true
+
+# Test: help mentions claude-code sentinel
+begin_test 'check help mentions claude-code'
+output=$("$BCS_CMD" check -h 2>/dev/null)
+assert_contains "$output" 'claude-code' 'help mentions claude-code' || true
+
+# Test: help still mentions ollama in model grammar
 begin_test 'check help mentions ollama'
 output=$("$BCS_CMD" check -h 2>/dev/null)
 assert_contains "$output" 'ollama' 'help mentions ollama' || true
 
-# Test: check help shows anthropic backend
+# Test: help still mentions anthropic in model grammar
 begin_test 'check help mentions anthropic'
 output=$("$BCS_CMD" check -h 2>/dev/null)
 assert_contains "$output" 'anthropic' 'help mentions anthropic' || true
 
-# Test: check help shows openai backend
+# Test: help still mentions openai in model grammar
 begin_test 'check help mentions openai'
 output=$("$BCS_CMD" check -h 2>/dev/null)
 assert_contains "$output" 'openai' 'help mentions openai' || true
 
-# Test: check help shows BCS_BACKEND env var
-begin_test 'check help mentions BCS_BACKEND'
+# Test: BCS_BACKEND env var triggers deprecation warning
+begin_test 'BCS_BACKEND deprecation warning'
+err=$(BCS_BACKEND=anthropic "$BCS_CMD" check -h 2>&1 >/dev/null || true)
+assert_contains "$err" 'BCS_BACKEND' 'warning mentions BCS_BACKEND' || true
+assert_contains "$err" 'deprecated' 'warning says deprecated' || true
+
+# Test: BCS_BACKEND is NOT in help anymore
+begin_test 'BCS_BACKEND removed from help env list'
 output=$("$BCS_CMD" check -h 2>/dev/null)
-assert_contains "$output" 'BCS_BACKEND' 'help mentions BCS_BACKEND' || true
+assert_not_contains "$output" 'BCS_BACKEND' 'help omits BCS_BACKEND env var' || true
 
 # Test: check help shows ANTHROPIC_API_KEY env var
 begin_test 'check help mentions ANTHROPIC_API_KEY'

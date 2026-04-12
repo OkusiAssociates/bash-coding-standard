@@ -123,23 +123,38 @@ bcs template -t library     # Sourceable library (~39 lines)
 
 Uses LLM-powered analysis to validate scripts against the full standard.
 Supports multiple backends: Ollama (local), Anthropic API, Google Gemini API,
-OpenAI API, and Claude CLI. Auto-detects the first available backend.
+OpenAI API, and Claude Code CLI. The backend is resolved from the `-m` model
+name alone — there is no separate `--backend` flag.
 
 ```bash
-bcs check myscript.sh                      # Auto-detect backend
-bcs check --backend ollama myscript.sh     # Use local Ollama
-bcs check --backend anthropic myscript.sh  # Use Anthropic API
-bcs check --backend google myscript.sh     # Use Google Gemini API
-bcs check --backend openai myscript.sh     # Use OpenAI API
+bcs check myscript.sh                      # Probe available backends (balanced tier)
+bcs check -m minimax-m2:cloud myscript.sh  # Route to local Ollama
+bcs check -m claude-sonnet-4-6 myscript.sh # Route to Anthropic API
+bcs check -m gemini-2.5-pro myscript.sh    # Route to Google Gemini API
+bcs check -m gpt-5.4 myscript.sh           # Route to OpenAI API
+bcs check -m claude-code myscript.sh       # Route to Claude Code CLI (balanced)
+bcs check -m claude-code:thorough deploy.sh # Claude Code CLI at thorough tier
 bcs check --strict deploy.sh               # Treat warnings as violations
 bcs check --effort high myscript.sh        # Thorough analysis
-bcs check --model thorough -e max deploy.sh # Higher quality + exhaustive
+bcs check -m thorough -e max deploy.sh     # Higher quality + exhaustive
 bcscheck myscript.sh                       # Convenience shim for bcs check
 ```
 
-### Backends and Model Tiers
+### Model Grammar and Backend Routing
 
-The `-m` flag selects an abstract quality tier mapped to concrete models per backend:
+The `-m` value determines both the backend and the concrete model:
+
+| `-m` value | Backend | Model |
+|------------|---------|-------|
+| `fast` / `balanced` / `thorough` | Probe in order: ollama, anthropic, openai, google, claude | Tier's default per backend |
+| `claude-*` (e.g. `claude-opus-4-6`) | Anthropic API | Pass-through |
+| `gemini-*` (e.g. `gemini-2.5-pro`) | Google Gemini API | Pass-through |
+| `gpt-*` / `o[0-9]*` (e.g. `gpt-5.4`, `o3-mini`) | OpenAI API | Pass-through |
+| `claude-code` | Claude Code CLI | `balanced` tier default |
+| `claude-code:<tier-or-model>` | Claude Code CLI | Stripped suffix |
+| anything else (e.g. `minimax-m2:cloud`) | Local Ollama | Pass-through |
+
+Tier keywords map to concrete defaults per backend:
 
 | Tier | Ollama | Anthropic | Google | OpenAI |
 |------|--------|-----------|--------|--------|
@@ -147,25 +162,27 @@ The `-m` flag selects an abstract quality tier mapped to concrete models per bac
 | balanced | qwen3.5:14b | claude-sonnet-4-6 | gemini-2.5-flash | gpt-5.4-mini |
 | thorough | qwen3.5:14b | claude-opus-4-6 | gemini-2.5-pro | gpt-5.4 |
 
+▲ Ollama models whose names happen to match `claude-*`, `gemini-*`, `gpt-*` or `o[0-9]*` are unreachable through `-m` — rename the local model if you need to target it.
+
 ### Recommended Settings
 
-Not all backend/tier/effort combinations produce equally reliable results. Based on accuracy testing across multiple scripts:
+Not all model/effort combinations produce equally reliable results. Based on accuracy testing across multiple scripts:
 
 | Use Case | Recommended Setting | Notes |
 |----------|-------------------|-------|
-| **Daily development** | `--backend anthropic -m balanced -e medium` | Best accuracy: zero false positives in testing |
-| **Pre-commit review** | `--backend anthropic -m balanced -e high` | More findings, still very accurate |
+| **Daily development** | `-m claude-sonnet-4-6 -e medium` | Best accuracy: zero false positives in testing |
+| **Pre-commit review** | `-m claude-sonnet-4-6 -e high` | More findings, still very accurate |
 | **Quick sanity check** | `-m fast -e low` | Fast and cheap; expect some noise |
-| **Thorough audit** | `--backend anthropic -m thorough -e high` | Near-zero false positives, comprehensive |
-| **Pre-release audit** | `--backend claude -m thorough -e medium` | Highest quality; finds issues others miss (slow: 2-8 min) |
+| **Thorough audit** | `-m claude-opus-4-6 -e high` | Near-zero false positives, comprehensive |
+| **Pre-release audit** | `-m claude-code:thorough -e medium` | Highest quality; finds issues others miss (slow: 2-8 min) |
 
 **Backend accuracy ranking** (from accuracy testing against known-compliant scripts):
 
-1. **Claude CLI** — Highest accuracy with unique findings other backends miss (unused variables, function ordering violations, redundant wrappers). Zero false positives at balanced/thorough tiers. Tradeoff: **very slow** (2-24 minutes per check). Best for final audits before release.
-2. **Anthropic API** — Best speed/accuracy ratio. The `balanced` tier produces zero false positives with good coverage in under a minute. Recommended for daily development.
-3. **OpenAI API** — Good at the `thorough` tier (`high`/`max` effort). Lower tiers invent rule codes and misread code logic. The `thorough-max` combination is the best non-Anthropic API option.
-4. **Google API** — The `thorough` tier at `medium` effort is reliable. Lower tiers over-report, frequently flag correct code as violations, and can produce empty or truncated output. The `fast` tier is not recommended.
-5. **Ollama** — Quality depends heavily on the local model and hardware. Good for offline/private use.
+1. **Claude Code CLI (`claude-code`)** — Highest accuracy with unique findings other backends miss (unused variables, function ordering violations, redundant wrappers). Zero false positives at balanced/thorough tiers. Tradeoff: **very slow** (2-24 minutes per check). Best for final audits before release.
+2. **Anthropic API (`claude-*`)** — Best speed/accuracy ratio. The `balanced` tier produces zero false positives with good coverage in under a minute. Recommended for daily development.
+3. **OpenAI API (`gpt-*`, `o[0-9]*`)** — Good at the `thorough` tier (`high`/`max` effort). Lower tiers invent rule codes and misread code logic. The `thorough-max` combination is the best non-Anthropic API option.
+4. **Google API (`gemini-*`)** — The `thorough` tier at `medium` effort is reliable. Lower tiers over-report, frequently flag correct code as violations, and can produce empty or truncated output. The `fast` tier is not recommended.
+5. **Ollama (local)** — Quality depends heavily on the local model and hardware. Good for offline/private use.
 
 **Effort levels** control analysis depth and output token budget:
 
@@ -176,7 +193,7 @@ Not all backend/tier/effort combinations produce equally reliable results. Based
 | `high` | All violations and warnings. Thorough. |
 | `max` | Exhaustive line-by-line audit. Expensive and slow. |
 
-For most users, `--backend anthropic -m balanced -e medium` (or configure these as defaults in `bcs.conf`) provides the best balance of accuracy, speed, and cost.
+For most users, `-m claude-sonnet-4-6 -e medium` (or configure these as defaults in `bcs.conf`) provides the best balance of accuracy, speed, and cost.
 
 ### Configuration
 
@@ -190,13 +207,17 @@ Config files are sourced as bash in cascade order (later files override earlier)
 Any file may set a subset of values; keys it doesn't touch inherit from earlier layers. This lets a user override a single setting without re-declaring every default.
 
 ```bash
-BCS_BACKEND=ollama        # auto, claude, ollama, anthropic, google, openai
-BCS_MODEL=balanced        # fast, balanced, thorough
+BCS_MODEL=balanced        # fast, balanced, thorough, or a direct model name
+                          # (e.g. claude-sonnet-4-6, minimax-m2:cloud, claude-code)
 BCS_EFFORT=medium         # low, medium, high, max
 
 # Override model for a specific backend (bypasses tier mapping)
 BCS_OPENAI_MODEL=gpt-5.4
 ```
+
+> **Note:** `BCS_BACKEND` is deprecated and ignored. A warning is emitted on
+> first use. Pin a concrete model in `BCS_MODEL` instead (e.g.
+> `BCS_MODEL=claude-sonnet-4-6` or `BCS_MODEL=claude-code`).
 
 See `bcs.conf.sample` for all options including per-tier array overrides. CLI flags override config file settings; config overrides environment variables.
 

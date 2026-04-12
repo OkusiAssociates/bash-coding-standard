@@ -95,42 +95,38 @@ Show template help and exit.
 AI-powered BCS compliance checking. Analyzes a script against the full
 standard and reports violations, warnings, and suggestions with BCS rule
 codes. Supports multiple LLM backends: local Ollama, Anthropic API, OpenAI
-API, Google Gemini API, and Claude CLI. Auto-detects available backends when
-none is specified.
-.TP
-.BR \-b ", " \-\-backend " " \fIBACKEND\fR
-LLM backend:
-.BR auto " (default),"
-.BR claude ","
-.BR ollama ","
-.BR anthropic ","
-.BR google ","
-.BR openai "."
-With a tier keyword, auto-detection probes backends in order
-(ollama, anthropic, openai, google, claude) and selects the first available.
-With a direct model name (via
-.BR \-m ")"
-it instead sniffs the vendor from the name:
-.BR claude\-* " \(-> anthropic,"
-.BR gemini\-* " \(-> google,"
-.BR gpt\-* / o#\-* " \(-> openai,"
-anything else \(-> ollama.
+API, Google Gemini API, and Claude Code CLI. The backend is selected
+entirely from the
+.B \-m
+model name \(em there is no separate backend flag.
 .TP
 .BR \-m ", " \-\-model " " \fIMODEL\fR
 Quality tier or concrete model ID. Tier keywords
-.BR fast " (default),"
-.BR balanced ", and"
+.BR fast ","
+.BR balanced " (default), and"
 .BR thorough
-are mapped per-backend to appropriate models; any other value is passed through
-to the selected backend unchanged, e.g.
+probe available backends in order (ollama, anthropic, openai, google, claude)
+and use the first reachable one with that tier's default model. Any other
+value is passed through to the backend sniffed from the name:
+.BR claude\-* " \(-> anthropic,"
+.BR gemini\-* " \(-> google,"
+.BR gpt\-* / o[0\-9]* " \(-> openai,"
+.BR claude\-code[:tier|model] " \(-> Claude Code CLI,"
+anything else \(-> ollama (e.g.
+.BR minimax\-m2:cloud ")."
+Direct pass-through examples:
 .BR claude\-opus\-4\-6 ","
-.BR gemini\-2.5\-pro ", or"
+.BR gemini\-2.5\-pro ","
 .BR minimax\-m2:cloud "."
 The
 .B BCS_<BACKEND>_MODEL
 environment variables still take precedence over
 .B \-m
-when set.
+when set. Note: Ollama models whose names happen to match
+.BR claude\-* ", " gemini\-* ", " gpt\-* " or " o[0\-9]*
+are unreachable through
+.B \-m
+\(em rename the local model if you need to target it.
 .TP
 .BR \-e ", " \-\-effort " " \fILEVEL\fR
 Analysis depth:
@@ -242,14 +238,17 @@ for all available variables.
 These variables can be set in the config file or environment.
 CLI flags take precedence.
 .TP
-.B BCS_BACKEND
-Default LLM backend for the check subcommand (auto, claude, ollama,
-anthropic, google, openai). Overridden by
-.BR \-b .
-.TP
 .B BCS_MODEL
-Default quality tier (fast, balanced, thorough). Overridden by
+Default quality tier or model name (fast, balanced, thorough, or a direct
+model ID such as claude-sonnet-4-6, minimax-m2:cloud, claude-code, etc.).
+Overridden by
 .BR \-m .
+Setting
+.B BCS_BACKEND
+is deprecated and ignored \(em a deprecation warning is emitted on first
+use. Pin a concrete model in
+.B BCS_MODEL
+instead.
 .TP
 .B BCS_EFFORT
 Default analysis depth (low, medium, high, max). Overridden by
@@ -343,8 +342,11 @@ Generate a sourceable library template.
 .B bcs check myscript.sh
 Run AI-powered compliance check (auto-detects backend).
 .TP
-.B bcs check \-\-backend ollama myscript.sh
-Check using local Ollama server.
+.B bcs check \-m minimax\-m2:cloud myscript.sh
+Check using local Ollama with a specific cloud model.
+.TP
+.B bcs check \-m claude\-code myscript.sh
+Check using the Claude Code CLI at the balanced tier.
 .TP
 .B bcs check \-\-strict deploy.sh
 Strict mode: treat warnings as violations.

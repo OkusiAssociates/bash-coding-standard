@@ -4,10 +4,17 @@
 # This file is sourced as bash. CLI flags override these settings.
 # See: bcs check --help
 
-# Default LLM backend: auto, claude, ollama, anthropic, google, openai
-BCS_BACKEND=anthropic
-
-# Default quality tier: fast, balanced, thorough
+# Default model. May be a tier keyword (fast, balanced, thorough) or a
+# concrete model name. The backend is resolved from the model name alone:
+#   claude-*           -> Anthropic API (e.g. claude-sonnet-4-6)
+#   gemini-*           -> Google Gemini API
+#   gpt-* | o[0-9]*    -> OpenAI API
+#   claude-code[:...]  -> Claude Code CLI
+#   (anything else)    -> local Ollama (e.g. minimax-m2:cloud)
+# Tier keywords probe available backends in order and use that tier's default.
+#
+# NOTE: BCS_BACKEND is deprecated and ignored. A warning is emitted on first
+# use. Pin a concrete model here instead.
 BCS_MODEL=balanced
 
 # Default analysis depth: low, medium, high, max

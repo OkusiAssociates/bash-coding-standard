@@ -23,7 +23,6 @@ declare -ar BCS_SEARCH_PATHS=(
 
 declare -ar VALID_EFFORTS=(low medium high max)
 declare -ar VALID_TEMPLATES=(minimal basic complete library)
-declare -ar VALID_BACKENDS=(auto claude ollama anthropic google openai)
 
 # Model-tier to concrete API model mapping per backend
 declare -A ANTHROPIC_MODELS=([fast]=claude-haiku-4-5 [balanced]=claude-sonnet-4-6 [thorough]=claude-opus-4-6)
@@ -171,24 +170,28 @@ ${BOLD}bcs check$NC - AI-powered BCS compliance checking
 ${BOLD}Usage:$NC $SCRIPT_NAME check [OPTIONS] SCRIPT
 
 ${BOLD}Options:$NC
-  -b, --backend BACKEND   LLM backend (${BOLD}auto$NC, claude, ollama, anthropic, google, openai)
-  -m, --model MODEL       Quality tier or model name (${BOLD}fast$NC, balanced, thorough, or e.g. claude-opus-4-6)
-  -e, --effort LEVEL      Analysis depth (${BOLD}low$NC, medium, high, max)
+  -m, --model MODEL       Quality tier or model name (${BOLD}balanced$NC, fast, thorough, or direct)
+  -e, --effort LEVEL      Analysis depth (${BOLD}medium$NC, low, high, max)
   -s, --strict            Treat warnings as violations
   -S, --no-strict         Don't treat warnings as violations (${BOLD}default$NC)
   -q, --quiet             Suppress info messages
   -h, --help              Show this help
 
-${BOLD}Backends:$NC
-  auto        Auto-detect (default): with a tier keyword, probes ollama,
-              anthropic, google, openai, claude in order; with a direct
-              model name, sniffs vendor from the name (claude-* → anthropic,
-              gemini-* → google, gpt-*/o#-* → openai, else → ollama)
-  claude      Claude CLI (\`claude\` command)
-  ollama      Local Ollama server (default: localhost:11434)
-  anthropic   Anthropic Messages API (requires ANTHROPIC_API_KEY)
-  google      Google Gemini API (requires GOOGLE_API_KEY or GEMINI_API_KEY)
-  openai      OpenAI Chat API (requires OPENAI_API_KEY)
+${BOLD}Model selection:$NC
+  The -m value determines which backend handles the check:
+
+    fast|balanced|thorough        Probe available backends (ollama, anthropic,
+                                  openai, google, claude) and use the first
+                                  reachable one with that tier's default model.
+    claude-*                      Anthropic API (e.g. claude-opus-4-6)
+    gemini-*                      Google Gemini API (e.g. gemini-2.5-pro)
+    gpt-* | o[0-9]*               OpenAI API (e.g. gpt-5.4, o3-mini)
+    claude-code                   Claude Code CLI at the balanced tier
+    claude-code:<tier-or-model>   Claude Code CLI with specific tier/model
+    (anything else)               Local Ollama (e.g. minimax-m2:cloud)
+
+  Note: Ollama models named 'claude-*', 'gemini-*', 'gpt-*' or 'o[0-9]*' are
+  unreachable through -m — rename the local model if you need to target it.
 
 ${BOLD}Effort Levels:$NC
   low         Clear violations only (fast, concise)
@@ -206,8 +209,7 @@ ${BOLD}Configuration:$NC
   CLI flags override config file settings; config overrides env vars.
 
 ${BOLD}Environment / Config Variables:$NC
-  BCS_BACKEND         Default backend (overridden by -b)
-  BCS_MODEL           Default quality tier (overridden by -m)
+  BCS_MODEL           Default quality tier or model name (overridden by -m)
   BCS_EFFORT          Default analysis depth (overridden by -e)
   BCS_STRICT          Treat warnings as violations: 0 or 1
   BCS_OLLAMA_MODEL    Override Ollama model (supports :cloud tags, e.g. minimax-m2:cloud)
@@ -225,9 +227,9 @@ ${BOLD}Inline suppression:$NC
 
 ${BOLD}Examples:$NC
   $SCRIPT_NAME check myscript.sh
-  $SCRIPT_NAME check --backend ollama myscript.sh
+  $SCRIPT_NAME check -m minimax-m2:cloud myscript.sh
   $SCRIPT_NAME check --effort high --strict deploy.sh
-  $SCRIPT_NAME check --model thorough -e max deploy.sh
+  $SCRIPT_NAME check -m claude-code:thorough -e max deploy.sh
 HELP
 }
 
@@ -317,15 +319,17 @@ _detect_backend() {
   return 1
 }
 
-# Sniff backend from a direct model name. Only used when backend=auto and
-# the user passed a concrete model ID rather than a tier keyword.
+# Sniff backend from a direct model name. Used by cmd_check() whenever the
+# user passes a concrete model ID rather than a tier keyword.
 # Matches vendor prefixes; anything unrecognised falls back to ollama.
 _sniff_backend() {
   case $1 in
-    claude-*)      echo anthropic ;;
-    gemini-*)      echo google ;;
-    gpt-*|o[0-9]*) echo openai ;;
-    *)             echo ollama ;;
+    # MUST precede claude-* so `claude-code` routes to the CLI, not Anthropic.
+    claude-code|claude-code:*) echo claude ;;
+    claude-*)                  echo anthropic ;;
+    gemini-*)                  echo google ;;
+    gpt-*|o[0-9]*)             echo openai ;;
+    *)                         echo ollama ;;
   esac
 }
 
@@ -642,14 +646,16 @@ cmd_template() {
 # ---- Subcommand: check ----
 
 cmd_check() {
-  local -- script_file='' model=${BCS_MODEL:-balanced} effort=${BCS_EFFORT:-medium} backend=${BCS_BACKEND:-auto}
-  local -i strict=${BCS_STRICT:-0} backend_cli=0
+  local -- script_file='' model=${BCS_MODEL:-balanced} effort=${BCS_EFFORT:-medium}
+  local -i strict=${BCS_STRICT:-0}
   local -ar onoff=(off on)
+  local -- backend=''
+  if [[ -n ${BCS_BACKEND:-} ]]; then
+    warn "BCS_BACKEND=${BCS_BACKEND@Q} is deprecated and ignored. Use BCS_MODEL to pick a backend (e.g. BCS_MODEL=claude-sonnet-4-6 or BCS_MODEL=claude-code)."
+    unset BCS_BACKEND
+  fi
 
   while (($#)); do case $1 in
-    -b|--backend)   noarg "$@"; shift; backend=$1; backend_cli=1
-                    [[ " ${VALID_BACKENDS[*]} " == *" $backend "* ]] || die 22 "Invalid backend ${backend@Q}"
-                    ;;
     -m|--model)     noarg "$@"; shift; model=$1 ;;
     -e|--effort)    noarg "$@"; shift; effort=$1
                     [[ " ${VALID_EFFORTS[*]} " == *" $effort "* ]] || die 22 "Invalid effort ${effort@Q}"
@@ -660,7 +666,7 @@ cmd_check() {
     -q|--quiet)     VERBOSE=0 ;;
     -h|--help)      show_check_help; return 0 ;;
     --)             shift; [[ -n ${1:-} ]] && { script_file=$1; shift; }; break ;;
-    -[bmesSvqh]?*)  set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+    -[mesSvqh]?*)   set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
     -*)             die 22 "Invalid option ${1@Q}" ;;
     *)              [[ -z $script_file ]] || die 2 'Only one script file allowed'
                     script_file=$1
@@ -672,19 +678,24 @@ cmd_check() {
   [[ -r $script_file ]] || die 13 "Cannot read ${script_file@Q}"
   script_file=$(realpath -e -- "$script_file")
 
-  # Resolve backend. A direct (non-tier) model name overrides a config-set
-  # backend via sniff — unless the user explicitly passed -b, in which case
-  # respect their choice and let the backend surface any incompatibility.
-  if [[ $model != @(fast|balanced|thorough) ]] && ((!backend_cli)); then
-    local -- sniffed
-    sniffed=$(_sniff_backend "$model")
-    if [[ $backend != "$sniffed" ]]; then
-      info "Inferred backend ${sniffed@Q} from model ${model@Q} (was ${backend@Q})"
-      backend=$sniffed
-    fi
-  elif [[ $backend == auto ]]; then
+  # Resolve backend from model name alone.
+  #
+  #   fast|balanced|thorough    -> probe available backends
+  #   claude-code[:tier|model]  -> Claude Code CLI; strip sentinel prefix
+  #   anything else             -> sniff vendor prefix
+  #
+  if [[ $model == @(fast|balanced|thorough) ]]; then
     backend=$(_detect_backend) \
       || die 18 'No LLM backend available (start Ollama, set ANTHROPIC_API_KEY/OPENAI_API_KEY, or install claude CLI)'
+  else
+    backend=$(_sniff_backend "$model")
+    # Strip the claude-code sentinel so _llm_claude_cli sees a resolvable
+    # tier keyword or direct model ID, not the sentinel itself.
+    case $model in
+      claude-code|claude-code:)  model=balanced ;;
+      claude-code:*)             model=${model#claude-code:} ;;
+    esac
+    info "Backend ${backend@Q} inferred from model ${model@Q}"
   fi
 
   # Verify curl+jq for API backends
@@ -699,9 +710,9 @@ cmd_check() {
   local -- bcs_file
   bcs_file=$(_find_bcs_md) || die 3 'BASH-CODING-STANDARD.md not found'
 
-  local -- check_cmd="bcs check --backend ${backend@Q} --model ${model@Q}"
-  check_cmd+=" --effort ${effort@Q} --strict ${onoff[strict]@Q} ${script_file@Q}"
-  ((!VERBOSE)) || info "Checking ${script_file@Q} against BCS..." "$check_cmd"
+  local -- check_cmd="bcs check --model ${model@Q} --effort ${effort@Q}"
+  check_cmd+=" --strict ${onoff[strict]@Q} ${script_file@Q}"
+  ((!VERBOSE)) || info "Checking ${script_file@Q} against BCS (backend=$backend)..." "$check_cmd"
 
   local -- result
   local -i exit_code=0
