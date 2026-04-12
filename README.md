@@ -58,11 +58,11 @@ The `bcs check` subcommand requires an LLM backend. At least one of the followin
 
 | Backend | Requirement | Notes |
 |---------|-------------|-------|
-| Anthropic API | `ANTHROPIC_API_KEY` + curl + jq | Recommended — best accuracy/speed ratio |
+| Anthropic API | `ANTHROPIC_API_KEY` + curl + jq | Recommended -- best accuracy/speed ratio |
 | Google Gemini API | `GOOGLE_API_KEY` + curl + jq | `thorough` tier recommended |
 | OpenAI API | `OPENAI_API_KEY` + curl + jq | `thorough` tier recommended |
 | Ollama (local or cloud) | Running Ollama server | No API key for local; `ollama signin` for cloud (e.g. `minimax-m2:cloud`) |
-| Claude Code CLI | `claude` installed | Optional — highest quality but slowest (2-24 min) |
+| Claude Code CLI | `claude` installed | Optional -- highest quality but slowest (2-24 min) |
 
 ## Installation
 
@@ -162,7 +162,7 @@ Tier keywords map to concrete defaults per backend:
 | balanced | qwen3.5:14b | claude-sonnet-4-6 | gemini-2.5-flash | gpt-5.4-mini |
 | thorough | qwen3.5:14b | claude-opus-4-6 | gemini-2.5-pro | gpt-5.4 |
 
-▲ Ollama models whose names happen to match `claude-*`, `gemini-*`, `gpt-*` or `o[0-9]*` are unreachable through `-m` — rename the local model if you need to target it.
+▲ Ollama models whose names happen to match `claude-*`, `gemini-*`, `gpt-*` or `o[0-9]*` are unreachable through `-m` -- rename the local model if you need to target it.
 
 ### Recommended Settings
 
@@ -178,11 +178,11 @@ Not all model/effort combinations produce equally reliable results. Based on acc
 
 **Backend accuracy ranking** (from accuracy testing against known-compliant scripts):
 
-1. **Claude Code CLI (`claude-code`)** — Highest accuracy with unique findings other backends miss (unused variables, function ordering violations, redundant wrappers). Zero false positives at balanced/thorough tiers. Tradeoff: **very slow** (2-24 minutes per check). Best for final audits before release.
-2. **Anthropic API (`claude-*`)** — Best speed/accuracy ratio. The `balanced` tier produces zero false positives with good coverage in under a minute. Recommended for daily development.
-3. **OpenAI API (`gpt-*`, `o[0-9]*`)** — Good at the `thorough` tier (`high`/`max` effort). Lower tiers invent rule codes and misread code logic. The `thorough-max` combination is the best non-Anthropic API option.
-4. **Google API (`gemini-*`)** — The `thorough` tier at `medium` effort is reliable. Lower tiers over-report, frequently flag correct code as violations, and can produce empty or truncated output. The `fast` tier is not recommended.
-5. **Ollama (local)** — Quality depends heavily on the local model and hardware. Good for offline/private use.
+1. **Claude Code CLI (`claude-code`)** -- Highest accuracy with unique findings other backends miss (unused variables, function ordering violations, redundant wrappers). Zero false positives at balanced/thorough tiers. Tradeoff: **very slow** (2-24 minutes per check). Best for final audits before release.
+2. **Anthropic API (`claude-*`)** -- Best speed/accuracy ratio. The `balanced` tier produces zero false positives with good coverage in under a minute. Recommended for daily development.
+3. **OpenAI API (`gpt-*`, `o[0-9]*`)** -- Good at the `thorough` tier (`high`/`max` effort). Lower tiers invent rule codes and misread code logic. The `thorough-max` combination is the best non-Anthropic API option.
+4. **Google API (`gemini-*`)** -- The `thorough` tier at `medium` effort is reliable. Lower tiers over-report, frequently flag correct code as violations, and can produce empty or truncated output. The `fast` tier is not recommended.
+5. **Ollama (local)** -- Quality depends heavily on the local model and hardware. Good for offline/private use.
 
 **Effort levels** control analysis depth and output token budget:
 
@@ -199,10 +199,10 @@ For most users, `-m claude-sonnet-4-6 -e medium` (or configure these as defaults
 
 Config files are sourced as bash in cascade order (later files override earlier):
 
-1. `/etc/bcs.conf` (system — flat file)
-2. `/etc/bcs/bcs.conf` (system — directory)
+1. `/etc/bcs.conf` (system -- flat file)
+2. `/etc/bcs/bcs.conf` (system -- directory)
 3. `/usr/local/etc/bcs/bcs.conf` (local install)
-4. `~/.config/bcs/bcs.conf` (user — XDG standard)
+4. `~/.config/bcs/bcs.conf` (user -- XDG standard)
 
 Any file may set a subset of values; keys it doesn't touch inherit from earlier layers. This lets a user override a single setting without re-declaring every default.
 
@@ -243,7 +243,7 @@ shellcheck -x bcs                     # Mandatory validation
 
 ## Bash 5.2 Reference (Strict Mode)
 
-BCS includes a rewritten Bash 5.2 reference manpage tailored for strict-mode scripting. It removes legacy syntax (backtick substitution, `[ ]` tests), POSIX compatibility modes, and `sh`-emulation caveats — leaving a clean, modern reference that assumes `set -euo pipefail` and `[[ ]]` throughout.
+BCS includes a rewritten Bash 5.2 reference manpage tailored for strict-mode scripting. It removes legacy syntax (backtick substitution, `[ ]` tests), POSIX compatibility modes, and `sh`-emulation caveats -- leaving a clean, modern reference that assumes `set -euo pipefail` and `[[ ]]` throughout.
 
 ```bash
 man BCS-bash    # View the reference (also: man bcs-bash)
@@ -253,9 +253,9 @@ The reference source lives in `docs/BCS-bash/` as structured Markdown files mirr
 
 ## Related Resources
 
-- [ShellCheck](https://www.shellcheck.net/) — Static analysis tool for shell scripts
-- [Google Shell Style Guide](https://google.github.io/styleguide/shellguide.html) — Google's shell scripting conventions
-- [Bash Reference Manual](https://www.gnu.org/software/bash/manual/) — Official GNU Bash documentation
+- [ShellCheck](https://www.shellcheck.net/) -- Static analysis tool for shell scripts
+- [Google Shell Style Guide](https://google.github.io/styleguide/shellguide.html) -- Google's shell scripting conventions
+- [Bash Reference Manual](https://www.gnu.org/software/bash/manual/) -- Official GNU Bash documentation
 
 ## License
 
