@@ -130,11 +130,17 @@ are unreachable through
 .TP
 .BR \-e ", " \-\-effort " " \fILEVEL\fR
 Analysis depth:
-.BR low " (default, clear violations only),"
-.BR medium " (violations and significant warnings),"
+.BR low " (clear violations only),"
+.BR medium " (violations and significant warnings; default),"
 .BR high " (all violations and warnings),"
 .BR max " (exhaustive line-by-line audit)."
 Controls both the prompt guidance and output token budget.
+.B medium
+is the recommended default for all backends.
+.B high
+improves results for Claude backends but is marginal or harmful for others.
+.B max
+should be avoided for Ollama cloud models (increases hallucination risk).
 .TP
 .BR \-s ", " \-\-strict
 Treat warnings as violations.
@@ -353,6 +359,46 @@ Regenerate BASH\-CODING\-STANDARD.md from section files.
 .TP
 .B bcs help template
 Show detailed help for the template subcommand.
+.\"
+.SH ACCURACY
+Backend accuracy varies significantly. Based on testing across 42 runs on
+two BCS-compliant scripts of different complexity (see
+.IR tests/accuracy/LLM\-ACCURACY.md ):
+.PP
+.B Recommended configurations
+.RS
+.TP
+.B Quick check
+gpt\-5.4 at medium effort (10\-15s, zero false positives)
+.TP
+.B Daily development
+claude\-sonnet\-4\-6 at medium effort (28\-87s, best accuracy/speed ratio)
+.TP
+.B Thorough audit
+claude\-code at balanced\-high (5\-9 min, highest recall, zero false positives)
+.RE
+.PP
+.B Backend ranking (by recall on complex scripts)
+.RS
+.IP 1. 4
+Claude Code CLI \(em highest accuracy, slowest (2\-24 min)
+.IP 2. 4
+Anthropic API (claude\-sonnet\-4\-6) \(em best speed/accuracy ratio
+.IP 3. 4
+OpenAI API (gpt\-5.4) \(em fastest, reliable on simpler scripts
+.IP 4. 4
+Google API (gemini) \(em thorough tier at medium effort is reliable
+.IP 5. 4
+Ollama cloud models \(em not recommended (low recall, hallucination risk)
+.RE
+.PP
+Tier keywords
+.RB ( fast ", " balanced ", " thorough )
+probe backends in order. When an Ollama server is running, it is probed
+first \(em this may route tier keywords to low\-accuracy cloud models.
+Use explicit model names (e.g.
+.BR \-m\ gpt\-5.4 )
+for predictable quality.
 .\"
 .SH SEE ALSO
 .BR bash (1),

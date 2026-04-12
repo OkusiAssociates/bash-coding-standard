@@ -3,6 +3,7 @@
 #
 # This file is sourced as bash. CLI flags override these settings.
 # See: bcs check --help
+# See: tests/accuracy/LLM-ACCURACY.md for detailed backend accuracy data.
 
 # Default model. May be a tier keyword (fast, balanced, thorough) or a
 # concrete model name. The backend is resolved from the model name alone:
@@ -12,9 +13,17 @@
 #   claude-code[:...]  -> Claude Code CLI
 #   (anything else)    -> local Ollama (e.g. minimax-m2:cloud)
 # Tier keywords probe available backends in order and use that tier's default.
+#
+# Accuracy-tested recommendations (by use case):
+#   Quick check:      gpt-5.4          (10-15s, 0 false positives)
+#   Daily dev:        claude-sonnet-4-6 (28-87s, best accuracy/speed)
+#   Pre-release:      claude-code       (2-24 min, highest accuracy)
 BCS_MODEL=balanced
 
 # Default analysis depth: low, medium, high, max
+# 'medium' is the recommended default for all backends.
+# 'high' benefits Claude backends; marginal or harmful elsewhere.
+# 'max' should be avoided for Ollama cloud models (hallucination risk).
 BCS_EFFORT=medium
 
 # Treat warnings as violations: 0 or 1
@@ -37,11 +46,15 @@ BCS_STRICT=0
 #OLLAMA_MODELS[thorough]=qwen3.5:14b
 
 # Ollama Cloud models (run `ollama signin` once, then `ollama pull <model>`):
-BCS_OLLAMA_MODEL=minimax-m2:cloud
-OLLAMA_MODELS[thorough]=minimax-m2:cloud
-OLLAMA_MODELS[balanced]=qwen3-coder:480b-cloud
-# Available cloud models: minimax-m2:cloud, qwen3-coder:480b-cloud,
-# deepseek-v3.1:671b-cloud, gpt-oss:120b-cloud
+# ▲ Accuracy testing shows Ollama cloud models (minimax, glm, qwen) have
+#   very low recall (0-0.5/8 on complex scripts) and non-deterministic
+#   suppression handling. Use for offline/private checking only.
+#   Prefer gpt-5.4 (OpenAI) or claude-sonnet-4-6 (Anthropic) for accuracy.
+#BCS_OLLAMA_MODEL=minimax-m2:cloud
+#OLLAMA_MODELS[thorough]=minimax-m2:cloud
+#OLLAMA_MODELS[balanced]=qwen3-coder:480b-cloud
+# Available cloud models: minimax-m2:cloud, minimax-m2.7:cloud,
+# qwen3-coder:480b-cloud, glm-5.1:cloud, deepseek-v3.1:671b-cloud
 
 #GOOGLE_MODELS[fast]=gemini-2.5-flash-lite
 #GOOGLE_MODELS[balanced]=gemini-2.5-flash

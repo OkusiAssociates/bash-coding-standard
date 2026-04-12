@@ -59,9 +59,9 @@ The `bcs check` subcommand requires an LLM backend. At least one of the followin
 | Backend | Requirement | Notes |
 |---------|-------------|-------|
 | Anthropic API | `ANTHROPIC_API_KEY` + curl + jq | Recommended -- best accuracy/speed ratio |
+| OpenAI API | `OPENAI_API_KEY` + curl + jq | Best speed; strong on simpler scripts |
 | Google Gemini API | `GOOGLE_API_KEY` + curl + jq | `thorough` tier recommended |
-| OpenAI API | `OPENAI_API_KEY` + curl + jq | `thorough` tier recommended |
-| Ollama (local or cloud) | Running Ollama server | No API key for local; `ollama signin` for cloud (e.g. `minimax-m2:cloud`) |
+| Ollama (local or cloud) | Running Ollama server | No API key for local; `ollama signin` for cloud. Low accuracy on cloud models -- use for offline/private checking only |
 | Claude Code CLI | `claude` installed | Optional -- highest quality but slowest (2-24 min) |
 
 ## Installation
@@ -166,34 +166,34 @@ Tier keywords map to concrete defaults per backend:
 
 ### Recommended Settings
 
-Not all model/effort combinations produce equally reliable results. Based on accuracy testing across multiple scripts:
+Not all model/effort combinations produce equally reliable results. Based on accuracy testing against BCS-compliant scripts of varying complexity (see `tests/accuracy/LLM-ACCURACY.md`):
 
 | Use Case | Recommended Setting | Notes |
 |----------|-------------------|-------|
-| **Daily development** | `-m claude-sonnet-4-6 -e medium` | Best accuracy: zero false positives in testing |
+| **Quick sanity check** | `-m gpt-5.4 -e medium` | 10--15s, zero false positives, catches surface-level issues |
+| **Daily development** | `-m claude-sonnet-4-6 -e medium` | Best accuracy/speed ratio: zero false positives, reliable suppression handling |
 | **Pre-commit review** | `-m claude-sonnet-4-6 -e high` | More findings, still very accurate |
-| **Quick sanity check** | `-m fast -e low` | Fast and cheap; expect some noise |
 | **Thorough audit** | `-m claude-opus-4-6 -e high` | Near-zero false positives, comprehensive |
 | **Pre-release audit** | `-m claude-code:thorough -e medium` | Highest quality; finds issues others miss (slow: 2-8 min) |
 
-**Backend accuracy ranking** (from accuracy testing against known-compliant scripts):
+**Backend accuracy ranking** (from accuracy testing across 78 runs on four scripts):
 
-1. **Claude Code CLI (`claude-code`)** -- Highest accuracy with unique findings other backends miss (unused variables, function ordering violations, redundant wrappers). Zero false positives at balanced/thorough tiers. Tradeoff: **very slow** (2-24 minutes per check). Best for final audits before release.
-2. **Anthropic API (`claude-*`)** -- Best speed/accuracy ratio. The `balanced` tier produces zero false positives with good coverage in under a minute. Recommended for daily development.
-3. **OpenAI API (`gpt-*`, `o[0-9]*`)** -- Good at the `thorough` tier (`high`/`max` effort). Lower tiers invent rule codes and misread code logic. The `thorough-max` combination is the best non-Anthropic API option.
+1. **Claude Code (`claude-code`)** -- Highest accuracy (5/8 consensus findings on a complex 1430-line script). Zero false positives at balanced/thorough tiers. Finds unique issues other backends miss: function ordering violations, unused wrappers, redundant variables. Tradeoff: **very slow** (2-24 minutes per check). Best for final audits.
+2. **Anthropic API (`claude-*`)** -- Best speed/accuracy ratio and most consistent across script types. Claude-sonnet-4-6 at medium scores 4/4 on simpler scripts, 3/3 on dual-purpose scripts, with zero false positives in 28--87s. Only model to find missing `local --` separators. Recommended for daily development.
+3. **OpenAI API (`gpt-*`, `o[0-9]*`)** -- Fastest backend (10--35s). gpt-5.4 at medium scores 4/4 on simpler scripts, 2/8 on complex scripts with zero false positives. Only model to catch comment typos. Best for quick checks. Avoid `max` effort -- introduces false positives on some script types.
 4. **Google API (`gemini-*`)** -- The `thorough` tier at `medium` effort is reliable. Lower tiers over-report, frequently flag correct code as violations, and can produce empty or truncated output. The `fast` tier is not recommended.
-5. **Ollama (local)** -- Quality depends heavily on the local model and hardware. Good for offline/private use.
+5. **Ollama cloud models** -- Not recommended for accuracy-sensitive work. Tested models (minimax-m2.7:cloud, glm-5.1:cloud, qwen3-coder:480b-cloud) scored 0--0.5/8 on complex scripts with 1--4 false positives per run. Non-deterministic suppression handling. Higher effort levels increase hallucination risk. Use for offline/private checking only.
 
 **Effort levels** control analysis depth and output token budget:
 
-| Effort | Behaviour |
-|--------|-----------|
-| `low` | Only clear violations. Concise output. |
-| `medium` | Violations and significant warnings. Good default. |
-| `high` | All violations and warnings. Thorough. |
-| `max` | Exhaustive line-by-line audit. Expensive and slow. |
+| Effort | Behaviour | Notes |
+|--------|-----------|-------|
+| `low` | Only clear violations. Concise output. | |
+| `medium` | Violations and significant warnings. | Best default for all backends |
+| `high` | All violations and warnings. Thorough. | Beneficial for Claude backends; marginal or harmful elsewhere |
+| `max` | Exhaustive line-by-line audit. Expensive. | Avoid for ollama-cloud models (hallucination risk) |
 
-For most users, `-m claude-sonnet-4-6 -e medium` (or configure these as defaults in `bcs.conf`) provides the best balance of accuracy, speed, and cost.
+For most users, `-m claude-sonnet-4-6 -e medium` (or configure these as defaults in `bcs.conf`) provides the best balance of accuracy, speed, and cost. For pre-commit hooks where speed matters, `-m gpt-5.4 -e medium` is 10--15s with zero false positives.
 
 ### Configuration
 

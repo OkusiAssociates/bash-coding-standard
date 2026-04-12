@@ -14,5 +14,3 @@ bash5.2
 CLAUDE.md
 examples/exemplar-code/
 UPGRADE-PLAN.md
-tests/accuracy/
-tests/.accuracy/
