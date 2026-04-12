@@ -124,7 +124,7 @@ bcs template -t library     # Sourceable library (~39 lines)
 Uses LLM-powered analysis to validate scripts against the full standard.
 Supports multiple backends: Ollama (local), Anthropic API, Google Gemini API,
 OpenAI API, and Claude Code CLI. The backend is resolved from the `-m` model
-name alone — there is no separate `--backend` flag.
+name.
 
 ```bash
 bcs check myscript.sh                      # Probe available backends (balanced tier)
