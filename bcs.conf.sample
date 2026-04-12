@@ -12,9 +12,6 @@
 #   claude-code[:...]  -> Claude Code CLI
 #   (anything else)    -> local Ollama (e.g. minimax-m2:cloud)
 # Tier keywords probe available backends in order and use that tier's default.
-#
-# NOTE: BCS_BACKEND is deprecated and ignored. A warning is emitted on first
-# use. Pin a concrete model here instead.
 BCS_MODEL=balanced
 
 # Default analysis depth: low, medium, high, max

@@ -650,10 +650,6 @@ cmd_check() {
   local -i strict=${BCS_STRICT:-0}
   local -ar onoff=(off on)
   local -- backend=''
-  if [[ -n ${BCS_BACKEND:-} ]]; then
-    warn "BCS_BACKEND=${BCS_BACKEND@Q} is deprecated and ignored. Use BCS_MODEL to pick a backend (e.g. BCS_MODEL=claude-sonnet-4-6 or BCS_MODEL=claude-code)."
-    unset BCS_BACKEND
-  fi
 
   while (($#)); do case $1 in
     -m|--model)     noarg "$@"; shift; model=$1 ;;

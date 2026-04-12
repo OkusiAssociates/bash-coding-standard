@@ -215,10 +215,6 @@ BCS_EFFORT=medium         # low, medium, high, max
 BCS_OPENAI_MODEL=gpt-5.4
 ```
 
-> **Note:** `BCS_BACKEND` is deprecated and ignored. A warning is emitted on
-> first use. Pin a concrete model in `BCS_MODEL` instead (e.g.
-> `BCS_MODEL=claude-sonnet-4-6` or `BCS_MODEL=claude-code`).
-
 See `bcs.conf.sample` for all options including per-tier array overrides. CLI flags override config file settings; config overrides environment variables.
 
 ## Examples

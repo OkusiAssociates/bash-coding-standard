@@ -137,17 +137,6 @@ begin_test 'check help mentions openai'
 output=$("$BCS_CMD" check -h 2>/dev/null)
 assert_contains "$output" 'openai' 'help mentions openai' || true
 
-# Test: BCS_BACKEND env var triggers deprecation warning
-begin_test 'BCS_BACKEND deprecation warning'
-err=$(BCS_BACKEND=anthropic "$BCS_CMD" check -h 2>&1 >/dev/null || true)
-assert_contains "$err" 'BCS_BACKEND' 'warning mentions BCS_BACKEND' || true
-assert_contains "$err" 'deprecated' 'warning says deprecated' || true
-
-# Test: BCS_BACKEND is NOT in help anymore
-begin_test 'BCS_BACKEND removed from help env list'
-output=$("$BCS_CMD" check -h 2>/dev/null)
-assert_not_contains "$output" 'BCS_BACKEND' 'help omits BCS_BACKEND env var' || true
-
 # Test: check help shows ANTHROPIC_API_KEY env var
 begin_test 'check help mentions ANTHROPIC_API_KEY'
 output=$("$BCS_CMD" check -h 2>/dev/null)
