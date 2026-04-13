@@ -251,6 +251,10 @@ man BCS-bash    # View the reference (also: man bcs-bash)
 
 The reference source lives in `docs/BCS-bash/` as structured Markdown files mirroring the original bash(1) man page sections.
 
+## AI Tooling (`ai-agents/`)
+
+The [`ai-agents/`](ai-agents/README.md) package bundles BCS-aware agents, slash commands, and rule snapshots for Claude Code, opencode, and codex. Drop them into `~/.claude/`, `~/.config/opencode/`, or `~/.codex/` to give any AI session BCS-aware scaffolding, auditing, and shellcheck remediation. See [`ai-agents/README.md`](ai-agents/README.md) for the narrative introduction and [`ai-agents/AGENTS.md`](ai-agents/AGENTS.md) for the flat file inventory.
+
 ## Related Resources
 
 - [ShellCheck](https://www.shellcheck.net/) -- Static analysis tool for shell scripts
