@@ -2,24 +2,5 @@
 # bcscheck - BCS compliance checker convenience shim
 # Passes all arguments to bcs check; defaults via ~/.config/bcs/bcs.conf
 set -euo pipefail
-shopt -s inherit_errexit
-
-#shellcheck disable=SC2155
-declare -r SCRIPT_PATH=$(realpath -- "$0")
-declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
-declare -rx PATH=~/.local/bin:/usr/local/bin:/usr/bin:/bin
-
-die() { (($# < 2)) || >&2 echo "$SCRIPT_NAME: error: ${*:2}"; exit "${1:-0}"; }
-
-# Find bcs
-declare -- BCS_CMD
-if [[ -x $SCRIPT_DIR/bcs ]]; then
-  BCS_CMD="$SCRIPT_DIR"/bcs
-elif command -v bcs >/dev/null; then
-  BCS_CMD=$(command -v bcs)
-else
-  die 18 'bcs command not found'
-fi
-
-exec "$BCS_CMD" check "$@"
+exec bcs check "$@"
 #fin
