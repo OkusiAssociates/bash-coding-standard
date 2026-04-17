@@ -281,3 +281,97 @@ fi
 ```
 
 Omitted components default to 0: `bash_at_least 5` accepts any 5.x; `bash_at_least 5 2` accepts 5.2.0+; `bash_at_least 5 2 21` accepts 5.2.21+.
+
+## BCS0410 Recursive Function State Discipline
+
+**Tier:** core
+
+Any variable assigned inside a recursive function must be declared `local`, **including for-loop variables**. Without `local`, a recursive call mutates the caller's variable -- producing silent corruption that depends on recursion depth and traversal order.
+
+**Test:** if a function's body references its own name (direct recursion) or calls another function that calls back into it (mutual recursion), every variable assigned in its body -- including `for VAR in ...` loop variables -- must be declared `local`.
+
+```bash
+# correct — loop variable declared local; caller's f is preserved
+walk() {
+  local -- dir=$1
+  local -- f
+  for f in "$dir"/*; do
+    [[ -d $f ]] && walk "$f" ||:           # recursive call
+    echo "$f"                              # always the current iteration's $f
+  done
+}
+
+# wrong — f leaks; after walk() returns, the caller's $f is whatever the
+# deepest recursion happened to leave behind
+walk() {
+  local -- dir=$1
+  for f in "$dir"/*; do                    # MISSING 'local -- f' above
+    [[ -d $f ]] && walk "$f" ||:
+    echo "$f"                              # may print a path from the wrong level
+  done
+}
+```
+
+Values passed via positional arguments (`$1`, `$2`, ...) are automatically per-call and do not need `local`.
+
+LLM-based checkers should flag any assignment inside a recursive function that lacks a `local` declaration -- including `for VAR in ...` which implicitly assigns `VAR`.
+
+## BCS0411 Subshell Return-Value Patterns
+
+**Tier:** recommended
+
+When a computation runs in a subshell, choose one of four documented patterns to return data to the parent shell. Never rely on variable mutation across the subshell boundary -- the assignment is lost when the subshell exits.
+
+**Pattern 1 -- Command substitution** (single value or multiline text):
+
+```bash
+local -- content=$(< "$file")
+local -- hash=$(sha256sum "$file" | cut -d' ' -f1)
+```
+
+**Pattern 2 -- Process substitution with `readarray` or `while`** (array or streaming output, preserves parent scope):
+
+```bash
+readarray -t lines < <(grep pattern "$file")
+while IFS= read -r line; do
+  process "$line"
+done < <(some_command)
+```
+
+**Pattern 3 -- Temp file** (large output, binary data, or output consumed by multiple later passes):
+
+```bash
+local -- tmp
+tmp=$(mktemp) || die 1 'mktemp failed'
+trap "rm -f '$tmp'" EXIT
+expensive_command > "$tmp"
+first_pass  < "$tmp"
+second_pass < "$tmp"
+```
+
+**Pattern 4 -- Explicit file descriptor** (long-running producer, interleaved reads):
+
+```bash
+exec 3< <(long_running_stream)
+while read -r -u 3 line; do
+  process "$line"
+done
+exec 3<&-
+```
+
+**Anti-patterns:**
+
+```bash
+# wrong — subshell variable lost
+declare -i count=0
+find . -name '*.log' | while read -r f; do
+  count+=1                               # modified in subshell, invisible in parent
+done
+echo "$count"                            # always 0
+
+# wrong — expecting a function called in a subshell to mutate globals
+process_files() { global_count+=1; }
+(process_files)                          # runs in subshell; global_count unchanged
+```
+
+Cross-references: BCS0504 (pipe-to-while subshells), BCS0903 (process substitution in file contexts), BCS0906 (`find` subshell pitfalls).

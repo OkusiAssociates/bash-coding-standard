@@ -149,3 +149,57 @@ echo data > "/tmp/app_$$"            # PID-based (predictable)
 ```
 
 Default `mktemp` permissions are secure (0600 files, 0700 directories). Multiple trap statements for the same signal overwrite each other — use a single cleanup function.
+
+## BCS1007 Environment Scrubbing Before exec
+
+**Tier:** recommended
+
+Scripts that hand control to another program in a **privileged or delegating context** must sanitise the inherited environment before `exec`. Inherited variables like `LD_PRELOAD`, `LD_LIBRARY_PATH`, or `PYTHONPATH` can silently hijack the child process.
+
+**Privileged or delegating contexts include:**
+
+- Scripts invoked via `sudo` that then `exec` a helper
+- `su`-style or wrapper scripts that elevate privilege
+- PAM or systemd service scripts that `exec` user-supplied commands
+- SSH `ForceCommand` wrappers and other shell-dispatch gatekeepers
+- Scripts that `exec` an interpreter (python, perl, ruby, node) against a fixed script path
+
+Scripts that merely run a pipeline of well-known commands (`grep`, `awk`, `curl`) in their own unprivileged context do not need this scrubbing.
+
+**Minimum unset list** (loaders, interpreter search paths, shell startup files):
+
+```bash
+# correct — explicit scrubbing before exec in a privileged wrapper
+unset LD_PRELOAD LD_LIBRARY_PATH LD_AUDIT \
+      PYTHONPATH PERL5LIB RUBYLIB NODE_PATH \
+      BASH_ENV ENV SHELLOPTS
+exec /usr/libexec/myapp/helper "$@"
+```
+
+**Stronger -- `env -i` for a fully-reset environment** (PATH must be set explicitly):
+
+```bash
+# correct — full environment reset
+exec env -i \
+  HOME="$HOME" \
+  PATH=/usr/local/bin:/usr/bin:/bin \
+  /usr/libexec/myapp/helper "$@"
+```
+
+**Anti-patterns:**
+
+```bash
+# wrong — sudoed wrapper exec's helper without scrubbing LD_PRELOAD
+#!/usr/bin/bash
+# invoked via: sudo /usr/local/bin/deploy-wrapper
+set -euo pipefail
+exec /usr/local/libexec/deploy "$@"      # LD_PRELOAD would hijack deploy
+
+# wrong — partial scrub missing the -AUDIT variant
+unset LD_PRELOAD LD_LIBRARY_PATH
+exec /usr/libexec/helper "$@"            # LD_AUDIT still inherited
+```
+
+LLM-based checkers should flag `exec /path/to/binary "$@"` (or comparable direct-exec patterns) when the script shows markers of a privileged/delegating context -- a top-of-file comment documenting sudo/systemd/PAM invocation, a `ForceCommand` hint, or an explicit privilege handoff -- and no preceding `unset` of the minimum list. Benign scripts without such markers should NOT be flagged.
+
+Cross-references: BCS1001 (SUID prohibition on bash itself), BCS1002 (PATH hardening).

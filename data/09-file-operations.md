@@ -104,3 +104,60 @@ cat "$file" | grep pattern
 ```
 
 Use `cat` only when concatenating multiple files or using cat-specific options (`-n`, `-A`, `-b`).
+
+## BCS0906 find Subshell Pitfalls
+
+**Tier:** recommended
+
+Piping `find` into a loop (`find ... | while read`) creates a subshell -- any variable set in the loop body is invisible to the parent. Use process substitution when state must escape the loop; use `-exec ... +` or built-in actions when no state is needed.
+
+**Stateful iteration -- process substitution + null-delimited input:**
+
+```bash
+# correct — state persists; filenames with spaces/newlines handled safely
+declare -i count=0
+declare -a paths=()
+while IFS= read -r -d '' f; do
+  count+=1
+  paths+=("$f")
+done < <(find . -type f -print0)
+info "Found $count files"
+```
+
+**Stateless batching -- `-exec ... +`** (one fork for N matches):
+
+```bash
+# correct — batches arguments; efficient
+find . -name '*.log' -exec gzip {} +
+find /tmp -type f -mtime +7 -exec rm -- {} +
+```
+
+**Stateless built-in actions** (preferred over `-exec` when available):
+
+```bash
+find . -name '*.tmp' -delete
+find . -type d -empty -delete
+```
+
+**Anti-patterns:**
+
+```bash
+# wrong — subshell loses count
+declare -i count=0
+find . -name '*.log' | while read -r f; do
+  count+=1
+done
+echo "$count"                            # always 0
+
+# wrong — filenames with spaces/newlines break plain read
+find . -type f | while read f; do        # should be -print0 + read -r -d ''
+  process "$f"
+done
+
+# wrong — -exec ... \; forks once per match (slow, cannot aggregate)
+find . -name '*.log' -exec gzip {} \;    # use + instead of \; when possible
+```
+
+Always pair `find -print0` with `read -r -d ''` so filenames containing spaces, tabs, or newlines are handled correctly.
+
+Cross-references: BCS0411 (subshell return patterns), BCS0504 (process substitution in while loops), BCS0903 (process substitution generally).

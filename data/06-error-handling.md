@@ -132,6 +132,26 @@ cmd1
 local -i result=$?
 ```
 
+**`PIPESTATUS` pitfalls:**
+
+- `PIPESTATUS` is overwritten by the **very next command** -- including `echo`. Snapshot it immediately if you need it across statements: `local -a ps=("${PIPESTATUS[@]}")`.
+- Under `set -o pipefail` (part of BCS0101 strict mode), `$?` already reflects the rightmost non-zero exit. Inspect `PIPESTATUS` only when you need to distinguish *which* stage failed.
+- `((PIPESTATUS[0]))` only tells you about the first command. For a multi-stage pipeline, iterate over a snapshot:
+
+```bash
+# correct — snapshot, then inspect each stage
+sort "$file" | uniq | wc -l > "$output"
+local -a ps=("${PIPESTATUS[@]}")
+for i in "${!ps[@]}"; do
+  ((ps[i] == 0)) || die 1 "Stage $i failed (exit ${ps[i]})"
+done
+
+# wrong — echo clobbers PIPESTATUS before we read it
+sort "$file" | uniq | wc -l > "$output"
+echo 'Pipeline done'
+((PIPESTATUS[0] == 0)) || die 1 'Sort failed'   # PIPESTATUS is now echo's
+```
+
 ## BCS0605 Error Suppression
 
 **Tier:** recommended

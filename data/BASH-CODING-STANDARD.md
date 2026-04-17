@@ -1047,6 +1047,100 @@ fi
 
 Omitted components default to 0: `bash_at_least 5` accepts any 5.x; `bash_at_least 5 2` accepts 5.2.0+; `bash_at_least 5 2 21` accepts 5.2.21+.
 
+## BCS0410 Recursive Function State Discipline
+
+**Tier:** core
+
+Any variable assigned inside a recursive function must be declared `local`, **including for-loop variables**. Without `local`, a recursive call mutates the caller's variable -- producing silent corruption that depends on recursion depth and traversal order.
+
+**Test:** if a function's body references its own name (direct recursion) or calls another function that calls back into it (mutual recursion), every variable assigned in its body -- including `for VAR in ...` loop variables -- must be declared `local`.
+
+```bash
+# correct — loop variable declared local; caller's f is preserved
+walk() {
+  local -- dir=$1
+  local -- f
+  for f in "$dir"/*; do
+    [[ -d $f ]] && walk "$f" ||:           # recursive call
+    echo "$f"                              # always the current iteration's $f
+  done
+}
+
+# wrong — f leaks; after walk() returns, the caller's $f is whatever the
+# deepest recursion happened to leave behind
+walk() {
+  local -- dir=$1
+  for f in "$dir"/*; do                    # MISSING 'local -- f' above
+    [[ -d $f ]] && walk "$f" ||:
+    echo "$f"                              # may print a path from the wrong level
+  done
+}
+```
+
+Values passed via positional arguments (`$1`, `$2`, ...) are automatically per-call and do not need `local`.
+
+LLM-based checkers should flag any assignment inside a recursive function that lacks a `local` declaration -- including `for VAR in ...` which implicitly assigns `VAR`.
+
+## BCS0411 Subshell Return-Value Patterns
+
+**Tier:** recommended
+
+When a computation runs in a subshell, choose one of four documented patterns to return data to the parent shell. Never rely on variable mutation across the subshell boundary -- the assignment is lost when the subshell exits.
+
+**Pattern 1 -- Command substitution** (single value or multiline text):
+
+```bash
+local -- content=$(< "$file")
+local -- hash=$(sha256sum "$file" | cut -d' ' -f1)
+```
+
+**Pattern 2 -- Process substitution with `readarray` or `while`** (array or streaming output, preserves parent scope):
+
+```bash
+readarray -t lines < <(grep pattern "$file")
+while IFS= read -r line; do
+  process "$line"
+done < <(some_command)
+```
+
+**Pattern 3 -- Temp file** (large output, binary data, or output consumed by multiple later passes):
+
+```bash
+local -- tmp
+tmp=$(mktemp) || die 1 'mktemp failed'
+trap "rm -f '$tmp'" EXIT
+expensive_command > "$tmp"
+first_pass  < "$tmp"
+second_pass < "$tmp"
+```
+
+**Pattern 4 -- Explicit file descriptor** (long-running producer, interleaved reads):
+
+```bash
+exec 3< <(long_running_stream)
+while read -r -u 3 line; do
+  process "$line"
+done
+exec 3<&-
+```
+
+**Anti-patterns:**
+
+```bash
+# wrong — subshell variable lost
+declare -i count=0
+find . -name '*.log' | while read -r f; do
+  count+=1                               # modified in subshell, invisible in parent
+done
+echo "$count"                            # always 0
+
+# wrong — expecting a function called in a subshell to mutate globals
+process_files() { global_count+=1; }
+(process_files)                          # runs in subshell; global_count unchanged
+```
+
+Cross-references: BCS0504 (pipe-to-while subshells), BCS0903 (process substitution in file contexts), BCS0906 (`find` subshell pitfalls).
+
 ---
 
 # Section 05: Control Flow
@@ -1400,6 +1494,26 @@ sort "$file" | uniq > "$output"
 # correct — check $? immediately
 cmd1
 local -i result=$?
+```
+
+**`PIPESTATUS` pitfalls:**
+
+- `PIPESTATUS` is overwritten by the **very next command** -- including `echo`. Snapshot it immediately if you need it across statements: `local -a ps=("${PIPESTATUS[@]}")`.
+- Under `set -o pipefail` (part of BCS0101 strict mode), `$?` already reflects the rightmost non-zero exit. Inspect `PIPESTATUS` only when you need to distinguish *which* stage failed.
+- `((PIPESTATUS[0]))` only tells you about the first command. For a multi-stage pipeline, iterate over a snapshot:
+
+```bash
+# correct — snapshot, then inspect each stage
+sort "$file" | uniq | wc -l > "$output"
+local -a ps=("${PIPESTATUS[@]}")
+for i in "${!ps[@]}"; do
+  ((ps[i] == 0)) || die 1 "Stage $i failed (exit ${ps[i]})"
+done
+
+# wrong — echo clobbers PIPESTATUS before we read it
+sort "$file" | uniq | wc -l > "$output"
+echo 'Pipeline done'
+((PIPESTATUS[0] == 0)) || die 1 'Sort failed'   # PIPESTATUS is now echo's
 ```
 
 ## BCS0605 Error Suppression
@@ -2036,6 +2150,63 @@ cat "$file" | grep pattern
 
 Use `cat` only when concatenating multiple files or using cat-specific options (`-n`, `-A`, `-b`).
 
+## BCS0906 find Subshell Pitfalls
+
+**Tier:** recommended
+
+Piping `find` into a loop (`find ... | while read`) creates a subshell -- any variable set in the loop body is invisible to the parent. Use process substitution when state must escape the loop; use `-exec ... +` or built-in actions when no state is needed.
+
+**Stateful iteration -- process substitution + null-delimited input:**
+
+```bash
+# correct — state persists; filenames with spaces/newlines handled safely
+declare -i count=0
+declare -a paths=()
+while IFS= read -r -d '' f; do
+  count+=1
+  paths+=("$f")
+done < <(find . -type f -print0)
+info "Found $count files"
+```
+
+**Stateless batching -- `-exec ... +`** (one fork for N matches):
+
+```bash
+# correct — batches arguments; efficient
+find . -name '*.log' -exec gzip {} +
+find /tmp -type f -mtime +7 -exec rm -- {} +
+```
+
+**Stateless built-in actions** (preferred over `-exec` when available):
+
+```bash
+find . -name '*.tmp' -delete
+find . -type d -empty -delete
+```
+
+**Anti-patterns:**
+
+```bash
+# wrong — subshell loses count
+declare -i count=0
+find . -name '*.log' | while read -r f; do
+  count+=1
+done
+echo "$count"                            # always 0
+
+# wrong — filenames with spaces/newlines break plain read
+find . -type f | while read f; do        # should be -print0 + read -r -d ''
+  process "$f"
+done
+
+# wrong — -exec ... \; forks once per match (slow, cannot aggregate)
+find . -name '*.log' -exec gzip {} \;    # use + instead of \; when possible
+```
+
+Always pair `find -print0` with `read -r -d ''` so filenames containing spaces, tabs, or newlines are handled correctly.
+
+Cross-references: BCS0411 (subshell return patterns), BCS0504 (process substitution in while loops), BCS0903 (process substitution generally).
+
 ---
 
 # Section 10: Security
@@ -2189,6 +2360,60 @@ echo data > "/tmp/app_$$"            # PID-based (predictable)
 ```
 
 Default `mktemp` permissions are secure (0600 files, 0700 directories). Multiple trap statements for the same signal overwrite each other — use a single cleanup function.
+
+## BCS1007 Environment Scrubbing Before exec
+
+**Tier:** recommended
+
+Scripts that hand control to another program in a **privileged or delegating context** must sanitise the inherited environment before `exec`. Inherited variables like `LD_PRELOAD`, `LD_LIBRARY_PATH`, or `PYTHONPATH` can silently hijack the child process.
+
+**Privileged or delegating contexts include:**
+
+- Scripts invoked via `sudo` that then `exec` a helper
+- `su`-style or wrapper scripts that elevate privilege
+- PAM or systemd service scripts that `exec` user-supplied commands
+- SSH `ForceCommand` wrappers and other shell-dispatch gatekeepers
+- Scripts that `exec` an interpreter (python, perl, ruby, node) against a fixed script path
+
+Scripts that merely run a pipeline of well-known commands (`grep`, `awk`, `curl`) in their own unprivileged context do not need this scrubbing.
+
+**Minimum unset list** (loaders, interpreter search paths, shell startup files):
+
+```bash
+# correct — explicit scrubbing before exec in a privileged wrapper
+unset LD_PRELOAD LD_LIBRARY_PATH LD_AUDIT \
+      PYTHONPATH PERL5LIB RUBYLIB NODE_PATH \
+      BASH_ENV ENV SHELLOPTS
+exec /usr/libexec/myapp/helper "$@"
+```
+
+**Stronger -- `env -i` for a fully-reset environment** (PATH must be set explicitly):
+
+```bash
+# correct — full environment reset
+exec env -i \
+  HOME="$HOME" \
+  PATH=/usr/local/bin:/usr/bin:/bin \
+  /usr/libexec/myapp/helper "$@"
+```
+
+**Anti-patterns:**
+
+```bash
+# wrong — sudoed wrapper exec's helper without scrubbing LD_PRELOAD
+#!/usr/bin/bash
+# invoked via: sudo /usr/local/bin/deploy-wrapper
+set -euo pipefail
+exec /usr/local/libexec/deploy "$@"      # LD_PRELOAD would hijack deploy
+
+# wrong — partial scrub missing the -AUDIT variant
+unset LD_PRELOAD LD_LIBRARY_PATH
+exec /usr/libexec/helper "$@"            # LD_AUDIT still inherited
+```
+
+LLM-based checkers should flag `exec /path/to/binary "$@"` (or comparable direct-exec patterns) when the script shows markers of a privileged/delegating context -- a top-of-file comment documenting sudo/systemd/PAM invocation, a `ForceCommand` hint, or an explicit privilege handoff -- and no preceding `unset` of the minimum list. Benign scripts without such markers should NOT be flagged.
+
+Cross-references: BCS1001 (SUID prohibition on bash itself), BCS1002 (PATH hardening).
 
 ---
 
