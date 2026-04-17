@@ -34,7 +34,7 @@ _policy_search_paths() {
 
 # Reset policy state so _load_policy re-reads each time.
 reset_policy() {
-  _policy_loaded=0
+  _POLICY_LOADED=0
   BCS_POLICY=()
 }
 

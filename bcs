@@ -30,7 +30,7 @@ declare -ar VALID_TIER_FILTERS=(core recommended style)
 declare -A BCS_TIERS=()
 # Policy overrides: BCS#### -> override tier (loaded from policy.conf cascade)
 declare -A BCS_POLICY=()
-declare -i _tiers_loaded=0 _policy_loaded=0
+declare -i _TIERS_LOADED=0 _POLICY_LOADED=0
 
 # Model-tier to concrete API model mapping per backend
 declare -A ANTHROPIC_MODELS=([fast]=claude-haiku-4-5 [balanced]=claude-sonnet-4-6 [thorough]=claude-opus-4-6)
@@ -71,7 +71,7 @@ error()   { >&2 _msg "$@"; }
 die()     { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 noarg()   { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
 
-# ---- Configuration ----
+# ---- Configuration and globals ----
 
 # Load all conf files (cascade: system first, user overrides system)
 # Emit bcs.conf cascade paths (system first, user last).
@@ -114,7 +114,7 @@ read_conf() {
   ((loaded))
 }
 
-# ---- Help functions ----
+# Help functions
 
 show_main_help() {
   cat <<HELP
@@ -352,7 +352,7 @@ to user-owned rule files outside the BCS tree.
 HELP
 }
 
-# ---- Path resolution helpers ----
+# ---- Helpers: paths, tiers, policy ----
 
 # Find BASH-CODING-STANDARD.md using FHS-compliant search
 _find_bcs_md() {
@@ -391,13 +391,13 @@ _find_md2ansi() {
   command -v md2ansi 2>/dev/null # Falls through to PATH search; non-zero = not found
 }
 
-# ---- Tier & policy loading ----
+# Tier & policy loading
 
 # Scan section files and populate BCS_TIERS from **Tier:** lines.
 # Tier markers live in rule bodies, one line each. Overview headings
 # (BCS#100) have no tier field and are skipped.
 _load_tiers() {
-  ((_tiers_loaded)) && return 0
+  ((_TIERS_LOADED)) && return 0
   local -- data_dir
   data_dir=$(_find_data_dir) || return 1
   local -- current_code='' line
@@ -411,7 +411,7 @@ _load_tiers() {
       current_code=''
     fi
   done < <(cat "${files[@]}" 2>/dev/null ||:)
-  _tiers_loaded=1
+  _TIERS_LOADED=1
 }
 
 # Emit policy.conf cascade paths (system first, project-local last).
@@ -426,7 +426,7 @@ _policy_search_paths() {
 # Load policy.conf cascade (system -> user -> project; later wins).
 # Policy files are parsed line-by-line -- NEVER sourced as shell.
 _load_policy() {
-  ((_policy_loaded)) && return 0
+  ((_POLICY_LOADED)) && return 0
   local -a search_paths=()
   readarray -t search_paths < <(_policy_search_paths)
   local -- path line code tier
@@ -453,7 +453,7 @@ _load_policy() {
       fi
     done < "$path"
   done
-  _policy_loaded=1
+  _POLICY_LOADED=1
 }
 
 # Effective tier for a BCS code (policy override wins over default).
@@ -484,19 +484,7 @@ _policy_summary() {
   printf 'Rules with override tier = "disabled" must NOT be reported.\n'
 }
 
-# Collect user rule files in load order: 98-user.md then 98-user.d/*.md.
-_collect_user_rules() {
-  local -- data_dir=$1
-  local -- f
-  [[ -f $data_dir/98-user.md ]] && printf '%s\n' "$data_dir"/98-user.md ||:
-  if [[ -d $data_dir/98-user.d ]]; then
-    for f in "$data_dir"/98-user.d/*.md; do
-      [[ -f $f ]] && printf '%s\n' "$f" ||:
-    done
-  fi
-}
-
-# ---- LLM backend functions ----
+# ---- LLM backends ----
 
 # Dump the raw HTTP response body to $BCS_RESPONSE_DUMP if set.
 # cmd_check sets this to a file path so that empty/malformed results
@@ -740,7 +728,9 @@ Respect inline suppression: eg, #bcscheck disable=BCS0101 exempts the next line/
   CLAUDECODE= claude "${claude_args[@]}" -p "$prompt" 2>/dev/null
 }
 
-# ---- Subcommand: display ----
+# ---- Subcommands ----
+
+# Subcommand: display
 
 cmd_display() {
   local -i force_cat=0
@@ -765,9 +755,8 @@ cmd_display() {
 
   bcs_file=$(_find_bcs_md) || die 3 'BASH-CODING-STANDARD.md not found'
 
-  local -a cat_opts=()
   if ((force_cat)); then
-    cat "${cat_opts[@]}" -- "$bcs_file"
+    cat -- "$bcs_file"
     return 0
   fi
 
@@ -782,10 +771,10 @@ cmd_display() {
   fi
 
   # Fallback to plain cat
-  cat "${cat_opts[@]}" -- "$bcs_file"
+  cat -- "$bcs_file"
 }
 
-# ---- Subcommand: template ----
+# Subcommand: template
 
 cmd_template() {
   local -- template_type=basic
@@ -857,7 +846,7 @@ cmd_template() {
   fi
 }
 
-# ---- Subcommand: check ----
+# Subcommand: check
 
 cmd_check() {
   local -- script_file='' model=${BCS_MODEL:-balanced} effort=${BCS_EFFORT:-medium}
@@ -945,7 +934,9 @@ cmd_check() {
   if [[ -d $state_dir && -w $state_dir ]]; then
     export BCS_RESPONSE_DUMP="$state_dir"/last-response.txt
   else
-    export BCS_RESPONSE_DUMP=/tmp/bcs-last-response.$$.txt
+    BCS_RESPONSE_DUMP=$(mktemp /tmp/bcs-last-response.XXXXXX) \
+      || die 1 'Failed to create response dump file in /tmp'
+    export BCS_RESPONSE_DUMP
   fi
 
   local -- result
@@ -954,11 +945,11 @@ cmd_check() {
 
   # Build tier/severity instructions once -- reused by both backends
   local -- tier_instr='' filter_instr='' policy_text
-  tier_instr="Severity mapping (use the **Tier:** field on each rule):
+  tier_instr='Severity mapping (use the **Tier:** field on each rule):
 - **Tier: core** violation -> label as [ERROR]
 - **Tier: recommended** or **Tier: style** violation -> label as [WARN]
 - **Tier: disabled** rules -> NEVER report; skip entirely
-- Rules with no **Tier:** field (section overviews) -> not enforceable; do not report"
+- Rules with no **Tier:** field (section overviews) -> not enforceable; do not report'
 
   if [[ -n $tier_filter ]]; then
     filter_instr="FILTER: Only report findings for rules at tier ${tier_filter@Q}. Omit all others."
@@ -967,6 +958,7 @@ cmd_check() {
       core)        filter_instr="FILTER: Only report findings for rules at tier 'core'. Omit 'recommended' and 'style'." ;;
       recommended) filter_instr="FILTER: Only report findings for rules at tier 'core' or 'recommended'. Omit 'style'." ;;
       style)       : ;;  # report all
+      *)           : ;;  # unreachable: validated at -M parse time
     esac
   fi
 
@@ -990,6 +982,7 @@ cmd_check() {
       medium) effort_guidance='Report VIOLATIONs and significant WARNINGs.' ;;
       high)   effort_guidance='Report all VIOLATIONs and WARNINGs. Be thorough.' ;;
       max)    effort_guidance='Exhaustive line-by-line audit. Report every finding.' ;;
+      *)      die 1 "Unexpected effort: ${effort@Q}" ;;
     esac
 
     #bcscheck disable=BCS1201 — LLM prompt prose; wrapping degrades instruction quality
@@ -1021,6 +1014,7 @@ $numbered_script"
       google)    result=$(_llm_google "$model" "$effort" "$sys_prompt" "$usr_prompt") || exit_code=$? ;;
       ollama)    result=$(_llm_ollama "$model" "$effort" "$sys_prompt" "$usr_prompt") || exit_code=$? ;;
       openai)    result=$(_llm_openai "$model" "$effort" "$sys_prompt" "$usr_prompt") || exit_code=$? ;;
+      *)         die 1 "Unexpected backend: ${backend@Q}" ;;
     esac
   fi
 
@@ -1077,7 +1071,7 @@ $numbered_script"
   return "$exit_code"
 }
 
-# ---- Subcommand: codes ----
+# Subcommand: codes
 
 cmd_codes() {
   local -- tier_filter='' explain_code=''
@@ -1151,7 +1145,7 @@ cmd_codes() {
   done < <(cat "${files[@]}" 2>/dev/null ||:)
 }
 
-# ---- Subcommand: generate ----
+# Subcommand: generate
 
 cmd_generate() {
   local -- output_file=''
@@ -1253,7 +1247,7 @@ cmd_generate() {
   success "Generated ${output_file@Q} ($line_count lines)"
 }
 
-# ---- Subcommand: help ----
+# Subcommand: help
 
 cmd_help() {
   (($#)) || { show_main_help; return 0; }
