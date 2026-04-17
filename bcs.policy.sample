@@ -1,0 +1,35 @@
+# bcs policy.conf -- tier overrides for BCS rules
+#
+# Cascade order (later layers override earlier):
+#   1. /etc/bcs/policy.conf                            (system)
+#   2. $XDG_CONFIG_HOME/bcs/policy.conf (~/.config/bcs/policy.conf)  (user)
+#   3. .bcs/policy.conf                                (project / repo-local)
+#
+# Syntax: BCS#### = <tier>
+#   valid tiers: core | recommended | style | disabled
+#
+# Comments start with '#' and run to end of line. Whitespace is ignored.
+# Overrides apply to rules loaded from both BCS sections and user rules
+# (98-user.md, 98-user.d/*.md).
+#
+# Severity mapping at check time:
+#   core       -> ERROR (non-zero exit)
+#   recommended -> WARN
+#   style      -> WARN
+#   disabled   -> never reported
+
+# Examples -- uncomment and edit as needed.
+
+# Downgrade single-quote dogma to pure style:
+#BCS0301 = style
+
+# Silence the #fin end-marker entirely:
+#BCS0109 = disabled
+
+# Promote the debugging-pattern rule to core for this repo:
+#BCS1207 = core
+
+# User rule (defined in ~/rules/okusi.md linked to data/98-user.d/okusi.md):
+#BCS9801 = core
+
+#fin

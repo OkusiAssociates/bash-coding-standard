@@ -6,6 +6,8 @@ Use `[[ ]]` for string and file tests, `(())` for arithmetic. Never use `[ ]`. T
 
 ## BCS0501 Conditionals
 
+**Tier:** core
+
 ```bash
 # correct — [[ ]] for strings/files, (()) for arithmetic
 [[ -f $file ]]
@@ -32,6 +34,8 @@ command -v curl >/dev/null || die 18 'curl required'
 
 ## BCS0502 Case Statements
 
+**Tier:** recommended
+
 Use `case` for multi-way branching on a single variable.
 
 ```bash
@@ -53,6 +57,8 @@ case "${1:-}" in                     # unnecessary quotes on expression
 Always include default case `*)`  to handle unexpected values. Align actions consistently for readability. Enable `extglob` for advanced patterns: `@(start|stop)`, `!(*.tmp)`, `+([0-9])`.
 
 ## BCS0503 Loops
+
+**Tier:** core
 
 ```bash
 # correct — for with arrays and globs
@@ -137,6 +143,8 @@ See also: [While Loops Reference](../benchmarks/while-loops-reference.md) — fu
 
 ## BCS0504 Process Substitution
 
+**Tier:** core
+
 Never pipe to while loops — pipes create subshells where variable modifications are lost.
 
 ```bash
@@ -165,6 +173,8 @@ Use here-string `<<< "$var"` when input is already in a variable.
 
 ## BCS0505 Arithmetic Operations
 
+**Tier:** style
+
 Always declare integer variables with `declare -i` or `local -i` before arithmetic.
 
 ```bash
@@ -186,6 +196,8 @@ count++
 Use `i+=1` for ALL increments. Integer division truncates: `((10 / 3))` equals 3.
 
 ## BCS0506 Floating-Point Operations
+
+**Tier:** recommended
 
 Bash only supports integer arithmetic. Use `bc -l` or `awk` for floating-point.
 

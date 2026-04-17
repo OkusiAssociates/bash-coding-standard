@@ -6,6 +6,8 @@ Code formatting, comments, development practices, debugging, dry-run patterns, a
 
 ## BCS1201 Code Formatting
 
+**Tier:** style
+
 ```
 - 2 spaces for indentation (never tabs)
 - Lines under 120 characters (except URLs/paths)
@@ -13,6 +15,8 @@ Code formatting, comments, development practices, debugging, dry-run patterns, a
 ```
 
 ## BCS1202 Comments
+
+**Tier:** style
 
 Focus on WHY, not WHAT.
 
@@ -36,6 +40,8 @@ Use standard documentation icons: `◉` (info), `⦿` (debug), `▲` (warn), `�
 
 ## BCS1203 Blank Lines
 
+**Tier:** style
+
 - One blank line between functions
 - One blank line between logical sections within functions
 - One blank line after section comments
@@ -44,6 +50,8 @@ Use standard documentation icons: `◉` (info), `⦿` (debug), `▲` (warn), `�
 - No blank lines between short, related statements
 
 ## BCS1204 Section Comments
+
+**Tier:** style
 
 ```bash
 # correct — lightweight, 2-4 words
@@ -66,6 +74,8 @@ Reserve 80-dash separators for major script divisions only.
 
 ## BCS1205 Language Best Practices
 
+**Tier:** style
+
 Prefer shell builtins over external commands (10-100x faster).
 
 ```bash
@@ -81,6 +91,8 @@ var=$(command)                      # not var=`command`
 ```
 
 ## BCS1206 Static Analysis Directives
+
+**Tier:** core
 
 ShellCheck compliance is compulsory. Use `#shellcheck disable=SCxxxx` only for documented exceptions. Similarly, use `#bcscheck disable=BCSxxxx` to suppress specific BCS rules.
 
@@ -121,6 +133,8 @@ Minimize subshells, use built-in string operations, batch operations, use proces
 
 ## BCS1207 Debugging
 
+**Tier:** recommended
+
 ```bash
 # correct
 declare -i DEBUG=${DEBUG:-0}
@@ -137,6 +151,8 @@ DEBUG=1 ./script.sh
 ```
 
 ## BCS1208 Dry-Run Pattern
+
+**Tier:** recommended
 
 ```bash
 # correct
@@ -155,6 +171,8 @@ deploy() {
 Dry-run maintains identical control flow (same function calls, same logic paths) to verify logic without side effects. Show detailed preview of what would happen with `[DRY-RUN]` prefix.
 
 ## BCS1209 Testing Support
+
+**Tier:** recommended
 
 ```bash
 # correct — dependency injection
@@ -191,6 +209,8 @@ run_tests() {
 
 ## BCS1210 Progressive State Management
 
+**Tier:** recommended
+
 Separate user intent from runtime state.
 
 ```bash
@@ -215,6 +235,8 @@ Apply state changes in logical order: parse, validate, execute. Never modify fla
 
 ## BCS1211 Utility Functions
 
+**Tier:** style
+
 Common helper functions:
 
 ```bash
@@ -232,6 +254,8 @@ s() { (( ${1:-1} == 1 )) || echo -n 's'; }
 ```
 
 ## BCS1212 Makefile Installation
+
+**Tier:** recommended
 
 Bash projects that install to the system must include a Makefile. The Makefile must be non-interactive, silent by default (no banners or colour output), and idempotent.
 
@@ -321,6 +345,8 @@ help:
 ```
 
 ## BCS1213 Date and Time Formatting
+
+**Tier:** style
 
 Prefer `printf '%()T'` (Bash 5.0+ builtin strftime) over `$(date)` for date/time formatting — avoids fork overhead (~28x faster in benchmarks).
 

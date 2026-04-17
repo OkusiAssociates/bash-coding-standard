@@ -6,6 +6,8 @@ Background job management, parallel execution, wait patterns, timeouts, and retr
 
 ## BCS1101 Background Job Management
 
+**Tier:** core
+
 Always track PIDs when starting background jobs.
 
 ```bash
@@ -42,6 +44,8 @@ Use `$!` for the last background PID. Never use `$$` (that's the parent PID).
 
 ## BCS1102 Parallel Execution
 
+**Tier:** recommended
+
 For ordered output, write results to temp files then display in order.
 
 ```bash
@@ -69,6 +73,8 @@ Never modify variables in background subshells expecting parent visibility — u
 
 ## BCS1103 Wait Patterns
 
+**Tier:** core
+
 Always capture wait exit codes.
 
 ```bash
@@ -89,6 +95,8 @@ wait $!
 ```
 
 ## BCS1104 Timeout Handling
+
+**Tier:** core
 
 Wrap network operations with timeout.
 
@@ -114,6 +122,8 @@ curl --connect-timeout 10 --max-time 60 "$url"
 ```
 
 ## BCS1105 Exponential Backoff
+
+**Tier:** recommended
 
 Use exponential backoff for retries. Never use fixed delays.
 

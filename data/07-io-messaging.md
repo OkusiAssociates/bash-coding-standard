@@ -6,6 +6,8 @@ All status messages go to stderr. Only data output goes to stdout. This separati
 
 ## BCS0701 Message Control Flags
 
+**Tier:** style
+
 Declare message control flags as integers at script start.
 
 ```bash
@@ -13,6 +15,8 @@ declare -i VERBOSE=1 PROMPT=1 DEBUG=0
 ```
 
 ## BCS0702 STDOUT vs STDERR Separation
+
+**Tier:** core
 
 ```bash
 # correct — status to stderr, data to stdout
@@ -32,6 +36,8 @@ printf '%s\n' 'error: something failed' >&2
 Stream separation enables: `data=$(./script.sh)` captures only data, `./script.sh 2>errors.log` separates errors, `./script.sh | process` pipes data while showing messages.
 
 ## BCS0703 Core Message Functions
+
+**Tier:** style
 
 Implement `_msg()` as the core function using `FUNCNAME[1]` dispatch.
 
@@ -69,6 +75,8 @@ The above is the **reference set**. Per BCS0405, scripts should only include the
 
 ## BCS0704 Usage Documentation
 
+**Tier:** style
+
 Structure help text with sections. Use heredoc with `cat`.
 
 ```bash
@@ -98,6 +106,8 @@ Never use messaging functions for help output. Help and version must always disp
 
 ## BCS0705 Echo vs Messaging Functions
 
+**Tier:** recommended
+
 ```bash
 # correct — messaging for status
 info 'Validating environment...'
@@ -125,6 +135,8 @@ echo 'Processing...'                 # status via echo to stdout
 Never mix data and status on the same stream.
 
 ## BCS0706 Color Definitions
+
+**Tier:** recommended
 
 Use a conditional block to define colors.
 
@@ -154,6 +166,8 @@ Never scatter inline color declarations across scripts. Centralize in a single d
 
 ## BCS0707 TUI Basics
 
+**Tier:** recommended
+
 Check for terminal before using TUI elements.
 
 ```bash
@@ -171,6 +185,8 @@ trap 'printf "\033[?25h"' EXIT       # restore on exit
 
 ## BCS0708 Terminal Capabilities
 
+**Tier:** recommended
+
 Get terminal dimensions dynamically.
 
 ```bash
@@ -185,6 +201,8 @@ cols=$(tput cols 2>/dev/null || echo 80)
 Never hardcode terminal width. Provide graceful fallbacks for limited terminals.
 
 ## BCS0709 Yes/No Prompt
+
+**Tier:** style
 
 ```bash
 yn() {
@@ -201,6 +219,8 @@ yn 'Deploy to production?' || die 0 'Cancelled'
 
 ## BCS0710 Standard Icons
 
+**Tier:** style
+
 | Icon | Purpose |
 |------|---------|
 | `◉` | Info |
@@ -211,6 +231,8 @@ yn 'Deploy to production?' || die 0 'Cancelled'
 | `⚠` | Caution |
 
 ## BCS0711 Combined Redirection
+
+**Tier:** style
 
 Prefer `&>` and `&>>` over the verbose `>file 2>&1` and `>>file 2>&1` forms.
 

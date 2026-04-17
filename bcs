@@ -23,6 +23,14 @@ declare -ar BCS_SEARCH_PATHS=(
 
 declare -ar VALID_EFFORTS=(low medium high max)
 declare -ar VALID_TEMPLATES=(minimal basic complete library)
+declare -ar VALID_TIERS=(core recommended style disabled)
+declare -ar VALID_TIER_FILTERS=(core recommended style)
+
+# Rule tier map: BCS#### -> default tier (loaded from section bodies)
+declare -A BCS_TIERS=()
+# Policy overrides: BCS#### -> override tier (loaded from policy.conf cascade)
+declare -A BCS_POLICY=()
+declare -i _tiers_loaded=0 _policy_loaded=0
 
 # Model-tier to concrete API model mapping per backend
 declare -A ANTHROPIC_MODELS=([fast]=claude-haiku-4-5 [balanced]=claude-sonnet-4-6 [thorough]=claude-opus-4-6)
@@ -174,6 +182,8 @@ ${BOLD}Options:$NC
   -e, --effort LEVEL      Analysis depth (${BOLD}medium$NC, low, high, max)
   -s, --strict            Treat warnings as violations
   -S, --no-strict         Don't treat warnings as violations (${BOLD}default$NC)
+  -T, --tier TIER         Report only findings at this tier (core|recommended|style)
+  -M, --min-tier TIER     Report findings at this tier or higher severity
   -q, --quiet             Suppress info messages
   -h, --help              Show this help
 
@@ -199,6 +209,31 @@ ${BOLD}Effort Levels:$NC
   high        All violations and warnings (thorough)
   max         Exhaustive line-by-line audit
 
+${BOLD}Tiers & Severity:$NC
+  Rules carry a ${BOLD}**Tier:**$NC field. The check command maps tier to severity:
+    core        -> [ERROR]  (non-zero exit when any [ERROR] found)
+    recommended -> [WARN]
+    style       -> [WARN]
+    disabled    -> not reported
+
+  Use ${BOLD}-T core$NC for CI gates (fail only on core violations) or
+  ${BOLD}-M recommended$NC to skip style findings during development.
+
+${BOLD}Policy Overrides:$NC
+  Place ${BOLD}policy.conf$NC at any of these cascading locations (later wins):
+    /etc/bcs/policy.conf                        (system)
+    \${XDG_CONFIG_HOME:-~/.config}/bcs/policy.conf (user)
+    .bcs/policy.conf                            (project / repo-local)
+  Syntax: ${BOLD}BCS#### = core|recommended|style|disabled$NC
+  See ${BOLD}bcs.policy.sample$NC in the BCS source tree for examples.
+
+${BOLD}User Rules:$NC
+  Custom rules may be added in BCS9800-BCS9899 space via:
+    \$BCS_DATA/98-user.md         (single file)
+    \$BCS_DATA/98-user.d/*.md     (drop-in directory)
+  Either may be symlinks to user-owned files. User rules are included in the
+  generated BASH-CODING-STANDARD.md and respected by bcs check / bcs codes.
+
 ${BOLD}Configuration:$NC
   Config files are sourced as bash in cascade order (later overrides earlier):
     /etc/bcs.conf                (system — flat file)
@@ -212,6 +247,8 @@ ${BOLD}Environment / Config Variables:$NC
   BCS_MODEL           Default quality tier or model name (overridden by -m)
   BCS_EFFORT          Default analysis depth (overridden by -e)
   BCS_STRICT          Treat warnings as violations: 0 or 1
+  BCS_TIER            Default --tier filter (core|recommended|style)
+  BCS_MIN_TIER        Default --min-tier filter (core|recommended|style)
   BCS_OLLAMA_MODEL    Override Ollama model (supports :cloud tags, e.g. minimax-m2:cloud)
   BCS_ANTHROPIC_MODEL Override Anthropic model selection
   BCS_GOOGLE_MODEL    Override Google model selection
@@ -240,14 +277,19 @@ ${BOLD}bcs codes$NC - List all BCS rule codes
 ${BOLD}Usage:$NC $SCRIPT_NAME codes [OPTIONS]
 
 ${BOLD}Options:$NC
-  -h, --help    Show this help
+  -T, --tier TIER         Show only rules at this tier (core|recommended|style|disabled)
+  -p, --plain             Omit tier decoration (just "BCS#### Title")
+  -x, --exclude-disabled  Skip rules that have been disabled via policy.conf
+  -h, --help              Show this help
 
-Lists all BCS rule codes and titles extracted from section files.
+Lists all BCS rule codes and titles extracted from section files and any
+user rules (98-user.md, 98-user.d/*.md). Each code is decorated with its
+effective tier (default from the rule body, overridden by policy.conf).
 
 ${BOLD}Example Output:$NC
-  BCS0101 Strict Mode
-  BCS0102 Shebang
-  BCS0103 Script Metadata
+  BCS0101 [core] Strict Mode
+  BCS0102 [recommended] Shebang
+  BCS0107 [style] Function Organization
   [...]
 HELP
 }
@@ -264,6 +306,10 @@ ${BOLD}Options:$NC
 
 Concatenates all data/[0-9]*.md section files into a single
 BASH-CODING-STANDARD.md document.
+
+User rules in data/98-user.md and data/98-user.d/*.md are spliced into
+the output after section 12, before the coda. These files may be symlinks
+to user-owned rule files outside the BCS tree.
 HELP
 }
 
@@ -304,6 +350,105 @@ _find_md2ansi() {
     [[ -x $path ]] && { echo "$path"; return 0; } ||:
   done
   command -v md2ansi 2>/dev/null # Falls through to PATH search; non-zero = not found
+}
+
+# ---- Tier & policy loading ----
+
+# Scan section files and populate BCS_TIERS from **Tier:** lines.
+# Tier markers live in rule bodies, one line each. Overview headings
+# (BCS#100) have no tier field and are skipped.
+_load_tiers() {
+  ((_tiers_loaded)) && return 0
+  local -- data_dir
+  data_dir=$(_find_data_dir) || return 1
+  local -- current_code='' line
+  local -a files=("$data_dir"/[0-9]*.md)
+  [[ -d $data_dir/98-user.d ]] && files+=("$data_dir"/98-user.d/*.md) ||:
+  while IFS= read -r line; do
+    if [[ $line =~ ^##[[:space:]]+(BCS[0-9]+)[[:space:]] ]]; then
+      current_code=${BASH_REMATCH[1]}
+    elif [[ -n $current_code && $line =~ ^\*\*Tier:\*\*[[:space:]]+([a-z]+) ]]; then
+      BCS_TIERS[$current_code]=${BASH_REMATCH[1]}
+      current_code=''
+    fi
+  done < <(cat "${files[@]}" 2>/dev/null ||:)
+  _tiers_loaded=1
+}
+
+# Load policy.conf cascade (system -> user -> project; later wins).
+# Policy files are parsed line-by-line -- NEVER sourced as shell.
+_load_policy() {
+  ((_policy_loaded)) && return 0
+  local -a search_paths=(
+    /etc/bcs/policy.conf
+    "${XDG_CONFIG_HOME:-$HOME/.config}"/bcs/policy.conf
+    .bcs/policy.conf
+  )
+  local -- path line code tier
+  local -i lineno
+  for path in "${search_paths[@]}"; do
+    [[ -f $path && -r $path ]] || continue
+    lineno=0
+    while IFS= read -r line || [[ -n $line ]]; do
+      lineno+=1
+      line=${line%%\#*}                         # strip comments
+      line=${line#"${line%%[![:space:]]*}"}     # ltrim
+      line=${line%"${line##*[![:space:]]}"}     # rtrim
+      [[ -n $line ]] || continue
+      if [[ $line =~ ^(BCS[0-9]+)[[:space:]]*=[[:space:]]*([a-z]+)$ ]]; then
+        code=${BASH_REMATCH[1]}
+        tier=${BASH_REMATCH[2]}
+        if [[ " ${VALID_TIERS[*]} " == *" $tier "* ]]; then
+          BCS_POLICY[$code]=$tier
+        else
+          warn "$path:$lineno: invalid tier ${tier@Q} (valid: ${VALID_TIERS[*]})"
+        fi
+      else
+        warn "$path:$lineno: malformed policy line ${line@Q}"
+      fi
+    done < "$path"
+  done
+  _policy_loaded=1
+}
+
+# Effective tier for a BCS code (policy override wins over default).
+# Returns empty string for codes with no tier (section overviews).
+_effective_tier() {
+  local -- code=$1
+  _load_tiers
+  _load_policy
+  if [[ -n ${BCS_POLICY[$code]:-} ]]; then
+    echo "${BCS_POLICY[$code]}"
+  else
+    echo "${BCS_TIERS[$code]:-}"
+  fi
+}
+
+# Emit a markdown policy-override block for inclusion in LLM prompts.
+# Produces no output when no overrides are defined.
+_policy_summary() {
+  _load_policy
+  ((${#BCS_POLICY[@]})) || return 0
+  local -- code
+  printf '\n=== POLICY OVERRIDES ===\n'
+  printf 'Apply these overrides to the rule tiers defined in the standard:\n'
+  while IFS= read -r code; do
+    printf -- '- %s: tier = %s\n' "$code" "${BCS_POLICY[$code]}"
+  done < <(printf '%s\n' "${!BCS_POLICY[@]}" | sort)
+  printf '\nWhen determining severity, use the OVERRIDE tier, not the default.\n'
+  printf 'Rules with override tier = "disabled" must NOT be reported.\n'
+}
+
+# Collect user rule files in load order: 98-user.md then 98-user.d/*.md.
+_collect_user_rules() {
+  local -- data_dir=$1
+  local -- f
+  [[ -f $data_dir/98-user.md ]] && printf '%s\n' "$data_dir"/98-user.md ||:
+  if [[ -d $data_dir/98-user.d ]]; then
+    for f in "$data_dir"/98-user.d/*.md; do
+      [[ -f $f ]] && printf '%s\n' "$f" ||:
+    done
+  fi
 }
 
 # ---- LLM backend functions ----
@@ -490,6 +635,7 @@ _llm_google() {
 _llm_claude_cli() {
   local -- model=$1 effort=$2 bcs_file=$3 script_file=$4
   local -i strict=$5
+  local -- tier_instr=${6:-} filter_instr=${7:-} policy_text=${8:-}
   command -v claude &>/dev/null || die 18 'Claude CLI required for claude backend'
 
   model=${BCS_ANTHROPIC_MODEL:-${ANTHROPIC_MODELS[$model]:-$model}}
@@ -498,17 +644,22 @@ _llm_claude_cli() {
 
 Analyze @$script_file against the Bash Coding Standard defined in @$bcs_file.
 
+$tier_instr
+
 For each finding, report:
 - The BCS code (e.g., BCS0101)
-- Severity: VIOLATION or WARNING
+- The rule's tier (core, recommended, style)
+- Severity: [ERROR] for core-tier violations, [WARN] for recommended/style
 - The specific line(s) affected
 - What is wrong and how to fix it
 
-At the end, provide a summary table.
+At the end, provide a summary table: | BCS Code | Tier | Severity | Line(s) | Description |.
 
 Respect inline suppression: eg, #bcscheck disable=BCS0101 exempts the next line/block."
 
-  ((strict)) && prompt+=$'\nSTRICT MODE: Treat all warnings as violations.' ||:
+  [[ -z $filter_instr ]] || prompt+=$'\n\n'"$filter_instr"
+  [[ -z $policy_text ]] || prompt+=$'\n'"$policy_text"
+  ((strict)) && prompt+=$'\n\nSTRICT MODE: Treat all warnings as [ERROR].' ||:
 
   # cd to clean temp dir -- prevents claude from loading local CLAUDE.md
   local -- check_dir
@@ -650,6 +801,7 @@ cmd_check() {
   local -i strict=${BCS_STRICT:-0}
   local -ar onoff=(off on)
   local -- backend=''
+  local -- tier_filter=${BCS_TIER:-} min_tier_filter=${BCS_MIN_TIER:-}
 
   while (($#)); do case $1 in
     -m|--model)     noarg "$@"; shift; model=$1 ;;
@@ -658,11 +810,19 @@ cmd_check() {
                     ;;
     -s|--strict)    strict=1 ;;
     -S|--no-strict) strict=0 ;;
+    -T|--tier)      noarg "$@"; shift; tier_filter=$1
+                    [[ " ${VALID_TIER_FILTERS[*]} " == *" $tier_filter "* ]] \
+                      || die 22 "Invalid tier ${tier_filter@Q} (valid: ${VALID_TIER_FILTERS[*]})"
+                    ;;
+    -M|--min-tier)  noarg "$@"; shift; min_tier_filter=$1
+                    [[ " ${VALID_TIER_FILTERS[*]} " == *" $min_tier_filter "* ]] \
+                      || die 22 "Invalid tier ${min_tier_filter@Q} (valid: ${VALID_TIER_FILTERS[*]})"
+                    ;;
     -v|--verbose)   VERBOSE=1 ;;
     -q|--quiet)     VERBOSE=0 ;;
     -h|--help)      show_check_help; return 0 ;;
     --)             shift; [[ -n ${1:-} ]] && { script_file=$1; shift; }; break ;;
-    -[mesSvqh]?*)   set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+    -[mesSTMvqh]?*) set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
     -*)             die 22 "Invalid option ${1@Q}" ;;
     *)              [[ -z $script_file ]] || die 2 'Only one script file allowed'
                     script_file=$1
@@ -714,12 +874,34 @@ cmd_check() {
   local -i exit_code=0
   SECONDS=0
 
+  # Build tier/severity instructions once -- reused by both backends
+  local -- tier_instr='' filter_instr='' policy_text
+  tier_instr="Severity mapping (use the **Tier:** field on each rule):
+- **Tier: core** violation -> label as [ERROR]
+- **Tier: recommended** or **Tier: style** violation -> label as [WARN]
+- **Tier: disabled** rules -> NEVER report; skip entirely
+- Rules with no **Tier:** field (section overviews) -> not enforceable; do not report"
+
+  if [[ -n $tier_filter ]]; then
+    filter_instr="FILTER: Only report findings for rules at tier ${tier_filter@Q}. Omit all others."
+  elif [[ -n $min_tier_filter ]]; then
+    case $min_tier_filter in
+      core)        filter_instr="FILTER: Only report findings for rules at tier 'core'. Omit 'recommended' and 'style'." ;;
+      recommended) filter_instr="FILTER: Only report findings for rules at tier 'core' or 'recommended'. Omit 'style'." ;;
+      style)       : ;;  # report all
+    esac
+  fi
+
+  policy_text=$(_policy_summary)
+
   if [[ $backend == claude ]]; then
-    result=$(_llm_claude_cli "$model" "$effort" "$bcs_file" "$script_file" "$strict") || exit_code=$?
+    result=$(_llm_claude_cli "$model" "$effort" "$bcs_file" "$script_file" "$strict" \
+               "$tier_instr" "$filter_instr" "$policy_text") || exit_code=$?
   else
     # Build prompts for API backends
     local -- sys_prompt usr_prompt numbered_script effort_guidance
     sys_prompt=$(< "$bcs_file")
+    [[ -z $policy_text ]] || sys_prompt+=$'\n'"$policy_text"
 
     # Prepend line numbers so the model can reference lines accurately
     numbered_script=$(nl -ba -w4 -s': ' -- "$script_file")
@@ -735,8 +917,9 @@ cmd_check() {
     #bcscheck disable=BCS1201 — LLM prompt prose; wrapping degrades instruction quality
     usr_prompt="Analyze the following numbered script against the Bash Coding Standard in your system context.
 
+$tier_instr
+
 Rules:
-- VIOLATION: Code is incorrect, unsafe, or clearly breaks a mandatory rule. WARNING: Style deviation or intentional design choice that deviates from a reference pattern.
 - Only report actual deviations. Do NOT report passing rules, observations, or findings you then retract. If analysis shows no violation, omit it entirely.
 - Only report findings about the script content provided. Do NOT assume anything about project structure, files, or resources you cannot see.
 - BCS0405 precedence: Do NOT flag missing functions, variables, or colors from reference templates (BCS0703, BCS0706, BCS0701) if the script does not use them. Unused code must be removed, not added.
@@ -745,11 +928,12 @@ Rules:
 - Line numbers are provided -- reference them exactly.
 
 $effort_guidance"
-    ((strict)) && usr_prompt+=$'\nSTRICT MODE: Treat all WARNINGs as VIOLATIONs.' ||:
+    [[ -z $filter_instr ]] || usr_prompt+=$'\n\n'"$filter_instr"
+    ((strict)) && usr_prompt+=$'\n\nSTRICT MODE: Treat all WARNINGs as VIOLATIONs (label as [ERROR]).' ||:
     usr_prompt+="
 
-For each finding report: BCS code, severity, line number(s), what is wrong, how to fix it.
-End with a summary table: | BCS Code | Severity | Line(s) | Description |
+Format each finding as: [ERROR|WARN] BCSxxxx line N: description, then a fix recommendation.
+End with a summary table: | BCS Code | Tier | Severity | Line(s) | Description |
 
 --- Script to analyze ---
 $numbered_script"
@@ -771,32 +955,59 @@ $numbered_script"
 
   [[ -z $result ]] || echo "$result"
   ((!VERBOSE)) || info "Tokens: $_llm_tokens" "Elapsed: ${SECONDS}s"
+
+  # Severity-based exit: any [ERROR] finding promotes exit code to 1
+  if ((exit_code == 0)) && [[ $result == *'[ERROR]'* ]]; then
+    exit_code=1
+  fi
   return "$exit_code"
 }
 
 # ---- Subcommand: codes ----
 
 cmd_codes() {
-  #shellcheck disable=SC2317
+  local -- tier_filter=''
+  local -i show_tier=1 include_disabled=1
+
   while (($#)); do case $1 in
-    -h|--help) show_codes_help; return 0 ;;
-    -*)        die 22 "Invalid option ${1@Q}" ;;
-    *)         die 2 "Unexpected argument ${1@Q}" ;;
+    -T|--tier)     noarg "$@"; shift; tier_filter=$1
+                   [[ " ${VALID_TIERS[*]} " == *" $tier_filter "* ]] \
+                     || die 22 "Invalid tier ${tier_filter@Q} (valid: ${VALID_TIERS[*]})"
+                   ;;
+    -p|--plain)    show_tier=0 ;;
+    -x|--exclude-disabled) include_disabled=0 ;;
+    -h|--help)     show_codes_help; return 0 ;;
+    -[Tpxh]?*)     set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+    -*)            die 22 "Invalid option ${1@Q}" ;;
+    *)             die 2 "Unexpected argument ${1@Q}" ;;
   esac; shift; done
 
   local -- data_dir
   data_dir=$(_find_data_dir) || die 3 'Data directory not found'
 
-  # Extract all ## BCS#### headers from section files
-  local -- line code title
+  _load_tiers
+  _load_policy
+
+  # Include BCS section files + user rule files
+  local -a files=("$data_dir"/[0-9]*.md)
+  [[ -d $data_dir/98-user.d ]] && files+=("$data_dir"/98-user.d/*.md) ||:
+
+  # Extract all ## BCS#### headers; decorate with effective tier
+  local -- line code title tier
   while IFS= read -r line; do
-    # Match lines like: ## BCS0102 Shebang
     if [[ $line =~ ^##\ (BCS[0-9]+)\ (.+)$ ]]; then
       code=${BASH_REMATCH[1]}
       title=${BASH_REMATCH[2]}
-      printf '%s %s\n' "$code" "$title"
+      tier=$(_effective_tier "$code")
+      [[ -z $tier_filter || $tier == "$tier_filter" ]] || continue
+      ((include_disabled)) || [[ $tier != disabled ]] || continue
+      if ((show_tier)) && [[ -n $tier ]]; then
+        printf '%s [%s] %s\n' "$code" "$tier" "$title"
+      else
+        printf '%s %s\n' "$code" "$title"
+      fi
     fi
-  done < <(cat "$data_dir"/[0-9]*.md)
+  done < <(cat "${files[@]}" 2>/dev/null ||:)
 }
 
 # ---- Subcommand: generate ----
@@ -821,13 +1032,53 @@ cmd_generate() {
   # Default output location
   [[ -n $output_file ]] || output_file="$data_dir"/BASH-CODING-STANDARD.md
 
-  # Count section files
+  # Build ordered list of section files.
+  # Glob picks up 00-index, 01..12, 98-user.md (if present), 99-coda in order.
+  # 98-user.d/*.md drop-ins are spliced in after 98-user.md, or before 99-*
+  # if 98-user.md does not exist.
   local -a section_files=()
-  local -- section_file
+  local -- section_file base f
   for section_file in "$data_dir"/[0-9]*.md; do
-    [[ ${section_file##*/} == BASH-CODING-STANDARD.md ]] && continue ||:
+    base=${section_file##*/}
+    [[ $base == BASH-CODING-STANDARD.md ]] && continue ||:
     section_files+=("$section_file")
   done
+
+  # Splice in 98-user.d/*.md drop-ins at the correct position
+  if [[ -d $data_dir/98-user.d ]]; then
+    local -a dropins=()
+    for f in "$data_dir"/98-user.d/*.md; do
+      [[ -f $f ]] && dropins+=("$f") ||:
+    done
+    if ((${#dropins[@]})); then
+      local -a ordered=()
+      local -i inserted=0
+      # Try to insert right after 98-user.md
+      for section_file in "${section_files[@]}"; do
+        ordered+=("$section_file")
+        base=${section_file##*/}
+        if [[ $base == 98-user.md ]] && ! ((inserted)); then
+          ordered+=("${dropins[@]}")
+          inserted=1
+        fi
+      done
+      # Fallback: insert right before 99-* if no 98-user.md
+      if ! ((inserted)); then
+        ordered=()
+        for section_file in "${section_files[@]}"; do
+          base=${section_file##*/}
+          if [[ $base == 99-* ]] && ! ((inserted)); then
+            ordered+=("${dropins[@]}")
+            inserted=1
+          fi
+          ordered+=("$section_file")
+        done
+      fi
+      # Final fallback: append drop-ins at end
+      ((inserted)) || ordered+=("${dropins[@]}")
+      section_files=("${ordered[@]}")
+    fi
+  fi
 
   ((${#section_files[@]})) || die 3 "No section files found in ${data_dir@Q}"
 

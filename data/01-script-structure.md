@@ -6,6 +6,8 @@ Every BCS-compliant script follows a 13-step structure. Scripts must be self-con
 
 ## BCS0101 Strict Mode
 
+**Tier:** core
+
 `set -euo pipefail` is *mandatory* before script execution starts, and must be the first executable command after shebang, comments, and shellcheck directives.
 
 ```bash
@@ -36,6 +38,8 @@ Choose `failglob` instead of `nullglob` for strict scripts where unmatched globs
 
 ## BCS0102 Shebang
 
+**Tier:** recommended
+
 First line of any script must be a shebang. Three acceptable forms:
 
 ```bash
@@ -58,6 +62,8 @@ shopt -s inherit_errexit
 
 ## BCS0103 Script Metadata
 
+**Tier:** recommended
+
 Declare metadata immediately after `shopt`. Use `realpath` (not `readlink`) by default.
 
 Standard metavars are VERSION, SCRIPT_PATH, SCRIPT_DIR, SCRIPT_NAME. Not all scripts need all four.
@@ -78,6 +84,8 @@ readonly SCRIPT_PATH
 Use `#shellcheck disable=SC2155` before the `SCRIPT_PATH` line. The failure mode (command doesn't exist) should cause immediate termination anyway.
 
 ## BCS0104 FHS Compliance
+
+**Tier:** recommended
 
 Search for resources in FHS order:
 
@@ -103,6 +111,8 @@ declare -- CONFIG_DIR=${XDG_CONFIG_HOME:-"$HOME"/.config}/myapp
 ```
 
 ## BCS0105 Global Variables and Colors
+
+**Tier:** recommended
 
 Declare all global variables up front with explicit types.
 
@@ -131,6 +141,8 @@ fi
 Always check BOTH stdout AND stderr: `[[ -t 1 && -t 2 ]]`.
 
 ## BCS0106 File Extensions and Dual-Purpose Scripts
+
+**Tier:** core
 
 Executables: `.sh` extension or no extension. Globally available executables via PATH must have no extension. Libraries must have `.sh` or `.bash` extension and should not be executable.
 
@@ -170,6 +182,8 @@ See also: [Source Guard Reference](../benchmarks/source-guard-reference.md) — 
 
 ## BCS0107 Function Organization
 
+**Tier:** style
+
 Organize functions bottom-up in 7 layers:
 
 1. Messaging functions (lowest level)
@@ -204,6 +218,8 @@ Never define `main()` at the top. Never define business logic before the utiliti
 
 ## BCS0108 Main Function and Script Invocation
 
+**Tier:** recommended
+
 Generally, use `main()` for scripts over ~200 lines. Parse arguments within `main()`, then make configuration variables readonly after parsing.
 
 ```bash
@@ -229,6 +245,8 @@ Always quote `"$@"` to preserve the argument array. Scripts under 200 lines may 
 
 ## BCS0109 End Marker
 
+**Tier:** style
+
 Every script must end with `#fin\n` OR `#end\n` as the mandatory final line.
 
 ```bash
@@ -246,6 +264,8 @@ main "$@"
 The #end marker simply confirms the file is complete and not truncated.
 
 ## BCS0110 Cleanup and Traps
+
+**Tier:** core
 
 Scripts requiring cleanup must define the cleanup function and set the trap before any code that creates temporary resources.
 
@@ -267,6 +287,8 @@ TEMP_DIR=$(mktemp -d)
 Always disable traps inside the cleanup function to prevent recursion.
 
 ## BCS0111 Configuration File Loading
+
+**Tier:** recommended
 
 Use `read_conf()` to cascade-source `.conf` files from a priority-ordered search path. System files load first, user files last, so user settings override system defaults key-by-key. Missing files are skipped silently.
 

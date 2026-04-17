@@ -41,6 +41,8 @@ Every BCS-compliant script follows a 13-step structure. Scripts must be self-con
 
 ## BCS0101 Strict Mode
 
+**Tier:** core
+
 `set -euo pipefail` is *mandatory* before script execution starts, and must be the first executable command after shebang, comments, and shellcheck directives.
 
 ```bash
@@ -71,6 +73,8 @@ Choose `failglob` instead of `nullglob` for strict scripts where unmatched globs
 
 ## BCS0102 Shebang
 
+**Tier:** recommended
+
 First line of any script must be a shebang. Three acceptable forms:
 
 ```bash
@@ -93,6 +97,8 @@ shopt -s inherit_errexit
 
 ## BCS0103 Script Metadata
 
+**Tier:** recommended
+
 Declare metadata immediately after `shopt`. Use `realpath` (not `readlink`) by default.
 
 Standard metavars are VERSION, SCRIPT_PATH, SCRIPT_DIR, SCRIPT_NAME. Not all scripts need all four.
@@ -113,6 +119,8 @@ readonly SCRIPT_PATH
 Use `#shellcheck disable=SC2155` before the `SCRIPT_PATH` line. The failure mode (command doesn't exist) should cause immediate termination anyway.
 
 ## BCS0104 FHS Compliance
+
+**Tier:** recommended
 
 Search for resources in FHS order:
 
@@ -138,6 +146,8 @@ declare -- CONFIG_DIR=${XDG_CONFIG_HOME:-"$HOME"/.config}/myapp
 ```
 
 ## BCS0105 Global Variables and Colors
+
+**Tier:** recommended
 
 Declare all global variables up front with explicit types.
 
@@ -166,6 +176,8 @@ fi
 Always check BOTH stdout AND stderr: `[[ -t 1 && -t 2 ]]`.
 
 ## BCS0106 File Extensions and Dual-Purpose Scripts
+
+**Tier:** core
 
 Executables: `.sh` extension or no extension. Globally available executables via PATH must have no extension. Libraries must have `.sh` or `.bash` extension and should not be executable.
 
@@ -205,6 +217,8 @@ See also: [Source Guard Reference](/ai/scripts/Okusi/BCS/benchmarks/source-guard
 
 ## BCS0107 Function Organization
 
+**Tier:** style
+
 Organize functions bottom-up in 7 layers:
 
 1. Messaging functions (lowest level)
@@ -239,6 +253,8 @@ Never define `main()` at the top. Never define business logic before the utiliti
 
 ## BCS0108 Main Function and Script Invocation
 
+**Tier:** recommended
+
 Generally, use `main()` for scripts over ~200 lines. Parse arguments within `main()`, then make configuration variables readonly after parsing.
 
 ```bash
@@ -264,6 +280,8 @@ Always quote `"$@"` to preserve the argument array. Scripts under 200 lines may 
 
 ## BCS0109 End Marker
 
+**Tier:** style
+
 Every script must end with `#fin\n` OR `#end\n` as the mandatory final line.
 
 ```bash
@@ -281,6 +299,8 @@ main "$@"
 The #end marker simply confirms the file is complete and not truncated.
 
 ## BCS0110 Cleanup and Traps
+
+**Tier:** core
 
 Scripts requiring cleanup must define the cleanup function and set the trap before any code that creates temporary resources.
 
@@ -302,6 +322,8 @@ TEMP_DIR=$(mktemp -d)
 Always disable traps inside the cleanup function to prevent recursion.
 
 ## BCS0111 Configuration File Loading
+
+**Tier:** recommended
 
 Use `read_conf()` to cascade-source `.conf` files from a priority-ordered search path. System files load first, user files last, so user settings override system defaults key-by-key. Missing files are skipped silently.
 
@@ -368,6 +390,8 @@ The cascade `source`-based pattern is the standard approach. Scripts that intent
 
 ## BCS0201 Type-Specific Declarations
 
+**Tier:** style
+
 Use explicit type declarations to make variable intent clear.
 
 ```bash
@@ -388,6 +412,8 @@ local filename=$1
 The `--` separator for string variable types is **purely semantic** -- it signals a conscious variable type choice, completing the pattern alongside `-i`, `-a`, and `-A`.
 
 ## BCS0202 Variable Scoping
+
+**Tier:** core
 
 Always declare function-specific variables as `local`.
 
@@ -410,6 +436,8 @@ Without `local`, variables become global, overwrite same-named variables, persis
 
 ## BCS0203 Naming Conventions
 
+**Tier:** style
+
 ```bash
 # correct
 readonly MAX_RETRIES=3                # UPPER_CASE for constants/globals
@@ -431,6 +459,8 @@ Avoid use single-letter names or shell built-in names like `PATH`, `HOME`, `USER
 
 ## BCS0204 Constants and Environment Variables
 
+**Tier:** recommended
+
 Use `readonly` for values that never change. Use `declare -x` for variables needed by child processes.
 
 ```bash
@@ -446,6 +476,8 @@ export VERSION=1.0.0                 # children rarely need VERSION
 Don't make user-configurable variables readonly before argument parsing is complete.
 
 ## BCS0205 Readonly Patterns
+
+**Tier:** recommended
 
 For script metadata, use `declare -r` for immediate readonly:
 
@@ -471,6 +503,8 @@ Three-step workflow: (1) declare with defaults, (2) parse/modify in main, (3) re
 
 ## BCS0206 Arrays
 
+**Tier:** core
+
 ```bash
 # correct
 declare -a files=()
@@ -492,6 +526,8 @@ for item in ${items[@]}; do          # unquoted expansion
 Always quote array expansions: `"${array[@]}"`. Never use `${array[*]}` in iteration. Use `readarray -t` or `mapfile -t` instead of word-split assignment.
 
 ## BCS0207 Parameter Expansion
+
+**Tier:** style
 
 Use `"$var"` as the default form. Use braces only when syntactically necessary.
 
@@ -517,6 +553,8 @@ Common expansions: `${var:-default}` (default), `${var##*/}` (basename), `${var%
 
 ## BCS0208 Boolean Flags
 
+**Tier:** recommended
+
 Use integer variables for boolean flags.
 
 ```bash
@@ -535,6 +573,8 @@ if [[ "$DRY_RUN" == "true" ]]; then  # string comparison
 Initialize to `0` (false) or `1` (true). Test with `((FLAG))` — non-zero is true, zero is false.
 
 ## BCS0209 Derived Variables
+
+**Tier:** recommended
 
 Derive paths from base variables to implement DRY.
 
@@ -560,6 +600,8 @@ Make derived variables readonly only after all parsing and derivation is complet
 Single quotes signal "literal text"; double quotes signal "shell processing needed." This semantic distinction clarifies intent for both developers and AI assistants.
 
 ## BCS0301 Quoting Fundamentals
+
+**Tier:** style
 
 Use single quotes for static strings. Use double quotes only when variable expansion is needed.
 
@@ -593,6 +635,8 @@ In general, quote variable portions separately from literal path components for 
 
 ## BCS0302 Command Substitution
 
+**Tier:** core
+
 Use double quotes when strings include command substitution.
 
 ```bash
@@ -607,6 +651,8 @@ echo $result                         # unquoted usage
 ```
 
 ## BCS0303 Quoting in Conditionals
+
+**Tier:** core
 
 Inside `[[ ]]`, **no word splitting or pathname expansion occurs** — variables are safe unquoted in any position. Quoting only matters for the right-hand side of `==`/`!=` (where it controls pattern vs literal matching) and `=~` (where it disables regex).
 
@@ -629,6 +675,8 @@ Inside `[[ ]]`, **no word splitting or pathname expansion occurs** — variables
 ```
 
 ## BCS0304 Here Documents
+
+**Tier:** recommended
 
 Use quoted delimiter `<<'EOF'` for literal content. Use unquoted delimiter `<<EOF` for variable expansion. Use descriptive names for the delimiter.
 
@@ -655,6 +703,8 @@ Quote here-doc delimiters for JSON, SQL, or any content with `$` characters.
 
 ## BCS0305 Printf Patterns
 
+**Tier:** recommended
+
 Use single quotes for format strings, double quotes for variable arguments.
 
 ```bash
@@ -669,6 +719,8 @@ echo -e "Line1\nLine2"              # inconsistent escape handling
 Use `$'...'` syntax as an alternative for escape sequences: `echo $'Line1\nLine2'`.
 
 ## BCS0306 Parameter Quoting with @Q
+
+**Tier:** recommended
 
 Use `${parameter@Q}` to safely display user input in error messages.
 
@@ -686,6 +738,8 @@ die 2 "Invalid argument '$1'"       # special chars break output
 Never use `@Q` for normal variable expansion or comparisons.
 
 ## BCS0307 Anti-Patterns
+
+**Tier:** recommended
 
 ```bash
 # wrong — double quotes for static strings
@@ -717,6 +771,8 @@ Organize functions bottom-up: messaging first, then helpers, then business logic
 
 ## BCS0401 Function Definition
 
+**Tier:** style
+
 Use single-line format for simple operations, multi-line for complex functions.
 
 ```bash
@@ -742,6 +798,8 @@ Declare local variables before use, grouped near the function top when practical
 
 ## BCS0402 Function Names
 
+**Tier:** recommended
+
 ```bash
 # correct
 process_log_file() { :; }           # lowercase with underscores
@@ -757,6 +815,8 @@ cd() { :; }                         # overriding built-in
 Never use dashes in function names. Never override built-in commands without good reason.
 
 ## BCS0403 Main Function
+
+**Tier:** recommended
 
 Include `main()` for scripts longer than ~200 lines. Place `main "$@"` at the bottom just before `#fin`.
 
@@ -786,6 +846,8 @@ Always call main with all arguments: `main "$@"`, never just `main`.
 
 ## BCS0404 Function Export
 
+**Tier:** recommended
+
 Export functions needed by subshells with `declare -fx`.
 
 ```bash
@@ -796,6 +858,8 @@ declare -fx grep find
 ```
 
 ## BCS0405 Production Optimization
+
+**Tier:** style
 
 Remove unused utility functions from production scripts. **This rule takes precedence over template completeness** — do not add functions, variables, or color definitions from reference templates (BCS0703, BCS0706, BCS0701) unless the script actually uses them.
 
@@ -813,6 +877,8 @@ declare -i DEBUG=0                   # no debug() function exists
 Keep only functions and variables the script actually needs. Remove unused globals too.
 
 ## BCS0406 Dual-Purpose Scripts
+
+**Tier:** core
 
 For scripts that can be sourced or executed, define functions before the source fence and strict mode after it. Either fence pattern is acceptable:
 
@@ -862,6 +928,8 @@ Use idempotent initialization with version guard:
 
 ## BCS0407 Library Patterns
 
+**Tier:** core
+
 Pure libraries must reject direct execution.
 
 ```bash
@@ -890,6 +958,8 @@ Source libraries with existence check:
 
 ## BCS0408 Dependency Management
 
+**Tier:** recommended
+
 Use `command -v` for dependency checks, never `which`. POSIX/coreutils commands guaranteed on any Bash 5.2+ system (e.g., `sed`, `awk`, `grep`, `cat`, `date`, `tput`, `wc`, `stty`, `mkdir`, `rm`, `cp`, `mv`) do not require checks — only verify non-standard or separately packaged tools.
 
 ```bash
@@ -905,8 +975,8 @@ done
 declare -i HAS_JQ=0
 command -v jq >/dev/null && HAS_JQ=1 ||:
 
-# correct — check bash version
-((BASH_VERSINFO[0] >= 5 && BASH_VERSINFO[1] >= 2)) || die 1 'Requires Bash 5.2+'
+# correct — check bash version (see BCS0409)
+require_bash 5 2
 
 # wrong — using which
 which curl &>/dev/null
@@ -917,6 +987,66 @@ command -v sed >/dev/null || die 18 'sed required'
 
 Use lazy loading for expensive resources: initialize only when first needed.
 
+## BCS0409 Bash Version Detection
+
+**Tier:** core
+
+Compare `BASH_VERSINFO` elements per component with short-circuit on the first differing index. Compound expressions like `((BASH_VERSINFO[0] >= 5 && BASH_VERSINFO[1] >= 2))` are wrong: they reject Bash 6.0 (major=6 satisfies, but minor=0 does not) even though 6.0 is newer than 5.2.
+
+Provide two predicates: a pure test (`bash_at_least`) and an exit-on-fail wrapper (`require_bash`).
+
+```bash
+# correct — per-component short-circuit, handles newer majors with lower minors
+bash_at_least() {
+  local -i major=${1:-0} minor=${2:-0} patch=${3:-0}
+  (( BASH_VERSINFO[0] != major )) && return $(( BASH_VERSINFO[0] < major ))
+  (( BASH_VERSINFO[1] != minor )) && return $(( BASH_VERSINFO[1] < minor ))
+  (( BASH_VERSINFO[2] >= patch ))
+}
+
+require_bash() {
+  bash_at_least "$@" && return 0
+  local want="${1:-0}.${2:-0}.${3:-0}"
+  local have="${BASH_VERSINFO[0]}.${BASH_VERSINFO[1]}.${BASH_VERSINFO[2]}"
+  die 2 "requires Bash >= ${want@Q} (have ${have@Q})"
+  # OR:
+  # printf '%s: requires Bash >= %s (have %s)\n' "${FUNCNAME[0]}" "$want" "$have" >&2
+  # exit 2
+}
+```
+
+```bash
+# wrong — compound && fails for newer major with lower minor
+((BASH_VERSINFO[0] >= 5 && BASH_VERSINFO[1] >= 2)) || die 1 'Requires Bash 5.2+'
+# On Bash 6.0: major=6>=5 (true) && minor=0>=2 (false) → dies, though 6.0 > 5.2
+
+# wrong — string compare on BASH_VERSION is lexicographic
+[[ $BASH_VERSION > "5.2" ]]   # "5.10" < "5.2" under string compare
+```
+
+`BASH_VERSINFO` indices: `[0]`=major, `[1]`=minor, `[2]`=patch, `[3]`=build, `[4]`=release status, `[5]`=machine type. Always compare integers per element; never compare `BASH_VERSION` as a string.
+
+Call `require_bash` at script start, after strict mode and before any feature-dependent code:
+
+```bash
+#!/usr/bin/bash
+set -euo pipefail
+shopt -s inherit_errexit
+require_bash 5 2
+```
+
+Use `bash_at_least` as a predicate when a script can degrade gracefully:
+
+```bash
+if bash_at_least 5 2; then
+  declare -A cache=()     # associative arrays
+else
+  declare -a cache=()     # fallback
+fi
+```
+
+Omitted components default to 0: `bash_at_least 5` accepts any 5.x; `bash_at_least 5 2` accepts 5.2.0+; `bash_at_least 5 2 21` accepts 5.2.21+.
+
 ---
 
 # Section 05: Control Flow
@@ -926,6 +1056,8 @@ Use lazy loading for expensive resources: initialize only when first needed.
 Use `[[ ]]` for string and file tests, `(())` for arithmetic. Never use `[ ]`. This section covers conditionals, case statements, loops, arithmetic, and floating-point operations.
 
 ## BCS0501 Conditionals
+
+**Tier:** core
 
 ```bash
 # correct — [[ ]] for strings/files, (()) for arithmetic
@@ -953,6 +1085,8 @@ command -v curl >/dev/null || die 18 'curl required'
 
 ## BCS0502 Case Statements
 
+**Tier:** recommended
+
 Use `case` for multi-way branching on a single variable.
 
 ```bash
@@ -974,6 +1108,8 @@ case "${1:-}" in                     # unnecessary quotes on expression
 Always include default case `*)`  to handle unexpected values. Align actions consistently for readability. Enable `extglob` for advanced patterns: `@(start|stop)`, `!(*.tmp)`, `+([0-9])`.
 
 ## BCS0503 Loops
+
+**Tier:** core
 
 ```bash
 # correct — for with arrays and globs
@@ -1058,6 +1194,8 @@ See also: [While Loops Reference](/ai/scripts/Okusi/BCS/benchmarks/while-loops-r
 
 ## BCS0504 Process Substitution
 
+**Tier:** core
+
 Never pipe to while loops — pipes create subshells where variable modifications are lost.
 
 ```bash
@@ -1086,6 +1224,8 @@ Use here-string `<<< "$var"` when input is already in a variable.
 
 ## BCS0505 Arithmetic Operations
 
+**Tier:** style
+
 Always declare integer variables with `declare -i` or `local -i` before arithmetic.
 
 ```bash
@@ -1107,6 +1247,8 @@ count++
 Use `i+=1` for ALL increments. Integer division truncates: `((10 / 3))` equals 3.
 
 ## BCS0506 Floating-Point Operations
+
+**Tier:** recommended
 
 Bash only supports integer arithmetic. Use `bc -l` or `awk` for floating-point.
 
@@ -1134,6 +1276,8 @@ Error handling covers strict mode, exit codes, traps, return value checking, and
 
 ## BCS0601 Exit on Error
 
+**Tier:** core
+
 `set -euo pipefail` provides three protections: `-e` exits on command failure, `-u` exits on undefined variables, `-o pipefail` fails pipeline if any command fails.
 
 ```bash
@@ -1159,6 +1303,8 @@ set -e
 ```
 
 ## BCS0602 Exit Codes
+
+**Tier:** recommended
 
 Use `die()` as the standard exit function.
 
@@ -1195,6 +1341,8 @@ Reserved: 64-78 (sysexits), 126 (cannot execute), 127 (not found), 128+n (signal
 
 ## BCS0603 Trap Handling
 
+**Tier:** core
+
 Install cleanup traps early, before creating any resources.
 
 ```bash
@@ -1230,6 +1378,8 @@ Never combine multiple traps for the same signal (replaces previous). Use a sing
 
 ## BCS0604 Checking Return Values
 
+**Tier:** core
+
 Always check return values of critical operations.
 
 ```bash
@@ -1254,6 +1404,8 @@ local -i result=$?
 
 ## BCS0605 Error Suppression
 
+**Tier:** recommended
+
 Only suppress errors when failure is expected, non-critical, and explicitly safe to ignore.
 
 ```bash
@@ -1275,6 +1427,8 @@ set +e                               # never disable broadly
 Verify system state after suppressed operations when possible.
 
 ## BCS0606 Conditional Declarations
+
+**Tier:** core
 
 Prefer inverting the condition with `||` over `((condition)) && action ||:`.
 
@@ -1310,6 +1464,8 @@ All status messages go to stderr. Only data output goes to stdout. This separati
 
 ## BCS0701 Message Control Flags
 
+**Tier:** style
+
 Declare message control flags as integers at script start.
 
 ```bash
@@ -1317,6 +1473,8 @@ declare -i VERBOSE=1 PROMPT=1 DEBUG=0
 ```
 
 ## BCS0702 STDOUT vs STDERR Separation
+
+**Tier:** core
 
 ```bash
 # correct — status to stderr, data to stdout
@@ -1336,6 +1494,8 @@ printf '%s\n' 'error: something failed' >&2
 Stream separation enables: `data=$(./script.sh)` captures only data, `./script.sh 2>errors.log` separates errors, `./script.sh | process` pipes data while showing messages.
 
 ## BCS0703 Core Message Functions
+
+**Tier:** style
 
 Implement `_msg()` as the core function using `FUNCNAME[1]` dispatch.
 
@@ -1373,6 +1533,8 @@ The above is the **reference set**. Per BCS0405, scripts should only include the
 
 ## BCS0704 Usage Documentation
 
+**Tier:** style
+
 Structure help text with sections. Use heredoc with `cat`.
 
 ```bash
@@ -1402,6 +1564,8 @@ Never use messaging functions for help output. Help and version must always disp
 
 ## BCS0705 Echo vs Messaging Functions
 
+**Tier:** recommended
+
 ```bash
 # correct — messaging for status
 info 'Validating environment...'
@@ -1429,6 +1593,8 @@ echo 'Processing...'                 # status via echo to stdout
 Never mix data and status on the same stream.
 
 ## BCS0706 Color Definitions
+
+**Tier:** recommended
 
 Use a conditional block to define colors.
 
@@ -1458,6 +1624,8 @@ Never scatter inline color declarations across scripts. Centralize in a single d
 
 ## BCS0707 TUI Basics
 
+**Tier:** recommended
+
 Check for terminal before using TUI elements.
 
 ```bash
@@ -1475,6 +1643,8 @@ trap 'printf "\033[?25h"' EXIT       # restore on exit
 
 ## BCS0708 Terminal Capabilities
 
+**Tier:** recommended
+
 Get terminal dimensions dynamically.
 
 ```bash
@@ -1489,6 +1659,8 @@ cols=$(tput cols 2>/dev/null || echo 80)
 Never hardcode terminal width. Provide graceful fallbacks for limited terminals.
 
 ## BCS0709 Yes/No Prompt
+
+**Tier:** style
 
 ```bash
 yn() {
@@ -1505,6 +1677,8 @@ yn 'Deploy to production?' || die 0 'Cancelled'
 
 ## BCS0710 Standard Icons
 
+**Tier:** style
+
 | Icon | Purpose |
 |------|---------|
 | `◉` | Info |
@@ -1515,6 +1689,8 @@ yn 'Deploy to production?' || die 0 'Cancelled'
 | `⚠` | Caution |
 
 ## BCS0711 Combined Redirection
+
+**Tier:** style
 
 Prefer `&>` and `&>>` over the verbose `>file 2>&1` and `>>file 2>&1` forms.
 
@@ -1541,6 +1717,8 @@ Use `2>/dev/null` or `2>file` when suppressing only stderr. The `&>` operator is
 Use `while (($#)); do case $1 in ... esac; shift; done` as the standard argument parsing pattern. This section covers parsing, standard options, option bundling, validation, and version output.
 
 ## BCS0801 Standard Parsing Pattern
+
+**Tier:** core
 
 ```bash
 # correct
@@ -1573,6 +1751,8 @@ See also: [Argument Processing Reference](/ai/scripts/Okusi/BCS/benchmarks/args-
 
 ## BCS0802 Version Output
 
+**Tier:** style
+
 Format: `scriptname X.Y.Z` without the word "version".
 
 ```bash
@@ -1586,6 +1766,8 @@ echo "Version: $VERSION"
 ```
 
 ## BCS0803 Argument Validation
+
+**Tier:** core
 
 Validate option arguments exist before capturing them.
 
@@ -1611,6 +1793,8 @@ Validate required arguments after parsing:
 
 ## BCS0804 Parsing Location
 
+**Tier:** recommended
+
 Place argument parsing inside `main()` for better testability.
 
 ```bash
@@ -1633,6 +1817,8 @@ esac; shift; done
 Make variables readonly after parsing completes.
 
 ## BCS0805 Short Option Bundling
+
+**Tier:** recommended
 
 Support bundled short options like `-vvn` expanding to `-v -v -n`.
 
@@ -1657,6 +1843,8 @@ Place bundling case before `-*)` invalid option handler and after all explicit o
 Include arg-taking options in the character class. They work correctly when last in the bundle — the disaggregation peels them off as a separate `-X` flag, and `shift` in their case handler picks up the argument normally. Example: `-vno output.txt` disaggregates to `-v -n -o`, then `-o` consumes `output.txt` via `shift`. The user must place arg-taking options last; `-von file` would incorrectly disaggregate to `-v -o -n`.
 
 ## BCS0806 Standard Options
+
+**Tier:** recommended
 
 Use consistent option letters and variable names across all BCS-compliant scripts. Avoid reassign a standard letter to a different purpose.
 
@@ -1727,6 +1915,8 @@ Safe file testing, wildcard expansion, process substitution, here documents, and
 
 ## BCS0901 Safe File Testing
 
+**Tier:** core
+
 Use `[[ ]]` for all file tests. Always include filenames in error messages for debugging.
 
 ```bash
@@ -1743,6 +1933,8 @@ Use `[[ ]]` for all file tests. Always include filenames in error messages for d
 
 ## BCS0902 Wildcard Expansion
 
+**Tier:** core
+
 Always use explicit path prefix to prevent filenames starting with `-` from being interpreted as flags.
 
 ```bash
@@ -1758,6 +1950,8 @@ for file in *.txt; do                # less safe
 ```
 
 ## BCS0903 Process Substitution
+
+**Tier:** core
 
 Use `< <(command)` with while loops to avoid subshell variable scope issues.
 
@@ -1788,6 +1982,8 @@ command | while read -r line; do count+=1; done
 
 ## BCS0904 Here Documents
 
+**Tier:** recommended
+
 ```bash
 # correct — no expansion (quoted delimiter)
 cat <<'EOF'
@@ -1801,6 +1997,8 @@ EOF
 ```
 
 ## BCS0905 Input Redirection
+
+**Tier:** style
 
 Use `$(< file)` instead of `$(cat file)` — 107x faster (zero process fork).
 
@@ -1826,6 +2024,8 @@ Five essential security areas: SUID/SGID prohibition, PATH security, IFS safety,
 
 ## BCS1001 SUID/SGID Prohibition
 
+**Tier:** core
+
 Never use SUID or SGID bits on Bash scripts. No exceptions.
 
 ```bash
@@ -1840,6 +2040,8 @@ sudo /usr/local/bin/myscript.sh
 For elevated privileges, use sudo, capabilities (`setcap`), compiled wrappers, PolicyKit, or systemd services.
 
 ## BCS1002 PATH Security
+
+**Tier:** core
 
 Secure PATH at script start to prevent command hijacking.
 
@@ -1858,6 +2060,8 @@ PATH="/tmp:$PATH"                    # world-writable directory
 Never include `.`, empty elements (`::`, leading/trailing `:`), `/tmp`, or user home directories in PATH. Place PATH setting early, before any commands that depend on it.
 
 ## BCS1003 IFS Safety
+
+**Tier:** recommended
 
 Never trust inherited IFS values.
 
@@ -1884,6 +2088,8 @@ IFS=','
 ```
 
 ## BCS1004 Eval Avoidance
+
+**Tier:** core
 
 Never use `eval` with untrusted input. Almost every use case has a safer alternative.
 
@@ -1916,6 +2122,8 @@ eval "${action}_function"
 
 ## BCS1005 Input Sanitization
 
+**Tier:** core
+
 Validate and sanitize all user input. Use whitelist over blacklist.
 
 ```bash
@@ -1937,6 +2145,8 @@ cp -- "$source" "$dest"
 Validate early, fail securely with clear errors, run with minimum necessary permissions.
 
 ## BCS1006 Temporary File Handling
+
+**Tier:** core
 
 Always use `mktemp`. Never hardcode temp file paths.
 
@@ -1967,6 +2177,8 @@ Default `mktemp` permissions are secure (0600 files, 0700 directories). Multiple
 Background job management, parallel execution, wait patterns, timeouts, and retry logic. Never leave background jobs unmanaged.
 
 ## BCS1101 Background Job Management
+
+**Tier:** core
 
 Always track PIDs when starting background jobs.
 
@@ -2004,6 +2216,8 @@ Use `$!` for the last background PID. Never use `$$` (that's the parent PID).
 
 ## BCS1102 Parallel Execution
 
+**Tier:** recommended
+
 For ordered output, write results to temp files then display in order.
 
 ```bash
@@ -2031,6 +2245,8 @@ Never modify variables in background subshells expecting parent visibility — u
 
 ## BCS1103 Wait Patterns
 
+**Tier:** core
+
 Always capture wait exit codes.
 
 ```bash
@@ -2051,6 +2267,8 @@ wait $!
 ```
 
 ## BCS1104 Timeout Handling
+
+**Tier:** core
 
 Wrap network operations with timeout.
 
@@ -2076,6 +2294,8 @@ curl --connect-timeout 10 --max-time 60 "$url"
 ```
 
 ## BCS1105 Exponential Backoff
+
+**Tier:** recommended
 
 Use exponential backoff for retries. Never use fixed delays.
 
@@ -2114,6 +2334,8 @@ Code formatting, comments, development practices, debugging, dry-run patterns, a
 
 ## BCS1201 Code Formatting
 
+**Tier:** style
+
 ```
 - 2 spaces for indentation (never tabs)
 - Lines under 120 characters (except URLs/paths)
@@ -2121,6 +2343,8 @@ Code formatting, comments, development practices, debugging, dry-run patterns, a
 ```
 
 ## BCS1202 Comments
+
+**Tier:** style
 
 Focus on WHY, not WHAT.
 
@@ -2144,6 +2368,8 @@ Use standard documentation icons: `◉` (info), `⦿` (debug), `▲` (warn), `�
 
 ## BCS1203 Blank Lines
 
+**Tier:** style
+
 - One blank line between functions
 - One blank line between logical sections within functions
 - One blank line after section comments
@@ -2152,6 +2378,8 @@ Use standard documentation icons: `◉` (info), `⦿` (debug), `▲` (warn), `�
 - No blank lines between short, related statements
 
 ## BCS1204 Section Comments
+
+**Tier:** style
 
 ```bash
 # correct — lightweight, 2-4 words
@@ -2174,6 +2402,8 @@ Reserve 80-dash separators for major script divisions only.
 
 ## BCS1205 Language Best Practices
 
+**Tier:** style
+
 Prefer shell builtins over external commands (10-100x faster).
 
 ```bash
@@ -2189,6 +2419,8 @@ var=$(command)                      # not var=`command`
 ```
 
 ## BCS1206 Static Analysis Directives
+
+**Tier:** core
 
 ShellCheck compliance is compulsory. Use `#shellcheck disable=SCxxxx` only for documented exceptions. Similarly, use `#bcscheck disable=BCSxxxx` to suppress specific BCS rules.
 
@@ -2229,6 +2461,8 @@ Minimize subshells, use built-in string operations, batch operations, use proces
 
 ## BCS1207 Debugging
 
+**Tier:** recommended
+
 ```bash
 # correct
 declare -i DEBUG=${DEBUG:-0}
@@ -2245,6 +2479,8 @@ DEBUG=1 ./script.sh
 ```
 
 ## BCS1208 Dry-Run Pattern
+
+**Tier:** recommended
 
 ```bash
 # correct
@@ -2263,6 +2499,8 @@ deploy() {
 Dry-run maintains identical control flow (same function calls, same logic paths) to verify logic without side effects. Show detailed preview of what would happen with `[DRY-RUN]` prefix.
 
 ## BCS1209 Testing Support
+
+**Tier:** recommended
 
 ```bash
 # correct — dependency injection
@@ -2299,6 +2537,8 @@ run_tests() {
 
 ## BCS1210 Progressive State Management
 
+**Tier:** recommended
+
 Separate user intent from runtime state.
 
 ```bash
@@ -2323,6 +2563,8 @@ Apply state changes in logical order: parse, validate, execute. Never modify fla
 
 ## BCS1211 Utility Functions
 
+**Tier:** style
+
 Common helper functions:
 
 ```bash
@@ -2340,6 +2582,8 @@ s() { (( ${1:-1} == 1 )) || echo -n 's'; }
 ```
 
 ## BCS1212 Makefile Installation
+
+**Tier:** recommended
 
 Bash projects that install to the system must include a Makefile. The Makefile must be non-interactive, silent by default (no banners or colour output), and idempotent.
 
@@ -2429,6 +2673,8 @@ help:
 ```
 
 ## BCS1213 Date and Time Formatting
+
+**Tier:** style
 
 Prefer `printf '%()T'` (Bash 5.0+ builtin strftime) over `$(date)` for date/time formatting — avoids fork overhead (~28x faster in benchmarks).
 

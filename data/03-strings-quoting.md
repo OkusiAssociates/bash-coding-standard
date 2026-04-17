@@ -6,6 +6,8 @@ Single quotes signal "literal text"; double quotes signal "shell processing need
 
 ## BCS0301 Quoting Fundamentals
 
+**Tier:** style
+
 Use single quotes for static strings. Use double quotes only when variable expansion is needed.
 
 ```bash
@@ -38,6 +40,8 @@ In general, quote variable portions separately from literal path components for 
 
 ## BCS0302 Command Substitution
 
+**Tier:** core
+
 Use double quotes when strings include command substitution.
 
 ```bash
@@ -52,6 +56,8 @@ echo $result                         # unquoted usage
 ```
 
 ## BCS0303 Quoting in Conditionals
+
+**Tier:** core
 
 Inside `[[ ]]`, **no word splitting or pathname expansion occurs** — variables are safe unquoted in any position. Quoting only matters for the right-hand side of `==`/`!=` (where it controls pattern vs literal matching) and `=~` (where it disables regex).
 
@@ -74,6 +80,8 @@ Inside `[[ ]]`, **no word splitting or pathname expansion occurs** — variables
 ```
 
 ## BCS0304 Here Documents
+
+**Tier:** recommended
 
 Use quoted delimiter `<<'EOF'` for literal content. Use unquoted delimiter `<<EOF` for variable expansion. Use descriptive names for the delimiter.
 
@@ -100,6 +108,8 @@ Quote here-doc delimiters for JSON, SQL, or any content with `$` characters.
 
 ## BCS0305 Printf Patterns
 
+**Tier:** recommended
+
 Use single quotes for format strings, double quotes for variable arguments.
 
 ```bash
@@ -114,6 +124,8 @@ echo -e "Line1\nLine2"              # inconsistent escape handling
 Use `$'...'` syntax as an alternative for escape sequences: `echo $'Line1\nLine2'`.
 
 ## BCS0306 Parameter Quoting with @Q
+
+**Tier:** recommended
 
 Use `${parameter@Q}` to safely display user input in error messages.
 
@@ -131,6 +143,8 @@ die 2 "Invalid argument '$1'"       # special chars break output
 Never use `@Q` for normal variable expansion or comparisons.
 
 ## BCS0307 Anti-Patterns
+
+**Tier:** recommended
 
 ```bash
 # wrong — double quotes for static strings

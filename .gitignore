@@ -14,3 +14,10 @@ bash5.2
 CLAUDE.md
 examples/exemplar-code/
 UPGRADE-PLAN.md
+
+# User-supplied rule extensions (never shipped with the standard)
+data/98-user.md
+data/98-user.d/
+
+# User-local policy overrides (tier reclassifications, disabled rules)
+.bcs/policy.conf

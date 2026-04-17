@@ -6,6 +6,8 @@ Five essential security areas: SUID/SGID prohibition, PATH security, IFS safety,
 
 ## BCS1001 SUID/SGID Prohibition
 
+**Tier:** core
+
 Never use SUID or SGID bits on Bash scripts. No exceptions.
 
 ```bash
@@ -20,6 +22,8 @@ sudo /usr/local/bin/myscript.sh
 For elevated privileges, use sudo, capabilities (`setcap`), compiled wrappers, PolicyKit, or systemd services.
 
 ## BCS1002 PATH Security
+
+**Tier:** core
 
 Secure PATH at script start to prevent command hijacking.
 
@@ -38,6 +42,8 @@ PATH="/tmp:$PATH"                    # world-writable directory
 Never include `.`, empty elements (`::`, leading/trailing `:`), `/tmp`, or user home directories in PATH. Place PATH setting early, before any commands that depend on it.
 
 ## BCS1003 IFS Safety
+
+**Tier:** recommended
 
 Never trust inherited IFS values.
 
@@ -64,6 +70,8 @@ IFS=','
 ```
 
 ## BCS1004 Eval Avoidance
+
+**Tier:** core
 
 Never use `eval` with untrusted input. Almost every use case has a safer alternative.
 
@@ -96,6 +104,8 @@ eval "${action}_function"
 
 ## BCS1005 Input Sanitization
 
+**Tier:** core
+
 Validate and sanitize all user input. Use whitelist over blacklist.
 
 ```bash
@@ -117,6 +127,8 @@ cp -- "$source" "$dest"
 Validate early, fail securely with clear errors, run with minimum necessary permissions.
 
 ## BCS1006 Temporary File Handling
+
+**Tier:** core
 
 Always use `mktemp`. Never hardcode temp file paths.
 

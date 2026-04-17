@@ -6,6 +6,8 @@
 
 ## BCS0201 Type-Specific Declarations
 
+**Tier:** style
+
 Use explicit type declarations to make variable intent clear.
 
 ```bash
@@ -26,6 +28,8 @@ local filename=$1
 The `--` separator for string variable types is **purely semantic** -- it signals a conscious variable type choice, completing the pattern alongside `-i`, `-a`, and `-A`.
 
 ## BCS0202 Variable Scoping
+
+**Tier:** core
 
 Always declare function-specific variables as `local`.
 
@@ -48,6 +52,8 @@ Without `local`, variables become global, overwrite same-named variables, persis
 
 ## BCS0203 Naming Conventions
 
+**Tier:** style
+
 ```bash
 # correct
 readonly MAX_RETRIES=3                # UPPER_CASE for constants/globals
@@ -69,6 +75,8 @@ Avoid use single-letter names or shell built-in names like `PATH`, `HOME`, `USER
 
 ## BCS0204 Constants and Environment Variables
 
+**Tier:** recommended
+
 Use `readonly` for values that never change. Use `declare -x` for variables needed by child processes.
 
 ```bash
@@ -84,6 +92,8 @@ export VERSION=1.0.0                 # children rarely need VERSION
 Don't make user-configurable variables readonly before argument parsing is complete.
 
 ## BCS0205 Readonly Patterns
+
+**Tier:** recommended
 
 For script metadata, use `declare -r` for immediate readonly:
 
@@ -109,6 +119,8 @@ Three-step workflow: (1) declare with defaults, (2) parse/modify in main, (3) re
 
 ## BCS0206 Arrays
 
+**Tier:** core
+
 ```bash
 # correct
 declare -a files=()
@@ -130,6 +142,8 @@ for item in ${items[@]}; do          # unquoted expansion
 Always quote array expansions: `"${array[@]}"`. Never use `${array[*]}` in iteration. Use `readarray -t` or `mapfile -t` instead of word-split assignment.
 
 ## BCS0207 Parameter Expansion
+
+**Tier:** style
 
 Use `"$var"` as the default form. Use braces only when syntactically necessary.
 
@@ -155,6 +169,8 @@ Common expansions: `${var:-default}` (default), `${var##*/}` (basename), `${var%
 
 ## BCS0208 Boolean Flags
 
+**Tier:** recommended
+
 Use integer variables for boolean flags.
 
 ```bash
@@ -173,6 +189,8 @@ if [[ "$DRY_RUN" == "true" ]]; then  # string comparison
 Initialize to `0` (false) or `1` (true). Test with `((FLAG))` — non-zero is true, zero is false.
 
 ## BCS0209 Derived Variables
+
+**Tier:** recommended
 
 Derive paths from base variables to implement DRY.
 

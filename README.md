@@ -78,7 +78,7 @@ Installs the `bcs` and `bcscheck` binaries, data files, bash completions, and th
 
 ## Overview
 
-The Bash Coding Standard defines 105 rules across 12 sections in a single ~2,500-line document. Rules are written for both human programmers and AI assistants, with code examples for every rule.
+The Bash Coding Standard defines 94 substantive rules (plus 12 section overviews) across 12 sections in a single ~2,800-line document. Rules are written for both human programmers and AI assistants, with code examples for every rule. Every rule is tagged with a tier (`core`, `recommended`, or `style`) that drives severity in `bcs check`.
 
 ### 12 Sections
 
@@ -194,6 +194,41 @@ Not all model/effort combinations produce equally reliable results. Based on acc
 | `max` | Exhaustive line-by-line audit. Expensive. | Avoid for ollama-cloud models (hallucination risk) |
 
 For most users, `-m claude-sonnet-4-6 -e medium` (or configure these as defaults in `bcs.conf`) provides the best balance of accuracy, speed, and cost. For pre-commit hooks where speed matters, `-m gpt-5.4 -e medium` is 10--15s with zero false positives.
+
+### Tiers and Severity
+
+Every rule carries a `**Tier:**` field. `bcs check` maps tier to severity:
+
+| Tier | Count | Severity | Behaviour |
+|------|-------|----------|-----------|
+| `core` | 32 | `[ERROR]` | Real correctness/safety bugs. Non-zero exit if any are found. |
+| `recommended` | 38 | `[WARN]` | Bash hygiene; prevents subtle issues. |
+| `style` | 24 | `[WARN]` | Taste; no correctness impact. |
+| `disabled` | -- | (silent) | Applied only via policy; never reported. |
+
+Filter with `-T <tier>` (only that tier) or `-M <tier>` (that tier and higher severity). For CI gates, use `bcscheck -T core script.sh` to fail only on core violations.
+
+### Policy Overrides
+
+Teams and individuals may reclassify or disable any rule via `policy.conf`:
+
+```bash
+# ~/.config/bcs/policy.conf  -- or .bcs/policy.conf per-repo
+BCS0301 = style        # downgrade single-quote dogma
+BCS0109 = disabled     # silence #fin end-marker noise
+BCS9801 = core         # classify a user rule
+```
+
+Cascade (later wins): `/etc/bcs/policy.conf` → `~/.config/bcs/policy.conf` → `.bcs/policy.conf`. Parsed with strict regex, never sourced. See `bcs.policy.sample` for a template.
+
+### User Rules
+
+Add custom rules in the reserved `BCS9800-BCS9899` namespace. Place markdown files (same structure as any BCS rule) at:
+
+- `data/98-user.md` (single file, optional)
+- `data/98-user.d/*.md` (drop-in directory, optional)
+
+Both may be symlinks to rule files in your home directory. `bcs generate` splices them into `BASH-CODING-STANDARD.md` after section 12; `bcs check` and `bcs codes` honour them like any other rule. Both paths are `.gitignore`d so your rules never ship with upstream BCS.
 
 ### Configuration
 

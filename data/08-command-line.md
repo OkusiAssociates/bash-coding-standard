@@ -6,6 +6,8 @@ Use `while (($#)); do case $1 in ... esac; shift; done` as the standard argument
 
 ## BCS0801 Standard Parsing Pattern
 
+**Tier:** core
+
 ```bash
 # correct
 while (($#)); do case $1 in
@@ -37,6 +39,8 @@ See also: [Argument Processing Reference](../benchmarks/args-processing-referenc
 
 ## BCS0802 Version Output
 
+**Tier:** style
+
 Format: `scriptname X.Y.Z` without the word "version".
 
 ```bash
@@ -50,6 +54,8 @@ echo "Version: $VERSION"
 ```
 
 ## BCS0803 Argument Validation
+
+**Tier:** core
 
 Validate option arguments exist before capturing them.
 
@@ -75,6 +81,8 @@ Validate required arguments after parsing:
 
 ## BCS0804 Parsing Location
 
+**Tier:** recommended
+
 Place argument parsing inside `main()` for better testability.
 
 ```bash
@@ -97,6 +105,8 @@ esac; shift; done
 Make variables readonly after parsing completes.
 
 ## BCS0805 Short Option Bundling
+
+**Tier:** recommended
 
 Support bundled short options like `-vvn` expanding to `-v -v -n`.
 
@@ -121,6 +131,8 @@ Place bundling case before `-*)` invalid option handler and after all explicit o
 Include arg-taking options in the character class. They work correctly when last in the bundle — the disaggregation peels them off as a separate `-X` flag, and `shift` in their case handler picks up the argument normally. Example: `-vno output.txt` disaggregates to `-v -n -o`, then `-o` consumes `output.txt` via `shift`. The user must place arg-taking options last; `-von file` would incorrectly disaggregate to `-v -o -n`.
 
 ## BCS0806 Standard Options
+
+**Tier:** recommended
 
 Use consistent option letters and variable names across all BCS-compliant scripts. Avoid reassign a standard letter to a different purpose.
 

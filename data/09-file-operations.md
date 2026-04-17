@@ -6,6 +6,8 @@ Safe file testing, wildcard expansion, process substitution, here documents, and
 
 ## BCS0901 Safe File Testing
 
+**Tier:** core
+
 Use `[[ ]]` for all file tests. Always include filenames in error messages for debugging.
 
 ```bash
@@ -22,6 +24,8 @@ Use `[[ ]]` for all file tests. Always include filenames in error messages for d
 
 ## BCS0902 Wildcard Expansion
 
+**Tier:** core
+
 Always use explicit path prefix to prevent filenames starting with `-` from being interpreted as flags.
 
 ```bash
@@ -37,6 +41,8 @@ for file in *.txt; do                # less safe
 ```
 
 ## BCS0903 Process Substitution
+
+**Tier:** core
 
 Use `< <(command)` with while loops to avoid subshell variable scope issues.
 
@@ -67,6 +73,8 @@ command | while read -r line; do count+=1; done
 
 ## BCS0904 Here Documents
 
+**Tier:** recommended
+
 ```bash
 # correct — no expansion (quoted delimiter)
 cat <<'EOF'
@@ -80,6 +88,8 @@ EOF
 ```
 
 ## BCS0905 Input Redirection
+
+**Tier:** style
 
 Use `$(< file)` instead of `$(cat file)` — 107x faster (zero process fork).
 

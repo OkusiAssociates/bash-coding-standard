@@ -6,6 +6,8 @@ Error handling covers strict mode, exit codes, traps, return value checking, and
 
 ## BCS0601 Exit on Error
 
+**Tier:** core
+
 `set -euo pipefail` provides three protections: `-e` exits on command failure, `-u` exits on undefined variables, `-o pipefail` fails pipeline if any command fails.
 
 ```bash
@@ -31,6 +33,8 @@ set -e
 ```
 
 ## BCS0602 Exit Codes
+
+**Tier:** recommended
 
 Use `die()` as the standard exit function.
 
@@ -67,6 +71,8 @@ Reserved: 64-78 (sysexits), 126 (cannot execute), 127 (not found), 128+n (signal
 
 ## BCS0603 Trap Handling
 
+**Tier:** core
+
 Install cleanup traps early, before creating any resources.
 
 ```bash
@@ -102,6 +108,8 @@ Never combine multiple traps for the same signal (replaces previous). Use a sing
 
 ## BCS0604 Checking Return Values
 
+**Tier:** core
+
 Always check return values of critical operations.
 
 ```bash
@@ -126,6 +134,8 @@ local -i result=$?
 
 ## BCS0605 Error Suppression
 
+**Tier:** recommended
+
 Only suppress errors when failure is expected, non-critical, and explicitly safe to ignore.
 
 ```bash
@@ -147,6 +157,8 @@ set +e                               # never disable broadly
 Verify system state after suppressed operations when possible.
 
 ## BCS0606 Conditional Declarations
+
+**Tier:** core
 
 Prefer inverting the condition with `||` over `((condition)) && action ||:`.
 
