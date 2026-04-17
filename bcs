@@ -74,15 +74,21 @@ noarg()   { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
 # ---- Configuration ----
 
 # Load all conf files (cascade: system first, user overrides system)
+# Emit bcs.conf cascade paths (system first, user last).
+# Extracted as a helper so tests can override it.
+_conf_search_paths() {
+  printf '%s\n' \
+    /etc/"$SCRIPT_NAME".conf \
+    /etc/"$SCRIPT_NAME"/"$SCRIPT_NAME".conf \
+    /usr/local/etc/"$SCRIPT_NAME"/"$SCRIPT_NAME".conf \
+    "${XDG_CONFIG_HOME:-$HOME/.config}"/"$SCRIPT_NAME"/"$SCRIPT_NAME".conf
+}
+
 read_conf() {
   local -- conf_file mode
   local -i loaded=0
-  local -a search_paths=(
-    /etc/"$SCRIPT_NAME".conf
-    /etc/"$SCRIPT_NAME"/"$SCRIPT_NAME".conf
-    /usr/local/etc/"$SCRIPT_NAME"/"$SCRIPT_NAME".conf
-    "${XDG_CONFIG_HOME:-$HOME/.config}"/"$SCRIPT_NAME"/"$SCRIPT_NAME".conf
-  )
+  local -a search_paths=()
+  readarray -t search_paths < <(_conf_search_paths)
   for conf_file in "${search_paths[@]}"; do
     [[ -f $conf_file ]] || continue
     # Warn if the config is group- or world-writable. The file is sourced
@@ -400,15 +406,21 @@ _load_tiers() {
   _tiers_loaded=1
 }
 
+# Emit policy.conf cascade paths (system first, project-local last).
+# Extracted as a helper so tests can override it.
+_policy_search_paths() {
+  printf '%s\n' \
+    /etc/bcs/policy.conf \
+    "${XDG_CONFIG_HOME:-$HOME/.config}"/bcs/policy.conf \
+    .bcs/policy.conf
+}
+
 # Load policy.conf cascade (system -> user -> project; later wins).
 # Policy files are parsed line-by-line -- NEVER sourced as shell.
 _load_policy() {
   ((_policy_loaded)) && return 0
-  local -a search_paths=(
-    /etc/bcs/policy.conf
-    "${XDG_CONFIG_HOME:-$HOME/.config}"/bcs/policy.conf
-    .bcs/policy.conf
-  )
+  local -a search_paths=()
+  readarray -t search_paths < <(_policy_search_paths)
   local -- path line code tier
   local -i lineno
   for path in "${search_paths[@]}"; do
@@ -1286,5 +1298,8 @@ main() {
   esac
 }
 
-main "$@"
+# Source guard: test scripts may source this file to access internal
+# functions without executing main. When sourced, BASH_SOURCE[0] (this
+# file's path) differs from $0 (the sourcing script's path).
+[[ ${BASH_SOURCE[0]} != "$0" ]] || main "$@"
 #fin

@@ -13,12 +13,13 @@ declare -r PROJECT_DIR=${TEST_DIR%/*}
 #shellcheck disable=SC2034  # used by test scripts that source this file
 declare -r BCS_CMD="$PROJECT_DIR"/bcs DATA_DIR="$PROJECT_DIR"/data
 
-# Colors
+# Colors (non-readonly so tests that also source bcs don't hit a
+# readonly-reassignment error; bcs itself will promote these to readonly).
 if [[ -t 1 && -t 2 ]]; then
-  declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' BOLD=$'\033[1m' NC=$'\033[0m'
+  declare -- RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' BOLD=$'\033[1m' NC=$'\033[0m'
 else
   #shellcheck disable=SC2034
-  declare -r RED='' GREEN='' YELLOW='' CYAN='' BOLD='' NC=''
+  declare -- RED='' GREEN='' YELLOW='' CYAN='' BOLD='' NC=''
 fi
 
 # Begin a test
