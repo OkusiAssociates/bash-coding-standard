@@ -91,13 +91,21 @@ read_conf() {
   readarray -t search_paths < <(_conf_search_paths)
   for conf_file in "${search_paths[@]}"; do
     [[ -f $conf_file ]] || continue
-    # Warn if the config is group- or world-writable. The file is sourced
-    # as shell, so permissive permissions are a latent RCE surface.
-    # Octal digit without write bit: 0, 1, 4, 5.
+    # The file is sourced as shell, so loose permissions are an RCE surface.
+    # Policy:
+    #   - world-writable  -> die 13  (no legitimate setup; always compromise risk)
+    #   - group-writable  -> warn    (contextual; may be legitimate in admin groups)
+    #   - owner-only      -> silent
+    # Octal digit without write bit: 0, 1, 4, 5. With write bit: 2, 3, 6, 7.
+    # The ?([0-7]) prefix handles modes with setuid/setgid/sticky bits (e.g. 4755).
     mode=$(stat -c '%a' "$conf_file" 2>/dev/null) ||:
     case $mode in
-      ''|[0-7][0145][0145]) ;;   # neither group nor others writable (or stat unavailable)
-      *)                    warn "$conf_file: permissive mode $mode -- file is sourced as shell; chmod go-w recommended" ;;
+      ''|?([0-7])[0-7][0145][0145])
+        ;;                                          # stat failed, or safe perms
+      ?([0-7])[0-7][0-7][2367])
+        die 13 "$conf_file: world-writable (mode $mode) -- refusing to source as shell; run: chmod o-w ${conf_file@Q}" ;;
+      *)
+        warn "$conf_file: group-writable mode $mode -- file is sourced as shell; chmod g-w recommended" ;;
     esac
     #shellcheck source=/dev/null
     source "$conf_file"

@@ -131,25 +131,69 @@ BCS_TEST_MODE_CHECK=present
 EOF
 chmod 664 "$USR_CONF"
 err=$(read_conf 2>&1 1>/dev/null)
-assert_contains "$err" 'permissive mode' '664 warns'
+assert_contains "$err" 'group-writable' '664 warns'
 
-begin_test '666 mode: warning (world-writable)'
+# World-writable modes now cause read_conf to die. Run in a subshell so
+# the exit doesn't kill the test script.
+begin_test '666 mode: read_conf dies (world-writable)'
 : > "$SYS_CONF"
 cat > "$USR_CONF" <<'EOF'
 BCS_TEST_MODE_CHECK=present
 EOF
 chmod 666 "$USR_CONF"
-err=$(read_conf 2>&1 1>/dev/null)
-assert_contains "$err" 'permissive mode' '666 warns'
+if ( read_conf ) 2>"$FIXTURE_ROOT"/err.log; then
+  TESTS_FAILED+=1
+  printf '  %s✗%s should have died on world-writable 666\n' "$RED" "$NC"
+else
+  err=$(< "$FIXTURE_ROOT"/err.log)
+  if [[ $err == *'refusing to source'* ]]; then
+    TESTS_PASSED+=1
+    printf '  %s✓%s 666 dies with refusing-to-source message\n' "$GREEN" "$NC"
+  else
+    TESTS_FAILED+=1
+    printf '  %s✗%s 666 died but wrong message: %s\n' "$RED" "$NC" "$err"
+  fi
+fi
 
-begin_test '777 mode: warning (fully open)'
+begin_test '777 mode: read_conf dies (fully open)'
 : > "$SYS_CONF"
 cat > "$USR_CONF" <<'EOF'
 BCS_TEST_MODE_CHECK=present
 EOF
 chmod 777 "$USR_CONF"
-err=$(read_conf 2>&1 1>/dev/null)
-assert_contains "$err" 'permissive mode' '777 warns'
+if ( read_conf ) 2>"$FIXTURE_ROOT"/err.log; then
+  TESTS_FAILED+=1
+  printf '  %s✗%s should have died on world-writable 777\n' "$RED" "$NC"
+else
+  err=$(< "$FIXTURE_ROOT"/err.log)
+  if [[ $err == *'refusing to source'* ]]; then
+    TESTS_PASSED+=1
+    printf '  %s✓%s 777 dies with refusing-to-source message\n' "$GREEN" "$NC"
+  else
+    TESTS_FAILED+=1
+    printf '  %s✗%s 777 died but wrong message: %s\n' "$RED" "$NC" "$err"
+  fi
+fi
+
+begin_test '706 mode: read_conf dies (others-writable without group)'
+: > "$SYS_CONF"
+cat > "$USR_CONF" <<'EOF'
+BCS_TEST_MODE_CHECK=present
+EOF
+chmod 706 "$USR_CONF"
+if ( read_conf ) 2>"$FIXTURE_ROOT"/err.log; then
+  TESTS_FAILED+=1
+  printf '  %s✗%s should have died on 706 (last digit 6 is world-writable)\n' "$RED" "$NC"
+else
+  err=$(< "$FIXTURE_ROOT"/err.log)
+  if [[ $err == *'refusing to source'* ]]; then
+    TESTS_PASSED+=1
+    printf '  %s✓%s 706 dies with refusing-to-source message\n' "$GREEN" "$NC"
+  else
+    TESTS_FAILED+=1
+    printf '  %s✗%s 706 died but wrong message: %s\n' "$RED" "$NC" "$err"
+  fi
+fi
 
 # Reset to known-good mode at end so trap cleanup is quiet.
 chmod 600 "$USR_CONF" 2>/dev/null ||:
