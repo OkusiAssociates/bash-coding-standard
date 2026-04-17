@@ -168,10 +168,18 @@ Never scatter inline color declarations across scripts. Centralize in a single d
 
 **Tier:** recommended
 
-Check for terminal before using TUI elements.
+"TUI elements" means output that is meaningful only on an interactive terminal:
+
+- ANSI colour escapes (see BCS0706)
+- Cursor positioning or visibility control (e.g., `\033[?25l`, `\033[H`)
+- Progress bars, spinners, status lines
+- Interactive prompts (see BCS0709)
+- Terminal-width-dependent formatting (see BCS0708)
+
+Each must be gated on `[[ -t 1 ]]` (or `[[ -t 1 && -t 2 ]]` when both streams matter) so that piped, redirected, or non-interactive invocations produce clean output.
 
 ```bash
-# correct
+# correct — TUI output gated on terminal
 if [[ -t 1 ]]; then
   progress_bar 50 100
 else
@@ -179,9 +187,16 @@ else
 fi
 
 # correct — hide cursor during TUI, restore on exit
-printf '\033[?25l'                   # hide cursor
-trap 'printf "\033[?25h"' EXIT       # restore on exit
+if [[ -t 1 ]]; then
+  printf '\033[?25l'                   # hide cursor
+  trap 'printf "\033[?25h"' EXIT       # restore on exit
+fi
+
+# wrong — cursor escape leaks into pipes and logs
+printf '\033[?25l'
 ```
+
+Plain-text, JSON, or other machine-parseable output does NOT qualify as a TUI element and should flow to stdout unconditionally.
 
 ## BCS0708 Terminal Capabilities
 

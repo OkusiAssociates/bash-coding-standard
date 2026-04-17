@@ -160,26 +160,33 @@ Verify system state after suppressed operations when possible.
 
 **Tier:** core
 
-Prefer inverting the condition with `||` over `((condition)) && action ||:`.
+Under `set -e`, a false arithmetic condition (e.g., `((DRY_RUN))` when `DRY_RUN=0`) returns exit code 1 and terminates the script. Any `&&` chain built on an arithmetic condition MUST end with `||:` to suppress this, unless the chain is expressed in inverted form with `||`.
+
+**Mandatory (correctness):** the `&&`-chain form requires `||:`:
 
 ```bash
-# preferred — inverted condition avoids ||: entirely
-((width >= 20)) || width=20
-((padding >= 0)) || padding=0
-((color_count < 256)) || HAS_COLOR=1
-
-# acceptable — when && reads more naturally (flag-guarded actions)
+# correct — flag-guarded action, safely wrapped
 ((DRY_RUN)) && info 'Dry-run mode' ||:
 ((VERBOSE)) && echo "Processing $file" ||:
 ((DEBUG)) && set -x ||:
 ((VERBOSE < 3)) && VERBOSE+=1 ||:
 
-# wrong — exits script when condition is false under set -e
+# wrong — missing ||:, script exits when flag is 0
 ((DRY_RUN)) && info 'Dry-run mode'
 ```
 
-A false arithmetic condition returns exit code 1, which triggers `set -e`. The inverted `||` form avoids this because the right-hand side (an assignment or command) returns 0. When `&&` reads more naturally (e.g., flag-guarded actions), append `||:` to make the expression safe. The `||:` catches failure from **the entire chain**, including a false arithmetic condition — not just the final command. Use `:` over `true` (traditional shell idiom, built-in).
+The inverted form avoids the issue because the RHS returns 0:
 
-**Severity guide:** missing `||:` on a `&&` chain is a VIOLATION (script exits unexpectedly). Using `&&...||:` instead of the inverted `||` form is a style preference, not a violation — both are correct when `||:` is present.
+```bash
+# correct — no ||: needed (RHS is an assignment or command returning 0)
+((width >= 20)) || width=20
+((padding >= 0)) || padding=0
+((color_count < 256)) || HAS_COLOR=1
+command -v curl >/dev/null || die 18 'curl required'
+```
 
-Never use `||:` for critical operations that must succeed.
+The `||:` catches failure from **the entire chain**, including the arithmetic condition -- not just the final command. Use `:` over `true` (shorter, built-in, traditional shell idiom).
+
+**Style (preference only):** when `||:` is present, both the `&&...||:` form and the inverted `||` form are correct. Pick whichever reads more naturally -- short guard clauses favour inversion; flag-guarded actions often favour `&&...||:`. **Neither form alone is a violation.** LLM-based checkers MUST NOT report a rule violation for form choice when `||:` is properly present.
+
+**Never:** never use `||:` for critical operations that must succeed -- it masks real failures.

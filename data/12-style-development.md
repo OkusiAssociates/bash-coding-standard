@@ -18,25 +18,35 @@ Code formatting, comments, development practices, debugging, dry-run patterns, a
 
 **Tier:** style
 
-Focus on WHY, not WHAT.
+Write comments that add information not present in the code: constraints, gotchas, trade-offs, references to context. A comment that paraphrases the next statement in natural language adds no information and is a violation.
+
+**Mechanical test for a violating comment:**
+
+1. Remove the comment.
+2. Read the code below it.
+3. If the comment conveys no information that a competent reader couldn't recover from the code alone, it is a violation.
 
 ```bash
-# correct — explains non-obvious decisions
+# correct — information not in the code (constraint + rationale)
 # PROFILE_DIR hardcoded to /etc/profile.d for system-wide bash integration
 declare -r PROFILE_DIR=/etc/profile.d
 
-# correct — documents gotcha
+# correct — documents a non-obvious semantic
 # readarray quirk: single empty element means no results
 ((fnd == 1)) && [[ -z ${found_files[0]} ]] && fnd=0
 
-# wrong — restates the code
+# wrong — paraphrases the statement below
 # Set verbose to 1
 VERBOSE=1
+
+# wrong — restates a visible test
 # Check if file exists
 [[ -f $file ]]
 ```
 
-Use standard documentation icons: `◉` (info), `⦿` (debug), `▲` (warn), `✓` (success), `✗` (error).
+Use standard documentation icons where applicable: `◉` (info), `⦿` (debug), `▲` (warn), `✓` (success), `✗` (error).
+
+LLM-based checkers should flag comments that mechanically paraphrase the next line. They should NOT flag comments that are terse but add information (e.g., the "readarray quirk:" example above).
 
 ## BCS1203 Blank Lines
 
@@ -53,8 +63,15 @@ Use standard documentation icons: `◉` (info), `⦿` (debug), `▲` (warn), `�
 
 **Tier:** style
 
+Section comments mark logical divisions within a script. They must be:
+
+- A single line
+- 2-4 words
+- Prefixed with a single `#` (no box-drawing characters, no ASCII art frames)
+- Followed by a blank line before the first marked statement
+
 ```bash
-# correct — lightweight, 2-4 words
+# correct — single #, 2-4 words, blank line follows
 # Default values
 declare -i VERBOSE=1 DEBUG=0
 
@@ -64,13 +81,17 @@ declare -- BIN_DIR="$PREFIX"/bin
 # Core message function
 _msg() { :; }
 
-# wrong — heavy box drawing
+# wrong — box drawing / multi-line frames
 #############################
 # Default values            #
 #############################
+
+# wrong — full sentence, too long
+# These are the default values used when no user override is provided
+declare -i VERBOSE=1 DEBUG=0
 ```
 
-Reserve 80-dash separators for major script divisions only.
+Reserve 80-dash separators (`# ----`) for major script divisions only -- typically no more than two or three per file.
 
 ## BCS1205 Language Best Practices
 

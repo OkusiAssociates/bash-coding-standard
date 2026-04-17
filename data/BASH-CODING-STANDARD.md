@@ -1430,29 +1430,36 @@ Verify system state after suppressed operations when possible.
 
 **Tier:** core
 
-Prefer inverting the condition with `||` over `((condition)) && action ||:`.
+Under `set -e`, a false arithmetic condition (e.g., `((DRY_RUN))` when `DRY_RUN=0`) returns exit code 1 and terminates the script. Any `&&` chain built on an arithmetic condition MUST end with `||:` to suppress this, unless the chain is expressed in inverted form with `||`.
+
+**Mandatory (correctness):** the `&&`-chain form requires `||:`:
 
 ```bash
-# preferred — inverted condition avoids ||: entirely
-((width >= 20)) || width=20
-((padding >= 0)) || padding=0
-((color_count < 256)) || HAS_COLOR=1
-
-# acceptable — when && reads more naturally (flag-guarded actions)
+# correct — flag-guarded action, safely wrapped
 ((DRY_RUN)) && info 'Dry-run mode' ||:
 ((VERBOSE)) && echo "Processing $file" ||:
 ((DEBUG)) && set -x ||:
 ((VERBOSE < 3)) && VERBOSE+=1 ||:
 
-# wrong — exits script when condition is false under set -e
+# wrong — missing ||:, script exits when flag is 0
 ((DRY_RUN)) && info 'Dry-run mode'
 ```
 
-A false arithmetic condition returns exit code 1, which triggers `set -e`. The inverted `||` form avoids this because the right-hand side (an assignment or command) returns 0. When `&&` reads more naturally (e.g., flag-guarded actions), append `||:` to make the expression safe. The `||:` catches failure from **the entire chain**, including a false arithmetic condition — not just the final command. Use `:` over `true` (traditional shell idiom, built-in).
+The inverted form avoids the issue because the RHS returns 0:
 
-**Severity guide:** missing `||:` on a `&&` chain is a VIOLATION (script exits unexpectedly). Using `&&...||:` instead of the inverted `||` form is a style preference, not a violation — both are correct when `||:` is present.
+```bash
+# correct — no ||: needed (RHS is an assignment or command returning 0)
+((width >= 20)) || width=20
+((padding >= 0)) || padding=0
+((color_count < 256)) || HAS_COLOR=1
+command -v curl >/dev/null || die 18 'curl required'
+```
 
-Never use `||:` for critical operations that must succeed.
+The `||:` catches failure from **the entire chain**, including the arithmetic condition -- not just the final command. Use `:` over `true` (shorter, built-in, traditional shell idiom).
+
+**Style (preference only):** when `||:` is present, both the `&&...||:` form and the inverted `||` form are correct. Pick whichever reads more naturally -- short guard clauses favour inversion; flag-guarded actions often favour `&&...||:`. **Neither form alone is a violation.** LLM-based checkers MUST NOT report a rule violation for form choice when `||:` is properly present.
+
+**Never:** never use `||:` for critical operations that must succeed -- it masks real failures.
 
 ---
 
@@ -1626,10 +1633,18 @@ Never scatter inline color declarations across scripts. Centralize in a single d
 
 **Tier:** recommended
 
-Check for terminal before using TUI elements.
+"TUI elements" means output that is meaningful only on an interactive terminal:
+
+- ANSI colour escapes (see BCS0706)
+- Cursor positioning or visibility control (e.g., `\033[?25l`, `\033[H`)
+- Progress bars, spinners, status lines
+- Interactive prompts (see BCS0709)
+- Terminal-width-dependent formatting (see BCS0708)
+
+Each must be gated on `[[ -t 1 ]]` (or `[[ -t 1 && -t 2 ]]` when both streams matter) so that piped, redirected, or non-interactive invocations produce clean output.
 
 ```bash
-# correct
+# correct — TUI output gated on terminal
 if [[ -t 1 ]]; then
   progress_bar 50 100
 else
@@ -1637,9 +1652,16 @@ else
 fi
 
 # correct — hide cursor during TUI, restore on exit
-printf '\033[?25l'                   # hide cursor
-trap 'printf "\033[?25h"' EXIT       # restore on exit
+if [[ -t 1 ]]; then
+  printf '\033[?25l'                   # hide cursor
+  trap 'printf "\033[?25h"' EXIT       # restore on exit
+fi
+
+# wrong — cursor escape leaks into pipes and logs
+printf '\033[?25l'
 ```
+
+Plain-text, JSON, or other machine-parseable output does NOT qualify as a TUI element and should flow to stdout unconditionally.
 
 ## BCS0708 Terminal Capabilities
 
@@ -2247,23 +2269,31 @@ Never modify variables in background subshells expecting parent visibility — u
 
 **Tier:** core
 
-Always capture wait exit codes.
+Never discard the exit code of `wait`. Accumulate failures into a counter and fail the script once at the end if any background job failed. An unsuppressed `wait` under `set -e` terminates the script on the first failure -- losing information about other in-flight jobs.
 
 ```bash
-# correct — track errors across waits
+# correct — accumulator pattern over a fixed list of pids
 declare -i errors=0
 for pid in "${pids[@]}"; do
   wait "$pid" || errors+=1
 done
 ((errors == 0)) || die 1 "$errors job(s) failed"
 
-# correct — process as completed (Bash 4.3+)
+# correct — process-as-completed (Bash 4.3+ wait -n)
+declare -i errors=0
 while ((${#pids[@]})); do
   wait -n || errors+=1
+  pids=("${pids[@]:1}")
 done
+((errors == 0)) || die 1 "$errors job(s) failed"
 
-# wrong — ignoring return value
+# wrong — exit code discarded; failures silent
 wait $!
+
+# wrong — no accumulator; first failure kills script under set -e
+for pid in "${pids[@]}"; do
+  wait "$pid"
+done
 ```
 
 ## BCS1104 Timeout Handling
@@ -2346,25 +2376,35 @@ Code formatting, comments, development practices, debugging, dry-run patterns, a
 
 **Tier:** style
 
-Focus on WHY, not WHAT.
+Write comments that add information not present in the code: constraints, gotchas, trade-offs, references to context. A comment that paraphrases the next statement in natural language adds no information and is a violation.
+
+**Mechanical test for a violating comment:**
+
+1. Remove the comment.
+2. Read the code below it.
+3. If the comment conveys no information that a competent reader couldn't recover from the code alone, it is a violation.
 
 ```bash
-# correct — explains non-obvious decisions
+# correct — information not in the code (constraint + rationale)
 # PROFILE_DIR hardcoded to /etc/profile.d for system-wide bash integration
 declare -r PROFILE_DIR=/etc/profile.d
 
-# correct — documents gotcha
+# correct — documents a non-obvious semantic
 # readarray quirk: single empty element means no results
 ((fnd == 1)) && [[ -z ${found_files[0]} ]] && fnd=0
 
-# wrong — restates the code
+# wrong — paraphrases the statement below
 # Set verbose to 1
 VERBOSE=1
+
+# wrong — restates a visible test
 # Check if file exists
 [[ -f $file ]]
 ```
 
-Use standard documentation icons: `◉` (info), `⦿` (debug), `▲` (warn), `✓` (success), `✗` (error).
+Use standard documentation icons where applicable: `◉` (info), `⦿` (debug), `▲` (warn), `✓` (success), `✗` (error).
+
+LLM-based checkers should flag comments that mechanically paraphrase the next line. They should NOT flag comments that are terse but add information (e.g., the "readarray quirk:" example above).
 
 ## BCS1203 Blank Lines
 
@@ -2381,8 +2421,15 @@ Use standard documentation icons: `◉` (info), `⦿` (debug), `▲` (warn), `�
 
 **Tier:** style
 
+Section comments mark logical divisions within a script. They must be:
+
+- A single line
+- 2-4 words
+- Prefixed with a single `#` (no box-drawing characters, no ASCII art frames)
+- Followed by a blank line before the first marked statement
+
 ```bash
-# correct — lightweight, 2-4 words
+# correct — single #, 2-4 words, blank line follows
 # Default values
 declare -i VERBOSE=1 DEBUG=0
 
@@ -2392,13 +2439,17 @@ declare -- BIN_DIR="$PREFIX"/bin
 # Core message function
 _msg() { :; }
 
-# wrong — heavy box drawing
+# wrong — box drawing / multi-line frames
 #############################
 # Default values            #
 #############################
+
+# wrong — full sentence, too long
+# These are the default values used when no user override is provided
+declare -i VERBOSE=1 DEBUG=0
 ```
 
-Reserve 80-dash separators for major script divisions only.
+Reserve 80-dash separators (`# ----`) for major script divisions only -- typically no more than two or three per file.
 
 ## BCS1205 Language Best Practices
 

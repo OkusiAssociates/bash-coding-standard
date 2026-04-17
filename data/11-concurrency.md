@@ -75,23 +75,31 @@ Never modify variables in background subshells expecting parent visibility — u
 
 **Tier:** core
 
-Always capture wait exit codes.
+Never discard the exit code of `wait`. Accumulate failures into a counter and fail the script once at the end if any background job failed. An unsuppressed `wait` under `set -e` terminates the script on the first failure -- losing information about other in-flight jobs.
 
 ```bash
-# correct — track errors across waits
+# correct — accumulator pattern over a fixed list of pids
 declare -i errors=0
 for pid in "${pids[@]}"; do
   wait "$pid" || errors+=1
 done
 ((errors == 0)) || die 1 "$errors job(s) failed"
 
-# correct — process as completed (Bash 4.3+)
+# correct — process-as-completed (Bash 4.3+ wait -n)
+declare -i errors=0
 while ((${#pids[@]})); do
   wait -n || errors+=1
+  pids=("${pids[@]:1}")
 done
+((errors == 0)) || die 1 "$errors job(s) failed"
 
-# wrong — ignoring return value
+# wrong — exit code discarded; failures silent
 wait $!
+
+# wrong — no accumulator; first failure kills script under set -e
+for pid in "${pids[@]}"; do
+  wait "$pid"
+done
 ```
 
 ## BCS1104 Timeout Handling
