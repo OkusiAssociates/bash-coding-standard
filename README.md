@@ -4,65 +4,51 @@
 
 Designed by [Okusi Associates](https://www.okusi.id) for the [Indonesian Open Technology Foundation (YaTTI)](https://www.yatti.id).
 
-Bash is a battle-tested, sophisticated programming language deployed on virtually every Unix-like system. When wielded with discipline and proper engineering principles, Bash delivers production-grade solutions for system automation, data processing, and infrastructure orchestration. This standard codifies that discipline.
-
-## Install
+## Quickstart
 
 ```bash
-git clone https://github.com/Open-Technology-Foundation/bash-coding-standard.git && cd bash-coding-standard && sudo make install
+git clone https://github.com/Open-Technology-Foundation/bash-coding-standard.git
+cd bash-coding-standard && sudo make install
+
+bcs                                                  # View the standard
+bcs template -t complete -n deploy -o deploy.sh -x   # Scaffold a script
+bcs check deploy.sh                                  # AI-powered compliance check
+bcs codes                                            # List all 110 BCS rule codes
 ```
 
-## Key Features
+You now have:
+
+| Tool | Purpose |
+|------|---------|
+| `bcs` | CLI for the standard (display / template / check / codes / generate) |
+| `bcscheck` | Convenience shim for `bcs check` (defaults configured in `bcs.conf`) |
+| `man bcs`, `man BCS-bash` | Manpages for the CLI and a strict-mode Bash 5.2 reference |
+
+## For AI Readers
+
+Programmatic anchors for machine consumption:
+
+| Resource | Path / Command | Use |
+|----------|----------------|-----|
+| Standard document | [`data/BASH-CODING-STANDARD.md`](data/BASH-CODING-STANDARD.md) | Single assembled doc; `## BCS####` headers |
+| Section sources | `data/01-*.md` ... `data/12-*.md` | Edit these, never the assembled doc |
+| Rule codes | `bcs codes` / `bcs codes -E BCSdddd` | List all, or explain one |
+| AI tooling inventory | [`ai-agents/AGENTS.md`](ai-agents/AGENTS.md) | Flat inventory of agents, slash commands, rule snapshots |
+
+Canonical command phrasings: `bcs check <path>`, `bcs codes [-E BCSdddd]`, `bcs template -t <type> -n <name> -o <path>`, `man bcs`, `man BCS-bash`. Rule references in body text use the bare form `BCSdddd`; in links use `[BCSdddd](data/<section>.md)`.
+
+## Why BCS
+
+Bash is a battle-tested programming language deployed on virtually every Unix-like system. When wielded with discipline it delivers production-grade automation, data processing, and infrastructure orchestration. *KISS -- keep it simple.*
 
 - Targets Bash 5.2+ exclusively (not a compatibility standard)
-- Enforces strict error handling with `set -euo pipefail`
-- Requires explicit variable declarations with type hints
-- Mandates ShellCheck compliance
-- Defines standard utility functions for consistent messaging
-- AI-powered compliance checking via multiple LLM backends
+- Strict error handling with `set -euo pipefail`
+- Explicit variable declarations and scoping
+- Mandatory ShellCheck compliance
+- Standard utility functions for consistent messaging
+- AI-powered compliance checking across five LLM backends
 
-## Target Audience
-
-- Human developers writing production-grade Bash scripts
-- AI assistants generating or analyzing Bash code
-- DevOps engineers and system administrators
-- Organizations needing standardized scripting guidelines
-
-## Quick Start
-
-```bash
-# View the standard
-bcs
-
-# Symlink the standard into your current directory
-bcs -S
-
-# Generate a BCS-compliant script
-bcs template -t complete -n deploy -d 'Deploy script' -o deploy.sh -x
-
-# Check a script for compliance
-bcs check myscript.sh
-
-# List all BCS rule codes
-bcs codes
-```
-
-## Prerequisites
-
-| Requirement | Version | Check Command |
-|-------------|---------|---------------|
-| Bash | 5.2+ | `bash --version` |
-| ShellCheck | 0.8.0+ | `shellcheck --version` |
-
-The `bcs check` subcommand requires an LLM backend. At least one of the following:
-
-| Backend | Requirement | Notes |
-|---------|-------------|-------|
-| Anthropic API | `ANTHROPIC_API_KEY` + curl + jq | Recommended -- best accuracy/speed ratio |
-| OpenAI API | `OPENAI_API_KEY` + curl + jq | Best speed; strong on simpler scripts |
-| Google Gemini API | `GOOGLE_API_KEY` + curl + jq | `thorough` tier recommended |
-| Ollama (local or cloud) | Running Ollama server | No API key for local; `ollama signin` for cloud. Low accuracy on cloud models; glm-5.1:cloud is currently unreachable (HTTP 403 from ollama.com) -- use for offline/private checking only |
-| Claude Code CLI | `claude` installed | Optional -- deepest rule citations but slowest (2--14 min per check in the 2026-04-17 refresh) |
+Audience: human developers writing production-grade Bash, AI assistants generating or analysing Bash code, DevOps engineers and organisations needing standardised guidelines.
 
 ## Installation
 
@@ -70,236 +56,244 @@ The `bcs check` subcommand requires an LLM backend. At least one of the followin
 git clone https://github.com/Open-Technology-Foundation/bash-coding-standard.git
 cd bash-coding-standard
 sudo make install              # Install to /usr/local (default)
-sudo make PREFIX=/usr install  # Install to /usr (system-wide)
+sudo make PREFIX=/usr install  # System-wide
 sudo make uninstall            # Uninstall
 ```
 
-Installs the `bcs` and `bcscheck` binaries, data files, bash completions, and the `bcs(1)` and `BCS-bash(1)` manpages.
+Installs `bcs`, `bcscheck`, data files, bash completions, and the `bcs(1)` and `BCS-bash(1)` manpages.
 
-## Overview
+**Prerequisites:** Bash 5.2+ (`bash --version`) and ShellCheck 0.8.0+ (`shellcheck --version`).
 
-The Bash Coding Standard defines 98 substantive rules (plus 12 section overviews) across 12 sections in a single ~3,000-line document. Rules are written for both human programmers and AI assistants, with code examples for every rule. Every rule is tagged with a tier (`core`, `recommended`, or `style`) that drives severity in `bcs check`.
+**LLM backends** (optional, for `bcs check`) -- at least one of:
 
-### 12 Sections
+| Backend | Requirement |
+|---------|-------------|
+| Anthropic API | `ANTHROPIC_API_KEY` + `curl` + `jq` |
+| OpenAI API | `OPENAI_API_KEY` + `curl` + `jq` |
+| Google Gemini API | `GOOGLE_API_KEY` + `curl` + `jq` |
+| Ollama (local or cloud) | Running Ollama server |
+| Claude Code CLI | `claude` installed on `PATH` |
 
-| # | Section | Key Rules |
-|---|---------|-----------|
-| 1 | Script Structure & Layout | Shebang, strict mode, metadata, function organization |
+See [Compliance Checking](#compliance-checking) for backend trade-offs.
+
+## The Standard
+
+The Bash Coding Standard defines **98 substantive rules plus 12 section overviews** (110 total codes) across 12 sections in a single ~3,000-line document. Every rule carries examples, a `**Tier:**` label, and a BCS code (`BCSssrr`, four digits, zero-padded).
+
+| # | Section | Focus |
+|---|---------|-------|
+| 1 | Script Structure & Layout | Shebang, strict mode, metadata, function organisation |
 | 2 | Variables & Data Types | Type declarations, scoping, naming, arrays |
 | 3 | Strings & Quoting | Single vs double quotes, conditionals, here-docs |
-| 4 | Functions & Libraries | Definition, organization, export, library patterns |
-| 5 | Control Flow | Conditionals, case, loops, arithmetic |
-| 6 | Error Handling | Exit codes, traps, return value checking |
-| 7 | I/O & Messaging | Standard messaging functions, colors, TUI |
+| 4 | Functions & Libraries | Definition, organisation, export, library patterns |
+| 5 | Control Flow | Conditionals, `case`, loops, arithmetic |
+| 6 | Error Handling | Exit codes, traps, return-value checking |
+| 7 | I/O & Messaging | Standard messaging functions, colours, TUI |
 | 8 | Command-Line Arguments | Parsing patterns, option bundling, validation |
 | 9 | File Operations | File testing, wildcards, process substitution |
-| 10 | Security | PATH, eval avoidance, input sanitization |
+| 10 | Security | `PATH`, `eval` avoidance, input sanitisation |
 | 11 | Concurrency & Jobs | Background jobs, parallel execution, timeouts |
 | 12 | Style & Development | Formatting, debugging, dry-run, testing |
 
-## The `bcs` CLI Tool
-
-| Command | Purpose |
-|---------|---------|
-| `bcs display` | View the standard document (default); `--symlink` to link into cwd |
-| `bcs template` | Generate BCS-compliant script templates |
-| `bcs check` | AI-powered compliance checking (multi-backend) |
-| `bcs codes` | List all BCS rule codes |
-| `bcs generate` | Regenerate standard from section files |
-| `bcs help` | Show help for commands |
-
-### Templates
-
-Four template types for different needs:
-
-```bash
-bcs template -t minimal     # Bare essentials (~16 lines)
-bcs template -t basic       # Standard with metadata (~26 lines)
-bcs template -t complete    # Full toolkit (~119 lines)
-bcs template -t library     # Sourceable library (~40 lines)
-```
-
-### Compliance Checking
-
-Uses LLM-powered analysis to validate scripts against the full standard.
-Supports multiple backends: Ollama (local), Anthropic API, Google Gemini API,
-OpenAI API, and Claude Code CLI. The backend is resolved from the `-m` model
-name.
-
-```bash
-bcs check myscript.sh                      # Probe available backends (balanced tier)
-bcs check -m minimax-m2:cloud myscript.sh  # Route to local Ollama
-bcs check -m claude-sonnet-4-6 myscript.sh # Route to Anthropic API
-bcs check -m gemini-2.5-pro myscript.sh    # Route to Google Gemini API
-bcs check -m gpt-5.4 myscript.sh           # Route to OpenAI API
-bcs check -m claude-code myscript.sh       # Route to Claude Code CLI (balanced)
-bcs check -m claude-code:thorough deploy.sh # Claude Code CLI at thorough tier
-bcs check --strict deploy.sh               # Treat warnings as violations
-bcs check --effort high myscript.sh        # Thorough analysis
-bcs check -m thorough -e max deploy.sh     # Higher quality + exhaustive
-bcscheck myscript.sh                       # Convenience shim for bcs check
-```
-
-### Model Grammar and Backend Routing
-
-The `-m` value determines both the backend and the concrete model:
-
-| `-m` value | Backend | Model |
-|------------|---------|-------|
-| `fast` / `balanced` / `thorough` | Probe in order: ollama, anthropic, openai, google, claude | Tier's default per backend |
-| `claude-*` (e.g. `claude-opus-4-6`) | Anthropic API | Pass-through |
-| `gemini-*` (e.g. `gemini-2.5-pro`) | Google Gemini API | Pass-through |
-| `gpt-*` / `o[0-9]*` (e.g. `gpt-5.4`, `o3-mini`) | OpenAI API | Pass-through |
-| `claude-code` | Claude Code CLI | `balanced` tier default |
-| `claude-code:<tier-or-model>` | Claude Code CLI | Stripped suffix |
-| anything else (e.g. `minimax-m2:cloud`) | Local Ollama | Pass-through |
-
-Tier keywords map to concrete defaults per backend:
-
-| Tier | Ollama | Anthropic | Google | OpenAI |
-|------|--------|-----------|--------|--------|
-| fast | qwen3.5:9b | claude-haiku-4-5 | gemini-2.5-flash-lite | gpt-4.1-mini |
-| balanced | qwen3.5:14b | claude-sonnet-4-6 | gemini-2.5-flash | gpt-5.4-mini |
-| thorough | qwen3.5:14b | claude-opus-4-6 | gemini-2.5-pro | gpt-5.4 |
-
-▲ Ollama models whose names happen to match `claude-*`, `gemini-*`, `gpt-*` or `o[0-9]*` are unreachable through `-m` -- rename the local model if you need to target it.
-
-### Recommended Settings
-
-Not all model/effort combinations produce equally reliable results. Based on accuracy testing against BCS-compliant scripts of varying complexity (see `tests/accuracy/LLM-ACCURACY.md`, 2026-04-17 refresh):
-
-| Use Case | Recommended Setting | Notes |
-|----------|-------------------|-------|
-| **Quick sanity check** | `-m gpt-5.4 -e medium` | 9--71s; clean on `cln`/`which` (0--1 FP), noisier on function-free scripts |
-| **Daily development** | `-m claude-sonnet-4-6 -e medium` | 35--83s; zero false positives across all four test scripts; reliable suppression handling |
-| **Pre-commit review** | `-m claude-sonnet-4-6 -e high` | 43--101s; more findings; still zero FPs on most scripts |
-| **Thorough audit** | `-m claude-sonnet-4-6 -e max` | 42--128s; top scorer on md2ansi (6/10) and accuracy.sh (4/4) in the refresh |
-| **Pre-release audit** | `-m claude-code -e max` | Deepest `which` analysis (3/3); very slow (5--14 min on larger scripts) |
-
-**Backend accuracy ranking** (2026-04-17 refresh, 60 completed runs across four scripts; 12 glm-5.1 runs failed HTTP 403 and are excluded):
-
-1. **Anthropic API (`claude-*`)** -- Best speed/accuracy ratio and most consistent across script types. claude-sonnet-4-6 at max is the top scorer on md2ansi (6/10) and accuracy.sh (4/4); at high it leads on cln (3.5/4); at medium it is the only model with zero FPs across all four scripts (35--83s). Only model to find both missing `local --` separators and both `((FLAG == 0))` sites. Recommended for daily development.
-2. **Claude Code (`claude-code`)** -- Deepest rule citation on suppression/fence patterns. claude-code max scores 3/3 on `which` (tied for top). Tradeoff: **very slow** (5--14 min on larger scripts in this refresh). Best for final pre-release audits.
-3. **OpenAI API (`gpt-*`, `o[0-9]*`)** -- Fastest backend (4--109s). gpt-5.4 at medium scores 2/4 on cln and 2/3 on which with 0--1 FP; degrades on function-free scripts where it misapplies BCS0202. Best for quick checks. Avoid `max` effort on `cln` and `accuracy.sh` -- introduces false positives without adding coverage.
-4. **Google API (`gemini-*`)** -- Not included in the 2026-04-17 refresh matrix. Prior guidance stands: `thorough` tier at `medium` effort is reliable; lower tiers over-report.
-5. **Ollama cloud models** -- Not recommended for accuracy-sensitive work. Refreshed scores: minimax-m2.7:cloud 0--2/3, qwen3-coder:480b-cloud 0--2/3 per script, both with persistent FPs (2--6 per run). The 2026-04-12 hallucinations (minimax producing 4 wrong claims on cln, qwen3 emitting XML tool-call tokens) did **not** recur; output is now well-formed but recall remains low. glm-5.1:cloud is currently unavailable (all 12 runs failed with HTTP 403 "a subscription is required for access" via ollama.com).
-
-**Effort levels** control analysis depth and output token budget:
-
-| Effort | Behaviour | Notes |
-|--------|-----------|-------|
-| `low` | Only clear violations. Concise output. | |
-| `medium` | Violations and significant warnings. | Best default for gpt-5.4 (speed) and claude-sonnet-4-6 (zero-FP baseline) |
-| `high` | All violations and warnings. Thorough. | Beneficial for Claude backends; marginal for gpt-5.4 and cloud models |
-| `max` | Exhaustive line-by-line audit. Expensive. | Recommended for claude-sonnet-4-6 when catching low-rate findings matters; for gpt-5.4 and cloud-ollama models, tends to inflate runtime and FP count without new insights |
-
-For most users, `-m claude-sonnet-4-6 -e medium` (or configure these as defaults in `bcs.conf`) provides the best balance of accuracy, speed, and cost. For pre-commit hooks where speed matters, `-m gpt-5.4 -e medium` is 9--71s with 0--1 FP on most scripts.
-
-### Tiers and Severity
-
-Every rule carries a `**Tier:**` field. `bcs check` maps tier to severity:
+**Tier distribution** -- `bcs check` maps tier to severity:
 
 | Tier | Count | Severity | Behaviour |
 |------|-------|----------|-----------|
 | `core` | 33 | `[ERROR]` | Real correctness/safety bugs. Non-zero exit if any are found. |
 | `recommended` | 41 | `[WARN]` | Bash hygiene; prevents subtle issues. |
 | `style` | 24 | `[WARN]` | Taste; no correctness impact. |
-| `disabled` | -- | (silent) | Applied only via policy; never reported. |
+| `disabled` | -- | (silent) | Applied only via `policy.conf`; never reported. |
 
-Filter with `-T <tier>` (only that tier) or `-M <tier>` (that tier and higher severity). For CI gates, use `bcscheck -T core script.sh` to fail only on core violations.
+## CLI Reference
 
-### Policy Overrides
+Subcommands, frequency-ordered:
 
-Teams and individuals may reclassify or disable any rule via `policy.conf`:
+| Command | Purpose |
+|---------|---------|
+| `bcs check` | AI-powered compliance check against the full standard |
+| `bcs template` | Generate BCS-compliant script templates |
+| `bcs codes` | List rule codes; `-E BCSdddd` to explain one |
+| `bcs display` | View the standard (default when no subcommand) |
+| `bcs generate` | Reassemble `BASH-CODING-STANDARD.md` from section files (maintainer) |
+| `bcs help [CMD]` | Per-command help |
+
+### `bcs check`
 
 ```bash
-# ~/.config/bcs/policy.conf  -- or .bcs/policy.conf per-repo
+bcs check myscript.sh                      # Auto-detect backend (balanced tier)
+bcs check -m claude-sonnet-4-6 deploy.sh   # Anthropic API
+bcs check -m claude-code:thorough ci.sh    # Claude Code CLI, thorough tier
+bcs check --strict -T core deploy.sh       # CI gate: core-only, warnings fatal
+bcscheck myscript.sh                       # Equivalent shim (defaults from bcs.conf)
+```
+
+### `bcs template`
+
+```bash
+bcs template -t complete -n deploy -d 'Deploy script' -o deploy.sh -x
+```
+
+| Type | Lines | Use |
+|------|-------|-----|
+| `minimal` | ~16 | Bare essentials |
+| `basic` | ~26 | Standard with metadata (default) |
+| `complete` | ~119 | Full toolkit (main, args, messaging, cleanup) |
+| `library` | ~40 | Sourceable library (no `main`) |
+
+### `bcs codes`
+
+```bash
+bcs codes                  # All rules, tier-decorated
+bcs codes -T core          # Only core-tier rules (33)
+bcs codes -E BCS0101       # Explain one rule
+bcs codes -p               # Plain output (no tier decoration)
+```
+
+### `bcs display` & `bcs generate`
+
+`bcs` (no args) renders the standard via `md2ansi` + `less` in a terminal. Flags: `-c` plain, `-S` symlink the standard into cwd, `-f` print its path. `bcs generate` rebuilds `data/BASH-CODING-STANDARD.md` from the `data/[0-9]*.md` section files -- maintainer-only; never edit the assembled document directly.
+
+## Compliance Checking
+
+`bcs check` analyses a script with an LLM and reports findings keyed to BCS codes. The backend is resolved entirely from the `-m` model name -- there is no separate `--backend` flag.
+
+**Backend routing**
+
+| `-m` value | Backend | Notes |
+|------------|---------|-------|
+| `fast` / `balanced` / `thorough` | Probe order: ollama, anthropic, openai, google, claude | First reachable wins; tier's default model |
+| `claude-*` (e.g. `claude-opus-4-6`) | Anthropic API | Pass-through |
+| `gemini-*` (e.g. `gemini-2.5-pro`) | Google Gemini API | Pass-through |
+| `gpt-*` / `o[0-9]*` (e.g. `gpt-5.4`, `o3-mini`) | OpenAI API | Pass-through |
+| `claude-code` | Claude Code CLI | `balanced` tier default |
+| `claude-code:<tier-or-model>` | Claude Code CLI | Suffix stripped before resolution |
+| anything else (e.g. `minimax-m2:cloud`) | Local Ollama | Pass-through |
+
+▲ Local Ollama models whose names match `claude-*`, `gemini-*`, `gpt-*`, or `o[0-9]*` are unreachable through `-m` -- rename the local model.
+
+**Tiers per backend**
+
+| Tier | Ollama | Anthropic | Google | OpenAI | Claude Code |
+|------|--------|-----------|--------|--------|-------------|
+| `fast` | qwen3.5:9b | claude-haiku-4-5 | gemini-2.5-flash-lite | gpt-4.1-mini | claude-haiku-4-5 |
+| `balanced` | qwen3.5:14b | claude-sonnet-4-6 | gemini-2.5-flash | gpt-5.4-mini | claude-sonnet-4-6 |
+| `thorough` | qwen3.5:14b | claude-opus-4-6 | gemini-2.5-pro | gpt-5.4 | claude-opus-4-6 |
+
+**Effort levels**
+
+| `-e` | Max tokens | Prompt guidance |
+|------|------------|------------------|
+| `low` | 4000 | Clear violations only; concise |
+| `medium` (default) | 8000 | Violations and significant warnings |
+| `high` | 32000 | All violations and warnings |
+| `max` | 64000 | Exhaustive line-by-line audit |
+
+**Recommended defaults**
+
+| Use case | Setting |
+|----------|---------|
+| Quick sanity check | `-m gpt-5.4 -e medium` |
+| Daily development | `-m claude-sonnet-4-6 -e medium` |
+| Pre-commit review | `-m claude-sonnet-4-6 -e high` |
+| Thorough audit | `-m claude-sonnet-4-6 -e max` |
+| Pre-release audit | `-m claude-code -e max` |
+
+**Filtering, CI gates, suppression**
+
+- `-T <tier>` -- only findings at that tier (e.g. `bcscheck -T core deploy.sh` as a CI gate).
+- `-M <tier>` -- that tier or stricter (`-M recommended` excludes style).
+- `--strict` -- treat warnings as violations (non-zero exit on any finding).
+- `#bcscheck disable=BCSdddd` on its own line suppresses a rule for the next command, function, or `{ ... }` block -- same scope rules as `shellcheck` directives.
+
+**Accuracy data** -- backend accuracy is measured against four BCS-compliant scripts (`cln`, `md2ansi`, `which`, `tests/accuracy/bcs-check-accuracy.sh`) across multiple models and effort levels. See [`tests/accuracy/LLM-ACCURACY.md`](tests/accuracy/LLM-ACCURACY.md) for the current scoring matrix and refresh date.
+
+## Customisation
+
+### Policy Overrides (`policy.conf`)
+
+Reclassify or disable any rule:
+
+```
+# ~/.config/bcs/policy.conf  -- or .bcs/policy.conf per repo
 BCS0301 = style        # downgrade single-quote dogma
 BCS0109 = disabled     # silence #fin end-marker noise
 BCS9801 = core         # classify a user rule
 ```
 
-Cascade (later wins): `/etc/bcs/policy.conf` → `~/.config/bcs/policy.conf` → `.bcs/policy.conf`. Parsed with strict regex, never sourced. See `bcs.policy.sample` for a template.
+Cascade, later wins: `/etc/bcs/policy.conf` → `~/.config/bcs/policy.conf` → `.bcs/policy.conf`. Parsed with a strict regex, never sourced as shell. See [`bcs.policy.sample`](bcs.policy.sample).
 
-### User Rules
+### Custom Rules (`BCS9800`--`BCS9899`)
 
-Add custom rules in the reserved `BCS9800-BCS9899` namespace. Place markdown files (same structure as any BCS rule) at:
+The `BCS98xx` namespace is reserved for user rules. Place markdown files (same structure as any BCS rule) at `data/98-user.md` (single file) or `data/98-user.d/*.md` (drop-in directory); both may be symlinks. `bcs generate` splices them into `BASH-CODING-STANDARD.md` after section 12. Both paths are `.gitignore`d so user rules never ship upstream.
 
-- `data/98-user.md` (single file, optional)
-- `data/98-user.d/*.md` (drop-in directory, optional)
+### Configuration (`bcs.conf`)
 
-Both may be symlinks to rule files in your home directory. `bcs generate` splices them into `BASH-CODING-STANDARD.md` after section 12; `bcs check` and `bcs codes` honour them like any other rule. Both paths are `.gitignore`d so your rules never ship with upstream BCS.
-
-### Configuration
-
-Config files are sourced as bash in cascade order (later files override earlier):
-
-1. `/etc/bcs.conf` (system -- flat file)
-2. `/etc/bcs/bcs.conf` (system -- directory)
-3. `/usr/local/etc/bcs/bcs.conf` (local install)
-4. `~/.config/bcs/bcs.conf` (user -- XDG standard)
-
-Any file may set a subset of values; keys it doesn't touch inherit from earlier layers. This lets a user override a single setting without re-declaring every default.
+Cascading bash-sourced config, later wins: `/etc/bcs.conf` → `/etc/bcs/bcs.conf` → `/usr/local/etc/bcs/bcs.conf` → `~/.config/bcs/bcs.conf` (XDG).
 
 ```bash
 BCS_MODEL=balanced        # fast, balanced, thorough, or a direct model name
-                          # (e.g. claude-sonnet-4-6, minimax-m2:cloud, claude-code)
 BCS_EFFORT=medium         # low, medium, high, max
-
-# Override model for a specific backend (bypasses tier mapping)
-BCS_OPENAI_MODEL=gpt-5.4
+BCS_STRICT=0              # 0 or 1
+BCS_OPENAI_MODEL=gpt-5.4  # Per-backend override; bypasses tier mapping
 ```
 
-See `bcs.conf.sample` for all options including per-tier array overrides. CLI flags override config file settings; config overrides environment variables.
+CLI flags override config; config overrides environment. See [`bcs.conf.sample`](bcs.conf.sample) for all options including per-tier array overrides.
 
 ## Examples
 
-The `examples/` directory contains exemplar BCS-compliant scripts:
+### Standalone Scripts
+
+`examples/` contains exemplar BCS-compliant scripts:
 
 | Script | Lines | Demonstrates |
-|--------|-------|-------------|
-| `cln` | 246 | File operations, argument parsing, arrays |
-| `md2ansi` | 1430 | Large-scale text processing, ANSI formatting |
-| `which` | 111 | Dual-purpose script pattern |
+|--------|-------|--------------|
+| [`cln`](examples/cln) | 246 | File operations, argument parsing, arrays |
+| [`md2ansi`](examples/md2ansi) | 1430 | Large-scale text processing, ANSI formatting |
+| [`which`](examples/which) | 111 | Dual-purpose script pattern |
 
-## Testing
+### Exemplar Library & Templates
 
-```bash
-./tests/run-all-tests.sh              # Run all tests
-./tests/test-subcommand-template.sh   # Run specific suite
-shellcheck -x bcs                     # Mandatory validation
-```
+[`examples/exemplar-code/`](examples/exemplar-code/) holds smaller idiomatic snippets (`checkpoint`, `clip`, `dux`, `hr2int`, `int2hr`, `internetip`, `lsd`, `nukedir`, `oknav`, ...) -- see [`examples/exemplar-code/BCS.md`](examples/exemplar-code/BCS.md) for the annotated index. Generate fresh BCS-compliant skeletons with `bcs template -t {minimal,basic,complete,library}` (see [CLI Reference](#bcs-template)).
 
-## Coding Principles
+## AI Tooling (`ai-agents/`)
 
-- K.I.S.S.
-- "The best process is no process"
-- "Everything should be made as simple as possible, but not any simpler."
+The [`ai-agents/`](ai-agents/README.md) package bundles BCS-aware agents, slash commands, and rule snapshots for Claude Code, opencode, and codex. Drop them into `~/.claude/`, `~/.config/opencode/`, or `~/.codex/` to give any AI session BCS-aware scaffolding, auditing, and ShellCheck remediation.
 
-## Bash 5.2 Reference (Strict Mode)
+| Component | Inventory | Use |
+|-----------|-----------|-----|
+| Agents | `bash-expert`, `bcs-auditor`, `script-scaffolder`, `shellcheck-fixer`, `documentation-writer` | Autonomous BCS-aware sub-agents |
+| Slash commands | `/audit-bash`, `/bcs-check`, `/bcs-codes`, `/fix-shellcheck`, `/scaffold`, `/pfu`, `/update-docs`, `/update-internal-docs` | Single-shot operations |
+| Rule snapshots | `bash-coding-standard.md`, `coding-principles.md`, `documentation.md`, ... | Drop-in rule files |
+
+See [`ai-agents/AGENTS.md`](ai-agents/AGENTS.md) for the flat file inventory.
+
+## Bash 5.2 Reference (`BCS-bash`)
 
 BCS includes a rewritten Bash 5.2 reference manpage tailored for strict-mode scripting. It removes legacy syntax (backtick substitution, `[ ]` tests), POSIX compatibility modes, and `sh`-emulation caveats -- leaving a clean, modern reference that assumes `set -euo pipefail` and `[[ ]]` throughout.
 
 ```bash
-man BCS-bash    # View the reference (also: man bcs-bash)
+man BCS-bash    # Also: man bcs-bash
 ```
 
-The reference source lives in `docs/BCS-bash/` as structured Markdown files mirroring the original bash(1) man page sections.
+Source lives in [`docs/BCS-bash/`](docs/BCS-bash/) as structured Markdown mirroring the original `bash(1)` man page sections.
 
-## AI Tooling (`ai-agents/`)
+## Testing & Self-Compliance
 
-The [`ai-agents/`](ai-agents/README.md) package bundles BCS-aware agents, slash commands, and rule snapshots for Claude Code, opencode, and codex. Drop them into `~/.claude/`, `~/.config/opencode/`, or `~/.codex/` to give any AI session BCS-aware scaffolding, auditing, and shellcheck remediation. See [`ai-agents/README.md`](ai-agents/README.md) for the narrative introduction and [`ai-agents/AGENTS.md`](ai-agents/AGENTS.md) for the flat file inventory.
+```bash
+./tests/run-all-tests.sh             # Run all suites
+./tests/test-subcommand-template.sh  # Run a single suite
+shellcheck -x bcs bcscheck           # Mandatory static check
+make check && make test              # Equivalent shortcuts
+```
+
+✓ **Self-compliance:** `bcs check bcs` passes -- the `bcs` script is itself BCS-compliant. The invariant is enforced by [`tests/test-self-compliance.sh`](tests/test-self-compliance.sh) and runs as part of every test suite invocation.
 
 ## Related Resources
 
-- [ShellCheck](https://www.shellcheck.net/) -- Static analysis tool for shell scripts
-- [Google Shell Style Guide](https://google.github.io/styleguide/shellguide.html) -- Google's shell scripting conventions
+- [ShellCheck](https://www.shellcheck.net/) -- Static analysis for shell scripts
+- [Google Shell Style Guide](https://google.github.io/styleguide/shellguide.html) -- Google's conventions
 - [Bash Reference Manual](https://www.gnu.org/software/bash/manual/) -- Official GNU Bash documentation
 
-## License
+## License & Acknowledgments
 
-CC BY-SA 4.0 - See LICENSE for details.
-
-## Acknowledgments
-
-Developed by [Okusi Associates](https://www.okusi.id) for the [Indonesian Open Technology Foundation (YaTTI)](https://www.yatti.id).
+Licensed under [CC BY-SA 4.0](LICENSE). Developed by [Okusi Associates](https://www.okusi.id) for the [Indonesian Open Technology Foundation (YaTTI)](https://www.yatti.id).
