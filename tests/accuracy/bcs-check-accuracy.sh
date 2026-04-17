@@ -9,11 +9,11 @@ declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 declare -a BASH_SCRIPTS=( md2ansi cln which "$SCRIPT_PATH")
-declare -- script scriptname
+declare -- script scriptname scriptdir
 
 # Models to exercise
 declare -a LLM_MODELS=(
-  claude
+  claude-code
   claude-sonnet-4-6
   #claude-opus-4-6
   #gemini-2.5-pro
@@ -62,7 +62,7 @@ HELP
   exit 0
 fi
 
-cd "$SCRIPT_DIR"
+cd "$SCRIPT_DIR" # anchor to script's dir path
 
 declare -- output_to
 
@@ -71,19 +71,22 @@ declare -i start_time=$EPOCHSECONDS
 for script in "${BASH_SCRIPTS[@]}"; do
   script=$(realpath -- "$script")
   scriptname=${script##*/}
+  scriptdir=${script%/*}
+
+  cd "$scriptdir"
 
   for model in "${LLM_MODELS[@]}"; do
     # Sanitize for filename: collapse ':' and '/' to '_'.
-    modelname=${model//[:\/]/_}
+    modelname=${model//[:\/]/-}
     for effort in "${EFFORTS[@]}"; do
-      output_to="bcs-check-$scriptname-$modelname-$effort.md"
+      output_to="$SCRIPT_DIR"/bcs-check_"$scriptname"_"$modelname"_"$effort".md
       >&2 echo "bcs check --model $model --effort $effort ${script@Q} &>${output_to@Q}"
       if [[ -f $output_to ]]; then
         >&2 echo "    ${output_to@Q} already exists; skipping"
         continue
       fi
 
-      bcs check --model "$model" --effort "$effort" "$script" &>"$output_to"
+      bcs check --model "$model" --effort "$effort" "$script" &>"$output_to" ||:
 
     done
   done
