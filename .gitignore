@@ -21,3 +21,6 @@ data/98-user.d/
 
 # User-local policy overrides (tier reclassifications, disabled rules)
 .bcs/policy.conf
+
+# Local archive of superseded LLM accuracy reports
+tests/accuracy/old-tests/
