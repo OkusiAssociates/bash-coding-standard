@@ -181,10 +181,10 @@ ${BOLD}Options:$NC
   -h, --help            Show this help
 
 ${BOLD}Template Types:$NC
-  minimal     Bare essentials (~15 lines)
-  basic       Standard with metadata (~25 lines)
-  complete    Full toolkit with all utilities (~112 lines)
-  library     Sourceable library pattern (~39 lines)
+  minimal     Bare essentials (~16 lines)
+  basic       Standard with metadata (~26 lines)
+  complete    Full toolkit with all utilities (~119 lines)
+  library     Sourceable library pattern (~40 lines)
 
 ${BOLD}Examples:$NC
   $SCRIPT_NAME template -t minimal
@@ -208,14 +208,16 @@ ${BOLD}Options:$NC
   -M, --min-tier TIER     Report findings at this tier or higher severity
   -D, --debug             Announce raw-response dump path on success;
                           dump is always written and auto-announced on failure
+  -v, --verbose           Show info messages (${BOLD}default$NC)
   -q, --quiet             Suppress info messages
   -h, --help              Show this help
 
 ${BOLD}Raw Response Dump:$NC
   Every API response is saved to \${XDG_STATE_HOME:-~/.local/state}/bcs/last-response.txt
-  (or /tmp/bcs-last-response.\$\$.txt if no state dir). On failure or --debug,
-  the path is printed to stderr so you can inspect the raw JSON without
-  re-running the check.
+  (or /tmp/bcs-last-response.XXXXXX via mktemp if no state dir). On failure or
+  --debug, the path is printed to stderr so you can inspect the raw JSON
+  without re-running the check. The Claude Code CLI backend does not dump --
+  it returns text directly, not JSON.
 
 ${BOLD}Model selection:$NC
   The -m value determines which backend handles the check:

@@ -1,5 +1,5 @@
 .\" BCS Manual Page
-.\" Generated: 2026-04-09
+.\" Generated: 2026-04-17
 .\"
 .TH BCS 1 "April 2026" "BCS 2.0.1" "User Commands"
 .\"
@@ -29,9 +29,10 @@ bcs \- Bash Coding Standard CLI toolkit
 .SH DESCRIPTION
 .B bcs
 is a CLI toolkit for working with the Bash Coding Standard (BCS), a set of
-105 concise, actionable rules across 12 sections for Bash 5.2+ scripts.
-Designed by Okusi Associates for the Indonesian Open Technology Foundation
-(YaTTI), the standard targets both human programmers and AI assistants.
+98 concise, actionable rules (plus 12 section overviews) across 12 sections
+for Bash 5.2+ scripts. Designed by Okusi Associates for the Indonesian Open
+Technology Foundation (YaTTI), the standard targets both human programmers
+and AI assistants.
 .PP
 The toolkit provides six subcommands for viewing, generating templates,
 checking compliance, listing rule codes, and regenerating the standard
@@ -65,10 +66,10 @@ Generate BCS-compliant script templates with placeholder substitution.
 .TP
 .BR \-t ", " \-\-type " " \fITYPE\fR
 Template type:
-.BR minimal " (~15 lines),"
-.BR basic " (~25 lines, default),"
+.BR minimal " (~16 lines),"
+.BR basic " (~26 lines, default),"
 .BR complete " (~119 lines),"
-.BR library " (~39 lines)."
+.BR library " (~40 lines)."
 .TP
 .BR \-n ", " \-\-name " " \fINAME\fR
 Script name for placeholders.
@@ -148,21 +149,72 @@ Treat warnings as violations.
 .BR \-S ", " \-\-no\-strict
 Don't treat warnings as violations (default).
 .TP
+.BR \-T ", " \-\-tier " " \fITIER\fR
+Report only findings at this tier
+.RB ( core ", " recommended ", " style ).
+.TP
+.BR \-M ", " \-\-min\-tier " " \fITIER\fR
+Report findings at this tier or higher severity
+.RB ( core ", " recommended ", " style ).
+.TP
+.BR \-D ", " \-\-debug
+Announce the raw-response dump path on success (the dump is always written
+and auto-announced on failure).
+.TP
+.BR \-v ", " \-\-verbose
+Show info messages (default).
+.TP
 .BR \-q ", " \-\-quiet
 Suppress info messages.
 .TP
 .BR \-h ", " \-\-help
 Show check help and exit.
+.PP
+Every API response is saved to
+.IR ${XDG_STATE_HOME:\-~/.local/state}/bcs/last\-response.txt
+(or
+.I /tmp/bcs\-last\-response.XXXXXX
+via mktemp if no state directory). The Claude Code CLI backend does not
+dump \(em it returns text directly, not JSON.
+.PP
+Inline suppression:
+.B #bcscheck disable=BCS\fIxxxx\fR
+on its own line suppresses the named rule for the next command or block,
+matching the scope rules of
+.B shellcheck
+directives.
 .\"
 .SS bcs codes
-List all BCS rule codes and titles extracted from section files. Each code
-follows the format
+List all BCS rule codes and titles extracted from section files plus any
+user rule drop-ins
+.RI ( data/98\-user.md ", " data/98\-user.d/*.md ).
+Each code follows the format
 .B BCS\fISSRR\fR
 where
 .I SS
 is the section number and
 .I RR
-is the rule number, both zero-padded.
+is the rule number, both zero-padded. Output is decorated with the rule's
+effective tier (default tier overridden by
+.IR policy.conf ,
+if any).
+.TP
+.BR \-T ", " \-\-tier " " \fITIER\fR
+Show only rules at this tier
+.RB ( core ", " recommended ", " style ", " disabled ).
+.TP
+.BR \-E ", " \-\-explain " " \fIBCS####\fR
+Print the full body of a single rule (heading, tier, rationale, examples)
+and exit. Useful for drilling into a specific rule after a failed
+.B bcs check
+run.
+.TP
+.BR \-p ", " \-\-plain
+Omit tier decoration (output is just "BCS#### Title").
+.TP
+.BR \-x ", " \-\-exclude\-disabled
+Skip rules that have been disabled via
+.IR policy.conf .
 .TP
 .BR \-h ", " \-\-help
 Show codes help and exit.
@@ -189,6 +241,12 @@ Global options recognized before any subcommand:
 .TP
 .BR \-V ", " \-\-version
 Display version information and exit.
+.TP
+.BR \-v ", " \-\-verbose
+Enable verbose output (default).
+.TP
+.BR \-q ", " \-\-quiet
+Suppress info messages.
 .TP
 .BR \-h ", " \-\-help
 Display main help message and exit.
@@ -361,35 +419,74 @@ Regenerate BASH\-CODING\-STANDARD.md from section files.
 Show detailed help for the template subcommand.
 .\"
 .SH ACCURACY
-Backend accuracy varies significantly. Based on testing across 42 runs on
-two BCS-compliant scripts of different complexity (see
-.IR tests/accuracy/LLM\-ACCURACY.md ):
+Backend accuracy varies significantly. Based on the 2026-04-17 refresh
+covering four BCS-compliant scripts of varying complexity
+.RB ( cln ", " md2ansi ", " which ", " tests/accuracy/bcs\-check\-accuracy.sh )
+across six models \(mu three effort levels (60 completed runs; 12
+.BR glm\-5.1:cloud
+runs failed HTTP 403 and are excluded). See
+.I tests/accuracy/LLM\-ACCURACY.md
+for the full scoring matrices.
 .PP
 .B Recommended configurations
 .RS
 .TP
-.B Quick check
-gpt\-5.4 at medium effort (10\-15s, zero false positives)
+.B Quick sanity check
+gpt\-5.4 at medium effort (9\(en71s; 0\(en1 FP on most scripts, noisier on
+function-free scripts)
 .TP
 .B Daily development
-claude\-sonnet\-4\-6 at medium effort (28\-87s, best accuracy/speed ratio)
+claude\-sonnet\-4\-6 at medium effort (35\(en83s; zero false positives across
+all four test scripts; reliable suppression handling)
+.TP
+.B Pre-commit review
+claude\-sonnet\-4\-6 at high effort (43\(en101s; more findings; still zero FPs
+on most scripts)
 .TP
 .B Thorough audit
-claude\-code at balanced\-high (5\-9 min, highest recall, zero false positives)
+claude\-sonnet\-4\-6 at max effort (42\(en128s; top scorer on md2ansi and
+tests/accuracy/bcs\-check\-accuracy.sh)
+.TP
+.B Pre-release audit
+claude\-code at max effort (deepest
+.B which
+analysis; very slow at 5\(en14 min on larger scripts)
 .RE
 .PP
-.B Backend ranking (by recall on complex scripts)
+.B Backend ranking (2026-04-17 refresh)
 .RS
 .IP 1. 4
-Claude Code CLI \(em highest accuracy, slowest (2\-24 min)
+Anthropic API (claude\-sonnet\-4\-6) \(em best speed/accuracy ratio and most
+consistent across script types. Only model to find both missing
+.B local \-\-
+separators and both
+.B ((FLAG == 0))
+sites. Recommended for daily development.
 .IP 2. 4
-Anthropic API (claude\-sonnet\-4\-6) \(em best speed/accuracy ratio
+Claude Code CLI \(em deepest rule citation on suppression/fence patterns.
+Tradeoff: very slow (5\(en14 min on larger scripts). Best for final pre-release
+audits.
 .IP 3. 4
-OpenAI API (gpt\-5.4) \(em fastest, reliable on simpler scripts
+OpenAI API (gpt\-5.4) \(em fastest backend (4\(en109s). Best for quick checks.
+Degrades on function-free scripts (misapplies BCS0202). Avoid
+.B max
+effort \(em introduces false positives without adding coverage.
 .IP 4. 4
-Google API (gemini) \(em thorough tier at medium effort is reliable
+Google API (gemini) \(em not included in the 2026-04-17 refresh matrix.
+Prior guidance stands:
+.B thorough
+tier at
+.B medium
+effort is reliable; lower tiers over-report.
 .IP 5. 4
-Ollama cloud models \(em not recommended (low recall, hallucination risk)
+Ollama cloud models \(em not recommended for accuracy-sensitive work.
+.BR minimax\-m2.7:cloud
+and
+.BR qwen3\-coder:480b\-cloud
+score 0\(en2/3 per script with persistent 2\(en6 FPs per run.
+.BR glm\-5.1:cloud
+is currently unavailable (HTTP 403 "a subscription is required for access"
+via ollama.com).
 .RE
 .PP
 Tier keywords
@@ -397,7 +494,7 @@ Tier keywords
 probe backends in order. When an Ollama server is running, it is probed
 first \(em this may route tier keywords to low\-accuracy cloud models.
 Use explicit model names (e.g.
-.BR \-m\ gpt\-5.4 )
+.BR \-m\ gpt\-5.4 " or " \-m\ claude\-sonnet\-4\-6 )
 for predictable quality.
 .\"
 .SH SEE ALSO

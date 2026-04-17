@@ -61,8 +61,8 @@ The `bcs check` subcommand requires an LLM backend. At least one of the followin
 | Anthropic API | `ANTHROPIC_API_KEY` + curl + jq | Recommended -- best accuracy/speed ratio |
 | OpenAI API | `OPENAI_API_KEY` + curl + jq | Best speed; strong on simpler scripts |
 | Google Gemini API | `GOOGLE_API_KEY` + curl + jq | `thorough` tier recommended |
-| Ollama (local or cloud) | Running Ollama server | No API key for local; `ollama signin` for cloud. Low accuracy on cloud models -- use for offline/private checking only |
-| Claude Code CLI | `claude` installed | Optional -- highest quality but slowest (2-24 min) |
+| Ollama (local or cloud) | Running Ollama server | No API key for local; `ollama signin` for cloud. Low accuracy on cloud models; glm-5.1:cloud is currently unreachable (HTTP 403 from ollama.com) -- use for offline/private checking only |
+| Claude Code CLI | `claude` installed | Optional -- deepest rule citations but slowest (2--14 min per check in the 2026-04-17 refresh) |
 
 ## Installation
 
@@ -78,7 +78,7 @@ Installs the `bcs` and `bcscheck` binaries, data files, bash completions, and th
 
 ## Overview
 
-The Bash Coding Standard defines 94 substantive rules (plus 12 section overviews) across 12 sections in a single ~2,800-line document. Rules are written for both human programmers and AI assistants, with code examples for every rule. Every rule is tagged with a tier (`core`, `recommended`, or `style`) that drives severity in `bcs check`.
+The Bash Coding Standard defines 98 substantive rules (plus 12 section overviews) across 12 sections in a single ~3,000-line document. Rules are written for both human programmers and AI assistants, with code examples for every rule. Every rule is tagged with a tier (`core`, `recommended`, or `style`) that drives severity in `bcs check`.
 
 ### 12 Sections
 
@@ -113,10 +113,10 @@ The Bash Coding Standard defines 94 substantive rules (plus 12 section overviews
 Four template types for different needs:
 
 ```bash
-bcs template -t minimal     # Bare essentials (~15 lines)
-bcs template -t basic       # Standard with metadata (~25 lines)
+bcs template -t minimal     # Bare essentials (~16 lines)
+bcs template -t basic       # Standard with metadata (~26 lines)
 bcs template -t complete    # Full toolkit (~119 lines)
-bcs template -t library     # Sourceable library (~39 lines)
+bcs template -t library     # Sourceable library (~40 lines)
 ```
 
 ### Compliance Checking
@@ -166,34 +166,34 @@ Tier keywords map to concrete defaults per backend:
 
 ### Recommended Settings
 
-Not all model/effort combinations produce equally reliable results. Based on accuracy testing against BCS-compliant scripts of varying complexity (see `tests/accuracy/LLM-ACCURACY.md`):
+Not all model/effort combinations produce equally reliable results. Based on accuracy testing against BCS-compliant scripts of varying complexity (see `tests/accuracy/LLM-ACCURACY.md`, 2026-04-17 refresh):
 
 | Use Case | Recommended Setting | Notes |
 |----------|-------------------|-------|
-| **Quick sanity check** | `-m gpt-5.4 -e medium` | 10--15s, zero false positives, catches surface-level issues |
-| **Daily development** | `-m claude-sonnet-4-6 -e medium` | Best accuracy/speed ratio: zero false positives, reliable suppression handling |
-| **Pre-commit review** | `-m claude-sonnet-4-6 -e high` | More findings, still very accurate |
-| **Thorough audit** | `-m claude-opus-4-6 -e high` | Near-zero false positives, comprehensive |
-| **Pre-release audit** | `-m claude-code:thorough -e medium` | Highest quality; finds issues others miss (slow: 2-8 min) |
+| **Quick sanity check** | `-m gpt-5.4 -e medium` | 9--71s; clean on `cln`/`which` (0--1 FP), noisier on function-free scripts |
+| **Daily development** | `-m claude-sonnet-4-6 -e medium` | 35--83s; zero false positives across all four test scripts; reliable suppression handling |
+| **Pre-commit review** | `-m claude-sonnet-4-6 -e high` | 43--101s; more findings; still zero FPs on most scripts |
+| **Thorough audit** | `-m claude-sonnet-4-6 -e max` | 42--128s; top scorer on md2ansi (6/10) and accuracy.sh (4/4) in the refresh |
+| **Pre-release audit** | `-m claude-code -e max` | Deepest `which` analysis (3/3); very slow (5--14 min on larger scripts) |
 
-**Backend accuracy ranking** (from accuracy testing across 78 runs on four scripts):
+**Backend accuracy ranking** (2026-04-17 refresh, 60 completed runs across four scripts; 12 glm-5.1 runs failed HTTP 403 and are excluded):
 
-1. **Claude Code (`claude-code`)** -- Highest accuracy (5/8 consensus findings on a complex 1430-line script). Zero false positives at balanced/thorough tiers. Finds unique issues other backends miss: function ordering violations, unused wrappers, redundant variables. Tradeoff: **very slow** (2-24 minutes per check). Best for final audits.
-2. **Anthropic API (`claude-*`)** -- Best speed/accuracy ratio and most consistent across script types. Claude-sonnet-4-6 at medium scores 4/4 on simpler scripts, 3/3 on dual-purpose scripts, with zero false positives in 28--87s. Only model to find missing `local --` separators. Recommended for daily development.
-3. **OpenAI API (`gpt-*`, `o[0-9]*`)** -- Fastest backend (10--35s). gpt-5.4 at medium scores 4/4 on simpler scripts, 2/8 on complex scripts with zero false positives. Only model to catch comment typos. Best for quick checks. Avoid `max` effort -- introduces false positives on some script types.
-4. **Google API (`gemini-*`)** -- The `thorough` tier at `medium` effort is reliable. Lower tiers over-report, frequently flag correct code as violations, and can produce empty or truncated output. The `fast` tier is not recommended.
-5. **Ollama cloud models** -- Not recommended for accuracy-sensitive work. Tested models (minimax-m2.7:cloud, glm-5.1:cloud, qwen3-coder:480b-cloud) scored 0--0.5/8 on complex scripts with 1--4 false positives per run. Non-deterministic suppression handling. Higher effort levels increase hallucination risk. Use for offline/private checking only.
+1. **Anthropic API (`claude-*`)** -- Best speed/accuracy ratio and most consistent across script types. claude-sonnet-4-6 at max is the top scorer on md2ansi (6/10) and accuracy.sh (4/4); at high it leads on cln (3.5/4); at medium it is the only model with zero FPs across all four scripts (35--83s). Only model to find both missing `local --` separators and both `((FLAG == 0))` sites. Recommended for daily development.
+2. **Claude Code (`claude-code`)** -- Deepest rule citation on suppression/fence patterns. claude-code max scores 3/3 on `which` (tied for top). Tradeoff: **very slow** (5--14 min on larger scripts in this refresh). Best for final pre-release audits.
+3. **OpenAI API (`gpt-*`, `o[0-9]*`)** -- Fastest backend (4--109s). gpt-5.4 at medium scores 2/4 on cln and 2/3 on which with 0--1 FP; degrades on function-free scripts where it misapplies BCS0202. Best for quick checks. Avoid `max` effort on `cln` and `accuracy.sh` -- introduces false positives without adding coverage.
+4. **Google API (`gemini-*`)** -- Not included in the 2026-04-17 refresh matrix. Prior guidance stands: `thorough` tier at `medium` effort is reliable; lower tiers over-report.
+5. **Ollama cloud models** -- Not recommended for accuracy-sensitive work. Refreshed scores: minimax-m2.7:cloud 0--2/3, qwen3-coder:480b-cloud 0--2/3 per script, both with persistent FPs (2--6 per run). The 2026-04-12 hallucinations (minimax producing 4 wrong claims on cln, qwen3 emitting XML tool-call tokens) did **not** recur; output is now well-formed but recall remains low. glm-5.1:cloud is currently unavailable (all 12 runs failed with HTTP 403 "a subscription is required for access" via ollama.com).
 
 **Effort levels** control analysis depth and output token budget:
 
 | Effort | Behaviour | Notes |
 |--------|-----------|-------|
 | `low` | Only clear violations. Concise output. | |
-| `medium` | Violations and significant warnings. | Best default for all backends |
-| `high` | All violations and warnings. Thorough. | Beneficial for Claude backends; marginal or harmful elsewhere |
-| `max` | Exhaustive line-by-line audit. Expensive. | Avoid for ollama-cloud models (hallucination risk) |
+| `medium` | Violations and significant warnings. | Best default for gpt-5.4 (speed) and claude-sonnet-4-6 (zero-FP baseline) |
+| `high` | All violations and warnings. Thorough. | Beneficial for Claude backends; marginal for gpt-5.4 and cloud models |
+| `max` | Exhaustive line-by-line audit. Expensive. | Recommended for claude-sonnet-4-6 when catching low-rate findings matters; for gpt-5.4 and cloud-ollama models, tends to inflate runtime and FP count without new insights |
 
-For most users, `-m claude-sonnet-4-6 -e medium` (or configure these as defaults in `bcs.conf`) provides the best balance of accuracy, speed, and cost. For pre-commit hooks where speed matters, `-m gpt-5.4 -e medium` is 10--15s with zero false positives.
+For most users, `-m claude-sonnet-4-6 -e medium` (or configure these as defaults in `bcs.conf`) provides the best balance of accuracy, speed, and cost. For pre-commit hooks where speed matters, `-m gpt-5.4 -e medium` is 9--71s with 0--1 FP on most scripts.
 
 ### Tiers and Severity
 
@@ -201,8 +201,8 @@ Every rule carries a `**Tier:**` field. `bcs check` maps tier to severity:
 
 | Tier | Count | Severity | Behaviour |
 |------|-------|----------|-----------|
-| `core` | 32 | `[ERROR]` | Real correctness/safety bugs. Non-zero exit if any are found. |
-| `recommended` | 38 | `[WARN]` | Bash hygiene; prevents subtle issues. |
+| `core` | 33 | `[ERROR]` | Real correctness/safety bugs. Non-zero exit if any are found. |
+| `recommended` | 41 | `[WARN]` | Bash hygiene; prevents subtle issues. |
 | `style` | 24 | `[WARN]` | Taste; no correctness impact. |
 | `disabled` | -- | (silent) | Applied only via policy; never reported. |
 
@@ -259,7 +259,7 @@ The `examples/` directory contains exemplar BCS-compliant scripts:
 | Script | Lines | Demonstrates |
 |--------|-------|-------------|
 | `cln` | 246 | File operations, argument parsing, arrays |
-| `md2ansi` | 1428 | Large-scale text processing, ANSI formatting |
+| `md2ansi` | 1430 | Large-scale text processing, ANSI formatting |
 | `which` | 111 | Dual-purpose script pattern |
 
 ## Testing
