@@ -72,7 +72,7 @@ _bcs() {
       esac
       case $cur in
         -*)
-          mapfile -t COMPREPLY < <(compgen -W '-m --model -e --effort -s --strict -S --no-strict -T --tier -M --min-tier -q --quiet -h --help' -- "$cur")
+          mapfile -t COMPREPLY < <(compgen -W '-m --model -e --effort -s --strict -S --no-strict -T --tier -M --min-tier -D --debug -q --quiet -h --help' -- "$cur")
           ;;
         *)
           _filedir
@@ -86,8 +86,19 @@ _bcs() {
           mapfile -t COMPREPLY < <(compgen -W 'core recommended style disabled' -- "$cur")
           return
           ;;
+        -E|--explain)
+          # best-effort: completions list common codes
+          mapfile -t COMPREPLY < <(compgen -W '
+            BCS0101 BCS0106 BCS0107 BCS0109 BCS0110 BCS0202 BCS0206
+            BCS0301 BCS0302 BCS0303 BCS0406 BCS0407 BCS0410 BCS0411
+            BCS0501 BCS0503 BCS0504 BCS0606 BCS0604 BCS0801 BCS0803
+            BCS0901 BCS0906 BCS1001 BCS1002 BCS1004 BCS1006 BCS1007
+            BCS1101 BCS1103 BCS1104 BCS1202 BCS1204 BCS1206
+          ' -- "$cur")
+          return
+          ;;
       esac
-      mapfile -t COMPREPLY < <(compgen -W '-T --tier -p --plain -x --exclude-disabled -h --help' -- "$cur")
+      mapfile -t COMPREPLY < <(compgen -W '-T --tier -E --explain -p --plain -x --exclude-disabled -h --help' -- "$cur")
       ;;
 
     generate)

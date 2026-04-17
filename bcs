@@ -75,7 +75,7 @@ noarg()   { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
 
 # Load all conf files (cascade: system first, user overrides system)
 read_conf() {
-  local -- conf_file
+  local -- conf_file mode
   local -i loaded=0
   local -a search_paths=(
     /etc/"$SCRIPT_NAME".conf
@@ -85,6 +85,14 @@ read_conf() {
   )
   for conf_file in "${search_paths[@]}"; do
     [[ -f $conf_file ]] || continue
+    # Warn if the config is group- or world-writable. The file is sourced
+    # as shell, so permissive permissions are a latent RCE surface.
+    # Octal digit without write bit: 0, 1, 4, 5.
+    mode=$(stat -c '%a' "$conf_file" 2>/dev/null) ||:
+    case $mode in
+      ''|[0-7][0145][0145]) ;;   # neither group nor others writable (or stat unavailable)
+      *)                    warn "$conf_file: permissive mode $mode -- file is sourced as shell; chmod go-w recommended" ;;
+    esac
     #shellcheck source=/dev/null
     source "$conf_file"
     loaded+=1
@@ -184,8 +192,16 @@ ${BOLD}Options:$NC
   -S, --no-strict         Don't treat warnings as violations (${BOLD}default$NC)
   -T, --tier TIER         Report only findings at this tier (core|recommended|style)
   -M, --min-tier TIER     Report findings at this tier or higher severity
+  -D, --debug             Announce raw-response dump path on success;
+                          dump is always written and auto-announced on failure
   -q, --quiet             Suppress info messages
   -h, --help              Show this help
+
+${BOLD}Raw Response Dump:$NC
+  Every API response is saved to \${XDG_STATE_HOME:-~/.local/state}/bcs/last-response.txt
+  (or /tmp/bcs-last-response.\$\$.txt if no state dir). On failure or --debug,
+  the path is printed to stderr so you can inspect the raw JSON without
+  re-running the check.
 
 ${BOLD}Model selection:$NC
   The -m value determines which backend handles the check:
@@ -249,6 +265,7 @@ ${BOLD}Environment / Config Variables:$NC
   BCS_STRICT          Treat warnings as violations: 0 or 1
   BCS_TIER            Default --tier filter (core|recommended|style)
   BCS_MIN_TIER        Default --min-tier filter (core|recommended|style)
+  BCS_DEBUG           Default --debug (0 or 1); announces raw-response dump path
   BCS_OLLAMA_MODEL    Override Ollama model (supports :cloud tags, e.g. minimax-m2:cloud)
   BCS_ANTHROPIC_MODEL Override Anthropic model selection
   BCS_GOOGLE_MODEL    Override Google model selection
@@ -278,6 +295,7 @@ ${BOLD}Usage:$NC $SCRIPT_NAME codes [OPTIONS]
 
 ${BOLD}Options:$NC
   -T, --tier TIER         Show only rules at this tier (core|recommended|style|disabled)
+  -E, --explain BCS####   Print the full body of a single rule and exit
   -p, --plain             Omit tier decoration (just "BCS#### Title")
   -x, --exclude-disabled  Skip rules that have been disabled via policy.conf
   -h, --help              Show this help
@@ -286,11 +304,18 @@ Lists all BCS rule codes and titles extracted from section files and any
 user rules (98-user.md, 98-user.d/*.md). Each code is decorated with its
 effective tier (default from the rule body, overridden by policy.conf).
 
+Use ${BOLD}--explain$NC to drill into a specific rule after a failed ${BOLD}bcs check$NC run --
+prints the full rule body (heading, tier, rationale, examples).
+
 ${BOLD}Example Output:$NC
   BCS0101 [core] Strict Mode
   BCS0102 [recommended] Shebang
   BCS0107 [style] Function Organization
   [...]
+
+${BOLD}Explain a rule:$NC
+  $SCRIPT_NAME codes -E BCS0606           # Print BCS0606 rule body
+  $SCRIPT_NAME codes --explain BCS0101    # Same; long form
 HELP
 }
 
@@ -453,6 +478,15 @@ _collect_user_rules() {
 
 # ---- LLM backend functions ----
 
+# Dump the raw HTTP response body to $BCS_RESPONSE_DUMP if set.
+# cmd_check sets this to a file path so that empty/malformed results
+# can be diagnosed without re-running the check.
+_dump_response() {
+  [[ -n ${BCS_RESPONSE_DUMP:-} ]] || return 0
+  printf '%s\n' "$1" > "$BCS_RESPONSE_DUMP" 2>/dev/null ||:
+}
+
+
 # Auto-detect available LLM backend (ollama → anthropic → openai → google → claude)
 _detect_backend() {
   local -- host=${OLLAMA_HOST:-localhost:11434}
@@ -467,9 +501,14 @@ _detect_backend() {
 # Sniff backend from a direct model name. Used by cmd_check() whenever the
 # user passes a concrete model ID rather than a tier keyword.
 # Matches vendor prefixes; anything unrecognised falls back to ollama.
+#
+# ▲ LOAD-BEARING CASE ORDER ▲
+# The `claude-code*` case MUST precede `claude-*`. If reordered, the
+# claude-code sentinel routes to the Anthropic Messages API instead of
+# the Claude Code CLI -- silently, with no error -- because `claude-*`
+# also matches `claude-code`. Do not reorder these cases.
 _sniff_backend() {
   case $1 in
-    # MUST precede claude-* so `claude-code` routes to the CLI, not Anthropic.
     claude-code|claude-code:*) echo claude ;;
     claude-*)                  echo anthropic ;;
     gemini-*)                  echo google ;;
@@ -504,6 +543,7 @@ _llm_anthropic() {
     'https://api.anthropic.com/v1/messages' <<< "$payload") || die 5 'Anthropic API connection failed'
   http_code=${raw##*$'\n'}
   body=${raw%$'\n'"$http_code"}
+  _dump_response "$body"
   if ! ((http_code >= 200 && http_code < 300)); then
     local -- errmsg
     errmsg=$(jq -r '.error.message // empty' <<< "$body" 2>/dev/null) ||:
@@ -539,6 +579,7 @@ _llm_ollama() {
     "http://$ollama_host/api/chat" <<< "$payload") || die 5 'Ollama API connection failed'
   http_code=${raw##*$'\n'}
   body=${raw%$'\n'"$http_code"}
+  _dump_response "$body"
   if ! ((http_code >= 200 && http_code < 300)); then
     local -- errmsg
     errmsg=$(jq -r '.error // empty' <<< "$body" 2>/dev/null) ||:
@@ -579,6 +620,7 @@ _llm_openai() {
     'https://api.openai.com/v1/chat/completions' <<< "$payload") || die 5 'OpenAI API connection failed'
   http_code=${raw##*$'\n'}
   body=${raw%$'\n'"$http_code"}
+  _dump_response "$body"
   if ! ((http_code >= 200 && http_code < 300)); then
     local -- errmsg
     errmsg=$(jq -r '.error.message // empty' <<< "$body" 2>/dev/null) ||:
@@ -617,6 +659,7 @@ _llm_google() {
     "$url" <<< "$payload") || die 5 'Google API connection failed'
   http_code=${raw##*$'\n'}
   body=${raw%$'\n'"$http_code"}
+  _dump_response "$body"
   if ! ((http_code >= 200 && http_code < 300)); then
     local -- errmsg
     errmsg=$(jq -r '.error.message // empty' <<< "$body" 2>/dev/null) ||:
@@ -798,7 +841,7 @@ cmd_template() {
 
 cmd_check() {
   local -- script_file='' model=${BCS_MODEL:-balanced} effort=${BCS_EFFORT:-medium}
-  local -i strict=${BCS_STRICT:-0}
+  local -i strict=${BCS_STRICT:-0} debug=${BCS_DEBUG:-0}
   local -ar onoff=(off on)
   local -- backend=''
   local -- tier_filter=${BCS_TIER:-} min_tier_filter=${BCS_MIN_TIER:-}
@@ -818,11 +861,12 @@ cmd_check() {
                     [[ " ${VALID_TIER_FILTERS[*]} " == *" $min_tier_filter "* ]] \
                       || die 22 "Invalid tier ${min_tier_filter@Q} (valid: ${VALID_TIER_FILTERS[*]})"
                     ;;
+    -D|--debug)     debug=1 ;;
     -v|--verbose)   VERBOSE=1 ;;
     -q|--quiet)     VERBOSE=0 ;;
     -h|--help)      show_check_help; return 0 ;;
     --)             shift; [[ -n ${1:-} ]] && { script_file=$1; shift; }; break ;;
-    -[mesSTMvqh]?*) set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+    -[mesSTMDvqh]?*) set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
     -*)             die 22 "Invalid option ${1@Q}" ;;
     *)              [[ -z $script_file ]] || die 2 'Only one script file allowed'
                     script_file=$1
@@ -854,10 +898,13 @@ cmd_check() {
     info "Backend ${backend@Q} inferred from model ${model@Q}"
   fi
 
-  # Verify curl+jq for API backends
+  # Verify curl+jq+nl for API backends. `nl` produces the numbered-line
+  # user message; without it the API receives an empty prompt and returns
+  # confused output -- the failure surfaces at the API layer, not the
+  # actual cause.
   if [[ $backend != claude ]]; then
     local -- dep
-    for dep in curl jq; do
+    for dep in curl jq nl; do
       command -v "$dep" &>/dev/null || die 18 "Required tool: ${dep@Q}"
     done
   fi
@@ -869,6 +916,17 @@ cmd_check() {
   local -- check_cmd="bcs check --model ${model@Q} --effort ${effort@Q}"
   check_cmd+=" --strict ${onoff[strict]@Q} ${script_file@Q}"
   ((!VERBOSE)) || info "Checking ${script_file@Q} against BCS (backend=$backend)..." "$check_cmd"
+
+  # Set up raw-response dump path. Always written; only announced on
+  # failure or when --debug is set. Lets users diagnose empty/malformed
+  # responses without re-running the check.
+  local -- state_dir=${XDG_STATE_HOME:-$HOME/.local/state}/bcs
+  mkdir -p "$state_dir" 2>/dev/null ||:
+  if [[ -d $state_dir && -w $state_dir ]]; then
+    export BCS_RESPONSE_DUMP="$state_dir"/last-response.txt
+  else
+    export BCS_RESPONSE_DUMP=/tmp/bcs-last-response.$$.txt
+  fi
 
   local -- result
   local -i exit_code=0
@@ -954,11 +1012,47 @@ $numbered_script"
   fi
 
   [[ -z $result ]] || echo "$result"
-  ((!VERBOSE)) || info "Tokens: $_llm_tokens" "Elapsed: ${SECONDS}s"
+
+  # Build diagnostic message list. Claude CLI backend does not emit token
+  # counts, so suppress the Tokens line entirely when empty or all-zero --
+  # avoid printing noise like "Tokens: " or "Tokens: in=0 out=0".
+  local -a diag_msgs=()
+  if [[ -n $_llm_tokens && $_llm_tokens != 'in=0 out=0' ]]; then
+    diag_msgs+=("Tokens: $_llm_tokens")
+  fi
+  diag_msgs+=("Elapsed: ${SECONDS}s")
+
+  ((!VERBOSE)) || info "${diag_msgs[@]}"
 
   # Severity-based exit: any [ERROR] finding promotes exit code to 1
   if ((exit_code == 0)) && [[ $result == *'[ERROR]'* ]]; then
     exit_code=1
+  fi
+
+  # Diagnostics on failure or debug:
+  #   - API backend failed, or
+  #   - empty result with non-claude backend (likely parse failure), or
+  #   - --debug was requested
+  # In these cases, surface the saved raw-response path so the user can
+  # diagnose without re-running. Non-API (claude-code CLI) backend does
+  # not dump -- it returns text directly, not JSON.
+  local -i dump_show=0
+  if ((debug)); then
+    dump_show=1
+  elif ((exit_code != 0)); then
+    dump_show=1
+  elif [[ -z $result && $backend != claude ]]; then
+    dump_show=1
+    warn 'LLM returned empty result'
+    exit_code=5
+  fi
+  if ((dump_show)); then
+    # Re-emit diagnostics on failure even when non-verbose, plus exit code
+    ((VERBOSE)) || >&2 info "${diag_msgs[@]}"
+    >&2 info "Exit: $exit_code"
+    if [[ $backend != claude && -s ${BCS_RESPONSE_DUMP:-} ]]; then
+      >&2 info "Raw response: $BCS_RESPONSE_DUMP"
+    fi
   fi
   return "$exit_code"
 }
@@ -966,7 +1060,7 @@ $numbered_script"
 # ---- Subcommand: codes ----
 
 cmd_codes() {
-  local -- tier_filter=''
+  local -- tier_filter='' explain_code=''
   local -i show_tier=1 include_disabled=1
 
   while (($#)); do case $1 in
@@ -974,16 +1068,43 @@ cmd_codes() {
                    [[ " ${VALID_TIERS[*]} " == *" $tier_filter "* ]] \
                      || die 22 "Invalid tier ${tier_filter@Q} (valid: ${VALID_TIERS[*]})"
                    ;;
+    -E|--explain)  noarg "$@"; shift; explain_code=${1^^}
+                   [[ $explain_code =~ ^BCS[0-9]{4}$ ]] \
+                     || die 22 "Invalid code ${explain_code@Q} (expected BCS####)"
+                   ;;
     -p|--plain)    show_tier=0 ;;
     -x|--exclude-disabled) include_disabled=0 ;;
     -h|--help)     show_codes_help; return 0 ;;
-    -[Tpxh]?*)     set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+    -[TEpxh]?*)    set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
     -*)            die 22 "Invalid option ${1@Q}" ;;
     *)             die 2 "Unexpected argument ${1@Q}" ;;
   esac; shift; done
 
   local -- data_dir
   data_dir=$(_find_data_dir) || die 3 'Data directory not found'
+
+  # --explain short-circuits: print one rule's body and return
+  if [[ -n $explain_code ]]; then
+    local -a sources=("$data_dir"/[0-9]*.md)
+    [[ -d $data_dir/98-user.d ]] && sources+=("$data_dir"/98-user.d/*.md) ||:
+    local -- src found=''
+    for src in "${sources[@]}"; do
+      [[ -f $src ]] || continue
+      if grep -q "^## $explain_code " "$src" 2>/dev/null; then
+        found=$src
+        break
+      fi
+    done
+    [[ -n $found ]] || die 3 "Rule ${explain_code@Q} not found"
+    awk -v code="$explain_code" '
+      /^## BCS/ {
+        if (printing) exit
+        if ($0 ~ "^## "code" ") printing=1
+      }
+      printing { print }
+    ' "$found"
+    return 0
+  fi
 
   _load_tiers
   _load_policy
