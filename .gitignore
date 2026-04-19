@@ -1,6 +1,11 @@
 mk-index*
 .deprecated
+
 docs/promo/
+promo
+docs/.promo/
+.promo
+
 *.pyc
 *.swo
 *.swp
