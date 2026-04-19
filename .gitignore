@@ -1,3 +1,5 @@
+mk-index*
+.deprecated
 docs/promo/
 *.pyc
 *.swo
@@ -24,3 +26,7 @@ data/98-user.d/
 
 # Local archive of superseded LLM accuracy reports
 tests/accuracy/old-tests/
+
+# Per-project BCS doc symlinks inside reference codebases (dev-machine
+# convenience; absolute targets dangle on fresh clone)
+examples/lib/**/BASH-CODING-STANDARD.md
