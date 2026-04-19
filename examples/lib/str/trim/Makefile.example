@@ -1,0 +1,58 @@
+# Makefile - Install trim utilities
+# BCS1212 compliant
+
+PREFIX   ?= /usr/local
+BINDIR   ?= $(PREFIX)/bin
+MANDIR   ?= $(PREFIX)/share/man/man1
+SHAREDIR ?= $(PREFIX)/share/yatti/trim
+COMPDIR  ?= /etc/bash_completion.d
+DESTDIR  ?=
+
+SCRIPTS := trim ltrim rtrim trimv trimall squeeze
+
+.PHONY: all install uninstall check test help
+
+all: help
+
+install:
+	install -d $(DESTDIR)$(BINDIR)
+	@for s in $(SCRIPTS); do install -m 755 $$s.bash $(DESTDIR)$(BINDIR)/$$s; done
+	install -d $(DESTDIR)$(SHAREDIR)
+	bash generate-inc.sh $(DESTDIR)$(SHAREDIR)/trim.inc.sh
+	install -d $(DESTDIR)$(MANDIR)
+	install -m 644 trim.1 $(DESTDIR)$(MANDIR)/trim.1
+	@for s in $(SCRIPTS); do [ "$$s" = trim ] || ln -sf trim.1 $(DESTDIR)$(MANDIR)/$$s.1; done
+	@if [ -d $(DESTDIR)$(COMPDIR) ]; then \
+	  install -m 644 trim.bash_completion $(DESTDIR)$(COMPDIR)/trim; \
+	fi
+	@if [ -z "$(DESTDIR)" ]; then $(MAKE) --no-print-directory check; fi
+
+uninstall:
+	@for s in $(SCRIPTS); do rm -f $(DESTDIR)$(BINDIR)/$$s; done
+	rm -rf $(DESTDIR)$(SHAREDIR)
+	@for s in $(SCRIPTS); do rm -f $(DESTDIR)$(MANDIR)/$$s.1; done
+	rm -f $(DESTDIR)$(COMPDIR)/trim
+
+check:
+	@for s in $(SCRIPTS); do \
+	  command -v $$s >/dev/null 2>&1 \
+	    && echo "$$s: OK" \
+	    || echo "$$s: NOT FOUND (check PATH)"; \
+	done
+
+test:
+	./test/run-tests.sh
+
+help:
+	@echo 'Usage: make [target]'
+	@echo ''
+	@echo 'Targets:'
+	@echo '  install     Install to $(PREFIX)'
+	@echo '  uninstall   Remove installed files'
+	@echo '  check       Verify installation'
+	@echo '  test        Run test suite'
+	@echo '  help        Show this message'
+	@echo ''
+	@echo 'Install from GitHub:'
+	@echo '  git clone https://github.com/Open-Technology-Foundation/trim.git'
+	@echo '  cd trim && sudo make install'

@@ -1,0 +1,59 @@
+#!/bin/bash
+# get-mac - Get MAC address for machine
+
+get_mac() {
+  local -- iface wired='' wireless=''
+  for iface in /sys/class/net/*; do
+    iface=${iface##*/}
+    [[ -d /sys/class/net/"$iface"/device ]] || continue
+    [[ -d /sys/class/net/"$iface"/wireless ]] && wireless=$iface || wired=$iface
+  done
+  local -- target=${wired:-$wireless}
+  [[ -n $target ]] || return 1
+  cat /sys/class/net/"$target"/address
+}
+declare -fx get_mac
+
+is_approved_mac() {
+  [[ ${1-} =~ ^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$ ]] || return 1
+  grep -q "^${1}\( \|$\)" /etc/network/approved_macs
+}
+declare -fx is_approved_mac
+
+[[ ${BASH_SOURCE[0]} == "$0" ]] || return 0
+
+# --- Script mode only below ---
+set -euo pipefail
+shopt -s inherit_errexit
+
+declare -r SCRIPT_NAME=get-mac VERSION='1.0.0'
+
+show_help() {
+  cat <<HELP
+$SCRIPT_NAME $VERSION - Get MAC address for machine
+
+When sourced, also includes function is_approved_mac
+from list in file /etc/network/approved_macs
+
+Usage: $SCRIPT_NAME [-h] [-V]
+
+Print the MAC address of the primary network interface.
+Prefers wired over wireless.
+
+Options:
+  -h, --help      Show this help message
+  -V, --version   Show version
+HELP
+}
+
+while (($#)); do
+  case $1 in
+    -h|--help)    show_help; exit 0 ;;
+    -V|--version) echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
+    *)            >&2 echo "$SCRIPT_NAME: unknown option: ${1@Q}"
+                  >&2 show_help; exit 1 ;;
+  esac
+done
+
+get_mac
+#fin

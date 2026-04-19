@@ -1,0 +1,29 @@
+#!/bin/bash
+# Bash completion for elapsed_time script
+
+_elapsed_time() {
+  local cur prev opts
+  COMPREPLY=()
+  cur="${COMP_WORDS[COMP_CWORD]}"
+  prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+  opts="-h --help -V --version"
+
+  # First argument: start_time (numeric) or help options
+  if [ $COMP_CWORD -eq 1 ]; then
+    if [[ "$cur" == -* ]]; then
+      COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
+    else
+      # No completion for numeric start_time
+      COMPREPLY=()
+    fi
+  # Second argument: end_time (numeric, optional)
+  elif [ $COMP_CWORD -eq 2 ]; then
+    # No completion for numeric end_time
+    COMPREPLY=()
+  fi
+
+  return 0
+}
+
+complete -F _elapsed_time elapsed_time

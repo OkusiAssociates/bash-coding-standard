@@ -1,0 +1,163 @@
+.\" get-chassis.1 - manpage for get-chassis
+.TH GET\-CHASSIS 1 "2026-03-31" "1.0.0" "User Commands"
+.SH NAME
+get\-chassis \- return chassis type of current machine
+.SH SYNOPSIS
+.B get\-chassis
+.RI [ OPTIONS ]
+.RI [ TYPE ]...
+.SH DESCRIPTION
+.B get\-chassis
+prints the chassis type of the current machine (e.g.,
+.IR laptop ,
+.IR desktop ,
+.IR tablet ).
+.PP
+If one or more
+.I TYPE
+arguments are given,
+.B get\-chassis
+exits 0 if the current chassis matches any of them, or exits 1 otherwise.
+Comparison is case\-insensitive.
+.PP
+Detection tries
+.BR hostnamectl (1)
+first, then falls back to the SMBIOS chassis_type code in
+.IR /sys/class/dmi/id/chassis_type .
+.PP
+.B get\-chassis
+can also be sourced as a Bash library, which exports the
+.B get_chassis
+function into the calling shell.
+.SH OPTIONS
+.TP
+.BR \-V ", " \-\-version
+Show version and exit.
+.TP
+.BR \-h ", " \-\-help
+Show help and exit.
+.SH VALID CHASSIS TYPES
+.TS
+l l.
+1	other
+2	unknown
+3	desktop
+4	low\-profile\-desktop
+5	pizza\-box
+6	mini\-tower
+7	tower
+8	portable
+9	laptop
+10	notebook
+11	hand\-held
+12	docking\-station
+13	all\-in\-one
+14	sub\-notebook
+15	space\-saving
+16	lunch\-box
+17	main\-server\-chassis
+18	expansion\-chassis
+19	sub\-chassis
+20	bus\-expansion\-chassis
+21	peripheral\-chassis
+22	raid\-chassis
+23	rack\-mount\-chassis
+24	sealed\-case\-pc
+25	multi\-system\-chassis
+26	compact\-pci
+27	advanced\-tca
+28	blade
+29	blade\-enclosure
+30	tablet
+31	convertible
+32	detachable
+33	iot\-gateway
+34	embedded\-pc
+35	mini\-pc
+36	stick\-pc
+.TE
+.PP
+These correspond to SMBIOS specification chassis type codes from
+.IR /sys/class/dmi/id/chassis_type .
+.SH EXAMPLES
+Print the chassis type:
+.PP
+.RS
+.nf
+$ get\-chassis
+laptop
+.fi
+.RE
+.PP
+Test against one or more types:
+.PP
+.RS
+.nf
+$ get\-chassis laptop notebook && echo "Portable"
+Portable
+.fi
+.RE
+.PP
+Use as a conditional in a script:
+.PP
+.RS
+.nf
+if get\-chassis desktop mini\-tower tower; then
+  echo "This is a desktop system"
+fi
+.fi
+.RE
+.PP
+Source as a library:
+.PP
+.RS
+.nf
+source get\-chassis
+get_chassis laptop && echo "Running on a laptop"
+.fi
+.RE
+.SH EXIT STATUS
+.TP
+.B 0
+Success (no arguments), or a match was found (with arguments).
+If no detection method succeeds, an empty string is printed but exit status
+is still 0.
+.TP
+.B 1
+No match found (with arguments), or unknown option given.
+.SH ENVIRONMENT
+No environment variables are used.
+.SH FILES
+.TP
+.I /sys/class/dmi/id/chassis_type
+SMBIOS chassis type code (fallback detection).
+.SH DEPENDENCIES
+.TP
+.BR jq (1)
+Used to parse hostnamectl JSON output. Optional \(em falls back to SMBIOS
+if unavailable.
+.TP
+.BR hostnamectl (1)
+Primary detection method (requires systemd 246+). Optional \(em falls back
+to SMBIOS if unavailable.
+.SH REQUIREMENTS
+.TP
+.B Bash 4.4+
+Uses
+.IR inherit_errexit ,
+.IR "${var,,}" " lowercase expansion, and"
+.IR "${var@Q}" " quoting transform."
+.TP
+.B Linux
+Requires either systemd or DMI/SMBIOS support.
+.SH BUGS
+On systems without both systemd and DMI (e.g., ARM SBCs, containers),
+the function returns an empty string and type matching always fails.
+.SH LICENSE
+GNU General Public License v3.0.
+.SH AUTHORS
+Gary Dean, Biksu Okusi
+.SH SEE ALSO
+.BR hostnamectl (1),
+.BR jq (1),
+.BR dmidecode (8)

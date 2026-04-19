@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Bash completion for trim utilities: trim, ltrim, rtrim, trimv, trimall, squeeze
+
+_trim_completion() {
+  local -- cur=${COMP_WORDS[COMP_CWORD]}
+  local -- prev=${COMP_WORDS[COMP_CWORD-1]}
+  local -- cmd=${COMP_WORDS[0]##*/}
+
+  # trimv: -n expects a variable name — no completions
+  if [[ $cmd == trimv && $prev == -n ]]; then
+    COMPREPLY=()
+    return
+  fi
+
+  # Only complete options (not positional args — those are user strings)
+  if [[ $cur == -* ]]; then
+    local -- opts='-e -h --help -V --version --'
+    [[ "$cmd" == trimv ]] && opts='-e -n -h --help -V --version --' ||:
+    COMPREPLY=($(compgen -W "$opts" -- "$cur"))
+  fi
+}
+
+complete -F _trim_completion trim ltrim rtrim trimv trimall squeeze
+#fin

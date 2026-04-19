@@ -1,0 +1,71 @@
+#!/bin/bash
+# get-pubkey - Get the current user's SSH public key.
+
+get_pubkey() {
+  local -- keyfile
+
+  if (($#)); then
+    local -- HOME
+    HOME=$(sudo getent passwd "$1" |cut -d: -f6) || {
+      >&2 echo "${FUNCNAME[0]}: error: user ${1@Q} not found"
+      return 2
+    }
+  fi
+
+  for keyfile in "$HOME"/.ssh/id_{ed25519,ecdsa,rsa}.pub; do
+    [[ -r $keyfile ]] || continue
+    printf '%s\n' "$(<"$keyfile")"
+    return 0
+  done
+  return 1
+}
+declare -fx get_pubkey
+
+[[ ${BASH_SOURCE[0]} == "$0" ]] || return 0
+
+# --- Script mode only below ---
+set -euo pipefail
+shopt -s inherit_errexit
+
+declare -r SCRIPT_NAME=get-pubkey VERSION='1.0.0'
+
+show_help() {
+  cat <<HELP
+$SCRIPT_NAME $VERSION - print the current user's SSH public key
+
+Usage: $SCRIPT_NAME [-h] [-V] [USER]
+
+Print the first available SSH public key for USER (default: current user).
+Key types are checked in order: ed25519, ecdsa, rsa.
+
+Can also be sourced as a library:
+  source $SCRIPT_NAME  # exports get_pubkey()
+
+Options:
+  -h, --help      Show this help message
+  -V, --version   Show version
+
+Exit codes:
+  0  Key found and printed
+  1  No readable public key found
+  2  USER not found
+
+Examples:
+  $SCRIPT_NAME
+  $SCRIPT_NAME | ssh-keygen -lf -
+  sudo $SCRIPT_NAME netadmin
+HELP
+}
+
+while (($#)); do
+  case $1 in
+    -h|--help)    show_help; exit 0 ;;
+    -V|--version) echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
+    -*)           >&2 echo "$SCRIPT_NAME: error: unknown option ${1@Q}"
+                  >&2 show_help; exit 1 ;;
+  esac
+  break
+done
+
+get_pubkey "$@"
+#fin

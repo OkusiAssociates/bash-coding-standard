@@ -11,6 +11,8 @@ Target audience: both human programmers and AI assistants.
 
 Templates for new scripts: [complete.sh.template](/ai/scripts/Okusi/BCS/examples/templates/complete.sh.template), [basic.sh.template](/ai/scripts/Okusi/BCS/examples/templates/basic.sh.template), [minimal.sh.template](/ai/scripts/Okusi/BCS/examples/templates/minimal.sh.template), [library.sh.template](/ai/scripts/Okusi/BCS/examples/templates/library.sh.template)
 
+[Codebase examples](/ai/scripts/Okusi/BCS/examples/lib/index.md)
+
 ## Coding Principles
 - K.I.S.S.
 - "The best process is no process"

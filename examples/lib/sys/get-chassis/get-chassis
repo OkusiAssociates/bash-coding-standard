@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+# get-chassis - return chassis of current machine
+
+get_chassis() {
+  local -- chassis=''
+  chassis=$(hostnamectl --json=short 2>/dev/null | jq -r '.Chassis // empty' 2>/dev/null) || true
+
+  if [[ -z $chassis && -r /sys/class/dmi/id/chassis_type ]]; then
+    local -a chassis_map=(
+      [1]=other [2]=unknown [3]=desktop [4]=low-profile-desktop
+      [5]=pizza-box [6]=mini-tower [7]=tower [8]=portable
+      [9]=laptop [10]=notebook [11]=hand-held [12]=docking-station
+      [13]=all-in-one [14]=sub-notebook [15]=space-saving [16]=lunch-box
+      [17]=main-server-chassis [18]=expansion-chassis [19]=sub-chassis
+      [20]=bus-expansion-chassis [21]=peripheral-chassis [22]=raid-chassis
+      [23]=rack-mount-chassis [24]=sealed-case-pc [25]=multi-system-chassis
+      [26]=compact-pci [27]=advanced-tca [28]=blade [29]=blade-enclosure
+      [30]=tablet [31]=convertible [32]=detachable [33]=iot-gateway
+      [34]=embedded-pc [35]=mini-pc [36]=stick-pc
+    )
+    local -i code
+    code=$(< /sys/class/dmi/id/chassis_type)
+    chassis=${chassis_map[code]:-unknown}
+  fi
+
+  if (($#)); then
+    local -i ret=1
+    while (($#)); do
+      [[ ${chassis,,} == "${1,,}" ]] || { shift; continue; }
+      ret=0
+      break
+    done
+    return "$ret"
+  fi
+
+  echo "$chassis"
+  return 0
+}
+
+[[ ${BASH_SOURCE[0]} == "$0" ]] || { declare -fx get_chassis; return 0; }
+
+# -- Run as script --
+set -euo pipefail
+shopt -s inherit_errexit
+
+declare -- SCRIPT_NAME=${0##*/} VERSION='1.0.0'
+
+show_help() {
+  cat <<HELP
+$SCRIPT_NAME $VERSION - return chassis type of current machine
+
+Usage: $SCRIPT_NAME [OPTIONS] [TYPE]...
+
+Print the chassis type of the current machine. If one or more TYPEs
+are given, exit 0 if the current chassis matches any of them, or
+exit 1 otherwise. Comparison is case-insensitive.
+
+Detection tries hostnamectl first, then falls back to the SMBIOS
+chassis_type code in /sys/class/dmi/id/chassis_type.
+
+Options:
+  -V, --version           Show version
+  -h, --help              Show this help
+
+Valid chassis types:
+  other, unknown, desktop, low-profile-desktop, pizza-box,
+  mini-tower, tower, portable, laptop, notebook, hand-held,
+  docking-station, all-in-one, sub-notebook, space-saving,
+  lunch-box, main-server-chassis, expansion-chassis, sub-chassis,
+  bus-expansion-chassis, peripheral-chassis, raid-chassis,
+  rack-mount-chassis, sealed-case-pc, multi-system-chassis,
+  compact-pci, advanced-tca, blade, blade-enclosure, tablet,
+  convertible, detachable, iot-gateway, embedded-pc, mini-pc,
+  stick-pc
+
+Examples:
+  $SCRIPT_NAME
+  $SCRIPT_NAME laptop notebook
+  $SCRIPT_NAME desktop && echo 'This is a desktop'
+
+Depends: jq
+HELP
+}
+
+if (($#)); then
+  case $1 in
+    -V|--version) echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
+    -h|--help)    show_help; exit 0 ;;
+    -*)           >&2 echo "$SCRIPT_NAME: unknown option: ${1@Q}"
+                  exit 1 ;;
+  esac
+fi
+
+get_chassis "$@"
+#fin

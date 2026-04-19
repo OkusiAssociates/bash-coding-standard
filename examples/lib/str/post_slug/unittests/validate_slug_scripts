@@ -1,0 +1,232 @@
+#!/bin/bash
+set -e
+
+declare _ent_0 PRG PRGDIR
+_ent_0=$(readlink -fn -- "$0")
+PRG=${_ent_0##*/} 
+PRGDIR=${_ent_0%/*}
+# Change into the unittests directory.
+cd "$PRGDIR"
+
+is.interactive() { 
+  local -i isit=0
+  [[ -t 1 ]] && isit=1
+  [[ "${PS1+x}" == 'x' ]] && (( ${#PS1} > 1 )) && isit=1
+  [[ "$-" == *"i"* ]] && isit=1
+  [[ -p /dev/stdout ]] && isit=0
+  [[ ! -t 1 ]] && [[ ! -p /dev/stdout ]] && isit=0
+  return $(( ! isit ))
+}
+
+open_file_in_editor() {
+  local -i line=$1
+  local file=$2
+  local editor=${EDITOR:-/usr/bin/nano}
+	read -r -p "Edit $file at line $line? (y/n) " yn
+	[[ "${yn,,}" == 'y' ]] || return 0
+	$editor +$line "$file"
+	return 0
+}
+
+declare filename
+declare -i max_len
+declare -a sep_chars=(- _)
+declare -i preserve_cases=(0 1)
+declare -i preserve_case=0
+declare -A Slugs=()
+declare -A Script_Templates=()
+declare -a Script_Types=( 'py' 'bash' 'php' 'js' )
+declare line sep_char script_type
+declare -i count=0 unique_slugs=0
+declare -a Errs=()
+
+usage() {
+	cat <<-EOT
+	Slug Validation for 'post_slug.*' modules.
+	
+	Usage: $PRG [[-q] textfile [max_len [seps [cases]]]]
+	
+	textfile   Any text file; required
+	max_len    Maximum length of slug; default 0 (0=unlimited)
+	seps       Separator chars, delimited with ',', eg, '-,_,+'
+	cases      Cases to check, can be 0, 1, or '0,1' (1=preserve case)
+	-q         If specified, only report errors.
+	
+	Note: all parameters are positional.
+
+	Modules to be tested are (${Script_Types[*]})
+	Separator chars to be used are (${sep_chars[*]})
+	
+	Examples:
+	$PRG datasets/headlines.txt 0 '-' 1
+	$PRG datasets/booktitles.txt 0 '_,-,|' 0,1
+	$PRG -q datasets/booktitles.txt 127 '-' 0
+	EOT
+	exit 0
+}
+
+[[ "$1" == '-h' || "$1" == '--help' || ${#@} == 0 ]] && usage
+
+declare -i verbose=1
+if [[ "$1" == '-q' || "$1" == '--quiet' ]]; then
+	verbose=0
+	shift
+	[[ ${#@} == 0 ]] && usage
+fi
+
+filename="$1"
+max_len=${2:-0}
+IFS=',' read -ra sep_chars <<< "${3:-_,-}"
+IFS=',' read -ra preserve_cases <<< "${4:-0,1}"
+
+Script_Types=() # reset script types
+prg="$(command -v 'python')"
+#shellcheck disable=SC2016
+if [[ -n "$prg" ]]; then
+	Script_Types+=('py')
+	Script_Templates['py']="#!/usr/bin/env $prg
+--MODULE--
+
+if __name__ == '__main__':
+  import sys
+
+  # Check for command-line arguments
+  if len(sys.argv) < 2:
+    print('Usage: python post_slug.py string2slugify [separator character] [preserve case] [max length]')
+    sys.exit(1)
+
+  # Parse command-line arguments
+  string_to_slugify = sys.argv[1]
+  separator_char = sys.argv[2] if len(sys.argv) > 2 else '-'
+  preserve_case_flag = bool(int(sys.argv[3])) if len(sys.argv) > 3 else False
+  max_len = int(sys.argv[4]) if len(sys.argv) > 4 else 0
+
+  # Call the post_slug function and print the result
+  result = post_slug(string_to_slugify, separator_char, preserve_case_flag, max_len=max_len)
+  print(result)
+"
+else
+	echo >&2 "Program 'python' not found. Module post_slug.py will not be tested."
+fi
+
+prg="$(command -v 'node')"
+#shellcheck disable=SC2016
+if [[ -n "$prg" ]]; then
+	Script_Types+=('js')
+	Script_Templates['js']="#!/usr/bin/env $prg
+--MODULE--
+
+// Command-line interface
+if (require.main === module) {
+  const args = process.argv.slice(2);
+  if (args.length !== 0) {
+    const stringToSlugify = args[0];
+    const separatorChar = args[1] || '-';
+    const preserveCaseFlag = args[2] === '1';
+    const maxLen = parseInt(args[3]) || 0;
+    console.log(post_slug(stringToSlugify, separatorChar, preserveCaseFlag, maxLen));
+  }
+}
+"
+else
+	echo >&2 "Program 'node' was not found. Module post_slug.js will not be tested."
+fi
+
+prg="$(command -v 'bash')"
+#shellcheck disable=SC2016
+if [[ -n "$prg" ]]; then
+	Script_Types+=('bash')
+	Script_Templates['bash']="#!/usr/bin/env $prg"'
+--MODULE--
+'
+else
+	echo >&2 "Program 'bash' not found. Module post_slug.bash will not be tested."
+fi
+
+prg="$(command -v 'php')"
+#shellcheck disable=SC2016
+if [[ -n "$prg" ]]; then
+	Script_Types+=('php')
+	Script_Templates['php']="#!/usr/bin/env $prg"'
+--MODULE--
+
+# Check if the script is run from the command line
+if (PHP_SAPI === "cli") {
+  global $argc, $argv;
+  if($argc > 1) {
+    $string = $argv[1];
+    $sep_char = isset($argv[2]) ? $argv[2] : "-";
+    $preserve = isset($argv[3]) ? filter_var($argv[3], FILTER_VALIDATE_BOOLEAN) : false;
+    $maxlen = isset($argv[4]) ? intval($argv[4]) : 0;
+    echo post_slug($string, $sep_char, $preserve, $maxlen);
+    echo "\n";
+  }
+}
+'
+else
+	echo >&2 "Program 'php' cli was not found. Module post_slug.php will not be tested."
+fi
+
+# create _script files
+for script_type in "${Script_Types[@]}"; do
+	temp=$(cat -s "../post_slug.$script_type")
+	Script_Templates[$script_type]=${Script_Templates[$script_type]/--MODULE--/"$temp"}
+	echo "${Script_Templates[$script_type]}" > "$PRGDIR/_post_slug.$script_type"
+	chmod 775 "$PRGDIR/_post_slug.$script_type"
+done
+
+cat <<-EOT
+	Slug Validation Tests for 'post_slug.*' modules.
+  	- file           $filename
+  	- max_len        $max_len
+  	- separators     (${sep_chars[*]})
+  	- preserve case  (${preserve_cases[*]})
+  	- modules        (${Script_Types[*]})
+	EOT
+	while read -r line; do 
+		((count+=1))
+		[[ -n "$line" ]] || continue
+		((verbose)) \
+				&& printf "%5s|%s|%s|%s: %s\n" "line" "s" "p" "$max_len" "$line" \
+				|| echo -ne "\r" $count
+		for sep_char in "${sep_chars[@]}"; do
+			for preserve_case in "${preserve_cases[@]}"; do
+				Slugs=()
+				for script_type in "${Script_Types[@]}"; do
+					slug=$("$PRGDIR"/_post_slug."$script_type" "$line" "$sep_char" "$preserve_case" "$max_len" || { echo "ERROR in ../_post_slug.${script_type}"; exit 1; } )
+					((verbose)) && printf "%5s|%s|%s|%s: %s\n" "${script_type}" "$sep_char" "$preserve_case" "$max_len" "$slug"
+					Slugs["$script_type"]="$slug"
+		 		done
+				# Validate that all slug scripts return exactly the same slug
+				unique_slugs=$(printf "%s\n" "${Slugs[@]}" | sort -u | wc -l)
+				if (( unique_slugs == 1 )); then
+					((verbose)) && echo "OK: All slugs are identical."
+				else
+					echo >&2 -e "\n! Validation failed at line $count in '$filename': Slugs are not the same ($unique_slugs)."
+					printf >&2 "%5s: %s\n" "line" "$line"
+					for key in "${!Slugs[@]}"; do
+						printf >&2 "%5s: %s\n" "$key" "${Slugs[$key]}"
+					done
+					Errs+=("$count,$filename")
+					echo >&2 ''
+				fi
+		 	done
+		done
+		((verbose)) && echo ''
+	done 	< <(cat -- "$filename")
+
+	# Attempt to edit error causing lines in file
+	if (( ${#Errs[@]} )); then
+		for errs in "${Errs[@]}"; do
+			line="${errs%%,*}"
+			file="${errs#*,}"
+	  	echo "Slug mismatch error in line $line file '$file'"
+	  	if is.interactive; then
+		  	open_file_in_editor "$line" "$file"
+		  fi
+		done
+	fi
+
+	echo "'post_slug' modules slugtest validation finished"
+
+#fin

@@ -1,0 +1,77 @@
+#!/bin/bash
+# is_authorized_pubkey - is public key in authorized_keys
+
+if ((EUID == 0)); then
+  declare -x AUTHORIZED_KEYS_FILE=${AUTHORIZED_KEYS_FILE:-/root/.ssh/authorized_keys}
+else
+  declare -x AUTHORIZED_KEYS_FILE=${AUTHORIZED_KEYS_FILE:-~/.ssh/authorized_keys}
+fi
+
+is_authorized_pubkey() {
+  [[ -n "${1:-}" ]] || { >&2 echo "${FUNCNAME[0]}: error: No PUBKEY specified"; return 1; }
+
+  local -- r_pubkey=$1 r_keyblob
+  r_pubkey=${r_pubkey#*|}
+  r_keyblob=${r_pubkey#* }
+  r_keyblob=${r_keyblob%% *}
+  [[ -r $AUTHORIZED_KEYS_FILE ]] || { >&2 echo "${FUNCNAME[0]}: error: cannot read ${AUTHORIZED_KEYS_FILE@Q}"; return 1; }
+  grep -Fq "$r_keyblob" "$AUTHORIZED_KEYS_FILE" \
+      || { >&2 echo "${FUNCNAME[0]}: error: pubkey not in authorized_keys"; return 1; }
+  return 0
+}
+declare -fx is_authorized_pubkey
+
+[[ ${BASH_SOURCE[0]} == "$0" ]] || return 0
+
+# --- Script mode only below ---
+set -euo pipefail
+shopt -s inherit_errexit
+
+declare -r SCRIPT_NAME=is-authorized-pubkey VERSION='1.0.0'
+
+show_help() {
+  cat <<HELP
+$SCRIPT_NAME $VERSION - check if a public key is in authorized_keys
+
+Usage: $SCRIPT_NAME [-h] [-V] PUBKEY
+
+Check whether PUBKEY exists in the authorized_keys file.
+Matches on the key blob (type + base64), ignoring comments.
+Input may include a mac|pubkey prefix, which is stripped before matching.
+
+Can also be sourced as a library:
+  source $SCRIPT_NAME  # exports is_authorized_pubkey()
+
+Options:
+  -h, --help      Show this help message
+  -V, --version   Show version
+
+Environment:
+  AUTHORIZED_KEYS_FILE  Path to authorized_keys (default: ~/.ssh/authorized_keys)
+
+Exit codes:
+  0  Key found in authorized_keys
+  1  Key not found, or authorized_keys unreadable
+
+Examples:
+  $SCRIPT_NAME "\$(get-pubkey)"
+  AUTHORIZED_KEYS_FILE=/root/.ssh/authorized_keys sudo $SCRIPT_NAME "\$(get-pubkey)"
+HELP
+}
+
+while (($#)); do
+  case $1 in
+    -h|--help)    show_help; exit 0 ;;
+    -V|--version) echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
+    -*)           >&2 echo "$SCRIPT_NAME: error: unknown option: ${1@Q}"
+                  >&2 show_help; exit 1 ;;
+  esac
+  break
+done
+(($#)) || {
+  >&2 echo "Usage: $SCRIPT_NAME [-h] [-V] PUBKEY"
+  exit 1
+}
+
+is_authorized_pubkey "$@"
+#fin

@@ -1,0 +1,109 @@
+#!/bin/bash
+# elapsed_time: Format time duration as human-readable string
+
+# --- Function (safe to source) ---
+
+elapsed_time() {
+  # Convert decimal seconds to integer microseconds via nameref (zero-fork)
+  _to_us() {
+    local -n _result=$1
+    local -- val=$2 int_part frac_part
+
+    int_part=${val%%.*}
+    if [[ $val == *.* ]]; then
+      frac_part=${val#*.}
+    else
+      frac_part=0
+    fi
+
+    # Pad/truncate fractional part to exactly 6 digits
+    frac_part="$frac_part"000000
+    frac_part=${frac_part:0:6}
+
+    # 10# forces base-10 (prevents octal interpretation of zero-padded digits)
+    _result=$(( 10#${int_part:-0} * 1000000 + 10#$frac_part ))
+  }
+
+  local -- start_time=${1:-0} end_time=${2:-$EPOCHREALTIME}
+
+  local -i start_us end_us remaining_us
+  _to_us start_us "$start_time"
+  _to_us end_us "$end_time"
+  remaining_us=$((end_us - start_us))
+
+  local -i days hours minutes
+
+  days=$((remaining_us / 86400000000))
+  if ((days)); then
+    printf '%dd ' "$days"
+    remaining_us=$((remaining_us - days * 86400000000))
+  fi
+
+  hours=$((remaining_us / 3600000000))
+  if ((hours || days)); then
+    printf '%02dh ' "$hours"
+    remaining_us=$((remaining_us - hours * 3600000000))
+  fi
+
+  minutes=$((remaining_us / 60000000))
+  if ((minutes || hours || days)); then
+    printf '%02dm ' "$minutes"
+    remaining_us=$((remaining_us - minutes * 60000000))
+  fi
+
+  # Xe-6 = scientific notation for µs→s conversion
+  printf '%.3fs\n' "${remaining_us}e-6"
+}
+declare -fx elapsed_time
+
+# --- source fence ---
+return 0 2>/dev/null ||:
+
+# --- Script mode only ---
+set -euo pipefail
+shopt -s inherit_errexit
+
+declare -r VERSION='1.1.0' SCRIPT_NAME=${0##*/}
+
+die() { (($# < 2)) || >&2 printf '%s: %s\n' "$SCRIPT_NAME" "${*:2}"; exit "${1:-0}"; }
+
+show_help() {
+  cat <<HELP
+$SCRIPT_NAME $VERSION - Return time duration as human-readable string
+
+Use \$EPOCHREALTIME to return micro-second resolution time duration
+as human-readable string.
+
+Use \$EPOCHTIME or \$SECONDS to return second resolution time duration
+as human-readable string.
+
+Usage: $SCRIPT_NAME start_time [end_time]
+
+Examples:
+  start=\$EPOCHREALTIME     # capture start time
+  # do something...
+  elapsed_time "\$start"    # automatic end time
+
+  # explicit start/end times:
+  elapsed_time 0 3661.123  # Output: "01h 01m 01.123s"
+
+  # elapsed time since start of Unix epoch
+  TZ=UTC0 elapsed_time 0   # > 20552d 04h 06m 36.512s
+HELP
+}
+
+while (($#)); do
+  case $1 in
+    -h|--help)    show_help; exit 0 ;;
+    -V|--version) printf '%s %s\n' "$SCRIPT_NAME" "$VERSION"; exit 0 ;;
+    --)           shift; break ;;
+    -*)           die 22 "Invalid option ${1@Q}" ;;
+    *)            break ;;
+  esac
+  shift
+done
+
+(($#)) || { >&2 show_help; exit 1; }
+
+elapsed_time "$@"
+#fin

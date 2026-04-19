@@ -1,0 +1,213 @@
+.\" trim.1 — manpage for Bash string trimming utilities
+.\" Copyright (c) Open Technology Foundation — GPL-3.0-or-later
+.TH TRIM 1 "2026-03-09" "trim 1.0.0" "Bash String Trimming Utilities"
+.SH NAME
+trim, ltrim, rtrim, trimv, trimall, squeeze \- pure Bash string trimming utilities
+.SH SYNOPSIS
+.B trim
+.RB [ \-e ]
+.RB [ \-h ]
+.RB [ \-V ]
+.RB [ \-\- ]
+.RI [ string\  .\|.\|. ]
+.br
+.B ltrim
+.RB [ \-e ]
+.RB [ \-h ]
+.RB [ \-V ]
+.RB [ \-\- ]
+.RI [ string\  .\|.\|. ]
+.br
+.B rtrim
+.RB [ \-e ]
+.RB [ \-h ]
+.RB [ \-V ]
+.RB [ \-\- ]
+.RI [ string\  .\|.\|. ]
+.br
+.B trimv
+.RB [ \-e ]
+.RB [ "\-n \fIvarname\fR" ]
+.RB [ \-h ]
+.RB [ \-V ]
+.RB [ \-\- ]
+.RI [ string\  .\|.\|. ]
+.br
+.B trimall
+.RB [ \-e ]
+.RB [ \-h ]
+.RB [ \-V ]
+.RB [ \-\- ]
+.RI [ string\  .\|.\|. ]
+.br
+.B squeeze
+.RB [ \-e ]
+.RB [ \-h ]
+.RB [ \-V ]
+.RB [ \-\- ]
+.RI [ string\  .\|.\|. ]
+.SH DESCRIPTION
+Six pure-Bash string trimming utilities that use native parameter expansion
+with zero external dependencies.
+Each utility works both as a standalone command and as a sourceable function.
+.PP
+When invoked with arguments, the string is processed and printed to stdout.
+When invoked with no arguments, stdin is processed line by line.
+.SS trim
+Remove both leading and trailing blanks (spaces and tabs).
+.SS ltrim
+Remove leading blanks only.
+.SS rtrim
+Remove trailing blanks only.
+.SS trimv
+Trim leading and trailing blanks and optionally assign the result
+directly to a named variable via
+.BR \-n .
+Must be
+.B sourced
+for variable assignment to work in the calling shell.
+.SS trimall
+Normalize whitespace: strip leading and trailing blanks, then collapse
+all consecutive whitespace (spaces, tabs, newlines) to single spaces.
+.SS squeeze
+Collapse consecutive blanks (spaces and tabs) to single spaces while
+.I preserving
+leading and trailing whitespace.
+.SH OPTIONS
+.TP
+.B \-e
+Process escape sequences
+.RB ( \et ,
+.BR \en ,
+etc.\&) in the input string via
+.BR printf\  %b .
+.TP
+.BI \-n\  varname
+.RB ( trimv\  only)
+Store the trimmed result in
+.I varname
+instead of printing to stdout.
+Defaults to
+.B TRIM
+if
+.I varname
+is omitted.
+Requires the utility to be sourced.
+.TP
+.B \-\-
+End of options.
+All subsequent arguments are treated as input strings.
+.TP
+.BR \-h ", " \-\-help
+Display help message and exit.
+.TP
+.BR \-V ", " \-\-version
+Display version information and exit.
+.SH SOURCE MODE
+Sourcing is the primary intended usage.
+When sourced, each utility defines and exports its function without
+executing any command-mode logic.
+.PP
+Source an individual utility:
+.PP
+.RS
+.nf
+\fBsource trim\fR
+result=$(trim "\ \ hello\ \ ")
+.fi
+.RE
+.PP
+Source all utilities at once:
+.PP
+.RS
+.nf
+\fBsource /usr/local/share/yatti/trim/trim.inc.sh\fR
+.fi
+.RE
+.PP
+For
+.BR trimv ,
+sourcing is
+.B required
+when using
+.B \-n
+because subprocesses cannot modify parent shell variables.
+.SH EXAMPLES
+Command-line usage:
+.PP
+.RS
+.nf
+trim "\ \ hello world\ \ "         # "hello world"
+ltrim "\ \ hello world\ \ "        # "hello world\ \ "
+rtrim "\ \ hello world\ \ "        # "\ \ hello world"
+trimall "\ \ multiple\ \ \ spaces\ \ "  # "multiple spaces"
+squeeze "\ \ multiple\ \ \ spaces\ \ "  # "\ multiple spaces\ "
+.fi
+.RE
+.PP
+Pipeline usage:
+.PP
+.RS
+.nf
+cat file.txt | trim
+grep pattern file.txt | trim | sort | uniq
+.fi
+.RE
+.PP
+Variable assignment with
+.BR trimv :
+.PP
+.RS
+.nf
+source trimv
+trimv \-n RESULT "\ \ hello world\ \ "
+echo "$RESULT"   # "hello world"
+.fi
+.RE
+.PP
+Inline parameter expansion (avoids function call overhead):
+.PP
+.RS
+.nf
+v="${v#"${v%%[![:blank:]]*}"}"   # leading
+v="${v%"${v##*[![:blank:]]}"}"   # trailing
+.fi
+.RE
+.SH EXIT CODES
+.TP
+.B 0
+Success.
+.TP
+.B 22
+Invalid option (EINVAL).
+.SH ENVIRONMENT
+These utilities use the POSIX
+.B [:blank:]
+character class, which matches space and tab only.
+Unicode whitespace (U+00A0, U+2000\(enU+200A, etc.\&) is
+.B not
+trimmed.
+This is intentional.
+.PP
+Requires
+.B Bash 4.4+
+for
+.BR ${parameter@Q} ,
+.BR inherit_errexit ,
+and other features.
+.SH FILES
+.TP
+.I /usr/local/bin/trim
+Installed commands (trim, ltrim, rtrim, trimv, trimall, squeeze).
+.TP
+.I /usr/local/share/yatti/trim/trim.inc.sh
+Combined source file containing all function definitions.
+.SH SEE ALSO
+.BR bash (1),
+.BR sed (1),
+.BR tr (1)
+.SH AUTHORS
+Open Technology Foundation
+.br
+.UR https://github.com/Open-Technology-Foundation/trim
+.UE

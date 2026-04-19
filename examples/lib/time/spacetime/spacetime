@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+# spacetime - Format and display current time with optional template support
+#
+# Usage: spacetime [template]
+#   Without arguments: Returns formatted time as
+#     "DayOfWeek YYYY-MM-DD HH:MM:SS TZ Timezone"
+#   With template: Returns custom format using placeholders:
+#     {{dow}}      - Day of week (e.g., Monday)
+#     {{date}}     - Date in YYYY-MM-DD format
+#     {{time}}     - Time in HH:MM:SS format
+#     {{tz}}       - Timezone offset (e.g., +0000)
+#     {{timezone}} - Timezone name (e.g., America/New_York)
+declare -gx -- _SPACETIME_TZ=${_SPACETIME_TZ:-}  # Required for caching
+declare -gx -- EPOCHSPACETIME=''
+
+spacetime() {
+  # Resolve timezone name
+  # If TZ is set (even empty), use it directly every call (POSIX: TZ='' means UTC).
+  # If TZ is unset, use cached system timezone with fallback chain.
+  local -- tz_name
+  if [[ -v TZ ]]; then
+    tz_name=${TZ:-UTC}
+  else
+    if [[ ! -v _SPACETIME_TZ || -z $_SPACETIME_TZ ]]; then
+      _SPACETIME_TZ=$(timedatectl show --property=Timezone --value 2>/dev/null) \
+        || _SPACETIME_TZ=$(< /etc/timezone) \
+        || _SPACETIME_TZ=UTC
+      [[ -n $_SPACETIME_TZ ]] || _SPACETIME_TZ=UTC
+    fi
+    tz_name=$_SPACETIME_TZ
+  fi
+
+  # Get current time in standardized format
+  # Format: DayOfWeek YYYY-MM-DD HH:MM:SS TZ TimezoneName
+  local -- curtime
+  printf -v curtime '%(%A %F %T %z)T %s' -1 "$tz_name"
+
+  # If a template string is provided, parse and replace placeholders
+  if (($#)); then
+    # Template format: $1="{{dow}} {{date}} {{time}} {{tz}} {{timezone}}"
+    local -- dow cur_date cur_time tz timezone _ IFS
+
+    # Parse the current time into individual components
+    IFS=' ' read -r dow cur_date cur_time tz timezone _ <<<"$curtime"
+
+    # Perform template replacements using parameter expansion
+    curtime=${1//\{\{dow\}\}/$dow}
+    curtime=${curtime//\{\{date\}\}/$cur_date}
+    curtime=${curtime//\{\{time\}\}/$cur_time}
+    curtime=${curtime//\{\{tz\}\}/$tz}
+    curtime=${curtime//\{\{timezone\}\}/$timezone}
+  fi
+
+  # Output the formatted time
+  echo "$curtime"
+
+  # Store the result in the global variable for later reference
+  #shellcheck disable=SC2034
+  EPOCHSPACETIME=$curtime
+}
+
+# Sourced fence
+[[ ${BASH_SOURCE[0]} == "$0" ]] || { declare -fx spacetime; return 0; }
+
+# If script is executed directly (not sourced), run spacetime with arguments
+set -euo pipefail
+shopt -s inherit_errexit
+
+declare -r VERSION='1.1.0'
+declare -r SCRIPT_NAME=${0##*/}
+
+if [[ ${1:-} =~ ^(-V|--version)$ ]]; then
+  echo "$SCRIPT_NAME $VERSION"
+  exit 0
+fi
+
+if [[ ${1:-} =~ ^(-h|--help)$ ]]; then
+  cat <<HELP
+$SCRIPT_NAME $VERSION - Format and display current time with template support
+
+Usage: $SCRIPT_NAME [template]
+
+Without arguments: Returns formatted time as
+  "DayOfWeek YYYY-MM-DD HH:MM:SS TZ Timezone"
+
+With template: Returns custom format using placeholders
+
+Placeholders:
+  {{dow}}      - Day of week (e.g., Monday)
+  {{date}}     - Date in YYYY-MM-DD format
+  {{time}}     - Time in HH:MM:SS format
+  {{tz}}       - Timezone offset (e.g., +0000)
+  {{timezone}} - Timezone name (e.g., America/New_York)
+
+Examples:
+  $SCRIPT_NAME
+  TZ=UTC $SCRIPT_NAME
+  $SCRIPT_NAME "{{date}} at {{time}}"
+  $SCRIPT_NAME "Log entry: {{dow}} {{date}} {{time}} {{tz}}"
+HELP
+  exit 0
+fi
+
+spacetime "$@"
+#fin

@@ -1,0 +1,119 @@
+#!/usr/bin/bash
+# bitwiddle - Apply bitwise operations (OR, AND, XOR) to each byte of a string.
+
+bitwiddle() {
+  local -r VERSION=1.0.0
+  local -- SCRIPT_NAME=${FUNCNAME[0]}
+  show_help() {
+    [[ $0 == bash ]] && return 0 ||:
+    cat <<HELP
+$SCRIPT_NAME $VERSION - Apply bitwise operations (OR, AND, XOR) to each byte of a string.
+
+Usage: $SCRIPT_NAME [OPTIONS] STRING OPERATION OPERAND
+
+  STRING     Input string to process (use "-" for stdin).
+  OPERATION  Bitwise operation: or, and, xor (case-insensitive).
+  OPERAND    Integer operand for the bitwise operation.
+
+Options:
+  -x|--hex       Output as hex bytes (space-separated).
+  -d|--decimal   Output as decimal values (space-separated).
+  -V|--version   Print version and exit.
+  -h|--help      Print this help and exit.
+
+Examples:
+  $SCRIPT_NAME 'hello' xor 42
+  $SCRIPT_NAME -x 'hello' or 128
+  echo -n 'secret' | $SCRIPT_NAME - xor 0x55
+  $SCRIPT_NAME 'hello' xor 42 | $SCRIPT_NAME - xor 42   # returns 'hello'
+HELP
+  }
+  error() { >&2 printf "$SCRIPT_NAME: ✗ %s\n" "${@:2}"; return "${1:-0}"; }
+
+  local -- str='' op='' operand=''
+  local -i hex=0 decimal=0
+  while (($#)); do case $1 in
+    -x|--hex)      hex=1 ;;
+    -d|--decimal)  decimal=1 ;;
+    -V|--version)  echo "$SCRIPT_NAME $VERSION"; return 0 ;;
+    -h|--help)     show_help; return 0 ;;
+    --)            shift; break ;;
+    -[xdVh]?*)     set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+    -?*)           error 22 "Invalid option ${1@Q}" ;;
+    *)  if [[ -z $str ]]; then
+          str=$1
+        elif [[ -z $op ]]; then
+          op=$1
+        elif [[ -z $operand ]]; then
+          operand=$1
+        else
+          error 2 "Unexpected argument ${1@Q}"
+        fi
+  esac; shift; done
+
+  # Collect remaining positional args after --
+  while (($#)); do
+    if [[ -z $str ]]; then
+      str=$1
+    elif [[ -z $op ]]; then
+      op=$1
+    elif [[ -z $operand ]]; then
+      operand=$1
+    else
+      error 2 "Unexpected argument ${1@Q}"
+    fi
+    shift
+  done
+
+  # Validate required arguments
+  [[ -n $str && -n $op && -n $operand ]] \
+      || error 2 "Requires STRING OPERATION OPERAND"
+
+  # Validate operation
+  case ${op,,} in
+    or|and|xor) ;;
+    *) error 22 "Invalid operation ${op@Q} (use: or, and, xor)" ;;
+  esac
+
+  # _bw_process: apply bitwise op to a stream of decimal byte values
+  _bw_process() {
+    local -i val
+    while read -r val; do
+      case ${op,,} in
+        or)  val=$((val | operand)) ;;
+        and) val=$((val & operand)) ;;
+        xor) val=$((val ^ operand)) ;;
+      esac
+      if ((hex)); then
+        printf '%02x ' "$val"
+      elif ((decimal)); then
+        printf '%d ' "$val"
+      else
+        printf "\\$(printf '%03o' "$val")"
+      fi
+    done
+    ((hex || decimal)) && echo ||:
+  }
+
+  if [[ $str == '-' ]]; then
+    # Read stdin as numeric byte values via od — handles null bytes
+    od -An -tu1 -v | xargs -n1 | _bw_process
+  else
+    # Convert string to numeric byte values
+    local -i i
+    local -- LC_ALL=C
+    for ((i=0; i<${#str}; i+=1)); do
+      printf '%d\n' "'${str:i:1}"
+    done | _bw_process
+  fi
+}
+declare -fx bitwiddle
+
+[[ ${BASH_SOURCE[0]} == "$0" ]] || return 0
+
+# --- Script mode only below ---
+set -euo pipefail
+shopt -s inherit_errexit
+
+bitwiddle "$@"
+#fin
