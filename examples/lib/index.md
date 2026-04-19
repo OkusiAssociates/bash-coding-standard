@@ -2,12 +2,49 @@
 
 The following codebases use highly optimized patterns that should be referred to, and where necessary, incorporated into generated code.
 
+    .
+    ├── file
+    │   ├── cln
+    │   ├── dux
+    │   ├── ls.types
+    │   ├── md2ansi
+    │   ├── symlink
+    │   └── which
+    ├── math
+    │   └── hr2int
+    ├── str
+    │   ├── post_slug
+    │   ├── remblanks
+    │   └── trim
+    ├── sys
+    │   ├── bitwiddle
+    │   ├── en_ID
+    │   ├── get-chassis
+    │   ├── get_mac
+    │   ├── get_pubkey
+    │   ├── shlock
+    │   └── stopwords.bash
+    └── time
+        ├── elapsed_time
+        └── spacetime
+    
+    25 directories
+
+---
+
 - [bitwiddle](/ai/scripts/Okusi/BCS/examples/lib/sys/bitwiddle) - bitwiddle 1.0.0 - Apply bitwise operations (OR, AND, XOR) to each byte of a string.
   > Usage: bitwiddle [OPTIONS] STRING OPERATION OPERAND
   >   STRING     Input string to process (use "-" for stdin).
   >   OPERATION  Bitwise operation: or, and, xor (case-insensitive).
   >   OPERAND    Integer operand for the bitwise operation.
   > (source: /ai/scripts/Okusi/BCS/examples/lib/sys/bitwiddle/bitwiddle [symlink])
+- [cln](/usr/local/bin) - cln 1.1.0 - Search for and delete junk/trash/rubbish files.
+  > Recursively removes all temporary/junk files.
+  > The following filespecs are removed by default:
+  >   ( *~ ~* .~* .*~ DEADJOE dead.letter wget-log* *.tmp )
+  > Config files (first found wins):
+  > (source: /usr/local/bin/cln [makefile])
+  > (manpage: man -l /usr/local/share/man/man1/cln.1)
 - [elapsed_time](/usr/local/bin) - elapsed_time 1.1.0 - Return time duration as human-readable string
   > Use $EPOCHREALTIME to return micro-second resolution time duration
   > as human-readable string.
@@ -51,6 +88,22 @@ The following codebases use highly optimized patterns that should be referred to
   > to list files of that type. Direct invocation supports management only.
   > (source: /usr/local/bin/ls.types [makefile])
   > (manpage: man -l /usr/local/share/man/man1/ls.types.1)
+- [md2ansi](/usr/local/bin) - md2ansi 1.0.1 - Convert Markdown to ANSI-colored terminal output
+  > A zero-dependency Bash implementation that renders markdown files with color
+  > and style directly in your terminal.
+  > Usage: md2ansi [OPTIONS] [file1.md [file2.md ...]]
+  >        cat README.md | md2ansi
+  > (source: /usr/local/bin/md2ansi [makefile])
+  > (manpage: man -l /usr/local/share/man/man1/md2ansi.1.gz)
+- [md-link-extract](/usr/local/bin) - Usage: md-link-extract file [file...]
+  > Extract links from text/markdown files
+  > (source: /usr/local/bin/md-link-extract [makefile])
+- [mdview](/usr/local/bin) - mdview 1.0.1 — Markdown viewer using pandoc with theme support
+  > Usage: mdview [OPTIONS] <file>
+  > Options:
+  >   -t, --theme NAME         Theme name (default: github-dark)
+  >   -s, --window-size WxH    Browser window size (default: 960x1080)
+  > (source: /usr/local/bin/mdview [makefile])
 - [shlock](/usr/local/bin) - shlock 2.0.0 - file-based locking system with stale lock detection
   > Usage: shlock [OPTIONS] [LOCKNAME] -- COMMAND [ARGS...]
   > Runs COMMAND while holding an exclusive flock-based lock. Prevents multiple
@@ -71,3 +124,10 @@ The following codebases use highly optimized patterns that should be referred to
   >   symlink -S [OPTIONS] [startpath]    Scan for .symlink files (depth ≤5)
   > (source: /usr/local/bin/symlink [makefile])
   > (manpage: man -l /usr/local/share/man/man1/symlink.1)
+- [which](/usr/local/bin) - which 2.0 - Locate executables in PATH
+  > Usage: which [OPTIONS] [--] command ...
+  > Options:
+  >   -a, --all        Print all matches, not just first
+  >   -c, --canonical  Resolve symlinks via realpath
+  > (source: /usr/local/bin/which [makefile])
+  > (manpage: man -l /usr/local/share/man/man1/which.1)

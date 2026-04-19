@@ -1,0 +1,132 @@
+.TH CLN 1 "March 2026" "cln 1.1.0" "User Commands"
+.SH NAME
+cln \- recursively clean temporary and junk files from directories
+.SH SYNOPSIS
+.B cln
+[\fIOPTIONS\fR] [\fIPATH\fR ...]
+.SH DESCRIPTION
+.B cln
+searches for and removes common editor backup files, crash files, and other
+temporary files that accumulate in working directories.
+.PP
+By default, cln prompts before deleting files. Use \fB\-P\fR for non-interactive
+operation.
+.SH DEFAULT PATTERNS
+The following file patterns are removed by default:
+.TP
+.B *~
+Editor backup files (Emacs, nano, etc.)
+.TP
+.B ~*
+Alternate backup format
+.TP
+.B .~*
+Hidden backup files
+.TP
+.B .*~
+Hidden files ending with tilde
+.TP
+.B DEADJOE
+Joe editor crash files
+.TP
+.B dead.letter
+Unsent mail files
+.TP
+.B wget-log*
+wget download logs
+.SH OPTIONS
+.TP
+.BR \-h ", " \-\-help
+Display help message and exit.
+.TP
+.BR \-V ", " \-\-version
+Display version information and exit.
+.TP
+.BR \-p ", " \-n ", " \-\-prompt
+Prompt before deleting files. This is the default behavior.
+.TP
+.BR \-P ", " \-N ", " \-\-no\-prompt
+Delete files without prompting.
+.TP
+.BR \-v ", " \-\-verbose
+Increase output verbosity (up to 3 levels). Level 2 shows find expressions.
+.TP
+.BR \-q ", " \-\-quiet
+Suppress all output.
+.TP
+.BI \-m " N" "\fR, \fP" \-\-depth " N"
+Set maximum directory depth to recurse. Default is 3.
+Use \-1 for unlimited depth.
+.TP
+.BI \-a " SPEC" "\fR, \fP" \-\-add " SPEC"
+Add file pattern(s) to the cleanup scan. Can be specified multiple times.
+SPEC can be comma-delimited for multiple patterns.
+.TP
+.BI \-S " SPEC" "\fR, \fP" \-\-set " SPEC"
+Set/replace all file patterns, overriding config files and defaults.
+SPEC can be comma-delimited for multiple patterns.
+.TP
+.B \-L
+Follow symbolic links during search. By default, symbolic links are not followed.
+.SH EXIT STATUS
+.TP
+.B 0
+Success.
+.TP
+.B 22
+Invalid argument or missing required option value.
+.SH EXAMPLES
+.TP
+Clean current directory with prompting:
+.B cln
+.TP
+Clean /tmp without prompting:
+.B cln \-P /tmp
+.TP
+Quiet mode, no prompts:
+.B cln \-Pq /var/cache
+.TP
+Add custom patterns:
+.B cln \-a \(aq*.bak,*.tmp\(aq .
+.TP
+Deep clean with depth 7:
+.B cln \-Pqm 7 /home/user
+.TP
+Clean multiple directories:
+.B cln \-P dir1 dir2 dir3
+.TP
+Replace default patterns entirely:
+.B cln \-S \(aq*.tmp,*.old\(aq /tmp
+.SH FILES
+Configuration files contain one pattern per line. Lines starting with # are
+comments. The first file found is used:
+.TP
+.I $XDG_CONFIG_HOME/cln/cln.conf
+User configuration (defaults to \fI~/.config/cln/cln.conf\fR).
+.TP
+.I /etc/cln/cln.conf
+System configuration.
+.TP
+.I /etc/cln.conf
+System configuration (flat).
+.TP
+.I /etc/default/cln
+System default configuration.
+.TP
+.I /usr/local/etc/cln/cln.conf
+Local install configuration.
+.SH NOTES
+When prompted, respond with:
+.TP
+.B y
+Yes, delete the listed files
+.TP
+Any other key
+Skip this directory
+.SH SEE ALSO
+.BR find (1),
+.BR rm (1)
+.SH AUTHOR
+Written for the Okusi Associates scripts collection.
+.SH BUGS
+Report bugs at https://github.com/OkusiAssociates/cln/issues

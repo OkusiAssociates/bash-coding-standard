@@ -1,0 +1,32 @@
+# cln.conf - File patterns for cln cleanup utility
+#
+# One pattern per line. Blank lines and lines starting with # are ignored.
+# These patterns replace the built-in defaults when this file is installed.
+#
+# Install to one of:
+#   ~/.config/cln/cln.conf        (user)
+#   /etc/cln/cln.conf             (system)
+#   /etc/cln.conf                 (system, flat)
+#   /etc/default/cln              (system default)
+#   /usr/local/etc/cln/cln.conf   (local install)
+
+# Editor backup files
+*~
+~*
+.~*
+.*~
+
+# Editor crash/recovery files
+DEADJOE
+dead.letter
+
+# Download logs
+wget-log*
+
+# Uncomment to also clean these:
+# *.bak
+*.tmp
+# *.old
+# *.orig
+# *.swp
+# *.swo

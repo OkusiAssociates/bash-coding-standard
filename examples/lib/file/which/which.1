@@ -1,0 +1,345 @@
+.TH WHICH 1 "2026" "which 2.0" "User Commands"
+.SH NAME
+which \- locate a command (robust, POSIX-compliant replacement)
+.SH SYNOPSIS
+.B which
+[\fIOPTIONS\fR]
+.IR filename " ..."
+.SH DESCRIPTION
+.B which
+is a robust, POSIX-compliant drop-in replacement for the classic Unix
+.BR which (1)
+command. It locates executables in your PATH with enhanced features.
+.PP
+.B which
+returns the pathnames of files (or links) that would be executed in the
+current environment, had its arguments been given as commands in a
+strictly POSIX-conformant shell. It searches the
+.B PATH
+environment variable for executable files matching the names of the arguments.
+.SS Key Features
+.IP \(bu 2
+Predictable exit codes (0, 1, 2) for reliable scripting
+.IP \(bu 2
+Canonical path resolution to follow symlinks
+.IP \(bu 2
+True silent mode for clean conditionals
+.IP \(bu 2
+POSIX-compliant PATH handling including empty elements
+.IP \(bu 2
+Combined short options support (\-ac equivalent to \-a \-c)
+.IP \(bu 2
+Sourceable for 12x faster interactive use
+.IP \(bu 2
+Consistent behavior across all Unix/Linux systems
+.SH OPTIONS
+Options can be combined: \fB\-ac\fR is equivalent to \fB\-a \-c\fR.
+.TP
+.BR \-a ", " \-\-all
+Print all matching pathnames of each argument, not just the first match.
+By default, only the first match in PATH is displayed.
+.TP
+.BR \-c ", " \-\-canonical
+Resolve symlinks and print canonical paths using
+.BR realpath (1).
+This resolves all symbolic links and relative path components to show
+the actual executable location.
+.TP
+.BR \-s ", " \-\-silent
+Silent mode. Suppress all output; communicate via exit code only.
+Useful for conditional checks in scripts.
+.TP
+.BR \-V ", " \-\-version
+Print version information and exit.
+.TP
+.BR \-h ", " \-\-help
+Display help message and exit.
+.TP
+.B \-\-
+End of options. All subsequent arguments are treated as filenames,
+even if they begin with a hyphen.
+.SH EXIT STATUS
+.B which
+uses specific exit codes to allow scripts to distinguish between
+different error conditions:
+.TP
+.B 0 (EXIT_SUCCESS)
+All specified commands found successfully.
+.TP
+.B 1 (EXIT_NOT_FOUND)
+One or more commands not found.
+.TP
+.B 2 (EXIT_INVALID_OPTION)
+Invalid command-line option.
+.SH EXAMPLES
+.SS Basic Usage
+Find the location of the ls command:
+.PP
+.RS
+.nf
+$ which ls
+/usr/bin/ls
+.fi
+.RE
+.PP
+Find multiple commands at once:
+.PP
+.RS
+.nf
+$ which ls cat grep
+/usr/bin/ls
+/usr/bin/cat
+/usr/bin/grep
+.fi
+.RE
+.SS Find All Matches (\-a)
+Show all executables in PATH, not just the first:
+.PP
+.RS
+.nf
+$ which \-a python3
+/usr/bin/python3
+/usr/local/bin/python3
+.fi
+.RE
+.SS Canonical Paths (\-c)
+Resolve symlinks to find the actual executable:
+.PP
+.RS
+.nf
+$ which python3
+/usr/bin/python3
+
+$ which \-c python3
+/usr/bin/python3.12
+.fi
+.RE
+.SS Combined Options
+Options can be combined for convenience:
+.PP
+.RS
+.nf
+$ which \-ac python3
+/usr/bin/python3.12
+/usr/local/bin/python3.11
+.fi
+.RE
+.SS Silent Mode (\-s)
+Use in scripts for conditional checks:
+.PP
+.RS
+.nf
+# Simple conditional
+if which \-s docker; then
+    echo "Docker is available"
+fi
+
+# Pre-flight dependency check
+which \-s gcc make cmake || {
+    echo "Missing build tools" >&2
+    exit 1
+}
+.fi
+.RE
+.SS Direct Path Verification
+Verify a specific path is executable:
+.PP
+.RS
+.nf
+$ which /usr/local/bin/my\-script
+/usr/local/bin/my-script
+
+$ which ./local\-tool
+./local-tool
+.fi
+.RE
+.SH SOURCEABLE MODE
+.B which
+is designed to work both as an executable script and as a sourceable shell function.
+When sourced, the
+.B which()
+function runs directly in your shell process, providing ~12x faster performance.
+.SS Why Sourced Mode is Faster
+Each external command invocation requires:
+.IP \(bu 2
+fork() \(em create a new process
+.IP \(bu 2
+exec() \(em load the bash interpreter
+.IP \(bu 2
+Interpreter startup \(em parse the script
+.PP
+This overhead totals ~1.6ms per invocation.
+A shell function skips all of this, running in ~0.13ms (in-process).
+.SS Installation for Sourced Mode
+.PP
+.RS
+.nf
+# Option 1: Add to ~/.bashrc
+source /usr/local/bin/which
+
+# Option 2: System-wide via profile.d
+sudo make install-sourceable
+# Installs to /etc/profile.d/which.sh
+
+# Now which runs as a shell function
+which ls  # ~7500 ops/s vs ~600 ops/s
+.fi
+.RE
+.PP
+.B Note:
+.I /etc/profile.d/
+is sourced by login shells via
+.IR /etc/profile .
+Most terminal emulators start non-login shells, which source
+.I ~/.bashrc
+instead. If
+.B which
+isn\(aqt available in new terminals, add to your
+.IR ~/.bashrc :
+.PP
+.RS
+.nf
+source /etc/profile.d/which.sh
+.fi
+.RE
+.SS Function Export
+The script uses
+.B declare \-fx which
+to export the function to subshells, making it available in scripts launched from your interactive shell.
+.SH ARCHITECTURE
+.SS Dual-Mode Design
+The script is structured to work in two modes:
+.IP "\fBExecuted\fR" 4
+Run as
+.B ./which ls
+\(em a subprocess is created, strict mode applies, full help available.
+.IP "\fBSourced\fR" 4
+Run as
+.B source which; which ls
+\(em function runs in current shell, no subprocess overhead.
+.PP
+This is achieved with the BASH_SOURCE guard:
+.PP
+.RS
+.nf
+which() {
+  # ... function body ...
+}
+declare \-fx which
+
+[[ "${BASH_SOURCE[0]}" == "$0" ]] || return 0
+
+# Script mode only (direct execution)
+set \-euo pipefail
+shopt \-s inherit_errexit
+which "$@"
+.fi
+.RE
+.PP
+When sourced,
+.B BASH_SOURCE[0]
+differs from
+.BR $0 ,
+so
+.B return 0
+exits early after defining the function.
+When executed directly, they match, so the script continues to apply strict mode
+and run the function.
+.SS Strict Mode Without Pollution
+Traditional bash scripts enable strict mode
+.RB ( "set \-euo pipefail" )
+at the top, but this would pollute the sourcing shell's environment.
+.B which
+solves this by placing strict mode
+.I after
+the BASH_SOURCE guard:
+.IP \(bu 2
+\fBSourced\fR: Returns before reaching strict mode \(em caller's shell unaffected
+.IP \(bu 2
+\fBExecuted\fR: Strict mode applies only to the subprocess
+.SS Function Design
+All logic lives in a single
+.B which()
+function with:
+.IP \(bu 2
+All variables declared
+.B local
+(no namespace pollution)
+.IP \(bu 2
+.B return
+instead of
+.B exit
+(function-safe)
+.IP \(bu 2
+Inline PATH parsing (no helper functions to leak)
+.IP \(bu 2
+Conditional help: brief when sourced, full when executed
+.SH POSIX COMPLIANCE
+.SS Empty PATH Elements
+Per POSIX, an empty element in PATH means the current directory.
+.B which
+handles this correctly, unlike many implementations:
+.PP
+.RS
+.nf
+# Leading colon = empty first element = current directory
+$ PATH=":/usr/bin" which ./my\-script
+./my-script
+
+# Double colon = empty middle element
+$ PATH="/usr/bin::/usr/local/bin" which ls
+/usr/bin/ls
+.fi
+.RE
+.SS Search Order
+.B which
+searches PATH directories in order and returns the first match
+(unless
+.B \-a
+is specified), exactly as a POSIX shell would resolve the command.
+.SH ENVIRONMENT
+.TP
+.B PATH
+Colon-separated list of directories to search for executables.
+Empty elements are treated as the current directory per POSIX.
+.SH FILES
+.TP
+.I /usr/local/bin/which
+Default installation location.
+.TP
+.I /etc/profile.d/which.sh
+Sourceable installation location (optional).
+.SH DEPENDENCIES
+.TP
+.B bash
+Version 4.4 or later.
+.TP
+.BR realpath (1)
+Required for canonical path resolution
+.RB ( \-c
+option). Falls back to
+.BR readlink (1)
+if unavailable.
+.SH SEE ALSO
+.BR whereis (1),
+.BR type (1),
+.BR command (1),
+.BR realpath (1),
+.BR bash (1)
+.SH STANDARDS
+.B which
+follows POSIX guidelines for PATH searching, including proper handling
+of empty PATH elements which many implementations get wrong.
+.SH BUGS
+Report bugs at: https://github.com/Open-Technology-Foundation/whichx/issues
+.SH AUTHOR
+Indonesian Open Technology Foundation (admin@yatti.id)
+.SH COPYRIGHT
+Copyright \(co 2025-2026 Indonesian Open Technology Foundation.
+.PP
+License GPLv3+: GNU GPL version 3 or later.
+.br
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+.SH LINKS
+Project repository: https://github.com/Open-Technology-Foundation/whichx

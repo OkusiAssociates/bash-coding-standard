@@ -1,0 +1,31 @@
+_cln() {
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    opts="-L -a --add -S --set -m --depth -p -n --prompt -P -N --no-prompt -v --verbose -q --quiet -h --help -V --version"
+
+    case ${prev} in
+        -a|--add|-S|--set)
+            COMPREPLY=( $(compgen -W "*.bak *.tmp *.log *.old *.orig *.swp *.swo" -- ${cur}) )
+            return 0
+            ;;
+        -m|--depth)
+            COMPREPLY=( $(compgen -W "1 2 3 4 5 10 -1" -- ${cur}) )
+            return 0
+            ;;
+        *)
+            ;;
+    esac
+
+    if [[ ${cur} == -* ]] ; then
+        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+        return 0
+    fi
+
+    # Complete with directories
+    COMPREPLY=( $(compgen -d -- ${cur}) )
+}
+
+complete -F _cln cln
