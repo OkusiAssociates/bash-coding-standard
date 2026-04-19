@@ -2,33 +2,253 @@
 
 The following codebases use highly optimized patterns that should be referred to, and where necessary, incorporated into generated code.
 
-    .
+```
+    ../lib/
     ├── file
     │   ├── cln
+    │   │   ├── cln
+    │   │   ├── cln.1
+    │   │   ├── cln.bash_completion
+    │   │   ├── Makefile
+    │   │   └── tests
+    │   │       ├── run-all-tests.sh
+    │   │       ├── test-cli-options.sh
+    │   │       ├── test-deletion.sh
+    │   │       ├── test-edge-cases.sh
+    │   │       ├── test-file-patterns.sh
+    │   │       └── test-helpers.sh
     │   ├── dux
+    │   │   ├── dir-sizes -> dux
+    │   │   ├── dux
+    │   │   ├── dux.1
+    │   │   ├── dux.bash_completion
+    │   │   ├── install.sh
+    │   │   └── tests
+    │   │       ├── run-tests.sh
+    │   │       ├── test-arguments.sh
+    │   │       ├── test-basic.sh
+    │   │       ├── test-edge-cases.sh
+    │   │       ├── test-exit-codes.sh
+    │   │       ├── test-helpers.sh
+    │   │       ├── test-install.sh
+    │   │       └── test-output.sh
     │   ├── ls.types
+    │   │   ├── ls.types
+    │   │   ├── Makefile
+    │   │   ├── test_ls.types.bats
+    │   │   └── types.conf
     │   ├── md2ansi
+    │   │   ├── display-ansi-palette
+    │   │   ├── Makefile
+    │   │   ├── md
+    │   │   ├── md2ansi
+    │   │   ├── md2ansi.1
+    │   │   ├── md2ansi.bash -> md2ansi
+    │   │   ├── md2ansi.bash_completion
+    │   │   ├── md-link-extract
+    │   │   ├── mdview
+    │   │   ├── mdview.conf
+    │   │   ├── rewrite-md-links.lua
+    │   │   ├── test
+    │   │   │   ├── run_tests
+    │   │   │   ├── test_basic.sh
+    │   │   │   ├── test_code.sh
+    │   │   │   ├── test_edge_cases.sh
+    │   │   │   ├── test_footnotes.sh
+    │   │   │   ├── test_gaps.sh
+    │   │   │   ├── test_mdview.sh
+    │   │   │   ├── test_options.sh
+    │   │   │   ├── test_security.sh
+    │   │   │   ├── test_tables.sh
+    │   │   │   └── test_wrapping.sh
+    │   │   └── themes
+    │   │       ├── github-dark.css
+    │   │       ├── github-dark.theme
+    │   │       ├── github-light.css
+    │   │       └── github-light.theme
     │   ├── symlink
+    │   │   ├── Makefile
+    │   │   ├── symlink
+    │   │   ├── symlink.1
+    │   │   ├── symlink.bash_completion
+    │   │   ├── test-harness
+    │   │   ├── test-helpers
+    │   │   └── test-symlink
     │   └── which
+    │       ├── legacy-which
+    │       │   ├── which.debianutils
+    │       │   ├── which.debianutils-core22
+    │       │   ├── which.nodejs
+    │       │   └── which.snap-core
+    │       ├── Makefile
+    │       ├── tests
+    │       │   ├── benchmark-ci.sh
+    │       │   ├── benchmark.sh
+    │       │   ├── test_compat.sh
+    │       │   ├── test_which_posix.sh
+    │       │   └── test_which.sh
+    │       ├── which
+    │       ├── which.1
+    │       └── which.sh
+    ├── index.md
     ├── math
     │   └── hr2int
+    │       ├── hr2int -> hr2int.bash
+    │       ├── hr2int.bash
+    │       └── int2hr -> hr2int.bash
+    ├── mk-index.sh
     ├── str
     │   ├── post_slug
+    │   │   ├── docs
+    │   │   ├── post_slug.bash
+    │   │   ├── post_slug.js
+    │   │   ├── post_slug.php
+    │   │   ├── post_slug.py
+    │   │   ├── pyproject.toml
+    │   │   ├── slugify -> post_slug.bash
+    │   │   ├── slugify-files
+    │   │   ├── test_files
+    │   │   │   ├── Barnes & Noble's Books.pdf
+    │   │   │   ├── Hello World\!.txt
+    │   │   │   ├── ñoño's café €5.50.html
+    │   │   │   ├── Test_File-Already-Slugged.doc
+    │   │   │   └── Very Long File Name That Should Be Truncated Because It Is Way Too Long For Most Systems.md
+    │   │   ├── unittests
+    │   │   │   ├── datasets
+    │   │   │   │   ├── booktitles.txt
+    │   │   │   │   ├── edge_cases.txt
+    │   │   │   │   ├── headlines.txt
+    │   │   │   │   └── products.txt
+    │   │   │   ├── test_post_slug.py
+    │   │   │   └── validate_slug_scripts
+    │   │   ├── update_version.sh
+    │   │   ├── VERSION
+    │   │   └── _version.py
     │   ├── remblanks
+    │   │   └── remblanks
     │   └── trim
+    │       ├── generate-inc.sh
+    │       ├── ltrim.bash
+    │       ├── Makefile
+    │       ├── rtrim.bash
+    │       ├── squeeze.bash
+    │       ├── test
+    │       │   ├── benchmark-squeeze.sh
+    │       │   ├── benchmark-stream-processing.sh
+    │       │   ├── benchmark-trim-vs-trimv.sh
+    │       │   ├── fixtures
+    │       │   │   ├── expected
+    │       │   │   │   ├── empty_trim.txt
+    │       │   │   │   ├── multiline_ltrim.txt
+    │       │   │   │   ├── multiline_rtrim.txt
+    │       │   │   │   ├── multiline_trimall.txt
+    │       │   │   │   ├── multiline_trim.txt
+    │       │   │   │   └── whitespace_trim.txt
+    │       │   │   └── input
+    │       │   │       ├── empty.txt
+    │       │   │       ├── escape_sequences.txt
+    │       │   │       ├── multiline.txt
+    │       │   │       ├── tabs_and_spaces.txt
+    │       │   │       └── whitespace.txt
+    │       │   ├── integration
+    │       │   │   ├── test-complex-pipelines.sh
+    │       │   │   ├── test-pipes.sh
+    │       │   │   └── test-sourced.sh
+    │       │   ├── run-tests.sh
+    │       │   ├── security
+    │       │   │   └── test-injection.sh
+    │       │   ├── stress
+    │       │   │   └── test-large-inputs.sh
+    │       │   ├── test_trimv_pipe.sh
+    │       │   ├── unit
+    │       │   │   ├── test-binary-safety.sh
+    │       │   │   ├── test-concurrent.sh
+    │       │   │   ├── test-error-handling.sh
+    │       │   │   ├── test-line-endings.sh
+    │       │   │   ├── test-locale.sh
+    │       │   │   ├── test-ltrim.sh
+    │       │   │   ├── test-null-byte.sh
+    │       │   │   ├── test-rtrim.sh
+    │       │   │   ├── test-sigpipe.sh
+    │       │   │   ├── test-squeeze.sh
+    │       │   │   ├── test-trimall.sh
+    │       │   │   ├── test-trim.sh
+    │       │   │   ├── test-trimv-advanced.sh
+    │       │   │   ├── test-trimv.sh
+    │       │   │   └── test-unicode.sh
+    │       │   └── utils.sh
+    │       ├── trim.1
+    │       ├── trimall.bash
+    │       ├── trim.bash
+    │       ├── trim.bash_completion
+    │       ├── trim.inc.sh
+    │       └── trimv.bash
     ├── sys
     │   ├── bitwiddle
+    │   │   ├── bitwiddle
+    │   │   └── obfuscate
+    │   │       ├── obs-common.sh
+    │   │       ├── obs-receive.sh
+    │   │       └── obs-test.sh
     │   ├── en_ID
+    │   │   ├── ensure-persistence.sh
+    │   │   ├── install-arch.sh
+    │   │   ├── install-fedora.sh
+    │   │   ├── install-ubuntu.sh
+    │   │   ├── localedata
+    │   │   │   └── en_ID
+    │   │   ├── Makefile
+    │   │   └── tests
+    │   │       └── test_en_ID.sh
     │   ├── get-chassis
+    │   │   ├── get-chassis
+    │   │   ├── get-chassis.1
+    │   │   └── Makefile
     │   ├── get_mac
+    │   │   └── get-mac
     │   ├── get_pubkey
+    │   │   ├── get-pubkey
+    │   │   └── is-authorized-pubkey
     │   ├── shlock
+    │   │   ├── install.sh
+    │   │   ├── Makefile
+    │   │   ├── shlock
+    │   │   ├── shlock.1
+    │   │   ├── shlock.1.md
+    │   │   ├── shlock.bash_completion
+    │   │   └── tests
+    │   │       ├── run_tests.sh
+    │   │       ├── test_basic.sh
+    │   │       ├── test_concurrent.sh
+    │   │       ├── test_edge_cases.sh
+    │   │       ├── test_errors.sh
+    │   │       ├── test_stale_locks.sh
+    │   │       ├── test_steal.sh
+    │   │       └── test_wait_timeout.sh
     │   └── stopwords.bash
+    │       ├── install.sh
+    │       ├── nltk_data
+    │       │   └── tokenizers
+    │       │       └── punkt
+    │       ├── stopwords
+    │       └── tests
+    │           ├── benchmark_readme.sh
+    │           ├── benchmark.sh
+    │           ├── functional_tests.sh
+    │           └── stopwords_python.py
     └── time
         ├── elapsed_time
+        │   ├── elapsed_time
+        │   ├── elapsed_time.py
+        │   └── Makefile
         └── spacetime
+            ├── spacetime
+            ├── spacetime.php
+            └── spacetime.py
     
-    25 directories
+    51 directories, 191 files
+
+```
 
 ---
 
