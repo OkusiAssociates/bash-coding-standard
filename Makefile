@@ -29,6 +29,8 @@ install:
 	cp -a benchmarks/. $(DESTDIR)$(SHAREDIR)/benchmarks/
 	install -d $(DESTDIR)$(SHAREDIR)/examples
 	find examples/ -maxdepth 1 -type f -exec install -m 755 {} $(DESTDIR)$(SHAREDIR)/examples/ \;
+	install -d $(DESTDIR)$(SHAREDIR)/examples/lib
+	tar --exclude='mk-index*' --exclude='BASH-CODING-STANDARD.md' -cf - examples/lib | tar -xf - -C $(DESTDIR)$(SHAREDIR)/
 	install -d $(DESTDIR)$(MANDIR)
 	install -m 644 bcs.1 $(DESTDIR)$(MANDIR)/bcs.1
 	install -m 644 docs/BCS-bash.1 $(DESTDIR)$(MANDIR)/BCS-bash.1
