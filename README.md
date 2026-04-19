@@ -251,9 +251,9 @@ CLI flags override config; config overrides environment. See [`bcs.conf.sample`]
 | [`md2ansi`](examples/md2ansi) | 1430 | Large-scale text processing, ANSI formatting |
 | [`which`](examples/which) | 111 | Dual-purpose script pattern |
 
-### Exemplar Library & Templates
+### Reference Codebase Library & Templates
 
-[`examples/exemplar-code/`](examples/exemplar-code/) holds smaller idiomatic snippets (`checkpoint`, `clip`, `dux`, `hr2int`, `int2hr`, `internetip`, `lsd`, `nukedir`, `oknav`, ...) -- see [`examples/exemplar-code/BCS.md`](examples/exemplar-code/BCS.md) for the annotated index. Generate fresh BCS-compliant skeletons with `bcs template -t {minimal,basic,complete,library}` (see [CLI Reference](#bcs-template)).
+[`examples/lib/`](examples/lib/index.md) is a curated set of working, BCS-compliant reference codebases organised by domain (`file/`, `math/`, `str/`, `sys/`, `time/`) -- see the index for an annotated tour of each project. Generate fresh BCS-compliant skeletons with `bcs template -t {minimal,basic,complete,library}` (see [CLI Reference](#bcs-template)).
 
 ## AI Tooling (`ai-agents/`)
 
