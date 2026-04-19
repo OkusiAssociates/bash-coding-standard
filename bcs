@@ -497,14 +497,17 @@ _dump_response() {
 }
 
 
-# Auto-detect available LLM backend (ollama → anthropic → openai → google → claude)
+# Auto-detect available LLM backend (claude → ollama → anthropic → openai → google)
+# The Claude Code CLI wins first when available: it runs locally like ollama
+# but without needing a model server, and avoids spending API credits on
+# unconfigured default invocations.
 _detect_backend() {
+  command -v claude &>/dev/null && { echo claude; return 0; } ||:
   local -- host=${OLLAMA_HOST:-localhost:11434}
   curl -sf --connect-timeout 2 http://"$host"/api/tags &>/dev/null && { echo ollama; return 0; } ||:
   [[ -n ${ANTHROPIC_API_KEY:-} ]] && { echo anthropic; return 0; } ||:
   [[ -n ${OPENAI_API_KEY:-} ]] && { echo openai; return 0; } ||:
   [[ -n ${GOOGLE_API_KEY:-${GEMINI_API_KEY:-}} ]] && { echo google; return 0; } ||:
-  command -v claude &>/dev/null && { echo claude; return 0; } ||:
   return 1
 }
 

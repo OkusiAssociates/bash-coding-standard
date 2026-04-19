@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 # test-detect-backend.sh - Unit tests for _detect_backend()
 #
-# _detect_backend probes Ollama via HTTP then checks API key presence
-# in a fixed order. We mock curl() to force the Ollama probe's result,
-# manipulate env vars to drive the fallback order, and verify each
-# short-circuit point.
+# _detect_backend probes claude CLI on PATH first, then Ollama via HTTP,
+# then API-key presence in a fixed order. We mock `command` and `curl` to
+# force each branch's result and verify every short-circuit point.
 
 set -euo pipefail
 shopt -s inherit_errexit
@@ -32,91 +31,120 @@ curl_ok()   { curl() { return 0; }; }
 # Remove the override.
 curl_real() { unset -f curl; }
 
+# Claude CLI mocks: intercept `command -v claude` only; delegate everything
+# else to the real builtin so other `command` invocations keep working.
+claude_absent()  { command() { [[ $1 == -v && $2 == claude ]] && return 1; builtin command "$@"; }; }
+claude_present() { command() { [[ $1 == -v && $2 == claude ]] && { echo /usr/bin/claude; return 0; }; builtin command "$@"; }; }
+claude_real()    { unset -f command; }
+
+# --- Claude CLI probe (highest priority) -------------------------------
+
+begin_test 'claude CLI wins when present, even with ollama reachable and all API keys set'
+reset_env
+claude_present
+curl_ok
+ANTHROPIC_API_KEY=a OPENAI_API_KEY=b GOOGLE_API_KEY=c
+assert_equal claude "$(_detect_backend)"
+reset_env
+curl_real
+claude_real
+
 # --- Ollama probe ------------------------------------------------------
 
-begin_test 'ollama reachable wins even with all API keys set'
+begin_test 'ollama wins when claude absent and ollama reachable, even with all API keys set'
 reset_env
+claude_absent
 curl_ok
 ANTHROPIC_API_KEY=a OPENAI_API_KEY=b GOOGLE_API_KEY=c
 assert_equal ollama "$(_detect_backend)"
 reset_env
 curl_real
+claude_real
 
 # --- Anthropic fallback ------------------------------------------------
 
-begin_test 'anthropic wins when ollama unreachable and ANTHROPIC_API_KEY set'
+begin_test 'anthropic wins when claude absent, ollama unreachable, ANTHROPIC_API_KEY set'
 reset_env
+claude_absent
 curl_fail
 ANTHROPIC_API_KEY='test'
 assert_equal anthropic "$(_detect_backend)"
 reset_env
 curl_real
+claude_real
 
 begin_test 'anthropic wins over openai/google when all three keys set'
 reset_env
+claude_absent
 curl_fail
 ANTHROPIC_API_KEY=a OPENAI_API_KEY=b GOOGLE_API_KEY=c
 assert_equal anthropic "$(_detect_backend)"
 reset_env
 curl_real
+claude_real
 
 # --- OpenAI fallback ---------------------------------------------------
 
 begin_test 'openai wins when only OPENAI_API_KEY set'
 reset_env
+claude_absent
 curl_fail
 OPENAI_API_KEY='test'
 assert_equal openai "$(_detect_backend)"
 reset_env
 curl_real
+claude_real
 
 begin_test 'openai wins over google when both set (no anthropic)'
 reset_env
+claude_absent
 curl_fail
 OPENAI_API_KEY=a GOOGLE_API_KEY=b
 assert_equal openai "$(_detect_backend)"
 reset_env
 curl_real
+claude_real
 
 # --- Google fallback via GOOGLE_API_KEY --------------------------------
 
 begin_test 'google wins when only GOOGLE_API_KEY set'
 reset_env
+claude_absent
 curl_fail
 GOOGLE_API_KEY='test'
 assert_equal google "$(_detect_backend)"
 reset_env
 curl_real
+claude_real
 
 # --- Google fallback via GEMINI_API_KEY --------------------------------
 
 begin_test 'google backend via GEMINI_API_KEY alone'
 reset_env
+claude_absent
 curl_fail
 GEMINI_API_KEY='test'
 assert_equal google "$(_detect_backend)"
 reset_env
 curl_real
+claude_real
 
-# --- Claude CLI fallback (system-dependent) ----------------------------
-# Only meaningful given the current system state (whether `claude` is on PATH).
+# --- Nothing available -------------------------------------------------
 
-begin_test 'claude CLI is final fallback when nothing else available'
+begin_test 'detect_backend returns non-zero when nothing is available'
 reset_env
+claude_absent
 curl_fail
-if command -v claude &>/dev/null; then
-  assert_equal claude "$(_detect_backend)" 'claude CLI picked up'
+if _detect_backend &>/dev/null; then
+  TESTS_FAILED+=1
+  printf '  %s✗%s detect_backend should fail when nothing available\n' "$RED" "$NC"
 else
-  # Truly nothing available.
-  if _detect_backend &>/dev/null; then
-    TESTS_FAILED+=1
-    printf '  %s✗%s detect_backend should fail when nothing available\n' "$RED" "$NC"
-  else
-    TESTS_PASSED+=1
-    printf '  %s✓%s detect_backend returns non-zero when nothing available\n' "$GREEN" "$NC"
-  fi
+  TESTS_PASSED+=1
+  printf '  %s✓%s detect_backend returns non-zero when nothing available\n' "$GREEN" "$NC"
 fi
+reset_env
 curl_real
+claude_real
 
 print_summary 'detect-backend'
 #fin
