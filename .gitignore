@@ -35,3 +35,4 @@ tests/accuracy/old-tests/
 # Per-project BCS doc symlinks inside reference codebases (dev-machine
 # convenience; absolute targets dangle on fresh clone)
 examples/lib/**/BASH-CODING-STANDARD.md
+benchmarks/BASH-CODING-STANDARD.md
