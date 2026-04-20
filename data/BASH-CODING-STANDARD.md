@@ -1623,17 +1623,21 @@ Stream separation enables: `data=$(./script.sh)` captures only data, `./script.s
 Implement `_msg()` as the core function using `FUNCNAME[1]` dispatch.
 
 ```bash
+# SCRIPT_NAME defined in script metadata
+
+# Define messaging flags (VERBOSE, DEBUG, as required)
+declare -i VERBOSE=1 DEBUG=0
+
+# Define messaging colors (RED GREEN YELLOW etc, as required)
+if [[ -t 1 && -t 2 ]]; then
+  declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' NC=$'\033[0m'
+else
+  declare -r RED='' GREEN='' YELLOW='' CYAN='' NC=''
+fi
+
 _msg() {
-  local -- prefix="$SCRIPT_NAME:" msg
-  case ${FUNCNAME[1]} in
-    success) prefix+=" $GREEN✓$NC" ;;
-    warn)    prefix+=" $YELLOW▲$NC" ;;
-    info)    prefix+=" $CYAN◉$NC" ;;
-    error)   prefix+=" $RED✗$NC" ;;
-    debug)   prefix+=" DEBUG:" ;;
-    *)       ;;
-  esac
-  for msg in "$@"; do printf '%s %s\n' "$prefix" "$msg"; done
+  local -Ar funcs=( [vecho]='' [success]=" $GREEN✓$NC" [info]=" $CYAN◉$NC" [warn]=" $YELLOW▲$NC" [error]=" $RED✗$NC" [debug]=' DEBUG:' )
+  printf "$SCRIPT_NAME:${funcs[${FUNCNAME[1]}]} %s\n" "$@"
 }
 
 vecho()   { ((VERBOSE)) || return 0; _msg "$@"; }
@@ -1651,6 +1655,22 @@ Rules:
 - `info()`, `success()`, `vecho()` respect VERBOSE flag
 - `debug()` respects DEBUG flag
 - `die()` takes exit code as first argument
+
+Alternative (acceptable) \_msg function:
+
+```bash
+_msg() {
+  local -- prefix="$SCRIPT_NAME:"
+  case ${FUNCNAME[1]} in
+    success) prefix+=" $GREEN✓$NC" ;;
+    warn)    prefix+=" $YELLOW▲$NC" ;;
+    info)    prefix+=" $CYAN◉$NC" ;;
+    error)   prefix+=" $RED✗$NC" ;;
+    *)       ;;
+  esac
+  printf "$prefix %s\n" "$@"
+}
+```
 
 The above is the **reference set**. Per BCS0405, scripts should only include the messaging functions they actually call — omitting unused functions (e.g., `success()`, `debug()`, `vecho()`) is correct, not a violation.
 
@@ -1670,11 +1690,12 @@ Usage: $SCRIPT_NAME [OPTIONS] FILE [FILE ...]
 A more detailed description of what the script does.
 
 Options:
-  -n, --dry-run           Dry run mode
-  -v, --verbose           Verbose output (default)
-  -q, --quiet             Quiet mode
-  -V, --version           Show version
-  -h, --help              Show this help
+
+  -n, --dry-run     Dry run mode
+  -v, --verbose     Verbose output (default)
+  -q, --quiet       Quiet mode
+  -V, --version     Show version
+  -h, --help        Show this help
 
 Examples:
   $SCRIPT_NAME file.txt
@@ -1741,7 +1762,7 @@ else
 fi
 ```
 
-Per BCS0405, declare only the colors the script actually uses. A script with no `success()` function does not need `GREEN`. Both branches of the `if`/`else` must declare the same set of variables.
+Per BCS0405, declare only the colors the script actually uses. A script with no `success()` function may not need `GREEN`. Both branches of the `if`/`else` must declare the same set of variables.
 
 Never scatter inline color declarations across scripts. Centralize in a single declaration block.
 
@@ -1803,7 +1824,7 @@ Never hardcode terminal width. Provide graceful fallbacks for limited terminals.
 ```bash
 yn() {
   local -- REPLY
-  >&2 echo -n "$SCRIPT_NAME: $YELLOW▲$NC ${1:-Continue?} y/n"
+  >&2 echo -n "$SCRIPT_NAME: $YELLOW▲$NC ${1:-Continue?} y/n "
   read -r -n 1
   >&2 echo
   [[ ${REPLY,,} == y ]]

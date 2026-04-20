@@ -10,11 +10,7 @@ declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # Messaging functions
-_msg() {
-  local -- prefix="$SCRIPT_NAME:" msg
-  for msg in "$@"; do printf '%s %s\n' "$prefix" "$msg"; done
-}
-error() { >&2 _msg "$@"; }
+error() { >&2 printf "$SCRIPT_NAME: %s\n" "$@"; }
 die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 main() {

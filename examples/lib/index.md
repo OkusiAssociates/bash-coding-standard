@@ -9,7 +9,6 @@ The following codebases use highly optimized patterns that should be referred to
     │   │   ├── cln
     │   │   ├── cln.1
     │   │   ├── cln.bash_completion
-    │   │   ├── Makefile
     │   │   └── tests
     │   │       ├── run-all-tests.sh
     │   │       ├── test-cli-options.sh
@@ -34,12 +33,10 @@ The following codebases use highly optimized patterns that should be referred to
     │   │       └── test-output.sh
     │   ├── ls.types
     │   │   ├── ls.types
-    │   │   ├── Makefile
     │   │   ├── test_ls.types.bats
     │   │   └── types.conf
     │   ├── md2ansi
     │   │   ├── display-ansi-palette
-    │   │   ├── Makefile
     │   │   ├── md
     │   │   ├── md2ansi
     │   │   ├── md2ansi.1
@@ -67,7 +64,6 @@ The following codebases use highly optimized patterns that should be referred to
     │   │       ├── github-light.css
     │   │       └── github-light.theme
     │   ├── symlink
-    │   │   ├── Makefile
     │   │   ├── symlink
     │   │   ├── symlink.1
     │   │   ├── symlink.bash_completion
@@ -80,7 +76,6 @@ The following codebases use highly optimized patterns that should be referred to
     │       │   ├── which.debianutils-core22
     │       │   ├── which.nodejs
     │       │   └── which.snap-core
-    │       ├── Makefile
     │       ├── tests
     │       │   ├── benchmark-ci.sh
     │       │   ├── benchmark.sh
@@ -129,7 +124,6 @@ The following codebases use highly optimized patterns that should be referred to
     │   └── trim
     │       ├── generate-inc.sh
     │       ├── ltrim.bash
-    │       ├── Makefile
     │       ├── rtrim.bash
     │       ├── squeeze.bash
     │       ├── test
@@ -197,13 +191,11 @@ The following codebases use highly optimized patterns that should be referred to
     │   │   ├── install-ubuntu.sh
     │   │   ├── localedata
     │   │   │   └── en_ID
-    │   │   ├── Makefile
     │   │   └── tests
     │   │       └── test_en_ID.sh
     │   ├── get-chassis
     │   │   ├── get-chassis
-    │   │   ├── get-chassis.1
-    │   │   └── Makefile
+    │   │   └── get-chassis.1
     │   ├── get_mac
     │   │   └── get-mac
     │   ├── get_pubkey
@@ -211,7 +203,6 @@ The following codebases use highly optimized patterns that should be referred to
     │   │   └── is-authorized-pubkey
     │   ├── shlock
     │   │   ├── install.sh
-    │   │   ├── Makefile
     │   │   ├── shlock
     │   │   ├── shlock.1
     │   │   ├── shlock.1.md
@@ -239,14 +230,13 @@ The following codebases use highly optimized patterns that should be referred to
     └── time
         ├── elapsed_time
         │   ├── elapsed_time
-        │   ├── elapsed_time.py
-        │   └── Makefile
+        │   └── elapsed_time.py
         └── spacetime
             ├── spacetime
             ├── spacetime.php
             └── spacetime.py
     
-    51 directories, 191 files
+    51 directories, 181 files
 
 ```
 

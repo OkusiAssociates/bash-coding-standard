@@ -23,29 +23,32 @@ fi
 
 # Utility Functions
 _msg() {
-  local -- prefix="$SCRIPT_NAME:" msg
+  local -- prefix="$SCRIPT_NAME:"
   case ${FUNCNAME[1]} in
-    vecho) : ;;
-    info) prefix+=" ${CYAN}◉${NC}" ;;
-    warn) prefix+=" ${YELLOW}▲${NC}" ;;
-    success) prefix+=" ${GREEN}✓${NC}" ;;
-    error) prefix+=" ${RED}✗${NC}" ;;
-    *) : ;;
+    success) prefix+=" $GREEN✓$NC" ;;
+    warn)    prefix+=" $YELLOW▲$NC" ;;
+    info)    prefix+=" $CYAN◉$NC" ;;
+    error)   prefix+=" $RED✗$NC" ;;
+    debug)   prefix+=" DEBUG:" ;;
+    *)       ;;
   esac
-  for msg in "$@"; do printf '%s %s\n' "$prefix" "$msg"; done
+  printf "$prefix %s\n" "${msg[@]}"
 }
-vecho() { ((VERBOSE)) || return 0; _msg "$@"; }
-info() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
+vecho()   { ((VERBOSE)) || return 0; _msg "$@"; }
+info()    { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
 success() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
-warn() { >&2 _msg "$@"; }
-error() { >&2 _msg "$@"; }
-die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+warn()    { >&2 _msg "$@"; }
+error()   { >&2 _msg "$@"; }
+die()     { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+
 yn() {
   local -- REPLY
-  read -r -n 1 -p "$SCRIPT_NAME: ${YELLOW}▲${NC} ${1:-'Continue?'} y/n "
+  >&2 echo -n "$SCRIPT_NAME: $YELLOW▲$NC ${1:-Continue?} y/n "
+  read -r -n 1
   >&2 echo
   [[ ${REPLY,,} == y ]]
 }
+
 noarg() { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
 
 show_help() {
@@ -79,7 +82,7 @@ main() {
         return 0
         ;;
       -V|--version)
-        echo "$SCRIPT_NAME $VERSION"
+        printf '%s %s\n' "$SCRIPT_NAME" "$VERSION"
         return 0
         ;;
       -v|--verbose)
@@ -112,6 +115,9 @@ main() {
 
   # Business
   info "Hello from ${USER@Q}"
+
+  # ...
+
   success 'Script completed successfully'
 }
 
