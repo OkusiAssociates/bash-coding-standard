@@ -9,15 +9,20 @@ shopt -s inherit_errexit shift_verbose extglob nullglob
 ##
 
 # Script metadata
-declare -r VERSION=1.0.0 # 2026-04-06 - Initial version
+declare -r VERSION=1.0.1 # 2026-04-20
 declare -r SCRIPT_NAME=${0##*/}
+
+# Test name derived from script filename: 'benchmark.X.sh' → 'X'
+declare -- TESTNAME=${SCRIPT_NAME#benchmark.}
+TESTNAME=${TESTNAME%.sh}
+declare -r TESTNAME
 
 # Configuration
 declare -i RUNS_PER_TEST=10
 
 # Output files
 #shellcheck disable=SC2155
-declare -r RESULTS_FILE=benchmark-results-args-"$(printf '%(%F_%T)T')".txt
+declare -r RESULTS_FILE=${TESTNAME}_results_$(printf '%(%F_%T)T').txt
 
 # Test argument arrays
 declare -ra ARGS_SHORT=(-v -q -n -f -D -x -c -o /tmp/out -p 8080 -l info)
@@ -31,8 +36,64 @@ declare -a times_0 times_1 times_2 times_3
 ## FUNCTIONS
 ##
 
+error() { >&2 printf '%s: ✗ %s\n' "$SCRIPT_NAME" "$*"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+noarg() {
+  if (($# <= 1)) || [[ ${2:0:1} == '-' ]]; then
+    die 22 "Option ${1@Q} requires an argument"
+  fi
+}
+
+show_help() {
+  cat <<HELP
+$SCRIPT_NAME $VERSION - Performance comparison of argument processing methods
+
+Measures pure parsing overhead (no I/O, no work per option) for four
+argument-parsing constructs across three argument styles.
+
+Methods:
+  1. BCS while/case    BCS0801 pattern with BCS0805 bundling line
+  2. getopts           POSIX builtin (short options only, no long)
+  3. GNU getopt        external command (fork + exec per invocation)
+  4. Simple while/case tutorial pattern, no bundling
+
+Argument styles tested:
+  short    -v -q -n -f -D -x -c -o /tmp/out -p 8080 -l info
+  long     --verbose --quiet --dry-run --force ... --level info
+  bundled  -vqnfDxc -o /tmp/out -p 8080 -l info
+
+Not every method runs on every style:
+  - Long style:    getopts skipped (no long-option support)
+  - Bundled style: Simple while/case skipped (no bundling support)
+
+Default run: 6 test series (each style at 1000 and 5000 iterations).
+With -i NUM: 3 test series (each style once at NUM iterations).
+Each test series repeats RUNS_PER_TEST times and reports mean/median/stddev.
+
+Usage: $SCRIPT_NAME [OPTIONS]
+
+Options:
+  -h, --help       Show this help and exit
+  -V, --version    Show version and exit
+  -i NUM           Replace default 1K/5K matrix with a single pass at NUM
+  -r NUM           Runs per test series (default: 10)
+
+Output:
+  stdout           Live progress, per-series results, fastest method
+  file             benchmark-results-args-YYYY-MM-DD_HH:MM:SS.txt
+                   (system info, raw numbers, summary analysis)
+
+Exit codes:
+  0  success
+  2  unexpected positional argument
+ 18  missing dependency (GNU getopt)
+ 22  unknown option or missing option argument
+
+HELP
+}
+
 print_system_info() {
-  cat <<EOF
+  cat <<SYSINFO
 System Information
 ==================
 Date: $(date -Iseconds)
@@ -42,7 +103,7 @@ CPU: $(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2 | xargs)
 Kernel: $(uname -r)
 Runs per test: $RUNS_PER_TEST
 
-EOF
+SYSINFO
 }
 
 run_benchmark_bcs() {
@@ -57,6 +118,7 @@ run_benchmark_bcs() {
   start=${EPOCHREALTIME/./}
   i=-$iterations
   while ((1)); do
+    #bcscheck disable=BCS0505
     ((i++)) || break
     _v=0 _q=0 _n=0 _f=0 _D=0 _x=0 _c=0
     _o='' _p='' _l=''
@@ -93,6 +155,7 @@ run_benchmark_getopts() {
 
   start=${EPOCHREALTIME/./}
   i=-$iterations
+  #bcscheck disable=BCS0505
   while ((1)); do
     ((i++)) || break
     _v=0 _q=0 _n=0 _f=0 _D=0 _x=0 _c=0
@@ -130,6 +193,7 @@ run_benchmark_getopt() {
 
   start=${EPOCHREALTIME/./}
   i=-$iterations
+  #bcscheck disable=BCS0505
   while ((1)); do
     ((i++)) || break
     _v=0 _q=0 _n=0 _f=0 _D=0 _x=0 _c=0
@@ -167,11 +231,13 @@ run_benchmark_simple() {
 
   start=${EPOCHREALTIME/./}
   i=-$iterations
+  #bcscheck disable=BCS0505
   while ((1)); do
     ((i++)) || break
     _v=0 _q=0 _n=0 _f=0 _D=0 _x=0 _c=0
     _o='' _p='' _l=''
     set -- "${args[@]}"
+    #bcscheck disable=BCS0503
     while [[ $# -gt 0 ]]; do
       case $1 in
         -v|--verbose) _v=1; shift ;;
@@ -196,9 +262,10 @@ run_benchmark_simple() {
 calculate_statistics() {
   # Calculate mean, median, stddev from array of values (microseconds)
   local -n values=$1
-  local -i sum=0 count=${#values[@]}
+  local -i sum=0 count=${#values[@]} val=0
   local -a sorted
-  local -- mean median stddev variance sum_sq_diff
+  local -i mean median variance sum_sq_diff
+  local -- stddev
 
   # Calculate mean
   for val in "${values[@]}"; do
@@ -307,6 +374,9 @@ run_test_series() {
 
   printf '\n◉ Fastest: %s\n' "${labels[fastest_idx]}"
 
+  # Guard against degenerate 0 µs measurements (would raise SIGFPE below)
+  ((fastest_time)) || fastest_time=1
+
   local -i diff_pct
   for ((m=0; m<method_count; m+=1)); do
     ((m == fastest_idx)) && continue
@@ -332,31 +402,6 @@ run_test_series() {
   } >> "$RESULTS_FILE"
 }
 
-show_help() {
-  cat <<'HELP'
-benchmark-args.sh - Performance comparison of argument processing methods
-
-Compares the performance of:
-  1. BCS while/case   -- BCS0801 pattern with BCS0805 bundling
-  2. getopts           -- POSIX builtin (short options only)
-  3. GNU getopt        -- external command (fork + exec per call)
-  4. Simple while/case -- common tutorial pattern, no bundling
-
-Usage: benchmark-args.sh [OPTIONS]
-
-Options:
-  -h, --help       Show this help message
-  -V, --version    Show version information
-  -i NUM           Override iteration count (default: 1K/5K matrix)
-  -r NUM           Number of runs per test (default: 10)
-
-Output:
-  benchmark-results-args-TIMESTAMP.txt (detailed results with summary)
-
-HELP
-  exit "${1:-0}"
-}
-
 ##
 ## EXECUTION
 ##
@@ -367,24 +412,37 @@ main() {
   # Argument parsing
   while (($#)); do
     case $1 in
-      -h|--help)    show_help 0 ;;
-      -V|--version) echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
-      -i)           custom_iterations=${2:?'-i requires a number'}; shift ;;
-      -r)           RUNS_PER_TEST=${2:?'-r requires a number'}; shift ;;
-      -[irhV]?*)    set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+      -h|--help)    show_help; exit 0 ;;
+      -V|--version) printf '%s %s\n' "$SCRIPT_NAME" "$VERSION"; exit 0 ;;
+      -i)           noarg "$@"; shift
+                    [[ $1 =~ ^[0-9]+$ ]] \
+                      || die 22 "Option -i requires a positive integer, got ${1@Q}"
+                    custom_iterations=$1 ;;
+      -r)           noarg "$@"; shift
+                    [[ $1 =~ ^[0-9]+$ ]] \
+                      || die 22 "Option -r requires a positive integer, got ${1@Q}"
+                    RUNS_PER_TEST=$1 ;;
       --)           shift; break ;;
-      -*)           >&2 echo "$SCRIPT_NAME: unknown option ${1@Q}"; show_help 2 ;;
-      *)            >&2 echo "$SCRIPT_NAME: unexpected argument ${1@Q}"; show_help 2 ;;
+      -[hVir]?*)    set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+      -*)           die 22 "Unknown option ${1@Q}" ;;
+      *)            die 2 "Unexpected argument ${1@Q}" ;;
     esac
     shift
   done
   readonly RUNS_PER_TEST
 
+  # Dependency check: GNU getopt (util-linux, not the Bash builtin getopts)
+  command -v getopt >/dev/null \
+    || die 18 "GNU getopt required (apt install util-linux)"
+
   # Print header
   { print_system_info
-    echo 'Starting benchmarks...'
+    if ((custom_iterations)); then
+      echo "Starting benchmarks: 3 test series at ${custom_iterations} iterations (${RUNS_PER_TEST} runs each)"
+    else
+      echo "Starting benchmarks: 6 test series (short/long/bundled × 1K/5K iterations, ${RUNS_PER_TEST} runs each)"
+    fi
     echo
-    true
   } | tee "$RESULTS_FILE"
 
   if ((custom_iterations)); then
@@ -448,12 +506,6 @@ Benchmark Complete
 
 Detailed results saved to: $RESULTS_FILE
 
-Methods tested:
-  1. BCS while/case    -- standard BCS0801 pattern with BCS0805 bundling
-  2. getopts           -- POSIX builtin (short options only)
-  3. GNU getopt        -- external command (fork + exec per call)
-  4. Simple while/case -- common tutorial pattern, no bundling
-
 Capability matrix:
   Feature              BCS    getopts  getopt  Simple
   Long options          ✓       ✗        ✓       ✓
@@ -463,35 +515,29 @@ Capability matrix:
 
 Analysis:
 ---------
-The three pure-Bash methods (BCS, getopts, simple) all operate in
-microsecond range -- the difference between them is negligible in
-real-world scripts that parse arguments once at startup.
+The three pure-Bash methods (BCS, getopts, simple) all run in the
+microsecond range; differences between them are negligible for scripts
+that parse arguments once at startup.
 
 GNU getopt forks an external process per invocation, adding ~1-3ms
-overhead. For a single parse at script startup this is invisible,
-but it shows in tight loops and highlights the architectural cost.
+overhead. Invisible for a one-shot parse, measurable in tight loops,
+and a clear architectural cost.
 
 BCS while/case offers the best balance of capability and performance:
 long options, bundling, pure Bash, and explicit control flow.
 
-Note on simple while/case:
-The simple pattern lacks option bundling (-vqn). In practice,
-programmers either omit bundling entirely (frustrating users who
-expect it) or bolt on ad-hoc solutions -- typically fragile regex
-splits or nested loops that introduce subtle bugs with argument-
-taking options. The BCS bundling line (BCS0805) solves this with a
-single, well-tested and fast pattern.
+Notes:
+  - Simple while/case lacks option bundling. In practice this leads
+    either to no bundling at all (frustrating users) or fragile ad-hoc
+    regex/loop workarounds. BCS0805 solves this in one tested line.
+  - BCS does not support -oFILE (attached argument) forms. Arguments
+    must be space-separated: -o FILE. This is a deliberate trade-off --
+    the bundling pattern would disaggregate -oFILE into -o -F -I -L -E.
 
-Note on BCS argument style:
-BCS does not support -oFILE (attached argument) forms. Arguments
-must always be space-separated: -o FILE. This is a deliberate
-simplicity trade-off -- the bundling disaggregation pattern treats
--oFILE as -o -F -I -L -E, which would be incorrect.
-
-For BCS guideline consideration:
-- The while/case pattern is the recommended approach (BCS0801)
-- getopts is acceptable for very simple scripts needing only short options
-- GNU getopt should be avoided
+BCS guidance:
+  - while/case is the recommended pattern (BCS0801)
+  - getopts is acceptable for very simple scripts (short options only)
+  - GNU getopt should be avoided
 
 SUMMARY
   } | tee -a "$RESULTS_FILE"

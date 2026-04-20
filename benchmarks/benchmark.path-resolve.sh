@@ -12,12 +12,17 @@ shopt -s inherit_errexit shift_verbose extglob nullglob
 declare -r VERSION=1.0.0 # 2026-04-11 - Initial version
 declare -r SCRIPT_NAME=${0##*/}
 
+# Test name derived from script filename: 'benchmark.X.sh' → 'X'
+declare -- TESTNAME=${SCRIPT_NAME#benchmark.}
+TESTNAME=${TESTNAME%.sh}
+declare -r TESTNAME
+
 # Configuration
 declare -i RUNS_PER_TEST=10
 
 # Output files
 #shellcheck disable=SC2155
-declare -r RESULTS_FILE=benchmark-results-path-resolve-"$(printf '%(%F_%T)T')".txt
+declare -r RESULTS_FILE=${TESTNAME}_results_$(printf '%(%F_%T)T').txt
 
 # Test results storage
 declare -a times_cd_pwd
@@ -32,8 +37,64 @@ declare -- TARGET_DIR=''
 ## FUNCTIONS
 ##
 
+error() { >&2 printf '%s: ✗ %s\n' "$SCRIPT_NAME" "$*"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+noarg() {
+  if (($# <= 1)) || [[ ${2:0:1} == '-' ]]; then
+    die 22 "Option ${1@Q} requires an argument"
+  fi
+}
+
+show_help() {
+  cat <<HELP
+$SCRIPT_NAME $VERSION - Performance comparison of directory-resolve idioms
+
+Measures the cost of resolving a directory path using four equivalent
+idioms, split into two semantically-matched pairs.
+
+Pair A -- Logical resolve (symlinks preserved):
+  cd && pwd       \$(cd "\${dir:-.}" && pwd)
+  realpath -s     \$(realpath -s -- "\${dir:-.}")
+
+Pair B -- Canonical resolve (symlinks resolved):
+  cd -P && pwd -P \$(cd -P -- "\${dir:-.}" && pwd -P)
+  realpath        \$(realpath -- "\${dir:-.}")
+
+Each comparison is fair: both members of a pair produce the same output
+for the test target. Mixing pairs (e.g. 'cd && pwd' vs 'realpath') would
+compare different semantics, not different implementations.
+
+Target directory: a fresh mktemp -d tree with a symlink component
+(\$TMPDIR/XXX/link/b/c where link -> a), removed on EXIT.
+
+Default run: 6 test series (each pair at 100, 1K, 5K iterations).
+With -i NUM: 2 test series (Pair A + Pair B) at NUM iterations.
+Each test series repeats RUNS_PER_TEST times and reports mean/median/stddev.
+
+Usage: $SCRIPT_NAME [OPTIONS]
+
+Options:
+  -h, --help       Show this help and exit
+  -V, --version    Show version and exit
+  -i NUM           Replace default 100/1K/5K matrix with a single pass at NUM
+  -r NUM           Runs per test series (default: 10)
+
+Output:
+  stdout           Live progress, per-series results, fastest method,
+                   slowdown ratio (e.g. '8.2x slower')
+  file             benchmark-results-path-resolve-YYYY-MM-DD_HH:MM:SS.txt
+                   (system info, raw numbers, semantic notes)
+
+Exit codes:
+  0  success
+  2  unexpected positional argument
+ 22  unknown option or missing option argument
+
+HELP
+}
+
 print_system_info() {
-  cat <<EOF
+  cat <<SYSINFO
 System Information
 ==================
 Date: $(date -Iseconds)
@@ -45,12 +106,13 @@ realpath: $(realpath --version | head -n1)
 Target dir: $TARGET_DIR
 Runs per test: $RUNS_PER_TEST
 
-EOF
+SYSINFO
 }
 
 setup_target() {
-  # Use a real directory with a symlink in its path to exercise resolution.
-  # Fallback to /tmp if the BCS source tree is unavailable.
+  # Build a fresh mktemp -d tree with a symlink component so resolution
+  # actually exercises logical vs canonical semantics (link -> a, then b/c).
+  # cleanup_target() only removes the tree if it lives under /tmp.
   local -- candidate
   candidate=$(mktemp -d)
   mkdir -p "$candidate"/a/b/c
@@ -74,6 +136,7 @@ run_cd_pwd() {
   start=${EPOCHREALTIME/./}
 
   i=-$iterations
+  #bcscheck disable=BCS0505
   while ((1)); do
     ((i++)) || break
     result=$(cd "${target_dir:-.}" && pwd)
@@ -94,6 +157,7 @@ run_realpath() {
   start=${EPOCHREALTIME/./}
 
   i=-$iterations
+  #bcscheck disable=BCS0505
   while ((1)); do
     ((i++)) || break
     result=$(realpath -- "${target_dir:-.}")
@@ -114,6 +178,7 @@ run_cd_pwd_p() {
   start=${EPOCHREALTIME/./}
 
   i=-$iterations
+  #bcscheck disable=BCS0505
   while ((1)); do
     ((i++)) || break
     result=$(cd -P -- "${target_dir:-.}" && pwd -P)
@@ -134,6 +199,7 @@ run_realpath_s() {
   start=${EPOCHREALTIME/./}
 
   i=-$iterations
+  #bcscheck disable=BCS0505
   while ((1)); do
     ((i++)) || break
     result=$(realpath -s -- "${target_dir:-.}")
@@ -147,9 +213,10 @@ run_realpath_s() {
 
 calculate_statistics() {
   local -n values=$1
-  local -i sum=0 count=${#values[@]}
+  local -i sum=0 count=${#values[@]} val=0
   local -a sorted
-  local -- mean median stddev variance sum_sq_diff
+  local -i mean median variance sum_sq_diff
+  local -- stddev
 
   for val in "${values[@]}"; do
     sum+=val
@@ -239,6 +306,8 @@ run_pair() {
     slower_name=$label_a
   fi
 
+  # Guard against degenerate 0 µs measurements (would raise SIGFPE below)
+  ((faster_time)) || faster_time=1
   diff_pct=$(( (slower_time - faster_time) * 100 / faster_time ))
   ratio=$(awk "BEGIN {printf \"%.1f\", $slower_time/$faster_time}")
 
@@ -257,33 +326,6 @@ run_pair() {
   } >> "$RESULTS_FILE"
 }
 
-show_help() {
-  cat <<'HELP'
-benchmark-path-resolve.sh - Performance comparison of directory-resolve idioms
-
-Compares the performance of:
-  - target_dir=$(cd "${target_dir:-.}" && pwd)          (subshell + builtins)
-  - target_dir=$(realpath -- "${target_dir:-.}")        (fork+exec coreutils)
-
-Also compares the symlink-canonical variants for a fair semantic match:
-  - target_dir=$(cd -P -- "${target_dir:-.}" && pwd -P)
-  - target_dir=$(realpath -s -- "${target_dir:-.}")     (logical, no -s symlink expansion)
-
-Usage: benchmark-path-resolve.sh [OPTIONS]
-
-Options:
-  -h, --help       Show this help message
-  -V, --version    Show version information
-  -i NUM           Override iteration count (default: 100/1K/5K matrix)
-  -r NUM           Number of runs per test (default: 10)
-
-Output:
-  benchmark-results-path-resolve-TIMESTAMP.txt
-
-HELP
-  exit "${1:-0}"
-}
-
 ##
 ## EXECUTION
 ##
@@ -293,14 +335,20 @@ main() {
 
   while (($#)); do
     case $1 in
-      -h|--help)    show_help 0 ;;
-      -V|--version) echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
-      -i)           custom_iterations=${2:?'-i requires a number'}; shift ;;
-      -r)           RUNS_PER_TEST=${2:?'-r requires a number'}; shift ;;
-      -[irhV]?*)    set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+      -h|--help)    show_help; exit 0 ;;
+      -V|--version) printf '%s %s\n' "$SCRIPT_NAME" "$VERSION"; exit 0 ;;
+      -i)           noarg "$@"; shift
+                    [[ $1 =~ ^[0-9]+$ ]] \
+                      || die 22 "Option -i requires a positive integer, got ${1@Q}"
+                    custom_iterations=$1 ;;
+      -r)           noarg "$@"; shift
+                    [[ $1 =~ ^[0-9]+$ ]] \
+                      || die 22 "Option -r requires a positive integer, got ${1@Q}"
+                    RUNS_PER_TEST=$1 ;;
       --)           shift; break ;;
-      -*)           >&2 echo "$SCRIPT_NAME: unknown option ${1@Q}"; show_help 2 ;;
-      *)            >&2 echo "$SCRIPT_NAME: unexpected argument ${1@Q}"; show_help 2 ;;
+      -[hVir]?*)    set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+      -*)           die 22 "Unknown option ${1@Q}" ;;
+      *)            die 2 "Unexpected argument ${1@Q}" ;;
     esac
     shift
   done
@@ -310,9 +358,12 @@ main() {
   trap cleanup_target EXIT
 
   { print_system_info
-    echo 'Starting benchmarks...'
+    if ((custom_iterations)); then
+      echo "Starting benchmarks: 2 test series at ${custom_iterations} iterations (${RUNS_PER_TEST} runs each)"
+    else
+      echo "Starting benchmarks: 6 test series (logical + canonical × 100/1K/5K, ${RUNS_PER_TEST} runs each)"
+    fi
     echo
-    true
   } | tee "$RESULTS_FILE"
 
   if ((custom_iterations)); then

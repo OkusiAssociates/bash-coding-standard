@@ -12,12 +12,17 @@ shopt -s inherit_errexit shift_verbose extglob nullglob
 declare -r VERSION=1.1.0 # 2026-04-08 - Source actual test files instead of inline proxies
 declare -r SCRIPT_NAME=${0##*/}
 
+# Test name derived from script filename: 'benchmark.X.sh' → 'X'
+declare -- TESTNAME=${SCRIPT_NAME#benchmark.}
+TESTNAME=${TESTNAME%.sh}
+declare -r TESTNAME
+
 # Configuration
 declare -i RUNS_PER_TEST=10
 
 # Output files
 #shellcheck disable=SC2155
-declare -r RESULTS_FILE=benchmark-results-source-guard-"$(printf '%(%F_%T)T')".txt
+declare -r RESULTS_FILE=${TESTNAME}_results_$(printf '%(%F_%T)T').txt
 
 # Test results storage
 declare -a times_0 times_1 times_2
@@ -30,8 +35,57 @@ declare -- FILE_BASH_SOURCE='' FILE_RETURN_GUARD='' FILE_SUBSHELL=''
 ## FUNCTIONS
 ##
 
+error() { >&2 printf '%s: ✗ %s\n' "$SCRIPT_NAME" "$*"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+noarg() {
+  if (($# <= 1)) || [[ ${2:0:1} == '-' ]]; then
+    die 22 "Option ${1@Q} requires an argument"
+  fi
+}
+
+show_help() {
+  cat <<HELP
+$SCRIPT_NAME $VERSION - Performance comparison of source guard methods
+
+Measures the end-to-end cost of sourcing a library file with a "run-as-
+script vs. sourced" guard. Each iteration opens a temp file, parses it,
+defines a dummy function, evaluates the guard, and returns.
+
+Guard patterns tested:
+  1. BASH_SOURCE check    [[ \${BASH_SOURCE[0]} == "\$0" ]] || return 0
+  2. return 0 guard       return 0 2>/dev/null ||:
+  3. (return 0) subshell  (return 0 2>/dev/null) && return 0
+
+Temporary guard files are written to a fresh mktemp -d directory and
+removed on EXIT via trap.
+
+Default run: 3 test series at 1K, 5K, 10K iterations.
+With -i NUM: 1 test series at NUM iterations.
+Each test series repeats RUNS_PER_TEST times and reports mean/median/stddev.
+
+Usage: $SCRIPT_NAME [OPTIONS]
+
+Options:
+  -h, --help       Show this help and exit
+  -V, --version    Show version and exit
+  -i NUM           Replace default 1K/5K/10K matrix with a single pass at NUM
+  -r NUM           Runs per test series (default: 10)
+
+Output:
+  stdout           Live progress, per-series results, fastest method
+  file             benchmark-results-source-guard-YYYY-MM-DD_HH:MM:SS.txt
+                   (system info, raw numbers, analysis)
+
+Exit codes:
+  0  success
+  2  unexpected positional argument
+ 22  unknown option or missing option argument
+
+HELP
+}
+
 print_system_info() {
-  cat <<EOF
+  cat <<SYSINFO
 System Information
 ==================
 Date: $(date -Iseconds)
@@ -41,7 +95,7 @@ CPU: $(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2 | xargs)
 Kernel: $(uname -r)
 Runs per test: $RUNS_PER_TEST
 
-EOF
+SYSINFO
 }
 
 setup_test_files() {
@@ -97,6 +151,7 @@ run_benchmark_bash_source() {
   start=${EPOCHREALTIME/./}
 
   i=-$iterations
+  #bcscheck disable=BCS0505
   while ((1)); do
     ((i++)) || break
     source "$FILE_BASH_SOURCE"
@@ -117,6 +172,7 @@ run_benchmark_return_guard() {
   start=${EPOCHREALTIME/./}
 
   i=-$iterations
+  #bcscheck disable=BCS0505
   while ((1)); do
     ((i++)) || break
     source "$FILE_RETURN_GUARD"
@@ -137,6 +193,7 @@ run_benchmark_subshell() {
   start=${EPOCHREALTIME/./}
 
   i=-$iterations
+  #bcscheck disable=BCS0505
   while ((1)); do
     ((i++)) || break
     source "$FILE_SUBSHELL"
@@ -151,9 +208,10 @@ run_benchmark_subshell() {
 calculate_statistics() {
   # Calculate mean, median, stddev from array of values (microseconds)
   local -n values=$1
-  local -i sum=0 count=${#values[@]}
+  local -i sum=0 count=${#values[@]} val=0
   local -a sorted
-  local -- mean median stddev variance sum_sq_diff
+  local -i mean median variance sum_sq_diff
+  local -- stddev
 
   # Calculate mean
   for val in "${values[@]}"; do
@@ -258,6 +316,9 @@ run_test_series() {
 
   printf '\n◉ Fastest: %s\n' "${labels[fastest_idx]}"
 
+  # Guard against degenerate 0 µs measurements (would raise SIGFPE below)
+  ((fastest_time)) || fastest_time=1
+
   local -i diff_pct
   for ((m=0; m<method_count; m+=1)); do
     ((m == fastest_idx)) && continue
@@ -283,33 +344,6 @@ run_test_series() {
   } >> "$RESULTS_FILE"
 }
 
-show_help() {
-  cat <<'HELP'
-benchmark-source-guard.sh - Performance comparison of source guard methods
-
-Sources test files containing a dummy function and a guard pattern.
-Each iteration: open file, parse, define function, evaluate guard, return.
-
-Compares the performance of:
-  1. BASH_SOURCE check   -- [[ ${BASH_SOURCE[0]} == "$0" ]]
-  2. return 0 guard      -- return 0 2>/dev/null ||:
-  3. (return 0) subshell -- (return 0 2>/dev/null) && return 0
-
-Usage: benchmark-source-guard.sh [OPTIONS]
-
-Options:
-  -h, --help       Show this help message
-  -V, --version    Show version information
-  -i NUM           Override iteration count (default: 100/1K/5K matrix)
-  -r NUM           Number of runs per test (default: 10)
-
-Output:
-  benchmark-results-source-guard-TIMESTAMP.txt (detailed results with summary)
-
-HELP
-  exit "${1:-0}"
-}
-
 ##
 ## EXECUTION
 ##
@@ -320,14 +354,20 @@ main() {
   # Argument parsing
   while (($#)); do
     case $1 in
-      -h|--help)    show_help 0 ;;
-      -V|--version) echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
-      -i)           custom_iterations=${2:?'-i requires a number'}; shift ;;
-      -r)           RUNS_PER_TEST=${2:?'-r requires a number'}; shift ;;
-      -[irhV]?*)    set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+      -h|--help)    show_help; exit 0 ;;
+      -V|--version) printf '%s %s\n' "$SCRIPT_NAME" "$VERSION"; exit 0 ;;
+      -i)           noarg "$@"; shift
+                    [[ $1 =~ ^[0-9]+$ ]] \
+                      || die 22 "Option -i requires a positive integer, got ${1@Q}"
+                    custom_iterations=$1 ;;
+      -r)           noarg "$@"; shift
+                    [[ $1 =~ ^[0-9]+$ ]] \
+                      || die 22 "Option -r requires a positive integer, got ${1@Q}"
+                    RUNS_PER_TEST=$1 ;;
       --)           shift; break ;;
-      -*)           >&2 echo "$SCRIPT_NAME: unknown option ${1@Q}"; show_help 2 ;;
-      *)            >&2 echo "$SCRIPT_NAME: unexpected argument ${1@Q}"; show_help 2 ;;
+      -[hVir]?*)    set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+      -*)           die 22 "Unknown option ${1@Q}" ;;
+      *)            die 2 "Unexpected argument ${1@Q}" ;;
     esac
     shift
   done
@@ -339,9 +379,12 @@ main() {
 
   # Print header
   { print_system_info
-    echo 'Starting benchmarks...'
+    if ((custom_iterations)); then
+      echo "Starting benchmarks: 1 test series at ${custom_iterations} iterations (${RUNS_PER_TEST} runs each)"
+    else
+      echo "Starting benchmarks: 3 test series (1K/5K/10K iterations, ${RUNS_PER_TEST} runs each)"
+    fi
     echo
-    true
   } | tee "$RESULTS_FILE"
 
   if ((custom_iterations)); then
@@ -351,17 +394,17 @@ main() {
       '(return 0) subshell' run_benchmark_subshell
   else
     # Default test matrix
-    run_test_series 'Source guard (100)' 1000 \
+    run_test_series 'Source guard (1K)' 1000 \
       'BASH_SOURCE check'   run_benchmark_bash_source \
       'return 0 guard'        run_benchmark_return_guard \
       '(return 0) subshell' run_benchmark_subshell
 
-    run_test_series 'Source guard (1K)' 5000 \
+    run_test_series 'Source guard (5K)' 5000 \
       'BASH_SOURCE check'   run_benchmark_bash_source \
       'return 0 guard'        run_benchmark_return_guard \
       '(return 0) subshell' run_benchmark_subshell
 
-    run_test_series 'Source guard (5K)' 10000 \
+    run_test_series 'Source guard (10K)' 10000 \
       'BASH_SOURCE check'   run_benchmark_bash_source \
       'return 0 guard'        run_benchmark_return_guard \
       '(return 0) subshell' run_benchmark_subshell

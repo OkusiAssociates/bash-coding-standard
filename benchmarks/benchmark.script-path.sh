@@ -12,12 +12,17 @@ shopt -s inherit_errexit shift_verbose extglob nullglob
 declare -r VERSION=1.1.0 # 2026-04-11 - Add dir-only cd+pwd variant (no basename append)
 declare -r SCRIPT_NAME=${0##*/}
 
+# Test name derived from script filename: 'benchmark.X.sh' → 'X'
+declare -- TESTNAME=${SCRIPT_NAME#benchmark.}
+TESTNAME=${TESTNAME%.sh}
+declare -r TESTNAME
+
 # Configuration
 declare -i RUNS_PER_TEST=10
 
 # Output files
 #shellcheck disable=SC2155
-declare -r RESULTS_FILE=benchmark-results-script-path-"$(printf '%(%F_%T)T')".txt
+declare -r RESULTS_FILE=${TESTNAME}_results_$(printf '%(%F_%T)T').txt
 
 # Test results storage (one array per method)
 declare -a times_realpath
@@ -35,8 +40,71 @@ declare -- TMPROOT=''
 ## FUNCTIONS
 ##
 
+error() { >&2 printf '%s: ✗ %s\n' "$SCRIPT_NAME" "$*"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+noarg() {
+  if (($# <= 1)) || [[ ${2:0:1} == '-' ]]; then
+    die 22 "Option ${1@Q} requires an argument"
+  fi
+}
+
+show_help() {
+  cat <<HELP
+$SCRIPT_NAME $VERSION - Performance comparison of SCRIPT_PATH resolution idioms
+
+Measures the cost of five different ways a Bash script can resolve its
+own path (SCRIPT_PATH / SCRIPT_DIR / SCRIPT_NAME) from "\$0", evaluated
+under two realistic scenarios.
+
+Methods tested:
+  1. realpath --               external, fully canonical
+  2. readlink -f --             external, fully canonical
+  3. cd -P && pwd -P + base    subshell + builtins; directory canonical,
+                                final component as-typed
+  4. cd -P && pwd -P (dir)     SCRIPT_DIR only (no basename append),
+                                same semantics as method 3 for dir
+  5. readlink loop             pure Bash loop calling readlink(1) per
+                                hop + final cd -P && pwd -P
+
+Scenarios:
+  Direct      \$0 is a real file    (e.g. /opt/app/bin/foo)
+  Symlinked   \$0 is a one-hop link (e.g. /usr/local/bin/foo -> /opt/app/bin/foo)
+
+Targets are built under a fresh mktemp -d tree and removed on EXIT.
+
+Before the timed runs, each method is evaluated once on both targets and
+the output is printed for side-by-side semantic comparison -- so you can
+confirm what each idiom actually returns before trusting the numbers.
+
+Default run: 6 test series (each scenario at 100, 1K, 5K iterations).
+With -i NUM: 2 test series (Direct + Symlinked) at NUM iterations.
+Each test series repeats RUNS_PER_TEST times; speedups are reported
+relative to realpath as the baseline.
+
+Usage: $SCRIPT_NAME [OPTIONS]
+
+Options:
+  -h, --help       Show this help and exit
+  -V, --version    Show version and exit
+  -i NUM           Replace default 100/1K/5K matrix with a single pass at NUM
+  -r NUM           Runs per test series (default: 10)
+
+Output:
+  stdout           Semantic verification, live progress, per-scenario
+                   results, speedup ratios vs realpath baseline
+  file             benchmark-results-script-path-YYYY-MM-DD_HH:MM:SS.txt
+                   (system info, semantic output, raw numbers, analysis)
+
+Exit codes:
+  0  success
+  2  unexpected positional argument
+ 22  unknown option or missing option argument
+
+HELP
+}
+
 print_system_info() {
-  cat <<EOF
+  cat <<SYSINFO
 System Information
 ==================
 Date: $(date -Iseconds)
@@ -50,7 +118,7 @@ Real target: $REAL_SCRIPT
 Link target: $LINK_SCRIPT
 Runs per test: $RUNS_PER_TEST
 
-EOF
+SYSINFO
 }
 
 setup_targets() {
@@ -85,6 +153,7 @@ run_realpath() {
   start=${EPOCHREALTIME/./}
 
   i=-$iterations
+  #bcscheck disable=BCS0505
   while ((1)); do
     ((i++)) || break
     result=$(realpath -- "$arg0")
@@ -105,6 +174,7 @@ run_readlink_f() {
   start=${EPOCHREALTIME/./}
 
   i=-$iterations
+  #bcscheck disable=BCS0505
   while ((1)); do
     ((i++)) || break
     result=$(readlink -f -- "$arg0")
@@ -126,6 +196,7 @@ run_cd_pwd() {
   start=${EPOCHREALTIME/./}
 
   i=-$iterations
+  #bcscheck disable=BCS0505
   while ((1)); do
     ((i++)) || break
     dir=${arg0%/*}
@@ -141,7 +212,7 @@ run_cd_pwd() {
 }
 
 run_cd_pwd_dir() {
-  # Method 5: SCRIPT_DIR ONLY: dir=$(cd -P -- "${0%/*}" && pwd -P)
+  # Method 4: SCRIPT_DIR ONLY: dir=$(cd -P -- "${0%/*}" && pwd -P)
   #          No basename append. Relevant when only SCRIPT_DIR is needed
   #          (the common case -- SCRIPT_NAME is used only in help/messages).
   #          Returns the LINK'S directory when $0 is a symlink.
@@ -153,6 +224,7 @@ run_cd_pwd_dir() {
   start=${EPOCHREALTIME/./}
 
   i=-$iterations
+  #bcscheck disable=BCS0505
   while ((1)); do
     ((i++)) || break
     dir=${arg0%/*}
@@ -166,7 +238,7 @@ run_cd_pwd_dir() {
 }
 
 run_readlink_loop() {
-  # Method 4: manual symlink-follow loop using readlink(1) + cd -P/pwd -P
+  # Method 5: manual symlink-follow loop using readlink(1) + cd -P/pwd -P
   #          (follows final-component symlink chain)
   local -ri iterations=$1
   local -- arg0=$2
@@ -176,6 +248,7 @@ run_readlink_loop() {
   start=${EPOCHREALTIME/./}
 
   i=-$iterations
+  #bcscheck disable=BCS0505
   while ((1)); do
     ((i++)) || break
     path=$arg0
@@ -205,9 +278,10 @@ run_readlink_loop() {
 
 calculate_statistics() {
   local -n values=$1
-  local -i sum=0 count=${#values[@]}
+  local -i sum=0 count=${#values[@]} val=0
   local -a sorted
-  local -- mean median stddev variance sum_sq_diff
+  local -i mean median variance sum_sq_diff
+  local -- stddev
 
   for val in "${values[@]}"; do
     sum+=val
@@ -375,36 +449,6 @@ run_scenario() {
   } >> "$RESULTS_FILE"
 }
 
-show_help() {
-  cat <<'HELP'
-benchmark-script-path.sh - Performance comparison of SCRIPT_PATH resolution idioms
-
-Compares five ways to resolve a script path (e.g. SCRIPT_PATH=...):
-  1. realpath -- "$0"                                       (external, canonical)
-  2. readlink -f -- "$0"                                    (external, canonical)
-  3. cd -P "${0%/*}" && pwd -P  + basename append           (no final symlink follow)
-  4. cd -P "${0%/*}" && pwd -P                              (SCRIPT_DIR only, no basename)
-  5. pure loop: readlink(1) per hop + cd -P/pwd -P          (follows final symlink)
-
-Two scenarios are tested:
-  - Direct:     $0 is the real file (no install-style symlink)
-  - Symlinked:  $0 is a symlink to the real file (one hop)
-
-Usage: benchmark-script-path.sh [OPTIONS]
-
-Options:
-  -h, --help       Show this help message
-  -V, --version    Show version information
-  -i NUM           Override iteration count (default: 100/1K/5K matrix)
-  -r NUM           Number of runs per test (default: 10)
-
-Output:
-  benchmark-results-script-path-TIMESTAMP.txt
-
-HELP
-  exit "${1:-0}"
-}
-
 ##
 ## EXECUTION
 ##
@@ -414,14 +458,20 @@ main() {
 
   while (($#)); do
     case $1 in
-      -h|--help)    show_help 0 ;;
-      -V|--version) echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
-      -i)           custom_iterations=${2:?'-i requires a number'}; shift ;;
-      -r)           RUNS_PER_TEST=${2:?'-r requires a number'}; shift ;;
-      -[irhV]?*)    set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+      -h|--help)    show_help; exit 0 ;;
+      -V|--version) printf '%s %s\n' "$SCRIPT_NAME" "$VERSION"; exit 0 ;;
+      -i)           noarg "$@"; shift
+                    [[ $1 =~ ^[0-9]+$ ]] \
+                      || die 22 "Option -i requires a positive integer, got ${1@Q}"
+                    custom_iterations=$1 ;;
+      -r)           noarg "$@"; shift
+                    [[ $1 =~ ^[0-9]+$ ]] \
+                      || die 22 "Option -r requires a positive integer, got ${1@Q}"
+                    RUNS_PER_TEST=$1 ;;
       --)           shift; break ;;
-      -*)           >&2 echo "$SCRIPT_NAME: unknown option ${1@Q}"; show_help 2 ;;
-      *)            >&2 echo "$SCRIPT_NAME: unexpected argument ${1@Q}"; show_help 2 ;;
+      -[hVir]?*)    set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+      -*)           die 22 "Unknown option ${1@Q}" ;;
+      *)            die 2 "Unexpected argument ${1@Q}" ;;
     esac
     shift
   done
@@ -432,9 +482,12 @@ main() {
 
   { print_system_info
     verify_methods
-    echo 'Starting benchmarks...'
+    if ((custom_iterations)); then
+      echo "Starting benchmarks: 2 scenarios at ${custom_iterations} iterations (${RUNS_PER_TEST} runs each)"
+    else
+      echo "Starting benchmarks: 6 test series (direct + symlinked × 100/1K/5K, ${RUNS_PER_TEST} runs each)"
+    fi
     echo
-    true
   } | tee "$RESULTS_FILE"
 
   if ((custom_iterations)); then

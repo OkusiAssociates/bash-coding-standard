@@ -12,12 +12,17 @@ shopt -s inherit_errexit shift_verbose extglob nullglob
 declare -r VERSION=1.0.0 # 2026-04-06 - Initial version
 declare -r SCRIPT_NAME=${0##*/}
 
+# Test name derived from script filename: 'benchmark.X.sh' → 'X'
+declare -- TESTNAME=${SCRIPT_NAME#benchmark.}
+TESTNAME=${TESTNAME%.sh}
+declare -r TESTNAME
+
 # Configuration
 declare -i RUNS_PER_TEST=10
 
 # Output files
 #shellcheck disable=SC2155
-declare -r RESULTS_FILE=benchmark-results-date-"$(printf '%(%F_%T)T')".txt
+declare -r RESULTS_FILE=${TESTNAME}_results_$(printf '%(%F_%T)T').txt
 
 # Test results storage
 declare -a times_printf_builtin
@@ -27,8 +32,67 @@ declare -a times_date_external
 ## FUNCTIONS
 ##
 
+error() { >&2 printf '%s: ✗ %s\n' "$SCRIPT_NAME" "$*"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+noarg() {
+  if (($# <= 1)) || [[ ${2:0:1} == '-' ]]; then
+    die 22 "Option ${1@Q} requires an argument"
+  fi
+}
+
+show_help() {
+  cat <<HELP
+$SCRIPT_NAME $VERSION - Performance comparison of date formatting methods
+
+Measures the cost of formatting the current date using Bash's printf
+builtin versus the external date(1) command, in two usage patterns.
+
+Method pairs:
+  Pair A -- discard output (written to /dev/null)
+    printf '%(%F)T' "\$EPOCHSECONDS"
+    date -d "@\$EPOCHSECONDS" +'%F'
+
+  Pair B -- capture into a variable
+    printf -v var '%(%F)T'
+    var=\$(date +'%F')
+
+Pair A isolates the formatting cost. Pair B adds the subshell overhead
+that date(1) requires to get its output into a variable.
+
+Default run: 6 test series
+  Pair A at 100, 1000, 5000 iterations
+  Pair B at 100, 1000, 5000 iterations
+
+With -i NUM: 2 test series (Pair A + Pair B) at NUM iterations each.
+
+Iteration counts are deliberately small -- date(1) forks a process
+per call, so even 5K iterations costs several seconds on commodity
+hardware. Each test series repeats RUNS_PER_TEST times.
+
+Usage: $SCRIPT_NAME [OPTIONS]
+
+Options:
+  -h, --help       Show this help and exit
+  -V, --version    Show version and exit
+  -i NUM           Replace default 100/1K/5K matrix with a single pass at NUM
+  -r NUM           Runs per test series (default: 10)
+
+Output:
+  stdout           Live progress, per-series results, fastest method,
+                   slowdown ratio (e.g. '12.4x slower')
+  file             benchmark-results-date-YYYY-MM-DD_HH:MM:SS.txt
+                   (system info, raw numbers, analysis notes)
+
+Exit codes:
+  0  success
+  2  unexpected positional argument
+ 22  unknown option or missing option argument
+
+HELP
+}
+
 print_system_info() {
-  cat <<EOF
+  cat <<SYSINFO
 System Information
 ==================
 Date: $(date -Iseconds)
@@ -38,17 +102,18 @@ CPU: $(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2 | xargs)
 Kernel: $(uname -r)
 Runs per test: $RUNS_PER_TEST
 
-EOF
+SYSINFO
 }
 
 run_benchmark_printf() {
-  # Benchmark: printf '%(%F)T\n' "$EPOCHSECONDS" (builtin)
+  # Benchmark: printf '%(%F)T' "$EPOCHSECONDS" (builtin)
   local -ri iterations=$1
   local -i i start end elapsed
 
   start=${EPOCHREALTIME/./}
 
   i=-$iterations
+  #bcscheck disable=BCS0505
   while ((1)); do
     ((i++)) || break
     printf '%(%F)T' "$EPOCHSECONDS" >/dev/null
@@ -69,6 +134,7 @@ run_benchmark_date() {
   start=${EPOCHREALTIME/./}
 
   i=-$iterations
+  #bcscheck disable=BCS0505
   while ((1)); do
     ((i++)) || break
     date -d "@$EPOCHSECONDS" +'%F' >/dev/null
@@ -89,6 +155,7 @@ run_benchmark_printf_var() {
   start=${EPOCHREALTIME/./}
 
   i=-$iterations
+  #bcscheck disable=BCS0505
   while ((1)); do
     ((i++)) || break
     printf -v var '%(%F)T'
@@ -109,6 +176,7 @@ run_benchmark_date_var() {
   start=${EPOCHREALTIME/./}
 
   i=-$iterations
+  #bcscheck disable=BCS0505
   while ((1)); do
     ((i++)) || break
     var=$(date +'%F')
@@ -123,9 +191,10 @@ run_benchmark_date_var() {
 calculate_statistics() {
   # Calculate mean, median, stddev from array of values (microseconds)
   local -n values=$1
-  local -i sum=0 count=${#values[@]}
+  local -i sum=0 count=${#values[@]} val=0
   local -a sorted
-  local -- mean median stddev variance sum_sq_diff
+  local -i mean median variance sum_sq_diff
+  local -- stddev
 
   # Calculate mean
   for val in "${values[@]}"; do
@@ -224,6 +293,8 @@ run_test_series() {
     slower_name='printf %()T'
   fi
 
+  # Guard against degenerate 0 µs measurements (would raise SIGFPE below)
+  ((faster_time)) || faster_time=1
   diff_pct=$(( (slower_time - faster_time) * 100 / faster_time ))
   ratio=$(awk "BEGIN {printf \"%.1f\", $slower_time/$faster_time}")
 
@@ -243,31 +314,6 @@ run_test_series() {
   } >> "$RESULTS_FILE"
 }
 
-show_help() {
-  cat <<'HELP'
-benchmark-date.sh - Performance comparison of date formatting methods
-
-Compares the performance of:
-  - printf '%(%F)T' "$EPOCHSECONDS"   (Bash builtin)
-  - date -d "@$EPOCHSECONDS" +'%F'    (external command)
-  - printf -v var '%(%F)T'            (builtin, no subshell)
-  - var=$(date +'%F')                 (external + subshell)
-
-Usage: benchmark-date.sh [OPTIONS]
-
-Options:
-  -h, --help       Show this help message
-  -V, --version    Show version information
-  -i NUM           Override iteration count (default: 100/1K/5K matrix)
-  -r NUM           Number of runs per test (default: 10)
-
-Output:
-  benchmark-results-date-TIMESTAMP.txt (detailed results with summary)
-
-HELP
-  exit "${1:-0}"
-}
-
 ##
 ## EXECUTION
 ##
@@ -278,14 +324,20 @@ main() {
   # Argument parsing
   while (($#)); do
     case $1 in
-      -h|--help)    show_help 0 ;;
-      -V|--version) echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
-      -i)           custom_iterations=${2:?'-i requires a number'}; shift ;;
-      -r)           RUNS_PER_TEST=${2:?'-r requires a number'}; shift ;;
-      -[irhV]?*)    set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+      -h|--help)    show_help; exit 0 ;;
+      -V|--version) printf '%s %s\n' "$SCRIPT_NAME" "$VERSION"; exit 0 ;;
+      -i)           noarg "$@"; shift
+                    [[ $1 =~ ^[0-9]+$ ]] \
+                      || die 22 "Option -i requires a positive integer, got ${1@Q}"
+                    custom_iterations=$1 ;;
+      -r)           noarg "$@"; shift
+                    [[ $1 =~ ^[0-9]+$ ]] \
+                      || die 22 "Option -r requires a positive integer, got ${1@Q}"
+                    RUNS_PER_TEST=$1 ;;
       --)           shift; break ;;
-      -*)           >&2 echo "$SCRIPT_NAME: unknown option ${1@Q}"; show_help 2 ;;
-      *)            >&2 echo "$SCRIPT_NAME: unexpected argument ${1@Q}"; show_help 2 ;;
+      -[hVir]?*)    set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+      -*)           die 22 "Unknown option ${1@Q}" ;;
+      *)            die 2 "Unexpected argument ${1@Q}" ;;
     esac
     shift
   done
@@ -293,9 +345,12 @@ main() {
 
   # Print header
   { print_system_info
-    echo 'Starting benchmarks...'
+    if ((custom_iterations)); then
+      echo "Starting benchmarks: 2 test series at ${custom_iterations} iterations (${RUNS_PER_TEST} runs each)"
+    else
+      echo "Starting benchmarks: 6 test series (format + var-assign × 100/1K/5K, ${RUNS_PER_TEST} runs each)"
+    fi
     echo
-    true
   } | tee "$RESULTS_FILE"
 
   if ((custom_iterations)); then

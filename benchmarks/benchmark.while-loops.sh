@@ -12,12 +12,17 @@ shopt -s inherit_errexit shift_verbose extglob nullglob
 declare -r VERSION=1.1.0 # 2025-10-20 - Added while true comparison
 declare -r SCRIPT_NAME=${0##*/}
 
+# Test name derived from script filename: 'benchmark.X.sh' → 'X'
+declare -- TESTNAME=${SCRIPT_NAME#benchmark.}
+TESTNAME=${TESTNAME%.sh}
+declare -r TESTNAME
+
 # Configuration
 declare -i RUNS_PER_TEST=30
 
 # Output files
 #shellcheck disable=SC2155
-declare -r RESULTS_FILE=benchmark-results-while-"$(printf '%(%F_%T)T')".txt
+declare -r RESULTS_FILE=${TESTNAME}_results_$(printf '%(%F_%T)T').txt
 
 # Test results storage
 declare -a times_while_double_paren
@@ -28,8 +33,61 @@ declare -a times_while_true
 ## FUNCTIONS
 ##
 
+error() { >&2 printf '%s: ✗ %s\n' "$SCRIPT_NAME" "$*"; }
+die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+noarg() {
+  if (($# <= 1)) || [[ ${2:0:1} == '-' ]]; then
+    die 22 "Option ${1@Q} requires an argument"
+  fi
+}
+
+show_help() {
+  cat <<HELP
+$SCRIPT_NAME $VERSION - Performance comparison of while loop constructs
+
+Measures pure loop overhead (and loop + arithmetic work) for three
+equivalent infinite-loop constructs.
+
+Constructs tested:
+  while ((1)); do ... done   arithmetic-eval infinite loop
+  while :;    do ... done    null-builtin infinite loop
+  while true; do ... done    external/builtin-alias infinite loop
+
+Each construct is exercised in two loop bodies:
+  empty      ((i++)) || break          (pure loop overhead)
+  with-work  ((i++)) || break; sum+=i  (loop + arithmetic assignment)
+
+Default run: 4 test series
+  Empty loop at 100K, 1M, 2M iterations
+  Loop with arithmetic work at 1M iterations
+
+With -i NUM: 2 test series (empty + with-work) at NUM iterations each.
+
+Each test series repeats RUNS_PER_TEST times and reports mean/median/stddev.
+
+Usage: $SCRIPT_NAME [OPTIONS]
+
+Options:
+  -h, --help       Show this help and exit
+  -V, --version    Show version and exit
+  -i NUM           Replace default matrix with empty + with-work at NUM
+  -r NUM           Runs per test series (default: 30)
+
+Output:
+  stdout           Live progress, per-series results, fastest construct
+  file             benchmark-results-while-YYYY-MM-DD_HH:MM:SS.txt
+                   (system info, raw numbers, summary)
+
+Exit codes:
+  0  success
+  2  unexpected positional argument
+ 22  unknown option or missing option argument
+
+HELP
+}
+
 print_system_info() {
-  cat <<EOF
+  cat <<SYSINFO
 System Information
 ==================
 Date: $(date -Iseconds)
@@ -39,7 +97,7 @@ CPU: $(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2 | xargs)
 Kernel: $(uname -r)
 Runs per test: $RUNS_PER_TEST
 
-EOF
+SYSINFO
 }
 
 run_benchmark_double_paren() {
@@ -51,6 +109,7 @@ run_benchmark_double_paren() {
   start=${EPOCHREALTIME/./}
 
   i=-$iterations
+  #bcscheck disable=BCS0505
   while ((1)); do
     ((i++)) || break
   done
@@ -70,6 +129,7 @@ run_benchmark_colon() {
   start=${EPOCHREALTIME/./}
 
   i=-$iterations
+  #bcscheck disable=BCS0505
   while :; do
     ((i++)) || break
   done
@@ -89,6 +149,7 @@ run_benchmark_true() {
   start=${EPOCHREALTIME/./}
 
   i=-$iterations
+  #bcscheck disable=BCS0505
   while true; do
     ((i++)) || break
   done
@@ -109,6 +170,7 @@ run_benchmark_double_paren_with_work() {
 
   i=-$iterations
   sum=0
+  #bcscheck disable=BCS0505
   while ((1)); do
     ((i++)) || break
     sum+=i
@@ -130,6 +192,7 @@ run_benchmark_colon_with_work() {
 
   i=-$iterations
   sum=0
+  #bcscheck disable=BCS0505
   while :; do
     ((i++)) || break
     sum+=i
@@ -151,6 +214,7 @@ run_benchmark_true_with_work() {
 
   i=-$iterations
   sum=0
+  #bcscheck disable=BCS0505
   while true; do
     ((i++)) || break
     sum+=i
@@ -165,9 +229,10 @@ run_benchmark_true_with_work() {
 calculate_statistics() {
   # Calculate mean, median, stddev from array of values (microseconds)
   local -n values=$1
-  local -i sum=0 count=${#values[@]}
+  local -i sum=0 count=${#values[@]} val=0
   local -a sorted
-  local -- mean median stddev variance sum_sq_diff
+  local -i mean median variance sum_sq_diff
+  local -- stddev
 
   # Calculate mean
   for val in "${values[@]}"; do
@@ -222,16 +287,17 @@ run_test_series() {
   times_while_true=()
 
   # Run benchmarks
+  #bcscheck disable=BCS0503,BCS0505
   for ((run=1; run<=RUNS_PER_TEST; run++)); do
-    printf "\rRun %2d/%d: Testing while ((1))..." "$run" "$RUNS_PER_TEST"
+    printf '\rRun %2d/%d: Testing while ((1))...' "$run" "$RUNS_PER_TEST"
     result=$($func_double_paren "$iterations")
     times_while_double_paren+=("$result")
 
-    printf "\rRun %2d/%d: Testing while :...   " "$run" "$RUNS_PER_TEST"
+    printf '\rRun %2d/%d: Testing while :...   ' "$run" "$RUNS_PER_TEST"
     result=$($func_colon "$iterations")
     times_while_colon+=("$result")
 
-    printf "\rRun %2d/%d: Testing while true..." "$run" "$RUNS_PER_TEST"
+    printf '\rRun %2d/%d: Testing while true...' "$run" "$RUNS_PER_TEST"
     result=$($func_true "$iterations")
     times_while_true+=("$result")
   done
@@ -252,11 +318,11 @@ run_test_series() {
     "$(format_time "${stats_dp[0]}")" \
     "$(format_time "${stats_dp[1]}")" \
     "$(format_time "${stats_dp[2]}")"
-  printf "%-20s %15s %15s %15s\n" "while :" \
+  printf '%-20s %15s %15s %15s\n' 'while :' \
     "$(format_time "${stats_colon[0]}")" \
     "$(format_time "${stats_colon[1]}")" \
     "$(format_time "${stats_colon[2]}")"
-  printf "%-20s %15s %15s %15s\n" "while true" \
+  printf '%-20s %15s %15s %15s\n' 'while true' \
     "$(format_time "${stats_true[0]}")" \
     "$(format_time "${stats_true[1]}")" \
     "$(format_time "${stats_true[2]}")"
@@ -274,6 +340,9 @@ run_test_series() {
     fastest_time=${stats_true[0]}
     fastest_name='while true'
   fi
+
+  # Guard against degenerate 0 µs measurements (would raise SIGFPE below)
+  ((fastest_time)) || fastest_time=1
 
   # Calculate percentage differences from fastest
   local -i diff_dp diff_colon diff_true
@@ -306,30 +375,6 @@ run_test_series() {
   } >> "$RESULTS_FILE"
 }
 
-show_help() {
-  cat <<'HELP'
-benchmark-while-loops.sh - Performance comparison of while loop constructs
-
-Compares the performance of:
-  - while ((1)); do ... done
-  - while :; do ... done
-  - while true; do ... done
-
-Usage: benchmark-while-loops.sh [OPTIONS]
-
-Options:
-  -h, --help       Show this help message
-  -V, --version    Show version information
-  -i NUM           Override iteration count (default: 100K/1M/5M matrix)
-  -r NUM           Number of runs per test (default: 30)
-
-Output:
-  benchmark-results-while-TIMESTAMP.txt (detailed results with summary)
-
-HELP
-  exit "${1:-0}"
-}
-
 ##
 ## EXECUTION
 ##
@@ -340,23 +385,33 @@ main() {
   # Argument parsing
   while (($#)); do
     case $1 in
-      -h|--help)    show_help 0 ;;
-      -V|--version) echo "$SCRIPT_NAME $VERSION"; exit 0 ;;
-      -i)           custom_iterations=${2:?'-i requires a number'}; shift ;;
-      -r)           RUNS_PER_TEST=${2:?'-r requires a number'}; shift ;;
-      -[irhV]?*)    set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+      -h|--help)    show_help; exit 0 ;;
+      -V|--version) printf '%s %s\n' "$SCRIPT_NAME" "$VERSION"; exit 0 ;;
+      -i)           noarg "$@"; shift
+                    [[ $1 =~ ^[0-9]+$ ]] \
+                      || die 22 "Option -i requires a positive integer, got ${1@Q}"
+                    custom_iterations=$1 ;;
+      -r)           noarg "$@"; shift
+                    [[ $1 =~ ^[0-9]+$ ]] \
+                      || die 22 "Option -r requires a positive integer, got ${1@Q}"
+                    RUNS_PER_TEST=$1 ;;
       --)           shift; break ;;
-      -*)           echo "$SCRIPT_NAME: unknown option: $1" >&2; show_help 2 ;;
-      *)            echo "$SCRIPT_NAME: unexpected argument: $1" >&2; show_help 2 ;;
+      -[hVir]?*)    set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+      -*)           die 22 "Unknown option ${1@Q}" ;;
+      *)            die 2 "Unexpected argument ${1@Q}" ;;
     esac
     shift
   done
+  readonly RUNS_PER_TEST
 
   # Print header
   { print_system_info
-    echo 'Starting benchmarks...'
+    if ((custom_iterations)); then
+      echo "Starting benchmarks: 2 test series at ${custom_iterations} iterations (${RUNS_PER_TEST} runs each)"
+    else
+      echo "Starting benchmarks: 4 test series (empty @ 100K/1M/2M + with-work @ 1M, ${RUNS_PER_TEST} runs each)"
+    fi
     echo
-    true
   } | tee "$RESULTS_FILE"
 
   if ((custom_iterations)); then
@@ -412,14 +467,22 @@ Benchmark Complete
 
 Detailed results saved to: $RESULTS_FILE
 
-Analysis and Recommendation:
-----------------------------
-See results above for performance comparison.
+Construct notes:
+  while ((1))  Pure Bash arithmetic; no command lookup.
+  while :      Null builtin; POSIX-portable, traditional idiom.
+  while true   'true' is a Bash builtin but goes through command lookup.
 
-For BCS guideline consideration:
-- If while ((1)) is consistently faster: Recommend for performance-critical code
-- If while : is faster or equivalent: Recommend for better POSIX compatibility
-- If difference is < 5%: Recommend while : for readability and tradition
+Analysis:
+---------
+All three are pure-Bash constructs. On modern Bash the difference per
+iteration is in nanoseconds -- visible only at million-iteration scale.
+See the per-series results above for the actual numbers on this host.
+
+BCS guidance:
+  - Any of the three is acceptable for clarity.
+  - Prefer while ((1)) when the loop contains arithmetic already.
+  - Prefer while : for the shortest, most traditional idiom.
+  - while true is acceptable but offers no advantage over while :.
 
 SUMMARY
   } | tee -a "$RESULTS_FILE"
