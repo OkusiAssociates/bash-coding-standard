@@ -1,0 +1,117 @@
+System Information
+==================
+Date: 2026-04-20T08:52:28+08:00
+Hostname: okusi
+Bash Version: 5.2.21(1)-release
+CPU: 13th Gen Intel(R) Core(TM) i9-13900HX
+Kernel: 6.17.0-20-generic
+realpath: realpath (GNU coreutils) 9.4
+readlink: readlink (GNU coreutils) 9.4
+Real target: /tmp/tmp.mutO0BfawY/bin/fake.bash
+Link target: /tmp/tmp.mutO0BfawY/usr/local/bin/fake.bash
+Runs per test: 10
+
+Semantic verification
+---------------------
+Input: /tmp/tmp.mutO0BfawY/bin/fake.bash
+  realpath --            -> /tmp/tmp.mutO0BfawY/bin/fake.bash
+  readlink -f --         -> /tmp/tmp.mutO0BfawY/bin/fake.bash
+  cd -P && pwd -P        -> /tmp/tmp.mutO0BfawY/bin/fake.bash
+  cd -P && pwd -P (dir)  -> /tmp/tmp.mutO0BfawY/bin  (SCRIPT_DIR only)
+  readlink loop          -> /tmp/tmp.mutO0BfawY/bin/fake.bash
+
+Input: /tmp/tmp.mutO0BfawY/usr/local/bin/fake.bash
+  realpath --            -> /tmp/tmp.mutO0BfawY/bin/fake.bash
+  readlink -f --         -> /tmp/tmp.mutO0BfawY/bin/fake.bash
+  cd -P && pwd -P        -> /tmp/tmp.mutO0BfawY/usr/local/bin/fake.bash
+  cd -P && pwd -P (dir)  -> /tmp/tmp.mutO0BfawY/usr/local/bin  (SCRIPT_DIR only)
+  readlink loop          -> /tmp/tmp.mutO0BfawY/bin/fake.bash
+
+Starting benchmarks: 6 test series (direct + symlinked × 100/1K/5K, 10 runs each)
+
+Scenario: Direct (100) (iterations: 100)
+Input: /tmp/tmp.mutO0BfawY/bin/fake.bash
+realpath --            Mean: 0.098s, Median: 0.097s, StdDev: 0.002s
+readlink -f --         Mean: 0.099s, Median: 0.099s, StdDev: 0.001s
+cd -P && pwd -P        Mean: 0.050s, Median: 0.051s, StdDev: 0.003s
+cd -P && pwd -P (dir)  Mean: 0.047s, Median: 0.046s, StdDev: 0.003s
+readlink loop          Mean: 0.050s, Median: 0.049s, StdDev: 0.001s
+Speedup vs realpath: readlink -f 0.99x, cd+pwd 1.95x, cd+pwd dir 2.07x, readlink loop 1.97x
+
+Scenario: Direct (1K) (iterations: 1000)
+Input: /tmp/tmp.mutO0BfawY/bin/fake.bash
+realpath --            Mean: 0.992s, Median: 0.997s, StdDev: 0.014s
+readlink -f --         Mean: 0.984s, Median: 0.986s, StdDev: 0.013s
+cd -P && pwd -P        Mean: 0.490s, Median: 0.493s, StdDev: 0.020s
+cd -P && pwd -P (dir)  Mean: 0.471s, Median: 0.474s, StdDev: 0.016s
+readlink loop          Mean: 0.489s, Median: 0.484s, StdDev: 0.014s
+Speedup vs realpath: readlink -f 1.01x, cd+pwd 2.02x, cd+pwd dir 2.11x, readlink loop 2.03x
+
+Scenario: Direct (5K) (iterations: 5000)
+Input: /tmp/tmp.mutO0BfawY/bin/fake.bash
+realpath --            Mean: 5.008s, Median: 5.018s, StdDev: 0.021s
+readlink -f --         Mean: 5.020s, Median: 5.023s, StdDev: 0.019s
+cd -P && pwd -P        Mean: 2.382s, Median: 2.399s, StdDev: 0.066s
+cd -P && pwd -P (dir)  Mean: 2.374s, Median: 2.374s, StdDev: 0.042s
+readlink loop          Mean: 2.460s, Median: 2.484s, StdDev: 0.062s
+Speedup vs realpath: readlink -f 1.00x, cd+pwd 2.10x, cd+pwd dir 2.11x, readlink loop 2.04x
+
+Scenario: Symlinked (100) (iterations: 100)
+Input: /tmp/tmp.mutO0BfawY/usr/local/bin/fake.bash
+realpath --            Mean: 0.100s, Median: 0.100s, StdDev: 0.002s
+readlink -f --         Mean: 0.101s, Median: 0.101s, StdDev: 0.002s
+cd -P && pwd -P        Mean: 0.051s, Median: 0.051s, StdDev: 0.001s
+cd -P && pwd -P (dir)  Mean: 0.048s, Median: 0.049s, StdDev: 0.003s
+readlink loop          Mean: 0.158s, Median: 0.159s, StdDev: 0.005s
+Speedup vs realpath: readlink -f 0.98x, cd+pwd 1.96x, cd+pwd dir 2.07x, readlink loop 0.63x
+
+Scenario: Symlinked (1K) (iterations: 1000)
+Input: /tmp/tmp.mutO0BfawY/usr/local/bin/fake.bash
+realpath --            Mean: 1.007s, Median: 1.011s, StdDev: 0.012s
+readlink -f --         Mean: 1.013s, Median: 1.014s, StdDev: 0.007s
+cd -P && pwd -P        Mean: 0.494s, Median: 0.495s, StdDev: 0.019s
+cd -P && pwd -P (dir)  Mean: 0.483s, Median: 0.482s, StdDev: 0.023s
+readlink loop          Mean: 1.614s, Median: 1.617s, StdDev: 0.013s
+Speedup vs realpath: readlink -f 0.99x, cd+pwd 2.04x, cd+pwd dir 2.08x, readlink loop 0.62x
+
+Scenario: Symlinked (5K) (iterations: 5000)
+Input: /tmp/tmp.mutO0BfawY/usr/local/bin/fake.bash
+realpath --            Mean: 5.073s, Median: 5.072s, StdDev: 0.019s
+readlink -f --         Mean: 5.044s, Median: 5.048s, StdDev: 0.022s
+cd -P && pwd -P        Mean: 2.563s, Median: 2.560s, StdDev: 0.036s
+cd -P && pwd -P (dir)  Mean: 2.454s, Median: 2.442s, StdDev: 0.038s
+readlink loop          Mean: 7.978s, Median: 7.980s, StdDev: 0.022s
+Speedup vs realpath: readlink -f 1.01x, cd+pwd 1.98x, cd+pwd dir 2.07x, readlink loop 0.64x
+
+Benchmark Complete
+==================
+
+Detailed results saved to: script-path_results_2026-04-20_08:52:28.txt
+
+Analysis:
+---------
+Semantic recap:
+  realpath / readlink -f  -> fully canonical (directory AND final-component
+                             symlinks resolved). One fork + one execve.
+  cd -P && pwd -P + base  -> directory canonical only; final component
+                             stays as-typed. One fork, zero execve.
+  readlink loop           -> manual chain-follow using readlink(1) per hop,
+                             plus final cd -P && pwd -P. One execve per
+                             symlink hop + one fork for cd+pwd.
+
+When to pick which:
+- Script is never installed behind a symlink: use 'cd -P && pwd -P'. It is
+  equivalent to realpath for that case and roughly 2x faster per call.
+- Script MAY be installed behind a wrapper symlink (e.g. /usr/local/bin/foo
+  -> /opt/foo/foo.bash): 'cd -P && pwd -P' will return the *link* path, not
+  the real file. SCRIPT_DIR-based data discovery will then look in the
+  wrong place. Use realpath / readlink -f, OR the readlink loop.
+- SCRIPT_PATH is resolved exactly ONCE at startup. The absolute time saved
+  by the faster idiom is sub-millisecond per script invocation. This
+  benchmark is about understanding the trade, not about micro-optimising
+  a one-shot assignment.
+
+Caching:
+Warm-cache conditions throughout (page cache, dentry cache, Bash path
+hash). Cold first-invocation gaps would be larger.
+

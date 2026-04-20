@@ -10,9 +10,27 @@ Mechanisms for a Bash script to detect whether it is being sourced or executed d
 | Works in functions      | ✓ | ✗ | ✗ |
 | Dual-purpose support    | ✓ | ✗ | ✗ |
 | POSIX sh compatible     | ✗ | ✓ | ✓ |
-| Performance (sourced)   | ~13% slower | Fastest | ~56x slower |
+| Performance (sourced)   | **Fastest** | ~2% slower | **~27× slower** |
 
-Percentages from benchmark sourcing files with a dummy function + guard at 10K iterations (i9-13900HX, Bash 5.2.21). The return 0 guard is a single builtin that succeeds immediately when sourced. The BASH_SOURCE check requires variable expansion plus string comparison -- more work per call, though still sub-microsecond. The subshell forks per call.
+## Benchmark Results
+
+Measured on Intel i9-13900HX, Bash 5.2.21, 10 runs per series, mean
+times in seconds. Each iteration sources a real file containing a
+dummy function definition plus the guard. See
+`source-guard_results_*.txt` for raw data.
+
+| Test          | BASH_SOURCE check | return 0 guard | (return 0) subshell |
+|---------------|------------------:|---------------:|--------------------:|
+| 1K iter       | **0.011**         | 0.011          | 0.282 (~26×)        |
+| 5K iter       | **0.052**         | 0.054          | 1.397 (~27×)        |
+| 10K iter      | **0.102**         | 0.104          | 2.768 (~27×)        |
+
+**Reading the numbers:** `BASH_SOURCE` check and `return 0` guard are
+indistinguishable in practice — both run in well under a microsecond
+per call. The `BASH_SOURCE` test edges ahead by ~2% in the 5K and 10K
+runs; the difference is below most users' noise floor. The subshell
+guard's ~27× penalty comes entirely from the per-call `fork()` — the
+work done inside is identical.
 
 ## Common BCS Pattern: BASH_SOURCE Check (BCS0106)
 
@@ -81,7 +99,9 @@ fi
 **How it works:** `(return 0 2>/dev/null)` runs `return` inside a subshell. In a sourced context, `return` succeeds (exit status 0). When executed directly, `return` fails (exit status 1). The subshell isolates the side effect -- a successful return exits only the subshell, not the caller.
 
 **Characteristics:**
-- Forks a child process on every call (~56x slower than the return 0 guard in benchmarks sourcing real files at 10K iterations)
+- Forks a child process on every call (**~27× slower** than the
+  BASH_SOURCE check or return 0 guard in benchmarks sourcing real
+  files; ratio is stable across 1K/5K/10K iterations)
 - Does not actually return -- only detects, so a separate `return` or `exit` is needed afterward
 - Two-step: detect then act, versus the single-step BASH_SOURCE guard or single-step return 0 guard
 - Works in POSIX sh where `BASH_SOURCE` is not available

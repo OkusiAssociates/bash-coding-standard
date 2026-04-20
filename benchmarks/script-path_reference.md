@@ -14,11 +14,17 @@ declare -r SCRIPT_NAME=${SCRIPT_PATH##*/}
 |----------------------------|:-:|:-:|:-:|:-:|:-:|:-:|
 | `realpath -- "$0"`         | ✓ | ✓ | ✓ | ✓ | ✓ | 1.00x |
 | `readlink -f -- "$0"`      | ✓ | ✓ | ✓ | ✓ | ✓ | ~1.00x |
-| `cd -P && pwd -P` + base   | ✓ | ✗ | ✗ | ✓ | ✗ (link path) | ~1.93x |
-| `cd -P && pwd -P` (dir)    | ✓ | ✗ | ✗ | ✓ | ✗ (link dir)  | ~2.00x |
-| readlink loop              | ✓ | ✓ per hop | ✓ | ✓ | ✓ | 0.65x (slower) |
+| `cd -P && pwd -P` + base   | ✓ | ✗ | ✗ | ✓ | ✗ (link path) | ~2.00x |
+| `cd -P && pwd -P` (dir)    | ✓ | ✗ | ✗ | ✓ | ✗ (link dir)  | ~2.10x |
+| readlink loop              | ✓ | ✓ per hop | ✓ | ✓ | ✓ | 2.04x direct / **0.62x symlinked** |
 
-Percentages from `benchmark-script-path.sh` at 5000 iterations (i9-13900HX, Bash 5.2.21, GNU coreutils 9.4). The `cd -P && pwd -P` variants win by ~2x because they fork a subshell but skip the execve of an external binary. The readlink loop is actively *slower* than `realpath` once a symlink is present, because it pays for both `readlink(1)` per hop *and* the `cd+pwd` subshell afterwards.
+Percentages from `benchmark.script-path.sh` at 5000 iterations
+(i9-13900HX, Bash 5.2.21, GNU coreutils 9.4). The `cd -P && pwd -P`
+variants win by ~2× because they fork a subshell but skip the execve
+of an external binary. The readlink loop is competitive on direct
+files (~2× faster than `realpath`) but **inverts to ~0.62× — actively
+slower — once a symlink is present**, because it pays an execve per
+hop *plus* the `cd+pwd` subshell afterwards.
 
 ## The Five Methods
 
@@ -185,15 +191,24 @@ For this pattern to work, `SCRIPT_DIR` must reflect *where the data is*, not whe
 
 ## Performance (5000 iterations, warm cache)
 
+Measured on Intel i9-13900HX, Bash 5.2.21, GNU coreutils 9.4, 10 runs
+per series, mean times in seconds. See `script-path_results_*.txt` for
+raw data including 100/1K/5K iteration sweeps.
+
 | Method                    | Direct | Symlinked |
 |---------------------------|-------:|----------:|
-| `realpath --`             | 4.77s  | 4.93s     |
-| `readlink -f --`          | 4.80s  | 4.89s     |
-| `cd -P && pwd -P` + base  | 2.47s  | 2.46s     |
-| `cd -P && pwd -P` (dir)   | 2.35s  | 2.40s     |
-| readlink loop             | 2.50s  | 7.58s     |
+| `realpath --`             | 5.008s | 5.073s    |
+| `readlink -f --`          | 5.020s | 5.044s    |
+| `cd -P && pwd -P` + base  | 2.382s | 2.563s    |
+| `cd -P && pwd -P` (dir)   | 2.374s | 2.454s    |
+| readlink loop             | 2.460s | **7.978s** |
 
-Per-call cost: `realpath` ≈ 0.95 ms, `cd -P && pwd -P` (dir) ≈ 0.48 ms. Delta ≈ 0.5 ms per invocation, invariant across iteration counts — a fixed per-call cost dominated by fork+execve overhead for the external-binary methods.
+Per-call cost: `realpath` ≈ 1.00 ms, `cd -P && pwd -P` (dir) ≈ 0.48 ms.
+Delta ≈ 0.52 ms per invocation, invariant across iteration counts — a
+fixed per-call cost dominated by fork+execve overhead for the
+external-binary methods. The `readlink loop` symlinked figure
+(7.978 s = ~1.6 ms per call) reflects two execves per hop plus the
+final `cd+pwd` subshell.
 
 **Cold cache:** the gap widens. First invocation of `realpath` in a fresh shell incurs PATH lookup, page faults loading the binary, `ld.so` startup, and libc initialisation. Bash builtins pay none of this.
 

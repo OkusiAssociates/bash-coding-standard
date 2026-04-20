@@ -1,8 +1,11 @@
 # Argument Processing Methods Reference
 
 Four approaches to parsing command-line arguments in Bash 5.2+.
-Benchmarks show the three pure-Bash methods are equivalent in speed;
-GNU getopt adds ~1ms fork overhead per invocation. See BCS0801, BCS0805.
+Benchmarks show `getopts` is the fastest on short and bundled options
+(C-level bundling); the BCS while/case pattern is competitive on
+non-bundled forms and the only pure-Bash option for long flags. GNU
+`getopt` forks an external process and is **~35× (≈3400%) slower** at
+~1.05 ms per invocation. See BCS0801, BCS0805.
 
 ## Quick Comparison
 
@@ -15,6 +18,30 @@ GNU getopt adds ~1ms fork overhead per invocation. See BCS0801, BCS0805.
 | Argument validation  | Manual | Automatic | Automatic | Manual |
 | Error messages       | Custom | Generic | Generic | Custom |
 | BCS recommended      | ✓ | Acceptable | ✗ | ✗ |
+
+## Benchmark Results
+
+Measured on Intel i9-13900HX, Bash 5.2.21, 10 runs per series, mean
+times in seconds. See `args-processing_results_*.txt` for raw data.
+
+| Test                        | BCS while/case | getopts | GNU getopt | Simple case |
+|-----------------------------|---------------:|--------:|-----------:|------------:|
+| Short options (1K iter)     | 0.038          | **0.031** | 1.056    | 0.038       |
+| Short options (5K iter)     | 0.175          | **0.151** | 5.299    | 0.182       |
+| Long options (1K iter)      | **0.041**      | n/a     | 1.081      | 0.041       |
+| Long options (5K iter)      | **0.193**      | n/a     | 5.477      | 0.201       |
+| Bundled short (1K iter)     | 0.087          | **0.032** | 1.109    | n/a         |
+| Bundled short (5K iter)     | 0.442          | **0.162** | 5.564    | n/a         |
+
+**Reading the numbers:**
+- `getopts` wins short and bundled by ~16-23% (non-bundled) or ~2.7×
+  (bundled) — its option splitting is implemented in C, the BCS pattern
+  re-enters the loop in shell.
+- For long options, `getopts` does not compete (POSIX limitation). BCS
+  while/case ties Simple case.
+- GNU `getopt` is 26-35× slower across every test — the cost of
+  `fork()+execve()` per invocation. Per-call overhead is consistently
+  ~1.05-1.11 ms.
 
 ## Method 1: BCS while/case (BCS0801 + BCS0805)
 
@@ -70,7 +97,12 @@ shift $((OPTIND - 1))
 - `OPTIND` must be reset if parsing multiple times
 - Stops at first non-option argument (no mixed args/options)
 
-**When acceptable:** simple scripts with few options, all short, no long forms needed.
+**When acceptable:** simple scripts with few options, all short, no
+long forms needed. Note: `getopts` is the **fastest** parser in the
+benchmarks for short and bundled options (~16-23% faster than BCS
+while/case unbundled, ~2.7× faster bundled). The BCS preference for
+while/case is driven by long-option support and explicit dispatch, not
+performance.
 
 ## Method 3: GNU getopt (external command)
 
@@ -93,7 +125,8 @@ esac; shift; done
 ```
 
 **Why BCS avoids this:**
-- Forks an external process (~1ms overhead, ~2000% slower in benchmarks)
+- Forks an external process (~1.05-1.11 ms per call; **~26-35× slower**
+  than the pure-Bash methods across every measured workload)
 - Requires `eval set --` which is fragile and hard to audit
 - Not portable: BSD getopt is incompatible with GNU getopt
 - Reorders arguments silently (options before non-options)
@@ -165,8 +198,13 @@ the output filename.
 
 ## Notes
 
-- All three pure-Bash methods parse in microseconds -- the difference is
-  irrelevant for scripts that parse arguments once at startup.
+- All three pure-Bash methods parse in microseconds per call. For
+  scripts that parse arguments once at startup the differences (~30-450
+  µs total) are irrelevant; the choice is driven by capability
+  (long options, bundling) and clarity, not speed.
+- The exception is `getopts` vs BCS while/case on **bundled** input:
+  ~2.7× wider gap. Still microseconds per call in absolute terms, but
+  worth noting if bundling is the dominant call pattern.
 - BCS mandates `(($#))` over `[[ $# -gt 0 ]]` (BCS0801) -- arithmetic
   evaluation is faster and more idiomatic.
 - Place argument parsing inside `main()` for scripts >200 lines (BCS0804).

@@ -1,0 +1,70 @@
+System Information
+==================
+Date: 2026-04-20T09:29:56+08:00
+Hostname: okusi
+Bash Version: 5.2.21(1)-release
+CPU: 13th Gen Intel(R) Core(TM) i9-13900HX
+Kernel: 6.17.0-20-generic
+realpath: realpath (GNU coreutils) 9.4
+Target dir: /tmp/tmp.jBkELjLF3J/link/b/c
+Runs per test: 10
+
+Starting benchmarks: 6 test series (logical + canonical × 100/1K/5K, 10 runs each)
+
+Test: Logical resolve (100) (iterations: 100)
+cd && pwd - Mean: 0.048s, Median: 0.049s, StdDev: 0.002s
+realpath -s - Mean: 0.099s, Median: 0.099s, StdDev: 0.001s
+Fastest: cd && pwd (2.1x)
+
+Test: Logical resolve (1K) (iterations: 1000)
+cd && pwd - Mean: 0.473s, Median: 0.475s, StdDev: 0.013s
+realpath -s - Mean: 1.001s, Median: 1.002s, StdDev: 0.008s
+Fastest: cd && pwd (2.1x)
+
+Test: Logical resolve (5K) (iterations: 5000)
+cd && pwd - Mean: 2.347s, Median: 2.353s, StdDev: 0.030s
+realpath -s - Mean: 5.015s, Median: 5.016s, StdDev: 0.016s
+Fastest: cd && pwd (2.1x)
+
+Test: Canonical resolve (100) (iterations: 100)
+cd -P && pwd -P - Mean: 0.051s, Median: 0.051s, StdDev: 0.001s
+realpath - Mean: 0.100s, Median: 0.101s, StdDev: 0.003s
+Fastest: cd -P && pwd -P (1.9x)
+
+Test: Canonical resolve (1K) (iterations: 1000)
+cd -P && pwd -P - Mean: 0.512s, Median: 0.512s, StdDev: 0.007s
+realpath - Mean: 1.011s, Median: 1.011s, StdDev: 0.008s
+Fastest: cd -P && pwd -P (2.0x)
+
+Test: Canonical resolve (5K) (iterations: 5000)
+cd -P && pwd -P - Mean: 2.514s, Median: 2.537s, StdDev: 0.061s
+realpath - Mean: 5.016s, Median: 5.022s, StdDev: 0.019s
+Fastest: cd -P && pwd -P (2.0x)
+
+Benchmark Complete
+==================
+
+Detailed results saved to: path-resolve_results_2026-04-20_09:29:56.txt
+
+Analysis:
+---------
+$(cd "$dir" && pwd) runs inside a subshell but uses only Bash builtins
+(cd, pwd) -- no fork+exec of an external binary. The subshell itself is
+a fork() but no execve() of a new program image.
+
+$(realpath -- "$dir") also spawns a subshell for command substitution,
+then fork+execs the GNU coreutils realpath binary -- paying the full
+dynamic-loader + libc startup cost on every invocation.
+
+Semantic note:
+- 'cd && pwd' prints the LOGICAL path ($PWD as entered, symlinks kept)
+- 'realpath' (no flags) prints the CANONICAL path (all symlinks resolved)
+- For a fair semantic comparison, use 'cd -P && pwd -P' vs 'realpath'
+  (both canonical), or 'cd && pwd' vs 'realpath -s' (both logical).
+
+Caching:
+After the first realpath invocation, the kernel page cache, dentry/inode
+cache, and Bash path hash keep the binary warm. These results therefore
+reflect warm-cache conditions, favourable to realpath. Cold invocations
+would show an even larger gap.
+

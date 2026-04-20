@@ -8,11 +8,26 @@ differ in mechanism and speed. BCS recommends `while ((1))`. See BCS0503.
 | Construct      | Type              | POSIX | Speed   |
 |----------------|-------------------|:-----:|---------|
 | `while ((1))`  | Arithmetic eval   | No    | Fastest |
-| `while :`      | Builtin command   | Yes   | ~14% slower |
-| `while true`   | Builtin command   | Yes   | ~21% slower |
+| `while :`      | Builtin command   | Yes   | ~12-15% slower |
+| `while true`   | Builtin command   | Yes   | ~21-22% slower |
 
-Percentages from benchmark at 1M iterations (i9-13900HX, Bash 5.2.21).
-At 2M iterations the gap widens slightly: `:` is ~14%, `true` is ~23%.
+## Benchmark Results
+
+Measured on Intel i9-13900HX, Bash 5.2.21, 30 runs per series, mean
+times in seconds. See `while-loops_results_*.txt` for raw data.
+
+| Test                                      | `while ((1))` | `while :` | `while true` |
+|-------------------------------------------|--------------:|----------:|-------------:|
+| Empty loop, 100K iter                     | **0.096**     | 0.110 (+14%) | 0.118 (+22%) |
+| Empty loop, 1M iter                       | **0.935**     | 1.075 (+15%) | 1.142 (+22%) |
+| Empty loop, 2M iter                       | **1.854**     | 2.083 (+12%) | 2.259 (+22%) |
+| Loop + arithmetic work, 1M iter           | **1.553**     | 1.685 (+8%)  | 1.758 (+13%) |
+
+**Reading the numbers:** gaps are stable across iteration counts, not
+widening with scale — each construct carries a fixed per-iteration
+overhead. Adding arithmetic work inside the loop narrows the
+percentage gap (the work dominates the loop-condition cost), but
+`while ((1))` still wins in absolute terms.
 
 ## How Each Works
 

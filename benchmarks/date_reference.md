@@ -1,7 +1,27 @@
 # Date Formatting: `date` vs `printf '%()T'` Reference
 
 Bash 5.0+ provides `printf '%()T'` as a builtin `strftime` — no fork, no exec.
-Benchmarks show ~28x faster than `$(date ...)`. See BCS1213.
+Benchmarks show **34-77× faster** than `$(date ...)` (gap widens with
+iteration count and is largest in capture-to-variable mode). See BCS1213.
+
+## Benchmark Results
+
+Measured on Intel i9-13900HX, Bash 5.2.21, 10 runs per series, mean
+times in seconds. See `date_results_*.txt` for raw data.
+
+| Test                              | `printf '%()T'` | `date(1)`  | Speedup |
+|-----------------------------------|----------------:|-----------:|--------:|
+| Format only, 100 iter             | 0.003           | 0.086      | 33.6×   |
+| Format only, 1K iter              | 0.016           | 0.842      | 51.1×   |
+| Format only, 5K iter              | 0.081           | 4.167      | 51.5×   |
+| Capture-to-variable, 100 iter     | 0.002           | 0.102      | 48.3×   |
+| Capture-to-variable, 1K iter      | 0.014           | 1.010      | 71.0×   |
+| Capture-to-variable, 5K iter      | 0.066           | 5.065      | 76.7×   |
+
+**Reading the numbers:** the per-call cost of `printf '%()T'` is
+microseconds; `date(1)` pays ~0.85 ms per call (fork + execve + pipe).
+Capture-to-variable widens the gap because `var=$(date ...)` adds a
+subshell on top of the fork — `printf -v var '%()T'` does neither.
 
 ## Equivalent Commands
 

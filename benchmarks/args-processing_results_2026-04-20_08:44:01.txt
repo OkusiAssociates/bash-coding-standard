@@ -1,0 +1,87 @@
+System Information
+==================
+Date: 2026-04-20T08:44:01+08:00
+Hostname: okusi
+Bash Version: 5.2.21(1)-release
+CPU: 13th Gen Intel(R) Core(TM) i9-13900HX
+Kernel: 6.17.0-20-generic
+Runs per test: 10
+
+Starting benchmarks: 6 test series (short/long/bundled × 1K/5K iterations, 10 runs each)
+
+Test: Short options (1K) (iterations: 1000)
+BCS while/case       - Mean: 0.038s, Median: 0.037s, StdDev: 0.004s
+getopts              - Mean: 0.031s, Median: 0.031s, StdDev: 0.002s
+GNU getopt           - Mean: 1.056s, Median: 1.045s, StdDev: 0.022s
+Simple case          - Mean: 0.038s, Median: 0.037s, StdDev: 0.002s
+Fastest: getopts
+
+Test: Short options (5K) (iterations: 5000)
+BCS while/case       - Mean: 0.175s, Median: 0.173s, StdDev: 0.006s
+getopts              - Mean: 0.151s, Median: 0.149s, StdDev: 0.005s
+GNU getopt           - Mean: 5.299s, Median: 5.286s, StdDev: 0.043s
+Simple case          - Mean: 0.182s, Median: 0.182s, StdDev: 0.003s
+Fastest: getopts
+
+Test: Long options (1K) (iterations: 1000)
+BCS while/case       - Mean: 0.041s, Median: 0.040s, StdDev: 0.003s
+GNU getopt           - Mean: 1.081s, Median: 1.080s, StdDev: 0.011s
+Simple case          - Mean: 0.041s, Median: 0.040s, StdDev: 0.003s
+Fastest: BCS while/case
+
+Test: Long options (5K) (iterations: 5000)
+BCS while/case       - Mean: 0.193s, Median: 0.194s, StdDev: 0.004s
+GNU getopt           - Mean: 5.477s, Median: 5.462s, StdDev: 0.073s
+Simple case          - Mean: 0.201s, Median: 0.200s, StdDev: 0.008s
+Fastest: BCS while/case
+
+Test: Bundled short (1K) (iterations: 1000)
+BCS while/case       - Mean: 0.087s, Median: 0.087s, StdDev: 0.003s
+getopts              - Mean: 0.032s, Median: 0.032s, StdDev: 0.002s
+GNU getopt           - Mean: 1.109s, Median: 1.111s, StdDev: 0.013s
+Fastest: getopts
+
+Test: Bundled short (5K) (iterations: 5000)
+BCS while/case       - Mean: 0.442s, Median: 0.438s, StdDev: 0.011s
+getopts              - Mean: 0.162s, Median: 0.164s, StdDev: 0.005s
+GNU getopt           - Mean: 5.564s, Median: 5.563s, StdDev: 0.021s
+Fastest: getopts
+
+Benchmark Complete
+==================
+
+Detailed results saved to: args-processing_results_2026-04-20_08:44:01.txt
+
+Capability matrix:
+  Feature              BCS    getopts  getopt  Simple
+  Long options          ✓       ✗        ✓       ✓
+  Option bundling       ✓       ✓        ✓       ✗
+  -oFILE attached arg   ✗       ✓        ✓       ✗
+  Pure Bash (no fork)   ✓       ✓        ✗       ✓
+
+Analysis:
+---------
+The three pure-Bash methods (BCS, getopts, simple) all run in the
+microsecond range; differences between them are negligible for scripts
+that parse arguments once at startup.
+
+GNU getopt forks an external process per invocation, adding ~1-3ms
+overhead. Invisible for a one-shot parse, measurable in tight loops,
+and a clear architectural cost.
+
+BCS while/case offers the best balance of capability and performance:
+long options, bundling, pure Bash, and explicit control flow.
+
+Notes:
+  - Simple while/case lacks option bundling. In practice this leads
+    either to no bundling at all (frustrating users) or fragile ad-hoc
+    regex/loop workarounds. BCS0805 solves this in one tested line.
+  - BCS does not support -oFILE (attached argument) forms. Arguments
+    must be space-separated: -o FILE. This is a deliberate trade-off --
+    the bundling pattern would disaggregate -oFILE into -o -F -I -L -E.
+
+BCS guidance:
+  - while/case is the recommended pattern (BCS0801)
+  - getopts is acceptable for very simple scripts (short options only)
+  - GNU getopt should be avoided
+

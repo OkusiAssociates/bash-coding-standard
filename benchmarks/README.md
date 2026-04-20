@@ -39,7 +39,7 @@ the current directory.
 |--------|----------|---------------|
 | [`benchmark.args-processing.sh`](benchmark.args-processing.sh) | BCS while/case vs. `getopts` vs. GNU `getopt` vs. simple while/case (3 argument styles: short / long / bundled) | [`args-processing_reference.md`](args-processing_reference.md) |
 | [`benchmark.date.sh`](benchmark.date.sh) | `printf '%(...)T'` builtin vs. external `date(1)` (discard-output and capture-to-variable variants) | [`date_reference.md`](date_reference.md) |
-| [`benchmark.path-resolve.sh`](benchmark.path-resolve.sh) | `cd && pwd` vs. `realpath` for directory resolution (logical and canonical pairs) | — |
+| [`benchmark.path-resolve.sh`](benchmark.path-resolve.sh) | `cd && pwd` vs. `realpath` for directory resolution (logical and canonical pairs) | [`path-resolve_reference.md`](path-resolve_reference.md) |
 | [`benchmark.script-path.sh`](benchmark.script-path.sh) | Five idioms for resolving a script's own path: `realpath`, `readlink -f`, `cd -P && pwd -P`, `cd -P && pwd -P` (dir only), pure-Bash `readlink` loop — under direct and symlinked `$0` | [`script-path_reference.md`](script-path_reference.md) |
 | [`benchmark.source-guard.sh`](benchmark.source-guard.sh) | Three "sourced vs. executed" guard patterns: `BASH_SOURCE` check, `return 0` guard, `(return 0)` subshell | [`source-guard_reference.md`](source-guard_reference.md) |
 | [`benchmark.while-loops.sh`](benchmark.while-loops.sh) | `while ((1))` vs. `while :` vs. `while true` (empty body and arithmetic-work body) | [`while-loops_reference.md`](while-loops_reference.md) |
@@ -98,8 +98,7 @@ where `<testname>` is derived from the script filename
 ## Reference Documents
 
 Each benchmark has a paired reference doc named
-`<testname>_reference.md` (the `path-resolve` benchmark currently has
-no reference doc). They contain:
+`<testname>_reference.md`. They contain:
 
 - The full set of idioms tested, in BCS-compliant Bash.
 - Semantic notes explaining what each idiom does and where the variants

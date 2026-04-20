@@ -1,0 +1,57 @@
+System Information
+==================
+Date: 2026-04-20T09:01:28+08:00
+Hostname: okusi
+Bash Version: 5.2.21(1)-release
+CPU: 13th Gen Intel(R) Core(TM) i9-13900HX
+Kernel: 6.17.0-20-generic
+Runs per test: 30
+
+Starting benchmarks: 4 test series (empty @ 100K/1M/2M + with-work @ 1M, 30 runs each)
+
+Test: Empty loop with counter break (100K) (iterations: 100000)
+while ((1)) - Mean: 0.096s, Median: 0.095s, StdDev: 0.005s
+while :     - Mean: 0.110s, Median: 0.112s, StdDev: 0.005s
+while true  - Mean: 0.118s, Median: 0.119s, StdDev: 0.005s
+Fastest: while ((1))
+
+Test: Empty loop with counter break (1M) (iterations: 1000000)
+while ((1)) - Mean: 0.935s, Median: 0.934s, StdDev: 0.035s
+while :     - Mean: 1.075s, Median: 1.071s, StdDev: 0.048s
+while true  - Mean: 1.142s, Median: 1.128s, StdDev: 0.048s
+Fastest: while ((1))
+
+Test: Empty loop with counter break (2M) (iterations: 2000000)
+while ((1)) - Mean: 1.854s, Median: 1.856s, StdDev: 0.063s
+while :     - Mean: 2.083s, Median: 2.079s, StdDev: 0.051s
+while true  - Mean: 2.259s, Median: 2.266s, StdDev: 0.064s
+Fastest: while ((1))
+
+Test: Loop with arithmetic work (1M) (iterations: 1000000)
+while ((1)) - Mean: 1.553s, Median: 1.551s, StdDev: 0.066s
+while :     - Mean: 1.685s, Median: 1.697s, StdDev: 0.061s
+while true  - Mean: 1.758s, Median: 1.770s, StdDev: 0.060s
+Fastest: while ((1))
+
+Benchmark Complete
+==================
+
+Detailed results saved to: while-loops_results_2026-04-20_09:01:28.txt
+
+Construct notes:
+  while ((1))  Pure Bash arithmetic; no command lookup.
+  while :      Null builtin; POSIX-portable, traditional idiom.
+  while true   'true' is a Bash builtin but goes through command lookup.
+
+Analysis:
+---------
+All three are pure-Bash constructs. On modern Bash the difference per
+iteration is in nanoseconds -- visible only at million-iteration scale.
+See the per-series results above for the actual numbers on this host.
+
+BCS guidance:
+  - Any of the three is acceptable for clarity.
+  - Prefer while ((1)) when the loop contains arithmetic already.
+  - Prefer while : for the shortest, most traditional idiom.
+  - while true is acceptable but offers no advantage over while :.
+
