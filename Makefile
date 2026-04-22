@@ -9,40 +9,45 @@ SHAREDIR ?= $(PREFIX)/share/yatti/BCS
 COMPDIR  ?= /etc/bash_completion.d
 DESTDIR  ?=
 
+# Directory of this Makefile (trailing slash). Used to anchor all source
+# paths so 'make install' works regardless of the invoking CWD and never
+# picks up a like-named file from a parent directory.
+srcdir := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
 .PHONY: all install uninstall check test help
 
 all: help
 
 install:
 	install -d $(DESTDIR)$(BINDIR)
-	install -m 755 bcs $(DESTDIR)$(BINDIR)/bcs
-	install -m 755 bcscheck $(DESTDIR)$(BINDIR)/bcscheck
+	install -m 755 $(srcdir)bcs $(DESTDIR)$(BINDIR)/bcs
+	install -m 755 $(srcdir)bcscheck $(DESTDIR)$(BINDIR)/bcscheck
 	install -d $(DESTDIR)$(SHAREDIR)
-	install -m 644 LICENSE $(DESTDIR)$(SHAREDIR)/LICENSE
-	install -m 644 COPYING $(DESTDIR)$(SHAREDIR)/COPYING
+	install -m 644 $(srcdir)LICENSE $(DESTDIR)$(SHAREDIR)/LICENSE
+	install -m 644 $(srcdir)COPYING $(DESTDIR)$(SHAREDIR)/COPYING
 	install -d $(DESTDIR)$(SHAREDIR)/data
-	install -m 644 data/LICENSE $(DESTDIR)$(SHAREDIR)/data/LICENSE
-	install -m 644 data/BASH-CODING-STANDARD.md $(DESTDIR)$(SHAREDIR)/data/
-	install -m 644 data/[0-9]*.md $(DESTDIR)$(SHAREDIR)/data/
+	install -m 644 $(srcdir)data/LICENSE $(DESTDIR)$(SHAREDIR)/data/LICENSE
+	install -m 644 $(srcdir)data/BASH-CODING-STANDARD.md $(DESTDIR)$(SHAREDIR)/data/
+	install -m 644 $(srcdir)data/[0-9]*.md $(DESTDIR)$(SHAREDIR)/data/
 	install -d $(DESTDIR)$(SHAREDIR)/examples/templates
-	install -m 644 examples/templates/*.sh.template $(DESTDIR)$(SHAREDIR)/examples/templates/
+	install -m 644 $(srcdir)examples/templates/*.sh.template $(DESTDIR)$(SHAREDIR)/examples/templates/
 	install -d $(DESTDIR)$(SHAREDIR)/docs
-	cp -a docs/. $(DESTDIR)$(SHAREDIR)/docs/
+	cp -a $(srcdir)docs/. $(DESTDIR)$(SHAREDIR)/docs/
 	rm -f $(DESTDIR)$(SHAREDIR)/docs/CLAUDE.md
 	rm -rf $(DESTDIR)$(SHAREDIR)/docs/.claude
 	install -d $(DESTDIR)$(SHAREDIR)/benchmarks
-	cp -a benchmarks/. $(DESTDIR)$(SHAREDIR)/benchmarks/
+	cp -a $(srcdir)benchmarks/. $(DESTDIR)$(SHAREDIR)/benchmarks/
 	install -d $(DESTDIR)$(SHAREDIR)/examples
-	find examples/ -maxdepth 1 -type f -exec install -m 755 {} $(DESTDIR)$(SHAREDIR)/examples/ \;
+	find $(srcdir)examples/ -maxdepth 1 -type f -exec install -m 755 {} $(DESTDIR)$(SHAREDIR)/examples/ \;
 	install -d $(DESTDIR)$(SHAREDIR)/examples/lib
-	tar --exclude='mk-index*' --exclude='BASH-CODING-STANDARD.md' -cf - examples/lib | tar -xf - -C $(DESTDIR)$(SHAREDIR)/
+	cd $(srcdir) && tar --exclude='mk-index*' --exclude='BASH-CODING-STANDARD.md' -cf - examples/lib | tar -xf - -C $(DESTDIR)$(SHAREDIR)/
 	install -d $(DESTDIR)$(MANDIR)
-	install -m 644 bcs.1 $(DESTDIR)$(MANDIR)/bcs.1
-	install -m 644 docs/BCS-bash.1 $(DESTDIR)$(MANDIR)/BCS-bash.1
+	install -m 644 $(srcdir)bcs.1 $(DESTDIR)$(MANDIR)/bcs.1
+	install -m 644 $(srcdir)docs/BCS-bash.1 $(DESTDIR)$(MANDIR)/BCS-bash.1
 	ln -sfn BCS-bash.1 $(DESTDIR)$(MANDIR)/bcs-bash.1
 	@if [ -d $(DESTDIR)$(COMPDIR) ]; then \
-	  install -m 644 bcs.bash_completion $(DESTDIR)$(COMPDIR)/bcs; \
-	  install -m 644 bcscheck.bash_completion $(DESTDIR)$(COMPDIR)/bcscheck; \
+	  install -m 644 $(srcdir)bcs.bash_completion $(DESTDIR)$(COMPDIR)/bcs; \
+	  install -m 644 $(srcdir)bcscheck.bash_completion $(DESTDIR)$(COMPDIR)/bcscheck; \
 	fi
 	@if [ -d $(DESTDIR)$(PREFIX)/share/yatti/bash-coding-standard ] \
 	    && [ ! -L $(DESTDIR)$(PREFIX)/share/yatti/bash-coding-standard ]; then \
