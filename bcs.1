@@ -157,6 +157,24 @@ Report only findings at this tier
 Report findings at this tier or higher severity
 .RB ( core ", " recommended ", " style ).
 .TP
+.BR \-j ", " \-\-json
+Emit findings as a single JSON object on stdout. The schema mirrors
+.B shellcheck \-\-format=json1
+with a
+.B {source, meta, comments}
+envelope so CI tooling that already consumes shellcheck JSON can ingest
+.B bcs check
+findings with minimal adjustment. Info messages still go to stderr when
+verbose; stdout is JSON\-only. Exit code 5 is returned when the LLM emits
+invalid JSON (the raw response is preserved in
+.BR $BCS_RESPONSE_DUMP ).
+Each comment object carries
+.BR line ", " endLine ", " level " (error|warning|info), "
+.BR code " (integer), "
+.BR bcsCode " (full BCS#### string), "
+.BR tier ", " message ", and "
+.BR fixSuggestion .
+.TP
 .BR \-D ", " \-\-debug
 Announce the raw-response dump path on success (the dump is always written
 and auto-announced on failure).
@@ -315,6 +333,10 @@ Default analysis depth (low, medium, high, max). Overridden by
 .B BCS_STRICT
 Treat warnings as violations (0 or 1). Overridden by
 .BR \-s / \-S .
+.TP
+.B BCS_JSON
+Default JSON output mode (0 or 1). Overridden by
+.BR \-j / \-\-json .
 .TP
 .B BCS_OLLAMA_MODEL
 Override the Ollama model name instead of using the tier-based default.

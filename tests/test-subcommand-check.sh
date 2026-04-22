@@ -158,6 +158,36 @@ begin_test 'check help mentions BCS_OPENAI_MODEL'
 output=$("$BCS_CMD" check -h 2>/dev/null)
 assert_contains "$output" 'BCS_OPENAI_MODEL' 'help mentions BCS_OPENAI_MODEL' || true
 
+# Test: check help mentions -j / --json
+begin_test 'check help mentions --json'
+output=$("$BCS_CMD" check -h 2>/dev/null)
+assert_contains "$output" '--json' 'help mentions --json' || true
+
+# Test: check help mentions JSON Output section
+begin_test 'check help mentions JSON Output section'
+output=$("$BCS_CMD" check -h 2>/dev/null)
+assert_contains "$output" 'JSON Output' 'help has JSON Output section' || true
+
+# Test: -j accepted at argparse stage (short-circuit on -h)
+begin_test '-j accepted at argparse stage'
+assert_success '-j accepted' \
+  "$BCS_CMD" check -j -h || true
+
+# Test: --json accepted at argparse stage
+begin_test '--json accepted at argparse stage'
+assert_success '--json accepted' \
+  "$BCS_CMD" check --json -h || true
+
+# Test: -jq bundling parses (json + quiet) — neither should error
+begin_test '-jq bundling parsed correctly'
+err=$("$BCS_CMD" check -jq 2>&1 || true)
+assert_not_contains "$err" 'Invalid option' '-jq bundling parsed' || true
+
+# Test: -js bundling parses (json + strict)
+begin_test '-js bundling parsed correctly'
+err=$("$BCS_CMD" check -js 2>&1 || true)
+assert_not_contains "$err" 'Invalid option' '-js bundling parsed' || true
+
 # Skip actual LLM invocation tests (requires running backend)
 echo '  (skipping live LLM tests - requires running backend)'
 

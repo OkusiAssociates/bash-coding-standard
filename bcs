@@ -207,6 +207,8 @@ ${BOLD}Options:$NC
   -S, --no-strict         Don't treat warnings as violations (${BOLD}default$NC)
   -T, --tier TIER         Report only findings at this tier (core|recommended|style)
   -M, --min-tier TIER     Report findings at this tier or higher severity
+  -j, --json              Emit findings as a single JSON object on stdout
+                          (shellcheck --format=json1-compatible envelope)
   -D, --debug             Announce raw-response dump path on success;
                           dump is always written and auto-announced on failure
   -v, --verbose           Show info messages (${BOLD}default$NC)
@@ -283,6 +285,7 @@ ${BOLD}Environment / Config Variables:$NC
   BCS_TIER            Default --tier filter (core|recommended|style)
   BCS_MIN_TIER        Default --min-tier filter (core|recommended|style)
   BCS_DEBUG           Default --debug (0 or 1); announces raw-response dump path
+  BCS_JSON            Default --json (0 or 1); structured JSON output on stdout
   BCS_OLLAMA_MODEL    Override Ollama model (supports :cloud tags, e.g. minimax-m2:cloud)
   BCS_ANTHROPIC_MODEL Override Anthropic model selection
   BCS_GOOGLE_MODEL    Override Google model selection
@@ -296,11 +299,20 @@ ${BOLD}Environment / Config Variables:$NC
 ${BOLD}Inline suppression:$NC
   #bcscheck disable=BCS0606  # Suppress a rule for the next line or block
 
+${BOLD}JSON Output:$NC
+  With ${BOLD}-j/--json$NC, stdout contains a single JSON object shaped like:
+    { "source": "bcs", "meta": { ... }, "comments": [ ... ] }
+  The schema mirrors ${BOLD}shellcheck --format=json1$NC so existing tooling can
+  consume findings with minimal adjustment. Info messages still go to stderr
+  when verbose. Exit code 5 is returned if the LLM produced invalid JSON
+  (the raw response is preserved in \$BCS_RESPONSE_DUMP for inspection).
+
 ${BOLD}Examples:$NC
   $SCRIPT_NAME check myscript.sh
   $SCRIPT_NAME check -m minimax-m2:cloud myscript.sh
   $SCRIPT_NAME check --effort high --strict deploy.sh
   $SCRIPT_NAME check -m claude-code:thorough -e max deploy.sh
+  $SCRIPT_NAME check -j myscript.sh | jq '.comments[]'
 HELP
 }
 
@@ -497,6 +509,80 @@ _dump_response() {
   printf '%s\n' "$1" > "$BCS_RESPONSE_DUMP" 2>/dev/null ||:
 }
 
+# ---- JSON output helpers ----
+
+# Strip optional markdown code fences from an LLM response. Used by JSON
+# mode for backends without native JSON-mode parameters (Anthropic Messages
+# API, Claude Code CLI). Removes ``` or ```json at start and ``` at end,
+# plus surrounding whitespace.
+_strip_json_fences() {
+  local -- s=$1
+  s=${s#"${s%%[![:space:]]*}"}
+  s=${s%"${s##*[![:space:]]}"}
+  [[ $s != '```'* ]] || { s=${s#'```'}; s=${s#json}; s=${s#$'\n'}; }
+  [[ $s != *'```' ]] || { s=${s%'```'}; s=${s%$'\n'}; }
+  s=${s#"${s%%[![:space:]]*}"}
+  s=${s%"${s##*[![:space:]]}"}
+  printf '%s' "$s"
+}
+
+# Validate a bare JSON array of findings and wrap it in the top-level
+# envelope with meta fields. Emits the final JSON object on stdout.
+# Returns non-zero and emits nothing on validation failure.
+#
+# Arguments:
+#   $1 raw LLM response (may include fences)
+#   $2 absolute script path
+#   $3 backend name
+#   $4 model name (resolved)
+#   $5 effort level
+#   $6 strict (0|1)
+#   $7 elapsed seconds
+_render_json_output() {
+  local -- raw=$1 script_file=$2 backend=$3 model=$4 effort=$5
+  local -- strict=$6 elapsed_s=$7
+  local -- cleaned arr
+  cleaned=$(_strip_json_fences "$raw")
+  [[ -n $cleaned ]] || return 1
+  # Normalize to a bare array. OpenAI's json_object mode requires the
+  # top level be an object, so models often wrap the array as
+  # {"findings": [...]} or similar. Accept either form.
+  if jq -e 'type == "array"' <<< "$cleaned" >/dev/null 2>&1; then
+    arr=$cleaned
+  elif jq -e 'type == "object"' <<< "$cleaned" >/dev/null 2>&1; then
+    arr=$(jq -c '(.findings // .comments // .violations // .results // empty)
+                 | select(type == "array")' <<< "$cleaned" 2>/dev/null) ||:
+    [[ -n $arr ]] || return 1
+  else
+    return 1
+  fi
+  # Validate every element has the required finding keys.
+  jq -e 'all(.[]; type == "object"
+           and has("line") and has("level") and has("bcsCode"))' \
+    <<< "$arr" >/dev/null 2>&1 || return 1
+  local -- strict_bool
+  ((strict)) && strict_bool=true || strict_bool=false
+  jq -n \
+    --arg tool 'bcs' \
+    --arg version "$VERSION" \
+    --arg file "$script_file" \
+    --arg backend "$backend" \
+    --arg model "$model" \
+    --arg effort "$effort" \
+    --argjson strict "$strict_bool" \
+    --argjson elapsed_s "$elapsed_s" \
+    --argjson comments "$arr" \
+    '{source: "bcs",
+      meta: {tool: $tool, version: $version, file: $file, backend: $backend,
+             model: $model, effort: $effort, strict: $strict, elapsed_s: $elapsed_s},
+      comments: ($comments | map(. + {file: $file,
+                                       column: (.column // 1),
+                                       endLine: (.endLine // .line),
+                                       endColumn: (.endColumn // 1),
+                                       fix: null,
+                                       fixSuggestion: (.fixSuggestion // "")}))}' \
+    || return 1
+}
 
 # Auto-detect available LLM backend (claude → ollama → anthropic → openai → google)
 # The Claude Code CLI wins first when available: it runs locally like ollama
@@ -538,6 +624,8 @@ _llm_anthropic() {
   local -- api_model=${BCS_ANTHROPIC_MODEL:-${ANTHROPIC_MODELS[$model]:-$model}}
   local -i max_tokens=${EFFORT_TOKENS[$effort]}
 
+  # Anthropic Messages API has no native JSON-mode flag; rely on prompt
+  # discipline plus _strip_json_fences fallback applied by cmd_check.
   local -- payload
   payload=$(jq -n \
     --arg model "$api_model" \
@@ -575,15 +663,29 @@ _llm_ollama() {
   local -- ollama_host=${OLLAMA_HOST:-localhost:11434}
   local -i num_predict=${EFFORT_TOKENS[$effort]}
 
+  # Native JSON mode via "format": "json" (supported by qwen2.5+, llama3.1+,
+  # gemma2+). When BCS_JSON_MODE=1, forces the model to emit only valid JSON.
   local -- payload
-  payload=$(jq -n \
-    --arg model "$ollama_model" \
-    --argjson num_predict "$num_predict" \
-    --arg system "$sys" \
-    --arg user "$usr" \
-    '{model: $model, stream: false, options: {num_predict: $num_predict},
-      messages: [{role: "system", content: $system}, {role: "user", content: $user}]}') \
-    || die 1 'Failed to build JSON payload'
+  if ((${BCS_JSON_MODE:-0})); then
+    payload=$(jq -n \
+      --arg model "$ollama_model" \
+      --argjson num_predict "$num_predict" \
+      --arg system "$sys" \
+      --arg user "$usr" \
+      '{model: $model, stream: false, format: "json",
+        options: {num_predict: $num_predict},
+        messages: [{role: "system", content: $system}, {role: "user", content: $user}]}') \
+      || die 1 'Failed to build JSON payload'
+  else
+    payload=$(jq -n \
+      --arg model "$ollama_model" \
+      --argjson num_predict "$num_predict" \
+      --arg system "$sys" \
+      --arg user "$usr" \
+      '{model: $model, stream: false, options: {num_predict: $num_predict},
+        messages: [{role: "system", content: $system}, {role: "user", content: $user}]}') \
+      || die 1 'Failed to build JSON payload'
+  fi
 
   local -- raw body
   local -i http_code
@@ -615,15 +717,30 @@ _llm_openai() {
   local -- api_model=${BCS_OPENAI_MODEL:-${OPENAI_MODELS[$model]:-$model}}
   local -i max_tokens=${EFFORT_TOKENS[$effort]}
 
+  # Native JSON mode via response_format:{type:"json_object"} (GPT-4+).
+  # Forces the model to emit only valid JSON. System/user prompt must
+  # mention "JSON" somewhere -- our JSON-mode prompt satisfies that.
   local -- payload
-  payload=$(jq -n \
-    --arg model "$api_model" \
-    --argjson max_tokens "$max_tokens" \
-    --arg system "$sys" \
-    --arg user "$usr" \
-    '{model: $model, max_completion_tokens: $max_tokens,
-      messages: [{role: "system", content: $system}, {role: "user", content: $user}]}') \
-    || die 1 'Failed to build JSON payload'
+  if ((${BCS_JSON_MODE:-0})); then
+    payload=$(jq -n \
+      --arg model "$api_model" \
+      --argjson max_tokens "$max_tokens" \
+      --arg system "$sys" \
+      --arg user "$usr" \
+      '{model: $model, max_completion_tokens: $max_tokens,
+        response_format: {type: "json_object"},
+        messages: [{role: "system", content: $system}, {role: "user", content: $user}]}') \
+      || die 1 'Failed to build JSON payload'
+  else
+    payload=$(jq -n \
+      --arg model "$api_model" \
+      --argjson max_tokens "$max_tokens" \
+      --arg system "$sys" \
+      --arg user "$usr" \
+      '{model: $model, max_completion_tokens: $max_tokens,
+        messages: [{role: "system", content: $system}, {role: "user", content: $user}]}') \
+      || die 1 'Failed to build JSON payload'
+  fi
 
   local -- raw body
   local -i http_code
@@ -653,15 +770,29 @@ _llm_google() {
   local -- api_model=${BCS_GOOGLE_MODEL:-${GOOGLE_MODELS[$model]:-$model}}
   local -i max_tokens=${EFFORT_TOKENS[$effort]}
 
+  # Native JSON mode via generationConfig.response_mime_type. Gemini 1.5+
+  # supports "application/json" to force a structured-output response.
   local -- payload
-  payload=$(jq -n \
-    --argjson max_tokens "$max_tokens" \
-    --arg system "$sys" \
-    --arg user "$usr" \
-    '{systemInstruction: {parts: [{text: $system}]},
-      contents: [{role: "user", parts: [{text: $user}]}],
-      generationConfig: {maxOutputTokens: $max_tokens}}') \
-    || die 1 'Failed to build JSON payload'
+  if ((${BCS_JSON_MODE:-0})); then
+    payload=$(jq -n \
+      --argjson max_tokens "$max_tokens" \
+      --arg system "$sys" \
+      --arg user "$usr" \
+      '{systemInstruction: {parts: [{text: $system}]},
+        contents: [{role: "user", parts: [{text: $user}]}],
+        generationConfig: {maxOutputTokens: $max_tokens,
+                           response_mime_type: "application/json"}}') \
+      || die 1 'Failed to build JSON payload'
+  else
+    payload=$(jq -n \
+      --argjson max_tokens "$max_tokens" \
+      --arg system "$sys" \
+      --arg user "$usr" \
+      '{systemInstruction: {parts: [{text: $system}]},
+        contents: [{role: "user", parts: [{text: $user}]}],
+        generationConfig: {maxOutputTokens: $max_tokens}}') \
+      || die 1 'Failed to build JSON payload'
+  fi
 
   local -- url=https://generativelanguage.googleapis.com/v1beta/models/"$api_model":generateContent
   local -- raw body
@@ -697,7 +828,52 @@ _llm_claude_cli() {
 
   model=${BCS_ANTHROPIC_MODEL:-${ANTHROPIC_MODELS[$model]:-$model}}
 
-  local -- prompt="You are a Bash script compliance validator.
+  local -- prompt
+  if ((${BCS_JSON_MODE:-0})); then
+    prompt="You are a Bash script compliance validator emitting structured JSON output.
+
+Analyze @$script_file against the Bash Coding Standard defined in @$bcs_file.
+
+$tier_instr
+
+Level mapping for JSON output:
+- Tier \"core\"        -> level \"error\"
+- Tier \"recommended\" -> level \"warning\"
+- Tier \"style\"       -> level \"warning\"
+- Tier \"disabled\"    -> OMIT entirely
+
+Respect inline suppression: \`#bcscheck disable=BCSxxxx\` exempts the next line/block.
+
+Return a JSON array of finding objects. Each finding object has this shape:
+  {
+    \"line\": <1-indexed integer>,
+    \"endLine\": <1-indexed integer, same as line if single-line>,
+    \"level\": \"error\" | \"warning\" | \"info\",
+    \"code\": <integer, BCS code without the BCS prefix (e.g. 101 for BCS0101)>,
+    \"bcsCode\": \"BCS####\",
+    \"tier\": \"core\" | \"recommended\" | \"style\",
+    \"message\": \"<one sentence describing the violation>\",
+    \"fixSuggestion\": \"<human-readable remediation advice>\"
+  }
+
+Example of a valid response (one finding):
+[
+  {
+    \"line\": 4,
+    \"endLine\": 4,
+    \"level\": \"error\",
+    \"code\": 101,
+    \"bcsCode\": \"BCS0101\",
+    \"tier\": \"core\",
+    \"message\": \"Missing set -euo pipefail strict mode declaration.\",
+    \"fixSuggestion\": \"Add 'set -euo pipefail' and 'shopt -s inherit_errexit' right after the shebang.\"
+  }
+]
+
+Return ONLY the JSON array. No markdown code fences. No commentary. No preamble.
+If there are no findings, return []."
+  else
+    prompt="You are a Bash script compliance validator.
 
 Analyze @$script_file against the Bash Coding Standard defined in @$bcs_file.
 
@@ -713,10 +889,17 @@ For each finding, report:
 At the end, provide a summary table: | BCS Code | Tier | Severity | Line(s) | Description |.
 
 Respect inline suppression: eg, #bcscheck disable=BCS0101 exempts the next line/block."
+  fi
 
   [[ -z $filter_instr ]] || prompt+=$'\n\n'"$filter_instr"
   [[ -z $policy_text ]] || prompt+=$'\n'"$policy_text"
-  ((strict)) && prompt+=$'\n\nSTRICT MODE: Treat all warnings as [ERROR].' ||:
+  if ((strict)); then
+    if ((${BCS_JSON_MODE:-0})); then
+      prompt+=$'\n\nSTRICT MODE: Map recommended/style violations to level "error" instead of "warning".'
+    else
+      prompt+=$'\n\nSTRICT MODE: Treat all warnings as [ERROR].'
+    fi
+  fi
 
   # cd to clean temp dir -- prevents claude from loading local CLAUDE.md
   local -- check_dir
@@ -856,7 +1039,7 @@ cmd_template() {
 
 cmd_check() {
   local -- script_file='' model=${BCS_MODEL:-balanced} effort=${BCS_EFFORT:-medium}
-  local -i strict=${BCS_STRICT:-0} debug=${BCS_DEBUG:-0}
+  local -i strict=${BCS_STRICT:-0} debug=${BCS_DEBUG:-0} json_output=${BCS_JSON:-0}
   local -ar onoff=(off on)
   local -- backend=''
   local -- tier_filter=${BCS_TIER:-} min_tier_filter=${BCS_MIN_TIER:-}
@@ -876,12 +1059,13 @@ cmd_check() {
                     [[ " ${VALID_TIER_FILTERS[*]} " == *" $min_tier_filter "* ]] \
                       || die 22 "Invalid tier ${min_tier_filter@Q} (valid: ${VALID_TIER_FILTERS[*]})"
                     ;;
+    -j|--json)      json_output=1 ;;
     -D|--debug)     debug=1 ;;
     -v|--verbose)   VERBOSE=1 ;;
     -q|--quiet)     VERBOSE=0 ;;
     -h|--help)      show_check_help; return 0 ;;
     --)             shift; [[ -n ${1:-} ]] && { script_file=$1; shift; }; break ;;
-    -[mesSTMDvqh]?*) set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+    -[mesSTMDvqhj]?*) set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
     -*)             die 22 "Invalid option ${1@Q}" ;;
     *)              [[ -z $script_file ]] || die 2 'Only one script file allowed'
                     script_file=$1
@@ -970,6 +1154,13 @@ cmd_check() {
 
   policy_text=$(_policy_summary)
 
+  # Export JSON-mode switch for backends. Each _llm_* function reads this
+  # env var to flip native JSON-mode payload fields (OpenAI response_format,
+  # Google response_mime_type, Ollama format) and the claude-cli prompt
+  # template. Backends without native JSON mode (Anthropic, Claude CLI)
+  # rely on prompt discipline plus _strip_json_fences as a fallback.
+  export BCS_JSON_MODE=$json_output
+
   if [[ $backend == claude ]]; then
     result=$(_llm_claude_cli "$model" "$effort" "$bcs_file" "$script_file" "$strict" \
                "$tier_instr" "$filter_instr" "$policy_text") || exit_code=$?
@@ -991,8 +1182,65 @@ cmd_check() {
       *)      die 1 "Unexpected effort: ${effort@Q}" ;;
     esac
 
-    #bcscheck disable=BCS1201 — LLM prompt prose; wrapping degrades instruction quality
-    usr_prompt="Analyze the following numbered script against the Bash Coding Standard in your system context.
+    if ((json_output)); then
+      #bcscheck disable=BCS1201 — LLM prompt prose; wrapping degrades instruction quality
+      usr_prompt="Analyze the following numbered script against the Bash Coding Standard in your system context.
+
+$tier_instr
+
+Level mapping for JSON output:
+- Tier \"core\"        -> level \"error\"
+- Tier \"recommended\" -> level \"warning\"
+- Tier \"style\"       -> level \"warning\"
+- Tier \"disabled\"    -> OMIT entirely
+
+Rules:
+- Only report actual deviations. Do NOT report passing rules or retracted findings.
+- Only report findings about the script content provided. Do NOT assume project structure.
+- BCS0405 precedence: Do NOT flag missing reference-template code (BCS0703, BCS0706, BCS0701) if the script does not use it.
+- BCS0606: \`((cond)) && action ||:\` with \`||:\` present is NOT a violation.
+- Inline suppression: \`#bcscheck disable=BCSxxxx\` suppresses the next command or block.
+- Line numbers are provided -- reference them exactly.
+
+$effort_guidance"
+      [[ -z $filter_instr ]] || usr_prompt+=$'\n\n'"$filter_instr"
+      ((strict)) && usr_prompt+=$'\n\nSTRICT MODE: Map recommended/style violations to level \"error\" instead of \"warning\".' ||:
+      usr_prompt+="
+
+Return a JSON array of finding objects. Each finding object has this shape:
+  {
+    \"line\": <1-indexed integer>,
+    \"endLine\": <1-indexed integer, same as line if single-line>,
+    \"level\": \"error\" | \"warning\" | \"info\",
+    \"code\": <integer, BCS code without the BCS prefix (e.g. 101 for BCS0101)>,
+    \"bcsCode\": \"BCS####\",
+    \"tier\": \"core\" | \"recommended\" | \"style\",
+    \"message\": \"<one sentence describing the violation>\",
+    \"fixSuggestion\": \"<human-readable remediation advice>\"
+  }
+
+Example of a valid response (one finding):
+[
+  {
+    \"line\": 4,
+    \"endLine\": 4,
+    \"level\": \"error\",
+    \"code\": 101,
+    \"bcsCode\": \"BCS0101\",
+    \"tier\": \"core\",
+    \"message\": \"Missing set -euo pipefail strict mode declaration.\",
+    \"fixSuggestion\": \"Add 'set -euo pipefail' and 'shopt -s inherit_errexit' right after the shebang.\"
+  }
+]
+
+Return ONLY the JSON array. No markdown code fences. No commentary. No preamble.
+If there are no findings, return [].
+
+--- Script to analyze ---
+$numbered_script"
+    else
+      #bcscheck disable=BCS1201 — LLM prompt prose; wrapping degrades instruction quality
+      usr_prompt="Analyze the following numbered script against the Bash Coding Standard in your system context.
 
 $tier_instr
 
@@ -1005,15 +1253,16 @@ Rules:
 - Line numbers are provided -- reference them exactly.
 
 $effort_guidance"
-    [[ -z $filter_instr ]] || usr_prompt+=$'\n\n'"$filter_instr"
-    ((strict)) && usr_prompt+=$'\n\nSTRICT MODE: Treat all WARNINGs as VIOLATIONs (label as [ERROR]).' ||:
-    usr_prompt+="
+      [[ -z $filter_instr ]] || usr_prompt+=$'\n\n'"$filter_instr"
+      ((strict)) && usr_prompt+=$'\n\nSTRICT MODE: Treat all WARNINGs as VIOLATIONs (label as [ERROR]).' ||:
+      usr_prompt+="
 
 Format each finding as: [ERROR|WARN] BCSxxxx line N: description, then a fix recommendation.
 End with a summary table: | BCS Code | Tier | Severity | Line(s) | Description |
 
 --- Script to analyze ---
 $numbered_script"
+    fi
 
     case $backend in
       anthropic) result=$(_llm_anthropic "$model" "$effort" "$sys_prompt" "$usr_prompt") || exit_code=$? ;;
@@ -1031,8 +1280,6 @@ $numbered_script"
     result=${result%$'\n___TOKENS___ '*}
   fi
 
-  [[ -z $result ]] || echo "$result"
-
   # Build diagnostic message list. Claude CLI backend does not emit token
   # counts, so suppress the Tokens line entirely when empty or all-zero --
   # avoid printing noise like "Tokens: " or "Tokens: in=0 out=0".
@@ -1044,9 +1291,37 @@ $numbered_script"
 
   ((!VERBOSE)) || info "${diag_msgs[@]}"
 
-  # Severity-based exit: any [ERROR] finding promotes exit code to 1
-  if ((exit_code == 0)) && [[ $result == *'[ERROR]'* ]]; then
-    exit_code=1
+  # Output + severity-based exit
+  if ((json_output)); then
+    # JSON mode: validate raw array, wrap with envelope, emit on stdout.
+    # On validation failure, preserve the raw response in the dump file
+    # and exit 5 so CI can surface the problem without re-running.
+    if [[ -n $result ]]; then
+      local -- json_doc
+      if json_doc=$(_render_json_output "$result" "$script_file" "$backend" \
+                      "$model" "$effort" "$strict" "$SECONDS" 2>/dev/null); then
+        echo "$json_doc"
+        if ((exit_code == 0)) && \
+           jq -e '.comments[]? | select(.level == "error")' \
+               <<< "$json_doc" >/dev/null 2>&1; then
+          exit_code=1
+        fi
+      else
+        warn 'LLM returned invalid JSON (raw response preserved)'
+        # Claude CLI does not dump automatically; overwrite the dump file
+        # with the raw result so --debug can surface it uniformly.
+        if [[ $backend == claude && -n ${BCS_RESPONSE_DUMP:-} ]]; then
+          printf '%s\n' "$result" > "$BCS_RESPONSE_DUMP" 2>/dev/null ||:
+        fi
+        exit_code=5
+      fi
+    fi
+  else
+    [[ -z $result ]] || echo "$result"
+    # Severity-based exit: any [ERROR] finding promotes exit code to 1
+    if ((exit_code == 0)) && [[ $result == *'[ERROR]'* ]]; then
+      exit_code=1
+    fi
   fi
 
   # Diagnostics on failure or debug:

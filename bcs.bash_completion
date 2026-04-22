@@ -74,7 +74,7 @@ _bcs() {
       esac
       case $cur in
         -*)
-          mapfile -t COMPREPLY < <(compgen -W '-m --model -e --effort -s --strict -S --no-strict -T --tier -M --min-tier -D --debug -v --verbose -q --quiet -h --help' -- "$cur")
+          mapfile -t COMPREPLY < <(compgen -W '-m --model -e --effort -s --strict -S --no-strict -T --tier -M --min-tier -j --json -D --debug -v --verbose -q --quiet -h --help' -- "$cur")
           ;;
         *)
           _filedir
