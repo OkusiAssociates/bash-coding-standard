@@ -41,6 +41,16 @@ result=$(_sniff_backend claude-code)
 assert_equal claude "$result"
 [[ $result != anthropic ]] || printf '  %sNOTE%s ordering regressed: claude-code leaked to anthropic\n' "$YELLOW" "$NC"
 
+# Guard-rail assertions: explicitly pin the load-bearing case order in
+# _sniff_backend. docs/CRITICAL-ANALYSIS.md flagged the comment-only
+# safeguard at bcs:519-523 as a documentation smell; these assertions turn
+# the invariant into test coverage.
+begin_test 'claude-code sentinel pins to claude backend (load-bearing case order)'
+assert_equal claude "$(_sniff_backend claude-code)" 'claude-code sentinel'
+
+begin_test 'claude-sonnet routes to anthropic (not shadowed by claude-code pattern)'
+assert_equal anthropic "$(_sniff_backend claude-sonnet-4-6)" 'claude-sonnet-4-6'
+
 # --- Anthropic via claude-* ---------------------------------------------
 
 begin_test 'claude-sonnet-4-6 -> anthropic'

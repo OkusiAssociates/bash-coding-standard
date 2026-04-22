@@ -178,6 +178,22 @@ assert_gt() {
   fi
 }
 
+# Assert actual is a superset of expected (both newline-separated, sorted)
+assert_superset() {
+  local -- expected=$1 actual=$2 msg=${3:-$CURRENT_TEST}
+  local -- missing
+  missing=$(comm -23 <(echo "$expected") <(echo "$actual"))
+  if [[ -z $missing ]]; then
+    printf '  %s✓%s %s\n' "$GREEN" "$NC" "$msg"
+    TESTS_PASSED+=1
+    return 0
+  else
+    printf '  %s✗%s %s — missing: %s\n' "$RED" "$NC" "$msg" "$(echo "$missing" | tr '\n' ' ')"
+    TESTS_FAILED+=1
+    return 1
+  fi
+}
+
 # Print test summary
 print_summary() {
   local -- test_name=${1:-Tests}
