@@ -2935,6 +2935,33 @@ DESTDIR ?=
 - `uninstall` must remove everything `install` creates.
 - `check` must verify installed commands are callable. Skip `check` when `DESTDIR` is set (staged installs).
 
+### Source Path Anchoring
+
+Install recipes must not depend on the invoking working directory. Anchor every *source* path (not destination) to the Makefile's own directory, so `sudo make -f /path/to/project/Makefile install` from an arbitrary CWD behaves identically to `cd project && sudo make install`.
+
+```makefile
+# Directory of this Makefile (trailing slash). Anchors source paths so
+# 'make install' works regardless of invoking CWD and never picks up a
+# like-named file from a parent directory.
+srcdir := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+```
+
+- `$(MAKEFILE_LIST)` is GNU-make's list of parsed Makefiles.
+- `$(lastword ...)` selects the currently-parsed one (robust under `include`).
+- `$(abspath ...)` canonicalises to an absolute path.
+- `$(dir ...)` strips the filename and keeps the trailing slash — so use `$(srcdir)LICENSE`, not `$(srcdir)/LICENSE`.
+
+Prefix every *source* in install recipes with `$(srcdir)`. Destinations keep `$(DESTDIR)$(BINDIR)/...` form unchanged. For recipes using `tar -cf - <reldir>`, wrap with `cd $(srcdir) && tar ...` to preserve archive-internal relative paths.
+
+```makefile
+# correct — source anchored, works from any CWD
+install -m 755 $(srcdir)myscript $(DESTDIR)$(BINDIR)/myscript
+
+# wrong — resolves against invoking CWD; may silently pick up a
+# like-named file from a parent directory, or fail cryptically
+install -m 755 myscript $(DESTDIR)$(BINDIR)/myscript
+```
+
 ### Template
 
 ```makefile
@@ -2944,19 +2971,23 @@ MANDIR  ?= $(PREFIX)/share/man/man1
 COMPDIR ?= /etc/bash_completion.d
 DESTDIR ?=
 
+# Directory of this Makefile (trailing slash). Anchors source paths so
+# 'make install' works regardless of invoking CWD.
+srcdir := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
 .PHONY: all install uninstall check test help
 
 all: help
 
 install:
 	install -d $(DESTDIR)$(BINDIR)
-	install -m 755 myscript $(DESTDIR)$(BINDIR)/myscript
+	install -m 755 $(srcdir)myscript $(DESTDIR)$(BINDIR)/myscript
 	@# Manpages (if present)
 	install -d $(DESTDIR)$(MANDIR)
-	install -m 644 myscript.1 $(DESTDIR)$(MANDIR)/myscript.1
+	install -m 644 $(srcdir)myscript.1 $(DESTDIR)$(MANDIR)/myscript.1
 	@# Bash completion (if present, skip if dir missing)
 	@if [ -d $(DESTDIR)$(COMPDIR) ]; then \
-	  install -m 644 .bash_completion $(DESTDIR)$(COMPDIR)/myscript; \
+	  install -m 644 $(srcdir).bash_completion $(DESTDIR)$(COMPDIR)/myscript; \
 	fi
 	@if [ -z "$(DESTDIR)" ]; then $(MAKE) --no-print-directory check; fi
 
