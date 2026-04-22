@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ## SIMPLE COMMAND EXPANSION
 
 When a simple command is executed, the shell performs the following expansions, assignments, and redirections, from left to right, in the following order.

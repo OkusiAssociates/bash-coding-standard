@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ### Readline Notation
 
 In this section, Emacs-style notation denotes keystrokes. Control keys are written C-key, e.g., C-n means Control-N. Meta keys are written M-key, so M-x means Meta-X. On keyboards without a meta key, M-x means ESC x (press Escape then x), making ESC the meta prefix. The combination M-C-x means ESC-Control-x, or press Escape then hold Control while pressing x.

@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ## INVOCATION
 
 A login shell is one whose first character of argument zero is a -, or one started with the --login option.

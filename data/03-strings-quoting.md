@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 # Section 03: Strings & Quoting
 
 ## BCS0300 Section Overview

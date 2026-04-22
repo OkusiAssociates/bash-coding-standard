@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 # Bash Coding Standard (BCS)
 
 **Concise, actionable coding rules for BCS Bash 5.2+**
@@ -35,6 +36,7 @@ Templates for new scripts: [complete.sh.template](/ai/scripts/Okusi/BCS/examples
 
 ---
 
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 # Section 01: Script Structure & Layout
 
 ## BCS0100 Section Overview
@@ -384,6 +386,7 @@ The cascade `source`-based pattern is the standard approach. Scripts that intent
 
 ---
 
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 # Section 02: Variables & Data Types
 
 ## BCS0200 Section Overview
@@ -595,6 +598,7 @@ Make derived variables readonly only after all parsing and derivation is complet
 
 ---
 
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 # Section 03: Strings & Quoting
 
 ## BCS0300 Section Overview
@@ -765,6 +769,7 @@ Use braces only when required: `${var:-default}`, `${file##*/}`, `${array[@]}`, 
 
 ---
 
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 # Section 04: Functions & Libraries
 
 ## BCS0400 Section Overview
@@ -1145,6 +1150,7 @@ Cross-references: BCS0504 (pipe-to-while subshells), BCS0903 (process substituti
 
 ---
 
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 # Section 05: Control Flow
 
 ## BCS0500 Section Overview
@@ -1364,6 +1370,7 @@ fi
 
 ---
 
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 # Section 06: Error Handling
 
 ## BCS0600 Section Overview
@@ -1579,6 +1586,7 @@ The `||:` catches failure from **the entire chain**, including the arithmetic co
 
 ---
 
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 # Section 07: I/O & Messaging
 
 ## BCS0700 Section Overview
@@ -1869,6 +1877,7 @@ Use `2>/dev/null` or `2>file` when suppressing only stderr. The `&>` operator is
 
 ---
 
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 # Section 08: Command-Line Arguments
 
 ## BCS0800 Section Overview
@@ -2066,6 +2075,7 @@ See also: BCS0701 (message control flags), BCS0802 (version output format), BCS1
 
 ---
 
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 # Section 09: File Operations
 
 ## BCS0900 Section Overview
@@ -2232,6 +2242,7 @@ Cross-references: BCS0411 (subshell return patterns), BCS0504 (process substitut
 
 ---
 
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 # Section 10: Security
 
 ## BCS1000 Section Overview
@@ -2440,6 +2451,7 @@ Cross-references: BCS1001 (SUID prohibition on bash itself), BCS1002 (PATH harde
 
 ---
 
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 # Section 11: Concurrency & Jobs
 
 ## BCS1100 Section Overview
@@ -2604,6 +2616,7 @@ Validate success conditions beyond exit code — check output validity: `[[ -s "
 
 ---
 
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 # Section 12: Style & Development
 
 ## BCS1200 Section Overview
@@ -3005,6 +3018,7 @@ See also: [Date Formatting Reference](/ai/scripts/Okusi/BCS/benchmarks/date-prin
 
 ---
 
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 # Compliance Checking Reference
 
 This section summarises key rules that are frequently misapplied during automated compliance checking. It does not introduce new rules — it reinforces existing ones.

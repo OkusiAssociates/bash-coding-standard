@@ -1,0 +1,48 @@
+BCS Licensing -- Plain-English Summary
+======================================
+
+The BCS repository contains three kinds of material, each under a
+different license. This file summarises the split; the authoritative
+license texts are `LICENSE`, `data/LICENSE`, and the per-project
+`LICENSE` files inside `examples/lib/**/`.
+
+1. Software -- GPL-3.0-or-later
+   -----------------------------
+   The `bcs` and `bcscheck` CLI tools, the test suite (`tests/`),
+   the Makefile, bash completions (`*.bash_completion`), sample
+   configuration (`*.sample`), script templates
+   (`examples/templates/`), man pages (`bcs.1`, `docs/BCS-bash.1`),
+   and the rewritten Bash 5.2 reference (`docs/BCS-bash/`) are
+   licensed under the GNU General Public License, version 3 or
+   later. See `LICENSE` for the full text.
+
+2. The Standard (prose) -- CC BY-SA 4.0
+   -------------------------------------
+   The Bash Coding Standard document -- everything under `data/` --
+   is licensed under Creative Commons Attribution-ShareAlike 4.0
+   International. This is a creative work (prose), and CC BY-SA
+   is the license Creative Commons itself recommends for such
+   material. See `data/LICENSE` for the full text.
+
+   Promotional articles under `docs/promo/` are also CC BY-SA 4.0.
+
+3. Bundled third-party code -- per-project LICENSE
+   -----------------------------------------------
+   Reference implementations under `examples/lib/**/` (cln,
+   md2ansi, which, symlink, dux, ls.types, trim, post_slug,
+   elapsed_time, get-chassis, stopwords.bash, en_ID, shlock) ship
+   with their own `LICENSE` files -- predominantly GPL-3. Those
+   licenses govern the code inside their respective directories.
+
+   Pre-existing upstream Bash manual sources under `docs/bash5.2/`
+   are preserved for reference under their original terms and are
+   not relicensed by this project.
+
+Every first-party file carries a machine-readable
+`SPDX-License-Identifier` header (`GPL-3.0-or-later` for code,
+`CC-BY-SA-4.0` for prose) so tooling such as REUSE and grep can
+identify the license of any single file without parsing this
+summary.
+
+If you redistribute BCS or a subset of it, please preserve the
+relevant LICENSE file(s) alongside the files they cover.

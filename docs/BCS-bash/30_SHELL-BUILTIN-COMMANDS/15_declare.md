@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ### declare
 declare [-aAfFgiIlnrtux] [-p] [name[=value] ...]
 typeset [-aAfFgiIlnrtux] [-p] [name[=value] ...]

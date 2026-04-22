@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ## DEFINITIONS
 
 The following definitions are used throughout this document.

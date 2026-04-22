@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # run-all-tests.sh - Master test runner for BCS test suite
 set -euo pipefail
 shopt -s inherit_errexit nullglob

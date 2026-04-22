@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ## QUOTING
 
 Quoting removes the special meaning of certain characters or words to the shell. It can disable special treatment for special characters, prevent reserved words from being recognized as such, and prevent parameter expansion.

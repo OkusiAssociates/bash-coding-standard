@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 # Section 06: Error Handling
 
 ## BCS0600 Section Overview

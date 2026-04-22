@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 #shellcheck disable=SC2015
 # bcs - Bash Coding Standard CLI toolkit
 # Six subcommands for viewing, generating, and checking compliance with the Bash Coding Standard.

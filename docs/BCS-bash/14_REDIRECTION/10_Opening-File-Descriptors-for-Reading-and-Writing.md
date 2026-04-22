@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ### Opening File Descriptors for Reading and Writing
 
 The redirection operator

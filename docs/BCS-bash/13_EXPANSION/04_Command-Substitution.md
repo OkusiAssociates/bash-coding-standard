@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ### Command Substitution
 
 Command substitution replaces a command with its standard output:

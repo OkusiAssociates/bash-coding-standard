@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ## REDIRECTION
 
 Before a command is executed, its input and output may be redirected using a special notation interpreted by

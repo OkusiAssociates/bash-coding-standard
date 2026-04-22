@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ### Arithmetic Expansion
 
 Arithmetic expansion evaluates an expression and substitutes the result:

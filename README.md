@@ -296,4 +296,18 @@ make check && make test              # Equivalent shortcuts
 
 ## License & Acknowledgments
 
-Licensed under [CC BY-SA 4.0](LICENSE). Developed by [Okusi Associates](https://www.okusi.id) for the [Indonesian Open Technology Foundation (YaTTI)](https://www.yatti.id).
+BCS is dual-licensed to suit the two kinds of material it contains:
+
+- The **BCS CLI tooling** (`bcs`, `bcscheck`, tests, Makefile, templates,
+  man pages, first-party examples) is licensed under
+  [GPL-3.0-or-later](LICENSE).
+- The **Bash Coding Standard document** (`data/*`) -- prose, a creative
+  work -- is licensed under [CC BY-SA 4.0](data/LICENSE).
+- Bundled reference implementations under `examples/lib/**/` ship with
+  their own per-project LICENSE files (predominantly GPL-3).
+
+See [`COPYING`](COPYING) for a plain-English summary of the split. Every
+first-party file carries an `SPDX-License-Identifier` header so tooling
+(e.g. REUSE) can identify each file's licence unambiguously.
+
+Developed by [Okusi Associates](https://www.okusi.id) for the [Indonesian Open Technology Foundation (YaTTI)](https://www.yatti.id).

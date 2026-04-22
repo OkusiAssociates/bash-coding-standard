@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # test-sniff-backend.sh - Unit tests for _sniff_backend()
 #
 # _sniff_backend is pure (no I/O), so we source the bcs script to access

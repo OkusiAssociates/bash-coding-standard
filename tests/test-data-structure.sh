@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # test-data-structure.sh - Validate data directory structure and BCS codes
 set -euo pipefail
 shopt -s inherit_errexit
@@ -40,11 +41,18 @@ done
 # Test: each section file starts with # Section N:
 begin_test 'section files have proper headers'
 declare -i good_headers=0
-declare -- first_line f
+declare -- first_line line f
 for f in "$DATA_DIR"/[0-9]*.md; do
   [[ "${f##*/}" == BASH-CODING-STANDARD.md ]] && continue
   [[ "${f##*/}" == 00-* || "${f##*/}" == 99-* ]] && continue
-  IFS= read -r first_line < "$f"
+  # First non-empty, non-SPDX-comment line must be a "# Section N:" header.
+  first_line=''
+  while IFS= read -r line; do
+    [[ -z $line ]] && continue
+    [[ $line == '<!--'*'SPDX-License-Identifier:'*'-->' ]] && continue
+    first_line=$line
+    break
+  done < "$f"
   if [[ "$first_line" =~ ^#\ Section\ [0-9]+: ]]; then
     good_headers+=1
   else

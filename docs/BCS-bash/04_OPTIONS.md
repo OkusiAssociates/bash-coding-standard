@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ## OPTIONS
 
 All single-character shell options documented in the description of the set builtin, including -o, can be used as options when the shell is invoked. In addition, bash interprets the following options at invocation:

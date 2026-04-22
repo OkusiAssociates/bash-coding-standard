@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 # bcscheck(1) bash completion — mirrors 'bcs check' options
 # shellcheck shell=bash
 

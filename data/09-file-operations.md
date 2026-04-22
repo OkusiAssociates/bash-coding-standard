@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 # Section 09: File Operations
 
 ## BCS0900 Section Overview

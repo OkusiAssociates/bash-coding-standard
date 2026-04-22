@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # Bash 5.2 Reference (Strict Mode)
 
 This reference documents Bash 5.2 under the following standing assumptions:

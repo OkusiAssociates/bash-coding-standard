@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ## COMMENTS
 
 In a non-interactive shell, or an interactive shell in which the interactive_comments option to the shopt

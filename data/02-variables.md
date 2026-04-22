@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 # Section 02: Variables & Data Types
 
 ## BCS0200 Section Overview

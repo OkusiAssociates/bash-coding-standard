@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ### Commands for Manipulating the History
 
 accept-line (Newline, Return)

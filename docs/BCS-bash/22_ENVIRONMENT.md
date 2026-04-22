@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ## ENVIRONMENT
 
 When a program is invoked it is given an array of strings called the environment. This is a list of name-value pairs, of the form name=value.

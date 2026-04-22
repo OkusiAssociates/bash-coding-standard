@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ## SHELL BUILTIN COMMANDS
 
 Unless otherwise noted, each builtin command documented in this section as accepting options preceded by -

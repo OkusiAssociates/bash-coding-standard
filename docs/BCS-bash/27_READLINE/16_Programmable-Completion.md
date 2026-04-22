@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ### Programmable Completion
 
 When word completion is attempted for an argument to a command for which a completion specification (a compspec) has been defined using the complete builtin, the programmable completion facilities are invoked.

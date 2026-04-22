@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ### Miscellaneous
 
 re-read-init-file (C-x C-r)

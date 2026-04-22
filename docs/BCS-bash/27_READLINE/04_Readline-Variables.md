@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ### Readline Variables
 
 Readline has variables that can be used to further customize its behavior. A variable may be set in the inputrc file with a statement of the form

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # test-detect-backend.sh - Unit tests for _detect_backend()
 #
 # _detect_backend probes claude CLI on PATH first, then Ollama via HTTP,

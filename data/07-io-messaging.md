@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 # Section 07: I/O & Messaging
 
 ## BCS0700 Section Overview

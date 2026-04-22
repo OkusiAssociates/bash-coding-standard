@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ### bind
 bind [-m keymap] [-lpsvPSVX]
 bind [-m keymap] [-q function] [-u function] [-r keyseq]

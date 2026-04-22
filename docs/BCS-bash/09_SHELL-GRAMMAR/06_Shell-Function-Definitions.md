@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ### Shell Function Definitions
 
 A shell function is an object called like a simple command that executes a compound command with a new set of positional parameters. Shell functions are declared as follows:

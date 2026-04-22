@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ## EXPANSION
 
 Expansion is performed on the command line after it has been split into words.  There are seven kinds of

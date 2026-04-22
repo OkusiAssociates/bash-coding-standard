@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ## CONDITIONAL EXPRESSIONS
 
 Conditional expressions are used by the [[ compound command to test file attributes and perform string and arithmetic comparisons.

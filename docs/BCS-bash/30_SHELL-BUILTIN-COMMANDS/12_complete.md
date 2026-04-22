@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ### complete
 complete [-abcdefgjksuv] [-o comp-option] [-DEI] [-A action] [-G globpat] [-W wordlist]
  [-F function] [-C command] [-X filterpat] [-P prefix] [-S suffix] name [name ...]

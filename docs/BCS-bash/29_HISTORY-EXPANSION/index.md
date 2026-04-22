@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ## HISTORY EXPANSION
 
 The shell supports a history expansion feature that is similar to the history expansion in csh.  This section

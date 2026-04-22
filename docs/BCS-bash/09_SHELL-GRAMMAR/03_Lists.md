@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ### Lists
 
 A list is a sequence of one or more pipelines separated by ;, &, &&, or ||, and optionally terminated by ;, &, or a newline.

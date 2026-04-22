@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # bcscheck - BCS compliance checker convenience shim
 # Passes all arguments to bcs check; defaults via ~/.config/bcs/bcs.conf
 set -euo pipefail

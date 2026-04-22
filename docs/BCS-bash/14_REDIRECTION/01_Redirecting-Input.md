@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ### Redirecting Input
 
 Redirection of input causes the file whose name results from the expansion of word to be opened for reading on file descriptor n, or standard input (file descriptor 0) if n is not specified.

@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ## SIGNALS
 
 When bash is interactive, in the absence of any traps, it ignores SIGTERM (so that kill 0 does not kill an interactive shell), and SIGINT is caught and handled (so that the wait builtin is interruptible). In all cases, bash ignores SIGQUIT. If job control is in effect, bash ignores SIGTTIN, SIGTTOU, and SIGTSTP.

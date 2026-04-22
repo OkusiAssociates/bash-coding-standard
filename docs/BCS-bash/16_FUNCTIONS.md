@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ## FUNCTIONS
 
 A shell function, defined as described under SHELL GRAMMAR, stores a series of commands for later execution. When the name of a shell function is used as a simple command name, the list of commands associated with that function name is executed. Functions execute in the context of the current shell; no new process is created to interpret them (contrast this with executing a shell script). When a function executes, the arguments to the function become the positional parameters during its execution. Special parameter # is updated to reflect the change. Special parameter 0 is unchanged. The first element of the FUNCNAME variable is set to the name of the function while it is executing.

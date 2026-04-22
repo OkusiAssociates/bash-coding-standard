@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ## RESTRICTED SHELL
 
 If bash is started with the name rbash, or the -r option is supplied at invocation, the shell becomes restricted. A restricted shell sets up an environment more controlled than the standard shell. It behaves identically to bash with the exception that the following are disallowed or not performed:

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # test-helpers.sh - Shared test assertion functions
 # Source this file in test scripts: source "$(dirname "$0")"/test-helpers.sh
 set -euo pipefail

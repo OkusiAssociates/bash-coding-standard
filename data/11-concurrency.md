@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 # Section 11: Concurrency & Jobs
 
 ## BCS1100 Section Overview

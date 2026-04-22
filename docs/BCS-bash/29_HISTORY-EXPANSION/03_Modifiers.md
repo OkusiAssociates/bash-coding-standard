@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ### Modifiers
 
 After the optional word designator, one or more of the following modifiers may appear, each preceded by a :. These modify the word or words selected from the history event.

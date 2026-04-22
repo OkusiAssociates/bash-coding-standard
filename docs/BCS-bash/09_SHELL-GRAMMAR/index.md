@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ## SHELL GRAMMAR
 
 This section describes the syntax of the various forms of shell commands.

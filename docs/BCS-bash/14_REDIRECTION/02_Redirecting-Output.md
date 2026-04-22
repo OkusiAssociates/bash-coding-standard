@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ### Redirecting Output
 
 Redirection of output causes the file whose name results from the expansion of word to be opened for writing on file descriptor n, or standard output (file descriptor 1) if n is not specified. If the file does not exist it is created; if it does exist it is truncated to zero size.

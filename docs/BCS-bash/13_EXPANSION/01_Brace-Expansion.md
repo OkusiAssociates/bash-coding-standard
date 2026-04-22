@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ### Brace Expansion
 
 Brace expansion generates arbitrary strings. A pattern takes the form of an optional preamble, followed by either a series of comma-separated strings or a sequence expression between a pair of braces, followed by an optional postscript. The preamble is prefixed to each string within the braces, and the postscript is appended to each resulting string, expanding left to right.

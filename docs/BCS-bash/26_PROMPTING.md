@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ## PROMPTING
 
 When executing interactively, bash displays the primary prompt PS1 when it is ready to read a command, and the secondary prompt PS2 when it needs more input to complete a command. Bash displays PS0 after it reads a command but before executing it. Bash displays PS4 as described under SHELL VARIABLES before tracing each command when the -x option is enabled. Bash allows these prompt strings to be customized by inserting backslash-escaped special characters that are decoded as follows:

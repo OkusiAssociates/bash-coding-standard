@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ### Readline Initialization
 
 Readline is customized by putting commands in an initialization file (the inputrc file). The filename is taken from the value of the INPUTRC variable. If that variable is unset, the default is ~/.inputrc. If that file does not exist or cannot be read, the ultimate default is /etc/inputrc. When a program that uses the readline library starts up, the initialization file is read, and key bindings and variables are set.

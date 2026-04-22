@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ## HISTORY
 
 When the -o history option to the set builtin is enabled, the shell provides access to the command history, the list of commands previously typed. The value of HISTSIZE is used as the number of commands to save in a history list. The text of the last HISTSIZE commands (default 500) is saved. The shell stores each command in the history list prior to parameter and variable expansion (see EXPANSION) but after history expansion is performed, subject to the values of HISTIGNORE and HISTCONTROL.

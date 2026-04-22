@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ### Commands for Moving
 
 beginning-of-line (C-a)

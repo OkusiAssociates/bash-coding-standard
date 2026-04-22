@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ### pushd
 pushd [-n] [+n] [-n]
 pushd [-n] [dir]

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # test-read-conf.sh - Unit tests for read_conf()
 #
 # Overrides _conf_search_paths to point at test fixtures, verifies

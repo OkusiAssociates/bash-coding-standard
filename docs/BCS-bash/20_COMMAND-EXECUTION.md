@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ## COMMAND EXECUTION
 
 After a command has been split into words, if it results in a simple command and an optional list of arguments, the following actions are taken.

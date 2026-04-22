@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ### kill
 kill [-s sigspec | -n signum | -sigspec] [pid | jobspec] ...
 kill -l|-L [sigspec | exit_status]

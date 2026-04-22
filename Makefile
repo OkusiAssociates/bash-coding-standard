@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Makefile - Install BCS (Bash Coding Standard)
 # BCS1212 compliant
 
@@ -16,7 +17,11 @@ install:
 	install -d $(DESTDIR)$(BINDIR)
 	install -m 755 bcs $(DESTDIR)$(BINDIR)/bcs
 	install -m 755 bcscheck $(DESTDIR)$(BINDIR)/bcscheck
+	install -d $(DESTDIR)$(SHAREDIR)
+	install -m 644 LICENSE $(DESTDIR)$(SHAREDIR)/LICENSE
+	install -m 644 COPYING $(DESTDIR)$(SHAREDIR)/COPYING
 	install -d $(DESTDIR)$(SHAREDIR)/data
+	install -m 644 data/LICENSE $(DESTDIR)$(SHAREDIR)/data/LICENSE
 	install -m 644 data/BASH-CODING-STANDARD.md $(DESTDIR)$(SHAREDIR)/data/
 	install -m 644 data/[0-9]*.md $(DESTDIR)$(SHAREDIR)/data/
 	install -d $(DESTDIR)$(SHAREDIR)/examples/templates

@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ### Pipelines
 
 A pipeline is one or more commands separated by | or |&:

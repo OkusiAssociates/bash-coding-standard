@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ### Commands for Changing Text
 
 end-of-file (usually C-d)

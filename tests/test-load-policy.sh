@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # test-load-policy.sh - Unit tests for _load_policy()
 #
 # Overrides _policy_search_paths to point at test fixtures, verifies

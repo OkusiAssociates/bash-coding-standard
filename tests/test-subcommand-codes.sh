@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # test-subcommand-codes.sh - Tests for bcs codes subcommand
 set -euo pipefail
 shopt -s inherit_errexit

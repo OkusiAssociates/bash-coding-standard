@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ### Here Documents
 
 A here-document redirects the shell to read input from the current source until a line containing only delimiter (with no trailing blanks) is seen. All lines read up to that point become the standard input (or file descriptor n if n is specified) for a command.

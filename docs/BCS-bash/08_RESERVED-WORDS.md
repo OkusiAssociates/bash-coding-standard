@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ## RESERVED WORDS
 
 Reserved words are words that have a special meaning to the shell.  The following words are recognized as

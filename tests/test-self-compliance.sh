@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # test-self-compliance.sh - Verify bcs script follows its own standard
 set -euo pipefail
 shopt -s inherit_errexit

@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ## READLINE
 
 This is the library that handles reading input when using an interactive shell, unless the --noediting option

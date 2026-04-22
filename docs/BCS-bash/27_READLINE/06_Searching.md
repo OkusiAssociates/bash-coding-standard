@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ### Searching
 
 Readline provides commands for searching through the command history for lines containing a specified string. There are two search modes: incremental and non-incremental.

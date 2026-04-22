@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ## ARITHMETIC EVALUATION
 
 The shell allows arithmetic expressions to be evaluated under certain circumstances (see the let and declare builtins, the (( compound command, and Arithmetic Expansion). Evaluation is done in fixed-width integers with no check for overflow, though division by 0 is trapped and flagged as an error. The operators and their precedence, associativity, and values are the same as in the C language. The following list of operators is grouped into levels of equal-precedence operators, listed in order of decreasing precedence.

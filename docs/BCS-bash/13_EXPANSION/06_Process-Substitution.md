@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ### Process Substitution
 
 Process substitution allows referring to a process's input or output using a filename. It takes the form <(list) or >(list). The process list runs asynchronously, and its input or output appears as a filename passed as an argument to the current command.

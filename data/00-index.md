@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 # Bash Coding Standard (BCS)
 
 **Concise, actionable coding rules for BCS Bash 5.2+**

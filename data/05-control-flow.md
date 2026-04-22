@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 # Section 05: Control Flow
 
 ## BCS0500 Section Overview

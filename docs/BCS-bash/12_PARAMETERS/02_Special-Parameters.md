@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ### Special Parameters
 
 The shell treats several parameters specially. These parameters may only be referenced; assignment to them is not allowed.

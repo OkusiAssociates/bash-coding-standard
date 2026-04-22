@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 # Section 01: Script Structure & Layout
 
 ## BCS0100 Section Overview

@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ### jobs
 jobs [-lnprs] [jobspec ...]
 jobs -x command [args ...]

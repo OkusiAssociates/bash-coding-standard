@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ### Numeric Arguments
 
 digit-argument (M-0, M-1, ..., M--)

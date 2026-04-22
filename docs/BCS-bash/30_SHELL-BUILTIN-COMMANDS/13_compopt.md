@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 ### compopt
 compopt [-o option] [-DEI] [+o option] [name]
 
