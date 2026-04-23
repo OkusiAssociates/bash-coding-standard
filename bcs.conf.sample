@@ -30,6 +30,11 @@ BCS_EFFORT=medium
 # Treat warnings as violations: 0 or 1
 BCS_STRICT=0
 
+# Prepend `shellcheck --format=json -x` output to the LLM prompt as
+# static-analysis context. Auto-skipped if shellcheck is not in PATH.
+# Override per-call with --shellcheck / --no-shellcheck.
+BCS_SHELLCHECK=1
+
 # Override model for all tiers (per backend)
 #BCS_OLLAMA_MODEL=qwen3.5:14b
 #BCS_ANTHROPIC_MODEL=claude-sonnet-4-6

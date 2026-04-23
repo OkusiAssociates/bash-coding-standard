@@ -188,6 +188,16 @@ begin_test '-js bundling parsed correctly'
 err=$("$BCS_CMD" check -js 2>&1 || true)
 assert_not_contains "$err" 'Invalid option' '-js bundling parsed' || true
 
+# Test: --shellcheck accepted at argparse stage
+begin_test '--shellcheck accepted at argparse stage'
+assert_success '--shellcheck accepted' \
+  "$BCS_CMD" check --shellcheck -h || true
+
+# Test: --no-shellcheck accepted at argparse stage
+begin_test '--no-shellcheck accepted at argparse stage'
+assert_success '--no-shellcheck accepted' \
+  "$BCS_CMD" check --no-shellcheck -h || true
+
 # Skip actual LLM invocation tests (requires running backend)
 echo '  (skipping live LLM tests - requires running backend)'
 

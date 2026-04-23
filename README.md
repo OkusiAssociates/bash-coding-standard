@@ -124,8 +124,11 @@ bcs check myscript.sh                      # Auto-detect backend (balanced tier)
 bcs check -m claude-sonnet-4-6 deploy.sh   # Anthropic API
 bcs check -m claude-code:thorough ci.sh    # Claude Code CLI, thorough tier
 bcs check --strict -T core deploy.sh       # CI gate: core-only, warnings fatal
+bcs check --no-shellcheck myscript.sh      # Skip the shellcheck static-analysis prelude
 bcscheck myscript.sh                       # Equivalent shim (defaults from bcs.conf)
 ```
+
+When `shellcheck` is on `PATH`, `bcs check` prepends its `--format=json -x` output to the LLM prompt as deterministic static-analysis context (cheap, precise AST-level findings that the LLM would otherwise rediscover). Disable per-call with `--no-shellcheck` or globally via `BCS_SHELLCHECK=0` in `bcs.conf`.
 
 ### `bcs template`
 

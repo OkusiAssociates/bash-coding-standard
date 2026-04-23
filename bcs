@@ -143,6 +143,12 @@ ${BOLD}Examples:$NC
   $SCRIPT_NAME check myscript.sh         Check script compliance
   $SCRIPT_NAME codes                     List all BCS rule codes
   $SCRIPT_NAME help template             Help for template command
+
+${BOLD}Customisation:$NC
+  policy.conf             Override any rule's tier (system/user/repo cascade)
+  BCS9800-BCS9899         Reserved namespace for site-local user rules
+                          (data/98-user.md, data/98-user.d/*.md)
+  See ${BOLD}$SCRIPT_NAME help codes$NC for policy syntax and user-rule format.
 HELP
 }
 
@@ -205,6 +211,8 @@ ${BOLD}Options:$NC
   -e, --effort LEVEL      Analysis depth (${BOLD}medium$NC, low, high, max)
   -s, --strict            Treat warnings as violations
   -S, --no-strict         Don't treat warnings as violations (${BOLD}default$NC)
+      --shellcheck        Prepend shellcheck --format=json -x output to LLM context (${BOLD}default$NC)
+      --no-shellcheck     Skip shellcheck static-analysis context
   -T, --tier TIER         Report only findings at this tier (core|recommended|style)
   -M, --min-tier TIER     Report findings at this tier or higher severity
   -j, --json              Emit findings as a single JSON object on stdout
@@ -286,6 +294,7 @@ ${BOLD}Environment / Config Variables:$NC
   BCS_MIN_TIER        Default --min-tier filter (core|recommended|style)
   BCS_DEBUG           Default --debug (0 or 1); announces raw-response dump path
   BCS_JSON            Default --json (0 or 1); structured JSON output on stdout
+  BCS_SHELLCHECK      Prepend shellcheck --format=json -x as static-analysis context (0 or 1; default 1)
   BCS_OLLAMA_MODEL    Override Ollama model (supports :cloud tags, e.g. minimax-m2:cloud)
   BCS_ANTHROPIC_MODEL Override Anthropic model selection
   BCS_GOOGLE_MODEL    Override Google model selection
@@ -617,6 +626,42 @@ _sniff_backend() {
   esac
 }
 
+# Run shellcheck over the script-under-check and return its JSON report.
+# Never aborts the caller: missing binary or parse failure emits empty output
+# so cmd_check() can proceed without static-analysis context.
+_run_shellcheck() {
+  local -- file=$1 json=''
+  local -i rc=0
+  command -v shellcheck &>/dev/null || {
+    info 'shellcheck not in PATH; skipping static-analysis context'
+    return 0
+  }
+  # exit 0 = clean, 1 = findings present (both fine); >=2 = parse failure.
+  # Capture rc via fallback so set -e does not trip on the expected exit 1.
+  json=$(shellcheck --format=json -x -- "$file" 2>/dev/null) || rc=$?
+  ((rc <= 1)) || { warn "shellcheck failed (exit $rc); continuing without context"; return 0; }
+  printf '%s\n' "$json"
+}
+
+# Wrap a shellcheck JSON report in a markdown block suitable for prepending
+# to the LLM user prompt. Returns empty string when the report is empty or
+# `[]` so clean scripts never contribute an empty section to the prompt.
+_render_shellcheck_block() {
+  local -- json=$1
+  [[ -z $json || $json == '[]' ]] && return 0
+  cat <<MD
+## Static analysis context (shellcheck --format=json -x)
+
+The following findings come from a deterministic static analyser. Use
+them as supporting context for your BCS review; do not re-emit them as
+BCS findings unless they map to a specific BCS rule.
+
+\`\`\`json
+$json
+\`\`\`
+MD
+}
+
 # LLM backend: Anthropic Messages API
 _llm_anthropic() {
   local -- model=$1 effort=$2 sys=$3 usr=$4
@@ -824,6 +869,7 @@ _llm_claude_cli() {
   local -- model=$1 effort=$2 bcs_file=$3 script_file=$4
   local -i strict=$5
   local -- tier_instr=${6:-} filter_instr=${7:-} policy_text=${8:-}
+  local -- shellcheck_block=${9:-}
   command -v claude &>/dev/null || die 18 'Claude CLI required for claude backend'
 
   model=${BCS_ANTHROPIC_MODEL:-${ANTHROPIC_MODELS[$model]:-$model}}
@@ -893,6 +939,7 @@ Respect inline suppression: eg, #bcscheck disable=BCS0101 exempts the next line/
 
   [[ -z $filter_instr ]] || prompt+=$'\n\n'"$filter_instr"
   [[ -z $policy_text ]] || prompt+=$'\n'"$policy_text"
+  [[ -z $shellcheck_block ]] || prompt+=$'\n\n'"$shellcheck_block"
   if ((strict)); then
     if ((${BCS_JSON_MODE:-0})); then
       prompt+=$'\n\nSTRICT MODE: Map recommended/style violations to level "error" instead of "warning".'
@@ -1040,6 +1087,7 @@ cmd_template() {
 cmd_check() {
   local -- script_file='' model=${BCS_MODEL:-balanced} effort=${BCS_EFFORT:-medium}
   local -i strict=${BCS_STRICT:-0} debug=${BCS_DEBUG:-0} json_output=${BCS_JSON:-0}
+  local -i shellcheck_ctx=${BCS_SHELLCHECK:-1}
   local -ar onoff=(off on)
   local -- backend=''
   local -- tier_filter=${BCS_TIER:-} min_tier_filter=${BCS_MIN_TIER:-}
@@ -1051,6 +1099,8 @@ cmd_check() {
                     ;;
     -s|--strict)    strict=1 ;;
     -S|--no-strict) strict=0 ;;
+    --shellcheck)    shellcheck_ctx=1 ;;
+    --no-shellcheck) shellcheck_ctx=0 ;;
     -T|--tier)      noarg "$@"; shift; tier_filter=$1
                     [[ " ${VALID_TIER_FILTERS[*]} " == *" $tier_filter "* ]] \
                       || die 22 "Invalid tier ${tier_filter@Q} (valid: ${VALID_TIER_FILTERS[*]})"
@@ -1076,6 +1126,16 @@ cmd_check() {
   [[ -f $script_file ]] || die 3 "Script not found ${script_file@Q}"
   [[ -r $script_file ]] || die 13 "Cannot read ${script_file@Q}"
   script_file=$(realpath -e -- "$script_file")
+
+  # Static-analysis context: run shellcheck up front so its JSON report can
+  # be prepended to the LLM prompt. Silently skipped when disabled, when the
+  # binary is missing, or when shellcheck fails to parse the script.
+  local -- shellcheck_block=''
+  if ((shellcheck_ctx)); then
+    local -- sc_json=''
+    sc_json=$(_run_shellcheck "$script_file") ||:
+    shellcheck_block=$(_render_shellcheck_block "$sc_json") ||:
+  fi
 
   # Resolve backend from model name alone.
   #
@@ -1163,7 +1223,7 @@ cmd_check() {
 
   if [[ $backend == claude ]]; then
     result=$(_llm_claude_cli "$model" "$effort" "$bcs_file" "$script_file" "$strict" \
-               "$tier_instr" "$filter_instr" "$policy_text") || exit_code=$?
+               "$tier_instr" "$filter_instr" "$policy_text" "$shellcheck_block") || exit_code=$?
   else
     # Build prompts for API backends
     local -- sys_prompt usr_prompt numbered_script effort_guidance
@@ -1234,7 +1294,9 @@ Example of a valid response (one finding):
 ]
 
 Return ONLY the JSON array. No markdown code fences. No commentary. No preamble.
-If there are no findings, return [].
+If there are no findings, return []."
+      [[ -z $shellcheck_block ]] || usr_prompt+=$'\n\n'"$shellcheck_block"
+      usr_prompt+="
 
 --- Script to analyze ---
 $numbered_script"
@@ -1258,7 +1320,9 @@ $effort_guidance"
       usr_prompt+="
 
 Format each finding as: [ERROR|WARN] BCSxxxx line N: description, then a fix recommendation.
-End with a summary table: | BCS Code | Tier | Severity | Line(s) | Description |
+End with a summary table: | BCS Code | Tier | Severity | Line(s) | Description |"
+      [[ -z $shellcheck_block ]] || usr_prompt+=$'\n\n'"$shellcheck_block"
+      usr_prompt+="
 
 --- Script to analyze ---
 $numbered_script"
