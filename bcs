@@ -42,7 +42,9 @@ declare -A OPENAI_MODELS=([fast]=gpt-4.1-mini [balanced]=gpt-5.4-mini [thorough]
 # Effort-level to max output tokens mapping for API backends
 declare -A EFFORT_TOKENS=([low]=4000 [medium]=8000 [high]=32000 [max]=64000)
 
-# Color definitions
+# ---- Messaging System ----
+declare -i VERBOSE=1 DEBUG=0
+
 if [[ -t 1 && -t 2 ]]; then
   declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' \
              CYAN=$'\033[0;36m' BOLD=$'\033[1m' NC=$'\033[0m'
@@ -50,29 +52,18 @@ else
   declare -r RED='' GREEN='' YELLOW='' CYAN='' BOLD='' NC=''
 fi
 
-# ---- Messaging functions ----
-declare -i VERBOSE=1
-
-_msg() {
-  local -- prefix="$SCRIPT_NAME:" msg
-  case ${FUNCNAME[1]} in
-    success) prefix+=" $GREEN✓$NC" ;;
-    warn)    prefix+=" $YELLOW▲$NC" ;;
-    info)    prefix+=" $CYAN◉$NC" ;;
-    error)   prefix+=" $RED✗$NC" ;;
-    *)       ;;
-  esac
-  for msg in "$@"; do printf '%s %s\n' "$prefix" "$msg"; done
-}
-
-info()    { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
-success() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
-warn()    { >&2 _msg "$@"; }
-error()   { >&2 _msg "$@"; }
+_msg() { >&2 printf "$SCRIPT_NAME: $1 %s\n" "${@:2}"; }
+error()   { _msg "$RED✗$NC" "$@"; }
 die()     { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+warn()    { _msg "$YELLOW▲$NC" "$@"; }
+vecho()   { ((VERBOSE)) || return 0; _msg '' "$@"; }
+info()    { ((VERBOSE)) || return 0; _msg "$CYAN◉$NC" "$@"; }
+success() { ((VERBOSE)) || return 0; _msg "$GREEN✓$NC" "$@"; }
+debug()   { ((DEBUG)) || return 0; _msg "${RED}DEBUG$NC" "$@"; }
+
 noarg()   { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
 
-# ---- Configuration and globals ----
+# ---- Configuration and Globals ----
 
 # Load all conf files (cascade: system first, user overrides system)
 # Emit bcs.conf cascade paths (system first, user last).

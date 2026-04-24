@@ -36,37 +36,44 @@ printf '%s\n' 'error: something failed' >&2
 
 Stream separation enables: `data=$(./script.sh)` captures only data, `./script.sh 2>errors.log` separates errors, `./script.sh | process` pipes data while showing messages.
 
-## BCS0703 Core Message Functions
+## BCS0703 Core Messaging System
 
-**Tier:** style
+**Tier:** recommended
 
-Implement `_msg()` as the core function using `FUNCNAME[1]` dispatch.
+Structure:
+
+- SCRIPT_NAME (already defined from Script Metadata section)
+- Define Messaging Flags (as/if required)
+- Define Messaging Colours (as/if required)
+- Define Messaging Functions
+  - Implement `_msg()` as the core output function
+  - Implement `error()` and `die()`
+  - Where script requires, implement `vecho` `info()` `warn()` `success()` `debug()`
 
 ```bash
-# SCRIPT_NAME defined in script metadata
+# SCRIPT_NAME already defined in script metadata section
 
-# Define messaging flags (VERBOSE, DEBUG, as required)
+# Define Messaging Flags (VERBOSE, DEBUG, as/if required)
 declare -i VERBOSE=1 DEBUG=0
 
-# Define messaging colors (RED GREEN YELLOW etc, as required)
+# Define Messaging Colors (RED GREEN YELLOW etc, as/if required)
 if [[ -t 1 && -t 2 ]]; then
   declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' NC=$'\033[0m'
 else
   declare -r RED='' GREEN='' YELLOW='' CYAN='' NC=''
 fi
 
-_msg() {
-  local -Ar funcs=( [vecho]='' [success]=" $GREEN✓$NC" [info]=" $CYAN◉$NC" [warn]=" $YELLOW▲$NC" [error]=" $RED✗$NC" [debug]=' DEBUG:' )
-  printf "$SCRIPT_NAME:${funcs[${FUNCNAME[1]}]} %s\n" "$@"
-}
-
-vecho()   { ((VERBOSE)) || return 0; _msg "$@"; }
-success() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
-warn()    { >&2 _msg "$@"; }
-info()    { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
-error()   { >&2 _msg "$@"; }
-debug()   { ((DEBUG)) || return 0; >&2 _msg "$@"; }
+# Define Messaging Functions (add/remove as required by the specific script)
+# Core:
+_msg() { >&2 printf "$SCRIPT_NAME: $1 %s\n" "${@:2}"; }
+error()   { _msg "$RED✗$NC" "$@"; }
 die()     { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+# Optional:
+warn()    { _msg "$YELLOW▲$NC" "$@"; }
+vecho()   { ((VERBOSE)) || return 0; _msg '' "$@"; }
+info()    { ((VERBOSE)) || return 0; _msg "$CYAN◉$NC" "$@"; }
+success() { ((VERBOSE)) || return 0; _msg "$GREEN✓$NC" "$@"; }
+debug()   { ((DEBUG)) || return 0; _msg "${RED}DEBUG$NC" "$@"; }
 ```
 
 Rules:
@@ -76,23 +83,19 @@ Rules:
 - `debug()` respects DEBUG flag
 - `die()` takes exit code as first argument
 
-Alternative (acceptable) \_msg function:
+### Simple No-Colour Messaging System:
 
 ```bash
-_msg() {
-  local -- prefix="$SCRIPT_NAME:"
-  case ${FUNCNAME[1]} in
-    success) prefix+=" $GREEN✓$NC" ;;
-    warn)    prefix+=" $YELLOW▲$NC" ;;
-    info)    prefix+=" $CYAN◉$NC" ;;
-    error)   prefix+=" $RED✗$NC" ;;
-    *)       ;;
-  esac
-  printf "$prefix %s\n" "$@"
-}
+declare -i VERBOSE=1
+_msg() { >&2 printf "$SCRIPT_NAME: $1 %s\n" "${@:2}"; }
+info()    { ((VERBOSE)) || return 0; _msg '◉' "$@"; }
+success() { ((VERBOSE)) || return 0; _msg '✓' "$@"; }
+warn()    { _msg '▲' "$@"; }
+error()   { _msg '✗' "$@"; }
+die()     { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 ```
 
-The above is the **reference set**. Per BCS0405, scripts should only include the messaging functions they actually call — omitting unused functions (e.g., `success()`, `debug()`, `vecho()`) is correct, not a violation.
+**Note**: Per BCS0405, scripts should only include the messaging functions they actually call — omitting unused functions (e.g., `success()`, `debug()`, `vecho()`) is correct, not a violation.
 
 ## BCS0704 Usage Documentation
 
