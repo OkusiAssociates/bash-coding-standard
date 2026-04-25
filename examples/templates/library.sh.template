@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# SPDX-License-Identifier: GPL-3.0-or-later
 # {{DESCRIPTION}}
 # This is a sourceable library script
 
@@ -13,10 +12,7 @@ declare -rx {{NAME}}_PATH=$(realpath -- "${BASH_SOURCE[0]}")
 declare -rx {{NAME}}_DIR=${{{NAME}}_PATH%/*}
 
 # Messaging functions (library prefix)
-{{NAME}}_msg() {
-  local -- prefix="{{NAME}}:" msg
-  for msg in "$@"; do printf '%s %s\n' "$prefix" "$msg"; done
-}
+{{NAME}}_msg() { printf "{{NAME}}: %s\n" "$@"; }
 declare -fx {{NAME}}_msg
 
 {{NAME}}_error() { >&2 {{NAME}}_msg "$@"; }

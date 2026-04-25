@@ -1,40 +1,35 @@
 #!/usr/bin/bash
-# SPDX-License-Identifier: GPL-3.0-or-later
 # {{DESCRIPTION}}
 set -euo pipefail
-shopt -s inherit_errexit shift_verbose extglob nullglob
+shopt -s inherit_errexit extglob nullglob
 
-declare -rx PATH=~/.local/bin:/usr/local/bin:/usr/bin:/bin
+declare -rx PATH="$HOME"/.local/bin:/usr/local/bin:/usr/bin:/bin
 
-# Script Metadata
+# --- Script Metadata ---
 declare -r VERSION='{{VERSION}}'
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
-# Define Messaging Flags (as required)
+# --- Messaging System ---
 declare -i VERBOSE=1 DEBUG=0
 
-# Define Messaging Colors (as required)
 if [[ -t 1 && -t 2 ]]; then
   declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' NC=$'\033[0m'
 else
   declare -r RED='' GREEN='' YELLOW='' CYAN='' NC=''
 fi
 
-# Core message function
-_msg() {
-  local -Ar funcs=( [vecho]='' [success]=" $GREEN✓$NC" [info]=" $CYAN◉$NC" [warn]=" $YELLOW▲$NC" [error]=" $RED✗$NC" [debug]=' DEBUG:' )
-  printf "$SCRIPT_NAME:${funcs[${FUNCNAME[1]}]} %s\n" "$@"
-}
-# Message Functions
-vecho()   { ((VERBOSE)) || return 0; _msg "$@"; }
-success() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
-warn()    { >&2 _msg "$@"; }
-info()    { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
-error()   { >&2 _msg "$@"; }
-debug()   { ((DEBUG)) || return 0; >&2 _msg "$@"; }
+# Messaging Functions
+_msg()    { >&2 printf "$SCRIPT_NAME: $1 %s\n" "${@:2}"; }
+error()   { _msg "$RED✗$NC" "$@"; }
 die()     { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+
+warn()    { _msg "$YELLOW▲$NC" "$@"; }
+vecho()   { ((VERBOSE)) || return 0; _msg '' "$@"; }
+info()    { ((VERBOSE)) || return 0; _msg "$CYAN◉$NC" "$@"; }
+success() { ((VERBOSE)) || return 0; _msg "$GREEN✓$NC" "$@"; }
+debug()   { ((DEBUG)) || return 0; _msg "${RED}DEBUG$NC" "$@"; }
 
 yn() {
   local -- REPLY
@@ -72,12 +67,12 @@ main() {
 
   while (($#)); do
     case $1 in
-      -h|--help)
-        show_help
-        exit 0
-        ;;
       -V|--version)
         printf '%s %s\n' "$SCRIPT_NAME" "$VERSION"
+        exit 0
+        ;;
+      -h|--help)
+        show_help
         exit 0
         ;;
       -v|--verbose)
@@ -93,7 +88,7 @@ main() {
         shift
         break
         ;;
-      -[hVvqD]?*) # Bundled short options
+      -[VhvqD]?*) # Bundled short options
         set -- "${1:0:2}" "-${1:2}" "${@:2}"
         continue
         ;;
@@ -107,12 +102,10 @@ main() {
     shift
   done
 
-  # Business
-  info "Hello from ${USER@Q}"
-
-  # ...
-
-  success 'Script completed successfully'
+  # BUSINESS STARTS HERE: Add implementation
+  info 'Hello {{NAME}}'
+  #...
+  success 'Bye {{NAME}}'
 }
 
 main "$@"

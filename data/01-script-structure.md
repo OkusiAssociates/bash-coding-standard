@@ -39,9 +39,9 @@ Choose `failglob` instead of `nullglob` for strict scripts where unmatched globs
 
 ## BCS0102 Shebang
 
-**Tier:** recommended
+**Tier:** core
 
-First line of any script must be a shebang. Three acceptable forms:
+First executable line of any script must be a shebang. Three acceptable forms:
 
 ```bash
 #!/usr/bin/bash       # Preferred for Linux systems
