@@ -51,11 +51,11 @@ install:
 	ln -sfn BCS-bash.1 $(DESTDIR)$(MANDIR)/bcs-bash.1
 	@if [ -d $(DESTDIR)$(COMPDIR) ]; then \
 	  install -m 644 $(srcdir)bcs.bash_completion $(DESTDIR)$(COMPDIR)/bcs; \
-	  install -m 644 $(srcdir)bcscheck.bash_completion $(DESTDIR)$(COMPDIR)/bcscheck; \
-	  install -m 644 $(srcdir)bcsdisplay.bash_completion $(DESTDIR)$(COMPDIR)/bcsdisplay; \
-	  install -m 644 $(srcdir)bcstemplate.bash_completion $(DESTDIR)$(COMPDIR)/bcstemplate; \
-	  install -m 644 $(srcdir)bcscodes.bash_completion $(DESTDIR)$(COMPDIR)/bcscodes; \
-	  install -m 644 $(srcdir)bcsgenerate.bash_completion $(DESTDIR)$(COMPDIR)/bcsgenerate; \
+	  ln -sfn bcs $(DESTDIR)$(COMPDIR)/bcscheck; \
+	  ln -sfn bcs $(DESTDIR)$(COMPDIR)/bcsdisplay; \
+	  ln -sfn bcs $(DESTDIR)$(COMPDIR)/bcstemplate; \
+	  ln -sfn bcs $(DESTDIR)$(COMPDIR)/bcscodes; \
+	  ln -sfn bcs $(DESTDIR)$(COMPDIR)/bcsgenerate; \
 	fi
 	@if [ -d $(DESTDIR)$(PREFIX)/share/yatti/bash-coding-standard ] \
 	    && [ ! -L $(DESTDIR)$(PREFIX)/share/yatti/bash-coding-standard ]; then \

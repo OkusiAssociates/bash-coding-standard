@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# bcs(1) bash completion
+# bcs(1) bash completion — unified completer for `bcs` and the bcs* shim aliases
 # shellcheck shell=bash
 
 _bcs() {
@@ -7,26 +7,48 @@ _bcs() {
   _init_completion || return
 
   local -r subcommands='display template check codes generate help'
+  local -r models='
+    fast balanced thorough
+    claude-code claude-code:fast claude-code:balanced claude-code:thorough
+    claude-haiku-4-5 claude-sonnet-4-6 claude-opus-4-6
+    gemini-2.5-flash-lite gemini-2.5-flash gemini-2.5-pro
+    gpt-4.1-mini gpt-5.4-mini gpt-5.4
+    minimax-m2:cloud minimax-m2.7:cloud qwen3-coder:480b-cloud
+    deepseek-v3.1:671b-cloud gpt-oss:120b-cloud glm-5.1:cloud
+  '
+  local -r efforts='low medium high max'
+  local -r tiers='core recommended style'
+  local -r tiers_full='core recommended style disabled'
+  local -r template_types='minimal basic complete library'
 
-  # Find the subcommand (first non-option word after 'bcs')
-  local -- subcmd='' i
-  for ((i = 1; i < cword; i+=1)); do
-    case ${words[i]} in
-      -*) continue ;;
-      *)  subcmd=${words[i]}; break ;;
-    esac
-  done
+  # Resolve subcommand from invocation: shim name maps directly,
+  # `bcs` walks $words to find the first non-option token.
+  local -- subcmd=''
+  case ${1##*/} in
+    bcscheck)    subcmd=check ;;
+    bcsdisplay)  subcmd=display ;;
+    bcstemplate) subcmd=template ;;
+    bcscodes)    subcmd=codes ;;
+    bcsgenerate) subcmd=generate ;;
+    bcs)
+      local -- i
+      for ((i = 1; i < cword; i+=1)); do
+        case ${words[i]} in
+          -*) continue ;;
+          *)  subcmd=${words[i]}; break ;;
+        esac
+      done
+      if [[ -z "$subcmd" ]]; then
+        case $cur in
+          -*)  mapfile -t COMPREPLY < <(compgen -W '-V --version -v --verbose -q --quiet -h --help' -- "$cur") ;;
+          *)   mapfile -t COMPREPLY < <(compgen -W "$subcommands" -- "$cur") ;;
+        esac
+        return
+      fi
+      ;;
+    *) return ;;
+  esac
 
-  # Top-level: complete subcommands and global options
-  if [[ -z "$subcmd" ]]; then
-    case $cur in
-      -*)  mapfile -t COMPREPLY < <(compgen -W '-V --version -v --verbose -q --quiet -h --help' -- "$cur") ;;
-      *)   mapfile -t COMPREPLY < <(compgen -W "$subcommands" -- "$cur") ;;
-    esac
-    return
-  fi
-
-  # Per-subcommand completions
   case $subcmd in
     display)
       mapfile -t COMPREPLY < <(compgen -W '-c --cat -f --file -S --symlink -v --verbose -q --quiet -h --help' -- "$cur")
@@ -34,62 +56,30 @@ _bcs() {
 
     template)
       case $prev in
-        -t|--type)
-          mapfile -t COMPREPLY < <(compgen -W 'minimal basic complete library' -- "$cur")
-          return
-          ;;
-        -o|--output)
-          _filedir
-          return
-          ;;
-        -n|--name|-d|--desc|-V|--version)
-          return
-          ;;
+        -t|--type)    mapfile -t COMPREPLY < <(compgen -W "$template_types" -- "$cur"); return ;;
+        -o|--output)  _filedir; return ;;
+        -n|--name|-d|--desc|-V|--version) return ;;
       esac
       mapfile -t COMPREPLY < <(compgen -W '-t --type -n --name -d --desc -V --version -o --output -x --executable -f --force -v --verbose -q --quiet -h --help' -- "$cur")
       ;;
 
     check)
       case $prev in
-        -e|--effort)
-          mapfile -t COMPREPLY < <(compgen -W 'low medium high max' -- "$cur")
-          return
-          ;;
-        -T|--tier|-M|--min-tier)
-          mapfile -t COMPREPLY < <(compgen -W 'core recommended style' -- "$cur")
-          return
-          ;;
-        -m|--model)
-          mapfile -t COMPREPLY < <(compgen -W '
-            fast balanced thorough
-            claude-code claude-code:fast claude-code:balanced claude-code:thorough
-            claude-haiku-4-5 claude-sonnet-4-6 claude-opus-4-6
-            gemini-2.5-flash-lite gemini-2.5-flash gemini-2.5-pro
-            gpt-4.1-mini gpt-5.4-mini gpt-5.4
-            minimax-m2:cloud minimax-m2.7:cloud qwen3-coder:480b-cloud
-            deepseek-v3.1:671b-cloud gpt-oss:120b-cloud glm-5.1:cloud
-          ' -- "$cur")
-          return
-          ;;
+        -e|--effort)             mapfile -t COMPREPLY < <(compgen -W "$efforts" -- "$cur"); return ;;
+        -T|--tier|-M|--min-tier) mapfile -t COMPREPLY < <(compgen -W "$tiers" -- "$cur"); return ;;
+        -m|--model)              mapfile -t COMPREPLY < <(compgen -W "$models" -- "$cur"); return ;;
       esac
       case $cur in
-        -*)
-          mapfile -t COMPREPLY < <(compgen -W '-m --model -e --effort -s --strict -S --no-strict -T --tier -M --min-tier -j --json -D --debug -v --verbose -q --quiet -h --help' -- "$cur")
-          ;;
-        *)
-          _filedir
-          ;;
+        -*) mapfile -t COMPREPLY < <(compgen -W '-m --model -e --effort -s --strict -S --no-strict -T --tier -M --min-tier -j --json -D --debug -v --verbose -q --quiet -h --help' -- "$cur") ;;
+        *)  _filedir ;;
       esac
       ;;
 
     codes)
       case $prev in
-        -T|--tier)
-          mapfile -t COMPREPLY < <(compgen -W 'core recommended style disabled' -- "$cur")
-          return
-          ;;
+        -T|--tier)    mapfile -t COMPREPLY < <(compgen -W "$tiers_full" -- "$cur"); return ;;
         -E|--explain)
-          # best-effort: completions list common codes
+          # Static placeholder list; codes are dynamic, so users may type any BCS####.
           mapfile -t COMPREPLY < <(compgen -W '
             BCS0101 BCS0106 BCS0107 BCS0109 BCS0110 BCS0202 BCS0206
             BCS0301 BCS0302 BCS0303 BCS0406 BCS0407 BCS0410 BCS0411
@@ -105,10 +95,7 @@ _bcs() {
 
     generate)
       case $prev in
-        -o|--output)
-          _filedir
-          return
-          ;;
+        -o|--output)  _filedir; return ;;
       esac
       mapfile -t COMPREPLY < <(compgen -W '-o --output -v --verbose -q --quiet -h --help' -- "$cur")
       ;;
@@ -117,5 +104,12 @@ _bcs() {
       mapfile -t COMPREPLY < <(compgen -W "$subcommands" -- "$cur")
       ;;
   esac
-} && complete -F _bcs bcs
+}
+
+complete -F _bcs bcs
+complete -F _bcs bcscheck
+complete -F _bcs bcsdisplay
+complete -F _bcs bcstemplate
+complete -F _bcs bcscodes
+complete -F _bcs bcsgenerate
 #fin
