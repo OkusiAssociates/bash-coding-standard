@@ -153,6 +153,8 @@ ${BOLD}Options:$NC
   -c, --cat       Plain text output (no formatting)
   -f, --file      Show full path to the standard document
   -S, --symlink   Symlink BASH-CODING-STANDARD.md into current directory
+  -v, --verbose   Show info messages (${BOLD}default$NC)
+  -q, --quiet     Suppress info messages
   -h, --help      Show this help
 
 When stdout is a terminal and md2ansi is available, the standard is
@@ -176,6 +178,8 @@ ${BOLD}Options:$NC
   -o, --output FILE     Output file (default: ${BOLD}stdout$NC)
   -x, --executable      Make output file executable
   -f, --force           Overwrite existing files
+  -v, --verbose         Show info messages (${BOLD}default$NC)
+  -q, --quiet           Suppress info messages
   -h, --help            Show this help
 
 ${BOLD}Template Types:$NC
@@ -224,8 +228,8 @@ ${BOLD}Raw Response Dump:$NC
 ${BOLD}Model selection:$NC
   The -m value determines which backend handles the check:
 
-    fast|balanced|thorough        Probe available backends (ollama, anthropic,
-                                  openai, google, claude) and use the first
+    fast|balanced|thorough        Probe available backends (claude, ollama,
+                                  anthropic, openai, google) and use the first
                                   reachable one with that tier's default model.
     claude-*                      Anthropic API (e.g. claude-opus-4-6)
     gemini-*                      Google Gemini API (e.g. gemini-2.5-pro)
@@ -356,6 +360,8 @@ ${BOLD}Usage:$NC $SCRIPT_NAME generate [OPTIONS]
 
 ${BOLD}Options:$NC
   -o, --output FILE   Output file (default: ${BOLD}data/BASH-CODING-STANDARD.md$NC)
+  -v, --verbose       Show info messages (${BOLD}default$NC)
+  -q, --quiet         Suppress info messages
   -h, --help          Show this help
 
 Concatenates all data/[0-9]*.md section files into a single
@@ -409,8 +415,9 @@ _find_md2ansi() {
 # Tier & policy loading
 
 # Scan section files and populate BCS_TIERS from **Tier:** lines.
-# Tier markers live in rule bodies, one line each. Overview headings
-# (BCS#100) have no tier field and are skipped.
+# Tier markers live in rule bodies, one line each. Section overview
+# headings (BCS##00, e.g. BCS0100) carry no **Tier:** field and are
+# silently skipped, leaving BCS_TIERS keyed only by enforceable rules.
 _load_tiers() {
   ((_TIERS_LOADED)) && return 0
   local -- data_dir
@@ -547,9 +554,9 @@ _render_json_output() {
   # Normalize to a bare array. OpenAI's json_object mode requires the
   # top level be an object, so models often wrap the array as
   # {"findings": [...]} or similar. Accept either form.
-  if jq -e 'type == "array"' <<< "$cleaned" >/dev/null 2>&1; then
+  if jq -e 'type == "array"' <<< "$cleaned" &>/dev/null; then
     arr=$cleaned
-  elif jq -e 'type == "object"' <<< "$cleaned" >/dev/null 2>&1; then
+  elif jq -e 'type == "object"' <<< "$cleaned" &>/dev/null; then
     arr=$(jq -c '(.findings // .comments // .violations // .results // empty)
                  | select(type == "array")' <<< "$cleaned" 2>/dev/null) ||:
     [[ -n $arr ]] || return 1
@@ -559,7 +566,7 @@ _render_json_output() {
   # Validate every element has the required finding keys.
   jq -e 'all(.[]; type == "object"
            and has("line") and has("level") and has("bcsCode"))' \
-    <<< "$arr" >/dev/null 2>&1 || return 1
+    <<< "$arr" &>/dev/null || return 1
   local -- strict_bool
   ((strict)) && strict_bool=true || strict_bool=false
   jq -n \
@@ -855,7 +862,9 @@ _llm_google() {
   echo "___TOKENS___ $tkn"
 }
 
-# LLM backend: Claude CLI (original implementation, preserves @file references)
+# LLM backend: Claude Code CLI. Builds the prompt with @file references
+# (resolved by the CLI itself) rather than inlining the standard or script,
+# and runs `claude -p` from a clean temp dir with bypassPermissions.
 _llm_claude_cli() {
   local -- model=$1 effort=$2 bcs_file=$3 script_file=$4
   local -i strict=$5
@@ -1358,7 +1367,7 @@ $numbered_script"
         echo "$json_doc"
         if ((exit_code == 0)) && \
            jq -e '.comments[]? | select(.level == "error")' \
-               <<< "$json_doc" >/dev/null 2>&1; then
+               <<< "$json_doc" &>/dev/null; then
           exit_code=1
         fi
       else
@@ -1555,14 +1564,17 @@ cmd_generate() {
 
   info "Generating standard from ${#section_files[@]} section files..."
 
+  # First section's SPDX marker is preserved as the canonical header;
+  # strip the marker from every subsequent section to avoid 14 duplicates.
   local -i first=1
   { for section_file in "${section_files[@]}"; do
       if ((first)); then
         first=0
+        cat -- "$section_file"
       else
         printf '\n---\n\n'
+        sed '/^<!-- SPDX-License-Identifier:/d' "$section_file"
       fi
-      cat -- "$section_file"
     done
   } > "$output_file".tmp
   mv -f -- "$output_file".tmp "$output_file"
@@ -1573,7 +1585,8 @@ cmd_generate() {
   bcs_root=${bcs_root//\\/\\\\}   # escape backslashes
   bcs_root=${bcs_root//|/\\|}     # escape sed delimiter
   bcs_root=${bcs_root//&/\\&}     # escape sed back-reference
-  sed -i "s|](\\.\\.\/|](${bcs_root}/|g" "$output_file"
+  sed -i "s|](\\.\\.\/|](${bcs_root}/|g" "$output_file" \
+    || die 1 "Failed to resolve relative links in ${output_file@Q}"
 
   # Make it readonly so that users do not confuse this document with the rules sections
   chmod 444 "$output_file"

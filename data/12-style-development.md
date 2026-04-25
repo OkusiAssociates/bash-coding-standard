@@ -92,7 +92,7 @@ _msg() { :; }
 declare -i VERBOSE=1 DEBUG=0
 ```
 
-Reserve 80-dash separators (`# ----`) for major script divisions only -- typically no more than two or three per file.
+Reserve 80-dash separators (`# ----`) for major script divisions only. Two or three per file is plenty for a typical script. Large monolithic scripts -- subcommand dispatchers, multi-backend tools, framework-style libraries -- legitimately need more, and one divider per subcommand or per major architectural layer is fine. The test is whether each divider marks a real navigational landmark: if every minor section gets one, none of them help.
 
 ## BCS1205 Language Best Practices
 
