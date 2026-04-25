@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+# bcscodes - convenience shim for `bcs codes`
+# Passes all arguments to bcs codes; defaults via ~/.config/bcs/bcs.conf
+set -euo pipefail
+exec bcs codes "$@"
+#fin

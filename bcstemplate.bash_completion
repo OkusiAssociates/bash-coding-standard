@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# bcstemplate(1) bash completion — mirrors 'bcs template' options
+# shellcheck shell=bash
+
+_bcstemplate() {
+  local -- cur prev words cword
+  _init_completion || return
+
+  case $prev in
+    -t|--type)
+      mapfile -t COMPREPLY < <(compgen -W 'minimal basic complete library' -- "$cur")
+      return
+      ;;
+    -o|--output)
+      _filedir
+      return
+      ;;
+    -n|--name|-d|--desc|-V|--version)
+      return
+      ;;
+  esac
+
+  case $cur in
+    -*)
+      mapfile -t COMPREPLY < <(compgen -W '-t --type -n --name -d --desc -V --version -o --output -x --executable -f --force -v --verbose -q --quiet -h --help' -- "$cur")
+      ;;
+    *)
+      _filedir
+      ;;
+  esac
+} && complete -F _bcstemplate bcstemplate
+#fin

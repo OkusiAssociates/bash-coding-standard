@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+# bcstemplate - convenience shim for `bcs template`
+# Passes all arguments to bcs template; defaults via ~/.config/bcs/bcs.conf
+set -euo pipefail
+exec bcs template "$@"
+#fin

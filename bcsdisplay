@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+# bcsdisplay - convenience shim for `bcs display`
+# Passes all arguments to bcs display; defaults via ~/.config/bcs/bcs.conf
+set -euo pipefail
+exec bcs display "$@"
+#fin

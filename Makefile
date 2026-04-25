@@ -22,6 +22,10 @@ install:
 	install -d $(DESTDIR)$(BINDIR)
 	install -m 755 $(srcdir)bcs $(DESTDIR)$(BINDIR)/bcs
 	install -m 755 $(srcdir)bcscheck $(DESTDIR)$(BINDIR)/bcscheck
+	install -m 755 $(srcdir)bcsdisplay $(DESTDIR)$(BINDIR)/bcsdisplay
+	install -m 755 $(srcdir)bcstemplate $(DESTDIR)$(BINDIR)/bcstemplate
+	install -m 755 $(srcdir)bcscodes $(DESTDIR)$(BINDIR)/bcscodes
+	install -m 755 $(srcdir)bcsgenerate $(DESTDIR)$(BINDIR)/bcsgenerate
 	install -d $(DESTDIR)$(SHAREDIR)
 	install -m 644 $(srcdir)LICENSE $(DESTDIR)$(SHAREDIR)/LICENSE
 	install -m 644 $(srcdir)COPYING $(DESTDIR)$(SHAREDIR)/COPYING
@@ -48,6 +52,10 @@ install:
 	@if [ -d $(DESTDIR)$(COMPDIR) ]; then \
 	  install -m 644 $(srcdir)bcs.bash_completion $(DESTDIR)$(COMPDIR)/bcs; \
 	  install -m 644 $(srcdir)bcscheck.bash_completion $(DESTDIR)$(COMPDIR)/bcscheck; \
+	  install -m 644 $(srcdir)bcsdisplay.bash_completion $(DESTDIR)$(COMPDIR)/bcsdisplay; \
+	  install -m 644 $(srcdir)bcstemplate.bash_completion $(DESTDIR)$(COMPDIR)/bcstemplate; \
+	  install -m 644 $(srcdir)bcscodes.bash_completion $(DESTDIR)$(COMPDIR)/bcscodes; \
+	  install -m 644 $(srcdir)bcsgenerate.bash_completion $(DESTDIR)$(COMPDIR)/bcsgenerate; \
 	fi
 	@if [ -d $(DESTDIR)$(PREFIX)/share/yatti/bash-coding-standard ] \
 	    && [ ! -L $(DESTDIR)$(PREFIX)/share/yatti/bash-coding-standard ]; then \
@@ -59,11 +67,19 @@ install:
 uninstall:
 	rm -f $(DESTDIR)$(BINDIR)/bcs
 	rm -f $(DESTDIR)$(BINDIR)/bcscheck
+	rm -f $(DESTDIR)$(BINDIR)/bcsdisplay
+	rm -f $(DESTDIR)$(BINDIR)/bcstemplate
+	rm -f $(DESTDIR)$(BINDIR)/bcscodes
+	rm -f $(DESTDIR)$(BINDIR)/bcsgenerate
 	rm -f $(DESTDIR)$(MANDIR)/bcs.1
 	rm -f $(DESTDIR)$(MANDIR)/BCS-bash.1
 	rm -f $(DESTDIR)$(MANDIR)/bcs-bash.1
 	rm -f $(DESTDIR)$(COMPDIR)/bcs
 	rm -f $(DESTDIR)$(COMPDIR)/bcscheck
+	rm -f $(DESTDIR)$(COMPDIR)/bcsdisplay
+	rm -f $(DESTDIR)$(COMPDIR)/bcstemplate
+	rm -f $(DESTDIR)$(COMPDIR)/bcscodes
+	rm -f $(DESTDIR)$(COMPDIR)/bcsgenerate
 	rm -rf $(DESTDIR)$(SHAREDIR)
 	rm -f $(DESTDIR)$(PREFIX)/share/yatti/bash-coding-standard
 
@@ -74,6 +90,18 @@ check:
 	@command -v bcscheck >/dev/null 2>&1 \
 	  && echo 'bcscheck: OK' \
 	  || echo 'bcscheck: NOT FOUND (check PATH)'
+	@command -v bcsdisplay >/dev/null 2>&1 \
+	  && echo 'bcsdisplay: OK' \
+	  || echo 'bcsdisplay: NOT FOUND (check PATH)'
+	@command -v bcstemplate >/dev/null 2>&1 \
+	  && echo 'bcstemplate: OK' \
+	  || echo 'bcstemplate: NOT FOUND (check PATH)'
+	@command -v bcscodes >/dev/null 2>&1 \
+	  && echo 'bcscodes: OK' \
+	  || echo 'bcscodes: NOT FOUND (check PATH)'
+	@command -v bcsgenerate >/dev/null 2>&1 \
+	  && echo 'bcsgenerate: OK' \
+	  || echo 'bcsgenerate: NOT FOUND (check PATH)'
 
 test:
 	./tests/run-all-tests.sh

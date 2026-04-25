@@ -100,8 +100,8 @@ The Bash Coding Standard defines **98 substantive rules plus 12 section overview
 | Tier | Count | Severity | Behaviour |
 |------|-------|----------|-----------|
 | `core` | 33 | `[ERROR]` | Real correctness/safety bugs. Non-zero exit if any are found. |
-| `recommended` | 41 | `[WARN]` | Bash hygiene; prevents subtle issues. |
-| `style` | 24 | `[WARN]` | Taste; no correctness impact. |
+| `recommended` | 42 | `[WARN]` | Bash hygiene; prevents subtle issues. |
+| `style` | 23 | `[WARN]` | Taste; no correctness impact. |
 | `disabled` | -- | (silent) | Applied only via `policy.conf`; never reported. |
 
 ## CLI Reference
@@ -164,7 +164,7 @@ bcs codes -p               # Plain output (no tier decoration)
 
 | `-m` value | Backend | Notes |
 |------------|---------|-------|
-| `fast` / `balanced` / `thorough` | Probe order: ollama, anthropic, openai, google, claude | First reachable wins; tier's default model |
+| `fast` / `balanced` / `thorough` | Probe order: claude, ollama, anthropic, openai, google | First reachable wins; tier's default model |
 | `claude-*` (e.g. `claude-opus-4-6`) | Anthropic API | Pass-through |
 | `gemini-*` (e.g. `gemini-2.5-pro`) | Google Gemini API | Pass-through |
 | `gpt-*` / `o[0-9]*` (e.g. `gpt-5.4`, `o3-mini`) | OpenAI API | Pass-through |
