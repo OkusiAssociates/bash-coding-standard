@@ -4,9 +4,9 @@
 # bcs - Bash Coding Standard CLI toolkit
 # Six subcommands for viewing, generating, and checking compliance with the Bash Coding Standard.
 set -euo pipefail
-shopt -s inherit_errexit shift_verbose extglob nullglob
+shopt -s inherit_errexit extglob nullglob
 
-declare -rx PATH=~/.local/bin:/usr/local/bin:/usr/bin:/bin
+declare -rx PATH="$HOME"/.local/bin:/usr/local/bin:/usr/bin:/bin
 
 # Script metadata
 declare -r VERSION=2.0.1
@@ -93,7 +93,7 @@ read_conf() {
     mode=$(stat -c '%a' "$conf_file" 2>/dev/null) ||:
     case $mode in
       ''|?([0-7])[0-7][0145][0145])
-        ;;                                          # stat failed, or safe perms
+        : ;; # stat failed, or safe perms
       ?([0-7])[0-7][0-7][2367])
         die 13 "$conf_file: world-writable (mode $mode) -- refusing to source as shell; run: chmod o-w ${conf_file@Q}" ;;
       *)
@@ -456,7 +456,7 @@ _load_policy() {
   for path in "${search_paths[@]}"; do
     [[ -f $path && -r $path ]] || continue
     lineno=0
-    while IFS= read -r line || [[ -n $line ]]; do
+    while IFS= read -r line; do
       lineno+=1
       line=${line%%\#*}                         # strip comments
       line=${line#"${line%%[![:space:]]*}"}     # ltrim
@@ -616,11 +616,12 @@ _detect_backend() {
 # also matches `claude-code`. Do not reorder these cases.
 _sniff_backend() {
   case $1 in
-    claude-code|claude-code:*) echo claude ;;
-    claude-*)                  echo anthropic ;;
-    gemini-*)                  echo google ;;
-    gpt-*|o[0-9]*)             echo openai ;;
-    *)                         echo ollama ;;
+    claude|claude:*|claude-code|claude-code:*)
+                      echo claude ;;
+    claude-*)         echo anthropic ;;
+    gemini-*)         echo google ;;
+    gpt-*|o[0-9]*)    echo openai ;;
+    *)                echo ollama ;;
   esac
 }
 
