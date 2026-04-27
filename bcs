@@ -267,10 +267,13 @@ ${BOLD}Policy Overrides:$NC
 
 ${BOLD}User Rules:$NC
   Custom rules may be added in BCS9800-BCS9899 space via:
-    \$BCS_DATA/98-user.md         (single file)
-    \$BCS_DATA/98-user.d/*.md     (drop-in directory)
-  Either may be symlinks to user-owned files. User rules are included in the
-  generated BASH-CODING-STANDARD.md and respected by bcs check / bcs codes.
+    <data-dir>/98-user.md         (single file)
+    <data-dir>/98-user.d/*.md     (drop-in directory)
+  <data-dir> is resolved by FHS search (script's own data/, then
+  share/yatti/BCS/data under PREFIX, /usr/local, /usr/share — see
+  _find_data_dir). Either path may be a symlink to user-owned files.
+  User rules are included in the generated BASH-CODING-STANDARD.md and
+  respected by bcs check / bcs codes.
 
 ${BOLD}Configuration:$NC
   Config files are sourced as bash in cascade order (later overrides earlier):
