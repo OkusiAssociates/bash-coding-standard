@@ -183,10 +183,10 @@ ${BOLD}Options:$NC
   -h, --help            Show this help
 
 ${BOLD}Template Types:$NC
-  minimal     Bare essentials (~16 lines)
-  basic       Standard with metadata (~26 lines)
-  complete    Full toolkit with all utilities (~119 lines)
-  library     Sourceable library pattern (~40 lines)
+  minimal     Bare essentials (~18 lines)
+  basic       Standard with metadata (~43 lines)
+  complete    Full toolkit with all utilities (~112 lines)
+  library     Sourceable library pattern (~37 lines)
 
 ${BOLD}Examples:$NC
   $SCRIPT_NAME template -t minimal

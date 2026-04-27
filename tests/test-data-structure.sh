@@ -38,13 +38,26 @@ for type in minimal basic complete library; do
   assert_file_exists "$PROJECT_DIR"/examples/templates/"$type".sh.template "$type template exists" || true
 done
 
+# Documentation-only sections that intentionally contribute no BCS codes
+# (e.g. section 13 documents environment variables, not coding rules).
+declare -a NO_CODE_SECTIONS=(13)
+
+_is_no_code_section() {
+  local -- needle=$1 item
+  for item in "${NO_CODE_SECTIONS[@]}"; do
+    [[ $item == "$needle" ]] && return 0
+  done
+  return 1
+}
+
 # Test: each section file starts with # Section N:
 begin_test 'section files have proper headers'
-declare -i good_headers=0
+declare -i good_headers=0 expected_sections=0
 declare -- first_line line f
 for f in "$DATA_DIR"/[0-9]*.md; do
   [[ "${f##*/}" == BASH-CODING-STANDARD.md ]] && continue
   [[ "${f##*/}" == 00-* || "${f##*/}" == 99-* ]] && continue
+  expected_sections+=1
   # First non-empty, non-SPDX-comment line must be a "# Section N:" header.
   first_line=''
   while IFS= read -r line; do
@@ -59,21 +72,26 @@ for f in "$DATA_DIR"/[0-9]*.md; do
     printf '    bad header in %s: %s\n' "${f##*/}" "$first_line"
   fi
 done
-assert_equal 12 "$good_headers" 'all 12 section files have proper headers' || true
+assert_equal "$expected_sections" "$good_headers" 'all section files have proper headers' || true
 
-# Test: every section has at least one BCS code
-begin_test 'every section has BCS codes'
-declare -i sections_with_codes=0
+# Test: every rule section has at least one BCS code (documentation-only sections excluded)
+begin_test 'every rule section has BCS codes'
+declare -i sections_with_codes=0 expected_code_sections=0
+declare -- section_num
 for f in "$DATA_DIR"/[0-9]*.md; do
   [[ "${f##*/}" == BASH-CODING-STANDARD.md ]] && continue
   [[ "${f##*/}" == 00-* || "${f##*/}" == 99-* ]] && continue
+  section_num=${f##*/}
+  section_num=${section_num:0:2}
+  _is_no_code_section "$section_num" && continue
+  expected_code_sections+=1
   if grep -q '^## BCS[0-9]' "$f"; then
     sections_with_codes+=1
   else
     printf '    no BCS codes in %s\n' "${f##*/}"
   fi
 done
-assert_equal 12 "$sections_with_codes" 'all sections have BCS codes' || true
+assert_equal "$expected_code_sections" "$sections_with_codes" 'all rule sections have BCS codes' || true
 
 # Test: BCS codes are well-formed (BCS followed by 4 digits)
 begin_test 'BCS codes are well-formed'

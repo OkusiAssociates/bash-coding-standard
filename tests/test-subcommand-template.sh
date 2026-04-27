@@ -116,7 +116,7 @@ done
 # Test: help line counts match actual templates
 begin_test 'help line counts match actual templates'
 declare -i line_mismatches=0
-declare -Ar expected_lines=([minimal]=15 [basic]=25 [complete]=112 [library]=39)
+declare -Ar expected_lines=([minimal]=18 [basic]=43 [complete]=112 [library]=37)
 for ttype in minimal basic complete library; do
   actual_lines=$("$BCS_CMD" template -t "$ttype" 2>/dev/null | wc -l)
   expected=${expected_lines[$ttype]}

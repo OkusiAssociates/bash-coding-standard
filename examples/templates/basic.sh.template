@@ -23,7 +23,7 @@ main() {
   # Locals
   #...
   while (($#)); do case $1 in
-    -V|--version) printf '%s %s\n' "$SCRIPT_NAME $VERSION"; exit 0 ;;
+    -V|--version) printf '%s %s\n' "$SCRIPT_NAME" "$VERSION"; exit 0 ;;
     -h|--help)    printf 'Usage: %s %s\n' "$SCRIPT_NAME" "[OPTIONS] [ARG...]"; exit 0 ;;
     -v|--verbose) VERBOSE=1 ;;
     -q|--quiet)   VERBOSE=0 ;;
