@@ -21,7 +21,7 @@ Strict-mode assumptions throughout. Bottom-up structure: from the Unix model Bas
 
 ## About this reference
 
-This is a **structural reference guide** for advanced Bash users. It assumes Bash 5.2 or newer on Ubuntu 24.04 (or comparable Linux), strict-mode operation (`set -euo pipefail` with `shopt -s inherit_errexit`), and that the reader can already write at least basic shell.
+This is a **structural reference guide** for advanced Bash users. It assumes Bash 5.2 or newer on Ubuntu 24.04 (or comparable Linux), strict-mode operation (`set -euo pipefail` with `shopt -s inherit_errexit`), and that the reader can already write at least basic shell scripts.
 
 It is organised bottom-up: the Unix model first (because Bash is a thin language over Unix primitives), then Bash as a program, then the language proper (lexical structure, parameters, expansions, redirection, control flow), then the engineering layer (functions, libraries, process management, signals, errors, I/O, CLI, concurrency, IPC), then the interactive layer (readline), then performance, security, tooling, idioms, portability, and internals — closing on Bash 5.3 and beyond.
 
