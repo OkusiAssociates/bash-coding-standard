@@ -39,6 +39,9 @@ install:
 	cp -a $(srcdir)docs/. $(DESTDIR)$(SHAREDIR)/docs/
 	rm -f $(DESTDIR)$(SHAREDIR)/docs/CLAUDE.md
 	rm -rf $(DESTDIR)$(SHAREDIR)/docs/.claude
+	rm -rf $(DESTDIR)$(SHAREDIR)/docs/BCS-Bash-Ref/.audit
+	rm -f $(DESTDIR)$(SHAREDIR)/docs/BCS-Bash-Ref/CLAUDE.md
+	rm -rf $(DESTDIR)$(SHAREDIR)/docs/BCS-Bash-Ref/.claude
 	install -d $(DESTDIR)$(SHAREDIR)/benchmarks
 	cp -a $(srcdir)benchmarks/. $(DESTDIR)$(SHAREDIR)/benchmarks/
 	install -d $(DESTDIR)$(SHAREDIR)/examples
