@@ -1,0 +1,351 @@
+path	disposition	target_lines	required_examples	priority	notes
+docs/BCS-Bash-Ref/01_The-Unix-Model-from-Bash/01_Processes-fork-exec-wait.md	KEEP	180	2	P3	dense topic deserves syscall-table plus zombie/orphan demo; needs concrete fork+exec example
+docs/BCS-Bash-Ref/01_The-Unix-Model-from-Bash/02_The-file-descriptor-model.md	KEEP	180	2	P3	fd-table diagram and lsof inspection example required; xref to Part VI redirection
+docs/BCS-Bash-Ref/01_The-Unix-Model-from-Bash/03_Files-directories-and-special-files.md	KEEP	90	1	P3	needs file-type stat snippet; otherwise reasonable cheatsheet bullets
+docs/BCS-Bash-Ref/01_The-Unix-Model-from-Bash/04_Streams-and-the-standard-descriptors.md	KEEP	90	1	P3	needs isatty test snippet and a buffering-vs-pipe demo
+docs/BCS-Bash-Ref/01_The-Unix-Model-from-Bash/05_The-shell-environment.md	KEEP	150	2	P3	core Bash concept treated as bullet list; needs export-vs-shell-var example and env propagation demo
+docs/BCS-Bash-Ref/01_The-Unix-Model-from-Bash/06_Users-groups-permissions.md	KEEP	110	1	P3	add ruid-vs-euid table and one chmod/setcap example
+docs/BCS-Bash-Ref/01_The-Unix-Model-from-Bash/07_Exit-status-and-process-termination.md	KEEP	140	2	P3	needs 128+signum example and BCS exit-code table inline; xref to BCS Appendix L will not resolve in RAG
+docs/BCS-Bash-Ref/01_The-Unix-Model-from-Bash/08_Signals-overview.md	KEEP	100	1	P3	cheatsheet bullets ok; add signal-table mini-block; deep treatment correctly deferred to Part XII
+docs/BCS-Bash-Ref/01_The-Unix-Model-from-Bash/09_The-controlling-terminal-and-TTY-layer.md	KEEP	150	1	P3	needs line-discipline ascii diagram and stty/tty inspection example
+docs/BCS-Bash-Ref/01_The-Unix-Model-from-Bash/index.md	KEEP	24	0	P3	index page complete with chapter links and orientation prose
+docs/BCS-Bash-Ref/02_Bash-as-a-Program/01_Genealogy-and-the-shell-family.md	KEEP	90	0	P3	historical bullets sufficient; tighten dates and add cross-link to §23.6 macOS
+docs/BCS-Bash-Ref/02_Bash-as-a-Program/02_Bash-version-landscape.md	KEEP	100	1	P3	version-feature bullets dense and accurate; add a BASH_VERSINFO inspection snippet
+docs/BCS-Bash-Ref/02_Bash-as-a-Program/03_Build-configuration-and-feature-detection.md	KEEP	110	2	P3	needs runtime feature-detect snippets for extglob/globstar/loadable builtins
+docs/BCS-Bash-Ref/02_Bash-as-a-Program/04_Invocation-modes.md	KEEP	160	2	P3	four-quadrant matrix essential; needs a literal table plus interactive vs login detection examples
+docs/BCS-Bash-Ref/02_Bash-as-a-Program/05_Startup-file-chains.md	KEEP	180	2	P3	canonical map but no diagram; needs a flowchart of files-by-mode and the .bashrc-from-bash_profile idiom
+docs/BCS-Bash-Ref/02_Bash-as-a-Program/06_BASH_ENV-and-ENV.md	KEEP	80	1	P3	short by intent; add a BASH_ENV injection example and security note tying to §20
+docs/BCS-Bash-Ref/02_Bash-as-a-Program/07_Command-line-options-to-bash-itself.md	KEEP	100	1	P3	option catalogue acceptable as cheatsheet; add a -O shoptname example and tighten
+docs/BCS-Bash-Ref/02_Bash-as-a-Program/08_Exit-and-shell-session-lifecycle.md	KEEP	100	1	P3	needs an EXIT-trap example and clarify subshell EXIT inheritance with set -E vs functrace
+docs/BCS-Bash-Ref/02_Bash-as-a-Program/index.md	KEEP	24	0	P3	index page complete with prev/next nav
+docs/BCS-Bash-Ref/03_Lexical-Structure-and-Shell-Grammar/01_Tokenisation.md	KEEP	150	2	P2	core parser concept; needs metachar table and worked tokenisation example for [[ -f $f ]]
+docs/BCS-Bash-Ref/03_Lexical-Structure-and-Shell-Grammar/02_Reserved-words.md	KEEP	100	1	P2	list complete; needs example of reserved-word context vs literal context with quote-suppression demo
+docs/BCS-Bash-Ref/03_Lexical-Structure-and-Shell-Grammar/03_Comments.md	KEEP	90	1	P2	rules accurate; needs foo#bar vs # foo demo and BCS leading-only comment style citation
+docs/BCS-Bash-Ref/03_Lexical-Structure-and-Shell-Grammar/04_Quoting-overview.md	KEEP	150	2	P2	gateway chapter to four sub-quoting forms; needs hierarchy table and "$var" rationale example
+docs/BCS-Bash-Ref/03_Lexical-Structure-and-Shell-Grammar/05_Single-quotes.md	KEEP	80	1	P2	needs the close-escape-reopen idiom shown as code; rules complete
+docs/BCS-Bash-Ref/03_Lexical-Structure-and-Shell-Grammar/06_Double-quotes.md	KEEP	150	2	P2	cardinal "$@" vs "$*" semantics requires a worked example; central to scripting correctness
+docs/BCS-Bash-Ref/03_Lexical-Structure-and-Shell-Grammar/07_ANSI-C-quoting.md	KEEP	100	1	P2	escape table needs to be a literal markdown table with hex/octal/unicode rows
+docs/BCS-Bash-Ref/03_Lexical-Structure-and-Shell-Grammar/08_Locale-translation.md	KEEP	14	0	P2	rare-feature acknowledgement; bullets adequate for the disposition the author chose
+docs/BCS-Bash-Ref/03_Lexical-Structure-and-Shell-Grammar/09_Backslash-escapes.md	KEEP	90	1	P2	needs context-table (outside vs in "" vs in '' vs in $'') with one example each
+docs/BCS-Bash-Ref/03_Lexical-Structure-and-Shell-Grammar/10_Shell-grammar.md	KEEP	160	2	P2	grammar productions need BNF block plus worked parse-tree example for a real pipeline
+docs/BCS-Bash-Ref/03_Lexical-Structure-and-Shell-Grammar/11_Operator-precedence.md	KEEP	140	2	P2	precedence is footgun-rich; needs a precedence table and an a && b || c example showing why it is not if/else
+docs/BCS-Bash-Ref/03_Lexical-Structure-and-Shell-Grammar/index.md	KEEP	26	0	P2	index page complete
+docs/BCS-Bash-Ref/04_Parameters-Variables-and-Arrays/01_Parameter-taxonomy.md	KEEP	80	1	P2	overview chapter; add a hierarchy diagram and one example of each taxonomy class
+docs/BCS-Bash-Ref/04_Parameters-Variables-and-Arrays/02_Positional-parameters.md	KEEP	160	2	P2	needs "$@" vs "$*" worked example and a getopts loop showing how positionals are consumed
+docs/BCS-Bash-Ref/04_Parameters-Variables-and-Arrays/03_Special-parameters.md	KEEP	110	1	P2	needs a literal table of $? $$ $! $_ $- $0 with example values; appendix-style cheatsheet
+docs/BCS-Bash-Ref/04_Parameters-Variables-and-Arrays/04_Shell-variables.md	KEEP	220	2	P2	long reserved-name list functions as appendix preview; needs sub-grouping headings and examples for BASH_SOURCE/PIPESTATUS/BASH_REMATCH
+docs/BCS-Bash-Ref/04_Parameters-Variables-and-Arrays/05_The-declare-builtin-and-attributes.md	KEEP	200	3	P2	declare is BCS-central; needs attribute table plus -i -a -A -n -r -x worked examples; combining-attributes pitfalls
+docs/BCS-Bash-Ref/04_Parameters-Variables-and-Arrays/06_local-and-dynamic-scope.md	KEEP	170	2	P2	dynamic-scope is foreign to most readers; needs caller/callee visibility demo and the local -- BCS rule shown
+docs/BCS-Bash-Ref/04_Parameters-Variables-and-Arrays/07_readonly-and-immutability.md	KEEP	100	1	P2	needs a SCRIPT_NAME readonly example and a function-readonly example
+docs/BCS-Bash-Ref/04_Parameters-Variables-and-Arrays/08_export-and-the-environment.md	KEEP	150	2	P2	Shellshock function-export deserves a paragraph plus the export -f example; assignment-prefixed-command behavior needs demo
+docs/BCS-Bash-Ref/04_Parameters-Variables-and-Arrays/09_Indexed-arrays.md	KEEP	220	3	P2	core Bash data structure; needs sparse-array demo plus copy-pitfall worked code plus iteration loop
+docs/BCS-Bash-Ref/04_Parameters-Variables-and-Arrays/10_Associative-arrays.md	KEEP	200	3	P2	needs declare -A demo plus membership test plus deterministic-iteration sort idiom; central to modern Bash
+docs/BCS-Bash-Ref/04_Parameters-Variables-and-Arrays/11_Namerefs-n.md	KEEP	180	3	P2	nameref is conceptually subtle; needs output-parameter pattern code and cycle/shadowing pitfall examples
+docs/BCS-Bash-Ref/04_Parameters-Variables-and-Arrays/12_Integer-arithmetic-semantics.md	KEEP	150	2	P2	underflow/overflow/base-prefix examples needed; set -u inconsistency note must be demonstrated
+docs/BCS-Bash-Ref/04_Parameters-Variables-and-Arrays/13_Variable-assignment-semantics.md	KEEP	170	2	P2	scalar vs compound array assignment expansion difference is footgun-rich; needs side-by-side demo
+docs/BCS-Bash-Ref/04_Parameters-Variables-and-Arrays/14_Unsetting.md	KEEP	100	1	P2	needs unset arr[i] quoting demo and -n nameref-vs-target unset distinction
+docs/BCS-Bash-Ref/04_Parameters-Variables-and-Arrays/index.md	KEEP	30	0	P2	index page complete
+docs/BCS-Bash-Ref/05_Expansions/01_Order-of-expansions.md	KEEP	90	1	P2	numbered list excellent; add a worked walkthrough of one command through all eight phases
+docs/BCS-Bash-Ref/05_Expansions/02_Brace-expansion.md	KEEP	100	2	P2	range and nested forms benefit from short outputs shown in fenced blocks
+docs/BCS-Bash-Ref/05_Expansions/03_Tilde-expansion.md	KEEP	90	1	P2	needs quoted-vs-unquoted demo and a PATH=~/bin assignment example
+docs/BCS-Bash-Ref/05_Expansions/04_Parameter-and-variable-expansion.md	KEEP	260	4	P2	richest expansion in Bash; current bullets are appendix-preview; needs operator-by-operator table with mini-examples for default/substring/pattern/case/transformation
+docs/BCS-Bash-Ref/05_Expansions/05_Arithmetic-expansion.md	KEEP	110	1	P2	needs a small example showing $(( a + b )) without the $ prefix and the set -u arithmetic inconsistency demonstrated
+docs/BCS-Bash-Ref/05_Expansions/06_Command-substitution.md	KEEP	150	2	P2	needs $(<file) demo and the inherit_errexit interaction shown; trailing-newline stripping example
+docs/BCS-Bash-Ref/05_Expansions/07_Process-substitution.md	KEEP	140	2	P2	diff <(sort a) <(sort b) is the canonical example and must appear; tee >(...) demo for fan-out
+docs/BCS-Bash-Ref/05_Expansions/08_Word-splitting-and-IFS.md	KEEP	180	3	P2	word-splitting is the #1 source of Bash bugs; needs IFS=$'\\t\\n' demo plus IFS=: parsing demo plus quote-vs-unquote contrast
+docs/BCS-Bash-Ref/05_Expansions/09_Pathname-expansion-globbing.md	KEEP	170	2	P2	needs POSIX-class table and dotglob/nullglob behavioural demo with directory listings
+docs/BCS-Bash-Ref/05_Expansions/10_Quote-removal.md	KEEP	60	1	P2	short by intent; the var=$'a\\\\b' example mentioned in prose should be a real fenced block
+docs/BCS-Bash-Ref/05_Expansions/11_Glob-options.md	KEEP	160	2	P2	shopt toggles need a save-restore idiom demo and a nullglob-vs-failglob behavioural example
+docs/BCS-Bash-Ref/05_Expansions/12_Extended-globs-extglob.md	KEEP	150	2	P2	extglob operators each need a one-line demo; the !(*.bak|*.tmp) form is essential
+docs/BCS-Bash-Ref/05_Expansions/13_Locale-and-pattern-matching.md	KEEP	110	1	P2	needs LC_ALL=C example and a [a-z] locale-collation gotcha demo
+docs/BCS-Bash-Ref/05_Expansions/index.md	KEEP	30	0	P2	index page complete
+docs/BCS-Bash-Ref/11_Process-Management/index.md	KEEP	30	0	P1	Part-index TOC; navigation only
+docs/BCS-Bash-Ref/11_Process-Management/01_The-Bash-process-tree-at-runtime.md	KEEP	160	2	P1	Tree shape per construct needs diagram and pstree example; foundational
+docs/BCS-Bash-Ref/11_Process-Management/02_PIDs-BASHPID-PPID.md	KEEP	140	2	P1	Most-misunderstood BASHPID vs $$ semantics; needs subshell demo
+docs/BCS-Bash-Ref/11_Process-Management/03_Subshell-origins.md	KEEP	150	2	P1	Subshell catalogue is foundational; lastpipe interaction missing
+docs/BCS-Bash-Ref/11_Process-Management/04_BASH_SUBSHELL-depth-tracking.md	KEEP	60	1	P1	Tight scope; needs SHLVL contrast example and library-guard idiom
+docs/BCS-Bash-Ref/11_Process-Management/05_Foreground-vs-background.md	KEEP	160	3	P1	$!, wait -n, huponexit need worked examples; SIGCHLD interaction
+docs/BCS-Bash-Ref/11_Process-Management/06_Process-groups-and-sessions.md	KEEP	170	2	P1	pgid/sid model is dense; needs ps -o pgid demo and signal-fanout note
+docs/BCS-Bash-Ref/11_Process-Management/07_The-job-table.md	KEEP	60	1	P1	Tight scope; non-interactive set -m caveat needs example
+docs/BCS-Bash-Ref/11_Process-Management/08_Job-specifications.md	KEEP	20	0	P1	Cheatsheet table fits skeleton form
+docs/BCS-Bash-Ref/11_Process-Management/09_Job-control-builtins.md	KEEP	70	1	P1	disown -h vs -a vs default needs concrete example
+docs/BCS-Bash-Ref/11_Process-Management/10_kill-and-signal-delivery.md	KEEP	80	1	P1	Process-group negative-PID semantics warrants worked example
+docs/BCS-Bash-Ref/11_Process-Management/11_nohup-and-setsid.md	KEEP	120	2	P1	Daemonisation discipline; needs nohup vs setsid vs disown comparison
+docs/BCS-Bash-Ref/11_Process-Management/12_Detaching-from-the-terminal.md	KEEP	150	2	P1	Double-fork pattern needs full bash idiom; systemd vs bash trade-off
+docs/BCS-Bash-Ref/11_Process-Management/13_Environment-inheritance.md	KEEP	70	1	P1	env-i and VAR=val cmd one-shot need example
+docs/BCS-Bash-Ref/12_Signals-and-Traps/index.md	KEEP	33	0	P1	Part-index TOC; navigation only
+docs/BCS-Bash-Ref/12_Signals-and-Traps/01_Signal-taxonomy.md	KEEP	60	0	P1	Categorical list adequate; add default-action column reference to Appendix K
+docs/BCS-Bash-Ref/12_Signals-and-Traps/02_Signal-numbers-and-names.md	KEEP	20	0	P1	Cheatsheet pointing to Appendix K
+docs/BCS-Bash-Ref/12_Signals-and-Traps/03_Uncatchable-signals.md	KEEP	50	1	P1	Critical-cleanup discipline needs worked example
+docs/BCS-Bash-Ref/12_Signals-and-Traps/04_Signal-disposition.md	KEEP	70	1	P1	Inheritance and exec-reset interaction need brief demo
+docs/BCS-Bash-Ref/12_Signals-and-Traps/05_The-trap-builtin.md	KEEP	160	3	P1	Single vs double-quote handler expansion is bug magnet; full forms needed
+docs/BCS-Bash-Ref/12_Signals-and-Traps/06_Pseudo-signals-EXIT-ERR-DEBUG-RETURN.md	KEEP	200	4	P1	Pseudo-signal semantics are foundational; each needs example
+docs/BCS-Bash-Ref/12_Signals-and-Traps/07_trap-p-and-trap-inspection.md	KEEP	50	1	P1	trap -p output sample needed
+docs/BCS-Bash-Ref/12_Signals-and-Traps/08_Trap-inheritance.md	KEEP	160	2	P1	set -E set -T extdebug interactions are non-obvious; matrix needed
+docs/BCS-Bash-Ref/12_Signals-and-Traps/09_Trap-reset-across-exec.md	KEEP	50	1	P1	Ignored-vs-caught reset rules need exec demo
+docs/BCS-Bash-Ref/12_Signals-and-Traps/10_Synchronous-vs-asynchronous-delivery.md	KEEP	160	2	P1	wait-and-invert idiom missing; sleep-trap classic deserves walkthrough
+docs/BCS-Bash-Ref/12_Signals-and-Traps/11_Signal-safe-code.md	KEEP	150	2	P1	Async-signal-safety in bash poorly known; flag-and-defer pattern needed
+docs/BCS-Bash-Ref/12_Signals-and-Traps/12_Idempotent-cleanup-patterns.md	KEEP	80	2	P1	Sentinel and trap-disable patterns need full example
+docs/BCS-Bash-Ref/12_Signals-and-Traps/13_Tempfile-and-tempdir-lifecycle.md	KEEP	70	1	P1	Code block present; add multi-tempdir array cleanup demo
+docs/BCS-Bash-Ref/12_Signals-and-Traps/14_Lockfile-pattern.md	KEEP	80	1	P1	Code block present; add stale-lock and PID-write variant
+docs/BCS-Bash-Ref/12_Signals-and-Traps/15_Atomic-file-write.md	KEEP	70	1	P1	Code block present; cross-FS warning warrants its own example
+docs/BCS-Bash-Ref/12_Signals-and-Traps/16_Reload-on-SIGHUP.md	KEEP	80	1	P1	Code block present; flag-and-defer race pattern needs concrete code
+docs/BCS-Bash-Ref/13_Error-Handling-and-Exit-Status/index.md	KEEP	29	0	P1	Part-index TOC; navigation only
+docs/BCS-Bash-Ref/13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	KEEP	70	1	P1	Add 8-bit truncation example exit 257 -> 1
+docs/BCS-Bash-Ref/13_Error-Handling-and-Exit-Status/02_set-e-errexit-full-semantics.md	KEEP	220	4	P1	Most-misunderstood feature in bash; reference-grade prose mandatory
+docs/BCS-Bash-Ref/13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	KEEP	200	5	P1	Exemption matrix needs each row demonstrated; this is the canonical reference
+docs/BCS-Bash-Ref/13_Error-Handling-and-Exit-Status/04_set-u-nounset.md	KEEP	150	3	P1	Array-unset gotchas and default-expansion forms need worked examples
+docs/BCS-Bash-Ref/13_Error-Handling-and-Exit-Status/05_set-o-pipefail.md	KEEP	160	3	P1	pipefail interaction with PIPESTATUS and SIGPIPE needs walkthrough
+docs/BCS-Bash-Ref/13_Error-Handling-and-Exit-Status/06_inherit_errexit.md	KEEP	140	2	P1	Bug magnet without inherit_errexit; before/after example required
+docs/BCS-Bash-Ref/13_Error-Handling-and-Exit-Status/07_and-true-idioms.md	KEEP	70	1	P1	Add AND-OR list precedence trap example
+docs/BCS-Bash-Ref/13_Error-Handling-and-Exit-Status/08_The-ERR-trap.md	KEEP	90	2	P1	Code block present; add inheritance interaction note
+docs/BCS-Bash-Ref/13_Error-Handling-and-Exit-Status/09_errtrace-and-trap-inheritance.md	KEEP	130	2	P1	set -eET strict-mode contract deserves full demo and library-fn case
+docs/BCS-Bash-Ref/13_Error-Handling-and-Exit-Status/10_Exit-code-conventions.md	KEEP	80	1	P1	BCS code table aligns with global codes; add pointer to Appendix
+docs/BCS-Bash-Ref/13_Error-Handling-and-Exit-Status/11_Propagating-exit-codes.md	KEEP	160	3	P1	local x=$(failing) error-eating gotcha needs canonical demo
+docs/BCS-Bash-Ref/13_Error-Handling-and-Exit-Status/12_Rich-error-output.md	KEEP	100	2	P1	Code block present; add formatted-output and JSON-mode variant
+docs/BCS-Bash-Ref/14_Input-Output-and-Messaging/index.md	KEEP	29	0	P1	Part-index TOC; navigation only
+docs/BCS-Bash-Ref/14_Input-Output-and-Messaging/01_Standard-streams-discipline.md	KEEP	130	2	P1	Composable-script discipline is foundational; needs pipeline anti-pattern demo
+docs/BCS-Bash-Ref/14_Input-Output-and-Messaging/02_The-read-builtin.md	KEEP	100	2	P1	Flag table comprehensive; add IFS interaction and timeout-loop pattern
+docs/BCS-Bash-Ref/14_Input-Output-and-Messaging/03_mapfile-readarray.md	KEEP	80	1	P1	Add file-into-array idiom and NUL example
+docs/BCS-Bash-Ref/14_Input-Output-and-Messaging/04_The-printf-builtin.md	KEEP	100	2	P1	Add printf -v capture pattern and timestamp example
+docs/BCS-Bash-Ref/14_Input-Output-and-Messaging/05_printf-vs-echo.md	KEEP	60	1	P1	Add concrete -e flag failure mode demonstration
+docs/BCS-Bash-Ref/14_Input-Output-and-Messaging/06_Format-specifiers.md	KEEP	21	0	P1	Cheatsheet form appropriate
+docs/BCS-Bash-Ref/14_Input-Output-and-Messaging/07_Logging-discipline.md	KEEP	170	3	P1	BCS _msg dispatch pattern is canonical; needs full FUNCNAME implementation
+docs/BCS-Bash-Ref/14_Input-Output-and-Messaging/08_Log-levels.md	KEEP	80	1	P1	Add structured-logging JSON example
+docs/BCS-Bash-Ref/14_Input-Output-and-Messaging/09_Coloured-output-and-TERM-detection.md	KEEP	150	3	P1	BCS color-init pattern deserves full implementation; tput vs ANSI trade-off
+docs/BCS-Bash-Ref/14_Input-Output-and-Messaging/10_Progress-indicators.md	KEEP	90	2	P1	Add spinner and bar code blocks and TTY-detect guard
+docs/BCS-Bash-Ref/14_Input-Output-and-Messaging/11_Reading-binary-data.md	KEEP	60	1	P1	Add NUL-separated find-mapfile pattern; warning prose adequate
+docs/BCS-Bash-Ref/14_Input-Output-and-Messaging/12_File-locking-for-concurrent-writes.md	KEEP	70	1	P1	PIPE_BUF and O_APPEND need brief calibration example
+docs/BCS-Bash-Ref/15_Command-Line-Processing/index.md	KEEP	28	0	P1	Part-index TOC; navigation only
+docs/BCS-Bash-Ref/15_Command-Line-Processing/01_CLI-conventions.md	KEEP	80	1	P1	Convention list adequate; add concrete invocation examples
+docs/BCS-Bash-Ref/15_Command-Line-Processing/02_getopts-builtin.md	KEEP	140	2	P1	Full getopts loop with silent-mode and OPTERR handling required
+docs/BCS-Bash-Ref/15_Command-Line-Processing/03_GNU-getopt1-external.md	KEEP	60	1	P1	BSD vs GNU detection idiom should appear; warning prose adequate
+docs/BCS-Bash-Ref/15_Command-Line-Processing/04_Hand-rolled-while-case-shift.md	KEEP	120	2	P1	Code block present and canonical; expand bundling-class explanation and noarg helper definition
+docs/BCS-Bash-Ref/15_Command-Line-Processing/05_Long-options.md	KEEP	60	1	P1	Add both forms within a single case-block demo
+docs/BCS-Bash-Ref/15_Command-Line-Processing/06_Bundled-short-options.md	KEEP	70	1	P1	Bundling-class character-set rule deserves explicit code demo
+docs/BCS-Bash-Ref/15_Command-Line-Processing/07_end-of-options.md	KEEP	60	1	P1	Add filename-with-leading-dash example
+docs/BCS-Bash-Ref/15_Command-Line-Processing/08_Subcommand-dispatch.md	KEEP	100	2	P1	Code block present; add per-subcommand option-parsing example referencing bcs script
+docs/BCS-Bash-Ref/15_Command-Line-Processing/09_Help-text-conventions.md	KEEP	80	1	P1	Add fully-formed --help output sample
+docs/BCS-Bash-Ref/15_Command-Line-Processing/10_Synopsis-grammar.md	KEEP	20	0	P1	Cheatsheet form appropriate
+docs/BCS-Bash-Ref/15_Command-Line-Processing/11_Auto-generating-usage.md	KEEP	130	2	P1	Deferred-action / single-source-of-truth pattern central to BCS template; needs working impl
+docs/BCS-Bash-Ref/16_Concurrency-and-Parallelism/index.md	KEEP	29	0	P2	chapter index complete with orientation prose and links
+docs/BCS-Bash-Ref/16_Concurrency-and-Parallelism/01_Sequential-vs-background-execution.md	KEEP	60	1	P2	add wait $! and disown contrast plus one redirect example
+docs/BCS-Bash-Ref/16_Concurrency-and-Parallelism/02_wait-and-wait-n.md	KEEP	70	1	P2	add wait -n loop example and pre-5.1 fallback note
+docs/BCS-Bash-Ref/16_Concurrency-and-Parallelism/03_wait-pid-for-specific-child.md	KEEP	17	1	P2	concise with example covering the pattern
+docs/BCS-Bash-Ref/16_Concurrency-and-Parallelism/04_Capturing-per-child-exit-status.md	KEEP	120	2	P2	needs full pid-array + status-array example and aggregation logic; thin
+docs/BCS-Bash-Ref/16_Concurrency-and-Parallelism/05_Bounded-concurrency-fan-out.md	KEEP	80	1	P2	example present but pids array removal idiom is buggy in skeleton; clarify and add pre-5.1 fallback
+docs/BCS-Bash-Ref/16_Concurrency-and-Parallelism/06_The-job-table-under-concurrency.md	KEEP	70	1	P2	add jobs builtin output sample and disown semantics
+docs/BCS-Bash-Ref/16_Concurrency-and-Parallelism/07_xargs-P.md	KEEP	80	1	P2	add find -print0 piped example and discuss line-buffering pitfall
+docs/BCS-Bash-Ref/16_Concurrency-and-Parallelism/08_GNU-parallel.md	KEEP	90	2	P2	needs at-sign separator example and citation guidance
+docs/BCS-Bash-Ref/16_Concurrency-and-Parallelism/09_Race-conditions-in-shell.md	KEEP	160	2	P2	skeleton conflates many race classes; needs TOCTOU diagram and concrete fixes
+docs/BCS-Bash-Ref/16_Concurrency-and-Parallelism/10_Locking-primitives.md	KEEP	180	3	P2	flock subshell pattern essential and missing; mkdir lock and noclobber lock need full examples
+docs/BCS-Bash-Ref/16_Concurrency-and-Parallelism/11_Signal-handling-under-concurrency.md	KEEP	150	2	P2	trap-and-forward pattern is load-bearing for fan-out scripts; needs full kill 0 / pgid example
+docs/BCS-Bash-Ref/16_Concurrency-and-Parallelism/12_Queue-patterns.md	KEEP	90	2	P2	add at least one fifo producer-consumer example and lock+append-file pattern
+docs/BCS-Bash-Ref/17_Coprocesses-and-IPC/index.md	KEEP	26	0	P3	chapter index complete with orientation prose and links
+docs/BCS-Bash-Ref/17_Coprocesses-and-IPC/01_The-coproc-builtin.md	KEEP	70	1	P3	add minimal coproc invocation block; clarify NAME_PID env var name
+docs/BCS-Bash-Ref/17_Coprocesses-and-IPC/02_Bidirectional-fd-pairs.md	KEEP	70	1	P3	example present; add deadlock-on-buffering warning with stdbuf demo
+docs/BCS-Bash-Ref/17_Coprocesses-and-IPC/03_Multiple-coprocesses.md	KEEP	120	2	P3	skeleton has no example; needs two-coproc demo and fd close discipline
+docs/BCS-Bash-Ref/17_Coprocesses-and-IPC/04_Named-pipes-FIFOs.md	KEEP	90	1	P3	add mktemp -p /tmp fifo idiom and trap cleanup example
+docs/BCS-Bash-Ref/17_Coprocesses-and-IPC/05_Anonymous-pipes.md	KEEP	80	1	P3	mention pipefail interaction; cross-ref §6.13 must resolve in RAG
+docs/BCS-Bash-Ref/17_Coprocesses-and-IPC/06_devtcp-and-devudp.md	KEEP	100	2	P3	example present but split across bullets; consolidate into one HTTP probe block
+docs/BCS-Bash-Ref/17_Coprocesses-and-IPC/07_devshm-shared-memory.md	KEEP	70	1	P3	add tmpfs size detection and noexec interaction note
+docs/BCS-Bash-Ref/17_Coprocesses-and-IPC/08_External-IPC-tools.md	KEEP	12	0	P3	cheatsheet of escape-hatches; appropriate as bullet list
+docs/BCS-Bash-Ref/17_Coprocesses-and-IPC/09_Choosing-the-right-primitive.md	KEEP	14	0	P3	decision tree is concise and complete for its purpose
+docs/BCS-Bash-Ref/18_Readline-History-and-Completion/index.md	KEEP	33	0	P3	chapter index complete with orientation prose
+docs/BCS-Bash-Ref/18_Readline-History-and-Completion/01_Readline-overview.md	KEEP	13	0	P3	terse but accurate cheat-card; defers detail to subsequent chapters
+docs/BCS-Bash-Ref/18_Readline-History-and-Completion/02_Editing-modes.md	KEEP	13	0	P3	cheatsheet adequate for orientation
+docs/BCS-Bash-Ref/18_Readline-History-and-Completion/03_Key-bindings.md	KEEP	60	1	P3	add minimal ~/.inputrc snippet to anchor the syntax bullets
+docs/BCS-Bash-Ref/18_Readline-History-and-Completion/04_Bindable-functions.md	KEEP	13	0	P3	bind -l is the canonical lookup; cheatsheet appropriate
+docs/BCS-Bash-Ref/18_Readline-History-and-Completion/05_History.md	KEEP	16	0	P3	HIST* env-var enumeration complete and useful as cheat-card
+docs/BCS-Bash-Ref/18_Readline-History-and-Completion/06_The-history-builtin.md	KEEP	17	0	P3	cheatsheet of subcommands sufficient
+docs/BCS-Bash-Ref/18_Readline-History-and-Completion/07_History-expansion.md	KEEP	19	0	P3	complete designator/modifier reference card
+docs/BCS-Bash-Ref/18_Readline-History-and-Completion/08_Programmable-completion.md	KEEP	60	1	P3	add minimal complete -F skeleton; bullet density acceptable
+docs/BCS-Bash-Ref/18_Readline-History-and-Completion/09_Compspec-actions.md	KEEP	11	0	P3	complete -A action enumeration is the reference
+docs/BCS-Bash-Ref/18_Readline-History-and-Completion/10__init_completion.md	KEEP	60	1	P3	add tiny _init_completion call demo to anchor the bullets
+docs/BCS-Bash-Ref/18_Readline-History-and-Completion/11_Dynamic-completion-functions.md	KEEP	27	1	P3	example present and idiomatic
+docs/BCS-Bash-Ref/18_Readline-History-and-Completion/12_COMPREPLY-and-COMP_-variables.md	KEEP	15	0	P3	COMP_* variable enumeration is the reference card
+docs/BCS-Bash-Ref/18_Readline-History-and-Completion/13_Prompts.md	KEEP	14	0	P3	PS0-PS4 enumeration adequate
+docs/BCS-Bash-Ref/18_Readline-History-and-Completion/14_Prompt-escapes.md	KEEP	21	0	P3	prompt-escape table is complete cheat-card
+docs/BCS-Bash-Ref/18_Readline-History-and-Completion/15_Coloured-and-multi-line-prompts.md	KEEP	50	1	P3	add a single coloured PS1 example showing \[ ... \] wrap discipline
+docs/BCS-Bash-Ref/18_Readline-History-and-Completion/16_Terminal-capability-detection.md	KEEP	60	1	P3	add tput colour-test example and dumb-terminal guard
+docs/BCS-Bash-Ref/19_Performance/index.md	KEEP	30	0	P3	chapter index complete with orientation prose
+docs/BCS-Bash-Ref/19_Performance/01_The-Bash-cost-model.md	KEEP	80	1	P3	cost numbers solid; add citation/method note and one back-of-envelope demo
+docs/BCS-Bash-Ref/19_Performance/02_Profiling-tools.md	KEEP	80	1	P3	add EPOCHREALTIME instrumentation snippet and a note on perf for shells
+docs/BCS-Bash-Ref/19_Performance/03_time-builtin-vs-time-external.md	KEEP	60	1	P3	add concrete TIMEFORMAT and time -v sample output blocks
+docs/BCS-Bash-Ref/19_Performance/04_BASH_XTRACEFD.md	KEEP	60	1	P3	add full exec 3>>... + BASH_XTRACEFD=3 example with cleanup
+docs/BCS-Bash-Ref/19_Performance/05_PS4-instrumentation.md	KEEP	12	0	P3	concrete PS4 examples present and idiomatic
+docs/BCS-Bash-Ref/19_Performance/06_EPOCHREALTIME-for-sub-second-timing.md	KEEP	60	1	P3	avoid forking bc; show printf %s arithmetic for delta
+docs/BCS-Bash-Ref/19_Performance/07_Common-optimisations.md	KEEP	14	0	P3	concise checklist with cross-refs to following chapters
+docs/BCS-Bash-Ref/19_Performance/08_Parameter-expansion-vs-external-commands.md	KEEP	19	1	P3	table-driven cheat-card with embedded benchmark math
+docs/BCS-Bash-Ref/19_Performance/09_Pipes-vs-redirection.md	KEEP	50	1	P3	add tee replacement example and pipefail-with-tee gotcha
+docs/BCS-Bash-Ref/19_Performance/10_Builtins-vs-externals.md	KEEP	17	0	P3	external-to-builtin replacement table is the reference
+docs/BCS-Bash-Ref/19_Performance/11_Bash-5.3-no-fork-command-substitution.md	KEEP	60	1	P3	add a contrast example showing variable-leak side-effect
+docs/BCS-Bash-Ref/19_Performance/12_Memory-considerations.md	KEEP	70	1	P3	add bash internals reference and stream-vs-slurp example
+docs/BCS-Bash-Ref/19_Performance/13_When-Bash-is-the-wrong-tool.md	KEEP	14	0	P3	concise heuristics list appropriate as advisory
+docs/BCS-Bash-Ref/20_Security/index.md	KEEP	31	0	P1	chapter index complete with orientation prose
+docs/BCS-Bash-Ref/20_Security/01_Threat-model.md	KEEP	160	1	P1	threat-model chapter must be authoritative; expand each class with one concrete vector
+docs/BCS-Bash-Ref/20_Security/02_PATH-hardening.md	KEEP	80	1	P1	example present; add note on inherited PATH from sudo / sudo -i and IFS interaction
+docs/BCS-Bash-Ref/20_Security/03_IFS-reset.md	KEEP	80	1	P1	add IFS-injection demo and save/restore pattern fully written out
+docs/BCS-Bash-Ref/20_Security/04_eval-avoidance.md	KEEP	160	2	P1	must show concrete injection-via-eval before-and-after with nameref/declare -A replacement
+docs/BCS-Bash-Ref/20_Security/05_Command-injection-vectors.md	KEEP	200	3	P1	bullet list undersells; needs annotated vulnerable / fixed pairs for each vector class and allow-list pattern
+docs/BCS-Bash-Ref/20_Security/06_Input-validation.md	KEEP	150	2	P1	add full validator function template and rejection examples for filename traversal
+docs/BCS-Bash-Ref/20_Security/07_Quoting-under-set-u.md	KEEP	70	1	P1	add demonstration of set -u trap with arr[@]:- and ${1:-} pattern in argv parser
+docs/BCS-Bash-Ref/20_Security/08_SUID-restrictions.md	KEEP	130	2	P1	must include sudoers NOPASSWD example and the C-wrapper exec template
+docs/BCS-Bash-Ref/20_Security/09_Secrets-handling.md	KEEP	180	2	P1	add set +x scoped-disable example around secret use and process-arg leak demonstration
+docs/BCS-Bash-Ref/20_Security/10_noclobber.md	KEEP	60	1	P1	add the canonical exclusive-create lockfile example with PID writeback
+docs/BCS-Bash-Ref/20_Security/11_Privilege-drop.md	KEEP	160	2	P1	expand sudo -u / setpriv with capability-drop example and EUID re-acquire pattern
+docs/BCS-Bash-Ref/20_Security/12_Sanitising-filenames.md	KEEP	150	2	P1	add full sanitiser function and realpath -- canonicalisation example
+docs/BCS-Bash-Ref/20_Security/13_Symlink-races.md	KEEP	160	2	P1	mktemp -d wrapper pattern essential; show full create + trap cleanup with O_NOFOLLOW alternative via python helper
+docs/BCS-Bash-Ref/20_Security/14_Restricted-shell-mode.md	KEEP	70	1	P1	add a worked rbash escape demonstration and reinforce not a security boundary
+docs/BCS-Bash-Ref/06_Redirection-and-Pipelines/index.md	KEEP	35	0	P2	Part landing page; Chapter TOC adequate
+docs/BCS-Bash-Ref/06_Redirection-and-Pipelines/01_The-fd-table-from-Bashs-perspective.md	KEEP	60	1	P2	Recap of fd table; needs syscall-trace mini-example and §1.2 backref
+docs/BCS-Bash-Ref/06_Redirection-and-Pipelines/02_Input-redirection.md	KEEP	55	1	P2	Operator cheatsheet; one composite example showing fd 3 read suffices
+docs/BCS-Bash-Ref/06_Redirection-and-Pipelines/03_Output-redirection.md	KEEP	60	1	P2	Operator cheatsheet; show noclobber plus append plus &> precedence
+docs/BCS-Bash-Ref/06_Redirection-and-Pipelines/04_Stderr-redirection-and-merging.md	KEEP	130	2	P2	Order-of-evaluation gotcha needs side-by-side stdout/stderr trace example
+docs/BCS-Bash-Ref/06_Redirection-and-Pipelines/05_Reading-and-writing.md	KEEP	100	1	P2	Thin; <> is rarely-used and needs concrete read-modify-write demo
+docs/BCS-Bash-Ref/06_Redirection-and-Pipelines/06_Duplicating-fds.md	KEEP	150	2	P2	Save-restore-stdout dance is canonical; needs full worked example
+docs/BCS-Bash-Ref/06_Redirection-and-Pipelines/07_Moving-and-closing-fds.md	KEEP	120	2	P2	Atomic move semantics need demo; close-then-write SIGPIPE behaviour deserves example
+docs/BCS-Bash-Ref/06_Redirection-and-Pipelines/08_Here-documents.md	KEEP	170	3	P2	Quoted vs unquoted delim and <<- tab-strip are semantic landmines requiring multiple examples
+docs/BCS-Bash-Ref/06_Redirection-and-Pipelines/09_Here-strings.md	KEEP	100	2	P2	Trailing-newline gotcha and read idiom must be shown with exact byte-level trace
+docs/BCS-Bash-Ref/06_Redirection-and-Pipelines/10_Process-substitution-as-redirection.md	KEEP	160	3	P2	Lifetime stub left as TODO; tee-split-stdout-stderr idiom needs full example
+docs/BCS-Bash-Ref/06_Redirection-and-Pipelines/11_Order-of-evaluation.md	KEEP	120	2	P2	The notorious >file 2>&1 vs 2>&1 >file rule needs evaluative trace
+docs/BCS-Bash-Ref/06_Redirection-and-Pipelines/12_exec-for-fd-manipulation.md	KEEP	180	3	P2	exec save/restore/varredir_close semantics critical; thin coverage of two distinct exec modes
+docs/BCS-Bash-Ref/06_Redirection-and-Pipelines/13_Pipelines.md	KEEP	140	2	P2	No code at all; PIPESTATUS demonstration mandatory in a reference
+docs/BCS-Bash-Ref/06_Redirection-and-Pipelines/14_Stderr-pipelines.md	KEEP	60	1	P2	|& shorthand; one example showing 2>&1 equivalence sufficient
+docs/BCS-Bash-Ref/06_Redirection-and-Pipelines/15_pipefail-semantics.md	KEEP	150	2	P2	Strict-mode trio is foundational; PIPESTATUS plus errexit interaction needs traces
+docs/BCS-Bash-Ref/06_Redirection-and-Pipelines/16_lastpipe-semantics.md	KEEP	130	2	P2	Job-control gating subtle; needs demonstration both with and without set +m
+docs/BCS-Bash-Ref/07_Control-Flow-and-Compound-Commands/index.md	KEEP	30	0	P2	Part landing page adequate
+docs/BCS-Bash-Ref/07_Control-Flow-and-Compound-Commands/01_Compound-command-overview.md	KEEP	70	1	P2	Enumeration off (lists 7 forms then names 10); fix count and add backref example
+docs/BCS-Bash-Ref/07_Control-Flow-and-Compound-Commands/02_ifelifelsefi.md	KEEP	120	2	P2	Zero code in code-free Part; needs canonical if/elif/else example with errexit interaction
+docs/BCS-Bash-Ref/07_Control-Flow-and-Compound-Commands/03_caseesac.md	KEEP	160	3	P2	Fall-through forms ;& ;;& never demonstrated; extglob example needed
+docs/BCS-Bash-Ref/07_Control-Flow-and-Compound-Commands/04_for-x-in-list.md	KEEP	110	2	P2	Word-splitting/glob-expansion of list is reference-critical; needs array-iteration example
+docs/BCS-Bash-Ref/07_Control-Flow-and-Compound-Commands/05_C-style-for.md	KEEP	100	2	P2	Indexed iteration idiom and infinite loop need worked code
+docs/BCS-Bash-Ref/07_Control-Flow-and-Compound-Commands/06_whileuntil.md	KEEP	130	2	P2	while read -r idiom and subshell pitfall demand full example with process substitution
+docs/BCS-Bash-Ref/07_Control-Flow-and-Compound-Commands/07_select.md	KEEP	110	2	P2	Interactive menu mechanics opaque without demonstration of PS3 and REPLY
+docs/BCS-Bash-Ref/07_Control-Flow-and-Compound-Commands/08_Subshell-grouping.md	KEEP	120	2	P2	cd-in-subshell and BASH_SUBSHELL behaviour need traces
+docs/BCS-Bash-Ref/07_Control-Flow-and-Compound-Commands/09_Brace-grouping.md	KEEP	100	2	P2	Required spaces and trailing semicolon are syntactic landmines; redirection grouping needs demo
+docs/BCS-Bash-Ref/07_Control-Flow-and-Compound-Commands/10_and-short-circuits.md	KEEP	140	2	P2	The cmd1 && cmd2 || cmd3 misconception is reference-critical; needs trace
+docs/BCS-Bash-Ref/07_Control-Flow-and-Compound-Commands/11_break-and-continue.md	KEEP	70	1	P2	Cheatsheet OK; needs nested-loop break N example
+docs/BCS-Bash-Ref/07_Control-Flow-and-Compound-Commands/12_return.md	KEEP	80	1	P2	Mostly clear; needs return-from-sourced-file demonstration and strict-mode framing
+docs/BCS-Bash-Ref/07_Control-Flow-and-Compound-Commands/13_exit.md	KEEP	70	1	P2	Subshell-exit subtlety needs example; EXIT trap interaction worth a code block
+docs/BCS-Bash-Ref/07_Control-Flow-and-Compound-Commands/14_true-false.md	KEEP	75	1	P2	Cheatsheet adequate; one : ${VAR:=default} example clarifies side-effect idiom
+docs/BCS-Bash-Ref/08_Conditional-Expressions-and-Arithmetic/index.md	KEEP	30	0	P2	Part landing page adequate
+docs/BCS-Bash-Ref/08_Conditional-Expressions-and-Arithmetic/01_overview.md	KEEP	120	2	P2	Reserved-word parsing semantics need demonstration; quoting-on-RHS rules need worked example
+docs/BCS-Bash-Ref/08_Conditional-Expressions-and-Arithmetic/02_File-test-operators.md	KEEP	35	0	P2	Cheat-sheet table; complete and reference-grade as-is
+docs/BCS-Bash-Ref/08_Conditional-Expressions-and-Arithmetic/03_File-comparison-operators.md	KEEP	50	1	P2	Pitfall about missing files needs demonstration
+docs/BCS-Bash-Ref/08_Conditional-Expressions-and-Arithmetic/04_String-operators.md	KEEP	60	1	P2	Mostly cheatsheet; -v on array element is non-obvious and needs example
+docs/BCS-Bash-Ref/08_Conditional-Expressions-and-Arithmetic/05_Pattern-matching-with.md	KEEP	100	2	P2	Glob-vs-literal RHS quoting is reference-critical; extglob example needed
+docs/BCS-Bash-Ref/08_Conditional-Expressions-and-Arithmetic/06_Regex-matching-with.md	KEEP	150	3	P2	BASH_REMATCH plus quoting-changes-semantics rule are landmines; multiple examples mandatory
+docs/BCS-Bash-Ref/08_Conditional-Expressions-and-Arithmetic/07_Logical-operators-and-grouping.md	KEEP	60	1	P2	Precedence cheat-sheet; one combined-test example sufficient
+docs/BCS-Bash-Ref/08_Conditional-Expressions-and-Arithmetic/08_Quoting-rules-inside.md	KEEP	70	1	P2	Quoting subtleties need a paired matrix example showing harmless/required/wrong
+docs/BCS-Bash-Ref/08_Conditional-Expressions-and-Arithmetic/09_Arithmetic-context.md	KEEP	110	2	P2	Errexit-pitfall with ((count++)) is critical strict-mode interaction; needs traceable example
+docs/BCS-Bash-Ref/08_Conditional-Expressions-and-Arithmetic/10_Arithmetic-operators-and-precedence.md	KEEP	35	0	P2	Operator table adequate; cross-ref to Appendix H is sufficient
+docs/BCS-Bash-Ref/08_Conditional-Expressions-and-Arithmetic/11_Integer-types-overflow-base-prefixes.md	KEEP	55	1	P2	Examples already inline as values; one wrap-around demo would solidify
+docs/BCS-Bash-Ref/08_Conditional-Expressions-and-Arithmetic/12_Floating-point-workarounds.md	KEEP	60	1	P2	Workaround menu fine; one cents-vs-dollars currency example clarifies
+docs/BCS-Bash-Ref/08_Conditional-Expressions-and-Arithmetic/13_let-builtin.md	KEEP	50	1	P2	Last-expression-zero exit gotcha needs demonstration
+docs/BCS-Bash-Ref/08_Conditional-Expressions-and-Arithmetic/14_The-deprecated-and-test.md	KEEP	25	0	P2	Deprecated-warning content adequate; do not encourage with examples
+docs/BCS-Bash-Ref/09_Functions/index.md	KEEP	28	0	P2	Part landing page adequate
+docs/BCS-Bash-Ref/09_Functions/01_Definition-syntax.md	KEEP	120	2	P2	Subshell-body form and trailing redirection are reference-critical; needs side-by-side definition examples
+docs/BCS-Bash-Ref/09_Functions/02_Argument-passing.md	KEEP	130	2	P2	Default and required-arg idioms widely used; forwarding $@ vs $* needs trace
+docs/BCS-Bash-Ref/09_Functions/03_local-and-scope.md	KEEP	160	3	P2	Dynamic scope plus local - plus nameref interaction is heavy semantic load; multiple examples needed
+docs/BCS-Bash-Ref/09_Functions/04_Return-value-via-return-N.md	KEEP	70	1	P2	Mostly clear; one wrap-on-256 demonstration plus return-vs-exit example
+docs/BCS-Bash-Ref/09_Functions/05_Communicating-results.md	KEEP	150	3	P2	Four-mechanism trade-off central to BCS function design; each path needs example
+docs/BCS-Bash-Ref/09_Functions/06_Recursion-and-FUNCNEST.md	KEEP	90	1	P2	One recursive tree-walk example with FUNCNEST cap demonstration
+docs/BCS-Bash-Ref/09_Functions/07_Function-tracing.md	KEEP	80	1	P2	DEBUG/RETURN/ERR trap inheritance needs one demonstration
+docs/BCS-Bash-Ref/09_Functions/08_Listing-and-inspecting-functions.md	KEEP	65	1	P2	declare -F/-f cheat-sheet OK; one extdebug-on inspection example
+docs/BCS-Bash-Ref/09_Functions/09_Exporting-functions.md	KEEP	70	1	P2	Shellshock context worth more cross-refs; one export-and-receive example
+docs/BCS-Bash-Ref/09_Functions/10_Naming-conventions.md	KEEP	35	0	P2	Convention list adequate; cross-refs to BCS sufficient
+docs/BCS-Bash-Ref/09_Functions/11_Self-locating-with-BASH_SOURCE.md	KEEP	120	2	P2	Self-location idiom is canonical; full lib_dir derivation plus FUNCNAME pairing example needed
+docs/BCS-Bash-Ref/09_Functions/12_Calling-convention-discipline.md	KEEP	75	1	P2	Style guidance terse; one pure-function vs side-effecting comparison
+docs/BCS-Bash-Ref/10_Sourcing-Libraries-and-Modules/index.md	KEEP	28	0	P2	Part landing page adequate
+docs/BCS-Bash-Ref/10_Sourcing-Libraries-and-Modules/01_source-semantics.md	KEEP	130	2	P2	set -e propagation and return-vs-exit semantics are strict-mode landmines requiring trace examples
+docs/BCS-Bash-Ref/10_Sourcing-Libraries-and-Modules/02_The-BASH_SOURCE-array.md	KEEP	75	1	P2	Array semantics need one walk-the-stack example
+docs/BCS-Bash-Ref/10_Sourcing-Libraries-and-Modules/03_Self-locating-library-pattern.md	KEEP	70	1	P2	Already has canonical example; one symlink-resolution demonstration solidifies
+docs/BCS-Bash-Ref/10_Sourcing-Libraries-and-Modules/04_Idempotent-sourcing-guards.md	KEEP	65	1	P2	Guard pattern shown; one demonstration of double-source no-op
+docs/BCS-Bash-Ref/10_Sourcing-Libraries-and-Modules/05_Namespace-prefixes.md	KEEP	70	1	P2	One full mylib::function definition plus invocation example
+docs/BCS-Bash-Ref/10_Sourcing-Libraries-and-Modules/06_Public-vs-private-conventions.md	KEEP	60	1	P2	Convention list OK; library-header documentation example would seal
+docs/BCS-Bash-Ref/10_Sourcing-Libraries-and-Modules/07_Version-negotiation.md	KEEP	90	1	P2	Existing example good; semver-feature-detection variant would extend
+docs/BCS-Bash-Ref/10_Sourcing-Libraries-and-Modules/08_Lazy-and-conditional-loading.md	KEEP	120	2	P2	declare -g pitfall is critical strict-mode interaction; needs traceable example
+docs/BCS-Bash-Ref/10_Sourcing-Libraries-and-Modules/09_Cross-shell-sourcing-pitfalls.md	KEEP	85	1	P2	Detection idiom shown; one refuse-to-load guard plus a sh-mode-trap example
+docs/BCS-Bash-Ref/10_Sourcing-Libraries-and-Modules/10_API-design.md	KEEP	95	1	P2	Design-rules list good; one canonical small-library skeleton example
+docs/BCS-Bash-Ref/10_Sourcing-Libraries-and-Modules/11_Distribution-and-installation.md	KEEP	100	1	P2	FHS layout list good; one Makefile install-target example would anchor
+docs/BCS-Bash-Ref/21_Static-Analysis-Formatting-and-Testing/01_ShellCheck-warnings.md	KEEP	90	1	P2	bullets cover the right ground; needs a sample shellcheck JSON output and a CI gate snippet
+docs/BCS-Bash-Ref/21_Static-Analysis-Formatting-and-Testing/02_ShellCheck-directives.md	KEEP	60	1	P2	directive forms listed; add a multi-code disable example and a file-level shell=bash example
+docs/BCS-Bash-Ref/21_Static-Analysis-Formatting-and-Testing/03_Source-path-management.md	KEEP	70	1	P2	add a SCRIPTDIR sourcing example tied to BCS canonical SCRIPT_DIR pattern
+docs/BCS-Bash-Ref/21_Static-Analysis-Formatting-and-Testing/04_shfmt.md	KEEP	70	1	P2	short cheatsheet acceptable; add an .editorconfig-style flags snippet and pre-commit hook example
+docs/BCS-Bash-Ref/21_Static-Analysis-Formatting-and-Testing/05_bcscheck.md	KEEP	90	1	P2	add a sample bcscheck invocation with -j and inline #bcscheck disable= example tied to BCS0### codes
+docs/BCS-Bash-Ref/21_Static-Analysis-Formatting-and-Testing/06_Pre-commit-hooks.md	KEEP	120	2	P2	needs a complete .pre-commit-config.yaml with shellcheck/shfmt/bcscheck stanzas; bullets alone insufficient
+docs/BCS-Bash-Ref/21_Static-Analysis-Formatting-and-Testing/07_CI-integration.md	KEEP	160	2	P2	needs an actual GitHub Actions YAML workflow and a GitLab .gitlab-ci.yml snippet; this is a recipes chapter
+docs/BCS-Bash-Ref/21_Static-Analysis-Formatting-and-Testing/08_bats-core.md	KEEP	140	2	P2	needs a complete .bats file showing @test setup teardown run assertions; foundational for testing literacy
+docs/BCS-Bash-Ref/21_Static-Analysis-Formatting-and-Testing/09_Bats-setup-and-teardown.md	KEEP	90	1	P2	add a worked setup_file vs setup example demonstrating shared vs per-test state
+docs/BCS-Bash-Ref/21_Static-Analysis-Formatting-and-Testing/10_Bats-run-and-assertions.md	KEEP	130	2	P2	needs run/$status/$output assertion examples; key reader payload missing
+docs/BCS-Bash-Ref/21_Static-Analysis-Formatting-and-Testing/11_Mocking-via-PATH-injection.md	KEEP	28	1	P2	already has working code example and clear bullets; satisfactory as cheatsheet
+docs/BCS-Bash-Ref/21_Static-Analysis-Formatting-and-Testing/12_shunit2.md	KEEP	12	0	P2	correctly minimal; shunit2 is intentionally a deferred secondary framework
+docs/BCS-Bash-Ref/21_Static-Analysis-Formatting-and-Testing/13_Coverage-with-kcov.md	KEEP	70	1	P2	add a kcov+bats invocation and sample coverage threshold gate
+docs/BCS-Bash-Ref/21_Static-Analysis-Formatting-and-Testing/index.md	KEEP	30	0	P2	complete chapter list with prev/next nav
+docs/BCS-Bash-Ref/22_Idioms-Patterns-and-Anti-Patterns/01_The-strict-mode-preamble.md	KEEP	20	1	P1	canonical preamble with code block and explanatory bullets; matches BCS Section 1
+docs/BCS-Bash-Ref/22_Idioms-Patterns-and-Anti-Patterns/02_Self-locating-script-directory.md	KEEP	18	1	P1	BCS-canonical realpath idiom with code block; complete
+docs/BCS-Bash-Ref/22_Idioms-Patterns-and-Anti-Patterns/03_Argument-parsing-skeleton.md	KEEP	200	2	P1	stub; defers to §15.4 but the canonical hand-rolled parser must be inlined here for self-containment
+docs/BCS-Bash-Ref/22_Idioms-Patterns-and-Anti-Patterns/04_Default-value-patterns.md	KEEP	60	1	P1	add a code block showing all four forms side-by-side with their unset/empty-string distinctions
+docs/BCS-Bash-Ref/22_Idioms-Patterns-and-Anti-Patterns/05_Lazy-initialisation.md	KEEP	20	1	P1	concise pattern with code block and scope caveat; complete
+docs/BCS-Bash-Ref/22_Idioms-Patterns-and-Anti-Patterns/06_Memoisation.md	KEEP	22	1	P1	complete with code block and the +set test idiom for unset-vs-empty discrimination
+docs/BCS-Bash-Ref/22_Idioms-Patterns-and-Anti-Patterns/07_Iterating-an-associative-array-deterministically.md	KEEP	16	1	P1	complete idiom with sort flags note and performance caveat
+docs/BCS-Bash-Ref/22_Idioms-Patterns-and-Anti-Patterns/08_Building-structured-output.md	KEEP	70	2	P1	bullets cover ground but add code blocks for tsv/csv/jq-built JSON; CSV quoting deserves a dedicated example
+docs/BCS-Bash-Ref/22_Idioms-Patterns-and-Anti-Patterns/09_Reading-config-files-safely.md	KEEP	24	1	P1	full read_conf function with key whitelisting prose; matches BCS read_conf pattern
+docs/BCS-Bash-Ref/22_Idioms-Patterns-and-Anti-Patterns/10_Atomic-file-write.md	KEEP	140	2	P1	reclassified ENRICH→PROMOTE under Decision 3 (2026-05-03); inline mktemp+mv idiom rather than defer to §12.15
+docs/BCS-Bash-Ref/22_Idioms-Patterns-and-Anti-Patterns/11_Exclusive-lock.md	KEEP	140	2	P1	reclassified ENRICH→PROMOTE under Decision 3 (2026-05-03); inline exec 9+flock idiom rather than defer to §12.14
+docs/BCS-Bash-Ref/22_Idioms-Patterns-and-Anti-Patterns/12_Bounded-retry-with-exponential-backoff.md	KEEP	28	1	P1	complete retry function with jitter caveat; one of strongest leaves in shard
+docs/BCS-Bash-Ref/22_Idioms-Patterns-and-Anti-Patterns/13_Tempdir-lifecycle.md	KEEP	140	2	P1	reclassified ENRICH→PROMOTE under Decision 3 (2026-05-03); inline mktemp -d + trap EXIT idiom rather than defer to §12.13
+docs/BCS-Bash-Ref/22_Idioms-Patterns-and-Anti-Patterns/14_Mock-friendly-subprocess-wrapper.md	KEEP	14	1	P1	short but complete with the command-prefix idiom and tested rationale
+docs/BCS-Bash-Ref/22_Idioms-Patterns-and-Anti-Patterns/15_Stack-trace-error-reporter.md	KEEP	150	1	P1	defers to §13.12 but a canonical stack-trace function is the headline of an idioms chapter and must be inlined
+docs/BCS-Bash-Ref/22_Idioms-Patterns-and-Anti-Patterns/16_Self-test-mode-dual-purpose-script.md	KEEP	18	1	P1	complete dual-purpose pattern with code block and BASH_SOURCE rationale
+docs/BCS-Bash-Ref/22_Idioms-Patterns-and-Anti-Patterns/17_Anti-patterns-catalogue.md	KEEP	26	0	P1	exemplary catalogue; 18 anti-patterns each with right-way; benchmark for the corpus
+docs/BCS-Bash-Ref/22_Idioms-Patterns-and-Anti-Patterns/index.md	KEEP	34	0	P1	complete with all 17 chapter links and orientation prose
+docs/BCS-Bash-Ref/23_POSIX-Conformance-and-Portability/01_Bash-vs-POSIX-sh.md	KEEP	22	0	P3	complete bashism enumeration appropriate as cheatsheet; n-a for examples
+docs/BCS-Bash-Ref/23_POSIX-Conformance-and-Portability/02_The-bashisms-list.md	KEEP	18	0	P3	tight bashism-vs-sh contrasts; cheatsheet style appropriate
+docs/BCS-Bash-Ref/23_POSIX-Conformance-and-Portability/03_Bash-vs-dash.md	KEEP	50	1	P3	add checkbashisms invocation and a worked dash-vs-bash failure example
+docs/BCS-Bash-Ref/23_POSIX-Conformance-and-Portability/04_Bash-vs-ksh.md	KEEP	12	0	P3	historical context bullets sufficient; specialist topic
+docs/BCS-Bash-Ref/23_POSIX-Conformance-and-Portability/05_Bash-vs-zsh.md	KEEP	60	1	P3	add a KSH_ARRAYS demo and a word-splitting contrast example; users hit these
+docs/BCS-Bash-Ref/23_POSIX-Conformance-and-Portability/06_Bash-3.2-on-macOS.md	KEEP	11	0	P3	complete; cheatsheet is appropriate response
+docs/BCS-Bash-Ref/23_POSIX-Conformance-and-Portability/07_BSD-sh.md	KEEP	11	0	P3	terse and accurate; specialist niche
+docs/BCS-Bash-Ref/23_POSIX-Conformance-and-Portability/08_posix-mode.md	KEEP	11	0	P3	short but complete; deeper treatment lives in §23.9
+docs/BCS-Bash-Ref/23_POSIX-Conformance-and-Portability/09_shopt-compatibility-levels.md	KEEP	11	0	P3	correct guidance to avoid; cross-ref intact
+docs/BCS-Bash-Ref/23_POSIX-Conformance-and-Portability/10_When-to-write-portable-sh.md	KEEP	12	0	P3	bullet enumeration of use cases is the right form
+docs/BCS-Bash-Ref/23_POSIX-Conformance-and-Portability/11_Forward-compatibility-hygiene.md	KEEP	12	0	P3	rule-based hygiene list; cheatsheet appropriate
+docs/BCS-Bash-Ref/23_POSIX-Conformance-and-Portability/12_Targeting-multiple-Bash-versions.md	KEEP	50	1	P3	add a BASH_VERSINFO version-gate code block; this is the chapter's actionable payload
+docs/BCS-Bash-Ref/23_POSIX-Conformance-and-Portability/index.md	KEEP	30	0	P3	complete chapter index with nav
+docs/BCS-Bash-Ref/24_Bash-Internals/01_The-execution-pipeline.md	KEEP	80	1	P3	the 10-step pipeline is right; add a tiny illustrative xtrace transcript anchoring each step
+docs/BCS-Bash-Ref/24_Bash-Internals/02_The-bison-grammar.md	KEEP	12	0	P3	correct specialist briefing; deeper treatment lives in source repo
+docs/BCS-Bash-Ref/24_Bash-Internals/03_Variable-storage.md	KEEP	13	0	P3	hash-table briefing accurate at this depth; further detail belongs to source code
+docs/BCS-Bash-Ref/24_Bash-Internals/04_Function-storage.md	KEEP	12	0	P3	the global-table fact is the load-bearing point; appropriately terse
+docs/BCS-Bash-Ref/24_Bash-Internals/05_The-job-table.md	KEEP	11	0	P3	cheatsheet appropriate
+docs/BCS-Bash-Ref/24_Bash-Internals/06_The-trap-table.md	KEEP	11	0	P3	briefing is accurate at this depth; pseudo-signal note is the key fact
+docs/BCS-Bash-Ref/24_Bash-Internals/07_The-execution-environment.md	KEEP	16	0	P3	enumeration of inherited components is the chapter's payload
+docs/BCS-Bash-Ref/24_Bash-Internals/08_Subshell-forking.md	KEEP	60	1	P3	add a tiny BASHPID/BASH_SUBSHELL demo to make the COW semantics concrete
+docs/BCS-Bash-Ref/24_Bash-Internals/09_Builtin-loadables.md	KEEP	50	1	P3	add an enable -f invocation example pointing at a stock loadable like sleep or mkdir
+docs/BCS-Bash-Ref/24_Bash-Internals/10_Reading-the-bash-source.md	KEEP	12	0	P3	source-tour pointers are accurate and load-bearing; appropriate brevity
+docs/BCS-Bash-Ref/24_Bash-Internals/index.md	KEEP	27	0	P3	complete chapter index
+docs/BCS-Bash-Ref/25_Bash-5.3-and-the-Future/01_No-fork-command-substitution-cmd.md	KEEP	60	1	P3	add a worked ${ cmd; } vs $(cmd) timing example demonstrating the side-effect-persistence distinction
+docs/BCS-Bash-Ref/25_Bash-5.3-and-the-Future/02_Other-Bash-5.3-additions.md	KEEP	12	0	P3	stub-by-design; correctly defers to NEWS file
+docs/BCS-Bash-Ref/25_Bash-5.3-and-the-Future/03_Release-cadence.md	KEEP	11	0	P3	historical fact; cheatsheet appropriate
+docs/BCS-Bash-Ref/25_Bash-5.3-and-the-Future/04_Roadmap-signals.md	KEEP	13	0	P3	forward-looking commentary; bullet form correct
+docs/BCS-Bash-Ref/25_Bash-5.3-and-the-Future/05_Forward-compatibility-considerations.md	KEEP	12	0	P3	overlap with §23.11 is intentional reinforcement; brief is right
+docs/BCS-Bash-Ref/25_Bash-5.3-and-the-Future/index.md	KEEP	22	0	P3	complete chapter index
+docs/BCS-Bash-Ref/99_Appendices/A_Builtin-Reference-alphabetical.md	KEEP	57	0	P1	all bash 5.2 builtins listed alphabetically with cross-refs; complete reference table
+docs/BCS-Bash-Ref/99_Appendices/B_Special-Parameters-Reference.md	KEEP	17	0	P1	all 10 special parameters present in canonical table form
+docs/BCS-Bash-Ref/99_Appendices/C_Shell-Variables-Reference.md	KEEP	50	0	P1	major variables present but list-form rather than table; missing some (TIMEFORMAT FUNCNEST POSIXLY_CORRECT-on-strict reject); convert to table with type/scope columns
+docs/BCS-Bash-Ref/99_Appendices/D_set-Options-Reference.md	KEEP	28	0	P1	complete short/long/effect table; matches bash(1) set -o list
+docs/BCS-Bash-Ref/99_Appendices/E_shopt-Options-Reference.md	KEEP	70	0	P1	major options listed but list-not-table; convert to two-column table with default-state column for clarity
+docs/BCS-Bash-Ref/99_Appendices/F_ANSI-C-Escape-Sequences.md	KEEP	24	0	P1	complete escape table including \uHHHH and \cX
+docs/BCS-Bash-Ref/99_Appendices/G_Glob-and-Extglob-Patterns.md	KEEP	21	0	P1	complete glob and extglob patterns plus POSIX class names
+docs/BCS-Bash-Ref/99_Appendices/H_Conditional-Expression-Operators.md	KEEP	53	0	P1	complete file/string/numeric operator tables; canonical reference
+docs/BCS-Bash-Ref/99_Appendices/I_Parameter-Expansion-Cheat-Sheet.md	KEEP	41	0	P1	exhaustive expansion forms including @-transformations; benchmark appendix
+docs/BCS-Bash-Ref/99_Appendices/J_Redirection-Operators.md	KEEP	27	0	P1	complete redirection-operator table including process substitution and fd close/move forms
+docs/BCS-Bash-Ref/99_Appendices/K_Signal-Numbers-Linux.md	KEEP	41	0	P1	full Linux x86-64 signal map with default actions
+docs/BCS-Bash-Ref/99_Appendices/L_Exit-Code-Conventions.md	KEEP	22	0	P1	BCS conventions plus sysexits.h block; complete
+docs/BCS-Bash-Ref/99_Appendices/M_Bash-Version-History.md	KEEP	20	0	P1	full version timeline 1.0 through 5.3 with notable additions
+docs/BCS-Bash-Ref/99_Appendices/N_Glossary.md	KEEP	49	0	P1	~45 glossary entries covering the core vocabulary; one-line definitions appropriate
+docs/BCS-Bash-Ref/99_Appendices/O_Cross-Reference-Sections-to-BCS-Sections.md	KEEP	40	0	P1	13-row table covers the BCS sections but resolution to specific BCS#### codes would strengthen RAG retrieval
+docs/BCS-Bash-Ref/99_Appendices/P_Cross-Reference-Sections-to-BCS-bash-Files.md	KEEP	32	0	P1	complete chapter to BCS-bash file mapping
+docs/BCS-Bash-Ref/99_Appendices/Q_Further-Reading.md	KEEP	23	0	P1	annotated authoritative-resources list including what-to-skip; this prose-style appendix earns its keep
+docs/BCS-Bash-Ref/99_Appendices/index.md	KEEP	32	0	P1	complete contents listing with prev nav
