@@ -271,6 +271,30 @@ shopt -s inherit_errexit
 require_bash 5 2
 ```
 
+**Important: the guard must precede any version-dependent construct, including `shopt -s inherit_errexit` itself (which requires Bash 4.4+).** If `shopt -s inherit_errexit` runs before the version check on a Bash 3 host, the `shopt` line fails first with a cryptic `invalid shell option name`, `set -e` exits the script, and the helpful version message is never reached.
+
+### Quick one-liner form
+
+For scripts that need only a single hard floor (no graceful degradation, no shared helper to reuse, no library-style use), the predicate pair can be inlined as one statement. This must come **before** `set -e` and `shopt -s inherit_errexit` for the same reason — the guard owns the very first runtime check:
+
+```bash
+#!/usr/bin/bash
+(( BASH_VERSINFO[0] > 5 || (BASH_VERSINFO[0] == 5 && BASH_VERSINFO[1] >= 2) )) \
+  || { >&2 echo "${0##*/}: requires Bash >= 5.2 (have ${BASH_VERSION:-unknown})"; exit 2; }
+set -euo pipefail
+shopt -s inherit_errexit
+```
+
+The compound `>` / `&&` form is correct here — unlike the rejected `((BASH_VERSINFO[0] >= 5 && BASH_VERSINFO[1] >= 2))` antipattern — because the major-greater branch (`> 5`) accepts any newer major regardless of minor, and the equal-major branch (`== 5 && minor >= 2`) handles the boundary case explicitly. Bash 6.0 satisfies the first branch and is correctly accepted.
+
+Suitable when:
+
+- The script needs exactly one hard version floor (no `if bash_at_least` graceful fallbacks).
+- The failure path is terminal — no shared error helper to reuse.
+- Helper-function indirection would be inappropriate weight for a self-contained tool.
+
+Prefer the `bash_at_least` / `require_bash` predicates when any of those conditions don't hold (multiple version checks, graceful degradation, library-style scripts).
+
 Use `bash_at_least` as a predicate when a script can degrade gracefully:
 
 ```bash

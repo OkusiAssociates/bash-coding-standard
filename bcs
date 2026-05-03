@@ -965,6 +965,8 @@ Respect inline suppression: eg, #bcscheck disable=BCS0101 exempts the next line/
   [[ -z $effort ]] || claude_args+=(--effort "$effort")
 
   #shellcheck disable=SC1007
+  export CLAUDE_CODE_USE_OAUTH=1
+  unset ANTHROPIC_API_KEY
   CLAUDECODE= claude "${claude_args[@]}" -p "$prompt" 2>/dev/null
 }
 
