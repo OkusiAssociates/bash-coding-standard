@@ -1,0 +1,126 @@
+#!/usr/bin/env bash
+# BCS-Bash-Ref.html.build -- Render docs/BCS-Bash-Ref/ tree to docs/BCS-Bash-Ref.html/.
+# Wraps `mdview --preserve-tmp` to capture pandoc's rendered output session
+# and rsync the resulting tree into the checked-in HTML mirror.
+set -euo pipefail
+shopt -s inherit_errexit shift_verbose extglob nullglob
+
+declare -rx PATH="$HOME/.local/bin:/usr/local/bin:/usr/bin:/bin"
+
+# --- Script metadata ---
+declare -r VERSION='1.0.0'
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH="$(realpath -- "$0")"
+declare -r SCRIPT_DIR="${SCRIPT_PATH%/*}"
+declare -r SCRIPT_NAME="${SCRIPT_PATH##*/}"
+
+declare -r SOURCE_DIR="$SCRIPT_DIR/BCS-Bash-Ref"
+declare -r OUTPUT_DIR="$SCRIPT_DIR/BCS-Bash-Ref.html"
+declare -r ENTRY_POINT='index.md'
+declare -r THEME='github-dark'
+
+# --- Messaging ---
+declare -i VERBOSE=1
+
+if [[ -t 1 && -t 2 ]]; then
+  declare -r RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' NC=$'\033[0m'
+else
+  declare -r RED='' GREEN='' YELLOW='' CYAN='' NC=''
+fi
+
+_msg()    { >&2 printf '%s: %s %s\n' "$SCRIPT_NAME" "$1" "${*:2}"; }
+error()   { _msg "$RED✗$NC" "$@"; }
+warn()    { _msg "$YELLOW▲$NC" "$@"; }
+info()    { ((VERBOSE)) || return 0; _msg "$CYAN◉$NC" "$@"; }
+success() { ((VERBOSE)) || return 0; _msg "$GREEN✓$NC" "$@"; }
+die()     { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+noarg()   { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
+
+show_help() {
+  cat <<HELP
+$SCRIPT_NAME $VERSION -- Render BCS-Bash-Ref/ tree to BCS-Bash-Ref.html/.
+
+Usage: $SCRIPT_NAME [OPTIONS]
+
+Options:
+  -q, --quiet     Suppress informational output
+  -V, --version   Show version
+  -h, --help      Show this help
+
+Behaviour:
+  1. Run 'mdview --preserve-tmp --theme $THEME $ENTRY_POINT' from $SOURCE_DIR.
+  2. Capture mdview's session directory from its stdout.
+  3. Rsync rendered HTML tree into $OUTPUT_DIR (delete extraneous files).
+
+Requirements:
+  - mdview on PATH (provided by examples/lib/file/md2ansi/mdview)
+  - pandoc 3.0+ on PATH
+  - rsync on PATH
+HELP
+}
+
+require_cmd() {
+  local -- cmd="$1"
+  command -v "$cmd" >/dev/null 2>&1 \
+    || die 18 "Required command not found on PATH: $cmd"
+}
+
+main() {
+  while (($#)); do
+    case "$1" in
+      -q|--quiet)   VERBOSE=0 ;;
+      -V|--version) printf '%s %s\n' "$SCRIPT_NAME" "$VERSION"; exit 0 ;;
+      -h|--help)    show_help; exit 0 ;;
+      -[qVh]?*)     set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+      --)           shift; break ;;
+      -*)           die 22 "Unknown option: $1" ;;
+      *)            die 22 "Unexpected argument: $1" ;;
+    esac
+    shift
+  done
+
+  require_cmd mdview
+  require_cmd pandoc
+  require_cmd rsync
+
+  [[ -d "$SOURCE_DIR" ]] || die 3 "Source tree missing: $SOURCE_DIR"
+  [[ -f "$SOURCE_DIR/$ENTRY_POINT" ]] \
+    || die 3 "Entry point missing: $SOURCE_DIR/$ENTRY_POINT"
+
+  local -- log_file
+  log_file="$(mktemp -t "$SCRIPT_NAME".XXXXXX.log)"
+  # shellcheck disable=SC2064
+  trap "rm -f '$log_file'" EXIT
+
+  info "Rendering $SOURCE_DIR/$ENTRY_POINT via mdview (theme=$THEME)"
+  # Suppress browser launch: mdview always tries to open the rendered tree.
+  # Pointing MDVIEW_BROWSER at a no-op binary skips the real browser without
+  # affecting rendering.
+  (
+    cd "$SOURCE_DIR" \
+      && MDVIEW_BROWSER=/bin/true mdview --preserve-tmp --theme "$THEME" "$ENTRY_POINT"
+  ) > "$log_file" 2>&1 \
+    || die 5 "mdview failed; see $log_file"
+
+  # mdview echoes the session dir as its final stdout line when --preserve-tmp
+  # is given. Path layout: ${XDG_RUNTIME_DIR:-/tmp}/mdview/session.XXXXX
+  local -- session_dir
+  session_dir=$(grep -oE '[^[:space:]]+/mdview/session\.[A-Za-z0-9]+' "$log_file" | tail -1) || true
+  [[ -n "$session_dir" && -d "$session_dir" ]] \
+    || die 5 "Could not locate mdview session directory in: $log_file"
+
+  info "Mirroring session tree into $OUTPUT_DIR"
+  mkdir -p "$OUTPUT_DIR"
+  rsync -a --delete \
+    --exclude='*.md' \
+    --exclude='.audit/' \
+    "$session_dir/" "$OUTPUT_DIR/"
+
+  local -i html_count
+  html_count=$(find "$OUTPUT_DIR" -name '*.html' | wc -l)
+  success "Rendered $html_count HTML files into $OUTPUT_DIR"
+}
+
+main "$@"
+
+#fin
