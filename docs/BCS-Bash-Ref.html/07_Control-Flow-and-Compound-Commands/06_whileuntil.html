@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>06_whileuntil.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">06_whileuntil.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="76-whileuntil">7.6 <code>while</code>/<code>until</code></h2>
+<p>Loop while (or until) a condition holds. Like <code>if</code>, both
+forms test an <em>exit status</em> — they are command dispatchers, not
+boolean predicates. <code>while</code> runs the body as long as the
+condition list&#39;s last command exits <code>0</code>; <code>until</code>
+is its inverse, running while the condition exits non-zero.</p>
+<h3 id="syntax">Syntax</h3>
+<pre><code>while list; do list; done
+until list; do list; done</code></pre>
+<p>The condition is the exit status of the <em>last command</em> in the
+condition list, evaluated before each iteration. The condition list is
+errexit-exempt (§13.3) — a non-zero status is the loop&#39;s termination
+signal, not a fatal error.</p>
+<p>Idiomatic infinite loops:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="bu">:</span><span class="kw">;</span> <span class="cf">do</span> <span class="ex">…</span><span class="kw">;</span> <span class="cf">done</span>                  <span class="co"># always-true via the null builtin</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="fu">true</span><span class="kw">;</span> <span class="cf">do</span> <span class="ex">…</span><span class="kw">;</span> <span class="cf">done</span>               <span class="co"># equivalent; reads more naturally</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="kw">((;;));</span> <span class="cf">do</span> <span class="ex">…</span><span class="kw">;</span> <span class="cf">done</span>               <span class="co"># arithmetic equivalent (§7.5)</span></span></code></pre></div>
+<p><code>:</code> is a builtin that always exits <code>0</code>;
+<code>true</code> is a separate builtin with the same behaviour. The two
+are interchangeable in a loop condition.</p>
+<h3 id="the-canonical-read--r-idiom">The canonical <code>read -r</code>
+idiom</h3>
+<p>The <code>while read -r</code> loop is bash&#39;s primary line-oriented
+input construct:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: read every line of a file, preserving whitespace and backslashes</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="va">IFS</span><span class="op">=</span> <span class="bu">read</span> <span class="at">-r</span> <span class="va">line</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="ex">process_line</span> <span class="st">&quot;</span><span class="va">$line</span><span class="st">&quot;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span> <span class="op">&lt;</span> <span class="st">&quot;</span><span class="va">$input_file</span><span class="st">&quot;</span></span></code></pre></div>
+<p>The three pieces matter:</p>
+<ul>
+<li><code>IFS=</code> (empty) — disables word splitting on the read so
+leading and trailing whitespace is preserved.</li>
+<li><code>read -r</code> — disables backslash escaping; the line is
+taken verbatim. Without <code>-r</code>, <code>\&lt;newline&gt;</code>
+and <code>\&lt;char&gt;</code> are reinterpreted.</li>
+<li><code>&lt; &quot;$input_file&quot;</code> — redirection on <code>done</code>,
+attaching the file to the loop&#39;s stdin. The loop runs in the <em>current
+shell</em>; assignments and variables persist after the loop exits.</li>
+</ul>
+<p>If <code>process_line</code> itself reads from stdin, redirect from
+<code>&amp;3</code> to keep your two streams separate (BCS0903):
+<code>while …; do process_line &lt;&amp;3; done 3&lt; &quot;$input&quot;</code>.</p>
+<h3 id="the-subshell-pitfall--and-the-fix">The subshell pitfall — and
+the fix</h3>
+<p>Piping into a <code>while</code> loop runs the loop in a
+<em>subshell</em>, because every component of a pipeline is a separate
+process. Variables set inside the loop vanish when the loop ends:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># wrong — loop runs in a subshell; count is reset on exit</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-i</span> <span class="va">count</span><span class="op">=</span>0</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-c</span> <span class="st">&#39;pattern&#39;</span> files/<span class="pp">*</span> <span class="kw">|</span> <span class="cf">while</span> <span class="va">IFS</span><span class="op">=</span> <span class="bu">read</span> <span class="at">-r</span> <span class="va">line</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="va">count</span><span class="op">+=</span>1                           <span class="co"># mutates the subshell&#39;s count</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;count=</span><span class="va">$count</span><span class="st">&quot;</span>                  <span class="co"># ⇒ count=0 (parent never saw the increments)</span></span></code></pre></div>
+<p>The two standard fixes are <em>process substitution</em> (BCS0504,
+BCS0903) and the <em><code>lastpipe</code></em> shopt:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># right — process substitution attaches a fd; loop runs in current shell</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-i</span> <span class="va">count</span><span class="op">=</span>0</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="va">IFS</span><span class="op">=</span> <span class="bu">read</span> <span class="at">-r</span> <span class="va">line</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="va">count</span><span class="op">+=</span>1</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span> <span class="op">&lt;</span> <span class="op">&lt;(</span><span class="fu">grep</span> <span class="at">-c</span> <span class="st">&#39;pattern&#39;</span> files/<span class="pp">*</span><span class="op">)</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;count=</span><span class="va">$count</span><span class="st">&quot;</span>                  <span class="co"># ⇒ count=N</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># alternative — lastpipe runs the rightmost pipeline element in the current shell</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> lastpipe</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> +m                               <span class="co"># required: lastpipe needs job control off</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-i</span> <span class="va">count</span><span class="op">=</span>0</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-c</span> <span class="st">&#39;pattern&#39;</span> files/<span class="pp">*</span> <span class="kw">|</span> <span class="cf">while</span> <span class="va">IFS</span><span class="op">=</span> <span class="bu">read</span> <span class="at">-r</span> <span class="va">line</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="va">count</span><span class="op">+=</span>1</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;count=</span><span class="va">$count</span><span class="st">&quot;</span>                  <span class="co"># ⇒ count=N</span></span></code></pre></div>
+<p>Process substitution is the standard solution and works in any
+script; <code>lastpipe</code> is a global flag with broader effects
+(every pipeline&#39;s last stage runs in-shell), and it requires job control
+off, which is default for non-interactive scripts but worth confirming.
+Both mechanisms keep the loop&#39;s mutations visible to the surrounding
+scope.</p>
+<h3 id="until--the-inverse-of-while"><code>until</code> — the inverse of
+<code>while</code></h3>
+<p><code>until cmd</code> is <code>while ! cmd</code>. It reads
+naturally for &quot;wait for X to become true&quot; patterns:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: poll until the service responds</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-i</span> <span class="va">tries</span><span class="op">=</span>0</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="cf">until</span> <span class="ex">curl</span> <span class="at">-fsSL</span> <span class="st">&quot;</span><span class="va">$url</span><span class="st">&quot;</span> <span class="op">&gt;</span> /dev/null <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="va">tries</span><span class="op">+=</span>1</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">((</span><span class="va">tries</span> <span class="op">&gt;=</span> <span class="dv">30</span><span class="kw">))</span> <span class="kw">&amp;&amp;</span> <span class="ex">die</span> 24 <span class="st">&#39;service did not become ready&#39;</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sleep</span> 1</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div>
+<p>Most authors prefer <code>while ! cmd</code> for symmetry with the
+<code>while</code> family and skip <code>until</code> entirely; both
+forms are acceptable.</p>
+<p><strong>See also</strong>: §7.4 (<code>for x in list</code>), §7.5
+(C-style <code>for</code>), §7.11
+(<code>break</code>/<code>continue</code>), §6.16
+(<code>lastpipe</code>), §13.3 (errexit and conditions), BCS0503,
+BCS0504, BCS0903.</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

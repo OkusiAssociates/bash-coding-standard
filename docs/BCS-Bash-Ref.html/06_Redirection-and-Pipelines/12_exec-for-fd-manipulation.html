@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>12_exec-for-fd-manipulation.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">12_exec-for-fd-manipulation.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="612-exec-for-fd-manipulation">6.12 <code>exec</code> for fd
+manipulation</h2>
+<p><code>exec</code> has two distinct modes that share a name only by
+accident of history. With a command argument, it <em>replaces the shell
+process</em> with that command — the calling shell ceases to exist.
+Without a command, it <em>applies its redirections to the current
+shell</em> and continues executing the script. The latter is the only
+way to make redirections persist beyond a single command, and the only
+way to manage long-lived fds from inside a script.</p>
+<h3 id="the-two-modes">The two modes</h3>
+<ul>
+<li><code>exec cmd …</code> — <code>execve()</code>-replace this shell
+with <em>cmd</em>. The script ends here; whatever was after this line is
+dead code.</li>
+<li><code>exec REDIR…</code> — apply <em>REDIR…</em> to the calling
+shell&#39;s fd table. Script continues; subsequent commands inherit the new
+fd state.</li>
+</ul>
+<p>These two modes share the <em>redirection grammar</em>:
+<code>exec cmd &gt;log</code> execs <em>cmd</em> with stdout pointed at
+<em>log</em>, while <code>exec &gt;log</code> redirects the <em>current
+shell</em>&#39;s stdout to <em>log</em> and returns. The presence or absence
+of a command argument is the deciding factor.</p>
+<h3 id="persistent-script-wide-redirection">Persistent script-wide
+redirection</h3>
+<p>The most common script-wide use of <code>exec</code> is to redirect
+everything to a log:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: redirect all subsequent output of this script to a logfile</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail<span class="kw">;</span> <span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">LOGFILE</span><span class="op">=</span><span class="st">&#39;/var/log/myscript.log&#39;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Save originals on fd 3 (stdout) and fd 4 (stderr) for later restore</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="bu">exec</span> <span class="dv">3</span><span class="op">&gt;&amp;</span><span class="dv">1</span> <span class="dv">4</span><span class="op">&gt;&amp;</span><span class="dv">2</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Redirect script-wide</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="bu">exec</span> <span class="op">&gt;&gt;</span><span class="st">&quot;</span><span class="va">$LOGFILE</span><span class="st">&quot;</span> <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;this line is logged&quot;</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">date</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;diagnostic&quot;</span> <span class="op">&gt;&amp;</span><span class="dv">2</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Restore (move-form clears the saved fds atomically)</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="bu">exec</span> <span class="dv">1</span><span class="op">&gt;&amp;</span><span class="dv">3</span><span class="kw">-</span> <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">4</span><span class="kw">-</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;this line is back on terminal stdout&quot;</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;this too on terminal stderr&quot;</span> <span class="op">&gt;&amp;</span><span class="dv">2</span></span></code></pre></div>
+<p>The save-redirect-restore pattern is the standard technique; using
+the move-form (<code>1&gt;&amp;3-</code>, <code>2&gt;&amp;4-</code>) for
+the restore atomically closes the saved fds, preventing leaks into any
+later children (§6.7).</p>
+<h3 id="custom-fd-for-readwrite--fd-7-idiom">Custom fd for read+write —
+fd 7 idiom</h3>
+<p><code>exec</code> is also how scripts open custom fds for repeated
+<code>read</code>/<code>printf</code> without re-opening the file each
+time. Convention puts user fds in the 3–9 range; bash itself may use fds
+beyond that internally:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: open a config file once, read multiple lines, write a marker, close</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail<span class="kw">;</span> <span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">conf</span><span class="op">=</span><span class="st">&#39;session.dat&#39;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="kw">[[</span> <span class="ot">-f</span> <span class="va">$conf</span> <span class="kw">]]</span> <span class="kw">||</span> <span class="bu">:</span> <span class="op">&gt;</span><span class="st">&quot;</span><span class="va">$conf</span><span class="st">&quot;</span>     <span class="co"># ensure exists</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="bu">exec</span> <span class="dv">7</span><span class="op">&lt;&gt;</span><span class="st">&quot;</span><span class="va">$conf</span><span class="st">&quot;</span>                  <span class="co"># fd 7 open for read+write (§6.5)</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Read existing lines (offset advances as we read)</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">lines</span><span class="op">=</span><span class="va">()</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="bu">read</span> <span class="at">-r</span> <span class="at">-u</span> 7 <span class="va">line</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>  <span class="va">lines</span><span class="op">+=</span><span class="va">(</span><span class="st">&quot;</span><span class="va">$line</span><span class="st">&quot;</span><span class="va">)</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Append a new marker (offset is at EOF after the reads)</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;session-end %(%FT%T%z)T\n&#39;</span> <span class="at">-1</span> <span class="op">&gt;&amp;</span><span class="dv">7</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="bu">exec</span> <span class="dv">7</span><span class="op">&gt;&amp;</span>-                        <span class="co"># close fd 7</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;read </span><span class="va">${</span><span class="op">#</span><span class="va">lines</span><span class="op">[@]</span><span class="va">}</span><span class="st"> prior lines&quot;</span></span></code></pre></div>
+<p><code>read -u 7</code> reads from fd 7;
+<code>printf … &gt;&amp;7</code> writes to it;
+<code>exec 7&gt;&amp;-</code> closes it. The fd persists across all
+three commands — replacing it with a series of <code>&lt;file</code> /
+<code>&gt;file</code> operators on each command would force re-opens and
+lose the offset.</p>
+<h3 id="exec-replace-mode-the-other-meaning"><code>exec</code>-replace
+mode (the other meaning)</h3>
+<p>When <code>exec</code> carries a command, the shell calls
+<code>execve()</code> and the script&#39;s process <em>becomes</em> that
+command. The script ends; nothing after the <code>exec</code> line
+runs:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: tail-call into a longer-running program</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail<span class="kw">;</span> <span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Set up environment, then hand off to the real binary</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-x</span> <span class="va">PATH</span><span class="op">=</span><span class="st">&#39;/usr/local/bin:/usr/bin:/bin&#39;</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="bu">exec</span> /usr/sbin/myservice <span class="st">&quot;</span><span class="va">$@</span><span class="st">&quot;</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co"># DEAD CODE — never reached unless `exec` itself fails (e.g. missing binary)</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;this line will never print&quot;</span></span></code></pre></div>
+<p>The replace-mode is useful for wrapper scripts (set environment, then
+become the wrapped program) and for trampolines that should not leave a
+parent shell hanging around. Note the scripted error:
+<code>exec /missing</code> <em>does</em> fail and continue executing the
+script if the binary is missing — protect with <code>||</code> or rely
+on <code>set -e</code> to catch the failure.</p>
+<h3 id="varredir_close--bash-52-fd-lifetime-tied-to-variable-scope"><code>varredir_close</code>
+— Bash 5.2 fd lifetime tied to variable scope</h3>
+<p>Bash 5.2 introduced <code>shopt -s varredir_close</code> to address a
+long-standing fd-leak hazard: when an fd is opened by a
+<code>{var}&gt; file</code> redirection (the variable-fd form), the fd
+outlives the command unless explicitly closed. With
+<code>varredir_close</code> enabled, bash automatically closes such fds
+when the variable goes out of scope:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Without varredir_close: fd assigned to $log_fd leaks if not closed</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="bu">exec</span> {log_fd}<span class="op">&gt;</span>log</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># … fd remains open until script exit or explicit `exec {log_fd}&gt;&amp;-`</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># With varredir_close: fd closes when log_fd is unset or function returns</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> varredir_close</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="fu">log_step()</span> <span class="kw">{</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">-i</span> <span class="va">log_fd</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="bu">exec</span> {log_fd}<span class="op">&gt;</span>log         <span class="co"># log_fd is local; fd closes on function return</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">&#39;step done\n&#39;</span> <span class="op">&gt;&amp;</span><span class="st">&quot;</span><span class="va">$log_fd</span><span class="st">&quot;</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="ex">log_step</span>                    <span class="co"># fd auto-closed here, no leak</span></span></code></pre></div>
+<p>This is BCS-recommended for new code; combine with
+<code>local -i</code> for any function that opens a fd via the
+<code>{var}&gt;</code> form.</p>
+<p><strong>See also</strong>: §6.6 (duplicating fds), §6.7 (move and
+close), §11.x (<code>exec</code>-replace and process replacement), §13.x
+(errexit interaction with exec), BCS0101 (strict mode), BCS0107
+(function organisation), BCS0703 (messaging).</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

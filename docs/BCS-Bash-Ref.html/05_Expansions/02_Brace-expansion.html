@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>02_Brace-expansion.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">02_Brace-expansion.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="52-brace-expansion">5.2 Brace expansion</h2>
+<p>Generates arbitrary token sequences from a textual pattern. Phase 1
+of the expansion order (§5.1) — runs <strong>before</strong> parameter
+expansion, so a variable referenced inside the braces is not visible at
+brace time. Brace expansion is purely lexical: it does not consult the
+filesystem and does not see variables.</p>
+<h3 id="forms">Forms</h3>
+<ul>
+<li><strong>Comma form</strong>: <code>{a,b,c}</code> → three tokens
+<code>a</code>, <code>b</code>, <code>c</code>.</li>
+<li><strong>Range form</strong>: <code>{1..5}</code>,
+<code>{a..z}</code>, <code>{05..10}</code> (zero-padded),
+<code>{1..10..2}</code> (step). Reverse ranges work: <code>{5..1}</code>
+→ <code>5 4 3 2 1</code>.</li>
+<li><strong>Nested</strong>: <code>{a,b}{1,2}</code> →
+<code>a1 a2 b1 b2</code> (Cartesian product).</li>
+<li><strong>Preamble/postscript</strong>: <code>pre{a,b}post</code> →
+<code>preapost prebpost</code>.</li>
+<li><strong>Single element</strong>: <code>{a}</code> is left literal —
+at least two comma-separated items, or a <code>..</code> range, is
+required.</li>
+<li><strong>Unmatched / malformed</strong>: <code>{a,b</code> or
+<code>}b,c}</code> left literal.</li>
+</ul>
+<h3 id="outputs">Outputs</h3>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: see exactly what each form produces</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="dt">{a</span><span class="op">,</span><span class="dt">b</span><span class="op">,</span><span class="dt">c}</span>            <span class="co"># ⇒ a b c</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="dt">{</span><span class="dv">1</span><span class="dt">..</span><span class="dv">5</span><span class="dt">}</span>             <span class="co"># ⇒ 1 2 3 4 5</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="dt">{</span><span class="dv">05</span><span class="dt">..</span><span class="dv">10</span><span class="dt">}</span>           <span class="co"># ⇒ 05 06 07 08 09 10</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="dt">{</span><span class="dv">1</span><span class="dt">..</span><span class="dv">10</span><span class="dt">..</span><span class="dv">2</span><span class="dt">}</span>         <span class="co"># ⇒ 1 3 5 7 9</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="dt">{</span><span class="dv">5</span><span class="dt">..</span><span class="dv">1</span><span class="dt">}</span>             <span class="co"># ⇒ 5 4 3 2 1</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="dt">{</span>a<span class="dt">..</span>e<span class="dt">}</span>             <span class="co"># ⇒ a b c d e</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> pre<span class="dt">{a</span><span class="op">,</span><span class="dt">b}</span>post       <span class="co"># ⇒ preapost prebpost</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="dt">{a</span><span class="op">,</span><span class="dt">b}{1</span><span class="op">,</span><span class="dt">2}</span>         <span class="co"># ⇒ a1 a2 b1 b2</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> {a}                <span class="co"># ⇒ {a}    (single element — left literal)</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="dt">\{</span>a,b<span class="dt">\}</span>            <span class="co"># ⇒ {a,b}  (escaped braces — disabled)</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Variables inside braces do NOT expand:</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">list</span><span class="op">=</span><span class="st">&#39;1,2,3&#39;</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> {<span class="va">$list</span>}            <span class="co"># ⇒ {1,2,3}    (literal — phase 1 &lt; phase 3)</span></span></code></pre></div>
+<h3 id="why-list-does-not-work">Why <code>{$list}</code> does not
+work</h3>
+<p>Brace expansion is phase 1; parameter expansion is phase 3. By the
+time <code>$list</code> becomes <code>1,2,3</code>, the brace operator
+has already failed to match (single element after expansion). The
+work-around is <code>eval</code> (BCS1004 — almost always wrong) or
+arrays (<code>for x in &quot;${list[@]}&quot;; do</code>), which is the canonical
+replacement (§4.9, BCS0206).</p>
+<h3 id="common-idioms">Common idioms</h3>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: bulk file rename without forking sed</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. atomic rename: file.txt → file.txt.bak</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="fu">mv</span> <span class="at">--</span> <span class="st">&quot;</span><span class="va">$f</span><span class="st">&quot;</span><span class="dt">{</span><span class="op">,</span><span class="dt">.bak}</span>                  <span class="co"># expands to: mv -- &quot;$f&quot; &quot;$f&quot;.bak</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. directory tree creation in one call</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> <span class="at">--</span> <span class="dt">{2024</span><span class="op">,</span><span class="dt">2025</span><span class="op">,</span><span class="dt">2026}</span>/{01..12}/<span class="dt">{logs</span><span class="op">,</span><span class="dt">reports}</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. backup + restore symmetric pair</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> <span class="at">--</span> <span class="st">&quot;</span><span class="va">$conf</span><span class="st">&quot;</span><span class="dt">{</span><span class="op">,</span><span class="dt">.orig}</span>              <span class="co"># cp -- conf conf.orig</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="fu">mv</span> <span class="at">--</span> <span class="st">&quot;</span><span class="va">$conf</span><span class="st">&quot;</span><span class="dt">{.orig</span><span class="op">,</span><span class="dt">}</span>              <span class="co"># mv -- conf.orig conf</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. compose a numeric sequence (no seq fork required)</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="dt">{</span><span class="dv">01</span><span class="dt">..</span><span class="dv">10</span><span class="dt">}</span><span class="kw">;</span> <span class="cf">do</span> <span class="bu">printf</span> <span class="st">&#39;job-%s\n&#39;</span> <span class="st">&quot;</span><span class="va">$i</span><span class="st">&quot;</span><span class="kw">;</span> <span class="cf">done</span></span></code></pre></div>
+<h3 id="bcs-posture">BCS posture</h3>
+<ul>
+<li>Use brace expansion freely for <em>literal</em> sequences known at
+parse time. It saves forks (<code>seq</code>, <code>printf</code>
+loops).</li>
+<li>For <em>runtime</em> sequences, use arrays (BCS0206), not
+<code>eval</code>.</li>
+<li>Quote the <code>{,.bak}</code> idiom only on the static side:
+<code>mv -- &quot;$f&quot;{,.bak}</code>. The braces themselves must remain
+unquoted to expand.</li>
+<li>Range form preserves zero-padding only when both ends are padded:
+<code>{05..10}</code> works; <code>{5..010}</code> does not.</li>
+</ul>
+<p><strong>See also</strong>: §5.1 (expansion order, why brace runs
+first), §5.4 (parameter expansion), §5.9 (pathname expansion — distinct
+from brace), §5.11 (<code>globstar</code>).</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

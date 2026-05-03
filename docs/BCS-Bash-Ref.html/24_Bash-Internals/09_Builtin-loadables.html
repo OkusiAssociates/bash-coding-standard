@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>09_Builtin-loadables.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">09_Builtin-loadables.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="249-builtin-loadables">24.9 Builtin loadables</h2>
+<p>Bash supports loading additional builtins from shared objects at
+runtime. The mechanism turns a <code>.so</code> file with the right
+symbols into a new builtin command, indistinguishable from the ones
+compiled into bash itself: same dispatch path, same speed, no fork/exec
+cost. The bash distribution ships ~30 stock loadables in
+<code>examples/loadables/</code>; many distros package these and install
+them under <code>/usr/lib/bash/</code> (Debian, Ubuntu) or
+<code>/usr/local/lib/bash/</code> (Homebrew, source builds).</p>
+<p>Use cases:</p>
+<ul>
+<li>replacing a hot-path external (<code>sleep</code>,
+<code>mkdir</code>, <code>realpath</code>, <code>head</code>,
+<code>tee</code>) with a fork-free builtin;</li>
+<li>exposing a syscall bash does not normally provide
+(<code>mkfifo</code>, <code>head</code>, <code>print</code>);</li>
+<li>one-off performance-critical operations where the per-fork cost
+dominates the actual work.</li>
+</ul>
+<h3 id="loading-a-stock-loadable">Loading a stock loadable</h3>
+<p><code>enable -f /path/to/builtin.so name</code> registers the
+loadable as a builtin called <code>name</code>. After that,
+<code>name args…</code> runs through the builtin dispatch path with no
+fork.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: replace the `sleep` external with the loadable on Ubuntu</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">enable</span> <span class="at">-f</span> /usr/lib/bash/sleep sleep</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Now `sleep 0.1` is a builtin call — no /bin/sleep fork+exec.</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Same for mkdir:</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="bu">enable</span> <span class="at">-f</span> /usr/lib/bash/mkdir mkdir</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> /tmp/builtin-demo</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Same for realpath:</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="bu">enable</span> <span class="at">-f</span> /usr/lib/bash/realpath realpath</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">realpath</span> /etc/hosts</span></code></pre></div>
+<p><code>enable -d name</code> removes the loadable;
+<code>enable -f -d /path/to/foo.so name</code> is the explicit unload
+form. <code>enable -p</code> lists every builtin currently enabled,
+marking external loadables with their path. <code>enable -n name</code>
+disables a builtin without removing it (useful in defensive testing —
+&quot;ensure the script works even if <code>sleep</code> is the
+external&quot;).</p>
+<p>The performance gap matters most in tight loops. A microbench on a
+modern Linux box: 10 000 iterations of the external <code>sleep 0</code>
+runs in ~3 s (almost entirely fork/exec); 10 000 iterations of the
+loadable <code>sleep 0</code> runs in ~0.05 s. For scripts that sleep on
+every iteration of a polling loop, the loadable shaves real time off
+real workloads.</p>
+<h3 id="where-the-so-files-live">Where the .so files live</h3>
+<p>Distribution-dependent. Common paths on a typical Linux install:</p>
+<ul>
+<li><strong>Debian / Ubuntu</strong>: <code>/usr/lib/bash/</code>
+(<code>bash-builtins</code> package)</li>
+<li><strong>Fedora / RHEL</strong>: <code>/usr/lib64/bash/</code> or
+none (compile from <code>bash-source</code>)</li>
+<li><strong>macOS Homebrew</strong>:
+<code>$(brew --prefix)/lib/bash/</code></li>
+<li><strong>Source build</strong>:
+<code>/usr/local/lib/bash/</code></li>
+</ul>
+<p><code>pkg-config --variable=loadablesdir bash</code> returns the
+canonical path when bash is built with pkg-config metadata.</p>
+<h3 id="writing-your-own">Writing your own</h3>
+<p>A loadable is C source compiled with bash&#39;s <code>builtins.h</code>
+interface and linked against <code>libbash</code>. The bash source
+tree&#39;s <code>examples/loadables/</code> directory contains 30+ examples
+ranging from trivial (<code>hello.c</code>) to useful
+(<code>mkfifo.c</code>, <code>seq.c</code>). The compile invocation is
+approximately:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">gcc</span> <span class="at">-fPIC</span> <span class="at">-shared</span> <span class="at">-o</span> myhello.so <span class="dt">\</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-I</span>/usr/include/bash <span class="at">-I</span>/usr/include/bash/builtins <span class="at">-I</span>/usr/include/bash/include <span class="dt">\</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  myhello.c</span></code></pre></div>
+<p>The build is sufficiently fragile across bash-versions and distros
+that the practical advice is: <strong>use the stock loadables</strong>,
+and if you need something custom, factor it as an external program
+rather than as a loadable. The loadable interface is not a stable ABI,
+and a script that depends on a custom loadable becomes binary-coupled to
+a specific bash version.</p>
+<h3 id="--enable-loadable-builtins"><code>--enable-loadable-builtins</code></h3>
+<p>Some bash builds (particularly Alpine&#39;s BusyBox-derived environments
+and some hardened distros) ship without loadable-builtin support. The
+<code>./configure --enable-loadable-builtins</code> flag at build time
+controls this. <code>enable -f</code> returns &quot;dynamic loading not
+available&quot; when the support is missing.</p>
+<p><strong>See also</strong>: §24.10 (reading the bash source) for
+<code>examples/loadables/</code> in the upstream tree; §22.14
+(mock-friendly subprocess wrapper) for the contrasting &quot;swap out an
+external&quot; idiom that does not require loadables; BCS1002 (PATH security)
+for the discussion of why builtin dispatch is preferable on the security
+axis as well as the performance axis.</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

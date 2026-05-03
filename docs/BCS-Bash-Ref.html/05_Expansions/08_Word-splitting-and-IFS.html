@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>08_Word-splitting-and-IFS.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">08_Word-splitting-and-IFS.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="58-word-splitting-and-ifs">5.8 Word splitting and IFS</h2>
+<p>Word splitting is the step in bash&#39;s expansion pipeline (§5.1) where
+the <em>unquoted</em> results of parameter, command, and arithmetic
+expansion are broken into multiple words on the characters in the
+<code>IFS</code> variable. It is the single largest source of subtle
+bugs in production bash scripts: a filename containing a space, a tab in
+captured output, or a stray <code>*</code> can transform a one-argument
+command into many or none. This chapter is the canonical reference for
+the rule, the safe-IFS idiom, and the cardinal discipline that keeps
+scripts correct.</p>
+<h3 id="the-rule-in-one-sentence">The rule in one sentence</h3>
+<p>After expansion, every result that <em>was not</em> inside double
+quotes is re-tokenised by splitting on <code>IFS</code>. Quoted
+expansions (<code>&quot;$var&quot;</code>, <code>&quot;${arr[@]}&quot;</code>,
+<code>&quot;$(cmd)&quot;</code>) are exempt and survive as a single word each.</p>
+<p>That sentence is the entire model. The rest is detail.</p>
+<h3 id="default-ifs-and-the-ifs-whitespace-rule">Default IFS and the
+IFS-whitespace rule</h3>
+<p>The default value of <code>IFS</code> is the three characters space,
+tab, newline. These three are <em>IFS-whitespace</em>; any other
+character used as <code>IFS</code> is <em>IFS-non-whitespace</em>. The
+two classes split differently:</p>
+<ul>
+<li><strong>IFS-whitespace</strong>: leading and trailing runs are
+stripped; interior runs collapse to a single separator.
+<code>&#39;  a  b  &#39;</code> → <code>a</code> <code>b</code> (two
+fields).</li>
+<li><strong>IFS-non-whitespace</strong>: every separator delimits a
+field, including adjacent ones. <code>&#39;a::b&#39;</code> (with
+<code>IFS=:</code>) → <code>a</code>, ``, <code>b</code> (three fields,
+middle one empty).</li>
+</ul>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: IFS-whitespace collapses; IFS-non-whitespace does not</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="va">IFS</span><span class="op">=</span><span class="st">&#39; &#39;</span> <span class="bu">read</span> <span class="at">-ra</span> <span class="va">w</span> <span class="op">&lt;&lt;&lt;</span> <span class="st">&#39;  a  b  &#39;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-p</span> <span class="va">w</span>               <span class="co"># ⇒ declare -a w=([0]=&quot;a&quot; [1]=&quot;b&quot;)</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="va">IFS</span><span class="op">=</span><span class="st">&#39;:&#39;</span> <span class="bu">read</span> <span class="at">-ra</span> <span class="va">n</span> <span class="op">&lt;&lt;&lt;</span> <span class="st">&#39;a::b&#39;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-p</span> <span class="va">n</span>               <span class="co"># ⇒ declare -a n=([0]=&quot;a&quot; [1]=&quot;&quot; [2]=&quot;b&quot;)</span></span></code></pre></div>
+<p>This asymmetry is deliberate — whitespace runs are usually
+formatting, whereas a <code>:</code> (in <code>PATH</code>,
+<code>LD_LIBRARY_PATH</code>) is a real separator and empty fields carry
+meaning.</p>
+<h3 id="the-safe-ifs-idiom--ifstn">The safe-IFS idiom —
+<code>IFS=$&#39;\t\n&#39;</code></h3>
+<p>The default <code>IFS</code> includes a literal space, which means
+<em>any</em> unquoted expansion containing a space is silently re-split.
+The defensive posture is to remove space from <code>IFS</code> for the
+script body, leaving only tab and newline as separators. This is the
+BCS1003-mandated discipline:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="va">IFS</span><span class="op">=</span><span class="st">$&#39;</span><span class="dt">\t\n</span><span class="st">&#39;</span>                         <span class="co"># safe-IFS — drop space; keep tab and newline</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Now any unquoted file path or output containing spaces will not be</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># silently torn apart on its spaces. Tabs and newlines are still active</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># separators because real-world line- and column-oriented data needs them.</span></span></code></pre></div>
+<p>Place this assignment immediately after the strict-mode preamble.
+Every BCS-compliant script does so (see BCS0101, BCS1003). The result is
+that <em>forgetting</em> to quote becomes far less catastrophic — a
+missed quote on a filename like <code>My Documents/notes.txt</code> no
+longer splits into two arguments.</p>
+<h3 id="quoted-vs-unquoted--side-by-side">Quoted vs unquoted — side by
+side</h3>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: quoting controls whether splitting happens at all</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">spaced</span><span class="op">=</span><span class="st">&#39;one two three&#39;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">items</span><span class="op">=</span><span class="va">(</span><span class="st">&#39;alpha beta&#39;</span> <span class="st">&#39;gamma&#39;</span> <span class="st">&#39;delta epsilon&#39;</span><span class="va">)</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Quoted — single argument</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;[%s]\n&#39;</span> <span class="st">&quot;</span><span class="va">$spaced</span><span class="st">&quot;</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ [one two three]</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Unquoted — split on IFS (default)</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;[%s]\n&#39;</span> <span class="va">$spaced</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ [one]</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="co">#    [two]</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="co">#    [three]</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Quoted array expansion — preserves element boundaries</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;[%s]\n&#39;</span> <span class="st">&quot;</span><span class="va">${items</span><span class="op">[@]</span><span class="va">}</span><span class="st">&quot;</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ [alpha beta]</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="co">#    [gamma]</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="co">#    [delta epsilon]</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Unquoted array expansion — re-splits each element</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;[%s]\n&#39;</span> <span class="va">${items</span><span class="op">[@]</span><span class="va">}</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ [alpha]</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="co">#    [beta]</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a><span class="co">#    [gamma]</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a><span class="co">#    [delta]</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a><span class="co">#    [epsilon]</span></span></code></pre></div>
+<p>The rule: <code>&quot;${arr[@]}&quot;</code> is the only correct way to iterate
+an array where any element might contain whitespace (BCS0206). The
+unquoted form is broken by design.</p>
+<h3 id="per-command-ifs">Per-command IFS</h3>
+<p><code>IFS</code> can be set for one command only by placing the
+assignment on the same line as the command. The shell restores the
+previous value after:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: parse a colon-separated record without disturbing global IFS</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">record</span><span class="op">=</span><span class="st">&#39;alice:42:engineer:active&#39;</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="va">IFS</span><span class="op">=</span><span class="st">&#39;:&#39;</span> <span class="bu">read</span> <span class="at">-ra</span> <span class="va">fields</span> <span class="op">&lt;&lt;&lt;</span> <span class="st">&quot;</span><span class="va">$record</span><span class="st">&quot;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-p</span> <span class="va">fields</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ declare -a fields=([0]=&quot;alice&quot; [1]=&quot;42&quot; [2]=&quot;engineer&quot; [3]=&quot;active&quot;)</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co"># IFS is back to its previous value here.</span></span></code></pre></div>
+<p>This is the idiomatic way to parse <code>/etc/passwd</code>-style
+records, key=value pairs, and any column-oriented input.
+<code>read -ra</code> honours the per-command IFS without leaking the
+change.</p>
+<h3 id="splitting-newline-delimited-captures">Splitting
+newline-delimited captures</h3>
+<p>The classic problem: capture command output into an array, one line
+per element, where lines may contain spaces.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: read a process listing into an array, one line per element</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">procs</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="va">IFS</span><span class="op">=</span><span class="st">$&#39;</span><span class="dt">\n</span><span class="st">&#39;</span> <span class="bu">read</span> <span class="at">-d</span> <span class="st">&#39;&#39;</span> <span class="at">-ra</span> <span class="va">procs</span> <span class="op">&lt;</span> <span class="op">&lt;(</span><span class="fu">ps</span> <span class="at">-eo</span> comm=<span class="op">)</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Or — strongly preferred — use readarray (mapfile), which doesn&#39;t need IFS at all:</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">procs2</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="ex">readarray</span> <span class="at">-t</span> procs2 <span class="op">&lt;</span> <span class="op">&lt;(</span><span class="fu">ps</span> <span class="at">-eo</span> comm=<span class="op">)</span></span></code></pre></div>
+<p><code>readarray -t</code> (alias <code>mapfile -t</code>) is the
+BCS-preferred replacement for the IFS-fiddling form: it reads
+line-delimited input directly into an array with no IFS interaction, and
+<code>-t</code> strips the trailing newline on each element.</p>
+<h3 id="unsetting-ifs">Unsetting IFS</h3>
+<p>Unsetting <code>IFS</code> does <em>not</em> disable splitting — bash
+falls back to the default <code>space tab newline</code>. To truly
+suppress splitting for a block, quote the expansions or save and restore
+IFS:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: save/restore IFS around a block that needs a different value</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">_saved_IFS</span><span class="op">=</span><span class="va">$IFS</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="va">IFS</span><span class="op">=</span><span class="st">&#39;:&#39;</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co"># … code that needs colon-splitting …</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="va">IFS</span><span class="op">=</span><span class="va">$_saved_IFS</span></span></code></pre></div>
+<p>Most code never needs this — the per-command
+<code>IFS=value cmd</code> form covers the common case.</p>
+<h3 id="glob-expansion-of-unquoted-results">Glob expansion of unquoted
+results</h3>
+<p>After word splitting, each resulting word that contains unquoted glob
+metacharacters is filename-expanded (§5.9). This compounds the splitting
+hazard: an unquoted <code>$var</code> containing <code>*.log</code> will
+not just re-split — it will then expand against the working directory&#39;s
+files. A two-stage hazard avoided by the same single rule: quote.</p>
+<h3 id="the-cardinal-rule">The cardinal rule</h3>
+<blockquote>
+<p>Always double-quote variable expansions, command substitutions, and
+array expansions, except in the rare cases where you specifically want
+word splitting or pathname expansion.</p>
+</blockquote>
+<p>The rule is unconditional. Every leading bash style guide states it,
+ShellCheck&#39;s SC2086 enforces it, and BCS1003 codifies it. A script that
+never violates it is effectively immune to the entire word- splitting
+bug class.</p>
+<p><strong>See also</strong>: §5.1 (the order of expansions — splitting
+comes after expansion, before pathname matching), §5.4 (parameter
+expansion produces the values that splitting then divides), §5.9
+(pathname expansion of split words), §10.x (<code>read</code> and
+<code>readarray</code> for line-oriented capture), BCS0301 (quoting
+fundamentals), BCS1003 (IFS safety), BCS0206 (array expansion idioms),
+ShellCheck SC2086, SC2068, SC2206.</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

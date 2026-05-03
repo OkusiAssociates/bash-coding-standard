@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>15_pipefail-semantics.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">15_pipefail-semantics.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="615-pipefail-semantics">6.15 <code>pipefail</code>
+semantics</h2>
+<p><code>set -o pipefail</code> redefines a pipeline&#39;s exit status from
+&quot;the rightmost component&#39;s status&quot; to &quot;the rightmost <em>non-zero</em>
+component&#39;s status, or zero if every component succeeded&quot;. Without it,
+error detection through pipes is silently broken:
+<code>false | true</code> returns 0 and any subsequent
+<code>set -e</code> check passes blithely. With it, the same pipeline
+returns 1 and <code>errexit</code> fires. <code>pipefail</code> is one
+third of the strict-mode trio — <code>set -e -o pipefail</code> plus
+<code>shopt -s inherit_errexit</code> — mandated for every BCS-compliant
+script (BCS0101).</p>
+<h3 id="the-rightmost-non-zero-rule">The rightmost-non-zero rule</h3>
+<p>A pipeline of <code>N</code> components produces <code>N</code> exit
+statuses, one per component, available in <code>${PIPESTATUS[0]}</code>
+through <code>${PIPESTATUS[N-1]}</code>. The pipeline&#39;s overall status
+is then:</p>
+<ul>
+<li>Without <code>pipefail</code>: <code>${PIPESTATUS[N-1]}</code> —
+only the last component.</li>
+<li>With <code>pipefail</code>: 0 if all are 0; otherwise
+<code>${PIPESTATUS[k]}</code> where <em>k</em> is the <em>highest</em>
+index whose status is non-zero — that is, the <em>rightmost</em>
+failure.</li>
+</ul>
+<p>&quot;Rightmost non-zero&quot; is the rule literally; it is <em>not</em> &quot;first
+failure&quot;. <code>false | (exit 3) | (exit 7)</code> returns 7, not 1.</p>
+<h3 id="the-strict-mode-trio-in-action">The strict-mode trio in
+action</h3>
+<p><code>pipefail</code> alone changes only the pipeline&#39;s status; it
+does not trigger an exit. <code>errexit</code> then sees the new status
+and applies the exemption matrix as it would for any other command.
+<code>inherit_errexit</code> ensures the rule survives into command
+substitutions and explicit subshells:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: the trio in action — trace pipeline status under each combination</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># (no `set -e` yet — we want to read each result)</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-uo</span> pipefail<span class="kw">;</span> <span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># All-success</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">true</span> <span class="kw">|</span> <span class="fu">true</span> <span class="kw">|</span> <span class="fu">true</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;all-ok        rc=</span><span class="va">$?</span><span class="st"> PIPESTATUS=</span><span class="va">${PIPESTATUS</span><span class="op">[*]</span><span class="va">}</span><span class="st">&quot;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ all-ok        rc=0 PIPESTATUS=0 0 0</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Middle fails — pipefail surfaces it</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">true</span> <span class="kw">|</span> <span class="fu">false</span> <span class="kw">|</span> <span class="fu">true</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;mid-fail     rc=</span><span class="va">$?</span><span class="st"> PIPESTATUS=</span><span class="va">${PIPESTATUS</span><span class="op">[*]</span><span class="va">}</span><span class="st">&quot;</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ mid-fail     rc=1 PIPESTATUS=0 1 0</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Without pipefail — same pipeline appears successful</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> +o pipefail</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="fu">true</span> <span class="kw">|</span> <span class="fu">false</span> <span class="kw">|</span> <span class="fu">true</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;no-pipefail  rc=</span><span class="va">$?</span><span class="st"> PIPESTATUS=</span><span class="va">${PIPESTATUS</span><span class="op">[*]</span><span class="va">}</span><span class="st">&quot;</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ no-pipefail  rc=0 PIPESTATUS=0 1 0   — failure invisible in $?</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Multiple failures — pipefail picks the rightmost</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-o</span> pipefail</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="fu">false</span> <span class="kw">|</span> <span class="kw">(</span><span class="bu">exit</span> 3<span class="kw">)</span> <span class="kw">|</span> <span class="kw">(</span><span class="bu">exit</span> 7<span class="kw">)</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;many-fail    rc=</span><span class="va">$?</span><span class="st"> PIPESTATUS=</span><span class="va">${PIPESTATUS</span><span class="op">[*]</span><span class="va">}</span><span class="st">&quot;</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ many-fail    rc=7 PIPESTATUS=1 3 7</span></span></code></pre></div>
+<p>Once <code>set -e</code> is also active, every non-zero pipeline
+result aborts the script — exactly the behaviour BCS demands.</p>
+<h3 id="interaction-with-set--e">Interaction with
+<code>set -e</code></h3>
+<p><code>pipefail</code> <em>does not</em> by itself exit on failure. It
+re-defines the pipeline&#39;s exit status; <code>errexit</code> then decides
+whether to abort, using the standard exemption matrix:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Form</th>
+<th>Without pipefail</th>
+<th>With pipefail (under set -e)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>a | b</code> (b succeeds)</td>
+<td>exits 0</td>
+<td>exits 0 if a also succeeds, else aborts</td>
+</tr>
+<tr class="even">
+<td><code>a | b</code> (a fails)</td>
+<td>exits 0 (silent loss)</td>
+<td>aborts on a&#39;s failure</td>
+</tr>
+<tr class="odd">
+<td><code>a | b || handler</code></td>
+<td>handler runs only if b fails</td>
+<td>handler runs on any failure</td>
+</tr>
+<tr class="even">
+<td><code>if a | b; then …</code></td>
+<td>tested on b&#39;s status</td>
+<td>tested on rightmost-non-zero</td>
+</tr>
+</tbody>
+</table>
+<p>The most useful pattern is the <code> \|\| handler</code> tail: a
+failed pipeline followed by <code>\|\| handler</code> masks the failure
+cleanly without disabling <code>pipefail</code> globally:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: handle expected SIGPIPE-style failures locally without disabling pipefail</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail<span class="kw">;</span> <span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># `head` quitting after the first match causes upstream SIGPIPE → 141.</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Tolerate it for THIS pipeline only.</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="kw">{</span> <span class="ex">producer</span> <span class="kw">|</span> <span class="ex">filter</span> <span class="kw">|</span> <span class="fu">head</span> <span class="at">-1</span><span class="kw">;</span> <span class="kw">}</span> <span class="kw">||</span> <span class="kw">((</span> <span class="va">$?</span> <span class="op">==</span> <span class="dv">141</span> <span class="kw">))</span> <span class="kw">||</span> <span class="ex">die</span> 5 <span class="st">&quot;pipeline failed&quot;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ rc=141 accepted; any other non-zero status aborts via die</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Alternative: capture and inspect PIPESTATUS for finer control</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="ex">producer</span> <span class="kw">|</span> <span class="ex">filter</span> <span class="kw">|</span> <span class="fu">head</span> <span class="at">-1</span> <span class="kw">||</span> <span class="fu">true</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-ai</span> <span class="va">rcs</span><span class="op">=</span><span class="va">(</span><span class="st">&quot;</span><span class="va">${PIPESTATUS</span><span class="op">[@]</span><span class="va">}</span><span class="st">&quot;</span><span class="va">)</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="kw">((</span> <span class="va">rcs</span><span class="op">[</span><span class="dv">0</span><span class="op">]</span> <span class="op">==</span> <span class="dv">0</span> <span class="kw">||</span> <span class="va">rcs</span><span class="op">[</span><span class="dv">0</span><span class="op">]</span> <span class="op">==</span> <span class="dv">141</span> <span class="kw">))</span> <span class="kw">||</span> <span class="ex">die</span> 5 <span class="st">&quot;producer failed&quot;</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="kw">((</span> <span class="va">rcs</span><span class="op">[</span><span class="dv">1</span><span class="op">]</span> <span class="op">==</span> <span class="dv">0</span> <span class="kw">||</span> <span class="va">rcs</span><span class="op">[</span><span class="dv">1</span><span class="op">]</span> <span class="op">==</span> <span class="dv">141</span> <span class="kw">))</span> <span class="kw">||</span> <span class="ex">die</span> 5 <span class="st">&quot;filter failed&quot;</span></span></code></pre></div>
+<p>The <code>|| (( $? == 141 ))</code> idiom is the standard escape
+hatch when a pipeline&#39;s tail (<code>head</code>, <code>grep -q</code>,
+<code>awk &#39;NR==1{exit}&#39;</code>) is <em>expected</em> to terminate
+early.</p>
+<h3 id="pipelines-vs-lists">Pipelines vs lists</h3>
+<p><code>a; b; c</code> is a <em>list</em>, not a pipeline;
+<code>pipefail</code> does not apply. Errexit visits each command in
+turn. Likewise <code>a &amp;&amp; b &amp;&amp; c</code> is not a
+pipeline — each command is separate, each subject to errexit on its own
+status. <code>pipefail</code> only governs the <code>|</code>-connected
+case.</p>
+<h3 id="practical-guidance">Practical guidance</h3>
+<p>Always pair <code>pipefail</code> with <code>errexit</code> and
+<code>inherit_errexit</code> (BCS0101). Without <code>pipefail</code>,
+error detection through pipes is silently broken, and bugs migrate from
+the producing side to whichever component happens to read last. With it,
+every component is a first-class participant in error handling.</p>
+<p>When SIGPIPE is expected (rc 141), plan for it explicitly — do not
+silently <code>|| true</code> a pipeline, because that mask hides every
+other failure too.</p>
+<p><strong>See also</strong>: §6.13 (pipelines), §6.16
+(<code>lastpipe</code>), §13.2 (errexit semantics), §13.3 (errexit
+exemption matrix), §13.5 (<code>set -o pipefail</code> deep dive), §13.9
+(strict-mode contract), BCS0101, BCS0601.</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

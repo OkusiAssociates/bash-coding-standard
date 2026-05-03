@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>08_export-and-the-environment.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">08_export-and-the-environment.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="48-export-and-the-environment">4.8 <code>export</code> and the
+environment</h2>
+<p><code>export</code> marks a shell variable so that its name and value
+are passed into the environment of every subsequently-spawned child
+process. The exported state is a per-variable attribute (the
+<code>-x</code> flag in <code>declare</code> terms), not a separate
+namespace: an exported variable is still a shell variable, simply one
+that crosses the <code>fork+exec</code> boundary.</p>
+<h3 id="forms">Forms</h3>
+<ul>
+<li><code>export name=value</code> — assignment plus export in one
+statement.</li>
+<li><code>declare -x name=value</code> — equivalent; useful when
+combining with other attributes
+(<code>declare -rx FROZEN=…</code>).</li>
+<li><code>export name</code> — mark an existing variable as exported
+without changing its value.</li>
+<li><code>export -p</code> — print all exported variables in re-loadable
+form.</li>
+<li><code>export -n name</code> — remove the export attribute. The
+variable remains as a shell variable; only the inheritance flag is
+cleared.</li>
+<li><code>export -f funcname</code> — export a function (see
+<em>Function export and Shellshock</em> below).</li>
+</ul>
+<h3 id="inheritance-is-one-way">Inheritance is one-way</h3>
+<p>A child process receives a <strong>copy</strong> of the environment
+at exec time. Modifications inside the child do not propagate back.
+Subshells (parenthesised groups, <code>$( )</code>, pipelines) inherit
+by reference <em>for read</em> but copy-on-write for any modification —
+once the subshell mutates a variable, the parent&#39;s binding is
+unchanged.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: child sees the parent&#39;s export, mutations stay in the child</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">GREETING</span><span class="op">=</span><span class="st">&#39;hello&#39;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">bash</span> <span class="at">-c</span> <span class="st">&#39;printf &quot;child sees: %s\n&quot; &quot;$GREETING&quot;; GREETING=mutated&#39;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ child sees: hello</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;parent still: %s\n&#39;</span> <span class="st">&quot;</span><span class="va">$GREETING</span><span class="st">&quot;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ parent still: hello</span></span></code></pre></div>
+<h3 id="assignment-prefixed-commands">Assignment-prefixed commands</h3>
+<p>A command preceded by one or more <code>name=value</code> assignments
+inherits those bindings as exports <strong>for the duration of that
+command only</strong>. The shell variable in the parent is <em>not</em>
+modified.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: temporary export for one command</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">unset</span> <span class="va">LANG</span>          <span class="co"># remove from current shell</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="va">LANG</span><span class="op">=</span>C <span class="fu">sort</span> <span class="op">&lt;</span> input.txt <span class="op">&gt;</span> sorted.txt</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ sort sees LANG=C; the parent&#39;s LANG remains unset afterwards</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;parent LANG: &lt;%s&gt;\n&#39;</span> <span class="st">&quot;</span><span class="va">${LANG</span><span class="op">-</span>unset<span class="va">}</span><span class="st">&quot;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ parent LANG: &lt;unset&gt;</span></span></code></pre></div>
+<p>The exception: when the command is a <em>special builtin</em>
+(<code>:</code>, <code>.</code>, <code>break</code>,
+<code>continue</code>, <code>eval</code>, <code>exec</code>,
+<code>exit</code>, <code>export</code>, <code>readonly</code>,
+<code>return</code>, <code>set</code>, <code>shift</code>,
+<code>times</code>, <code>trap</code>, <code>unset</code>), the
+assignment persists in the <em>current</em> shell. Avoid this corner —
+under strict-mode scripting, prefer an explicit
+<code>export</code>/<code>declare</code> statement to anything that
+could reach a special builtin.</p>
+<h3 id="what-is-and-is-not-exported-by-default">What is and is not
+exported by default</h3>
+<p>Bash inherits whatever the parent shell exports. On a typical login
+shell that includes:</p>
+<ul>
+<li><code>PATH</code>, <code>HOME</code>, <code>USER</code>,
+<code>SHELL</code>, <code>TERM</code> — set by the login process</li>
+<li><code>LANG</code>, <code>LC_*</code> — locale settings</li>
+<li><code>PWD</code>, <code>OLDPWD</code> — Bash maintains these and
+exports them</li>
+<li><code>EDITOR</code>, <code>PAGER</code>, <code>LESS</code>, etc. —
+user-set in <code>~/.bashrc</code> or <code>~/.profile</code></li>
+</ul>
+<p>A new variable created in a script is <strong>not</strong> exported
+unless you say so. This is the right default — exported state pollutes
+every child and can break tools that expect a clean environment.</p>
+<h3 id="function-export-and-shellshock">Function export and
+Shellshock</h3>
+<p><code>export -f funcname</code> puts a function definition into the
+environment, encoded as a string. Bash 4.2 and earlier encoded this as a
+literal function body assigned to a specially-named variable; the child
+shell parsed and re-executed that body during startup. The infamous
+<strong>CVE-2014-6271 (&quot;Shellshock&quot;)</strong> exploited a flaw whereby
+Bash kept parsing trailing commands after the function body, allowing
+remote code execution through any path that fed user input into the
+environment of a Bash subshell — notably CGI scripts.</p>
+<p>Bash 4.3+ encodes exported functions with a separate prefix
+(<code>BASH_FUNC_name%%</code>) and the parser stops at the function
+body. Modern Bash is safe, but the larger lesson stands:</p>
+<ul>
+<li><strong>Exported functions are not portable</strong> across shells.
+A child <code>sh</code> process will not pick them up.</li>
+<li><strong>They are a debugging trap</strong> — the function appears in
+<code>env</code> output and can shadow the same name in the child.</li>
+<li><strong>Avoid <code>export -f</code> in production scripts.</strong>
+Prefer dotting-in a library file in the child, or passing logic via
+<code>bash -c &quot;$(declare -f fn); fn args&quot;</code> — explicit and
+visible.</li>
+</ul>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: function export — works, but rarely the right tool</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">greet()</span> <span class="kw">{</span> <span class="bu">printf</span> <span class="st">&#39;hello, %s\n&#39;</span> <span class="st">&quot;</span><span class="va">${1</span><span class="op">-</span>world<span class="va">}</span><span class="st">&quot;</span><span class="kw">;</span> <span class="kw">}</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="at">-f</span> <span class="va">greet</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="fu">bash</span> <span class="at">-c</span> <span class="st">&#39;greet alice&#39;</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ hello, alice</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="fu">env</span> <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-F</span> BASH_FUNC_greet</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ BASH_FUNC_greet%%=() {  printf &#39;hello, %s\n&#39; &quot;${1-world}&quot;;\n}</span></span></code></pre></div>
+<h3 id="pitfalls">Pitfalls</h3>
+<ul>
+<li><code>export name</code> <em>without</em> a value exports whatever
+value <code>name</code> currently has — including empty. Mark and assign
+in one step where possible.</li>
+<li><code>unset name</code> removes the variable entirely, including its
+export attribute. <code>export -n name</code> removes only the
+attribute.</li>
+<li>A variable assigned <strong>without</strong> <code>export</code>
+inside a function does not reach a child even if a parent-scope global
+of the same name was exported — the local shadows the global.</li>
+<li>Tools that read the environment via <code>/proc/self/environ</code>
+or <code>getenv()</code> see the byte-level encoding, including any
+nul-terminated embedded values. Never put untrusted data into an
+exported variable.</li>
+</ul>
+<h3 id="see-also">See also</h3>
+<ul>
+<li>§4.5 — <code>declare -x</code> and attribute combinations</li>
+<li>§4.6 — <code>local</code> and dynamic scope (locals are not exported
+by default)</li>
+<li>§4.13 — variable assignment semantics, especially
+assignment-prefix</li>
+<li>BCS0204 (constants and environment variables)</li>
+</ul>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

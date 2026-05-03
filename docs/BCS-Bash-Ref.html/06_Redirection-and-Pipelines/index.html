@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>index.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">index.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="part-vi--redirection-and-pipelines">Part VI — Redirection and
+Pipelines</h1>
+<p><em>Redirection is fd manipulation by another name. Every operator
+resolves to a small sequence of <code>dup2()</code> and
+<code>open()</code> syscalls. This Part documents the operators, the
+ordering rules, and the pipeline mechanism that composes them.</em></p>
+<hr />
+<h2 id="chapters">Chapters</h2>
+<ol type="1">
+<li><a href="01_The-fd-table-from-Bashs-perspective.html">6.1 The fd
+table from Bash&#39;s perspective</a> — Recap from §1.2 framed as Bash sees
+it.</li>
+<li><a href="02_Input-redirection.html">6.2 Input redirection</a> —
+Reading from a file or fd.</li>
+<li><a href="03_Output-redirection.html">6.3 Output redirection</a> —
+Writing to a file or fd.</li>
+<li><a href="04_Stderr-redirection-and-merging.html">6.4 Stderr
+redirection and merging</a> — Bash&#39;s two shorthands and the underlying
+explicit forms for combining stdout and stderr.</li>
+<li><a href="05_Reading-and-writing.html">6.5 Reading-and-writing</a> —
+<code>&lt;&gt;</code> opens a file for both reading and writing on the
+same fd.</li>
+<li><a href="06_Duplicating-fds.html">6.6 Duplicating fds</a> —
+<code>&gt;&amp;</code> and <code>&lt;&amp;</code> duplicate fds, sharing
+the underlying open file description.</li>
+<li><a href="07_Moving-and-closing-fds.html">6.7 Moving and closing
+fds</a> — The <code>&gt;&amp;-</code>/<code>&lt;&amp;-</code> close
+form, and the dup-and-close form <code>n&gt;&amp;m-</code>.</li>
+<li><a href="08_Here-documents.html">6.8 Here-documents</a> —
+<code>&lt;&lt;DELIM</code> … <code>DELIM</code> — synthesise stdin from
+inline text.</li>
+<li><a href="09_Here-strings.html">6.9 Here-strings</a> —
+<code>&lt;&lt;&lt;</code> — single-line variant of here-document;
+supplies a string as stdin.</li>
+<li><a href="10_Process-substitution-as-redirection.html">6.10 Process
+substitution as redirection</a> — Process substitution (§5.7) is a
+redirection mechanism in disguise — <code>&lt;(cmd)</code> produces a
+<code>/dev/fd/N</code> path that bash can pass as a filename.</li>
+<li><a href="11_Order-of-evaluation.html">6.11 Order of evaluation</a> —
+Redirections are processed left-to-right.</li>
+<li><a href="12_exec-for-fd-manipulation.html">6.12 <code>exec</code>
+for fd manipulation</a> — <code>exec</code> without a command applies
+redirections to the current shell, persisting beyond a single
+command.</li>
+<li><a href="13_Pipelines.html">6.13 Pipelines</a> — <code>a | b</code>
+connects a&#39;s stdout to b&#39;s stdin via a kernel pipe.</li>
+<li><a href="14_Stderr-pipelines.html">6.14 Stderr pipelines
+(<code>|&amp;</code>)</a> — <code>a |&amp; b</code> is shorthand for
+<code>a 2&gt;&amp;1 | b</code> — pipe both stdout and stderr.</li>
+<li><a href="15_pipefail-semantics.html">6.15 <code>pipefail</code>
+semantics</a> — <code>set -o pipefail</code> makes a pipeline&#39;s exit
+status the rightmost non-zero status, or zero if all succeeded.</li>
+<li><a href="16_lastpipe-semantics.html">6.16 <code>lastpipe</code>
+semantics</a> — <code>shopt -s lastpipe</code> runs the last command of
+a pipeline in the current shell rather than a subshell — making
+variables set in it visible afterwards.</li>
+</ol>
+<hr />
+<p>← Previous: <a href="../05_Expansions/index.html">Part V —
+Expansions</a></p>
+<p>Next: <a href="../07_Control-Flow-and-Compound-Commands/index.html">Part VII —
+Control Flow and Compound Commands</a> →</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

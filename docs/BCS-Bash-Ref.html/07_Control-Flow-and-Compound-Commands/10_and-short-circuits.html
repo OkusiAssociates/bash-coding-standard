@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>10_and-short-circuits.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">10_and-short-circuits.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="710--and--short-circuits">7.10 <code>&amp;&amp;</code> and
+<code>||</code> short-circuits</h2>
+<p>AND-OR lists chain commands with conditional execution. They are the
+in-line alternative to <code>if/fi</code>:
+<code>cmd1 &amp;&amp; cmd2</code> runs <code>cmd2</code> only if
+<code>cmd1</code> succeeded; <code>cmd1 || cmd2</code> runs
+<code>cmd2</code> only if <code>cmd1</code> failed. The two operators
+have <em>equal precedence</em> and are <em>left-associative</em>. This
+last fact is the source of the most famous trap in bash and of the
+canonical interview question on this topic.</p>
+<h3 id="mechanics">Mechanics</h3>
+<ul>
+<li><code>cmd1 &amp;&amp; cmd2</code> — exit status of <code>cmd1</code>
+decides; <code>cmd2</code> runs iff <code>cmd1</code> exited
+<code>0</code>.</li>
+<li><code>cmd1 || cmd2</code> — exit status of <code>cmd1</code>
+decides; <code>cmd2</code> runs iff <code>cmd1</code> exited
+non-zero.</li>
+<li>The whole list&#39;s exit status is the status of the <em>last command
+actually executed</em>.</li>
+<li>The <code>&amp;&amp;</code>/<code>||</code> test inspects the
+<em>immediate left command&#39;s</em> status — not the cumulative status of
+the whole left chain.</li>
+<li>Errexit exemption: every left-hand position in an AND-OR list is
+exempt from <code>set -e</code> (§13.3); only the <em>final</em>
+command&#39;s status is observed by errexit.</li>
+</ul>
+<h3 id="common-one-liners">Common one-liners</h3>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: conditional action without an if-block</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">[[</span> <span class="ot">-d</span> <span class="va">$dir</span> <span class="kw">]]</span> <span class="kw">||</span> <span class="fu">mkdir</span> <span class="at">-p</span> <span class="at">--</span> <span class="st">&quot;</span><span class="va">$dir</span><span class="st">&quot;</span>          <span class="co"># create only if missing</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="ex">cmd</span> <span class="kw">&amp;&amp;</span> <span class="ex">success</span> <span class="st">&#39;done&#39;</span> <span class="kw">||</span> <span class="ex">warn</span> <span class="st">&#39;failed&#39;</span>       <span class="co"># WRONG — see misconception below</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> <span class="st">&quot;</span><span class="va">$dir</span><span class="st">&quot;</span> <span class="kw">&amp;&amp;</span> <span class="fu">rm</span> <span class="at">--</span> <span class="pp">*</span>.tmp                     <span class="co"># cd or skip the rm</span></span></code></pre></div>
+<p>The first idiom is universally safe —
+<code>[[ -d … ]] || mkdir</code> reads as &quot;ensure the directory exists.&quot;
+The second is the misconception, dealt with next.</p>
+<h3 id="the-famous-misconception----is-not-if-then-else">The famous
+misconception: <code>&amp;&amp; … ||</code> is not
+<code>if-then-else</code></h3>
+<p><code>cmd1 &amp;&amp; cmd2 || cmd3</code> <em>looks</em> like
+<code>if cmd1 then cmd2 else cmd3</code>. It is not. It runs
+<code>cmd3</code> whenever the immediate left command of <code>||</code>
+fails — and the immediate left command of <code>||</code> is
+<code>cmd2</code> whenever <code>cmd1</code> succeeded. So
+<code>cmd3</code> runs not just when <code>cmd1</code> fails, but also
+when <code>cmd1</code> succeeds <em>and</em> <code>cmd2</code> then
+fails:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># wrong — looks like if/then/else; isn&#39;t.</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">[[</span> <span class="ot">-f</span> <span class="va">$file</span> <span class="kw">]]</span> <span class="kw">&amp;&amp;</span> <span class="fu">rm</span> <span class="at">--</span> <span class="st">&quot;</span><span class="va">$file</span><span class="st">&quot;</span> <span class="kw">||</span> <span class="ex">warn</span> <span class="st">&quot;could not check&quot;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># trace:</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co">#   $file present, rm succeeds (status 0)        → no warn (correct branch)</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co">#   $file present, rm fails    (status 1)        → warn fires (silently wrong)</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co">#   $file absent,  warn fires                    → warn fires (intended)</span></span></code></pre></div>
+<p>Two of the three execution paths print <code>could not check</code>
+even when the problem was a failed <code>rm</code>, not a failed test.
+The standard misdiagnosis is &quot;filesystem is glitching&quot;; the reality is
+that <code>&amp;&amp;</code>/<code>||</code> chains do not implement
+conditional dispatch.</p>
+<p>The right tool is an <code>if/fi</code>:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># right — explicit dispatch</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">[[</span> <span class="ot">-f</span> <span class="va">$file</span> <span class="kw">]];</span> <span class="cf">then</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rm</span> <span class="at">--</span> <span class="st">&quot;</span><span class="va">$file</span><span class="st">&quot;</span> <span class="kw">||</span> <span class="ex">warn</span> <span class="st">&quot;could not remove </span><span class="va">$file</span><span class="st">&quot;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="ex">warn</span> <span class="st">&quot;no such file: </span><span class="va">$file</span><span class="st">&quot;</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="cf">fi</span></span></code></pre></div>
+<p>…or grouping to disambiguate the intent:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># right — group the success branch so its failure cannot trigger the failure branch</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">[[</span> <span class="ot">-f</span> <span class="va">$file</span> <span class="kw">]]</span> <span class="kw">&amp;&amp;</span> <span class="kw">{</span> <span class="fu">rm</span> <span class="at">--</span> <span class="st">&quot;</span><span class="va">$file</span><span class="st">&quot;</span><span class="kw">;</span> <span class="ex">success</span> <span class="st">&quot;removed&quot;</span><span class="kw">;</span> <span class="kw">}</span> <span class="kw">||</span> <span class="ex">warn</span> <span class="st">&quot;no such file&quot;</span></span></code></pre></div>
+<p>The braces force <code>{ rm …; success …; }</code> to be evaluated as
+a single unit; their combined status is what <code>||</code> tests. The
+pattern is still fragile (<code>success</code> failing would trigger the
+warn), but it eliminates the more common version of the bug. For
+anything more than a binary guard, prefer <code>if/fi</code> and
+stop.</p>
+<h3 id="errexit-and-and-or-lists">Errexit and AND-OR lists</h3>
+<p><code>set -e</code> does not abort on a failure in any non-final
+position of an AND-OR list. This is by design —
+<code>cmd || handler</code> would be useless if the failing
+<code>cmd</code> aborted the script before <code>handler</code> ran. But
+it also means a long AND-OR chain hides errors:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># wrong — only failure of cmd5 is observed by errexit</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="ex">cmd1</span> <span class="kw">&amp;&amp;</span> <span class="ex">cmd2</span> <span class="kw">&amp;&amp;</span> <span class="ex">cmd3</span> <span class="kw">&amp;&amp;</span> <span class="ex">cmd4</span> <span class="kw">&amp;&amp;</span> <span class="ex">cmd5</span></span></code></pre></div>
+<p>Failures in <code>cmd1</code>–<code>cmd4</code> short-circuit the
+chain (the rest do not run), but the <em>script</em> continues — because
+the chain&#39;s overall status is whatever the last <em>executed</em>
+command returned, and that could be a mid-chain success that simply
+stopped further work. For multi-step sequences where every step must
+succeed, use a <code>for</code> loop, an explicit if-cascade, or the
+BCS-standard <code>cmd || die …</code> pattern at each step (BCS0601,
+BCS0604).</p>
+<h3 id="idiomatic-uses-that-are-safe">Idiomatic uses that <em>are</em>
+safe</h3>
+<p>For all the misconceptions, three AND-OR idioms remain canonical and
+unproblematic:</p>
+<ul>
+<li><strong>Guard-and-act</strong>:
+<code>[[ test ]] &amp;&amp; cmd</code> — single action conditional on a
+test. No third branch; cannot misfire.</li>
+<li><strong>Default-on-failure</strong>: <code>cmd || default</code> —
+fall back when <code>cmd</code> fails. Common with <code>||</code>
+<code>:</code> <code>||</code> <code>true</code> to suppress non-fatal
+errors (BCS0605).</li>
+<li><strong>Die-on-failure</strong>: <code>cmd || die N &quot;message&quot;</code>
+— the BCS-standard error-handling pattern (BCS0601, BCS0604). The
+terminating <code>die</code> guarantees the right-hand side is the only
+post-failure path.</li>
+</ul>
+<p>Reach for these freely. Reach for
+<code>cmd1 &amp;&amp; cmd2 || cmd3</code> and similar three-clause forms
+not at all.</p>
+<p><strong>See also</strong>: §7.2 (<code>if/elif/else/fi</code> — the
+explicit conditional), §7.8 (<code>( )</code> for grouping with
+isolation), §7.9 (<code>{ }</code> for grouping without forking), §13.3
+(errexit and the AND-OR exemption), BCS0601, BCS0604, BCS0605.</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

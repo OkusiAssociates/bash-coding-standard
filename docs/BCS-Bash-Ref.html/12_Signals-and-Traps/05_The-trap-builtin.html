@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>05_The-trap-builtin.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">05_The-trap-builtin.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="125-the-trap-builtin">12.5 The <code>trap</code> builtin</h2>
+<p><code>trap</code> registers handler commands for signals and
+pseudo-signals. The handler is a <em>string</em> that bash re-parses and
+evaluates in the shell&#39;s own context every time the trap fires;
+understanding when that string is expanded is the difference between a
+working cleanup and a silent footgun.</p>
+<h3 id="forms">Forms</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Form</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>trap &#39;CMDS&#39; SIG [SIG …]</code></td>
+<td>install handler for one or more signals</td>
+</tr>
+<tr class="even">
+<td><code>trap &#39;&#39; SIG</code></td>
+<td>ignore the signal (cannot be reset by the trap-setter&#39;s parent)</td>
+</tr>
+<tr class="odd">
+<td><code>trap - SIG</code></td>
+<td>reset to the default disposition (§12.4)</td>
+</tr>
+<tr class="even">
+<td><code>trap</code> <em>or</em> <code>trap -p</code></td>
+<td>print every installed trap in re-loadable form</td>
+</tr>
+<tr class="odd">
+<td><code>trap -p SIG</code></td>
+<td>print just one trap</td>
+</tr>
+<tr class="even">
+<td><code>trap -l</code></td>
+<td>list signal names and numbers</td>
+</tr>
+</tbody>
+</table>
+<p>A single <code>trap</code> call may name several signals; the same
+handler is attached to each. Pseudo-signals (<code>EXIT</code>,
+<code>ERR</code>, <code>DEBUG</code>, <code>RETURN</code>) are mixed
+freely with real signals on the same call, though the semantics differ
+(§12.6).</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: install one cleanup for three terminating events</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">trap</span> cleanup EXIT INT TERM</span></code></pre></div>
+<h3 id="single-quotes-vs-double-quotes--the-canonical-pitfall">Single
+quotes vs double quotes — the canonical pitfall</h3>
+<p>The handler string is expanded <strong>twice</strong>: once by the
+parser at the time <code>trap</code> is called, and again by the shell
+each time the trap fires. The quoting style of the handler decides which
+expansion wins.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># wrong — $var captured at trap-set time, frozen for the script&#39;s life</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="va">var</span><span class="op">=</span>initial</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">trap</span> <span class="st">&quot;echo </span><span class="va">$var</span><span class="st">&quot;</span> EXIT      <span class="co"># ⇒ becomes: trap &#39;echo initial&#39; EXIT</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="va">var</span><span class="op">=</span>final</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="bu">exit</span>                       <span class="co"># prints: initial</span></span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># right — $var deferred to trap-fire time</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="va">var</span><span class="op">=</span>initial</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">trap</span> <span class="st">&#39;echo $var&#39;</span> EXIT      <span class="co"># the literal string $var is stored</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="va">var</span><span class="op">=</span>final</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="bu">exit</span>                       <span class="co"># prints: final</span></span></code></pre></div>
+<p>The double-quoted form interpolates immediately, so the trap captures
+a <em>snapshot</em> of the variable. The single-quoted form stores the
+literal text <code>$var</code>, leaving expansion until the handler
+runs. For state that changes during the script (which is most state —
+line numbers, exit codes, working directories), single quotes are
+mandatory (BCS0301, BCS0603).</p>
+<p>The same rule governs <code>$LINENO</code>,
+<code>$BASH_COMMAND</code>, <code>$?</code>, <code>$BASH_SOURCE</code>,
+and any function call that should resolve at fire time:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># wrong — $LINENO is the line where trap was installed (always the same)</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="bu">trap</span> <span class="st">&quot;echo failed at </span><span class="va">$LINENO</span><span class="st">&quot;</span> ERR</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># right — $LINENO is the line where the failing command lives</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="bu">trap</span> <span class="st">&#39;echo failed at $LINENO&#39;</span> ERR</span></code></pre></div>
+<h3 id="functions-as-handlers">Functions as handlers</h3>
+<p>Wrap non-trivial logic in a function and trap the function name. Bash
+re-evaluates the <em>string</em> on each fire, so
+<code>trap cleanup EXIT</code> becomes a single-token call to whatever
+<code>cleanup</code> resolves to at fire time — including overrides
+installed later in the script.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: function-handler form; pass the failing line number explicitly</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-eEuo</span> pipefail<span class="kw">;</span> <span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="fu">on_err()</span> <span class="kw">{</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">-i</span> <span class="va">rc</span><span class="op">=</span><span class="va">$?</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">-i</span> <span class="va">ln</span><span class="op">=</span><span class="va">$1</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="op">&gt;&amp;</span><span class="dv">2</span> <span class="st">&#39;ERR rc=%d at line %d: %s\n&#39;</span> <span class="st">&quot;</span><span class="va">$rc</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">$ln</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">$BASH_COMMAND</span><span class="st">&quot;</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="bu">exit</span> <span class="st">&quot;</span><span class="va">$rc</span><span class="st">&quot;</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Single quotes around the whole handler so $LINENO defers; the</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co"># function call itself takes the deferred value as a positional arg.</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="bu">trap</span> <span class="st">&#39;on_err $LINENO&#39;</span> ERR</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="fu">work()</span> <span class="kw">{</span> <span class="fu">false</span><span class="kw">;</span> <span class="kw">}</span>                 <span class="co"># ⇒ on_err prints rc=1 at line 13: false</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="ex">work</span></span></code></pre></div>
+<h3 id="inspecting-and-clearing">Inspecting and clearing</h3>
+<p><code>trap -p</code> prints every trap in a form that can be
+<code>eval</code>&#39;d to restore state. This is the supported way for one
+function to save and later restore the calling context&#39;s traps:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: save and restore the EXIT trap around a critical section</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="va">saved</span><span class="op">=</span><span class="va">$(</span><span class="bu">trap</span> <span class="at">-p</span> EXIT<span class="va">)</span>             <span class="co"># eval-restorable string</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="bu">trap</span> <span class="st">&#39;rollback&#39;</span> EXIT</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="ex">do_risky_thing</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="bu">eval</span> <span class="st">&quot;</span><span class="va">${saved</span><span class="op">:-</span>trap - EXIT<span class="va">}</span><span class="st">&quot;</span>      <span class="co"># restore exactly; default if none was set</span></span></code></pre></div>
+<p><code>trap - SIG</code> resets a single signal to its default
+disposition; <code>trap &#39;&#39; SIG</code> ignores it entirely (and any child
+<code>exec</code>&#39;d from this shell inherits the <em>ignored</em> state
+— see §12.9).</p>
+<h3 id="multiple-signal-install--three-equivalent-forms">Multiple-signal
+install — three equivalent forms</h3>
+<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: one handler, three signals — three styles</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="bu">trap</span> cleanup EXIT INT TERM        <span class="co"># space-separated names</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="bu">trap</span> cleanup EXIT INT TERM HUP    <span class="co"># add SIGHUP for daemons (§12.16)</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="bu">trap</span> cleanup 0 2 15               <span class="co"># numeric form (0 = EXIT)</span></span></code></pre></div>
+<p>Mixing names and numbers is allowed but unidiomatic. Names survive
+across kernels and platforms; numbers do not (signal 10 is SIGUSR1 on
+Linux but SIGBUS on some BSDs — see §12.2).</p>
+<h3 id="strict-mode-interaction">Strict-mode interaction</h3>
+<p>Under <code>set -e</code>, a trap handler that exits non-zero will
+<em>itself</em> trigger errexit on the way out — but EXIT is already
+firing, so the effect is to override the script&#39;s exit status. Always
+end EXIT and ERR handlers with an explicit <code>exit &quot;$rc&quot;</code> (or
+<code>return &quot;$rc&quot;</code> from a function) to preserve the caller&#39;s
+outcome (BCS0110).</p>
+<p>The handler runs in the <em>parent</em> shell, not a subshell —
+assignments inside the handler persist (or, in the case of EXIT, persist
+for the remaining lifetime of the dying shell).
+<code>inherit_errexit</code> does <em>not</em> affect trap inheritance;
+that is governed by <code>set -E</code> and <code>set -T</code>
+(§12.8).</p>
+<p><strong>See also</strong>: §12.4 (signal disposition), §12.6
+(pseudo-signals EXIT/ERR/DEBUG/RETURN), §12.7 (<code>trap -p</code> and
+inspection), §12.8 (trap inheritance), §12.10 (synchronous vs
+asynchronous delivery), §12.11 (signal-safe code), §12.12 (idempotent
+cleanup), BCS0110, BCS0301, BCS0603, BCS-bash
+<code>30_48_trap.md</code>.</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

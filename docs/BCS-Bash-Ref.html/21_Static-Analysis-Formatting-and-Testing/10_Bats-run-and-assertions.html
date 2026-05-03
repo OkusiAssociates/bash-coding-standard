@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>10_Bats-run-and-assertions.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">10_Bats-run-and-assertions.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="2110-bats-run-and-assertions">21.10 Bats <code>run</code> and
+assertions</h2>
+<p><code>run</code> is the bats primitive that turns a <em>command
+invocation</em> into <em>observed evidence</em>. It executes its
+argument vector in the current shell, captures stdout, stderr, and exit
+code, and stows them in predictable variables so the test can assert
+against them. Without <code>run</code>, a non-zero exit halts the test
+on the offending line; with <code>run</code>, the exit code is data.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">@test</span> <span class="st">&#39;greet -n NAME exits 0 and prints greeting&#39;</span> {</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="ex">run</span> greet <span class="at">-n</span> Alice</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># raw assertions (built-in)</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="bu">[</span> <span class="st">&quot;</span><span class="va">$status</span><span class="st">&quot;</span> <span class="ot">-eq</span> 0 <span class="bu">]</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="bu">[</span> <span class="st">&quot;</span><span class="va">$output</span><span class="st">&quot;</span> <span class="ot">=</span> <span class="st">&#39;Hello, Alice!&#39;</span> <span class="bu">]</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="bu">[</span> <span class="st">&quot;</span><span class="va">${</span><span class="op">#</span><span class="va">lines</span><span class="op">[@]</span><span class="va">}</span><span class="st">&quot;</span> <span class="ot">-eq</span> 1 <span class="bu">]</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="er">}</span></span></code></pre></div>
+<p>The four state variables <code>run</code> populates:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Variable</th>
+<th>Type</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>$status</code></td>
+<td>integer</td>
+<td>exit code of the invoked command</td>
+</tr>
+<tr class="even">
+<td><code>$output</code></td>
+<td>string</td>
+<td>combined stdout+stderr (one buffer)</td>
+</tr>
+<tr class="odd">
+<td><code>$lines[]</code></td>
+<td>array</td>
+<td><code>$output</code> split on <code>\n</code>, no trailing
+empties</td>
+</tr>
+<tr class="even">
+<td><code>$stderr</code></td>
+<td>string</td>
+<td>stderr only — <em>requires</em>
+<code>run --separate-stderr</code></td>
+</tr>
+<tr class="odd">
+<td><code>$stderr_lines[]</code></td>
+<td>array</td>
+<td><code>$stderr</code> split on <code>\n</code></td>
+</tr>
+</tbody>
+</table>
+<p>Use <code>run --separate-stderr</code> (bats-core 1.5+) when the test
+must distinguish error messaging from primary output:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">@test</span> <span class="st">&#39;greet writes errors to stderr&#39;</span> {</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="ex">run</span> <span class="at">--separate-stderr</span> greet <span class="at">--no-such-flag</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="bu">[</span> <span class="st">&quot;</span><span class="va">$status</span><span class="st">&quot;</span> <span class="ot">-eq</span> 22 <span class="bu">]</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="bu">[</span> <span class="ot">-z</span> <span class="st">&quot;</span><span class="va">$output</span><span class="st">&quot;</span> <span class="bu">]</span>                              <span class="co"># nothing on stdout</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">[[</span> <span class="st">&quot;</span><span class="va">$stderr</span><span class="st">&quot;</span> <span class="ot">==</span> <span class="pp">*</span><span class="st">&#39;unknown option&#39;</span><span class="pp">*</span> <span class="kw">]]</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="er">}</span></span></code></pre></div>
+<h3 id="bats-assert-for-richer-assertions"><code>bats-assert</code> for
+richer assertions</h3>
+<p>The bare <code>[ ... ]</code> style is portable but verbose.
+<code>bats-assert</code> (loaded in <code>setup_file</code>) provides
+assertion helpers that produce diagnostic output naming the actual vs
+expected values when they fail:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">setup_file()</span> <span class="kw">{</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="ex">load</span> <span class="st">&#39;/usr/lib/bats/bats-support/load.bash&#39;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="ex">load</span> <span class="st">&#39;/usr/lib/bats/bats-assert/load.bash&#39;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="ex">@test</span> <span class="st">&#39;greet -n NAME with bats-assert&#39;</span> {</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="ex">run</span> greet <span class="at">-n</span> Alice</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="ex">assert_success</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="ex">assert_output</span> <span class="st">&#39;Hello, Alice!&#39;</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="er">}</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="ex">@test</span> <span class="st">&#39;greet -f reads each name&#39;</span> {</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">&#39;Alice\nBob\n&#39;</span> <span class="op">&gt;</span> <span class="st">&quot;</span><span class="va">$BATS_TEST_TMPDIR</span><span class="st">/names.txt&quot;</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>  <span class="ex">run</span> greet <span class="at">-f</span> <span class="st">&quot;</span><span class="va">$BATS_TEST_TMPDIR</span><span class="st">/names.txt&quot;</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>  <span class="ex">assert_success</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>  <span class="ex">assert_line</span> <span class="at">--index</span> 0 <span class="st">&#39;Hello, Alice!&#39;</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>  <span class="ex">assert_line</span> <span class="at">--index</span> 1 <span class="st">&#39;Hello, Bob!&#39;</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>  <span class="ex">refute_output</span> <span class="at">--partial</span> <span class="st">&#39;Charlie&#39;</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="er">}</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="ex">@test</span> <span class="st">&#39;greet --no-such-flag fails with exit 22&#39;</span> {</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>  <span class="ex">run</span> greet <span class="at">--no-such-flag</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>  <span class="ex">assert_failure</span> 22</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>  <span class="ex">assert_output</span> <span class="at">--partial</span> <span class="st">&#39;unknown option&#39;</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a><span class="er">}</span></span></code></pre></div>
+<p>The most-used helpers, paired with their bare-assertion
+equivalents:</p>
+<table>
+<thead>
+<tr class="header">
+<th><code>bats-assert</code></th>
+<th>Bare equivalent</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>assert_success</code></td>
+<td><code>[ &quot;$status&quot; -eq 0 ]</code></td>
+</tr>
+<tr class="even">
+<td><code>assert_failure [N]</code></td>
+<td><code>[ &quot;$status&quot; -ne 0 ]</code> (or <code>-eq N</code>)</td>
+</tr>
+<tr class="odd">
+<td><code>assert_output STR</code></td>
+<td><code>[ &quot;$output&quot; = &quot;STR&quot; ]</code></td>
+</tr>
+<tr class="even">
+<td><code>assert_output --partial S</code></td>
+<td><code>[[ &quot;$output&quot; == *S* ]]</code></td>
+</tr>
+<tr class="odd">
+<td><code>assert_output --regexp RE</code></td>
+<td><code>[[ &quot;$output&quot; =~ $RE ]]</code></td>
+</tr>
+<tr class="even">
+<td><code>assert_line [-n I] STR</code></td>
+<td><code>[ &quot;${lines[I]}&quot; = &quot;STR&quot; ]</code></td>
+</tr>
+<tr class="odd">
+<td><code>refute_output [...]</code></td>
+<td>inverse of <code>assert_output</code></td>
+</tr>
+<tr class="even">
+<td><code>assert_equal A B</code></td>
+<td><code>[ &quot;$A&quot; = &quot;$B&quot; ]</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="bats_test_tmpdir-and-friends"><code>BATS_TEST_TMPDIR</code> and
+friends</h3>
+<p>Tests that need scratch space should use the per-test temporary
+directory bats provides — it is created before the test and removed
+after, so no <code>trap</code> is needed:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Variable</th>
+<th>Lifetime</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>BATS_TEST_TMPDIR</code></td>
+<td>per-test</td>
+</tr>
+<tr class="even">
+<td><code>BATS_FILE_TMPDIR</code></td>
+<td>per-file (survives across tests in the same file)</td>
+</tr>
+<tr class="odd">
+<td><code>BATS_SUITE_TMPDIR</code></td>
+<td>per-suite (survives across files in the same <code>bats -r</code>
+run)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="custom-assertions">Custom assertions</h3>
+<p>Where <code>bats-assert</code> is too coarse, write a function that
+exits non-zero with a useful message:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">assert_json_field()</span> <span class="kw">{</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">--</span> <span class="va">field</span><span class="op">=</span><span class="va">$1</span> <span class="va">want</span><span class="op">=</span><span class="va">$2</span> <span class="va">got</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="va">got</span><span class="op">=</span><span class="va">$(</span><span class="ex">jq</span> <span class="at">-r</span> <span class="st">&quot;.</span><span class="va">$field</span><span class="st">&quot;</span> <span class="op">&lt;&lt;&lt;</span><span class="st">&quot;</span><span class="va">$output</span><span class="st">&quot;</span><span class="va">)</span> <span class="kw">||</span> <span class="cf">return</span> <span class="dv">1</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">[[</span> <span class="va">$got</span> <span class="ot">==</span> <span class="st">&quot;</span><span class="va">$want</span><span class="st">&quot;</span> <span class="kw">]]</span> <span class="kw">||</span> <span class="kw">{</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">printf</span> <span class="st">&#39;JSON field %s: want %q, got %q\n&#39;</span> <span class="st">&quot;</span><span class="va">$field</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">$want</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">$got</span><span class="st">&quot;</span> <span class="op">&gt;&amp;</span><span class="dv">2</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="dv">1</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">}</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="ex">@test</span> <span class="st">&#39;api returns ok status&#39;</span> {</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  <span class="ex">run</span> curl <span class="at">-s</span> https://example.invalid/api</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  <span class="ex">assert_success</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>  <span class="ex">assert_json_field</span> status ok</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="er">}</span></span></code></pre></div>
+<p>A failing custom assertion produces its own message on stderr, which
+bats relays into the test report — exactly the same shape as the
+built-in <code>assert_*</code> helpers.</p>
+<p><strong>See also</strong>: §21.8 (bats-core basics), §21.9
+(setup/teardown), §21.11 (PATH-injection mocking), Appendix L (exit
+codes).</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

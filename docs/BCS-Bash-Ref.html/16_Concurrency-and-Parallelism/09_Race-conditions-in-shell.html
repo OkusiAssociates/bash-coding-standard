@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>09_Race-conditions-in-shell.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">09_Race-conditions-in-shell.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="169-race-conditions-in-shell">16.9 Race conditions in shell</h2>
+<p>A race condition arises when correctness depends on the
+<em>order</em> of operations that are not atomic from the shell&#39;s point
+of view. Shell scripts are unusually prone to these bugs because most
+filesystem checks (<code>-f</code>, <code>-e</code>, <code>-d</code>)
+and most &quot;if absent then create&quot; idioms split into a <em>test</em> and
+an <em>act</em> with a window between them where another process —
+friendly or hostile — can change the answer. This is the TOCTOU
+(time-of-check / time-of-use) class.</p>
+<p>The classic illustration:</p>
+<pre class="text"><code>   process A                process B
+   ----------------          ----------------
+   [[ -f $f ]]              # A: test passes
+                             rm -f -- &quot;$f&quot;  # B: removes file
+   rm -- &quot;$f&quot;               # A: now fails or removes wrong file
+                             &gt; &quot;$f&quot;         # B: re-created (different inode)</code></pre>
+<p>Between A&#39;s check and A&#39;s act, B has changed the world. No amount of
+defensive testing closes this gap — only an <em>atomic</em> operation
+does.</p>
+<h3 id="toctou-on-a-regular-file">TOCTOU on a regular file</h3>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># wrong — test then act, racy</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">[[</span> <span class="ot">-f</span> <span class="va">$TARGET</span> <span class="kw">]];</span> <span class="cf">then</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rm</span> <span class="at">--</span> <span class="st">&quot;</span><span class="va">$TARGET</span><span class="st">&quot;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="cf">fi</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># right — let the kernel atomically test-and-act</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> <span class="at">-f</span> <span class="at">--</span> <span class="st">&quot;</span><span class="va">$TARGET</span><span class="st">&quot;</span>        <span class="co"># ENOENT is silently ignored</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ no window: rm(2) checks existence under the inode lock</span></span></code></pre></div>
+<p>For the create-only case (must not clobber an existing file), the
+atomic primitive is <code>O_EXCL</code> via <code>set -C</code>
+(noclobber):</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># right — atomic exclusive create</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-C</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">:</span> <span class="op">&gt;</span> <span class="st">&quot;</span><span class="va">$LOCK</span><span class="st">&quot;</span> <span class="dv">2</span><span class="op">&gt;</span>/dev/null <span class="kw">||</span> <span class="ex">die</span> <span class="st">&#39;already locked&#39;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> +C</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ open(2) with O_CREAT|O_EXCL fails atomically if the file exists</span></span></code></pre></div>
+<h3 id="symlink-races-toctou-on-the-path">Symlink races (TOCTOU on the
+path)</h3>
+<p>A path traversal that follows a symlink at use-time can be retargeted
+between check and use, letting an attacker substitute the file the
+victim writes. <code>chmod</code>, <code>chown</code>, and
+<code>cat &gt;</code> are all vulnerable when the path lies in an
+attacker-writable directory.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># wrong — symlink can be swapped between -d test and write</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">[[</span> <span class="ot">-d</span> <span class="va">$userdir</span> <span class="kw">]]</span> <span class="kw">&amp;&amp;</span> <span class="fu">cp</span> secret <span class="st">&quot;</span><span class="va">$userdir</span><span class="st">&quot;</span>/copy</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># right — operate on a fd opened with no-follow semantics</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="bu">exec</span> {fd}<span class="op">&lt;</span><span class="st">&quot;</span><span class="va">$userdir</span><span class="st">&quot;</span> <span class="kw">||</span> <span class="ex">die</span> <span class="st">&#39;cannot open&#39;</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="kw">[[</span> <span class="ot">-d</span> /proc/self/fd/<span class="va">$fd</span> <span class="kw">]]</span> <span class="kw">||</span> <span class="ex">die</span> <span class="st">&#39;not a directory&#39;</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> secret <span class="st">&quot;/proc/self/fd/</span><span class="va">$fd</span><span class="st">&quot;</span>/copy</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="bu">exec</span> {fd}<span class="op">&lt;&amp;</span>-</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ the fd binds the inode; cannot be retargeted by a later symlink swap</span></span></code></pre></div>
+<p>Where <code>/proc/self/fd</code> is unavailable, place the work
+inside a directory the script <em>creates</em> with
+<code>mktemp -d</code> (mode 0700, owned by the running user) — see
+§20.13.</p>
+<h3 id="tempfile-races">Tempfile races</h3>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># wrong — predictable name, racy create</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="va">tmp</span><span class="op">=</span><span class="st">&quot;/tmp/work.</span><span class="va">$$</span><span class="st">&quot;</span><span class="kw">;</span> <span class="op">&gt;</span> <span class="st">&quot;</span><span class="va">$tmp</span><span class="st">&quot;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># right — mktemp(1) creates atomically with mode 0600</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="va">tmp</span><span class="op">=</span><span class="va">$(</span><span class="fu">mktemp</span><span class="va">)</span> <span class="kw">||</span> <span class="ex">die</span> <span class="st">&#39;mktemp failed&#39;</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="bu">trap</span> <span class="st">&#39;rm -f -- &quot;$tmp&quot;&#39;</span> EXIT</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ mktemp uses O_EXCL internally and a 0600 umask</span></span></code></pre></div>
+<p>Note: some embedded systems ship a <code>tempfile(1)</code> helper
+that does <em>not</em> use <code>O_EXCL</code>. Treat
+<code>mktemp(1)</code> as the only portable safe primitive.</p>
+<h3 id="lock-then-do-races">Lock-then-do races</h3>
+<p>A &quot;test for lockfile then create&quot; pair is itself a TOCTOU. Use either
+<code>flock</code> on a long-lived fd (§16.10) or atomic
+<code>O_EXCL</code> create. The PID-bearing lockfile must check
+<code>kill -0 &quot;$old_pid&quot;</code> <em>after</em> taking the lock, never
+before, otherwise a stale-PID detection becomes its own race.</p>
+<h3 id="signal-during-handler">Signal-during-handler</h3>
+<p>Signals delivered while a trap is running are queued, not lost, but
+the handler is not re-entered. State a trap touches must be reset to a
+consistent value <em>before</em> the trap can fire again — typically by
+doing the cleanup last, or guarding with a single-shot flag (§12,
+§16.11).</p>
+<h3 id="fixes-that-always-work">Fixes that always work</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Pattern</th>
+<th>Atomic primitive</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Create-or-fail</td>
+<td><code>set -C; : &gt; &quot;$f&quot;</code> (uses <code>O_EXCL</code>)</td>
+</tr>
+<tr class="even">
+<td>Lock-or-fail</td>
+<td><code>flock -n</code> on an fd (§16.10)</td>
+</tr>
+<tr class="odd">
+<td>Tempfile</td>
+<td><code>mktemp</code> / <code>mktemp -d</code></td>
+</tr>
+<tr class="even">
+<td>Rename-into-place</td>
+<td><code>mv -- &quot;$tmp&quot; &quot;$final&quot;</code> (rename(2) is atomic)</td>
+</tr>
+<tr class="odd">
+<td>Append</td>
+<td><code>&gt;&gt; &quot;$f&quot;</code> is atomic for writes ≤
+<code>PIPE_BUF</code></td>
+</tr>
+</tbody>
+</table>
+<p>The &quot;rename into place&quot; idiom deserves its own example because it
+solves a <em>different</em> race — the half-written-file race, where a
+reader opens the target while a writer is still writing. Always write to
+a sibling tempfile and <code>mv</code> it on top:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: produce a config file readers must never see partial</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="va">tmp</span><span class="op">=</span><span class="va">$(</span><span class="fu">mktemp</span> <span class="at">--</span> <span class="st">&quot;</span><span class="va">$target</span><span class="st">.XXXXXX&quot;</span><span class="va">)</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="bu">trap</span> <span class="st">&#39;rm -f -- &quot;$tmp&quot;&#39;</span> EXIT</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="ex">generate_config</span> <span class="op">&gt;</span> <span class="st">&quot;</span><span class="va">$tmp</span><span class="st">&quot;</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="fu">mv</span> <span class="at">--</span> <span class="st">&quot;</span><span class="va">$tmp</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">$target</span><span class="st">&quot;</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="bu">trap</span> <span class="at">-</span> EXIT</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ readers see either the old contents or the new — never a mixture</span></span></code></pre></div>
+<p><code>mv</code> within the same filesystem is <code>rename(2)</code>,
+which is atomic from the kernel&#39;s perspective: the directory entry
+switches inodes in a single operation. Across filesystems
+<code>mv</code> falls back to copy + unlink, which is <em>not</em>
+atomic — keep the tempfile in the same directory as its target, never in
+<code>/tmp</code>.</p>
+<p><strong>See also</strong>: §16.10 (locking primitives), §16.11
+(signal handling), §20.13 (symlink/path security), §12 (traps).</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

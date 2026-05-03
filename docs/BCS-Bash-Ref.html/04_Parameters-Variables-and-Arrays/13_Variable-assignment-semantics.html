@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>13_Variable-assignment-semantics.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">13_Variable-assignment-semantics.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="413-variable-assignment-semantics">4.13 Variable assignment
+semantics</h2>
+<p>The exact sequence of operations that take place when Bash executes
+<code>name=value</code>. This is not &quot;how to assign a variable&quot; — it is
+which <strong>expansions</strong> apply, in which
+<strong>order</strong>, and how scalar versus compound array assignment
+differ. Most surprises in Bash come from the differences listed
+here.</p>
+<h3 id="the-scalar-assignment-pipeline">The scalar assignment
+pipeline</h3>
+<p>For <code>name=value</code> (scalar):</p>
+<ol type="1">
+<li>RHS is subject to <strong>tilde expansion</strong>,
+<strong>parameter expansion</strong>, <strong>command
+substitution</strong>, <strong>arithmetic expansion</strong>, and
+<strong>process substitution</strong>.</li>
+<li>RHS is <strong>NOT</strong> subject to <strong>word
+splitting</strong> or <strong>pathname expansion</strong>
+(globbing).</li>
+<li>The resulting single string is bound to <code>name</code>.</li>
+</ol>
+<p>This is why <code>arr2=$1</code> works correctly even when
+<code>$1</code> contains spaces or <code>*</code> — those characters are
+taken literally on the RHS of a scalar assignment.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: scalar RHS — no splitting, no globbing</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> nullglob</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">pattern</span><span class="op">=</span><span class="st">&#39;*.txt&#39;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Inside an assignment, &#39;*&#39; is a literal asterisk:</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">str</span><span class="op">=</span><span class="va">$pattern</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;%s\n&#39;</span> <span class="st">&quot;</span><span class="va">$str</span><span class="st">&quot;</span>            <span class="co"># ⇒ *.txt    (literal)</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># But the same expression as a command argument *does* glob:</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;%s\n&#39;</span> <span class="va">$pattern</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ a.txt</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ b.txt</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># (or nothing, with nullglob, if no matches)</span></span></code></pre></div>
+<p><code>declare name=value</code>, <code>local name=value</code>,
+<code>readonly name=value</code>, and <code>export name=value</code> all
+follow the <strong>same</strong> scalar assignment pipeline: no
+splitting, no globbing on the RHS.</p>
+<h3 id="the-compound-array-assignment-pipeline">The compound array
+assignment pipeline</h3>
+<p>For <code>arr=( word1 word2 … )</code> (compound):</p>
+<ol type="1">
+<li>Each <em>word</em> between the parentheses is independently subject
+to <strong>all</strong> expansions, including <strong>tilde</strong>,
+<strong>parameter</strong>, <strong>command substitution</strong>,
+<strong>arithmetic</strong>, <strong>process substitution</strong>,
+<strong>word splitting</strong>, <strong>AND pathname
+expansion</strong>.</li>
+<li>The resulting list of words populates the array, one element per
+resulting word.</li>
+</ol>
+<p>The presence of word splitting and globbing is the load-bearing
+difference: a value that&#39;s safe in a scalar assignment is <em>not</em>
+necessarily safe in a compound assignment.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: scalar vs compound, side by side</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> nullglob</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">a</span><span class="op">=</span><span class="st">&#39;one two three&#39;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">glob</span><span class="op">=</span><span class="st">&#39;*.md&#39;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Scalar: the entire RHS is one string</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">s1</span><span class="op">=</span><span class="va">$a</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;scalar: &lt;%s&gt;\n&#39;</span> <span class="st">&quot;</span><span class="va">$s1</span><span class="st">&quot;</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ scalar: &lt;one two three&gt;</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Compound, unquoted reference: word splitting happens</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">arr1</span><span class="op">=</span><span class="va">(</span> <span class="va">$a</span> <span class="va">)</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;arr1[%d]=&lt;%s&gt;\n&#39;</span> 0 <span class="st">&quot;</span><span class="va">${arr1</span><span class="op">[</span><span class="dv">0</span><span class="op">]</span><span class="va">}</span><span class="st">&quot;</span> 1 <span class="st">&quot;</span><span class="va">${arr1</span><span class="op">[</span><span class="dv">1</span><span class="op">]</span><span class="va">}</span><span class="st">&quot;</span> 2 <span class="st">&quot;</span><span class="va">${arr1</span><span class="op">[</span><span class="dv">2</span><span class="op">]</span><span class="va">}</span><span class="st">&quot;</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ arr1[0]=&lt;one&gt;</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ arr1[1]=&lt;two&gt;</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ arr1[2]=&lt;three&gt;</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Compound, quoted reference: one element preserved</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">arr2</span><span class="op">=</span><span class="va">(</span> <span class="st">&quot;</span><span class="va">$a</span><span class="st">&quot;</span> <span class="va">)</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;arr2[%d]=&lt;%s&gt;\n&#39;</span> 0 <span class="st">&quot;</span><span class="va">${arr2</span><span class="op">[</span><span class="dv">0</span><span class="op">]</span><span class="va">}</span><span class="st">&quot;</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ arr2[0]=&lt;one two three&gt;</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Compound, unquoted glob: PATHNAME EXPANSION happens</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">arr3</span><span class="op">=</span><span class="va">(</span> <span class="va">$glob</span> <span class="va">)</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-p</span> <span class="va">arr3</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ declare -a arr3=([0]=&quot;CHANGELOG.md&quot; [1]=&quot;README.md&quot;)  (or whatever matches)</span></span></code></pre></div>
+<p>The rule of thumb: inside <code>( … )</code>, treat each word exactly
+as you would treat a command argument — quote whenever you would quote a
+command argument.</p>
+<h3 id="append-assignment-">Append assignment <code>+=</code></h3>
+<ul>
+<li><strong>Scalar <code>+=</code></strong>: appends to the existing
+value. <code>s=&#39;hello, &#39;; s+=&#39;world&#39;</code> ⇒
+<code>&#39;hello, world&#39;</code>.</li>
+<li><strong>Integer <code>-i</code> <code>+=</code></strong>: arithmetic
+addition. <code>declare -i n=5; n+=3</code> ⇒ <code>8</code>.</li>
+<li><strong>Indexed array <code>+=</code></strong>: appends elements at
+the next free index. <code>arr=(a b); arr+=(c d)</code> ⇒
+<code>(a b c d)</code>.</li>
+<li><strong>Associative array <code>+=</code></strong>: same expansion
+rules as <code>=</code> for the new pairs.</li>
+<li><strong>Single element <code>arr[i]+=</code></strong>: appends to
+that one element&#39;s value.</li>
+</ul>
+<p><code>+=</code> preserves the variable&#39;s attributes; <code>=</code>
+also preserves them (despite a persistent myth otherwise). The only way
+to remove an attribute is <code>declare +X</code> or
+<code>unset</code>.</p>
+<h3 id="array-subscripts-are-arithmetic">Array subscripts are
+arithmetic</h3>
+<p>In <code>arr[i]=value</code>, the subscript <code>i</code> is
+evaluated in arithmetic context. This is true for both indexed and
+associative arrays — <strong>except</strong> that for an associative
+array, the <em>result</em> of arithmetic evaluation is a string and is
+used as a key as-is.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">a</span><span class="op">=</span><span class="va">()</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-i</span> <span class="va">offset</span><span class="op">=</span>2</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="va">a</span><span class="op">[</span>offset+1<span class="op">]=</span><span class="st">&#39;foo&#39;</span>         <span class="co"># ⇒ a[3]</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-p</span> <span class="va">a</span>              <span class="co"># ⇒ declare -a a=([3]=&quot;foo&quot;)</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-A</span> <span class="va">m</span><span class="op">=</span><span class="va">()</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="va">m</span><span class="op">[</span><span class="va">$((</span><span class="dv">1</span><span class="op">+</span><span class="dv">1</span><span class="va">))</span><span class="op">]=</span><span class="st">&#39;bar&#39;</span>         <span class="co"># key is the literal string &quot;2&quot;</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-p</span> <span class="va">m</span>              <span class="co"># ⇒ declare -A m=([2]=&quot;bar&quot;)</span></span></code></pre></div>
+<h3 id="multiple-assignments-on-one-line">Multiple assignments on one
+line</h3>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="va">a</span><span class="op">=</span>1 <span class="va">b</span><span class="op">=</span>2 <span class="va">c</span><span class="op">=</span>3 <span class="ex">cmd</span>          <span class="co"># all in cmd&#39;s environment, NOT in current shell</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="va">a</span><span class="op">=</span>1 <span class="va">b</span><span class="op">=</span>2                  <span class="co"># all in CURRENT shell (no command follows)</span></span></code></pre></div>
+<p>The <em>presence of a command</em> changes the scope. With a command,
+the assignments are temporary exports for that command&#39;s environment
+only (see §4.8 for the assignment-prefix-command rule). Without a
+command, the assignments persist in the current shell.</p>
+<h3 id="declare--i-and-rhs-arithmetic"><code>declare -i</code> and RHS
+arithmetic</h3>
+<p>A variable with the <code>-i</code> attribute interprets its RHS as
+an arithmetic expression on every assignment:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-i</span> <span class="va">x</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="va">x</span><span class="op">=</span><span class="st">&#39;2 + 3&#39;</span>                <span class="co"># ⇒ x=5</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="va">x</span><span class="op">=</span><span class="va">$(</span><span class="fu">date</span> +%s<span class="va">)</span>            <span class="co"># date&#39;s output is a digit string ⇒ valid integer</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="va">x</span><span class="op">=</span><span class="st">&#39;hello&#39;</span>                <span class="co"># ⇒ x=0  (non-numeric reduces to 0; no error!)</span></span></code></pre></div>
+<p>The silent reduction of non-numeric strings to <code>0</code> is a
+known footgun — validate input <em>before</em> assigning to an
+<code>-i</code> variable when the source is untrusted.</p>
+<h3 id="read-only-at-assignment-time">Read-only at assignment time</h3>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-r</span> <span class="va">x</span><span class="op">=</span>42</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="va">x</span><span class="op">=</span>43                     <span class="co"># ⇒ bash: x: readonly variable  (error)</span></span></code></pre></div>
+<p>Readonly is enforced at assignment, not at declaration. There is no
+mechanism to remove <code>-r</code> before script exit.</p>
+<h3 id="see-also">See also</h3>
+<ul>
+<li>§4.5 — <code>declare</code> and the attribute system</li>
+<li>§4.8 — assignment-prefixed commands and exports</li>
+<li>§4.9, §4.10 — array creation and indexing details</li>
+<li>§13 — full expansion rules (tilde, parameter, command, arithmetic,
+…)</li>
+<li>BCS0201 (type-specific declarations), BCS0301 (quoting
+fundamentals)</li>
+</ul>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>09_Pathname-expansion-globbing.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">09_Pathname-expansion-globbing.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="59-pathname-expansion-globbing">5.9 Pathname expansion
+(globbing)</h2>
+<p>After word splitting (§5.8), each word that contains unquoted glob
+metacharacters is treated as a <em>pattern</em> and matched against
+filenames in the working directory (or the directory implied by the
+pattern&#39;s path component). The matched filenames replace the pattern.
+Globbing is what makes <code>rm *.bak</code> work; it is also what makes
+a mistyped command catastrophic when a filename happens to start with
+<code>-</code>. This chapter is the structural reference; behavioural
+toggles live in §5.11 and extended-glob operators in §5.12.</p>
+<h3 id="metacharacters">Metacharacters</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Pattern</th>
+<th>Matches</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>*</code></td>
+<td>any string, including the empty string</td>
+</tr>
+<tr class="even">
+<td><code>?</code></td>
+<td>exactly one character</td>
+</tr>
+<tr class="odd">
+<td><code>[abc]</code></td>
+<td>one character from the set</td>
+</tr>
+<tr class="even">
+<td><code>[!abc]</code> or <code>[^abc]</code></td>
+<td>one character <em>not</em> in the set</td>
+</tr>
+<tr class="odd">
+<td><code>[a-z]</code></td>
+<td>one character in the range (locale-dependent — see §5.13)</td>
+</tr>
+<tr class="even">
+<td><code>[[:class:]]</code></td>
+<td>one character of the named POSIX class (table below)</td>
+</tr>
+</tbody>
+</table>
+<p>The metacharacters are special only when <em>unquoted</em>.
+<code>&#39;*.log&#39;</code> is the literal three characters; <code>*.log</code>
+is a pattern.</p>
+<h3 id="posix-character-classes">POSIX character classes</h3>
+<p>Bracket expressions accept POSIX-named character classes, written as
+<code>[[:class:]]</code> <em>inside</em> a bracket expression — the
+outer brackets are the bracket expression, the inner
+<code>[:class:]</code> is the class.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Class</th>
+<th>Members</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>[:alpha:]</code></td>
+<td>letters (A–Z, a–z under C locale; locale-extended otherwise)</td>
+</tr>
+<tr class="even">
+<td><code>[:upper:]</code></td>
+<td>upper-case letters</td>
+</tr>
+<tr class="odd">
+<td><code>[:lower:]</code></td>
+<td>lower-case letters</td>
+</tr>
+<tr class="even">
+<td><code>[:digit:]</code></td>
+<td>decimal digits 0–9</td>
+</tr>
+<tr class="odd">
+<td><code>[:xdigit:]</code></td>
+<td>hexadecimal digits 0–9 a–f A–F</td>
+</tr>
+<tr class="even">
+<td><code>[:alnum:]</code></td>
+<td><code>[:alpha:]</code> + <code>[:digit:]</code></td>
+</tr>
+<tr class="odd">
+<td><code>[:space:]</code></td>
+<td>whitespace (space, tab, newline, vertical tab, form feed, carriage
+return)</td>
+</tr>
+<tr class="even">
+<td><code>[:blank:]</code></td>
+<td>space and tab only</td>
+</tr>
+<tr class="odd">
+<td><code>[:cntrl:]</code></td>
+<td>control characters</td>
+</tr>
+<tr class="even">
+<td><code>[:print:]</code></td>
+<td>printable characters (including space)</td>
+</tr>
+<tr class="odd">
+<td><code>[:graph:]</code></td>
+<td>printable characters excluding space</td>
+</tr>
+<tr class="even">
+<td><code>[:punct:]</code></td>
+<td>punctuation</td>
+</tr>
+</tbody>
+</table>
+<p>Use these in preference to ad-hoc ranges: <code>[[:alpha:]]</code> is
+correct under any locale, whereas <code>[a-z]</code> may include
+accented characters under some locales and miss them under others (§5.13
+covers the locale trap).</p>
+<h3 id="dotfile-rule">Dotfile rule</h3>
+<p>By default, <code>*</code> and <code>?</code> do <em>not</em> match a
+leading <code>.</code> — dotfiles are hidden from globs unless the
+pattern <em>itself</em> begins with <code>.</code>. This is inherited
+from Unix shell tradition; it protects <code>rm *</code> from removing
+<code>.bashrc</code>. The <code>dotglob</code> shopt overrides it
+(§5.11):</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: dotglob behaviour, default vs enabled</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="at">-a</span> /tmp/demo</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ . .. .hidden visible.txt</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /tmp/demo</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;[%s]\n&#39;</span> <span class="pp">*</span>           <span class="co"># ⇒ [visible.txt]   — dotfiles excluded</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;[%s]\n&#39;</span> .<span class="pp">*</span>          <span class="co"># ⇒ [.] [..] [.hidden]   — explicit dot</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> dotglob</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;[%s]\n&#39;</span> <span class="pp">*</span>           <span class="co"># ⇒ [.hidden] [visible.txt]   — dotfiles included</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>                            <span class="co">#   but `.` and `..` still excluded (Bash 5.2+)</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-u</span> dotglob</span></code></pre></div>
+<p>Bash 5.2 introduces <code>globskipdots</code> (on by default in many
+distros), which excludes <code>.</code> and <code>..</code> from
+<code>*</code>/<code>?</code> matches even with <code>dotglob</code>
+enabled. See §5.11 for the full toggle inventory.</p>
+<h3 id="no-match-behaviour">No-match behaviour</h3>
+<p>By default, when a glob matches no files, <em>the pattern itself is
+passed through</em> unchanged — <code>for f in *.notexist</code> then
+iterates with <code>f=&#39;*.notexist&#39;</code>. This is almost always wrong.
+The fix is <code>nullglob</code>:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: nullglob makes empty matches yield zero arguments</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> nullglob</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">logs</span><span class="op">=</span><span class="va">(</span> /tmp/no-such-pattern-<span class="pp">*</span>.log <span class="va">)</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${</span><span class="op">#</span><span class="va">logs</span><span class="op">[@]</span><span class="va">}</span><span class="st">&quot;</span>          <span class="co"># ⇒ 0   — empty array</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Without nullglob:</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-u</span> nullglob</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">logs2</span><span class="op">=</span><span class="va">(</span> /tmp/no-such-pattern-<span class="pp">*</span>.log <span class="va">)</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${</span><span class="op">#</span><span class="va">logs2</span><span class="op">[@]</span><span class="va">}</span><span class="st">&quot;</span>         <span class="co"># ⇒ 1</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${logs2</span><span class="op">[</span><span class="dv">0</span><span class="op">]</span><span class="va">}</span><span class="st">&quot;</span>          <span class="co"># ⇒ /tmp/no-such-pattern-*.log   — literal pattern</span></span></code></pre></div>
+<p><code>nullglob</code> is the BCS-preferred behaviour (BCS0902,
+BCS0101 strict-mode preamble enables it). For &quot;this glob <em>must</em>
+match&quot; semantics, use <code>failglob</code> instead — it errors out on
+no-match (§5.11).</p>
+<h3 id="sort-order">Sort order</h3>
+<p>Matched filenames are sorted by <code>LC_COLLATE</code>. Under a
+UTF-8 locale, this is <em>not</em> byte-order; under
+<code>C</code>/<code>POSIX</code>, it is. Scripts that depend on a
+stable, predictable sort should set <code>LC_ALL=C</code> or sort
+explicitly:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: stable sort regardless of user locale</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="va">LC_ALL</span><span class="op">=</span>C</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">files</span><span class="op">=</span><span class="va">(</span> <span class="pp">*</span>.txt <span class="va">)</span>      <span class="co"># files now sorted by byte value</span></span></code></pre></div>
+<p>See §5.13 for the locale-collation pitfall in detail.</p>
+<h3 id="pattern-matching-outside-pathname-expansion">Pattern matching
+outside pathname expansion</h3>
+<p>The same glob syntax is used in <code>[[ word == pattern ]]</code>
+(§8 conditional expressions), <code>case</code> statements (§7.5), and
+the parameter-expansion operators <code>#</code>, <code>##</code>,
+<code>%</code>, <code>%%</code>, <code>/</code>, <code>//</code> (§5.4).
+In those contexts the pattern is <em>not</em> matched against filenames
+— it is matched against the string. Pathname expansion does not occur
+there.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: glob-as-pattern in case and [[</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">name</span><span class="op">=</span><span class="st">&#39;report.tar.gz&#39;</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="cf">case</span> <span class="st">&quot;</span><span class="va">$name</span><span class="st">&quot;</span> <span class="kw">in</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="pp">*</span><span class="ss">.tar.gz</span><span class="kw">|</span><span class="pp">*</span><span class="ss">.tgz</span><span class="kw">)</span> <span class="ex">info</span> <span class="st">&#39;gzip-tar archive&#39;</span> <span class="cf">;;</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="pp">*</span><span class="ss">.zip</span><span class="kw">)</span>          <span class="ex">info</span> <span class="st">&#39;zip archive&#39;</span> <span class="cf">;;</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="pp">*</span><span class="kw">)</span>              <span class="ex">info</span> <span class="st">&#39;unknown&#39;</span> <span class="cf">;;</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="cf">esac</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="kw">[[</span> <span class="va">$name</span> <span class="ot">==</span> <span class="pp">*</span>.tar.<span class="pp">*</span> <span class="kw">]]</span> <span class="kw">&amp;&amp;</span> <span class="ex">info</span> <span class="st">&#39;compressed tar&#39;</span></span></code></pre></div>
+<p>The same <code>*.tar.gz</code> is used in three different contexts:
+as a filename glob, as a <code>case</code> pattern, and as a
+<code>[[</code> operand. Behaviour is identical <em>except</em> for
+filesystem matching.</p>
+<p><strong>See also</strong>: §5.8 (word splitting precedes pathname
+expansion), §5.11 (behavioural toggles — <code>nullglob</code>,
+<code>dotglob</code>, <code>failglob</code>, <code>globstar</code>),
+§5.12 (extended-glob operators), §5.13 (locale and collation), §7.5
+(<code>case</code> patterns), §8 (<code>[[ == ]]</code> pattern
+operands), BCS0902 (wildcard expansion safety), BCS0101 (strict-mode
+shopt set).</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

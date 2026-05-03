@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>O_Cross-Reference-Sections-to-BCS-Sections.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">O_Cross-Reference-Sections-to-BCS-Sections.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="appendix-o--cross-reference-sections-to-bcs-sections">Appendix O
+— Cross-Reference: Sections to BCS Sections</h2>
+<p>Map from this document&#39;s chapters to the relevant BCS coding-standard
+sections, resolved where possible to specific <code>BCS####</code>
+codes.</p>
+<p>The left-hand BCS section is the standard&#39;s Section number (Section
+01 = &quot;Script Structure&quot;); the right-hand BCS#### codes are individual
+rules within that section. Codes were verified against the
+<code>./bcs codes</code> listing for bash-coding-standard 5.2-aligned
+BCS.</p>
+<table>
+<thead>
+<tr class="header">
+<th>BCS Section</th>
+<th>Title</th>
+<th>Reference chapters</th>
+<th>Key BCS codes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>§01</td>
+<td>Script Structure &amp; Layout</td>
+<td>§22.1, §22.2, §22.16, parts of §2</td>
+<td>BCS0101 (strict mode), BCS0102 (shebang), BCS0103 (script metadata),
+BCS0104 (FHS compliance), BCS0105 (global variables), BCS0106 (file
+extensions), BCS0107 (function organisation), BCS0108 (main function),
+BCS0109 (<code>#fin</code> end marker), BCS0110 (cleanup and traps),
+BCS0111 (config file loading)</td>
+</tr>
+<tr class="even">
+<td>§02</td>
+<td>Variables</td>
+<td>Part IV (chapters 4.1–4.14)</td>
+<td>BCS0201 (type-specific declarations), BCS0202 (variable scoping),
+BCS0203 (naming conventions), BCS0204 (constants and environment),
+BCS0205 (readonly patterns), BCS0206 (arrays), BCS0207 (parameter
+expansion), BCS0208 (boolean flags), BCS0209 (derived variables)</td>
+</tr>
+<tr class="odd">
+<td>§03</td>
+<td>Strings &amp; Quoting</td>
+<td>Part III (3.4–3.9), §5.4</td>
+<td>BCS0301 (quoting fundamentals), BCS0302 (command substitution),
+BCS0303 (quoting in conditionals), BCS0304 (here documents), BCS0305
+(printf patterns), BCS0306 (<code>@Q</code> parameter quoting), BCS0307
+(anti-patterns)</td>
+</tr>
+<tr class="even">
+<td>§04</td>
+<td>Functions</td>
+<td>Part IX, Part X</td>
+<td>BCS0401 (function definition), BCS0402 (function names), BCS0403
+(main function), BCS0404 (function export), BCS0405 (production
+optimisation), BCS0406 (dual-purpose scripts), BCS0407 (library
+patterns), BCS0408 (dependency management), BCS0409 (bash version
+detection), BCS0410 (recursive function state), BCS0411 (subshell
+return-value patterns)</td>
+</tr>
+<tr class="odd">
+<td>§05</td>
+<td>Control Flow</td>
+<td>Part VII, Part VIII</td>
+<td>BCS0501 (conditionals), BCS0502 (case statements), BCS0503 (loops),
+BCS0504 (process substitution), BCS0505 (arithmetic operations), BCS0506
+(floating-point)</td>
+</tr>
+<tr class="even">
+<td>§06</td>
+<td>Error Handling</td>
+<td>Part XIII</td>
+<td>BCS0601 (exit on error), BCS0602 (exit codes), BCS0603 (trap
+handling), BCS0604 (checking return values), BCS0605 (error
+suppression), BCS0606 (conditional declarations)</td>
+</tr>
+<tr class="odd">
+<td>§07</td>
+<td>I/O &amp; Messaging</td>
+<td>Part VI, Part XIV</td>
+<td>BCS0701 (message control flags), BCS0702 (stdout vs stderr), BCS0703
+(core messaging system), BCS0704 (usage documentation), BCS0705 (echo vs
+messaging functions), BCS0706 (color definitions), BCS0707 (TUI basics),
+BCS0708 (terminal capabilities), BCS0709 (yes/no prompt), BCS0710
+(standard icons), BCS0711 (combined redirection)</td>
+</tr>
+<tr class="even">
+<td>§08</td>
+<td>Command-Line Processing</td>
+<td>Part XV, §22.3</td>
+<td>BCS0801 (standard parsing pattern), BCS0802 (version output),
+BCS0803 (argument validation), BCS0804 (parsing location), BCS0805
+(short option bundling), BCS0806 (standard options)</td>
+</tr>
+<tr class="odd">
+<td>§09</td>
+<td>File Operations</td>
+<td>§1.3, §6.x, §17.x, §22.10, §22.13</td>
+<td>BCS0901 (safe file testing), BCS0902 (wildcard expansion), BCS0903
+(process substitution), BCS0904 (here documents), BCS0905 (input
+redirection), BCS0906 (<code>find</code> subshell pitfalls)</td>
+</tr>
+<tr class="even">
+<td>§10</td>
+<td>Security</td>
+<td>Part XX, §22.9, §22.13</td>
+<td>BCS1001 (SUID/SGID prohibition), BCS1002 (PATH security), BCS1003
+(IFS safety), BCS1004 (eval avoidance), BCS1005 (input sanitisation),
+BCS1006 (temporary file handling), BCS1007 (environment scrubbing before
+exec)</td>
+</tr>
+<tr class="odd">
+<td>§11</td>
+<td>Concurrency</td>
+<td>Part XVI, Part XVII, §22.11, §22.12</td>
+<td>BCS1101 (background job management), BCS1102 (parallel execution),
+BCS1103 (wait patterns), BCS1104 (timeout handling), BCS1105
+(exponential backoff)</td>
+</tr>
+<tr class="even">
+<td>§12</td>
+<td>Style &amp; Development</td>
+<td>Part XXI, §22.16, §22.17</td>
+<td>BCS1201 (code formatting), BCS1202 (comments), BCS1203 (blank
+lines), BCS1204 (section comments), BCS1205 (language best practices),
+BCS1206 (static analysis directives), BCS1207 (debugging), BCS1208
+(dry-run pattern), BCS1209 (testing support), BCS1210 (progressive state
+management), BCS1211 (utility functions), BCS1212 (Makefile
+installation), BCS1213 (date and time formatting)</td>
+</tr>
+<tr class="odd">
+<td>§13</td>
+<td>Environment</td>
+<td>§1.5, §2.5–§2.6, §22.9</td>
+<td>Section 13 is the environment-configuration reference (BCS
+configuration variables, backend model overrides, credentials, runtime
+behaviour). It is reference-form rather than rule-coded; consult
+<code>data/13-environment.md</code> for the per-variable
+definitions.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="reading-the-cross-reference">Reading the cross-reference</h3>
+<p>A chapter may legitimately resolve to multiple BCS sections (the
+strict-mode preamble, §22.1, hooks both BCS0101 and BCS0102; the
+argument-parsing skeleton in §22.3 hooks the entire §08 family). When in
+doubt, the canonical recipe lives in the reference chapter; the
+<em>rule</em> stating that the recipe is mandatory lives in the BCS
+code.</p>
+<p>The Section-98 reserved namespace (codes <code>BCS98xx</code>) is set
+aside for user-supplied rules (see CLAUDE.md → &quot;User Rule Extensions&quot;)
+and is not cross-referenced here — by design, those rules are
+organisation- specific and outside the upstream reference.</p>
+<p><strong>See also</strong>: Appendix P (Cross-Reference: Sections to
+BCS-bash files) for the parallel mapping into the bash-5.2 reference;
+<code>data/BASH-CODING-STANDARD.md</code> for the full text of every BCS
+rule cited above; <code>./bcs codes -T core</code> for the subset of
+rules whose violations are reported as <code>[ERROR]</code>.</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

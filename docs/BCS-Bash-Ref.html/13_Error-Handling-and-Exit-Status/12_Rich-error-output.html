@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>12_Rich-error-output.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">12_Rich-error-output.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="1312-rich-error-output">13.12 Rich error output</h2>
+<p>Diagnostic output that carries enough context for an operator to
+identify the failing command, the call stack, and any relevant process
+state — without forcing them to re-run with <code>bash -x</code>.</p>
+<h3 id="stack-walking-handler">Stack-walking handler</h3>
+<p>The canonical pattern walks <code>FUNCNAME[]</code>,
+<code>BASH_SOURCE[]</code>, and <code>BASH_LINENO[]</code> to print one
+frame per line, indented for readability:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">bash_stack()</span> <span class="kw">{</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="va">i</span> <span class="va">frame</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> <span class="kw">((</span><span class="va">i</span> <span class="op">=</span> <span class="dv">1</span><span class="kw">;</span> <span class="va">i</span> <span class="op">&lt;</span> <span class="va">${</span><span class="op">#</span><span class="va">FUNCNAME</span><span class="op">[@]</span><span class="va">}</span><span class="kw">;</span> <span class="va">i</span><span class="op">++</span><span class="kw">));</span> <span class="cf">do</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="va">frame</span><span class="op">=</span><span class="st">&quot;</span><span class="va">${FUNCNAME</span><span class="op">[</span>i<span class="op">]</span><span class="va">}</span><span class="st"> (</span><span class="va">${BASH_SOURCE</span><span class="op">[</span>i<span class="op">]</span><span class="va">}</span><span class="st">:</span><span class="va">${BASH_LINENO</span><span class="op">[</span>i-1<span class="op">]</span><span class="va">}</span><span class="st">)&quot;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">printf</span> <span class="st">&#39;  at %s\n&#39;</span> <span class="st">&quot;</span><span class="va">$frame</span><span class="st">&quot;</span> <span class="op">&gt;&amp;</span><span class="dv">2</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">done</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">on_err()</span> <span class="kw">{</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="va">rc</span><span class="op">=</span><span class="va">$?</span> <span class="va">line</span><span class="op">=</span><span class="va">$1</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  <span class="ex">error</span> <span class="st">&quot;command failed (rc=</span><span class="va">$rc</span><span class="st">) at line </span><span class="va">$line</span><span class="st">: </span><span class="va">$BASH_COMMAND</span><span class="st">&quot;</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="ex">bash_stack</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="bu">trap</span> <span class="st">&#39;on_err $LINENO&#39;</span> ERR</span></code></pre></div>
+<ul>
+<li><code>FUNCNAME[]</code>, <code>BASH_SOURCE[]</code>,
+<code>BASH_LINENO[]</code> are parallel arrays that together describe
+the call stack.</li>
+<li>Index 0 is the trap itself; useful frames start at 1.</li>
+<li><code>BASH_LINENO[i-1]</code> is the line where frame <code>i</code>
+<em>called</em> frame <code>i-1</code> — the off-by-one is correct.</li>
+<li>All output goes to <strong>stderr</strong> (<code>&gt;&amp;2</code>)
+so callers can capture stdout cleanly (BCS0702).</li>
+</ul>
+<h3 id="formatted-icon-decorated-output">Formatted (icon-decorated)
+output</h3>
+<p>Combine BCS messaging icons (BCS0710 — <code>◉</code> info,
+<code>⦿</code> debug, <code>▲</code> warn, <code>✓</code> success,
+<code>✗</code> error) with colour codes (BCS0706) for human-scannable
+output. Wrap colour escapes in a <code>[[ -t 2 ]]</code> TTY check so
+non-tty readers see plain text:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: formatted error output with icons + colour</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">[[</span> <span class="ot">-t</span> 2 <span class="kw">]];</span> <span class="cf">then</span> <span class="va">RED</span><span class="op">=</span><span class="st">$&#39;</span><span class="dt">\033</span><span class="st">[31m&#39;</span> <span class="va">YEL</span><span class="op">=</span><span class="st">$&#39;</span><span class="dt">\033</span><span class="st">[33m&#39;</span> <span class="va">RST</span><span class="op">=</span><span class="st">$&#39;</span><span class="dt">\033</span><span class="st">[0m&#39;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>                <span class="va">RED</span><span class="op">=</span><span class="st">&#39;&#39;</span>           <span class="va">YEL</span><span class="op">=</span><span class="st">&#39;&#39;</span>           <span class="va">RST</span><span class="op">=</span><span class="st">&#39;&#39;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="cf">fi</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">error_pretty()</span> <span class="kw">{</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="va">rc</span><span class="op">=</span><span class="va">$?</span> <span class="va">line</span><span class="op">=</span><span class="va">$1</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">&#39;%b ✗ command failed (rc=%d) at line %d\n&#39;</span> <span class="st">&quot;</span><span class="va">$RED</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">$rc</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">$line</span><span class="st">&quot;</span> <span class="op">&gt;&amp;</span><span class="dv">2</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">&#39;   %b%s%b\n&#39;</span>                         <span class="st">&quot;</span><span class="va">$YEL</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">$BASH_COMMAND</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">$RST</span><span class="st">&quot;</span> <span class="op">&gt;&amp;</span><span class="dv">2</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="ex">bash_stack</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="bu">trap</span> <span class="st">&#39;error_pretty $LINENO&#39;</span> ERR</span></code></pre></div>
+<h3 id="json-mode-variant-for-machine-consumption">JSON-mode variant for
+machine consumption</h3>
+<p>Long-running daemons, CI pipelines, and supervisors increasingly want
+structured error output. The same handler can emit a JSON object on a
+single line — easily ingested by <code>jq</code>, log aggregators, or
+test runners:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: structured JSON error output</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">on_err_json()</span> <span class="kw">{</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="va">rc</span><span class="op">=</span><span class="va">$?</span> <span class="va">line</span><span class="op">=</span><span class="va">$1</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">-a</span> <span class="va">frames</span><span class="op">=</span><span class="va">()</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="va">i</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> <span class="kw">((</span><span class="va">i</span> <span class="op">=</span> <span class="dv">1</span><span class="kw">;</span> <span class="va">i</span> <span class="op">&lt;</span> <span class="va">${</span><span class="op">#</span><span class="va">FUNCNAME</span><span class="op">[@]</span><span class="va">}</span><span class="kw">;</span> <span class="va">i</span><span class="op">++</span><span class="kw">));</span> <span class="cf">do</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="va">frames</span><span class="op">+=</span><span class="va">(</span> <span class="st">&quot;</span><span class="va">$(</span><span class="bu">printf</span> <span class="st">&#39;{&quot;func&quot;:%q,&quot;source&quot;:%q,&quot;line&quot;:%d}&#39;</span> <span class="dt">\</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>                  <span class="st">&quot;</span><span class="va">${FUNCNAME</span><span class="op">[</span>i<span class="op">]</span><span class="va">}</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">${BASH_SOURCE</span><span class="op">[</span>i<span class="op">]</span><span class="va">}</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">${BASH_LINENO</span><span class="op">[</span>i-1<span class="op">]</span><span class="va">}</span><span class="st">&quot;</span><span class="va">)</span><span class="st">&quot;</span> <span class="va">)</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">done</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="va">frames_json</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="at">-v</span> frames_json <span class="st">&#39;%s,&#39;</span> <span class="st">&quot;</span><span class="va">${frames</span><span class="op">[@]</span><span class="va">}</span><span class="st">&quot;</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  <span class="va">frames_json</span><span class="op">=</span><span class="st">&quot;[</span><span class="va">${frames_json</span><span class="op">%</span>,<span class="va">}</span><span class="st">]&quot;</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">&#39;{&quot;level&quot;:&quot;error&quot;,&quot;rc&quot;:%d,&quot;line&quot;:%d,&quot;command&quot;:%q,&quot;stack&quot;:%s}\n&#39;</span> <span class="dt">\</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;</span><span class="va">$rc</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">$line</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">$BASH_COMMAND</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">$frames_json</span><span class="st">&quot;</span> <span class="op">&gt;&amp;</span><span class="dv">2</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="bu">trap</span> <span class="st">&#39;on_err_json $LINENO&#39;</span> ERR</span></code></pre></div>
+<p>The output is one JSON object per line — <code>ndjson</code> — so a
+downstream consumer can <code>jq -c .</code> over the stderr stream
+without buffering. Switch between text and JSON modes via a flag
+(<code>--json</code> or <code>BCS_JSON_MODE=1</code>), mirroring the
+BCS-CLI convention used by <code>bcs check -j</code>.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">[[</span> <span class="va">${OUTPUT_FORMAT</span><span class="op">:-</span>text<span class="va">}</span> <span class="ot">==</span> json <span class="kw">]];</span> <span class="cf">then</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="bu">trap</span> <span class="st">&#39;on_err_json $LINENO&#39;</span> ERR</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="bu">trap</span> <span class="st">&#39;error_pretty  $LINENO&#39;</span> ERR</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="cf">fi</span></span></code></pre></div>
+<h3 id="what-to-include">What to include</h3>
+<p>A useful error report covers: exit status (<code>$?</code>); failing
+command text (<code>$BASH_COMMAND</code>); source location
+(<code>$LINENO</code>, <code>BASH_SOURCE</code>); call stack
+(<code>FUNCNAME[]</code>/<code>BASH_LINENO[]</code>); and — when the
+script forks or the diagnostic crosses a pipeline — process identity
+(<code>$$</code>, <code>$BASHPID</code>, <code>$PPID</code>). A
+consistent text format is greppable; the JSON form is parseable. Pick
+one shape per script and stick to it.</p>
+<p><strong>See also</strong>: §13.1 (exit status fundamentals), §13.2
+(<code>set -e</code> semantics), §13.8 (ERR trap), §13.9 (errtrace and
+trap inheritance), §13.10 (exit code conventions), §14.7 (logging
+discipline), BCS0602 (exit codes), BCS0701 (message control flags),
+BCS0702 (stdout vs stderr separation), BCS0703 (core messaging system),
+BCS0706 (color definitions), BCS0710 (standard icons), BCS0603 (trap
+handling).</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

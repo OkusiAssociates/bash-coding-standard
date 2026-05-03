@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>04_Stderr-redirection-and-merging.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">04_Stderr-redirection-and-merging.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="64-stderr-redirection-and-merging">6.4 Stderr redirection and
+merging</h2>
+<p>Bash provides explicit forms for redirecting stderr
+(<code>2&gt;</code>, <code>2&gt;&gt;</code>, <code>2&gt;&amp;1</code>,
+<code>1&gt;&amp;2</code>) plus two combined shorthands
+(<code>&amp;&gt;</code>, <code>&amp;&gt;&gt;</code>). All resolve, after
+parsing, to the same <code>dup2()</code> / <code>open()</code> syscall
+sequence the kernel sees. The trap is that the order of operators is
+significant — <code>&gt;file 2&gt;&amp;1</code> and
+<code>2&gt;&amp;1 &gt;file</code> differ in result, not just style. This
+chapter documents each form and traces the order-of-evaluation gotcha
+that bites new authors.</p>
+<h3 id="the-operator-inventory">The operator inventory</h3>
+<ul>
+<li><code>2&gt; file</code> — redirect stderr to <em>file</em> (truncate
+or create, fd 2).</li>
+<li><code>2&gt;&gt; file</code> — append stderr to <em>file</em> on fd
+2.</li>
+<li><code>2&gt;&amp;1</code> — make fd 2 a duplicate of fd 1&#39;s
+<em>current</em> target.</li>
+<li><code>1&gt;&amp;2</code> — make fd 1 a duplicate of fd 2&#39;s
+<em>current</em> target.</li>
+<li><code>&gt;file 2&gt;&amp;1</code> — both stdout and stderr to
+<em>file</em>. Idiomatic order.</li>
+<li><code>2&gt;&amp;1 &gt;file</code> — stderr to whatever fd 1
+<em>was</em> (terminal), stdout to <em>file</em>. A common mistake.</li>
+<li><code>&amp;&gt; file</code> — combined shorthand; equivalent to
+<code>&gt;file 2&gt;&amp;1</code>.</li>
+<li><code>&amp;&gt;&gt; file</code> — combined-append shorthand.</li>
+<li><code>2&gt; &gt;(cmd)</code> — pipe stderr through a process
+substitution (§6.10).</li>
+</ul>
+<h3 id="order-of-evaluation-gotcha">Order-of-evaluation gotcha</h3>
+<p>Redirections are applied left-to-right against the current fd table
+(§6.11). <code>2&gt;&amp;1</code> does not &quot;merge&quot; — it copies whatever
+fd 1 <em>currently</em> points at into fd 2. Trace each form one
+operator at a time:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: contrast `&gt;file 2&gt;&amp;1` (correct) with `2&gt;&amp;1 &gt;file` (wrong)</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail<span class="kw">;</span> <span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Correct order — file gets both streams</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="kw">{</span> <span class="bu">echo</span> to-stdout<span class="kw">;</span> <span class="bu">echo</span> to-stderr <span class="op">&gt;&amp;</span><span class="dv">2</span><span class="kw">;</span> <span class="kw">}</span> <span class="op">&gt;</span>out.log <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">#   ^^^^^^^^^^^   step 1: open out.log on fd 1</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co">#                  step 2: dup fd 1 (now out.log) onto fd 2</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co">#                  ⇒ both streams land in out.log</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Wrong order — same operators, different sequence, terminal sees stderr</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="kw">{</span> <span class="bu">echo</span> to-stdout<span class="kw">;</span> <span class="bu">echo</span> to-stderr <span class="op">&gt;&amp;</span><span class="dv">2</span><span class="kw">;</span> <span class="kw">}</span> <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span> <span class="op">&gt;</span>out2.log</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co">#   ^^^^^^^^^^^   step 1: dup fd 1 (still terminal) onto fd 2</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co">#                  step 2: open out2.log on fd 1</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co">#                  ⇒ stdout to file, stderr stays on terminal</span></span></code></pre></div>
+<p>The mnemonic: <em>first say where stdout goes, then say &quot;stderr
+follows stdout&quot;</em>. Reverse it and the duplication has captured stale
+state.</p>
+<h3 id="-and---atomic-combined-forms"><code>&amp;&gt;</code> and
+<code>&amp;&gt;&gt;</code> — atomic combined forms</h3>
+<p>Bash provides <code>&amp;&gt;file</code> and
+<code>&amp;&gt;&gt;file</code> as parser-level shorthands that
+<em>compile</em> to the correct ordering — there is no left-to-right
+pitfall because the operator names a single combined operation:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: the three equivalent forms for &quot;send everything to log&quot;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail<span class="kw">;</span> <span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="ex">cmd</span> <span class="op">&gt;</span>log <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span>                     <span class="co"># explicit, ordered</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="ex">cmd</span> <span class="op">&amp;&gt;</span> log                        <span class="co"># bash-only shorthand (recommended)</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="ex">cmd</span> <span class="dv">1</span><span class="op">&gt;</span>log <span class="dv">2</span><span class="op">&gt;</span>log                   <span class="co"># WRONG — two separate opens, two offsets,</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>                                  <span class="co"># output may interleave or one stream</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>                                  <span class="co"># may overwrite the other&#39;s bytes</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ first two equivalent; third races on shared file</span></span></code></pre></div>
+<p>The third form (<code>1&gt;log 2&gt;log</code>) is a common
+over-clever attempt: each operator opens the file independently, so each
+fd has its own write offset and the streams race. Use
+<code>&amp;&gt;</code> or <code>&gt;file 2&gt;&amp;1</code>.</p>
+<p><code>&amp;&gt;&gt;</code> likewise appends both streams atomically —
+the file is opened once with <code>O_APPEND</code>, and both fds share
+that one open file description, so writes from either fd advance the
+kernel-side offset correctly (BCS0711).</p>
+<h3 id="common-idioms">Common idioms</h3>
+<ul>
+<li>Discard both streams: <code>cmd &amp;&gt;/dev/null</code>.</li>
+<li>Capture both into a variable:
+<code>output=$(cmd 2&gt;&amp;1)</code>.</li>
+<li>Capture stdout into a variable, leave stderr on terminal:
+<code>output=$(cmd)</code> — the default; stderr is <em>not</em>
+captured by <code>$()</code>.</li>
+<li>Send stderr only to a file, leave stdout on terminal:
+<code>cmd 2&gt;err.log</code> — stderr alone has its own operator.</li>
+<li>Swap streams (pipe stderr but not stdout):
+<code>cmd 3&gt;&amp;1 1&gt;&amp;2 2&gt;&amp;3 3&gt;&amp;-</code> — the
+classic stream-swap dance, see §6.6.</li>
+<li>Pipe stderr into a downstream filter while keeping stdout on
+terminal: see the swap dance above; alternatively
+<code>cmd 2&gt; &gt;(filter &gt;&amp;2)</code> if a process-substitution
+sink suffices (§6.10).</li>
+</ul>
+<h3 id="why--is-preferred-for-everything-to-one-place">Why
+<code>&amp;&gt;</code> is preferred for &quot;everything to one place&quot;</h3>
+<p><code>&gt;file 2&gt;&amp;1</code> is portable, explicit, and correct,
+but its three-token shape invites the reversed-order error.
+<code>&amp;&gt;file</code> is a single bash parser-recognised operator:
+there is no left-to-right reordering hazard, no chance of accidentally
+inserting another redirection between the two pieces, and the reader&#39;s
+eye sees one operation. Likewise <code>&amp;&gt;&gt;file</code> for the
+append case. BCS0711 codifies this preference for combined
+redirection.</p>
+<p><strong>See also</strong>: §6.3 (output redirection), §6.6
+(duplicating fds), §6.11 (order of evaluation), §6.14
+(<code>|&amp;</code> pipeline form), §7.2 (BCS0702 stdout vs stderr
+separation), BCS0601, BCS0703, BCS0711.</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

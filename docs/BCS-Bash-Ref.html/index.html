@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>index.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">index.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h1 id="bcs-advanced-bash-reference">BCS Advanced Bash Reference</h1>
+<p><strong>A comprehensive, lookup-oriented reference for modern Bash on
+Linux.</strong></p>
+<p>Designed by Okusi Associates for the Indonesian Open Technology
+Foundation (YaTTI). Target audience: working engineers, library authors,
+reviewers, and AI assistants.</p>
+<p>Strict-mode assumptions throughout. Bottom-up structure: from the
+Unix model Bash sits on, through the language itself, through
+engineering discipline, to internals — closing on Bash 5.3 and
+beyond.</p>
+<h2 id="companion-documents">Companion documents</h2>
+<p><a href="../../data/BASH-CODING-STANDARD.html">Bash Coding Standard
+(BCS)</a> — ~100 actionable rules for BCS-compliant Bash 5.2+
+scripts.</p>
+<p><a href="../BCS-bash/index.html">BCS-bash</a> — the
+<code>bash(1)</code> man page rewritten under strict-mode assumptions
+(<code>set -euo pipefail</code>, <code>[[ ]]</code> only, no POSIX
+compat).</p>
+<p><a href="../../examples/">Examples directory</a> — exemplar
+BCS-compliant scripts.</p>
+<p><a href="../../examples/templates/">Templates</a> —
+<code>complete</code>, <code>basic</code>, <code>minimal</code>,
+<code>library</code> script scaffolds.</p>
+<hr />
+<h2 id="about-this-reference">About this reference</h2>
+<p>This is a <strong>structural reference guide</strong> for advanced
+Bash users. It assumes Bash 5.2 or newer on Ubuntu 24.04 (or comparable
+Linux), strict-mode operation (<code>set -euo pipefail</code> with
+<code>shopt -s inherit_errexit</code>), and that the reader can already
+write at least basic shell.</p>
+<p>It is organised bottom-up: the Unix model first (because Bash is a
+thin language over Unix primitives), then Bash as a program, then the
+language proper (lexical structure, parameters, expansions, redirection,
+control flow), then the engineering layer (functions, libraries, process
+management, signals, errors, I/O, CLI, concurrency, IPC), then the
+interactive layer (readline), then performance, security, tooling,
+idioms, portability, and internals — closing on Bash 5.3 and beyond.</p>
+<h3 id="who-this-is-for">Who this is for</h3>
+<ul>
+<li>Working engineers who write Bash regularly and need a single
+authoritative lookup.</li>
+<li>Library and tool authors who must understand semantics precisely,
+not approximately.</li>
+<li>Reviewers and standards authors who need cross-references between
+code, the BCS coding standard, and the Bash 5.2 man page.</li>
+</ul>
+<h3 id="what-this-is-not">What this is <em>not</em></h3>
+<ul>
+<li>Not a coding standard. See <a href="../../data/BASH-CODING-STANDARD.html"><code>../data/BASH-CODING-STANDARD.md</code></a>
+for ~100 actionable rules.</li>
+<li>Not a re-statement of the bash(1) man page. See <a href="../BCS-bash/"><code>BCS-bash/</code></a> for a
+strict-mode-rewritten man-page reference. This document is <em>organised
+pedagogically</em> and routinely cross-references both BCS and
+BCS-bash.</li>
+</ul>
+<h3 id="conventions">Conventions</h3>
+<ul>
+<li><strong>Section numbering.</strong>
+<code>Part N → Chapter N.M → Section N.M.K</code>. Cross-references use
+§N.M.K. Anchors follow the heading text.</li>
+<li><strong>Cross-references.</strong> <em>BCS hook</em> →
+coding-standard section. <em>BCS-bash</em> → strict-mode man-page file.
+<em>Greg</em> → Greg Wooledge&#39;s wiki at
+<code>mywiki.wooledge.org</code>. <em>Manual</em> → GNU Bash Reference
+Manual.</li>
+<li><strong>Strict mode is assumed.</strong> Every example, every
+recommendation. POSIX <code>sh</code> deviations are called out
+explicitly when relevant; otherwise not mentioned.</li>
+<li><strong>British English</strong> throughout, matching BCS docs.</li>
+<li><strong>Briefing notes</strong> under each heading describe the
+intended content of that section. Sub-bullets list the specific topics
+to cover. This document is the <em>structural skeleton</em> of the
+reference; full content lives in (or will live in) the chapter
+bodies.</li>
+</ul>
+<h3 id="how-to-use-this-document">How to use this document</h3>
+<p>For lookup, use the Table of Contents. Each chapter is self-contained
+— you should never need to read prior chapters to understand a later
+one, though forward references are flagged. For systematic study, read
+top-to-bottom; the ordering is bottom-up by design.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<h3 id="part-i--the-unix-model-from-bash"><a href="01_The-Unix-Model-from-Bash/index.html">Part I — The Unix Model
+from Bash</a></h3>
+<ul>
+<li><a href="01_The-Unix-Model-from-Bash/01_Processes-fork-exec-wait.html">1.1
+Processes — fork, exec, wait</a></li>
+<li><a href="01_The-Unix-Model-from-Bash/02_The-file-descriptor-model.html">1.2
+The file descriptor model</a></li>
+<li><a href="01_The-Unix-Model-from-Bash/03_Files-directories-and-special-files.html">1.3
+Files, directories, and special files</a></li>
+<li><a href="01_The-Unix-Model-from-Bash/04_Streams-and-the-standard-descriptors.html">1.4
+Streams and the standard descriptors</a></li>
+<li><a href="01_The-Unix-Model-from-Bash/05_The-shell-environment.html">1.5 The
+shell environment</a></li>
+<li><a href="01_The-Unix-Model-from-Bash/06_Users-groups-permissions.html">1.6
+Users, groups, permissions</a></li>
+<li><a href="01_The-Unix-Model-from-Bash/07_Exit-status-and-process-termination.html">1.7
+Exit status and process termination</a></li>
+<li><a href="01_The-Unix-Model-from-Bash/08_Signals-overview.html">1.8
+Signals — overview</a></li>
+<li><a href="01_The-Unix-Model-from-Bash/09_The-controlling-terminal-and-TTY-layer.html">1.9
+The controlling terminal and TTY layer</a></li>
+</ul>
+<h3 id="part-ii--bash-as-a-program"><a href="02_Bash-as-a-Program/index.html">Part II — Bash as a
+Program</a></h3>
+<ul>
+<li><a href="02_Bash-as-a-Program/01_Genealogy-and-the-shell-family.html">2.1
+Genealogy and the shell family</a></li>
+<li><a href="02_Bash-as-a-Program/02_Bash-version-landscape.html">2.2
+Bash version landscape</a></li>
+<li><a href="02_Bash-as-a-Program/03_Build-configuration-and-feature-detection.html">2.3
+Build configuration and feature detection</a></li>
+<li><a href="02_Bash-as-a-Program/04_Invocation-modes.html">2.4
+Invocation modes</a></li>
+<li><a href="02_Bash-as-a-Program/05_Startup-file-chains.html">2.5
+Startup file chains</a></li>
+<li><a href="02_Bash-as-a-Program/06_BASH_ENV-and-ENV.html">2.6
+<code>BASH_ENV</code> and <code>ENV</code></a></li>
+<li><a href="02_Bash-as-a-Program/07_Command-line-options-to-bash-itself.html">2.7
+Command-line options to bash itself</a></li>
+<li><a href="02_Bash-as-a-Program/08_Exit-and-shell-session-lifecycle.html">2.8
+Exit and shell session lifecycle</a></li>
+</ul>
+<h3 id="part-iii--lexical-structure-and-shell-grammar"><a href="03_Lexical-Structure-and-Shell-Grammar/index.html">Part III —
+Lexical Structure and Shell Grammar</a></h3>
+<ul>
+<li><a href="03_Lexical-Structure-and-Shell-Grammar/01_Tokenisation.html">3.1
+Tokenisation</a></li>
+<li><a href="03_Lexical-Structure-and-Shell-Grammar/02_Reserved-words.html">3.2
+Reserved words</a></li>
+<li><a href="03_Lexical-Structure-and-Shell-Grammar/03_Comments.html">3.3
+Comments</a></li>
+<li><a href="03_Lexical-Structure-and-Shell-Grammar/04_Quoting-overview.html">3.4
+Quoting overview</a></li>
+<li><a href="03_Lexical-Structure-and-Shell-Grammar/05_Single-quotes.html">3.5
+Single quotes</a></li>
+<li><a href="03_Lexical-Structure-and-Shell-Grammar/06_Double-quotes.html">3.6
+Double quotes</a></li>
+<li><a href="03_Lexical-Structure-and-Shell-Grammar/07_ANSI-C-quoting.html">3.7
+ANSI-C quoting <code>$&#39;...&#39;</code></a></li>
+<li><a href="03_Lexical-Structure-and-Shell-Grammar/08_Locale-translation.html">3.8
+Locale-translation <code>$&quot;...&quot;</code></a></li>
+<li><a href="03_Lexical-Structure-and-Shell-Grammar/09_Backslash-escapes.html">3.9
+Backslash escapes</a></li>
+<li><a href="03_Lexical-Structure-and-Shell-Grammar/10_Shell-grammar.html">3.10
+Shell grammar</a></li>
+<li><a href="03_Lexical-Structure-and-Shell-Grammar/11_Operator-precedence.html">3.11
+Operator precedence</a></li>
+</ul>
+<h3 id="part-iv--parameters-variables-and-arrays"><a href="04_Parameters-Variables-and-Arrays/index.html">Part IV —
+Parameters, Variables, and Arrays</a></h3>
+<ul>
+<li><a href="04_Parameters-Variables-and-Arrays/01_Parameter-taxonomy.html">4.1
+Parameter taxonomy</a></li>
+<li><a href="04_Parameters-Variables-and-Arrays/02_Positional-parameters.html">4.2
+Positional parameters</a></li>
+<li><a href="04_Parameters-Variables-and-Arrays/03_Special-parameters.html">4.3
+Special parameters</a></li>
+<li><a href="04_Parameters-Variables-and-Arrays/04_Shell-variables.html">4.4
+Shell variables</a></li>
+<li><a href="04_Parameters-Variables-and-Arrays/05_The-declare-builtin-and-attributes.html">4.5
+The <code>declare</code> builtin and attributes</a></li>
+<li><a href="04_Parameters-Variables-and-Arrays/06_local-and-dynamic-scope.html">4.6
+<code>local</code> and dynamic scope</a></li>
+<li><a href="04_Parameters-Variables-and-Arrays/07_readonly-and-immutability.html">4.7
+<code>readonly</code> and immutability</a></li>
+<li><a href="04_Parameters-Variables-and-Arrays/08_export-and-the-environment.html">4.8
+<code>export</code> and the environment</a></li>
+<li><a href="04_Parameters-Variables-and-Arrays/09_Indexed-arrays.html">4.9
+Indexed arrays</a></li>
+<li><a href="04_Parameters-Variables-and-Arrays/10_Associative-arrays.html">4.10
+Associative arrays</a></li>
+<li><a href="04_Parameters-Variables-and-Arrays/11_Namerefs-n.html">4.11
+Namerefs (<code>-n</code>)</a></li>
+<li><a href="04_Parameters-Variables-and-Arrays/12_Integer-arithmetic-semantics.html">4.12
+Integer arithmetic semantics</a></li>
+<li><a href="04_Parameters-Variables-and-Arrays/13_Variable-assignment-semantics.html">4.13
+Variable assignment semantics</a></li>
+<li><a href="04_Parameters-Variables-and-Arrays/14_Unsetting.html">4.14
+Unsetting</a></li>
+</ul>
+<h3 id="part-v--expansions"><a href="05_Expansions/index.html">Part V —
+Expansions</a></h3>
+<ul>
+<li><a href="05_Expansions/01_Order-of-expansions.html">5.1 Order of
+expansions</a></li>
+<li><a href="05_Expansions/02_Brace-expansion.html">5.2 Brace
+expansion</a></li>
+<li><a href="05_Expansions/03_Tilde-expansion.html">5.3 Tilde
+expansion</a></li>
+<li><a href="05_Expansions/04_Parameter-and-variable-expansion.html">5.4
+Parameter and variable expansion</a></li>
+<li><a href="05_Expansions/05_Arithmetic-expansion.html">5.5 Arithmetic
+expansion</a></li>
+<li><a href="05_Expansions/06_Command-substitution.html">5.6 Command
+substitution</a></li>
+<li><a href="05_Expansions/07_Process-substitution.html">5.7 Process
+substitution</a></li>
+<li><a href="05_Expansions/08_Word-splitting-and-IFS.html">5.8 Word
+splitting and IFS</a></li>
+<li><a href="05_Expansions/09_Pathname-expansion-globbing.html">5.9
+Pathname expansion (globbing)</a></li>
+<li><a href="05_Expansions/10_Quote-removal.html">5.10 Quote
+removal</a></li>
+<li><a href="05_Expansions/11_Glob-options.html">5.11 Glob
+options</a></li>
+<li><a href="05_Expansions/12_Extended-globs-extglob.html">5.12 Extended
+globs (extglob)</a></li>
+<li><a href="05_Expansions/13_Locale-and-pattern-matching.html">5.13
+Locale and pattern matching</a></li>
+</ul>
+<h3 id="part-vi--redirection-and-pipelines"><a href="06_Redirection-and-Pipelines/index.html">Part VI — Redirection and
+Pipelines</a></h3>
+<ul>
+<li><a href="06_Redirection-and-Pipelines/01_The-fd-table-from-Bashs-perspective.html">6.1
+The fd table from Bash&#39;s perspective</a></li>
+<li><a href="06_Redirection-and-Pipelines/02_Input-redirection.html">6.2
+Input redirection</a></li>
+<li><a href="06_Redirection-and-Pipelines/03_Output-redirection.html">6.3
+Output redirection</a></li>
+<li><a href="06_Redirection-and-Pipelines/04_Stderr-redirection-and-merging.html">6.4
+Stderr redirection and merging</a></li>
+<li><a href="06_Redirection-and-Pipelines/05_Reading-and-writing.html">6.5
+Reading-and-writing</a></li>
+<li><a href="06_Redirection-and-Pipelines/06_Duplicating-fds.html">6.6
+Duplicating fds</a></li>
+<li><a href="06_Redirection-and-Pipelines/07_Moving-and-closing-fds.html">6.7
+Moving and closing fds</a></li>
+<li><a href="06_Redirection-and-Pipelines/08_Here-documents.html">6.8
+Here-documents</a></li>
+<li><a href="06_Redirection-and-Pipelines/09_Here-strings.html">6.9
+Here-strings</a></li>
+<li><a href="06_Redirection-and-Pipelines/10_Process-substitution-as-redirection.html">6.10
+Process substitution as redirection</a></li>
+<li><a href="06_Redirection-and-Pipelines/11_Order-of-evaluation.html">6.11
+Order of evaluation</a></li>
+<li><a href="06_Redirection-and-Pipelines/12_exec-for-fd-manipulation.html">6.12
+<code>exec</code> for fd manipulation</a></li>
+<li><a href="06_Redirection-and-Pipelines/13_Pipelines.html">6.13
+Pipelines</a></li>
+<li><a href="06_Redirection-and-Pipelines/14_Stderr-pipelines.html">6.14
+Stderr pipelines (<code>|&amp;</code>)</a></li>
+<li><a href="06_Redirection-and-Pipelines/15_pipefail-semantics.html">6.15
+<code>pipefail</code> semantics</a></li>
+<li><a href="06_Redirection-and-Pipelines/16_lastpipe-semantics.html">6.16
+<code>lastpipe</code> semantics</a></li>
+</ul>
+<h3 id="part-vii--control-flow-and-compound-commands"><a href="07_Control-Flow-and-Compound-Commands/index.html">Part VII —
+Control Flow and Compound Commands</a></h3>
+<ul>
+<li><a href="07_Control-Flow-and-Compound-Commands/01_Compound-command-overview.html">7.1
+Compound command overview</a></li>
+<li><a href="07_Control-Flow-and-Compound-Commands/02_ifelifelsefi.html">7.2
+<code>if</code>/<code>elif</code>/<code>else</code>/<code>fi</code></a></li>
+<li><a href="07_Control-Flow-and-Compound-Commands/03_caseesac.html">7.3
+<code>case</code>/<code>esac</code></a></li>
+<li><a href="07_Control-Flow-and-Compound-Commands/04_for-x-in-list.html">7.4
+<code>for x in list</code></a></li>
+<li><a href="07_Control-Flow-and-Compound-Commands/05_C-style-for.html">7.5
+C-style <code>for ((;;))</code></a></li>
+<li><a href="07_Control-Flow-and-Compound-Commands/06_whileuntil.html">7.6
+<code>while</code>/<code>until</code></a></li>
+<li><a href="07_Control-Flow-and-Compound-Commands/07_select.html">7.7
+<code>select</code></a></li>
+<li><a href="07_Control-Flow-and-Compound-Commands/08_Subshell-grouping.html">7.8
+Subshell grouping <code>( )</code></a></li>
+<li><a href="07_Control-Flow-and-Compound-Commands/09_Brace-grouping.html">7.9
+Brace grouping <code>{ }</code></a></li>
+<li><a href="07_Control-Flow-and-Compound-Commands/10_and-short-circuits.html">7.10
+<code>&amp;&amp;</code> and <code>||</code> short-circuits</a></li>
+<li><a href="07_Control-Flow-and-Compound-Commands/11_break-and-continue.html">7.11
+<code>break</code> and <code>continue</code></a></li>
+<li><a href="07_Control-Flow-and-Compound-Commands/12_return.html">7.12
+<code>return</code></a></li>
+<li><a href="07_Control-Flow-and-Compound-Commands/13_exit.html">7.13
+<code>exit</code></a></li>
+<li><a href="07_Control-Flow-and-Compound-Commands/14_true-false.html">7.14
+<code>:</code>, <code>true</code>, <code>false</code></a></li>
+</ul>
+<h3 id="part-viii--conditional-expressions-and-arithmetic"><a href="08_Conditional-Expressions-and-Arithmetic/index.html">Part VIII —
+Conditional Expressions and Arithmetic</a></h3>
+<ul>
+<li><a href="08_Conditional-Expressions-and-Arithmetic/01_overview.html">8.1
+<code>[[ ]]</code> overview</a></li>
+<li><a href="08_Conditional-Expressions-and-Arithmetic/02_File-test-operators.html">8.2
+File test operators</a></li>
+<li><a href="08_Conditional-Expressions-and-Arithmetic/03_File-comparison-operators.html">8.3
+File comparison operators</a></li>
+<li><a href="08_Conditional-Expressions-and-Arithmetic/04_String-operators.html">8.4
+String operators</a></li>
+<li><a href="08_Conditional-Expressions-and-Arithmetic/05_Pattern-matching-with.html">8.5
+Pattern matching with <code>==</code></a></li>
+<li><a href="08_Conditional-Expressions-and-Arithmetic/06_Regex-matching-with.html">8.6
+Regex matching with <code>=~</code></a></li>
+<li><a href="08_Conditional-Expressions-and-Arithmetic/07_Logical-operators-and-grouping.html">8.7
+Logical operators and grouping</a></li>
+<li><a href="08_Conditional-Expressions-and-Arithmetic/08_Quoting-rules-inside.html">8.8
+Quoting rules inside <code>[[ ]]</code></a></li>
+<li><a href="08_Conditional-Expressions-and-Arithmetic/09_Arithmetic-context.html">8.9
+Arithmetic context <code>(( ))</code></a></li>
+<li><a href="08_Conditional-Expressions-and-Arithmetic/10_Arithmetic-operators-and-precedence.html">8.10
+Arithmetic operators and precedence</a></li>
+<li><a href="08_Conditional-Expressions-and-Arithmetic/11_Integer-types-overflow-base-prefixes.html">8.11
+Integer types, overflow, base prefixes</a></li>
+<li><a href="08_Conditional-Expressions-and-Arithmetic/12_Floating-point-workarounds.html">8.12
+Floating-point — workarounds</a></li>
+<li><a href="08_Conditional-Expressions-and-Arithmetic/13_let-builtin.html">8.13
+<code>let</code> builtin</a></li>
+<li><a href="08_Conditional-Expressions-and-Arithmetic/14_The-deprecated-and-test.html">8.14
+The deprecated <code>[ ]</code> and <code>test</code></a></li>
+</ul>
+<h3 id="part-ix--functions"><a href="09_Functions/index.html">Part IX —
+Functions</a></h3>
+<ul>
+<li><a href="09_Functions/01_Definition-syntax.html">9.1 Definition
+syntax</a></li>
+<li><a href="09_Functions/02_Argument-passing.html">9.2 Argument
+passing</a></li>
+<li><a href="09_Functions/03_local-and-scope.html">9.3
+<code>local</code> and scope</a></li>
+<li><a href="09_Functions/04_Return-value-via-return-N.html">9.4 Return
+value via <code>return N</code></a></li>
+<li><a href="09_Functions/05_Communicating-results.html">9.5
+Communicating results</a></li>
+<li><a href="09_Functions/06_Recursion-and-FUNCNEST.html">9.6 Recursion
+and <code>FUNCNEST</code></a></li>
+<li><a href="09_Functions/07_Function-tracing.html">9.7 Function
+tracing</a></li>
+<li><a href="09_Functions/08_Listing-and-inspecting-functions.html">9.8
+Listing and inspecting functions</a></li>
+<li><a href="09_Functions/09_Exporting-functions.html">9.9 Exporting
+functions</a></li>
+<li><a href="09_Functions/10_Naming-conventions.html">9.10 Naming
+conventions</a></li>
+<li><a href="09_Functions/11_Self-locating-with-BASH_SOURCE.html">9.11
+Self-locating with <code>BASH_SOURCE</code></a></li>
+<li><a href="09_Functions/12_Calling-convention-discipline.html">9.12
+Calling-convention discipline</a></li>
+</ul>
+<h3 id="part-x--sourcing-libraries-and-modules"><a href="10_Sourcing-Libraries-and-Modules/index.html">Part X — Sourcing,
+Libraries, and Modules</a></h3>
+<ul>
+<li><a href="10_Sourcing-Libraries-and-Modules/01_source-semantics.html">10.1
+<code>source</code> semantics</a></li>
+<li><a href="10_Sourcing-Libraries-and-Modules/02_The-BASH_SOURCE-array.html">10.2
+The <code>BASH_SOURCE</code> array</a></li>
+<li><a href="10_Sourcing-Libraries-and-Modules/03_Self-locating-library-pattern.html">10.3
+Self-locating library pattern</a></li>
+<li><a href="10_Sourcing-Libraries-and-Modules/04_Idempotent-sourcing-guards.html">10.4
+Idempotent sourcing guards</a></li>
+<li><a href="10_Sourcing-Libraries-and-Modules/05_Namespace-prefixes.html">10.5
+Namespace prefixes</a></li>
+<li><a href="10_Sourcing-Libraries-and-Modules/06_Public-vs-private-conventions.html">10.6
+Public vs private conventions</a></li>
+<li><a href="10_Sourcing-Libraries-and-Modules/07_Version-negotiation.html">10.7
+Version negotiation</a></li>
+<li><a href="10_Sourcing-Libraries-and-Modules/08_Lazy-and-conditional-loading.html">10.8
+Lazy and conditional loading</a></li>
+<li><a href="10_Sourcing-Libraries-and-Modules/09_Cross-shell-sourcing-pitfalls.html">10.9
+Cross-shell sourcing pitfalls</a></li>
+<li><a href="10_Sourcing-Libraries-and-Modules/10_API-design.html">10.10
+API design</a></li>
+<li><a href="10_Sourcing-Libraries-and-Modules/11_Distribution-and-installation.html">10.11
+Distribution and installation</a></li>
+</ul>
+<h3 id="part-xi--process-management"><a href="11_Process-Management/index.html">Part XI — Process
+Management</a></h3>
+<ul>
+<li><a href="11_Process-Management/01_The-Bash-process-tree-at-runtime.html">11.1
+The Bash process tree at runtime</a></li>
+<li><a href="11_Process-Management/02_PIDs-BASHPID-PPID.html">11.2 PIDs:
+<code>$$</code>, <code>$BASHPID</code>, <code>$PPID</code></a></li>
+<li><a href="11_Process-Management/03_Subshell-origins.html">11.3
+Subshell origins</a></li>
+<li><a href="11_Process-Management/04_BASH_SUBSHELL-depth-tracking.html">11.4
+<code>BASH_SUBSHELL</code> depth tracking</a></li>
+<li><a href="11_Process-Management/05_Foreground-vs-background.html">11.5
+Foreground vs background</a></li>
+<li><a href="11_Process-Management/06_Process-groups-and-sessions.html">11.6
+Process groups and sessions</a></li>
+<li><a href="11_Process-Management/07_The-job-table.html">11.7 The job
+table</a></li>
+<li><a href="11_Process-Management/08_Job-specifications.html">11.8 Job
+specifications</a></li>
+<li><a href="11_Process-Management/09_Job-control-builtins.html">11.9
+Job-control builtins</a></li>
+<li><a href="11_Process-Management/10_kill-and-signal-delivery.html">11.10
+<code>kill</code> and signal delivery</a></li>
+<li><a href="11_Process-Management/11_nohup-and-setsid.html">11.11
+<code>nohup</code> and <code>setsid</code></a></li>
+<li><a href="11_Process-Management/12_Detaching-from-the-terminal.html">11.12
+Detaching from the terminal</a></li>
+<li><a href="11_Process-Management/13_Environment-inheritance.html">11.13
+Environment inheritance</a></li>
+</ul>
+<h3 id="part-xii--signals-and-traps"><a href="12_Signals-and-Traps/index.html">Part XII — Signals and
+Traps</a></h3>
+<ul>
+<li><a href="12_Signals-and-Traps/01_Signal-taxonomy.html">12.1 Signal
+taxonomy</a></li>
+<li><a href="12_Signals-and-Traps/02_Signal-numbers-and-names.html">12.2
+Signal numbers and names</a></li>
+<li><a href="12_Signals-and-Traps/03_Uncatchable-signals.html">12.3
+Uncatchable signals</a></li>
+<li><a href="12_Signals-and-Traps/04_Signal-disposition.html">12.4
+Signal disposition</a></li>
+<li><a href="12_Signals-and-Traps/05_The-trap-builtin.html">12.5 The
+<code>trap</code> builtin</a></li>
+<li><a href="12_Signals-and-Traps/06_Pseudo-signals-EXIT-ERR-DEBUG-RETURN.html">12.6
+Pseudo-signals: EXIT, ERR, DEBUG, RETURN</a></li>
+<li><a href="12_Signals-and-Traps/07_trap-p-and-trap-inspection.html">12.7
+<code>trap -p</code> and trap inspection</a></li>
+<li><a href="12_Signals-and-Traps/08_Trap-inheritance.html">12.8 Trap
+inheritance</a></li>
+<li><a href="12_Signals-and-Traps/09_Trap-reset-across-exec.html">12.9
+Trap reset across <code>exec</code></a></li>
+<li><a href="12_Signals-and-Traps/10_Synchronous-vs-asynchronous-delivery.html">12.10
+Synchronous vs asynchronous delivery</a></li>
+<li><a href="12_Signals-and-Traps/11_Signal-safe-code.html">12.11
+Signal-safe code</a></li>
+<li><a href="12_Signals-and-Traps/12_Idempotent-cleanup-patterns.html">12.12
+Idempotent cleanup patterns</a></li>
+<li><a href="12_Signals-and-Traps/13_Tempfile-and-tempdir-lifecycle.html">12.13
+Tempfile and tempdir lifecycle</a></li>
+<li><a href="12_Signals-and-Traps/14_Lockfile-pattern.html">12.14
+Lockfile pattern</a></li>
+<li><a href="12_Signals-and-Traps/15_Atomic-file-write.html">12.15
+Atomic file write</a></li>
+<li><a href="12_Signals-and-Traps/16_Reload-on-SIGHUP.html">12.16
+Reload-on-SIGHUP</a></li>
+</ul>
+<h3 id="part-xiii--error-handling-and-exit-status"><a href="13_Error-Handling-and-Exit-Status/index.html">Part XIII — Error
+Handling and Exit Status</a></h3>
+<ul>
+<li><a href="13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.html">13.1
+Exit status fundamentals</a></li>
+<li><a href="13_Error-Handling-and-Exit-Status/02_set-e-errexit-full-semantics.html">13.2
+<code>set -e</code> (errexit) — full semantics</a></li>
+<li><a href="13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.html">13.3
+The errexit exemption matrix</a></li>
+<li><a href="13_Error-Handling-and-Exit-Status/04_set-u-nounset.html">13.4
+<code>set -u</code> (nounset)</a></li>
+<li><a href="13_Error-Handling-and-Exit-Status/05_set-o-pipefail.html">13.5
+<code>set -o pipefail</code></a></li>
+<li><a href="13_Error-Handling-and-Exit-Status/06_inherit_errexit.html">13.6
+<code>inherit_errexit</code></a></li>
+<li><a href="13_Error-Handling-and-Exit-Status/07_and-true-idioms.html">13.7
+<code>||:</code> and <code>|| true</code> idioms</a></li>
+<li><a href="13_Error-Handling-and-Exit-Status/08_The-ERR-trap.html">13.8 The
+<code>ERR</code> trap</a></li>
+<li><a href="13_Error-Handling-and-Exit-Status/09_errtrace-and-trap-inheritance.html">13.9
+<code>errtrace</code> and trap inheritance</a></li>
+<li><a href="13_Error-Handling-and-Exit-Status/10_Exit-code-conventions.html">13.10
+Exit code conventions</a></li>
+<li><a href="13_Error-Handling-and-Exit-Status/11_Propagating-exit-codes.html">13.11
+Propagating exit codes</a></li>
+<li><a href="13_Error-Handling-and-Exit-Status/12_Rich-error-output.html">13.12
+Rich error output</a></li>
+</ul>
+<h3 id="part-xiv--input-output-and-messaging"><a href="14_Input-Output-and-Messaging/index.html">Part XIV — Input,
+Output, and Messaging</a></h3>
+<ul>
+<li><a href="14_Input-Output-and-Messaging/01_Standard-streams-discipline.html">14.1
+Standard streams discipline</a></li>
+<li><a href="14_Input-Output-and-Messaging/02_The-read-builtin.html">14.2 The
+<code>read</code> builtin</a></li>
+<li><a href="14_Input-Output-and-Messaging/03_mapfile-readarray.html">14.3
+<code>mapfile</code> / <code>readarray</code></a></li>
+<li><a href="14_Input-Output-and-Messaging/04_The-printf-builtin.html">14.4 The
+<code>printf</code> builtin</a></li>
+<li><a href="14_Input-Output-and-Messaging/05_printf-vs-echo.html">14.5
+<code>printf</code> vs <code>echo</code></a></li>
+<li><a href="14_Input-Output-and-Messaging/06_Format-specifiers.html">14.6
+Format specifiers</a></li>
+<li><a href="14_Input-Output-and-Messaging/07_Logging-discipline.html">14.7
+Logging discipline</a></li>
+<li><a href="14_Input-Output-and-Messaging/08_Log-levels.html">14.8 Log
+levels</a></li>
+<li><a href="14_Input-Output-and-Messaging/09_Coloured-output-and-TERM-detection.html">14.9
+Coloured output and TERM detection</a></li>
+<li><a href="14_Input-Output-and-Messaging/10_Progress-indicators.html">14.10
+Progress indicators</a></li>
+<li><a href="14_Input-Output-and-Messaging/11_Reading-binary-data.html">14.11
+Reading binary data</a></li>
+<li><a href="14_Input-Output-and-Messaging/12_File-locking-for-concurrent-writes.html">14.12
+File locking for concurrent writes</a></li>
+</ul>
+<h3 id="part-xv--command-line-processing"><a href="15_Command-Line-Processing/index.html">Part XV — Command-Line
+Processing</a></h3>
+<ul>
+<li><a href="15_Command-Line-Processing/01_CLI-conventions.html">15.1
+CLI conventions</a></li>
+<li><a href="15_Command-Line-Processing/02_getopts-builtin.html">15.2
+<code>getopts</code> builtin</a></li>
+<li><a href="15_Command-Line-Processing/03_GNU-getopt1-external.html">15.3 GNU
+<code>getopt(1)</code> external</a></li>
+<li><a href="15_Command-Line-Processing/04_Hand-rolled-while-case-shift.html">15.4
+Hand-rolled <code>while case shift</code></a></li>
+<li><a href="15_Command-Line-Processing/05_Long-options.html">15.5 Long
+options</a></li>
+<li><a href="15_Command-Line-Processing/06_Bundled-short-options.html">15.6
+Bundled short options</a></li>
+<li><a href="15_Command-Line-Processing/07_end-of-options.html">15.7
+<code>--</code> end-of-options</a></li>
+<li><a href="15_Command-Line-Processing/08_Subcommand-dispatch.html">15.8
+Subcommand dispatch</a></li>
+<li><a href="15_Command-Line-Processing/09_Help-text-conventions.html">15.9
+Help text conventions</a></li>
+<li><a href="15_Command-Line-Processing/10_Synopsis-grammar.html">15.10
+Synopsis grammar</a></li>
+<li><a href="15_Command-Line-Processing/11_Auto-generating-usage.html">15.11
+Auto-generating usage</a></li>
+</ul>
+<h3 id="part-xvi--concurrency-and-parallelism"><a href="16_Concurrency-and-Parallelism/index.html">Part XVI — Concurrency
+and Parallelism</a></h3>
+<ul>
+<li><a href="16_Concurrency-and-Parallelism/01_Sequential-vs-background-execution.html">16.1
+Sequential vs background execution</a></li>
+<li><a href="16_Concurrency-and-Parallelism/02_wait-and-wait-n.html">16.2
+<code>wait</code> and <code>wait -n</code></a></li>
+<li><a href="16_Concurrency-and-Parallelism/03_wait-pid-for-specific-child.html">16.3
+<code>wait $pid</code> for specific child</a></li>
+<li><a href="16_Concurrency-and-Parallelism/04_Capturing-per-child-exit-status.html">16.4
+Capturing per-child exit status</a></li>
+<li><a href="16_Concurrency-and-Parallelism/05_Bounded-concurrency-fan-out.html">16.5
+Bounded-concurrency fan-out</a></li>
+<li><a href="16_Concurrency-and-Parallelism/06_The-job-table-under-concurrency.html">16.6
+The job table under concurrency</a></li>
+<li><a href="16_Concurrency-and-Parallelism/07_xargs-P.html">16.7
+<code>xargs -P</code></a></li>
+<li><a href="16_Concurrency-and-Parallelism/08_GNU-parallel.html">16.8
+GNU parallel</a></li>
+<li><a href="16_Concurrency-and-Parallelism/09_Race-conditions-in-shell.html">16.9
+Race conditions in shell</a></li>
+<li><a href="16_Concurrency-and-Parallelism/10_Locking-primitives.html">16.10
+Locking primitives</a></li>
+<li><a href="16_Concurrency-and-Parallelism/11_Signal-handling-under-concurrency.html">16.11
+Signal handling under concurrency</a></li>
+<li><a href="16_Concurrency-and-Parallelism/12_Queue-patterns.html">16.12 Queue
+patterns</a></li>
+</ul>
+<h3 id="part-xvii--coprocesses-and-ipc"><a href="17_Coprocesses-and-IPC/index.html">Part XVII — Coprocesses and
+IPC</a></h3>
+<ul>
+<li><a href="17_Coprocesses-and-IPC/01_The-coproc-builtin.html">17.1 The
+<code>coproc</code> builtin</a></li>
+<li><a href="17_Coprocesses-and-IPC/02_Bidirectional-fd-pairs.html">17.2
+Bidirectional fd pairs</a></li>
+<li><a href="17_Coprocesses-and-IPC/03_Multiple-coprocesses.html">17.3
+Multiple coprocesses</a></li>
+<li><a href="17_Coprocesses-and-IPC/04_Named-pipes-FIFOs.html">17.4
+Named pipes (FIFOs)</a></li>
+<li><a href="17_Coprocesses-and-IPC/05_Anonymous-pipes.html">17.5
+Anonymous pipes</a></li>
+<li><a href="17_Coprocesses-and-IPC/06_devtcp-and-devudp.html">17.6
+<code>/dev/tcp</code> and <code>/dev/udp</code></a></li>
+<li><a href="17_Coprocesses-and-IPC/07_devshm-shared-memory.html">17.7
+<code>/dev/shm</code> shared memory</a></li>
+<li><a href="17_Coprocesses-and-IPC/08_External-IPC-tools.html">17.8
+External IPC tools</a></li>
+<li><a href="17_Coprocesses-and-IPC/09_Choosing-the-right-primitive.html">17.9
+Choosing the right primitive</a></li>
+</ul>
+<h3 id="part-xviii--readline-history-and-completion"><a href="18_Readline-History-and-Completion/index.html">Part XVIII —
+Readline, History, and Completion</a></h3>
+<ul>
+<li><a href="18_Readline-History-and-Completion/01_Readline-overview.html">18.1
+Readline overview</a></li>
+<li><a href="18_Readline-History-and-Completion/02_Editing-modes.html">18.2
+Editing modes</a></li>
+<li><a href="18_Readline-History-and-Completion/03_Key-bindings.html">18.3 Key
+bindings</a></li>
+<li><a href="18_Readline-History-and-Completion/04_Bindable-functions.html">18.4
+Bindable functions</a></li>
+<li><a href="18_Readline-History-and-Completion/05_History.html">18.5
+History</a></li>
+<li><a href="18_Readline-History-and-Completion/06_The-history-builtin.html">18.6
+The <code>history</code> builtin</a></li>
+<li><a href="18_Readline-History-and-Completion/07_History-expansion.html">18.7
+History expansion</a></li>
+<li><a href="18_Readline-History-and-Completion/08_Programmable-completion.html">18.8
+Programmable completion</a></li>
+<li><a href="18_Readline-History-and-Completion/09_Compspec-actions.html">18.9
+Compspec actions</a></li>
+<li><a href="18_Readline-History-and-Completion/10__init_completion.html">18.10
+<code>_init_completion</code></a></li>
+<li><a href="18_Readline-History-and-Completion/11_Dynamic-completion-functions.html">18.11
+Dynamic completion functions</a></li>
+<li><a href="18_Readline-History-and-Completion/12_COMPREPLY-and-COMP_-variables.html">18.12
+<code>COMPREPLY</code> and <code>COMP_*</code> variables</a></li>
+<li><a href="18_Readline-History-and-Completion/13_Prompts.html">18.13
+Prompts</a></li>
+<li><a href="18_Readline-History-and-Completion/14_Prompt-escapes.html">18.14
+Prompt escapes</a></li>
+<li><a href="18_Readline-History-and-Completion/15_Coloured-and-multi-line-prompts.html">18.15
+Coloured and multi-line prompts</a></li>
+<li><a href="18_Readline-History-and-Completion/16_Terminal-capability-detection.html">18.16
+Terminal capability detection</a></li>
+</ul>
+<h3 id="part-xix--performance"><a href="19_Performance/index.html">Part
+XIX — Performance</a></h3>
+<ul>
+<li><a href="19_Performance/01_The-Bash-cost-model.html">19.1 The Bash
+cost model</a></li>
+<li><a href="19_Performance/02_Profiling-tools.html">19.2 Profiling
+tools</a></li>
+<li><a href="19_Performance/03_time-builtin-vs-time-external.html">19.3
+<code>time</code> builtin vs <code>time</code> external</a></li>
+<li><a href="19_Performance/04_BASH_XTRACEFD.html">19.4
+<code>BASH_XTRACEFD</code></a></li>
+<li><a href="19_Performance/05_PS4-instrumentation.html">19.5
+<code>PS4</code> instrumentation</a></li>
+<li><a href="19_Performance/06_EPOCHREALTIME-for-sub-second-timing.html">19.6
+<code>EPOCHREALTIME</code> for sub-second timing</a></li>
+<li><a href="19_Performance/07_Common-optimisations.html">19.7 Common
+optimisations</a></li>
+<li><a href="19_Performance/08_Parameter-expansion-vs-external-commands.html">19.8
+Parameter expansion vs external commands</a></li>
+<li><a href="19_Performance/09_Pipes-vs-redirection.html">19.9 Pipes vs
+redirection</a></li>
+<li><a href="19_Performance/10_Builtins-vs-externals.html">19.10
+Builtins vs externals</a></li>
+<li><a href="19_Performance/11_Bash-5.3-no-fork-command-substitution.html">19.11
+Bash 5.3 no-fork command substitution</a></li>
+<li><a href="19_Performance/12_Memory-considerations.html">19.12 Memory
+considerations</a></li>
+<li><a href="19_Performance/13_When-Bash-is-the-wrong-tool.html">19.13
+When Bash is the wrong tool</a></li>
+</ul>
+<h3 id="part-xx--security"><a href="20_Security/index.html">Part XX —
+Security</a></h3>
+<ul>
+<li><a href="20_Security/01_Threat-model.html">20.1 Threat
+model</a></li>
+<li><a href="20_Security/02_PATH-hardening.html">20.2 PATH
+hardening</a></li>
+<li><a href="20_Security/03_IFS-reset.html">20.3 IFS reset</a></li>
+<li><a href="20_Security/04_eval-avoidance.html">20.4 <code>eval</code>
+avoidance</a></li>
+<li><a href="20_Security/05_Command-injection-vectors.html">20.5 Command
+injection vectors</a></li>
+<li><a href="20_Security/06_Input-validation.html">20.6 Input
+validation</a></li>
+<li><a href="20_Security/07_Quoting-under-set-u.html">20.7 Quoting under
+<code>set -u</code></a></li>
+<li><a href="20_Security/08_SUID-restrictions.html">20.8 SUID
+restrictions</a></li>
+<li><a href="20_Security/09_Secrets-handling.html">20.9 Secrets
+handling</a></li>
+<li><a href="20_Security/10_noclobber.html">20.10
+<code>noclobber</code></a></li>
+<li><a href="20_Security/11_Privilege-drop.html">20.11 Privilege
+drop</a></li>
+<li><a href="20_Security/12_Sanitising-filenames.html">20.12 Sanitising
+filenames</a></li>
+<li><a href="20_Security/13_Symlink-races.html">20.13 Symlink
+races</a></li>
+<li><a href="20_Security/14_Restricted-shell-mode.html">20.14 Restricted
+shell mode</a></li>
+</ul>
+<h3 id="part-xxi--static-analysis-formatting-and-testing"><a href="21_Static-Analysis-Formatting-and-Testing/index.html">Part XXI —
+Static Analysis, Formatting, and Testing</a></h3>
+<ul>
+<li><a href="21_Static-Analysis-Formatting-and-Testing/01_ShellCheck-warnings.html">21.1
+ShellCheck warnings</a></li>
+<li><a href="21_Static-Analysis-Formatting-and-Testing/02_ShellCheck-directives.html">21.2
+ShellCheck directives</a></li>
+<li><a href="21_Static-Analysis-Formatting-and-Testing/03_Source-path-management.html">21.3
+Source-path management</a></li>
+<li><a href="21_Static-Analysis-Formatting-and-Testing/04_shfmt.html">21.4
+<code>shfmt</code></a></li>
+<li><a href="21_Static-Analysis-Formatting-and-Testing/05_bcscheck.html">21.5
+<code>bcscheck</code></a></li>
+<li><a href="21_Static-Analysis-Formatting-and-Testing/06_Pre-commit-hooks.html">21.6
+Pre-commit hooks</a></li>
+<li><a href="21_Static-Analysis-Formatting-and-Testing/07_CI-integration.html">21.7
+CI integration</a></li>
+<li><a href="21_Static-Analysis-Formatting-and-Testing/08_bats-core.html">21.8
+bats-core</a></li>
+<li><a href="21_Static-Analysis-Formatting-and-Testing/09_Bats-setup-and-teardown.html">21.9
+Bats setup and teardown</a></li>
+<li><a href="21_Static-Analysis-Formatting-and-Testing/10_Bats-run-and-assertions.html">21.10
+Bats <code>run</code> and assertions</a></li>
+<li><a href="21_Static-Analysis-Formatting-and-Testing/11_Mocking-via-PATH-injection.html">21.11
+Mocking via PATH injection</a></li>
+<li><a href="21_Static-Analysis-Formatting-and-Testing/12_shunit2.html">21.12
+shunit2</a></li>
+<li><a href="21_Static-Analysis-Formatting-and-Testing/13_Coverage-with-kcov.html">21.13
+Coverage with kcov</a></li>
+</ul>
+<h3 id="part-xxii--idioms-patterns-and-anti-patterns"><a href="22_Idioms-Patterns-and-Anti-Patterns/index.html">Part XXII —
+Idioms, Patterns, and Anti-Patterns</a></h3>
+<ul>
+<li><a href="22_Idioms-Patterns-and-Anti-Patterns/01_The-strict-mode-preamble.html">22.1
+The strict-mode preamble</a></li>
+<li><a href="22_Idioms-Patterns-and-Anti-Patterns/02_Self-locating-script-directory.html">22.2
+Self-locating script directory</a></li>
+<li><a href="22_Idioms-Patterns-and-Anti-Patterns/03_Argument-parsing-skeleton.html">22.3
+Argument-parsing skeleton</a></li>
+<li><a href="22_Idioms-Patterns-and-Anti-Patterns/04_Default-value-patterns.html">22.4
+Default-value patterns</a></li>
+<li><a href="22_Idioms-Patterns-and-Anti-Patterns/05_Lazy-initialisation.html">22.5
+Lazy initialisation</a></li>
+<li><a href="22_Idioms-Patterns-and-Anti-Patterns/06_Memoisation.html">22.6
+Memoisation</a></li>
+<li><a href="22_Idioms-Patterns-and-Anti-Patterns/07_Iterating-an-associative-array-deterministically.html">22.7
+Iterating an associative array deterministically</a></li>
+<li><a href="22_Idioms-Patterns-and-Anti-Patterns/08_Building-structured-output.html">22.8
+Building structured output</a></li>
+<li><a href="22_Idioms-Patterns-and-Anti-Patterns/09_Reading-config-files-safely.html">22.9
+Reading config files safely</a></li>
+<li><a href="22_Idioms-Patterns-and-Anti-Patterns/10_Atomic-file-write.html">22.10
+Atomic file write</a></li>
+<li><a href="22_Idioms-Patterns-and-Anti-Patterns/11_Exclusive-lock.html">22.11
+Exclusive lock</a></li>
+<li><a href="22_Idioms-Patterns-and-Anti-Patterns/12_Bounded-retry-with-exponential-backoff.html">22.12
+Bounded retry with exponential backoff</a></li>
+<li><a href="22_Idioms-Patterns-and-Anti-Patterns/13_Tempdir-lifecycle.html">22.13
+Tempdir lifecycle</a></li>
+<li><a href="22_Idioms-Patterns-and-Anti-Patterns/14_Mock-friendly-subprocess-wrapper.html">22.14
+Mock-friendly subprocess wrapper</a></li>
+<li><a href="22_Idioms-Patterns-and-Anti-Patterns/15_Stack-trace-error-reporter.html">22.15
+Stack-trace error reporter</a></li>
+<li><a href="22_Idioms-Patterns-and-Anti-Patterns/16_Self-test-mode-dual-purpose-script.html">22.16
+Self-test mode (dual-purpose script)</a></li>
+<li><a href="22_Idioms-Patterns-and-Anti-Patterns/17_Anti-patterns-catalogue.html">22.17
+Anti-patterns catalogue</a></li>
+</ul>
+<h3 id="part-xxiii--posix-conformance-and-portability"><a href="23_POSIX-Conformance-and-Portability/index.html">Part XXIII —
+POSIX Conformance and Portability</a></h3>
+<ul>
+<li><a href="23_POSIX-Conformance-and-Portability/01_Bash-vs-POSIX-sh.html">23.1
+Bash vs POSIX sh</a></li>
+<li><a href="23_POSIX-Conformance-and-Portability/02_The-bashisms-list.html">23.2
+The bashisms list</a></li>
+<li><a href="23_POSIX-Conformance-and-Portability/03_Bash-vs-dash.html">23.3
+Bash vs dash</a></li>
+<li><a href="23_POSIX-Conformance-and-Portability/04_Bash-vs-ksh.html">23.4
+Bash vs ksh</a></li>
+<li><a href="23_POSIX-Conformance-and-Portability/05_Bash-vs-zsh.html">23.5
+Bash vs zsh</a></li>
+<li><a href="23_POSIX-Conformance-and-Portability/06_Bash-3.2-on-macOS.html">23.6
+Bash 3.2 on macOS</a></li>
+<li><a href="23_POSIX-Conformance-and-Portability/07_BSD-sh.html">23.7
+BSD <code>sh</code></a></li>
+<li><a href="23_POSIX-Conformance-and-Portability/08_posix-mode.html">23.8
+<code>--posix</code> mode</a></li>
+<li><a href="23_POSIX-Conformance-and-Portability/09_shopt-compatibility-levels.html">23.9
+<code>shopt</code> compatibility levels</a></li>
+<li><a href="23_POSIX-Conformance-and-Portability/10_When-to-write-portable-sh.html">23.10
+When to write portable sh</a></li>
+<li><a href="23_POSIX-Conformance-and-Portability/11_Forward-compatibility-hygiene.html">23.11
+Forward-compatibility hygiene</a></li>
+<li><a href="23_POSIX-Conformance-and-Portability/12_Targeting-multiple-Bash-versions.html">23.12
+Targeting multiple Bash versions</a></li>
+</ul>
+<h3 id="part-xxiv--bash-internals"><a href="24_Bash-Internals/index.html">Part XXIV — Bash Internals</a></h3>
+<ul>
+<li><a href="24_Bash-Internals/01_The-execution-pipeline.html">24.1 The
+execution pipeline</a></li>
+<li><a href="24_Bash-Internals/02_The-bison-grammar.html">24.2 The bison
+grammar</a></li>
+<li><a href="24_Bash-Internals/03_Variable-storage.html">24.3 Variable
+storage</a></li>
+<li><a href="24_Bash-Internals/04_Function-storage.html">24.4 Function
+storage</a></li>
+<li><a href="24_Bash-Internals/05_The-job-table.html">24.5 The job
+table</a></li>
+<li><a href="24_Bash-Internals/06_The-trap-table.html">24.6 The trap
+table</a></li>
+<li><a href="24_Bash-Internals/07_The-execution-environment.html">24.7
+The execution environment</a></li>
+<li><a href="24_Bash-Internals/08_Subshell-forking.html">24.8 Subshell
+forking</a></li>
+<li><a href="24_Bash-Internals/09_Builtin-loadables.html">24.9 Builtin
+loadables</a></li>
+<li><a href="24_Bash-Internals/10_Reading-the-bash-source.html">24.10
+Reading the bash source</a></li>
+</ul>
+<h3 id="part-xxv--bash-53-and-the-future"><a href="25_Bash-5.3-and-the-Future/index.html">Part XXV — Bash 5.3 and the
+Future</a></h3>
+<ul>
+<li><a href="25_Bash-5.3-and-the-Future/01_No-fork-command-substitution-cmd.html">25.1
+No-fork command substitution <code>${ cmd; }</code></a></li>
+<li><a href="25_Bash-5.3-and-the-Future/02_Other-Bash-5.3-additions.html">25.2
+Other Bash 5.3 additions</a></li>
+<li><a href="25_Bash-5.3-and-the-Future/03_Release-cadence.html">25.3
+Release cadence</a></li>
+<li><a href="25_Bash-5.3-and-the-Future/04_Roadmap-signals.html">25.4
+Roadmap signals</a></li>
+<li><a href="25_Bash-5.3-and-the-Future/05_Forward-compatibility-considerations.html">25.5
+Forward-compatibility considerations</a></li>
+</ul>
+<h3 id="appendices"><a href="99_Appendices/index.html">Appendices</a></h3>
+<ul>
+<li><a href="99_Appendices/A_Builtin-Reference-alphabetical.html">Appendix A —
+Builtin Reference (alphabetical)</a></li>
+<li><a href="99_Appendices/B_Special-Parameters-Reference.html">Appendix
+B — Special Parameters Reference</a></li>
+<li><a href="99_Appendices/C_Shell-Variables-Reference.html">Appendix C
+— Shell Variables Reference</a></li>
+<li><a href="99_Appendices/D_set-Options-Reference.html">Appendix D —
+<code>set</code> Options Reference</a></li>
+<li><a href="99_Appendices/E_shopt-Options-Reference.html">Appendix E —
+<code>shopt</code> Options Reference</a></li>
+<li><a href="99_Appendices/F_ANSI-C-Escape-Sequences.html">Appendix F —
+ANSI-C Escape Sequences</a></li>
+<li><a href="99_Appendices/G_Glob-and-Extglob-Patterns.html">Appendix G
+— Glob and Extglob Patterns</a></li>
+<li><a href="99_Appendices/H_Conditional-Expression-Operators.html">Appendix H
+— Conditional Expression Operators</a></li>
+<li><a href="99_Appendices/I_Parameter-Expansion-Cheat-Sheet.html">Appendix I —
+Parameter Expansion Cheat Sheet</a></li>
+<li><a href="99_Appendices/J_Redirection-Operators.html">Appendix J —
+Redirection Operators</a></li>
+<li><a href="99_Appendices/K_Signal-Numbers-Linux.html">Appendix K —
+Signal Numbers (Linux)</a></li>
+<li><a href="99_Appendices/L_Exit-Code-Conventions.html">Appendix L —
+Exit Code Conventions</a></li>
+<li><a href="99_Appendices/M_Bash-Version-History.html">Appendix M —
+Bash Version History</a></li>
+<li><a href="99_Appendices/N_Glossary.html">Appendix N —
+Glossary</a></li>
+<li><a href="99_Appendices/O_Cross-Reference-Sections-to-BCS-Sections.html">Appendix
+O — Cross-Reference: Sections to BCS Sections</a></li>
+<li><a href="99_Appendices/P_Cross-Reference-Sections-to-BCS-bash-Files.html">Appendix
+P — Cross-Reference: Sections to BCS-bash Files</a></li>
+<li><a href="99_Appendices/Q_Further-Reading.html">Appendix Q — Further
+Reading</a></li>
+</ul>
+<hr />
+<p><em>End of reference.</em></p>
+<p><em>This document is a structural reference guide — a comprehensive
+outline with briefing notes describing the intended content of each
+section. It identifies what an authoritative Bash 5.2+ reference must
+cover and how to organise it. Filling out each chapter into a fully
+written reference is the work that follows from this structure.</em></p>
+<p>#fin</p>
+</body>
+</html>

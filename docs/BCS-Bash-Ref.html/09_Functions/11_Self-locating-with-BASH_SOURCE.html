@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>11_Self-locating-with-BASH_SOURCE.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">11_Self-locating-with-BASH_SOURCE.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="911-self-locating-with-bash_source">9.11 Self-locating with
+<code>BASH_SOURCE</code></h2>
+<p>A function or sourced script frequently needs to know <em>where on
+disk its own file lives</em> — to find sibling resources, to load
+configuration files placed alongside it, or to derive an FHS-compliant
+data directory (BCS0104). Bash exposes the necessary metadata through
+three parallel call-stack arrays: <code>BASH_SOURCE</code>,
+<code>FUNCNAME</code>, and <code>BASH_LINENO</code>.</p>
+<h3 id="the-three-call-stack-arrays">The three call-stack arrays</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Array</th>
+<th>Index 0</th>
+<th>Index N</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>BASH_SOURCE</code></td>
+<td>Source file of the currently executing function (or <code>$0</code>
+at top level).</td>
+<td>Source file of the call N levels up the stack.</td>
+</tr>
+<tr class="even">
+<td><code>FUNCNAME</code></td>
+<td>Name of the currently executing function (or <code>main</code> /
+<code>source</code> for top-level / sourced contexts).</td>
+<td>Name of the function N levels up.</td>
+</tr>
+<tr class="odd">
+<td><code>BASH_LINENO</code></td>
+<td>Line number in the file at depth <code>N+1</code> that called depth
+<code>N</code> — note the off-by-one.</td>
+<td>…</td>
+</tr>
+</tbody>
+</table>
+<p>The three arrays move in lockstep; index N of all three describes the
+same call frame. The off-by-one in <code>BASH_LINENO</code> is
+deliberate and matches the C-style &quot;where did the call come from&quot; view
+of a stack trace — <code>BASH_LINENO[0]</code> is the line in the
+<em>caller&#39;s</em> file that issued the current call.</p>
+<h3 id="the-canonical-self-location-idiom">The canonical self-location
+idiom</h3>
+<p>The pattern below resolves the absolute directory containing the file
+in which it is <em>written</em>, regardless of how the file was invoked
+(direct execution, sourced, exec&#39;d through a wrapper, symlinked into
+<code>$PATH</code>). It is duplicated verbatim in §10.3 for libraries;
+the two chapters describe the same idiom from the function-author and
+library-author perspectives.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: full self-location at script top — derives lib_dir for resource loading</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># BASH_SOURCE[0] is *this* file even when sourced or symlinked (Bash 4.4+).</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># realpath resolves any symlink chain to the canonical absolute path.</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-r</span> <span class="va">SCRIPT_PATH</span><span class="op">=</span><span class="st">&quot;</span><span class="va">$(</span><span class="fu">realpath</span> <span class="at">--</span> <span class="st">&quot;</span><span class="va">${BASH_SOURCE</span><span class="op">[</span><span class="dv">0</span><span class="op">]</span><span class="va">}</span><span class="st">&quot;</span><span class="va">)</span><span class="st">&quot;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-r</span> <span class="va">SCRIPT_DIR</span><span class="op">=</span><span class="st">&quot;</span><span class="va">${SCRIPT_PATH</span><span class="op">%</span>/<span class="pp">*</span><span class="va">}</span><span class="st">&quot;</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-r</span> <span class="va">LIB_DIR</span><span class="op">=</span><span class="st">&quot;</span><span class="va">${SCRIPT_DIR}</span><span class="st">/lib&quot;</span>          <span class="co"># sibling lib/ directory</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-r</span> <span class="va">DATA_DIR</span><span class="op">=</span><span class="st">&quot;</span><span class="va">${SCRIPT_DIR</span><span class="op">%</span>/bin<span class="va">}</span><span class="st">/share/myapp&quot;</span>  <span class="co"># FHS-style data dir</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Now resources can be loaded relative to the on-disk location.</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="kw">[[</span> <span class="ot">-f</span> <span class="st">&quot;</span><span class="va">$LIB_DIR</span><span class="st">/helpers.sh&quot;</span> <span class="kw">]]</span> <span class="kw">&amp;&amp;</span> <span class="bu">source</span> <span class="st">&quot;</span><span class="va">$LIB_DIR</span><span class="st">/helpers.sh&quot;</span></span></code></pre></div>
+<p>Three details deserve attention. First, <code>BASH_SOURCE[0]</code>
+(not <code>$0</code>) is what makes this idiom robust — <code>$0</code>
+is <code>bash</code> when the script is sourced, or the wrapper&#39;s name
+when exec&#39;d through a launcher. Second, <code>realpath --</code> (BCS
+prefers <code>realpath</code> over <code>readlink -f</code>)
+canonicalises symlinks so a script symlinked from
+<code>/usr/local/bin</code> into the real install prefix still finds its
+data directory. Third, the <code>${SCRIPT_DIR%/bin}/share/myapp</code>
+substitution is the FHS pattern: a binary in <code>…/bin/</code> derives
+its data root by stripping the trailing <code>bin</code> segment.</p>
+<h3 id="pairing-with-funcname-for-stack-traces">Pairing with
+<code>FUNCNAME[]</code> for stack traces</h3>
+<p>Combining the three arrays produces a textbook call-stack dump,
+useful inside an ERR trap or a <code>die</code> helper.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: dump the bash call stack — function name, file, line at every frame</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">print_stack()</span> <span class="kw">{</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">-i</span> <span class="va">i</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">&quot;stack trace (most recent call first):&quot;</span> <span class="op">&gt;&amp;</span><span class="dv">2</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> <span class="kw">((</span><span class="va">i</span> <span class="op">=</span> <span class="dv">0</span><span class="kw">;</span> <span class="va">i</span> <span class="op">&lt;</span> <span class="va">${</span><span class="op">#</span><span class="va">FUNCNAME</span><span class="op">[@]</span><span class="va">}</span><span class="kw">;</span> <span class="va">i</span><span class="op">++</span><span class="kw">));</span> <span class="cf">do</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="bu">printf</span> <span class="st">&#39;  #%-2d %s () at %s:%s\n&#39;</span> <span class="dt">\</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;</span><span class="va">$i</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">${FUNCNAME</span><span class="op">[</span>i<span class="op">]</span><span class="va">}</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">${BASH_SOURCE</span><span class="op">[</span>i<span class="op">]</span><span class="va">}</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">${BASH_LINENO</span><span class="op">[</span>i-1<span class="op">]:-</span><span class="pp">?</span><span class="va">}</span><span class="st">&quot;</span> <span class="op">&gt;&amp;</span><span class="dv">2</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="cf">done</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="fu">middle()</span> <span class="kw">{</span> <span class="ex">print_stack</span><span class="kw">;</span> <span class="kw">}</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="fu">outer()</span>  <span class="kw">{</span> <span class="ex">middle</span><span class="kw">;</span> <span class="kw">}</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="ex">outer</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ stack trace (most recent call first):</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co">#     #0  print_stack () at ./demo:11</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co">#     #1  middle      () at ./demo:18</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co">#     #2  outer       () at ./demo:19</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="co">#     #3  main        () at ./demo:20</span></span></code></pre></div>
+<p>Note the use of <code>BASH_LINENO[i-1]</code> rather than
+<code>[i]</code> — that is the off-by-one mentioned above.
+<code>FUNCNAME</code> ends with <code>main</code> for a script or
+<code>source</code> for a sourced file; <code>BASH_SOURCE</code> at that
+final index is the file&#39;s own path. The trace is RAG-grade information:
+with it the caller knows <em>which</em> invocation produced the failure,
+not merely <em>that</em> it failed.</p>
+<p>For the canonical library version of the self-location idiom, see
+§10.3. For pseudo-signal-based stack traces (ERR trap), see §12.6.</p>
+<p><strong>See also</strong>: §9.10 (naming conventions), §10.1
+(<code>source</code> semantics), §10.3 (self-locating library pattern —
+same idiom), §12.6 (ERR/EXIT pseudo-signals), §13.8 (ERR trap), BCS0103
+(script metadata), BCS0104 (FHS compliance), BCS-bash
+<code>12_03_Shell-Variables.md</code>.</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

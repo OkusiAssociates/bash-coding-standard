@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>05_The-declare-builtin-and-attributes.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">05_The-declare-builtin-and-attributes.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="45-the-declare-builtin-and-attributes">4.5 The
+<code>declare</code> builtin and attributes</h2>
+<p>Every Bash variable carries a set of <em>attributes</em> — a small
+fixed bag of flags that determine its type, scope, mutability, and
+export status. <code>declare</code> (alias <code>typeset</code>) sets
+those attributes; <code>local</code>, <code>readonly</code>,
+<code>export</code>, and <code>nameref</code> are conventional spellings
+of common combinations. Attributes are the only static type system Bash
+has, and the BCS rule is to use them everywhere a variable is
+introduced.</p>
+<h3 id="attribute-reference">Attribute reference</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Flag</th>
+<th>Meaning</th>
+<th>Mutual exclusion</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>--</code></td>
+<td>Terminate option processing; declare with no extra attribute (just a
+string)</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td><code>-i</code></td>
+<td>Integer; assignments are evaluated as arithmetic</td>
+<td>excludes <code>-a</code>/<code>-A</code> value semantics on RHS</td>
+</tr>
+<tr class="odd">
+<td><code>-a</code></td>
+<td>Indexed array</td>
+<td>mutually exclusive with <code>-A</code></td>
+</tr>
+<tr class="even">
+<td><code>-A</code></td>
+<td>Associative array</td>
+<td>mutually exclusive with <code>-a</code></td>
+</tr>
+<tr class="odd">
+<td><code>-r</code></td>
+<td>Readonly (immutable thereafter)</td>
+<td>applies on top of any other attribute</td>
+</tr>
+<tr class="even">
+<td><code>-x</code></td>
+<td>Export to the environment of children</td>
+<td>applies on top of any other attribute</td>
+</tr>
+<tr class="odd">
+<td><code>-l</code></td>
+<td>Convert value to lowercase on assignment</td>
+<td>mutually exclusive with <code>-u</code></td>
+</tr>
+<tr class="even">
+<td><code>-u</code></td>
+<td>Convert value to uppercase on assignment</td>
+<td>mutually exclusive with <code>-l</code></td>
+</tr>
+<tr class="odd">
+<td><code>-n</code></td>
+<td>Nameref — value is the <em>name</em> of another variable
+(§4.11)</td>
+<td>replaces other type flags on the ref itself</td>
+</tr>
+<tr class="even">
+<td><code>-t</code></td>
+<td>Function trace flag (only meaningful for functions)</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td><code>-g</code></td>
+<td>Declare a <em>global</em> from inside a function</td>
+<td>combine with any type flag</td>
+</tr>
+<tr class="even">
+<td><code>-p</code></td>
+<td>Print declarations (introspection only)</td>
+<td>not a type flag</td>
+</tr>
+<tr class="odd">
+<td><code>-f</code>, <code>-F</code></td>
+<td>Operate on functions (<code>-f</code> body, <code>-F</code> name
+only)</td>
+<td>not type flags for variables</td>
+</tr>
+</tbody>
+</table>
+<p><code>declare +X</code> removes attribute <code>X</code>. The
+<code>+</code> form cannot remove <code>-r</code>: once readonly, always
+readonly until process exit.</p>
+<h3 id="worked-examples">Worked examples</h3>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: integer attribute makes RHS arithmetic</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-i</span> <span class="va">count</span><span class="op">=</span>0</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="va">count</span><span class="op">=</span><span class="st">&#39;2 + 3&#39;</span>           <span class="co"># ⇒ count=5  (arithmetic context applied)</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="va">count</span><span class="op">=</span>0xff              <span class="co"># ⇒ count=255</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="va">count</span><span class="op">=</span><span class="st">&#39;abc&#39;</span>             <span class="co"># ⇒ count=0  (non-numeric reduces to 0)</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-p</span> <span class="va">count</span>        <span class="co"># ⇒ declare -i count=&quot;0&quot;</span></span></code></pre></div>
+<p>The <code>-i</code> attribute makes assignments <strong>silent
+arithmetic</strong> — usually desired for counters, occasionally
+surprising when a string sneaks through. Pair with <code>set -u</code>
+and explicit defaults; never feed user-controlled data into an
+<code>-i</code> variable without validation.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: indexed and associative arrays</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">words</span><span class="op">=</span><span class="va">(</span>alpha beta gamma<span class="va">)</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="va">words</span><span class="op">+=</span><span class="va">(</span>delta<span class="va">)</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-p</span> <span class="va">words</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ declare -a words=([0]=&quot;alpha&quot; [1]=&quot;beta&quot; [2]=&quot;gamma&quot; [3]=&quot;delta&quot;)</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-A</span> <span class="va">by_id</span><span class="op">=</span><span class="va">(</span><span class="op">[</span>alice<span class="op">]</span><span class="va">=</span>42 <span class="op">[</span>bob<span class="op">]</span><span class="va">=</span>17<span class="va">)</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="va">by_id</span><span class="op">[</span>carol<span class="op">]=</span>99</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-p</span> <span class="va">by_id</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ declare -A by_id=([alice]=&quot;42&quot; [bob]=&quot;17&quot; [carol]=&quot;99&quot;)</span></span></code></pre></div>
+<p>The associative array <strong>must</strong> be declared before first
+use — there is no implicit conversion; assigning to an undeclared name
+creates an indexed array with index <code>0</code>, silently masking the
+bug.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: combining attributes — the BCS idiom for a readonly array</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-ar</span> <span class="va">VALID_TIERS</span><span class="op">=</span><span class="va">(</span>core recommended style disabled<span class="va">)</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: nameref for output parameters</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="fu">get_user()</span> <span class="kw">{</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">-n</span> <span class="va">out</span><span class="op">=</span><span class="va">$1</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="va">out</span><span class="op">=</span><span class="st">&#39;alice&#39;</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">name</span><span class="op">=</span><span class="st">&#39;&#39;</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="ex">get_user</span> name</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;%s\n&#39;</span> <span class="st">&quot;</span><span class="va">$name</span><span class="st">&quot;</span>   <span class="co"># ⇒ alice</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: explicit export</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-x</span> <span class="va">PATH</span><span class="op">=</span><span class="st">&quot;/usr/local/bin:</span><span class="va">$PATH</span><span class="st">&quot;</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-rx</span> <span class="va">FROZEN_VERSION</span><span class="op">=</span><span class="st">&#39;1.0.0&#39;</span>   <span class="co"># readonly + exported in one statement</span></span></code></pre></div>
+<h3 id="combining-attributes--order-and-precedence">Combining attributes
+— order and precedence</h3>
+<ul>
+<li><code>-r</code> and <code>-x</code> <em>stack</em> on top of any
+type flag: <code>declare -ax CFG=(…)</code> exports an indexed array to
+children; <code>declare -ir N=42</code> is a readonly integer.</li>
+<li><code>-l</code>/<code>-u</code> apply on assignment, after
+expansion. They affect the stored value, not just display.</li>
+<li><code>-i</code> overrides RHS interpretation:
+<code>declare -i x=&#39;2+3&#39;</code> stores <code>5</code>, not the string
+<code>2+3</code>.</li>
+<li><code>-n</code> is <strong>special</strong>: it makes the variable a
+reference. Combining <code>-n</code> with <code>-i</code> or
+<code>-a</code> is meaningless — the type comes from the
+<em>target</em>. Always declare the nameref alone:
+<code>local -n ref=$1</code>.</li>
+</ul>
+<h3 id="-g--declaring-a-global-from-inside-a-function"><code>-g</code> —
+declaring a global from inside a function</h3>
+<p>By default a <code>declare</code> inside a function creates a
+<em>local</em>. The <code>-g</code> flag forces a global declaration
+with the given attributes — useful for one-time initialisation
+routines.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">init_cache()</span> <span class="kw">{</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="bu">declare</span> <span class="at">-gA</span> <span class="va">CACHE</span><span class="op">=</span><span class="va">()</span>        <span class="co"># global associative array</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="bu">declare</span> <span class="at">-gi</span> <span class="va">CACHE_HITS</span><span class="op">=</span>0    <span class="co"># global integer counter</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="ex">init_cache</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="va">CACHE</span><span class="op">[</span>key<span class="op">]=</span>value              <span class="co"># accessible at script scope</span></span></code></pre></div>
+<h3 id="pitfalls">Pitfalls</h3>
+<ul>
+<li><strong>Assigning to an undeclared associative array</strong>
+silently creates an <em>indexed</em> array.
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># wrong</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="va">m</span><span class="op">[</span>alice<span class="op">]=</span>42                 <span class="co"># creates indexed array; &#39;alice&#39; evaluates to 0</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># right</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-A</span> <span class="va">m</span><span class="op">=</span><span class="va">(</span><span class="op">[</span>alice<span class="op">]</span><span class="va">=</span>42<span class="va">)</span></span></code></pre></div></li>
+<li><strong>Removing attributes</strong> with <code>+</code>:
+<code>declare +i x</code> removes <code>-i</code> but cannot remove
+<code>-r</code>. There is no <code>+r</code>.</li>
+<li><strong><code>declare</code> inside a function without
+<code>-g</code></strong> is local even when the variable name was
+previously a global — you have shadowed the global.</li>
+<li><strong>Spaces are forbidden</strong> around <code>=</code> in any
+declaration: <code>declare x = 1</code> is parsed as the command
+<code>declare</code> with three operands.</li>
+<li><strong>Attribute persistence on append</strong>:
+<code>arr+=( … )</code> preserves attributes; <code>arr=( … )</code>
+does <strong>not</strong> clear them. Once an array is associative, it
+stays associative until <code>unset</code>.</li>
+</ul>
+<h3 id="introspection-declare--p">Introspection:
+<code>declare -p</code></h3>
+<p><code>declare -p name</code> prints a re-loadable declaration of
+<code>name</code>, including its attributes. <code>declare -p</code>
+with no name lists every variable. Combining with
+<code>grep</code>/<code>compgen</code> is the standard debugging
+technique when a value is &quot;wrong&quot; — print the declaration to see the
+attribute set.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: introspecting attributes during debugging</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-ir</span> <span class="va">MAX</span><span class="op">=</span>100</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-ax</span> <span class="va">PATHS</span><span class="op">=</span><span class="va">(</span>/usr/bin /bin<span class="va">)</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-A</span> <span class="va">MAP</span><span class="op">=</span><span class="va">(</span><span class="op">[</span>a<span class="op">]</span><span class="va">=</span>1 <span class="op">[</span>b<span class="op">]</span><span class="va">=</span>2<span class="va">)</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-p</span> <span class="va">MAX</span> <span class="va">PATHS</span> <span class="va">MAP</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ declare -ir MAX=&quot;100&quot;</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ declare -ax PATHS=([0]=&quot;/usr/bin&quot; [1]=&quot;/bin&quot;)</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ declare -A MAP=([a]=&quot;1&quot; [b]=&quot;2&quot; )</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter all readonly variables visible to the script:</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-p</span> <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-E</span> <span class="st">&#39;^declare -[^ ]*r &#39;</span></span></code></pre></div>
+<p><code>declare -F</code> lists <em>all</em> defined function names;
+<code>declare -F name</code> prints just one;
+<code>declare -f name</code> prints the function body. Together with
+<code>compgen -A function</code> they cover every common discovery
+use.</p>
+<h3 id="inheritance-via-local">Inheritance via <code>local</code></h3>
+<p>When a function calls <code>local name</code> <em>without</em> an
+attribute, and <code>name</code> already exists at script scope, the
+local <strong>inherits</strong> the global&#39;s attributes. This is rarely
+the intent — write <code>local --</code> (or the specific attribute you
+mean) to re-declare cleanly:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: silent attribute inheritance</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-i</span> <span class="va">counter</span><span class="op">=</span>0          <span class="co"># integer at script scope</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="fu">increment()</span> <span class="kw">{</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="va">counter</span>               <span class="co"># inherits -i ⇒ RHS is arithmetic</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="va">counter</span><span class="op">=</span><span class="st">&#39;2 + 3&#39;</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">&#39;%d\n&#39;</span> <span class="st">&quot;</span><span class="va">$counter</span><span class="st">&quot;</span>    <span class="co"># ⇒ 5  (probably not what you wanted)</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="fu">increment_clean()</span> <span class="kw">{</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">--</span> <span class="va">counter</span>            <span class="co"># explicit string; -i not inherited</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>  <span class="va">counter</span><span class="op">=</span><span class="st">&#39;2 + 3&#39;</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">&#39;%s\n&#39;</span> <span class="st">&quot;</span><span class="va">$counter</span><span class="st">&quot;</span>    <span class="co"># ⇒ 2 + 3</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span></code></pre></div>
+<p>The <code>local --</code> form is the BCS standard precisely because
+it severs this attribute-inheritance dependency on the global
+namespace.</p>
+<h3 id="see-also">See also</h3>
+<ul>
+<li>§4.6 — <code>local</code> (a function-scoped
+<code>declare</code>)</li>
+<li>§4.7 — <code>readonly</code> (the <code>-r</code> attribute
+alone)</li>
+<li>§4.8 — <code>export</code> (the <code>-x</code> attribute
+alone)</li>
+<li>§4.9, §4.10 — array creation and indexing details</li>
+<li>§4.11 — namerefs and the <code>-n</code> attribute in depth</li>
+<li>BCS0201 (type-specific declarations), BCS0202 (variable
+scoping)</li>
+</ul>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>04_set-u-nounset.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">04_set-u-nounset.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="134-set--u-nounset">13.4 <code>set -u</code> (nounset)</h2>
+<p><code>set -u</code> (equivalently <code>set -o nounset</code>) treats
+any reference to an unset variable as an error: bash prints
+<code>unbound variable</code> to stderr, returns non-zero status, and
+(under <code>set -e</code>) exits. It is the second leg of the
+strict-mode tripod (with <code>errexit</code> and <code>pipefail</code>)
+and the cheapest single defence against typo-introduced bugs.</p>
+<h3 id="what-counts-as-unset">What counts as &quot;unset&quot;</h3>
+<p>Unset means the variable was never assigned, was explicitly
+<code>unset</code>, or is a positional parameter (<code>$1</code>,
+<code>$2</code>, …) that does not exist. <em>Empty</em> is not unset:
+<code>var=&quot;&quot;</code> declares the name and leaves it empty;
+<code>echo &quot;$var&quot;</code> is fine under <code>set -u</code>. A
+<code>declare</code>d variable with no value is also &quot;set to empty&quot; and
+not flagged.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: unset vs empty under set -u</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail<span class="kw">;</span> <span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">empty</span><span class="op">=</span><span class="st">&quot;&quot;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;empty: [</span><span class="va">$empty</span><span class="st">]&quot;</span>         <span class="co"># ⇒ empty: []   — empty is set; no error</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="bu">unset</span> <span class="va">empty</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;unset: [</span><span class="va">$empty</span><span class="st">]&quot;</span>         <span class="co"># ⇒ unbound variable; EXITS</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Positional parameters:</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;first: [</span><span class="va">$1</span><span class="st">]&quot;</span>             <span class="co"># ⇒ unbound if no $1 was passed</span></span></code></pre></div>
+<p><code>declare -- name</code> (or <code>local -- name</code>) without
+an <code>=</code> <em>does</em> set the variable to empty in current
+bash; relying on this is portable to bash 4.0+. Do not assume
+<code>declare -- name</code> leaves the variable in an unset state — it
+does not.</p>
+<h3 id="default-expansion-forms">Default-expansion forms</h3>
+<p>The parameter-expansion family is the canonical way to read a
+possibly- unset variable without disabling <code>set -u</code>:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Form</th>
+<th>Behaviour when unset</th>
+<th>Behaviour when empty</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>${var}</code></td>
+<td>error under <code>set -u</code></td>
+<td>empty string</td>
+</tr>
+<tr class="even">
+<td><code>${var-default}</code></td>
+<td>yields <code>default</code></td>
+<td>empty string</td>
+</tr>
+<tr class="odd">
+<td><code>${var:-default}</code></td>
+<td>yields <code>default</code></td>
+<td>yields <code>default</code></td>
+</tr>
+<tr class="even">
+<td><code>${var=default}</code></td>
+<td>sets <em>and</em> yields <code>default</code></td>
+<td>empty string</td>
+</tr>
+<tr class="odd">
+<td><code>${var:=default}</code></td>
+<td>sets <em>and</em> yields <code>default</code></td>
+<td>sets <em>and</em> yields <code>default</code></td>
+</tr>
+<tr class="even">
+<td><code>${var?msg}</code></td>
+<td>error with <code>msg</code>, exits</td>
+<td>empty string</td>
+</tr>
+<tr class="odd">
+<td><code>${var:?msg}</code></td>
+<td>error with <code>msg</code>, exits</td>
+<td>error with <code>msg</code>, exits</td>
+</tr>
+<tr class="even">
+<td><code>[[ -v var ]]</code></td>
+<td>tests &quot;is it set?&quot;</td>
+<td>tests &quot;is it set?&quot; (returns true)</td>
+</tr>
+</tbody>
+</table>
+<p>The <code>:-</code> form is the one used in BCS templates for &quot;may be
+unset, treat as empty&quot; — <code>&quot;${OPTION:-}&quot;</code> is the standard way
+to test or pass an optional flag without tripping <code>set -u</code>.
+The <code>:?</code> form is the canonical &quot;required argument&quot; assertion:
+<code>: &quot;${1:?usage: foo PATH}&quot;</code>.</p>
+<p><code>[[ -v var ]]</code> is bash 4.2+ and is the cleanest
+<em>test</em> form: it asks &quot;is this name bound?&quot; without consuming the
+value. Use it where the question is set-vs-unset rather than
+empty-vs-non-empty.</p>
+<h3 id="array-gotchas">Array gotchas</h3>
+<p>The most-tripped-over <code>set -u</code> rule concerns arrays. A
+<em>declared but empty</em> array indexed by <code>[@]</code> or
+<code>[*]</code> errors under <code>set -u</code>. This is the array
+equivalent of &quot;unbound variable&quot;, and bites every script that iterates
+over a result array that <em>might</em> be empty.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: empty-array iteration under set -u</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail<span class="kw">;</span> <span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">results</span><span class="op">=</span><span class="va">()</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> x <span class="kw">in</span> <span class="st">&quot;</span><span class="va">${results</span><span class="op">[@]</span><span class="va">}</span><span class="st">&quot;</span><span class="kw">;</span> <span class="cf">do</span>          <span class="co"># ⇒ ERROR: results[@]: unbound variable</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">&quot;</span><span class="va">$x</span><span class="st">&quot;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Fix: default-expand the array</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> x <span class="kw">in</span> <span class="st">&quot;</span><span class="va">${results</span><span class="op">[@]:-</span><span class="va">}</span><span class="st">&quot;</span><span class="kw">;</span> <span class="cf">do</span>        <span class="co"># ⇒ loop runs zero times, no error</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">&quot;</span><span class="va">$x</span><span class="st">&quot;</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Or, gate the loop:</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">((</span> <span class="va">${</span><span class="op">#</span><span class="va">results</span><span class="op">[@]</span><span class="va">}</span> <span class="kw">));</span> <span class="cf">then</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> x <span class="kw">in</span> <span class="st">&quot;</span><span class="va">${results</span><span class="op">[@]</span><span class="va">}</span><span class="st">&quot;</span><span class="kw">;</span> <span class="cf">do</span> <span class="bu">echo</span> <span class="st">&quot;</span><span class="va">$x</span><span class="st">&quot;</span><span class="kw">;</span> <span class="cf">done</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="cf">fi</span></span></code></pre></div>
+<p>The <code>${arr[@]:-}</code> workaround substitutes a single empty
+element when the array is empty; for a true zero-iteration loop, the
+explicit length-gate is cleaner. BCS0206 prefers the gate form for
+clarity.</p>
+<p>Similarly, <code>&quot;${arr[i]}&quot;</code> errors when index <code>i</code>
+is unset; use <code>&quot;${arr[i]:-}&quot;</code> if the slot may be vacant.</p>
+<h3 id="positional-parameter-exception">Positional-parameter
+exception</h3>
+<p><code>$@</code> and <code>$*</code> do <strong>not</strong> error
+under <code>set -u</code> when the script was invoked with no arguments;
+they expand to nothing. This is intentional —
+<code>for arg in &quot;$@&quot;; do ...; done</code> must work for zero-arg
+scripts. However, <em>individual</em> positionals (<code>$1</code>,
+<code>$2</code>, …) error if not set:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: positional handling</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail<span class="kw">;</span> <span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">foo()</span> <span class="kw">{</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="bu">:</span> <span class="st">&quot;</span><span class="va">${1</span><span class="op">:?</span>missing PATH argument<span class="va">}</span><span class="st">&quot;</span>     <span class="co"># required: error with msg if unset</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">--</span> <span class="va">input</span><span class="op">=</span><span class="st">&quot;</span><span class="va">$1</span><span class="st">&quot;</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">--</span> <span class="va">output</span><span class="op">=</span><span class="st">&quot;</span><span class="va">${2</span><span class="op">:-</span>/tmp/out<span class="va">}</span><span class="st">&quot;</span>    <span class="co"># optional: default</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">&quot;</span><span class="va">$input</span><span class="st"> -&gt; </span><span class="va">$output</span><span class="st">&quot;</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="ex">foo</span> <span class="st">&quot;</span><span class="va">$@</span><span class="st">&quot;</span>                              <span class="co"># safe; &quot;$@&quot; empty-on-no-args</span></span></code></pre></div>
+<p>This pattern is the BCS-recommended argument validation idiom
+(BCS0803).</p>
+<h3 id="interaction-with-localdeclare">Interaction with
+<code>local</code>/<code>declare</code></h3>
+<p>A <code>local -- name</code> inside a function brings
+<code>name</code> into scope; if you read it before assigning a value,
+the rule depends on bash version. In modern bash (4.4+),
+<code>local -- name</code> initialises to empty and <code>set -u</code>
+will not flag a read. Do not rely on this for clarity — assign at
+declaration: <code>local -- name=&quot;&quot;</code>.</p>
+<p><code>local -n ref=other</code> (nameref) under <code>set -u</code>
+errors if <code>other</code> is unset <em>at the time the nameref is
+dereferenced</em>, not at declaration.</p>
+<h3 id="when-to-disable">When to disable</h3>
+<p>Almost never. The only legitimate reasons are:</p>
+<ul>
+<li>Sourcing a third-party file that violates <code>set -u</code> and
+cannot be patched: wrap in
+<code>set +u; source file; set -u</code>.</li>
+<li>A specific block reading completion-style data where unbound is the
+signalling convention. Document the disable.</li>
+</ul>
+<p><code>set +u</code> and <code>set -u</code> may be toggled at any
+point. Prefer to bracket the violation as narrowly as possible.</p>
+<h3 id="practical-guidance">Practical guidance</h3>
+<p>The BCS strict-mode preamble enables <code>set -u</code>
+unconditionally. Combined with explicit
+<code>declare</code>/<code>local --</code> (BCS0201) at the top of every
+function, <code>set -u</code> reduces typo bugs to zero —
+<code>if [[ $resluts ]];</code> errors immediately rather than silently
+testing an empty string.</p>
+<p><strong>See also</strong>: §13.2 (errexit), §13.9 (strict-mode
+contract), §13.11 (propagation), BCS0101 (strict mode), BCS0201
+(type-specific declarations), BCS0206 (arrays), BCS0803 (argument
+validation), BCS-bash <code>13_03_Parameter-Expansion.md</code>.</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

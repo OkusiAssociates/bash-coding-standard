@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>01_source-semantics.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">01_source-semantics.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="101-source-semantics">10.1 <code>source</code> semantics</h2>
+<p><code>source file</code> (POSIX alias <code>.</code>) executes
+<code>file</code> in the <em>current</em> shell&#39;s environment. Every
+variable assignment, function definition, trap installation, alias, and
+shell-option toggle made by the sourced file persists in the caller
+after sourcing returns. This is the mechanism that makes bash libraries
+possible: the library file is a script that, when sourced, populates the
+caller&#39;s namespace.</p>
+<p>This chapter is the <strong>canonical owner</strong> of the
+strict-mode propagation, <code>return</code>-versus-<code>exit</code>
+asymmetry, and Greg-canonical sourcing-idiom material. Other chapters
+(e.g. §10.4 on idempotent guards, §10.3 on self-location) reference this
+chapter rather than restating it.</p>
+<h3 id="the-basic-mechanics">The basic mechanics</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Property</th>
+<th>Behaviour</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Aliases</td>
+<td><code>.</code> (POSIX) and <code>source</code> (bash). Identical
+effect.</td>
+</tr>
+<tr class="even">
+<td>Path search</td>
+<td>If the filename contains no <code>/</code>, bash searches
+<code>$PATH</code>. With a slash (relative or absolute), the path is
+used verbatim.</td>
+</tr>
+<tr class="odd">
+<td>Executable bit</td>
+<td>Not required. The file is read, not exec&#39;d.</td>
+</tr>
+<tr class="even">
+<td>Persistence</td>
+<td>All shell-state changes (variables, functions, traps, aliases,
+<code>shopt</code>) survive sourcing.</td>
+</tr>
+<tr class="odd">
+<td>Arguments</td>
+<td><code>source file arg1 arg2</code> sets the file&#39;s positional
+parameters during sourcing; the caller&#39;s <code>$@</code> is restored on
+return.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="strict-mode-propagation-the-set--e-trap">Strict-mode
+propagation: the <code>set -e</code> trap</h3>
+<p>The single most under-documented fact about <code>source</code> is
+that the sourced file inherits the caller&#39;s strict-mode flags.
+<code>set -e</code> is <em>on</em> inside the sourced file if the caller
+has it on; a non-zero status from any unchecked simple command in the
+sourced file will exit the <em>caller&#39;s</em> shell.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: set -e in the caller propagates into the sourced file</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># --- caller.bash ---</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&#39;before source&#39;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="bu">source</span> ./lib.sh</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&#39;after source&#39;</span>                     <span class="co"># unreachable</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># --- lib.sh ---</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&#39;inside lib&#39;</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">false</span>                                   <span class="co"># ⇒ caller exits here, status 1</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&#39;lib continued&#39;</span>                    <span class="co"># never executed</span></span></code></pre></div>
+<p>The mistake is to write a library assuming &quot;errors will be silent
+because I am only being sourced.&quot; Under strict mode they are
+emphatically not silent. Library authors must therefore either (a) audit
+every command for failure modes, or (b) wrap risky sections with
+<code>|| true</code> / <code>|| return N</code> to inspect the status
+explicitly.</p>
+<h3 id="return-versus-exit-inside-a-sourced-file"><code>return</code>
+versus <code>exit</code> inside a sourced file</h3>
+<p>The two commands mean different things and mixing them is a landmine.
+<code>return</code> at the top level of a sourced file terminates
+<em>sourcing</em> and hands control back to the caller — the caller&#39;s
+shell keeps running. <code>exit</code> ends the <em>caller&#39;s</em> shell
+entirely, regardless of how deeply nested the sourcing is.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: return vs exit asymmetry in a sourced file</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co"># --- caller.bash ---</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="bu">source</span> ./lib.sh                         <span class="co"># see two variants below</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&#39;caller continues&#39;</span>                 <span class="co"># only printed for the return-form</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># --- lib.sh — variant A: return ---</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&#39;lib starting&#39;</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="kw">[[</span> <span class="ot">-r</span> /etc/myapp.conf <span class="kw">]]</span> <span class="kw">||</span> <span class="cf">return</span> <span class="dv">0</span>    <span class="co"># ⇒ caller prints &quot;caller continues&quot;</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&#39;lib loaded conf&#39;</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co"># --- lib.sh — variant B: exit ---</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&#39;lib starting&#39;</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="kw">[[</span> <span class="ot">-r</span> /etc/myapp.conf <span class="kw">]]</span> <span class="kw">||</span> <span class="bu">exit</span> 0      <span class="co"># ⇒ caller&#39;s shell exits, &quot;caller continues&quot; never printed</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&#39;lib loaded conf&#39;</span></span></code></pre></div>
+<p>The rule of thumb: <strong><code>return</code> from a sourced file,
+never <code>exit</code></strong>, unless the library has detected a
+state so corrupt that the caller <em>must</em> be terminated. The 1-line
+guard <code>return 0</code> is harmless; <code>exit 0</code> from a
+library kills any interactive shell that happened to source it for
+autocompletion. Library authors who follow this convention can safely be
+sourced from <code>~/.bashrc</code>.</p>
+<h3 id="the-greg-canonical-sourcing-idiom">The Greg-canonical sourcing
+idiom</h3>
+<p>The pattern below is the bash community&#39;s accepted shape for a
+library file. It combines an idempotent re-source guard, a strict-mode
+propagation acknowledgement, the function-prefix namespace convention
+(§10.5), and a <code>return</code>-not-<code>exit</code> discipline.
+Every BCS library should match this skeleton.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: full library skeleton — idempotent, strict-mode-aware, return-discipline</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co"># /usr/local/lib/myapp/strings.sh</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># strings.sh — string utilities for myapp.</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Reject direct execution: this file is meant to be sourced.</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="kw">[[</span> <span class="va">${BASH_SOURCE</span><span class="op">[</span><span class="dv">0</span><span class="op">]</span><span class="va">}</span> <span class="ot">!=</span> <span class="st">&quot;</span><span class="va">$0</span><span class="st">&quot;</span> <span class="kw">]]</span> <span class="kw">||</span> <span class="kw">{</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="op">&gt;&amp;</span><span class="dv">2</span> <span class="bu">echo</span> <span class="st">&quot;Error: </span><span class="va">${BASH_SOURCE</span><span class="op">[</span><span class="dv">0</span><span class="op">]</span><span class="va">}</span><span class="st"> must be sourced, not executed&quot;</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="bu">exit</span> 1                                <span class="co"># exit is correct here — we are NOT sourced</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Idempotent guard: re-sourcing is a no-op (§10.4).</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="kw">[[</span> <span class="va">${MYAPP_STRINGS_LOADED</span><span class="op">:-</span>0<span class="va">}</span> <span class="ot">-eq</span> 1 <span class="kw">]]</span> <span class="kw">&amp;&amp;</span> <span class="cf">return</span> <span class="dv">0</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-gri</span> <span class="va">MYAPP_STRINGS_LOADED</span><span class="op">=</span>1     <span class="co"># -g because we may be inside a function (§10.8)</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Acknowledge that set -e from the caller is in force here.</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Library code must not assume the unchecked command &quot;just continues&quot;.</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Use `|| return N` for any command whose failure should bail out of sourcing.</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a><span class="co"># --- public API (namespace-prefixed, §10.5) ---</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="fu">myapp_strings_upper()</span> <span class="kw">{</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">--</span> <span class="va">s</span><span class="op">=</span><span class="st">&quot;</span><span class="va">${1</span><span class="op">:?</span>usage: myapp_strings_upper STRING<span class="va">}</span><span class="st">&quot;</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">&#39;%s&#39;</span> <span class="st">&quot;</span><span class="va">${s</span><span class="op">^^</span><span class="va">}</span><span class="st">&quot;</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a><span class="fu">myapp_strings_lower()</span> <span class="kw">{</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">--</span> <span class="va">s</span><span class="op">=</span><span class="st">&quot;</span><span class="va">${1</span><span class="op">:?</span>usage: myapp_strings_lower STRING<span class="va">}</span><span class="st">&quot;</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">&#39;%s&#39;</span> <span class="st">&quot;</span><span class="va">${s</span><span class="op">,,</span><span class="va">}</span><span class="st">&quot;</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a><span class="co"># --- private helpers (single-underscore prefix, §10.6) ---</span></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a><span class="fu">_myapp_strings_assert_nonempty()</span> <span class="kw">{</span></span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>  <span class="kw">[[</span> <span class="ot">-n</span> <span class="va">${1</span><span class="op">:-</span><span class="va">}</span> <span class="kw">]]</span> <span class="kw">||</span> <span class="cf">return</span> <span class="dv">1</span></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a><span class="co"># Optional: export public functions if subshells must see them (§9.9).</span></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a><span class="co"># declare -fx myapp_strings_upper myapp_strings_lower</span></span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a><span class="co"># Successful end-of-file: implicit `return 0`. Never `exit`.</span></span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a><span class="co">#fin</span></span></code></pre></div>
+<p>Three notes on the skeleton. The <code>BASH_SOURCE[0] != &quot;$0&quot;</code>
+guard correctly uses <code>exit</code> when triggered, because in that
+branch the file <em>is</em> being executed directly and
+<code>return</code> would itself fail (&quot;can only <code>return</code>
+from a function or sourced script&quot;). The idempotent guard uses
+<code>declare -gri</code> so the flag survives even when the library is
+sourced for the first time <em>inside</em> a function (§10.8). The
+end-of-file is bare — bash treats it as <code>return 0</code>, which is
+what every successful library load should yield.</p>
+<h3 id="file-arguments-to-source">File arguments to
+<code>source</code></h3>
+<p><code>source file arg1 arg2</code> makes <code>arg1</code>,
+<code>arg2</code> available as <code>$1</code>, <code>$2</code> during
+the file&#39;s execution. The caller&#39;s positional parameters are restored
+when sourcing returns. This mechanism is occasionally useful for
+plugin-style libraries that want a configuration token without
+introducing a global.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: positional parameters during sourcing</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># --- plugin.sh ---</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;plugin called with: </span><span class="va">$1</span><span class="st">&quot;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># --- caller.bash ---</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">--</span> one two three</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="bu">source</span> ./plugin.sh foo                  <span class="co"># plugin sees $1=foo</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;caller still has: </span><span class="va">$1</span><span class="st">&quot;</span>             <span class="co"># ⇒ caller still has: one</span></span></code></pre></div>
+<p>The pattern is rare in BCS code; configuration is usually carried in
+environment variables to avoid the implicit ordering contract.</p>
+<p><strong>See also</strong>: §10.2 (<code>BASH_SOURCE</code> array
+detail), §10.3 (self-locating library pattern), §10.4 (idempotent
+guards), §10.5 (namespace prefixes), §10.8 (lazy loading and
+<code>declare -g</code>), §9.9 (exporting functions), §13.2
+(<code>set -e</code> semantics), BCS0101 (strict mode), BCS0407 (library
+patterns), BCS-bash <code>30_02_dot-source.md</code>.</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

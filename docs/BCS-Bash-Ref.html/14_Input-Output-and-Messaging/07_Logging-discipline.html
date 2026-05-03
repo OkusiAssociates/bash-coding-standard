@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>07_Logging-discipline.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">07_Logging-discipline.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="147-logging-discipline">14.7 Logging discipline</h2>
+<p>Every non-trivial script needs a small set of diagnostic helpers:
+<code>info</code>, <code>success</code>, <code>warn</code>,
+<code>error</code>, <code>die</code>. The BCS canonical implementation
+(BCS0703) is a single <code>_msg</code> core that dispatches by icon
+argument, with per-level wrappers. All output goes to stderr (§14.1) so
+the script remains pipe-composable.</p>
+<h3 id="canonical-implementation">Canonical implementation</h3>
+<p>The pattern below is lifted verbatim from the BCS reference scripts.
+The whole messaging suite is roughly 15 lines:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/bin/bash</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-r</span> <span class="va">SCRIPT_NAME</span><span class="op">=</span><span class="va">${0</span><span class="op">##</span><span class="pp">*</span>/<span class="va">}</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-i</span> <span class="va">VERBOSE</span><span class="op">=</span>1 <span class="va">DEBUG</span><span class="op">=</span>0</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Colour init — see §14.9 (BCS0706)</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">[[</span> <span class="ot">-t</span> 1 <span class="kw">&amp;&amp;</span> <span class="ot">-t</span> 2 <span class="kw">]];</span> <span class="cf">then</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="bu">declare</span> <span class="at">-r</span> <span class="va">RED</span><span class="op">=</span><span class="st">$&#39;</span><span class="dt">\033</span><span class="st">[0;31m&#39;</span> <span class="va">GREEN</span><span class="op">=</span><span class="st">$&#39;</span><span class="dt">\033</span><span class="st">[0;32m&#39;</span> <span class="va">YELLOW</span><span class="op">=</span><span class="st">$&#39;</span><span class="dt">\033</span><span class="st">[0;33m&#39;</span> <span class="dt">\</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>             <span class="va">CYAN</span><span class="op">=</span><span class="st">$&#39;</span><span class="dt">\033</span><span class="st">[0;36m&#39;</span> <span class="va">NC</span><span class="op">=</span><span class="st">$&#39;</span><span class="dt">\033</span><span class="st">[0m&#39;</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  <span class="bu">declare</span> <span class="at">-r</span> <span class="va">RED</span><span class="op">=</span><span class="st">&#39;&#39;</span> <span class="va">GREEN</span><span class="op">=</span><span class="st">&#39;&#39;</span> <span class="va">YELLOW</span><span class="op">=</span><span class="st">&#39;&#39;</span> <span class="va">CYAN</span><span class="op">=</span><span class="st">&#39;&#39;</span> <span class="va">NC</span><span class="op">=</span><span class="st">&#39;&#39;</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="cf">fi</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="fu">_msg()</span>    <span class="kw">{</span> <span class="op">&gt;&amp;</span><span class="dv">2</span> <span class="bu">printf</span> <span class="st">&quot;</span><span class="va">$SCRIPT_NAME</span><span class="st">: </span><span class="va">$1</span><span class="st"> %s\n&quot;</span> <span class="st">&quot;</span><span class="va">${@</span><span class="op">:</span><span class="dv">2</span><span class="va">}</span><span class="st">&quot;</span><span class="kw">;</span> <span class="kw">}</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="fu">error()</span>   <span class="kw">{</span> <span class="ex">_msg</span> <span class="st">&quot;</span><span class="va">$RED</span><span class="st">✗</span><span class="va">$NC</span><span class="st">&quot;</span>     <span class="st">&quot;</span><span class="va">$@</span><span class="st">&quot;</span><span class="kw">;</span> <span class="kw">}</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="fu">die()</span>     <span class="kw">{</span> <span class="kw">((</span><span class="va">$#</span> <span class="op">&lt;</span> <span class="dv">2</span><span class="kw">))</span> <span class="kw">||</span> <span class="ex">error</span> <span class="st">&quot;</span><span class="va">${@</span><span class="op">:</span><span class="dv">2</span><span class="va">}</span><span class="st">&quot;</span><span class="kw">;</span> <span class="bu">exit</span> <span class="st">&quot;</span><span class="va">${1</span><span class="op">:-</span>0<span class="va">}</span><span class="st">&quot;</span><span class="kw">;</span> <span class="kw">}</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="fu">warn()</span>    <span class="kw">{</span> <span class="ex">_msg</span> <span class="st">&quot;</span><span class="va">$YELLOW</span><span class="st">▲</span><span class="va">$NC</span><span class="st">&quot;</span>  <span class="st">&quot;</span><span class="va">$@</span><span class="st">&quot;</span><span class="kw">;</span> <span class="kw">}</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="fu">info()</span>    <span class="kw">{</span> <span class="kw">((</span><span class="va">VERBOSE</span><span class="kw">))</span> <span class="kw">||</span> <span class="cf">return</span> <span class="dv">0</span><span class="kw">;</span> <span class="ex">_msg</span> <span class="st">&quot;</span><span class="va">$CYAN</span><span class="st">◉</span><span class="va">$NC</span><span class="st">&quot;</span>   <span class="st">&quot;</span><span class="va">$@</span><span class="st">&quot;</span><span class="kw">;</span> <span class="kw">}</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="fu">success()</span> <span class="kw">{</span> <span class="kw">((</span><span class="va">VERBOSE</span><span class="kw">))</span> <span class="kw">||</span> <span class="cf">return</span> <span class="dv">0</span><span class="kw">;</span> <span class="ex">_msg</span> <span class="st">&quot;</span><span class="va">$GREEN</span><span class="st">✓</span><span class="va">$NC</span><span class="st">&quot;</span>  <span class="st">&quot;</span><span class="va">$@</span><span class="st">&quot;</span><span class="kw">;</span> <span class="kw">}</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="fu">debug()</span>   <span class="kw">{</span> <span class="kw">((</span><span class="va">DEBUG</span><span class="kw">))</span>   <span class="kw">||</span> <span class="cf">return</span> <span class="dv">0</span><span class="kw">;</span> <span class="ex">_msg</span> <span class="st">&quot;</span><span class="va">${RED}</span><span class="st">DEBUG</span><span class="va">$NC</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">$@</span><span class="st">&quot;</span><span class="kw">;</span> <span class="kw">}</span></span></code></pre></div>
+<h3 id="how-_msg-dispatch-works">How <code>_msg</code> dispatch
+works</h3>
+<p><code>_msg</code> is the only function that touches stdio. Every
+wrapper passes its severity icon as <code>$1</code> and forwards the
+user&#39;s message arguments as <code>${@:2}</code>. Inside
+<code>_msg</code>:</p>
+<ul>
+<li><code>&gt;&amp;2</code> — redirect the entire command to stderr
+(§14.1).</li>
+<li><code>printf &quot;$SCRIPT_NAME: $1 %s\n&quot;</code> — format string carries
+the script name and the icon literally; the message words go through
+<code>%s</code>.</li>
+<li><code>&quot;${@:2}&quot;</code> — every argument from position 2 onward
+becomes its own <code>%s</code>; <code>printf</code> recycles the format
+until inputs are exhausted, so one-liners and multi-arg calls both
+behave correctly.</li>
+</ul>
+<h3 id="behaviour-by-severity">Behaviour by severity</h3>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: typical use throughout a script</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">info</span> <span class="st">&#39;Loading configuration&#39;</span>        <span class="co"># only when VERBOSE=1 (default)</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="ex">success</span> <span class="st">&#39;Imported 42 records&#39;</span>       <span class="co"># only when VERBOSE=1</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="ex">warn</span> <span class="st">&#39;Cache stale; rebuilding&#39;</span>      <span class="co"># always shown</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="ex">error</span> <span class="st">&#39;Connection refused&#39;</span>          <span class="co"># always shown</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="ex">die</span> 22 <span class="st">&#39;Invalid argument:&#39;</span> <span class="st">&quot;</span><span class="va">$1</span><span class="st">&quot;</span>     <span class="co"># always shown, then exits 22</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="ex">debug</span> <span class="st">&quot;PATH=</span><span class="va">$PATH</span><span class="st">&quot;</span>                  <span class="co"># only when DEBUG=1</span></span></code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th>Helper</th>
+<th>Visible when</th>
+<th>Goes to</th>
+<th>Exits?</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>info</code></td>
+<td><code>VERBOSE=1</code></td>
+<td>stderr</td>
+<td>no</td>
+</tr>
+<tr class="even">
+<td><code>success</code></td>
+<td><code>VERBOSE=1</code></td>
+<td>stderr</td>
+<td>no</td>
+</tr>
+<tr class="odd">
+<td><code>warn</code></td>
+<td>always</td>
+<td>stderr</td>
+<td>no</td>
+</tr>
+<tr class="even">
+<td><code>error</code></td>
+<td>always</td>
+<td>stderr</td>
+<td>no</td>
+</tr>
+<tr class="odd">
+<td><code>die</code></td>
+<td>always</td>
+<td>stderr</td>
+<td>yes</td>
+</tr>
+<tr class="even">
+<td><code>debug</code></td>
+<td><code>DEBUG=1</code></td>
+<td>stderr</td>
+<td>no</td>
+</tr>
+</tbody>
+</table>
+<p><code>die N msg ...</code> is the canonical exit helper: first
+argument is the exit code, remaining arguments form the error message.
+Exit codes follow the BCS table (1 general, 2 usage, 22 invalid
+argument, …). <code>die N</code> with no message exits silently — useful
+for terminating without further output.</p>
+<h3 id="invocation-patterns">Invocation patterns</h3>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: pass the script name through automatically</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> myscript <span class="at">--bogus</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="ex">myscript:</span> ✗ Invalid argument <span class="st">&#39;--bogus&#39;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> echo <span class="va">$?</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="ex">22</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: VERBOSE off, only warnings/errors visible</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> VERBOSE=0 myscript</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="ex">myscript:</span> ▲ Cache stale<span class="kw">;</span> <span class="ex">rebuilding</span></span></code></pre></div>
+<p>Note that <code>$SCRIPT_NAME</code> (BCS0102) is referenced at every
+call but expanded once in the format string — efficient and consistent.
+Multi- argument calls produce one line per argument because the format
+is <code>%s\n</code>; pre-format with <code>printf -v</code> if you need
+a single line:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="at">-v</span> line <span class="st">&#39;records=%d errors=%d&#39;</span> <span class="st">&quot;</span><span class="va">$n</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">$err</span><span class="st">&quot;</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="ex">info</span> <span class="st">&quot;</span><span class="va">$line</span><span class="st">&quot;</span></span></code></pre></div>
+<h3 id="why-funcname-dispatch-is-not-used-here">Why FUNCNAME dispatch is
+<em>not</em> used here</h3>
+<p>A common alternative is a single <code>msg</code> function that
+inspects <code>${FUNCNAME[1]}</code> to pick its icon. The BCS pattern
+is simpler: each wrapper passes the icon explicitly. This avoids one
+stack-frame lookup per message and keeps <code>_msg</code> callable from
+anywhere (including subshells where <code>FUNCNAME[1]</code> may be
+empty).</p>
+<h3 id="timestamps-and-structured-logging">Timestamps and structured
+logging</h3>
+<p>For longer-running scripts, prepend a timestamp via
+<code>printf</code>&#39;s <code>%(fmt)T</code> specifier (built-in, no
+<code>date(1)</code> fork):</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: extend _msg with an ISO-8601 timestamp</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">_msg()</span> <span class="kw">{</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="op">&gt;&amp;</span><span class="dv">2</span> <span class="bu">printf</span> <span class="st">&#39;[%(%FT%T%z)T] %s: %s %s\n&#39;</span> <span class="dt">\</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">-1</span> <span class="st">&quot;</span><span class="va">$SCRIPT_NAME</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">$1</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">${*</span><span class="op">:</span><span class="dv">2</span><span class="va">}</span><span class="st">&quot;</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span></code></pre></div>
+<p>The <code>-1</code> argument tells <code>printf</code> to use
+<em>now</em> as the time. For machine-readable output (pipe to
+<code>jq</code>, store in a journal), build a structured logger that
+emits a single JSON line per call — but keep it on stderr so pipelines
+see only data on stdout (§14.1).</p>
+<h3 id="anti-patterns-to-avoid">Anti-patterns to avoid</h3>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># wrong — diagnostic on stdout, breaks pipelines</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;Loading config&quot;</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">$result</span><span class="st">&quot;</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co"># wrong — colour codes hard-coded; breaks log files</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="at">-e</span> <span class="st">&#39;\033[31mERROR\033[0m: failed&#39;</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co"># wrong — multiple bare echoes; no script-name context</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;WARN: cache stale&quot;</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;INFO: rebuilding&quot;</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="co"># right — single helper, stderr, conditional colour</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="ex">warn</span> <span class="st">&#39;cache stale&#39;</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="ex">info</span> <span class="st">&#39;rebuilding&#39;</span></span></code></pre></div>
+<p>A script that uses the BCS messaging suite from line one rarely
+acquires logging bugs — every diagnostic flows through one place.</p>
+<h3 id="see-also">See also</h3>
+<ul>
+<li>§14.1 — stdout/stderr discipline (why diagnostics go to stderr)</li>
+<li>§14.9 — colour init for
+<code>RED</code>/<code>GREEN</code>/etc.</li>
+<li>§14.8 — log levels and <code>VERBOSE</code>/<code>DEBUG</code>
+gating</li>
+<li>BCS0703 (messaging system), BCS0102 (<code>SCRIPT_NAME</code>),
+BCS0706 (colour definitions)</li>
+</ul>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

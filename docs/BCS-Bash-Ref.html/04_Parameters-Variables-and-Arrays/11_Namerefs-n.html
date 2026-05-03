@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>11_Namerefs-n.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">11_Namerefs-n.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="411-namerefs--n">4.11 Namerefs (<code>-n</code>)</h2>
+<p>A nameref is a variable whose value is the <strong>name</strong> of
+another variable; reads and writes through the nameref are forwarded to
+the referenced target. Bash&#39;s only pointer-like construct, namerefs are
+the canonical mechanism for output parameters, indirect access to
+arrays, and generic algorithms that operate on caller-supplied variable
+names.</p>
+<h3 id="declaration-and-basic-use">Declaration and basic use</h3>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: declaration, read, write</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">target</span><span class="op">=</span><span class="st">&#39;original&#39;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-n</span> <span class="va">ref</span><span class="op">=</span>target</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;%s\n&#39;</span> <span class="st">&quot;</span><span class="va">$ref</span><span class="st">&quot;</span>         <span class="co"># ⇒ original   (read forwarded)</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="va">ref</span><span class="op">=</span><span class="st">&#39;via nameref&#39;</span>             <span class="co"># write forwarded</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;%s\n&#39;</span> <span class="st">&quot;</span><span class="va">$target</span><span class="st">&quot;</span>      <span class="co"># ⇒ via nameref</span></span></code></pre></div>
+<p>The nameref is itself a variable; what makes it special is the
+<code>-n</code> attribute — its assigned value (<code>target</code>) is
+interpreted as the <em>name</em> of another variable, and every
+read/write goes through that name.</p>
+<p><code>local -n</code> is the function-scoped form. The reference dies
+when the function returns; the target is unaffected.</p>
+<h3 id="the-output-parameter-pattern">The output-parameter pattern</h3>
+<p>The dominant use of namerefs in production Bash is to <em>return</em>
+values from functions other than via stdout. Without namerefs, a
+function that needs to &quot;return&quot; a non-trivial value (an array, a
+structured object, multiple values) must echo and have the caller
+capture via <code>$()</code> — which forks a subshell, loses array-ness,
+and serialises everything to text. Namerefs fix this.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: output parameter — returning an array</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">fetch_records()</span> <span class="kw">{</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">-n</span> <span class="va">out</span><span class="op">=</span><span class="va">$1</span>            <span class="co"># caller-supplied array name</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="va">out</span><span class="op">=</span><span class="va">()</span>                     <span class="co"># reset</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="va">out</span><span class="op">+=</span><span class="va">(</span><span class="st">&#39;alice|42&#39;</span><span class="va">)</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="va">out</span><span class="op">+=</span><span class="va">(</span><span class="st">&#39;bob|17&#39;</span><span class="va">)</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="va">out</span><span class="op">+=</span><span class="va">(</span><span class="st">&#39;carol|99&#39;</span><span class="va">)</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">results</span><span class="op">=</span><span class="va">()</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="ex">fetch_records</span> results</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;%s\n&#39;</span> <span class="st">&quot;</span><span class="va">${results</span><span class="op">[@]</span><span class="va">}</span><span class="st">&quot;</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ alice|42</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ bob|17</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ carol|99</span></span></code></pre></div>
+<p>The contract is documented at the call site: &quot;first argument is the
+name of an array I will fill&quot;. Combine with
+<code>declare -n out=$1</code> as the <strong>first</strong> line of the
+function so the indirection is unmissable.</p>
+<h3 id="indirect-access-to-arrays-and-elements">Indirect access to
+arrays and elements</h3>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: nameref to an array, and to a single element</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">colours</span><span class="op">=</span><span class="va">(</span>red green blue<span class="va">)</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-A</span> <span class="va">by_id</span><span class="op">=</span><span class="va">(</span><span class="op">[</span>alice<span class="op">]</span><span class="va">=</span>42 <span class="op">[</span>bob<span class="op">]</span><span class="va">=</span>17<span class="va">)</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-n</span> <span class="va">alias</span><span class="op">=</span>colours</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;%s\n&#39;</span> <span class="st">&quot;</span><span class="va">${alias</span><span class="op">[</span><span class="dv">1</span><span class="op">]</span><span class="va">}</span><span class="st">&quot;</span>      <span class="co"># ⇒ green</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="va">alias</span><span class="op">+=</span><span class="va">(</span>yellow<span class="va">)</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;%s\n&#39;</span> <span class="st">&quot;</span><span class="va">${colours</span><span class="op">[</span><span class="dv">3</span><span class="op">]</span><span class="va">}</span><span class="st">&quot;</span>    <span class="co"># ⇒ yellow</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-n</span> <span class="va">cell</span><span class="op">=</span>by_id<span class="pp">[</span><span class="ss">alice</span><span class="pp">]</span>     <span class="co"># nameref to a single map element</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="va">cell</span><span class="op">=</span><span class="st">&#39;42 (admin)&#39;</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;%s\n&#39;</span> <span class="st">&quot;</span><span class="va">${by_id</span><span class="op">[</span>alice<span class="op">]</span><span class="va">}</span><span class="st">&quot;</span>  <span class="co"># ⇒ 42 (admin)</span></span></code></pre></div>
+<p>Note that <code>${!ref}</code> does <strong>not</strong> behave
+intuitively on a nameref. The <code>${!name}</code> indirection form
+predates namerefs and looks up &quot;the variable whose name is the value of
+<code>name</code>&quot; — for a nameref, this is the <em>target&#39;s</em> value,
+but indirected one extra level (i.e. it expects the target&#39;s
+<em>value</em> to itself be a variable name). Just write
+<code>$ref</code> or <code>${ref}</code> and let the nameref do its
+job.</p>
+<h3 id="cycles-and-self-reference">Cycles and self-reference</h3>
+<p>Bash detects simple nameref cycles and refuses to follow them:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-n</span> <span class="va">a</span><span class="op">=</span>b</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-n</span> <span class="va">b</span><span class="op">=</span>a</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">$a</span><span class="st">&quot;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ bash: warning: a: circular name reference</span></span></code></pre></div>
+<p>The classic shadowing pitfall is more insidious: declaring a nameref
+<em>with the same name</em> as its intended target. Inside a function,
+<code>local -n self=self</code> (or whatever the caller passed) creates
+a local that <em>shadows</em> the global <code>self</code>, and the
+nameref then refers to itself — producing a circular reference. The fix
+is to choose a nameref name that <strong>cannot collide</strong> with
+anything the caller might pass.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># wrong — caller passes &quot;out&quot; as the variable to fill, and the</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co">#         function names its nameref &quot;out&quot; too</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="fu">fill()</span> <span class="kw">{</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">-n</span> <span class="va">out</span><span class="op">=</span><span class="va">$1</span>     <span class="co"># if caller&#39;s variable is also named &#39;out&#39;,</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="va">out</span><span class="op">=</span><span class="va">(</span>a b c<span class="va">)</span>         <span class="co"># &#39;out&#39; shadows itself ⇒ circular reference</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">out</span><span class="op">=</span><span class="va">()</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="ex">fill</span> out              <span class="co"># ⇒ bash: warning: out: circular name reference</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co"># right — pick an unlikely internal name</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="fu">fill()</span> <span class="kw">{</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">-n</span> <span class="va">__fill_out</span><span class="op">=</span><span class="va">$1</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  <span class="va">__fill_out</span><span class="op">=</span><span class="va">(</span>a b c<span class="va">)</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span></code></pre></div>
+<p>The convention is to prefix the nameref&#39;s local name with the
+function name and a leading underscore (<code>__fill_out</code>,
+<code>__merge_dest</code>) — ugly but collision-proof.</p>
+<h3 id="pitfalls-collected">Pitfalls collected</h3>
+<ul>
+<li><strong>Shadowing</strong>: a nameref must not share its name with
+the variable it points to. Use a function-prefixed local.</li>
+<li><strong><code>declare -n</code> after the value has been
+assigned</strong>: combining attributes is order-sensitive —
+<code>declare -n ref; ref=target</code> works, but
+<code>declare ref=target; declare -n ref</code> does not retroactively
+make <code>ref</code> a nameref.</li>
+<li><strong>Empty target</strong>: <code>declare -n ref=</code> is
+rejected. Initialise the reference at the moment of declaration.</li>
+<li><strong>Crossing scope boundaries</strong>: a <code>local -n</code>
+that points at a <em>local</em> in a callee that has already returned is
+a dangling reference; Bash errors out on use.</li>
+<li><strong><code>unset ref</code> removes the nameref, not the
+target</strong>, <strong>unless</strong> you use
+<code>unset -n ref</code> — and even that varies by version. Prefer
+letting the local fall out of scope naturally.</li>
+</ul>
+<h3 id="when-not-to-use-a-nameref">When <em>not</em> to use a
+nameref</h3>
+<ul>
+<li>For pure-value return — echo to stdout and capture with
+<code>$()</code>. Cheaper to reason about.</li>
+<li>For configuration data shared across many functions — use a global
+with a documented name. Namerefs are for plumbing, not
+architecture.</li>
+</ul>
+<h3 id="see-also">See also</h3>
+<ul>
+<li>§4.5 — <code>declare</code> and the <code>-n</code> attribute</li>
+<li>§4.6 — <code>local</code> and dynamic scope (interaction with
+namerefs)</li>
+<li>§4.9, §4.10 — arrays (the most common nameref targets)</li>
+<li>BCS0202 (variable scoping), BCS0411 (subshell return-value
+patterns)</li>
+</ul>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

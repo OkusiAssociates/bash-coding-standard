@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>05_Arithmetic-expansion.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">05_Arithmetic-expansion.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="55-arithmetic-expansion">5.5 Arithmetic expansion</h2>
+<p><code>$(( expr ))</code> evaluates <em>expr</em> as a Bash arithmetic
+expression (§8.10) and substitutes the textual result. Phase 4 of the
+expansion order (§5.1). Inside an arithmetic context, named variables
+are read <strong>without</strong> the <code>$</code> prefix and are
+coerced to integers (zero if non-numeric or unset). The expansion is the
+workhorse for index arithmetic, counters, bitwise tests, and anything
+else that does not need an external
+<code>expr</code>/<code>bc</code>.</p>
+<h3 id="form-and-basic-behaviour">Form and basic behaviour</h3>
+<ul>
+<li><code>$(( expression ))</code> — produces the integer result as a
+string.</li>
+<li>Variables referenced <strong>without</strong> <code>$</code>:
+<code>$(( a + b ))</code> reads <code>a</code> and <code>b</code>
+directly. The <code>$</code> form <code>$(( $a + $b ))</code> works
+(parameter expansion runs first, phase 3) but is redundant and obscures
+precedence.</li>
+<li>Empty <code>$(( ))</code> evaluates to <code>0</code>.</li>
+<li>Nested <code>$(( $(( a )) + b ))</code> is unnecessary —
+<code>$(( a + b ))</code> suffices.</li>
+<li>The legacy form <code>$[ expression ]</code> is
+<strong>deprecated</strong>; do not use.</li>
+<li>Bash arithmetic is <strong>64-bit signed integer</strong>. Overflow
+wraps silently (BCS0506).</li>
+</ul>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: minimum-viable arithmetic expansion</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-i</span> <span class="va">a</span><span class="op">=</span>3 <span class="va">b</span><span class="op">=</span>4</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="va">$((</span> <span class="va">a</span> <span class="op">+</span> <span class="va">b</span> <span class="va">))</span>            <span class="co"># ⇒ 7</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="va">$((</span> <span class="va">a</span> <span class="op">+</span> <span class="va">b</span> <span class="op">*</span> <span class="dv">2</span> <span class="va">))</span>        <span class="co"># ⇒ 11    (precedence: * before +)</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="va">$((</span> (<span class="va">a</span> <span class="op">+</span> <span class="va">b</span>) <span class="op">*</span> <span class="dv">2</span> <span class="va">))</span>      <span class="co"># ⇒ 14</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="va">$((</span> <span class="dv">1</span> <span class="op">&lt;&lt;</span> <span class="dv">4</span> <span class="va">))</span>           <span class="co"># ⇒ 16    (bit-shift)</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="va">$((</span> <span class="va">a</span> <span class="op">&gt;</span> <span class="va">b</span> <span class="op">?</span> <span class="va">a</span> <span class="op">:</span> <span class="va">b</span> <span class="va">))</span>    <span class="co"># ⇒ 4     (ternary, returns max)</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="va">$((</span> <span class="va">))</span>                  <span class="co"># ⇒ 0</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="va">$((</span> <span class="bn">0xff</span> <span class="va">))</span>             <span class="co"># ⇒ 255   (hex prefix)</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="va">$((</span> <span class="dt">8#</span><span class="bn">17</span> <span class="va">))</span>             <span class="co"># ⇒ 15    (base#digits — base 8)</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="va">$((</span> <span class="dt">2#</span><span class="bn">1010</span> <span class="va">))</span>           <span class="co"># ⇒ 10    (binary)</span></span></code></pre></div>
+<h3 id="the-set--u-arithmetic-inconsistency">The <code>set -u</code>
+arithmetic inconsistency</h3>
+<p><code>set -u</code> (<code>nounset</code>) terminates the script on
+reference to an unset variable — except inside arithmetic, where unset
+variables are silently treated as <code>0</code>. This is a
+long-standing wart that catches authors who rely on <code>set -u</code>
+to catch typos in counter names:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: demonstrate the set -u arithmetic inconsistency</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Outside arithmetic — set -u fires:</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">$undef</span><span class="st">&quot;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ bash: undef: unbound variable</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ (script terminates here under `set -e`)</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"># But inside arithmetic, the same name is silently zero:</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="va">$((</span> <span class="va">undef</span> <span class="op">+</span> <span class="dv">1</span> <span class="va">))</span>            <span class="co"># ⇒ 1     — no error</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-i</span> <span class="va">n</span><span class="op">=</span><span class="va">$((</span> <span class="va">undef</span> <span class="op">*</span> <span class="dv">99</span> <span class="va">))</span>   <span class="co"># ⇒ n=0   — no error</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Workaround: defensive default expansion (BCS0207)</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="va">$((</span> <span class="va">${undef</span><span class="op">:-</span>0<span class="va">}</span> <span class="op">+</span> <span class="dv">1</span> <span class="va">))</span>      <span class="co"># explicit zero, intent visible</span></span></code></pre></div>
+<p>Mitigation: when a counter or index <em>must</em> be defined, default
+it explicitly with <code>${var:-0}</code> inside the arithmetic, or test
+<code>[[ -v var ]]</code> (§8.4) before the arithmetic runs. BCS0203 /
+BCS0207 naming and defaulting discipline removes most occurrences in
+practice.</p>
+<h3 id="where-the-form-lives-in-the-bash-zoo">Where the form lives in
+the Bash zoo</h3>
+<ul>
+<li><code>$(( … ))</code> — <em>arithmetic expansion</em>, substitutes a
+value, suitable in any word context.</li>
+<li><code>(( … ))</code> — <em>arithmetic command</em>, no substitution;
+exit status 0 iff result is non-zero. Used in
+<code>if</code>/<code>while</code> (BCS0501, BCS0505).</li>
+<li><code>let &#39;a = b + 1&#39;</code> — older form; avoid.</li>
+<li><code>declare -i x=…</code> — assignment context auto-arithmetic;
+the right side is evaluated as <code>expr</code>. Re-evaluated on every
+reassignment.</li>
+</ul>
+<h3 id="number-base-prefixes">Number-base prefixes</h3>
+<p>Bash recognises:</p>
+<ul>
+<li><code>0xN</code> / <code>0XN</code> — hexadecimal.</li>
+<li><code>0N</code> — octal (a leading literal zero).</li>
+<li><code>BASE#N</code> — base 2 through 64. Digits
+<code>0-9 a-z A-Z @ _</code>.</li>
+</ul>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: base prefixes — including the 0-prefix octal trap</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="va">$((</span> <span class="dv">010 ))            # ⇒ 8</span>     (<span class="va">literal</span><span class="op">-</span><span class="dv">0</span> <span class="va">prefix</span> <span class="va">is</span> <span class="va">OCTAL</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="va">echo</span> <span class="va">$((</span> <span class="dv">09 ))             # ⇒ bash: 09: value too great for base</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="va">echo</span> <span class="va">$((</span> <span class="dt">10#</span><span class="bn">09</span> <span class="va">))</span>          <span class="er">#</span> ⇒ <span class="dv">9</span>     (<span class="va">force</span> <span class="va">base</span> <span class="dv">10</span>)</span></code></pre></div>
+<p>The leading-zero octal trap matters when zero-padded numeric strings
+arrive from <code>printf &#39;%02d&#39;</code> or external tools. Use
+<code>10#$str</code> to force base 10 (BCS0505).</p>
+<h3 id="bcs-posture">BCS posture</h3>
+<ul>
+<li>Use <code>(( expr ))</code> (the <em>command</em>) for conditionals,
+<code>$(( expr ))</code> (the <em>expansion</em>) only when the value is
+needed in word context.</li>
+<li>Declare integer-typed variables with <code>declare -i</code> so
+simple reassignment (<code>count=$((count + 1))</code>) does not require
+explicit arithmetic re-evaluation each time (BCS0201).</li>
+<li>Increment idiom: <code>count+=1</code> (NOT
+<code>((count++))</code>) — the post-increment form returns 0 when the
+prior value was 0, tripping <code>set -e</code> (BCS0505).</li>
+<li>Always <code>10#$x</code> when <em>x</em> may carry a leading zero
+(BCS0505).</li>
+</ul>
+<p><strong>See also</strong>: §5.4 (parameter expansion runs first),
+§8.10 (arithmetic operator precedence and primaries), §4.12 (integer
+arithmetic semantics — overflow, base parsing), §13.3
+(<code>set -e</code> exemption matrix — <code>(( ))</code> and
+<code>let</code>).</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

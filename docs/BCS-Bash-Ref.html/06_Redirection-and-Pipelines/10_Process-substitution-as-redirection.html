@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>10_Process-substitution-as-redirection.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">10_Process-substitution-as-redirection.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="610-process-substitution-as-redirection">6.10 Process
+substitution as redirection</h2>
+<p>Process substitution (§5.7) is a redirection mechanism in disguise.
+<code>&lt;(cmd)</code> and <code>&gt;(cmd)</code> resolve at parse time
+to a <code>/dev/fd/N</code> filename that bash hands to the surrounding
+command, while spawning <em>cmd</em> as a child process whose stdout (or
+stdin) is connected to that fd. The calling command sees a path; the
+kernel sees a pipe. This dual character makes process substitution the
+answer to several problems that pipes cannot solve and that temp files
+solve only with explicit cleanup.</p>
+<h3 id="forms">Forms</h3>
+<ul>
+<li><code>&lt;(cmd)</code> — <em>cmd</em>&#39;s stdout is delivered as a
+readable file (<code>/dev/fd/N</code>); the surrounding command opens it
+for input.</li>
+<li><code>&gt;(cmd)</code> — <em>cmd</em>&#39;s stdin is delivered as a
+writable file; the surrounding command opens it for output.</li>
+<li>Multiple substitutions in one command line: each gets its own
+<code>/dev/fd/N</code> and its own background child.</li>
+<li>Lifetime: each child lives until the surrounding command finishes
+reading or writing and closes the fd.</li>
+</ul>
+<h3 id="multi-input-commands--the-diff-idiom">Multi-input commands — the
+<code>diff</code> idiom</h3>
+<p>Process substitution shines where a tool wants two file arguments and
+the contents are computed, not stored. The classic case is comparing the
+sorted output of two pipelines:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: compare sorted directory listings without intermediate temp files</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail<span class="kw">;</span> <span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">diff</span> <span class="op">&lt;(</span><span class="fu">ls</span> <span class="at">-1</span> /etc/nginx/sites-enabled <span class="kw">|</span> <span class="fu">sort</span><span class="op">)</span> <span class="dt">\</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>     <span class="op">&lt;(</span><span class="fu">ls</span> <span class="at">-1</span> /etc/nginx/sites-available <span class="kw">|</span> <span class="fu">sort</span><span class="op">)</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ output of diff comparing the two sorted listings</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># both sub-pipelines run in parallel; their fds are /dev/fd/63, /dev/fd/62</span></span></code></pre></div>
+<p>Without <code>&lt;()</code>, the same effect requires two temp files,
+two <code>mktemp</code> calls, and a trap to clean them up. Process
+substitution does it with zero file system state.</p>
+<h3 id="tee-split-stdout-and-stderr--the-canonical-idiom">Tee-split-stdout-and-stderr
+— the canonical idiom</h3>
+<p><code>&gt;()</code> lets a command split its output streams to
+multiple sinks while still appearing on the terminal. Combined with
+<code>tee</code>, this is the standard &quot;log everything&quot; pattern for
+build scripts:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: capture stdout and stderr to separate logs while keeping both visible</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail<span class="kw">;</span> <span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">build_step()</span> <span class="kw">{</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">&#39;progress: phase 1&#39;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">&#39;warning: deprecated flag&#39;</span> <span class="op">&gt;&amp;</span><span class="dv">2</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">&#39;progress: phase 2&#39;</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="dv">0</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="ex">build_step</span> <span class="dt">\</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>  <span class="op">&gt;</span> <span class="op">&gt;(</span><span class="fu">tee</span> build.out<span class="op">)</span>    <span class="dt">\</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  <span class="dv">2</span><span class="op">&gt;</span> <span class="op">&gt;(</span><span class="fu">tee</span> build.err <span class="op">&gt;&amp;</span><span class="dv">2</span><span class="op">)</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ progress: phase 1</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ warning: deprecated flag           (still on terminal stderr)</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ progress: phase 2</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="co"># build.out holds the two progress lines; build.err holds the warning</span></span></code></pre></div>
+<p>The <code>&gt;&amp;2</code> inside the second <code>tee</code>
+re-routes its stdout (which is <code>tee</code>&#39;s copy of the original
+stderr) back to the script&#39;s stderr, preserving the visible-on-terminal
+property. Without it, the warning would land on stdout from
+<code>tee</code>&#39;s perspective, mingling streams.</p>
+<h3 id="exit-status-nuance">Exit-status nuance</h3>
+<p>The exit status of a process substitution is <em>not</em> propagated
+to <code>$?</code>: the surrounding command&#39;s status is <code>$?</code>,
+while the substituted child&#39;s status is invisible. Process substitution
+is therefore unsafe for detecting failure of the substituted command.
+The standard work-arounds:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: detect failure inside &lt;( ) — which is otherwise silent</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail<span class="kw">;</span> <span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Pattern: write child&#39;s status into a sentinel file</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">sentinel</span><span class="kw">;</span> <span class="va">sentinel</span><span class="op">=</span><span class="va">$(</span><span class="fu">mktemp</span><span class="va">)</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="bu">trap</span> <span class="st">&#39;rm -f &quot;$sentinel&quot;&#39;</span> EXIT</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="bu">read</span> <span class="at">-r</span> <span class="va">line</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">&quot;consumed: </span><span class="va">$line</span><span class="st">&quot;</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span> <span class="op">&lt;</span> <span class="op">&lt;(</span><span class="ex">producer</span><span class="kw">;</span> <span class="bu">printf</span> <span class="st">&#39;%s&#39;</span> <span class="st">&quot;</span><span class="va">$?</span><span class="st">&quot;</span> <span class="op">&gt;</span><span class="st">&quot;</span><span class="va">$sentinel</span><span class="st">&quot;</span><span class="op">)</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-i</span> <span class="va">child_rc</span><span class="kw">;</span> <span class="va">child_rc</span><span class="op">=</span><span class="va">$(</span><span class="op">&lt;</span><span class="st">&quot;</span><span class="va">$sentinel</span><span class="st">&quot;</span><span class="va">)</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="kw">((</span><span class="va">child_rc</span> <span class="op">==</span> <span class="dv">0</span><span class="kw">))</span> <span class="kw">||</span> <span class="ex">die</span> 5 <span class="st">&quot;producer failed: rc=</span><span class="va">$child_rc</span><span class="st">&quot;</span></span></code></pre></div>
+<p>If <code>lastpipe</code> is enabled (§6.16), the simpler
+<code>producer | while read</code> form delivers the producer&#39;s status
+directly via <code>PIPESTATUS[]</code> — process substitution is
+necessary only when the consumer cannot run in the pipeline tail (e.g.
+it must mutate enclosing scope variables in a non-pipeline context).</p>
+<h3 id="lifetime-and-cleanup-nuances">Lifetime and cleanup nuances</h3>
+<ul>
+<li>The child of <code>&lt;(cmd)</code> is reaped when the surrounding
+command closes its read fd. If the surrounding command never reads, the
+child is orphaned until script exit.</li>
+<li><code>&gt;(cmd)</code> similarly: the child waits on EOF on its
+stdin. A surrounding command that exits before flushing all its output
+to the <code>&gt;()</code> substitute can lose late writes.</li>
+<li>Process substitution does <em>not</em> set <code>$!</code> — there
+is no PID variable exposed for the substituted child. To wait on it, you
+must <code>wait</code> for all background children or arrange a
+sentinel.</li>
+<li>Under <code>set -e</code>, a failed substituted child does not abort
+the script unless its status reaches <code>$?</code> via some other
+mechanism (e.g. the sentinel pattern above). This is the single biggest
+gotcha: a silently-failing <code>&lt;(producer)</code> can deliver an
+empty stream, the consumer reports &quot;no data&quot;, and the script proceeds as
+if all is well.</li>
+</ul>
+<h3 id="platform-notes">Platform notes</h3>
+<p>Process substitution requires <code>/dev/fd</code> (Linux, macOS,
+BSD). On systems without <code>/dev/fd</code>, bash falls back to FIFOs
+in <code>/tmp</code>, which may interact poorly with restrictive
+<code>noexec</code>/<code>nodev</code> mount options. Within the
+BCS-targeted Linux environment, <code>/dev/fd/N</code> is always
+available. For containerised environments, verify <code>/dev/fd</code>
+is mounted in the runtime image — the symptom of its absence is a
+parse-time &quot;redirection error: cannot create temp file&quot; diagnostic.</p>
+<p><strong>See also</strong>: §5.7 (process substitution as expansion),
+§6.13 (pipelines), §6.16 (<code>lastpipe</code>), §13.5
+(<code>pipefail</code> and PIPESTATUS), §9.3 (BCS0903 process
+substitution patterns), §9.6 (BCS0906 find subshell pitfalls).</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>08_Building-structured-output.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">08_Building-structured-output.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="228-building-structured-output">22.8 Building structured
+output</h2>
+<p>When a bash script has to emit data for another program — a CSV
+ingested by a spreadsheet, a TSV piped to <code>awk</code>, a JSON
+payload curled into an API — the scripts that fail in production almost
+always fail at the <em>quoting boundary</em>. A field with an embedded
+comma, a stray backslash, a Unicode quotation mark in someone&#39;s name:
+each is a defect just waiting for the right input.</p>
+<p>The general rule is: <strong>emit through a tool whose authors have
+already solved the quoting problem.</strong> For TSV that&#39;s
+<code>printf</code>; for CSV it&#39;s a discipline of explicit quoting; for
+JSON it is unconditionally <code>jq</code>.</p>
+<h3 id="tsv--the-easy-case">TSV — the easy case</h3>
+<p>Tab-separated values with no embedded tabs or newlines is the
+cheapest structured format bash supports. <code>printf</code> does the
+right thing for free:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: emit a TSV header and rows from arrays</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;%s\t%s\t%s\n&#39;</span> name email role</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="kw">((</span><span class="va">i</span><span class="op">=</span><span class="dv">0</span><span class="kw">;</span> <span class="va">i</span><span class="op">&lt;</span><span class="va">${</span><span class="op">#</span><span class="va">names</span><span class="op">[@]</span><span class="va">}</span><span class="kw">;</span> <span class="va">i</span><span class="op">+=</span><span class="dv">1</span><span class="kw">));</span> <span class="cf">do</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">&#39;%s\t%s\t%s\n&#39;</span> <span class="st">&quot;</span><span class="va">${names</span><span class="op">[</span>i<span class="op">]</span><span class="va">}</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">${emails</span><span class="op">[</span>i<span class="op">]</span><span class="va">}</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">${roles</span><span class="op">[</span>i<span class="op">]</span><span class="va">}</span><span class="st">&quot;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ name&lt;TAB&gt;email&lt;TAB&gt;role</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">#   alice&lt;TAB&gt;alice@example.com&lt;TAB&gt;admin</span></span></code></pre></div>
+<p>The only failure mode is a field containing an actual tab or newline.
+Strip or escape those at the source — <code>${value//$&#39;\t&#39;/ }</code> for
+tabs.</p>
+<h3 id="csv--explicit-quoting-required">CSV — explicit quoting
+required</h3>
+<p>CSV (RFC 4180) requires fields containing commas, double-quotes, or
+newlines to be wrapped in double-quotes, with internal quotes doubled.
+Skipping this step is the canonical bash CSV bug.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: write a CSV row from a bash array, RFC-4180 correct</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">csv_field()</span> <span class="kw">{</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">--</span> <span class="va">value</span><span class="op">=</span><span class="va">$1</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="kw">[[</span> <span class="va">$value</span> <span class="ot">==</span> <span class="pp">*[</span><span class="dt">\&quot;</span><span class="ss">,$</span><span class="st">&#39;\n&#39;</span><span class="pp">]*</span> <span class="kw">]];</span> <span class="cf">then</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="va">value</span><span class="op">=</span><span class="va">${value</span><span class="op">//</span><span class="dt">\&quot;</span><span class="op">/</span><span class="dt">\&quot;\&quot;</span><span class="va">}</span>              <span class="co"># double internal quotes</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="bu">printf</span> <span class="st">&#39;&quot;%s&quot;&#39;</span> <span class="st">&quot;</span><span class="va">$value</span><span class="st">&quot;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="bu">printf</span> <span class="st">&#39;%s&#39;</span> <span class="st">&quot;</span><span class="va">$value</span><span class="st">&quot;</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">fi</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="fu">csv_row()</span> <span class="kw">{</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">-i</span> <span class="va">i</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> <span class="kw">((</span><span class="va">i</span><span class="op">=</span><span class="dv">1</span><span class="kw">;</span> <span class="va">i</span><span class="op">&lt;=</span><span class="va">$#</span><span class="kw">;</span> <span class="va">i</span><span class="op">+=</span><span class="dv">1</span><span class="kw">));</span> <span class="cf">do</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">((</span> <span class="va">i</span> <span class="op">&gt;</span> <span class="dv">1</span> <span class="kw">))</span> <span class="kw">&amp;&amp;</span> <span class="bu">printf</span> <span class="st">&#39;,&#39;</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    <span class="ex">csv_field</span> <span class="st">&quot;</span><span class="va">${</span><span class="op">!</span><span class="va">i}</span><span class="st">&quot;</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>  <span class="cf">done</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">&#39;\n&#39;</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Usage:</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="ex">csv_row</span> <span class="st">&#39;Alice&#39;</span> <span class="st">&#39;alice@example.com&#39;</span> <span class="st">&#39;sales, EU&#39;</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="ex">csv_row</span> <span class="st">&#39;Bob, Jr.&#39;</span>  <span class="st">$&#39;multi</span><span class="dt">\n</span><span class="st">line&#39;</span>   <span class="st">&#39;admin&#39;</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ Alice,alice@example.com,&quot;sales, EU&quot;</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="co">#   &quot;Bob, Jr.&quot;,&quot;multi</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="co">#   line&quot;,admin</span></span></code></pre></div>
+<h3 id="json--never-hand-roll-use-jq">JSON — never hand-roll, use
+jq</h3>
+<p>Hand-rolling JSON in bash is the wrong answer to every question.
+Backslashes, control characters, Unicode, and the contrast between
+&quot;null&quot; and <code>&quot;null&quot;</code> will defeat any printf-based scheme
+eventually. Use <code>jq -n</code> and pass values through
+<code>--arg</code> (string) or <code>--argjson</code>
+(already-JSON):</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: build a JSON object from bash variables</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">name</span><span class="op">=</span><span class="st">&#39;O&#39;</span><span class="dt">\&#39;</span><span class="st">&#39;Brien&#39;</span> <span class="va">email</span><span class="op">=</span><span class="st">&#39;o@example.com&#39;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-i</span> <span class="va">age</span><span class="op">=</span>42</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="ex">jq</span> <span class="at">-n</span> <span class="dt">\</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">--arg</span> name  <span class="st">&quot;</span><span class="va">$name</span><span class="st">&quot;</span> <span class="dt">\</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">--arg</span> email <span class="st">&quot;</span><span class="va">$email</span><span class="st">&quot;</span> <span class="dt">\</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">--argjson</span> age <span class="st">&quot;</span><span class="va">$age</span><span class="st">&quot;</span> <span class="dt">\</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">&#39;{name: $name, email: $email, age: $age}&#39;</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ {&quot;name&quot;:&quot;O&#39;Brien&quot;,&quot;email&quot;:&quot;o@example.com&quot;,&quot;age&quot;:42}</span></span></code></pre></div>
+<p>For JSON arrays built from a bash array, push the whole list through
+<code>jq -R</code> (raw input) and <code>-s</code> (slurp into an
+array):</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: emit a JSON array from a bash array of strings</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">tags</span><span class="op">=</span><span class="va">(</span>red <span class="st">&#39;amber/orange&#39;</span> <span class="st">&#39;with &quot;quotes&quot;&#39;</span><span class="va">)</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;%s\n&#39;</span> <span class="st">&quot;</span><span class="va">${tags</span><span class="op">[@]</span><span class="va">}</span><span class="st">&quot;</span> <span class="kw">|</span> <span class="ex">jq</span> <span class="at">-R</span> . <span class="kw">|</span> <span class="ex">jq</span> <span class="at">-s</span> .</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ [&quot;red&quot;,&quot;amber/orange&quot;,&quot;with \&quot;quotes\&quot;&quot;]</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: nest the array inside an object</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="va">items_json</span><span class="op">=</span><span class="va">$(</span><span class="bu">printf</span> <span class="st">&#39;%s\n&#39;</span> <span class="st">&quot;</span><span class="va">${tags</span><span class="op">[@]</span><span class="va">}</span><span class="st">&quot;</span> <span class="kw">|</span> <span class="ex">jq</span> <span class="at">-R</span> . <span class="kw">|</span> <span class="ex">jq</span> <span class="at">-s</span> .<span class="va">)</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="ex">jq</span> <span class="at">-n</span> <span class="at">--argjson</span> items <span class="st">&quot;</span><span class="va">$items_json</span><span class="st">&quot;</span> <span class="st">&#39;{count: ($items | length), items: $items}&#39;</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ {&quot;count&quot;:3,&quot;items&quot;:[&quot;red&quot;,&quot;amber/orange&quot;,&quot;with \&quot;quotes\&quot;&quot;]}</span></span></code></pre></div>
+<p>The reason <code>--argjson</code> matters: <code>--arg age 42</code>
+would pass the <em>string</em> &quot;42&quot;, yielding <code>{&quot;age&quot;:&quot;42&quot;}</code>.
+Numeric and boolean fields must use <code>--argjson</code>.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># wrong — every field becomes a string, breaking downstream consumers</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="ex">jq</span> <span class="at">-n</span> <span class="at">--arg</span> active true <span class="at">--arg</span> count 0 <span class="st">&#39;{active: $active, count: $count}&#39;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ {&quot;active&quot;:&quot;true&quot;,&quot;count&quot;:&quot;0&quot;}</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># right — booleans and numbers go through --argjson</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="ex">jq</span> <span class="at">-n</span> <span class="at">--argjson</span> active true <span class="at">--argjson</span> count 0 <span class="st">&#39;{active: $active, count: $count}&#39;</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ {&quot;active&quot;:true,&quot;count&quot;:0}</span></span></code></pre></div>
+<p><strong>See also</strong>: §6.10 (<code>printf</code> formatting);
+§11.4 (<code>mapfile -t</code> for the inverse — JSON-to-bash); BCS0305
+(printf patterns) for the general printf-over-echo preference; BCS0306
+(<code>@Q</code> quoting) for safe shell-quoted output when the consumer
+is bash itself.</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

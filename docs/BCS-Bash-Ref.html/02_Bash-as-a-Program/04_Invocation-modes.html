@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>04_Invocation-modes.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">04_Invocation-modes.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="24-invocation-modes">2.4 Invocation modes</h2>
+<p>Bash behaves differently depending on how it was invoked. Confusing
+the modes is the most common source of &quot;works in my terminal, breaks in
+cron&quot; bugs — the cron environment is non-interactive, non-login, with a
+stripped <code>PATH</code> and no aliases.</p>
+<h3 id="the-four-quadrant-matrix">The four-quadrant matrix</h3>
+<p>Two orthogonal axes — <code>interactive | non-interactive</code> ×
+<code>login | non-login</code> — define which startup files are read
+(see §2.5) and which features (job control, prompt, history) are
+enabled.</p>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Login</strong></th>
+<th><strong>Non-login</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Interactive</strong></td>
+<td>SSH login, console TTY login, <code>bash -l</code>. Reads
+<code>/etc/profile</code> then the first of
+<code>~/.bash_profile</code>, <code>~/.bash_login</code>,
+<code>~/.profile</code>. Job control on.</td>
+<td>Terminal emulator window inside an existing session,
+<code>bash</code> with no flags from another shell. Reads
+<code>/etc/bash.bashrc</code>, <code>~/.bashrc</code>. Job control
+on.</td>
+</tr>
+<tr class="even">
+<td><strong>Non-interactive</strong></td>
+<td><code>bash -l script.sh</code>, <code>su - user -c …</code>. Reads
+login files. Rare — only for cron-like scenarios that explicitly want a
+login environment.</td>
+<td><code>bash script.sh</code>, <code>bash -c &#39;…&#39;</code>,
+<code>ssh host cmd</code>, <strong>cron</strong>. Reads
+<code>BASH_ENV</code> only. Job control off. <strong>The cron
+quadrant.</strong></td>
+</tr>
+</tbody>
+</table>
+<p>The bottom-right cell is where most surprises happen: cron runs your
+script with no aliases, no <code>~/.bashrc</code>, and a minimal
+<code>PATH</code> (usually <code>/usr/bin:/bin</code>).</p>
+<h3 id="detecting-the-mode-at-runtime">Detecting the mode at
+runtime</h3>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: emit a one-line classification of the current shell</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="va">mode</span><span class="op">=</span><span class="st">&#39;non-interactive non-login&#39;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">[[</span> <span class="va">$-</span> <span class="ot">==</span> <span class="pp">*</span>i<span class="pp">*</span> <span class="kw">]]</span> <span class="kw">&amp;&amp;</span> <span class="va">mode</span><span class="op">=</span><span class="st">&quot;interactive </span><span class="va">${mode</span><span class="op">#</span>non-interactive <span class="va">}</span><span class="st">&quot;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-q</span> login_shell <span class="kw">&amp;&amp;</span> <span class="va">mode</span><span class="op">=</span><span class="st">&quot;</span><span class="va">${mode</span><span class="op">/</span><span class="ss">non-login</span><span class="op">/</span>login<span class="va">}</span><span class="st">&quot;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">$mode</span><span class="st">&quot;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># bash      ⇒ interactive non-login</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># bash -l   ⇒ interactive login</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># bash -c   ⇒ non-interactive non-login</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># ssh host bash -lc &#39;&#39;  ⇒ non-interactive login</span></span></code></pre></div>
+<p><code>$-</code> contains the current short option flags:
+<code>i</code> for interactive, <code>m</code> for job control.
+<code>shopt -q login_shell</code> is the canonical login detection.</p>
+<h3 id="the-cron-pitfall">The cron pitfall</h3>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: a script that &quot;works in the terminal&quot; but fails in cron</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co"># crontab:  * * * * * /home/me/run.sh</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># run.sh contains:  ll /var/log</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># wrong — depends on alias from ~/.bashrc, which cron does not source</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="ex">ll</span> /var/log                <span class="co"># ⇒ /bin/sh: ll: command not found</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># right — use the real command and pin PATH (BCS1002)</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-rx</span> <span class="va">PATH</span><span class="op">=</span><span class="st">&#39;/usr/local/bin:/usr/bin:/bin&#39;</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="at">-l</span> /var/log</span></code></pre></div>
+<h3 id="single-command-and-stdin-modes">Single-command and stdin
+modes</h3>
+<p><code>bash -c &#39;cmd args&#39; name arg1 arg2</code> runs the string with
+<code>$0=name</code>, <code>$1=arg1</code>, <code>$2=arg2</code>.
+<code>bash -s</code> (or no script argument) reads commands from stdin —
+useful for piping a generated script:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: pipe a script body into bash with positional args</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;%s\n&#39;</span> <span class="st">&#39;echo &quot;$0 saw $#: $*&quot;&#39;</span> <span class="kw">|</span> <span class="fu">bash</span> <span class="at">-s</span> pipeline foo bar</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ pipeline saw 2: foo bar</span></span></code></pre></div>
+<h3 id="selected-flags">Selected flags</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Flag</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>-i</code></td>
+<td>Force interactive (rarely needed; the test on stdin handles
+it).</td>
+</tr>
+<tr class="even">
+<td><code>-l</code>, <code>--login</code></td>
+<td>Force login behaviour.</td>
+</tr>
+<tr class="odd">
+<td><code>-r</code>, <code>--restricted</code></td>
+<td>Restricted shell — no <code>cd</code>, no
+<code>PATH</code>/<code>SHELL</code>/<code>ENV</code> mutation, no
+<code>exec</code> of programmes containing <code>/</code>. See §20.14
+and §23.</td>
+</tr>
+<tr class="even">
+<td><code>--posix</code></td>
+<td>POSIX conformance. Strict-mode scripts do not need it.</td>
+</tr>
+<tr class="odd">
+<td><code>--noprofile</code></td>
+<td>Skip login startup files.</td>
+</tr>
+<tr class="even">
+<td><code>--norc</code></td>
+<td>Skip <code>~/.bashrc</code>.</td>
+</tr>
+<tr class="odd">
+<td><code>--rcfile FILE</code></td>
+<td>Read <code>FILE</code> instead of <code>~/.bashrc</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>The <code>sh</code> symlink invocation (<code>#!/bin/sh</code> plus a
+<code>bash</code>-as-<code>sh</code> install) makes Bash mimic POSIX
+<code>sh</code> — relevant when shipping to systems where
+<code>/bin/sh</code> is dash or ash. BCS0102 mandates an explicit Bash
+shebang specifically to avoid this ambiguity.</p>
+<p><strong>See also</strong>: §2.5 (which startup files each mode
+reads), §2.7 (full bash CLI option matrix), §20.14 / §23 (restricted
+shell), BCS0102 (shebang), BCS1002 (PATH security).</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

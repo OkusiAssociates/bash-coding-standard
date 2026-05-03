@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>06_Duplicating-fds.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">06_Duplicating-fds.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="66-duplicating-fds">6.6 Duplicating fds</h2>
+<p><code>&gt;&amp;</code> and <code>&lt;&amp;</code> duplicate one fd
+onto another. The mechanism is <code>dup2()</code>: the destination fd
+ends up referring to the same open file description as the source — same
+file, same offset, same status flags. Closing either does not close the
+other; they are independent handles to the shared description.</p>
+<h3 id="forms">Forms</h3>
+<ul>
+<li><code>n&gt;&amp;m</code> — make fd <em>n</em> a duplicate of fd
+<em>m</em> for writing.</li>
+<li><code>n&lt;&amp;m</code> — same, expressed for reading (parses
+identically).</li>
+<li><code>&gt;&amp;m</code> — equivalent to
+<code>1&gt;&amp;m</code>.</li>
+<li><code>&lt;&amp;m</code> — equivalent to
+<code>0&lt;&amp;m</code>.</li>
+<li><code>n&gt;&amp;m-</code> — duplicate-and-close: dup <em>m</em> onto
+<em>n</em>, then close <em>m</em> atomically (see §6.7).</li>
+<li><code>n&gt;&amp;-</code> — close fd <em>n</em> (see §6.7).</li>
+<li><code>{var}&gt;&amp;m</code> — Bash 5.0+ allocates a fresh fd,
+stores its number in <em>var</em>, and points it at <em>m</em>&#39;s
+description. Useful when the script must not collide with a hard-coded
+fd number.</li>
+</ul>
+<p>The two parser forms <code>&gt;&amp;</code> and
+<code>&lt;&amp;</code> are identical at the dup2 level — both perform
+the same <code>dup2(m, n)</code> syscall regardless of whether the
+operator is written for reading or writing. Bash uses the parser
+direction only to decide what message to emit on error; the underlying
+operation is symmetric.</p>
+<p>The duplicated fd shares the <em>open file description</em>, not just
+the target. Two consequences matter:</p>
+<ol type="1">
+<li><strong>Shared offset.</strong> Writes through fd 1 and fd 3 (where
+<code>3&gt;&amp;1</code>) advance the same kernel-side offset; bytes do
+not interleave on a per-fd basis.</li>
+<li><strong>Independent close.</strong> <code>exec 1&gt;&amp;-</code>
+does not close fd 3 even though it was created by
+<code>3&gt;&amp;1</code> — both must be closed explicitly.</li>
+</ol>
+<h3 id="save-restore-stdout-pattern">Save-restore-stdout pattern</h3>
+<p>The canonical use of duplication is the &quot;save current stdout,
+redirect, restore&quot; dance. Save fd 1 onto an unused fd (3 by convention),
+apply the temporary redirection, then restore by duplicating back:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: wrap a function call so its stdout is captured to a log,</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># leaving everything else on the terminal untouched</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail<span class="kw">;</span> <span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">run_quiet_with_log()</span> <span class="kw">{</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">--</span> <span class="va">logfile</span><span class="op">=</span><span class="st">&quot;</span><span class="va">$1</span><span class="st">&quot;</span><span class="kw">;</span> <span class="bu">shift</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="bu">exec</span> <span class="dv">3</span><span class="op">&gt;&amp;</span><span class="dv">1</span>                     <span class="co"># save current stdout on fd 3</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="bu">exec</span> <span class="dv">1</span><span class="op">&gt;</span><span class="st">&quot;</span><span class="va">$logfile</span><span class="st">&quot;</span>             <span class="co"># stdout now goes to logfile</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;</span><span class="va">$@</span><span class="st">&quot;</span>                          <span class="co"># run the command — its stdout goes to log</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  <span class="bu">exec</span> <span class="dv">1</span><span class="op">&gt;&amp;</span><span class="dv">3</span>                     <span class="co"># restore stdout from saved fd 3</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="bu">exec</span> <span class="dv">3</span><span class="op">&gt;&amp;</span>-                     <span class="co"># close the saved fd</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="ex">run_quiet_with_log</span> /tmp/build.log make all</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;build done&quot;</span>               <span class="co"># ⇒ printed to terminal as expected</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co"># /tmp/build.log contains only `make all` stdout</span></span></code></pre></div>
+<p>The two <code>exec</code> lines in the middle could collapse to
+<code>exec 3&gt;&amp;1 1&gt;&quot;$logfile&quot;</code> and the restore to
+<code>exec 1&gt;&amp;3 3&gt;&amp;-</code> — bash applies redirections
+left-to-right within a single <code>exec</code>, so the save happens
+before the overwrite. See §6.11 for the ordering rule.</p>
+<h3 id="stream-swap-the-awk-classic">Stream-swap (the awk classic)</h3>
+<p>Sometimes a command&#39;s stdout is uninteresting but its stderr should
+be captured for further pipeline processing. Naively
+<code>cmd 2&gt;&amp;1 | grep</code> only works if both streams are
+wanted; to swap them — pipe stderr, leave stdout on terminal — use a
+three-way dance:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: pipe stderr through a grep filter, keep stdout on terminal</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail<span class="kw">;</span> <span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Three-fd swap: 3 ← 1 ← 2 ← 3, then close 3</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="kw">{</span> <span class="fu">make</span> <span class="dv">3</span><span class="op">&gt;&amp;</span><span class="dv">1</span> <span class="dv">1</span><span class="op">&gt;&amp;</span><span class="dv">2</span> <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">3</span> <span class="dv">3</span><span class="op">&gt;&amp;</span>-<span class="kw">;</span> <span class="kw">}</span> <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-i</span> error</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># step-by-step at the brace:</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co">#   3&gt;&amp;1   fd 3 ← terminal-stdout</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co">#   1&gt;&amp;2   fd 1 ← terminal-stderr (so make&#39;s stdout goes to stderr)</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co">#   2&gt;&amp;3   fd 2 ← saved terminal-stdout (so make&#39;s stderr goes to stdout</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co">#                 → the pipe → grep)</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co">#   3&gt;&amp;-   close the temporary</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ grep sees `make`&#39;s stderr; `make`&#39;s stdout still appears on terminal</span></span></code></pre></div>
+<p>This is the only standard idiom; memorise the four-operator form
+rather than re-deriving it.</p>
+<h3 id="difference-from-move">Difference from move</h3>
+<p><code>n&gt;&amp;m</code> <em>duplicates</em>: fd <em>m</em> remains
+open. <code>n&gt;&amp;m-</code> <em>moves</em>: fd <em>m</em> is closed
+atomically once <em>n</em> has been pointed at the description (§6.7).
+For passing exactly the fds a child process needs, the move form avoids
+fd leaks.</p>
+<h3 id="why-fd-3-and-not-4-5-9-">Why fd 3 (and not 4, 5, 9 …)</h3>
+<p>Convention reserves fds 3–9 for user code; bash itself may open
+higher fds for internal bookkeeping. Within that range, fd 3 is the
+overwhelmingly common choice for save-stdout, fd 4 for save-stderr. Pick
+stable conventions within a script and document them in the header
+comment — readers (and <code>bash -x</code> traces) become much easier
+to follow when fd 3 <em>always</em> means &quot;saved stdout&quot; rather than
+rotating between fd 3, 4, and 5.</p>
+<p><code>exec {var}&gt;file</code> (Bash 5.0+) sidesteps the convention
+entirely: bash allocates a free fd and stores the number in
+<em>var</em>. Combine with <code>varredir_close</code> (§6.12) to make
+fd lifetime track variable scope.</p>
+<p>When in doubt, write the redirection list with comments tracing each
+operator&#39;s effect on the fd table — bash&#39;s terse syntax rewards explicit
+narration in places where the syscall semantics matter.</p>
+<p><strong>See also</strong>: §6.7 (moving and closing fds), §6.11
+(order of evaluation), §6.12 (<code>exec</code> for fd manipulation),
+§1.2 (fd table from the kernel&#39;s perspective), BCS0703 (messaging
+fds).</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

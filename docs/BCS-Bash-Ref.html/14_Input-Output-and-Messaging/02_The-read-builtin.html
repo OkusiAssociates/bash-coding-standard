@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>02_The-read-builtin.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">02_The-read-builtin.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="142-the-read-builtin">14.2 The <code>read</code> builtin</h2>
+<p>Read input from stdin (or a specified fd) into one or more variables.
+The default behaviour interprets backslash escapes and field-splits on
+<code>IFS</code>; both behaviours bite scripts and both are easily
+disabled.</p>
+<h3 id="flag-reference">Flag reference</h3>
+<ul>
+<li><code>read var</code> — single variable; field-splits on
+<code>IFS</code>.</li>
+<li><code>read var1 var2 var3</code> — multiple; the last variable
+receives every remaining field (joined with the first character of
+<code>IFS</code>).</li>
+<li><code>read -r</code> — <em>raw</em> mode; do not interpret backslash
+escapes (almost always wanted; BCS treats bare <code>read</code> as a
+defect).</li>
+<li><code>read -d DELIM</code> — read until DELIM character instead of
+newline.</li>
+<li><code>read -d &#39;&#39;</code> — read until NUL; pairs with
+<code>find -print0</code> and <code>mapfile -d &#39;&#39;</code>.</li>
+<li><code>read -p PROMPT</code> — interactive prompt to stderr (safe in
+pipelines).</li>
+<li><code>read -t TIMEOUT</code> — timeout in seconds (fractional in
+Bash 4.0+); exits 142 (or <code>128 + SIGALRM</code>) on timeout.</li>
+<li><code>read -n N</code> — read at most N characters.</li>
+<li><code>read -N N</code> — read exactly N characters; ignores
+delimiters.</li>
+<li><code>read -u FD</code> — read from a specific fd (avoids
+redirection scope surprises in subshells).</li>
+<li><code>read -e</code> / <code>read -i TEXT</code> — readline-edited
+input with optional pre-fill (interactive only).</li>
+<li><code>read -s</code> — silent (no echo, password prompts).</li>
+<li><code>read -a arr</code> — read into an indexed array, splitting on
+<code>IFS</code>.</li>
+</ul>
+<h3 id="ifs-interaction"><code>IFS</code> interaction</h3>
+<p>Without <code>IFS=</code> in front of <code>read</code>, leading and
+trailing whitespace are stripped and runs of whitespace collapse. The
+canonical &quot;preserve every byte&quot; form is:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: read a single line verbatim</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="va">IFS</span><span class="op">=</span> <span class="bu">read</span> <span class="at">-r</span> <span class="va">line</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">&#39;[%s]\n&#39;</span> <span class="st">&quot;</span><span class="va">$line</span><span class="st">&quot;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span> <span class="op">&lt;</span> file.txt</span></code></pre></div>
+<p><code>IFS=</code> for that one command sets the local field separator
+to empty — no splitting, leading/trailing whitespace preserved
+(BCS0905). The <code>-r</code> suppresses backslash escape
+interpretation. Together they form the single most copy-pasted bash
+idiom.</p>
+<h3 id="loop-discipline-under-set--e">Loop discipline under
+<code>set -e</code></h3>
+<p><code>read</code> returns non-zero at EOF. That looks like an error
+to <code>errexit</code> but is exempt when <code>read</code> is the loop
+<em>condition</em> — strict mode does not exit on the failing test of a
+<code>while</code>. Calling <code>read</code> outside a loop condition
+(or inside <code>if</code>/<code>||</code>) under
+<code>set -euo pipefail</code> requires no special handling for the same
+reason.</p>
+<h3 id="timeout-loop-pattern">Timeout-loop pattern</h3>
+<p><code>-t</code> lets a script poll a slow input without blocking
+forever. The exit status disambiguates timeout from EOF:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: read events for at most 60 s, exit cleanly on EOF or timeout</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-i</span> <span class="va">deadline</span><span class="op">=</span><span class="va">$((SECONDS</span> <span class="op">+</span> <span class="dv">60</span><span class="va">))</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="kw">((</span> <span class="va">SECONDS</span> <span class="op">&lt;</span> <span class="va">deadline</span> <span class="kw">));</span> <span class="cf">do</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="va">IFS</span><span class="op">=</span> <span class="bu">read</span> <span class="at">-r</span> <span class="at">-t</span> 1 <span class="va">event</span><span class="kw">;</span> <span class="cf">then</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="ex">process</span> <span class="st">&quot;</span><span class="va">$event</span><span class="st">&quot;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="va">rc</span><span class="op">=</span><span class="va">$?</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="co"># ⇒ rc == 142 means timeout (no data this second)</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># ⇒ rc == 1   means EOF (peer closed)</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">((</span> <span class="va">rc</span> <span class="op">&gt;</span> <span class="dv">128</span> <span class="kw">))</span> <span class="kw">||</span> <span class="cf">break</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">fi</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div>
+<p><code>(( rc &gt; 128 ))</code> distinguishes a signal/timeout
+(<code>128 + n</code>) from a plain EOF (rc == 1). The pattern composes
+with <code>coproc</code> (§17.1) and <code>/dev/tcp</code> (§17.6) where
+the peer may stall indefinitely.</p>
+<h3 id="nul-separated-input">NUL-separated input</h3>
+<p>When file names may contain newlines, switch to NUL framing:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: feed every regular file under . into read, NUL-safe</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="va">IFS</span><span class="op">=</span> <span class="bu">read</span> <span class="at">-r</span> <span class="at">-d</span> <span class="st">&#39;&#39;</span> <span class="va">path</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="ex">process</span> <span class="st">&quot;</span><span class="va">$path</span><span class="st">&quot;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span> <span class="op">&lt;</span> <span class="op">&lt;(</span><span class="fu">find</span> . <span class="at">-type</span> f <span class="at">-print0</span><span class="op">)</span></span></code></pre></div>
+<h3 id="see-also">See also</h3>
+<ul>
+<li>§14.3 — <code>mapfile</code> for whole-input-into-array (faster than
+a <code>read</code> loop)</li>
+<li>§6.x — process substitution (<code>&lt; &lt;(...)</code>) for
+non-pipe-subshell input</li>
+<li>BCS0905 (input redirection), BCS0901 (safe file testing)</li>
+</ul>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

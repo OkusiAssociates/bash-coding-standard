@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>01_The-Bash-process-tree-at-runtime.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">01_The-Bash-process-tree-at-runtime.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="111-the-bash-process-tree-at-runtime">11.1 The Bash process tree
+at runtime</h2>
+<p>A Bash script is not a single process; it is a parent shell that
+spawns children for some constructs and runs others in-process. Whether
+a given construct forks decides which variable assignments survive,
+which traps fire, and which signals reach which PID. Strict-mode
+discipline (BCS0101) lives or dies by knowing which line forks and which
+does not.</p>
+<h3 id="construct-to-tree-map">Construct-to-tree map</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Construct</th>
+<th style="text-align: center;">Forks?</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Builtin (<code>echo</code>, <code>read</code>, <code>[[</code>)</td>
+<td style="text-align: center;">no</td>
+<td>runs in current shell</td>
+</tr>
+<tr class="even">
+<td>Function call</td>
+<td style="text-align: center;">no</td>
+<td>shares variables, traps</td>
+</tr>
+<tr class="odd">
+<td>Brace group <code>{ …; }</code></td>
+<td style="text-align: center;">no</td>
+<td>grouping only</td>
+</tr>
+<tr class="even">
+<td><code>exec cmd</code></td>
+<td style="text-align: center;">no</td>
+<td>replaces current shell, does not return</td>
+</tr>
+<tr class="odd">
+<td>External command</td>
+<td style="text-align: center;">yes</td>
+<td>classic <code>fork(2)</code> + <code>execve(2)</code></td>
+</tr>
+<tr class="even">
+<td>Command substitution <code>$(…)</code></td>
+<td style="text-align: center;">yes</td>
+<td>child writes to a pipe</td>
+</tr>
+<tr class="odd">
+<td>Process substitution <code>&lt;(…)</code> <code>&gt;(…)</code></td>
+<td style="text-align: center;">yes</td>
+<td>child plus a <code>/dev/fd/N</code> pipe</td>
+</tr>
+<tr class="even">
+<td>Subshell <code>( … )</code></td>
+<td style="text-align: center;">yes</td>
+<td>explicit fork, no exec</td>
+</tr>
+<tr class="odd">
+<td>Background <code>cmd &amp;</code></td>
+<td style="text-align: center;">yes</td>
+<td>new pgid when job control on</td>
+</tr>
+<tr class="even">
+<td>Pipeline <code>a | b</code></td>
+<td style="text-align: center;">yes</td>
+<td>one fork per stage (see <code>lastpipe</code>)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="worked-example-pstree-of-every-construct">Worked example: pstree
+of every construct</h3>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: snapshot the process tree under five forking constructs.</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-r</span> <span class="va">SELF</span><span class="op">=</span><span class="va">$$</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;top-level pid=%d\n&#39;</span> <span class="st">&quot;</span><span class="va">$SELF</span><span class="st">&quot;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Each line below forks at least once; pstree freezes the moment.</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;subst=</span><span class="va">$(</span><span class="fu">pstree</span> <span class="at">-p</span> <span class="st">&quot;</span><span class="va">$SELF</span><span class="st">&quot;</span> <span class="kw">|</span> <span class="fu">head</span> <span class="at">-1</span><span class="va">)</span><span class="st">&quot;</span>          <span class="co"># $(...) child</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="kw">(</span> <span class="fu">pstree</span> <span class="at">-p</span> <span class="st">&quot;</span><span class="va">$SELF</span><span class="st">&quot;</span> <span class="kw">|</span> <span class="fu">sed</span> <span class="at">-n</span> <span class="st">&#39;1p&#39;</span> <span class="kw">)</span>                  <span class="co"># ( ... ) child</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">diff</span> <span class="op">&lt;(</span><span class="bu">echo</span> a<span class="op">)</span> <span class="op">&lt;(</span><span class="bu">echo</span> a<span class="op">)</span> <span class="kw">&amp;&amp;</span> <span class="bu">echo</span> <span class="st">&#39;procsub ok&#39;</span>        <span class="co"># &gt;(... ) &lt;(... )</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="fu">sleep</span> 0.1 <span class="kw">|</span> <span class="fu">sleep</span> 0.1                                <span class="co"># pipeline (two forks)</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">sleep</span> 1 <span class="kw">&amp;</span> <span class="bu">wait</span> <span class="st">&quot;</span><span class="va">$!</span><span class="st">&quot;</span>                                  <span class="co"># background + wait</span></span></code></pre></div>
+<p><code>pstree -p $$</code> printed inside <code>$(…)</code> shows the
+script PID with a child shell hanging off it; the same printed inside
+<code>( … )</code> shows the same parent but a different child PID —
+proof that each construct fakes a fresh process. Builtins and functions
+never appear as new nodes.</p>
+<h3 id="ascii-shape-under-each-construct">ASCII shape under each
+construct</h3>
+<pre><code>script (pid=4711)
+├── $(pstree -p 4711 ...)        ← bash subshell (pid=4712)
+│       └── pstree (pid=4713)
+├── ( pstree -p 4711 | sed ... ) ← bash subshell (pid=4714)
+│       ├── pstree (pid=4715)
+│       └── sed    (pid=4716)
+├── &lt;(echo a) &gt;(echo a)          ← two procsub children (pid=4717,4718)
+├── sleep 0.1 | sleep 0.1        ← pipeline (pid=4719,4720)
+└── sleep 1 &amp;                    ← backgrounded child (pid=4721)</code></pre>
+<p>A function call or <code>{ …; }</code> group would not add a node
+here; control returns inside the same <code>script</code> row.</p>
+<h3 id="lastpipe-the-pipeline-exception">lastpipe: the pipeline
+exception</h3>
+<p><code>shopt -s lastpipe</code> runs the <strong>rightmost</strong>
+stage of a pipeline in the current shell when the shell is
+non-interactive and job control is off. The other stages still fork;
+only the last is in-process.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: prove lastpipe lets the right-hand side mutate parent state.</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob lastpipe</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> +m                                                <span class="co"># disable job control</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-i</span> <span class="va">count</span><span class="op">=</span>0</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;%s\n&#39;</span> a b c <span class="kw">|</span> <span class="cf">while</span> <span class="bu">read</span> <span class="at">-r</span> <span class="va">_</span><span class="kw">;</span> <span class="cf">do</span> <span class="va">count</span><span class="op">+=</span>1<span class="kw">;</span> <span class="cf">done</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;count=%d\n&#39;</span> <span class="st">&quot;</span><span class="va">$count</span><span class="st">&quot;</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ count=3   (without lastpipe: count=0, the loop ran in a subshell)</span></span></code></pre></div>
+<p>Without <code>lastpipe</code> the <code>while</code> reads in a
+forked child; assignments to <code>count</code> evaporate when that
+child exits — a footgun that BCS0906 calls out for
+<code>find … | while</code>.</p>
+<h3 id="strict-mode-interaction">Strict-mode interaction</h3>
+<p><code>set -e</code> and <code>inherit_errexit</code> (BCS0101) follow
+the fork. A <code>false</code> in a brace group aborts the parent; the
+same <code>false</code> in <code>( false )</code> aborts only the
+subshell, returns a non-zero status, and the parent then honours
+<code>errexit</code> on the failing exit code. Knowing which body forks
+tells you whether a failure is local or terminal.</p>
+<h3 id="inspection-idioms">Inspection idioms</h3>
+<ul>
+<li><code>pstree -p &quot;$$&quot;</code> — full subtree from the script
+down.</li>
+<li><code>ps -o pid,ppid,pgid,comm --forest</code> — flat ancestor
+view.</li>
+<li><code>ps --ppid &quot;$$&quot; -o pid,comm</code> — direct children only.</li>
+<li><code>BASHPID</code> (§11.2) is the only reliable handle on the
+<em>current</em> node.</li>
+</ul>
+<h3 id="common-pitfalls">Common pitfalls</h3>
+<ul>
+<li>Treating <code>cmd | tee</code> as in-process: <code>tee</code>
+always forks; the <code>tee</code> variant of
+<code>read … | while</code> still loses the <code>read</code>-side state
+unless <code>lastpipe</code> is on (BCS0906).</li>
+<li>Assuming <code>( cmd )</code> and <code>{ cmd; }</code> are
+interchangeable: only the brace group preserves variable mutations.</li>
+<li>Counting forks for <code>$( $( … ) )</code>: each <code>$()</code>
+fork is independent; the inner one runs <em>inside</em> the outer
+subshell.</li>
+<li>Forgetting that <code>exec &gt;file</code> <em>redirects</em>
+without forking but rebinds the current shell&#39;s stdout for the rest of
+the script; <code>exec cmd</code> <em>replaces</em> the shell
+entirely.</li>
+</ul>
+<h3 id="quick-reference-fork-cost-intuition">Quick reference: fork cost
+intuition</h3>
+<p>External commands and forking constructs cost a <code>fork(2)</code>
+(cheap on Linux thanks to copy-on-write) plus, for external commands, an
+<code>execve(2)</code>. Builtins, brace groups, and function calls are
+free — they manipulate parser state only. Tight inner loops that invoke
+<code>grep</code>, <code>sed</code>, or <code>awk</code> once per
+iteration pay this cost on every trip; replace them with bash builtins
+(<code>[[ =~ ]]</code>, parameter expansion, <code>printf -v</code>)
+when the loop body permits.</p>
+<p><strong>See also</strong>: §11.2 (PID variables), §11.3 (subshell
+origins), §11.4 (<code>BASH_SUBSHELL</code>), §11.6 (process groups),
+§16 (concurrency), BCS0101, BCS0411, BCS0504, BCS0906.</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

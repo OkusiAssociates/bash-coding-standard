@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>11_nohup-and-setsid.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">11_nohup-and-setsid.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="1111-nohup-and-setsid">11.11 <code>nohup</code> and
+<code>setsid</code></h2>
+<p>Three tools — <code>nohup</code>, <code>setsid</code>, and
+<code>disown</code> — overlap enough to confuse and differ enough that
+picking the wrong one leaves a child killable by the next
+<code>SIGHUP</code>. This chapter pins down what each does, and what
+each does <em>not</em> do.</p>
+<h3 id="the-three-tools-at-a-glance">The three tools at a glance</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Tool</th>
+<th style="text-align: center;">Survives shell exit?</th>
+<th style="text-align: center;">New session?</th>
+<th style="text-align: center;">Redirects fds?</th>
+<th style="text-align: center;">Removes from job table?</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>nohup cmd &amp;</code></td>
+<td style="text-align: center;">yes (ignores <code>SIGHUP</code>)</td>
+<td style="text-align: center;">no</td>
+<td style="text-align: center;">yes — <code>nohup.out</code> if tty</td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr class="even">
+<td><code>setsid cmd</code></td>
+<td style="text-align: center;">yes (new session, no ctty)</td>
+<td style="text-align: center;">yes</td>
+<td style="text-align: center;">no</td>
+<td style="text-align: center;">n/a (already detached)</td>
+</tr>
+<tr class="odd">
+<td><code>cmd &amp; disown</code></td>
+<td style="text-align: center;">yes (Bash&#39;s <code>huponexit</code>
+off)</td>
+<td style="text-align: center;">no</td>
+<td style="text-align: center;">no</td>
+<td style="text-align: center;">yes</td>
+</tr>
+</tbody>
+</table>
+<p>Each addresses one slice of &quot;decouple from this shell&quot;; combine them
+when you want all three effects.</p>
+<h4 id="nohup--install-sig_ign-on-sighup"><code>nohup</code> — install
+<code>SIG_IGN</code> on <code>SIGHUP</code></h4>
+<p><code>nohup</code> calls <code>signal(SIGHUP, SIG_IGN)</code> and
+<code>execve(2)</code>s the target. If stdout is a terminal it redirects
+stdout (and stderr if also a tty) to <code>./nohup.out</code> or
+<code>$HOME/nohup.out</code>. The child <em>inherits</em> the ignored
+disposition; the new program may reset it but rarely does.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: a long sleep that survives this shell&#39;s logout.</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">nohup</span> sleep 600 <span class="op">&gt;</span>/tmp/sleep.log <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span> <span class="kw">&amp;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-ri</span> <span class="va">child</span><span class="op">=</span><span class="va">$!</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="bu">disown</span> <span class="st">&quot;</span><span class="va">$child</span><span class="st">&quot;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;detached pid=%d\n&#39;</span> <span class="st">&quot;</span><span class="va">$child</span><span class="st">&quot;</span></span></code></pre></div>
+<p>Without the explicit redirection, <code>nohup</code> writes to
+<code>nohup.out</code> in the cwd — a frequent surprise in shared
+directories.</p>
+<h4 id="setsid--fork-into-a-new-session"><code>setsid</code> — fork into
+a new session</h4>
+<p><code>setsid(1)</code> calls <code>setsid(2)</code> so the child
+becomes its own session leader with no controlling terminal. It cannot
+receive terminal- generated signals (<code>SIGHUP</code> from logout,
+<code>SIGINT</code> from Ctrl-C) because it has no terminal to receive
+them from.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: launch a daemonish worker fully detached from this tty.</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">setsid</span> <span class="at">--fork</span> bash <span class="at">-c</span> <span class="st">&#39;exec /usr/local/bin/myworker&#39;</span> <span class="dt">\</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>       <span class="op">&lt;</span>/dev/null <span class="op">&gt;</span>/var/log/myworker.log <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span></span></code></pre></div>
+<p><code>--fork</code> is essential: without it, <code>setsid</code>
+only does <code>setsid(2)</code> if the caller is not already a process
+group leader. With <code>--fork</code>, it forks first (so the child
+cannot be a leader) and then calls <code>setsid(2)</code>
+unconditionally.</p>
+<h4 id="disown--remove-from-bashs-job-table"><code>disown</code> —
+remove from Bash&#39;s job table</h4>
+<p><code>disown</code> is a Bash builtin; it does not touch the OS. By
+default it forgets the job, so subsequent
+<code>wait</code>/<code>fg</code>/<code>bg</code>/<code>jobs</code>
+cannot reach it. With <code>-h</code>, the job stays in the table but is
+marked &quot;do not send <code>SIGHUP</code> on shell exit&quot;. With
+<code>-a</code> it acts on every job. See §11.9.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: keep the job listed but immune to shell-exit SIGHUP.</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sleep</span> 600 <span class="kw">&amp;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">disown</span> <span class="at">-h</span> <span class="st">&quot;</span><span class="va">$!</span><span class="st">&quot;</span>   <span class="co"># listed by `jobs`, but huponexit cannot reach it</span></span></code></pre></div>
+<h3 id="side-by-side-comparison">Side-by-side comparison</h3>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># wrong — naive backgrounding leaves the child exposed</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sleep</span> 600 <span class="kw">&amp;</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="bu">exit</span>            <span class="co"># ⇒ child receives SIGHUP if huponexit is on</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># right (option A) — nohup ignores SIGHUP at the OS level</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="fu">nohup</span> sleep 600 <span class="op">&gt;</span>/tmp/x.log <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span> <span class="kw">&amp;</span> <span class="bu">disown</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="bu">exit</span>            <span class="co"># ⇒ child runs to completion</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co"># right (option B) — setsid puts the child in a new session</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="ex">setsid</span> <span class="at">--fork</span> bash <span class="at">-c</span> <span class="st">&#39;sleep 600&#39;</span> <span class="op">&lt;</span>/dev/null <span class="op">&gt;</span>/tmp/x.log <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="bu">exit</span>            <span class="co"># ⇒ child has no ctty, no SIGHUP source</span></span></code></pre></div>
+<p>The two right-hand forms are not equivalent: only <code>setsid</code>
+actually changes the kernel&#39;s view of the child&#39;s session. For a
+one-shot backgrounded job, <code>nohup … &amp; disown</code> is enough.
+For a long-running service, <code>setsid</code> is closer to a true
+daemon — and <code>systemd</code> is closer still (§11.12).</p>
+<h3 id="strict-mode-interaction">Strict-mode interaction</h3>
+<p>Under <code>set -euo pipefail</code>, the parent script&#39;s exit status
+is the exit status of the last executed command, not the detached child.
+<code>wait</code> will not see a <code>disown</code>ed PID; rely on the
+child&#39;s own logging or status file.</p>
+<p><strong>See also</strong>: §11.5 (foreground vs background), §11.6
+(process groups and sessions), §11.9 (job-control builtins, including
+<code>disown</code>), §11.12 (detaching from the terminal), BCS1101.</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

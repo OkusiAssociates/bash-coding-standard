@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>09_Indexed-arrays.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">09_Indexed-arrays.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="49-indexed-arrays">4.9 Indexed arrays</h2>
+<p>The default array type in Bash. <strong>Indexed</strong> because
+subscripts are integers; <strong>sparse</strong> because the indices
+need not be contiguous. An indexed array stores zero or more string
+elements at arbitrary non-negative integer positions, with no fixed
+length and no fixed capacity.</p>
+<h3 id="creation-and-assignment">Creation and assignment</h3>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: every legitimate way to create an indexed array</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">a</span>                    <span class="co"># empty, declared</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">b</span><span class="op">=</span><span class="va">()</span>                 <span class="co"># empty, declared explicitly</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">c</span><span class="op">=</span><span class="va">(</span>alpha beta gamma<span class="va">)</span> <span class="co"># populated literal</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">d</span><span class="op">=</span><span class="va">(</span><span class="op">[</span><span class="dv">5</span><span class="op">]</span><span class="va">=</span>x <span class="op">[</span><span class="dv">10</span><span class="op">]</span><span class="va">=</span>y<span class="va">)</span>     <span class="co"># sparse literal</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Implicit creation by subscripted assignment</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="va">e</span><span class="op">[</span><span class="dv">0</span><span class="op">]=</span>first                      <span class="co"># creates e as indexed array</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Append (preserves existing elements; new ones go at end)</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="va">c</span><span class="op">+=</span><span class="va">(</span>delta epsilon<span class="va">)</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-p</span> <span class="va">c</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ declare -a c=([0]=&quot;alpha&quot; [1]=&quot;beta&quot; [2]=&quot;gamma&quot; [3]=&quot;delta&quot; [4]=&quot;epsilon&quot;)</span></span></code></pre></div>
+<p>Always declare with <code>-a</code> (or <code>-ar</code> for
+readonly) at the point of introduction — implicit creation works but
+obscures intent. See BCS0201 and BCS0206.</p>
+<h3 id="reading-elements-and-metadata">Reading elements and
+metadata</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Expression</th>
+<th>Returns</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>${arr[i]}</code></td>
+<td>element at index <code>i</code> (subscript is arithmetic)</td>
+</tr>
+<tr class="even">
+<td><code>${arr[@]}</code> or <code>${arr[*]}</code></td>
+<td>all elements</td>
+</tr>
+<tr class="odd">
+<td><code>&quot;${arr[@]}&quot;</code></td>
+<td>all elements <strong>as separate words</strong></td>
+</tr>
+<tr class="even">
+<td><code>&quot;${arr[*]}&quot;</code></td>
+<td>all elements <strong>joined by <code>IFS[0]</code></strong></td>
+</tr>
+<tr class="odd">
+<td><code>${#arr[@]}</code></td>
+<td>element count (sparse: count of <em>populated</em> slots)</td>
+</tr>
+<tr class="even">
+<td><code>${#arr[i]}</code></td>
+<td>byte-length of element <code>i</code></td>
+</tr>
+<tr class="odd">
+<td><code>${!arr[@]}</code></td>
+<td>populated indices, ascending</td>
+</tr>
+<tr class="even">
+<td><code>&quot;${arr[@]:offset:length}&quot;</code></td>
+<td>slice of <code>length</code> elements starting at <em>position</em>
+(not index)</td>
+</tr>
+<tr class="odd">
+<td><code>&quot;${arr[i]:offset:length}&quot;</code></td>
+<td>substring slice of element <code>i</code></td>
+</tr>
+</tbody>
+</table>
+<p>The <code>[@]</code> versus <code>[*]</code> distinction is the same
+load-bearing rule as for positional parameters (§4.2):
+<code>&quot;${arr[@]}&quot;</code> preserves word boundaries;
+<code>&quot;${arr[*]}&quot;</code> collapses to one word.</p>
+<h3 id="sparse-arrays">Sparse arrays</h3>
+<p>Bash arrays are sparse. Unset elements simply have no index; they do
+not exist as &quot;empty slots&quot;. <code>${#arr[@]}</code> counts
+<em>populated</em> indices, not the maximum index.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: sparse-array semantics</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">arr</span><span class="op">=</span><span class="va">(</span>a b c<span class="va">)</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="va">arr</span><span class="op">[</span><span class="dv">10</span><span class="op">]=</span>x</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="va">arr</span><span class="op">[</span><span class="dv">20</span><span class="op">]=</span>y</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="bu">unset</span> <span class="st">&#39;arr[1]&#39;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;count: %d\n&#39;</span> <span class="st">&quot;</span><span class="va">${</span><span class="op">#</span><span class="va">arr</span><span class="op">[@]</span><span class="va">}</span><span class="st">&quot;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ count: 4   (indices 0, 2, 10, 20)</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;indices: %s\n&#39;</span> <span class="st">&quot;</span><span class="va">${</span><span class="op">!</span><span class="va">arr</span><span class="op">[*]</span><span class="va">}</span><span class="st">&quot;</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ indices: 0 2 10 20</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Iterating values gives elements only, in index order:</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> v <span class="kw">in</span> <span class="st">&quot;</span><span class="va">${arr</span><span class="op">[@]</span><span class="va">}</span><span class="st">&quot;</span><span class="kw">;</span> <span class="cf">do</span> <span class="bu">printf</span> <span class="st">&#39;&lt;%s&gt;\n&#39;</span> <span class="st">&quot;</span><span class="va">$v</span><span class="st">&quot;</span><span class="kw">;</span> <span class="cf">done</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ &lt;a&gt; &lt;c&gt; &lt;x&gt; &lt;y&gt;</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co"># To know which index each value lives at, iterate &quot;${!arr[@]}&quot;:</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="st">&quot;</span><span class="va">${</span><span class="op">!</span><span class="va">arr</span><span class="op">[@]</span><span class="va">}</span><span class="st">&quot;</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">&#39;[%d]=%s\n&#39;</span> <span class="st">&quot;</span><span class="va">$i</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">${arr</span><span class="op">[</span>i<span class="op">]</span><span class="va">}</span><span class="st">&quot;</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div>
+<h3 id="the-copy-pitfall">The copy pitfall</h3>
+<p><code>new=(&quot;${old[@]}&quot;)</code> produces a <strong>re-indexed</strong>
+copy: indices <code>0, 2, 10, 20</code> collapse to
+<code>0, 1, 2, 3</code>. This is almost always what you want, but it
+loses the sparse structure. To preserve indices verbatim, copy through
+the populated-index list.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: re-indexing copy versus index-preserving copy</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">old</span><span class="op">=</span><span class="va">(</span><span class="op">[</span><span class="dv">0</span><span class="op">]</span><span class="va">=</span>a <span class="op">[</span><span class="dv">2</span><span class="op">]</span><span class="va">=</span>c <span class="op">[</span><span class="dv">10</span><span class="op">]</span><span class="va">=</span>x <span class="op">[</span><span class="dv">20</span><span class="op">]</span><span class="va">=</span>y<span class="va">)</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-indexing copy — sparseness lost</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">flat</span><span class="op">=</span><span class="va">(</span><span class="st">&quot;</span><span class="va">${old</span><span class="op">[@]</span><span class="va">}</span><span class="st">&quot;</span><span class="va">)</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-p</span> <span class="va">flat</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ declare -a flat=([0]=&quot;a&quot; [1]=&quot;c&quot; [2]=&quot;x&quot; [3]=&quot;y&quot;)</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Index-preserving copy</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">same</span><span class="op">=</span><span class="va">()</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="st">&quot;</span><span class="va">${</span><span class="op">!</span><span class="va">old</span><span class="op">[@]</span><span class="va">}</span><span class="st">&quot;</span><span class="kw">;</span> <span class="cf">do</span> <span class="va">same</span><span class="op">[</span>i<span class="op">]=</span><span class="va">${old</span><span class="op">[</span>i<span class="op">]</span><span class="va">}</span><span class="kw">;</span> <span class="cf">done</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-p</span> <span class="va">same</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ declare -a same=([0]=&quot;a&quot; [2]=&quot;c&quot; [10]=&quot;x&quot; [20]=&quot;y&quot;)</span></span></code></pre></div>
+<p>The re-indexing copy is sometimes <em>intended</em> — for example,
+when collapsing a logical &quot;list&quot; that happened to have holes. State the
+intent explicitly with a comment if it matters.</p>
+<h3 id="iteration">Iteration</h3>
+<p>The two correct iteration idioms — pick whichever fits.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">paths</span><span class="op">=</span><span class="va">(</span><span class="st">&quot;/etc/passwd&quot;</span> <span class="st">&quot;/var/log/app.log&quot;</span> <span class="st">&quot;name with space&quot;</span><span class="va">)</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Idiom 1: iterate values directly (most common)</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> p <span class="kw">in</span> <span class="st">&quot;</span><span class="va">${paths</span><span class="op">[@]</span><span class="va">}</span><span class="st">&quot;</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">[[</span> <span class="ot">-f</span> <span class="va">$p</span> <span class="kw">]]</span> <span class="kw">||</span> <span class="cf">continue</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">&#39;exists: %s\n&#39;</span> <span class="st">&quot;</span><span class="va">$p</span><span class="st">&quot;</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Idiom 2: iterate indices (when you need the index)</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="st">&quot;</span><span class="va">${</span><span class="op">!</span><span class="va">paths</span><span class="op">[@]</span><span class="va">}</span><span class="st">&quot;</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">&#39;[%d] %s\n&#39;</span> <span class="st">&quot;</span><span class="va">$i</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">${paths</span><span class="op">[</span>i<span class="op">]</span><span class="va">}</span><span class="st">&quot;</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div>
+<p>Always quote <code>&quot;${arr[@]}&quot;</code> — otherwise each element is
+re-split on <code>IFS</code> and subjected to pathname expansion. See
+BCS0301 and BCS0206.</p>
+<h3 id="common-operations">Common operations</h3>
+<ul>
+<li><strong>Append</strong>: <code>arr+=(x y z)</code> — add elements at
+the next free index.</li>
+<li><strong>Element append</strong>: <code>arr[3]+=&#39;more&#39;</code> —
+append to a single element.</li>
+<li><strong>Delete one element</strong>: <code>unset &#39;arr[2]&#39;</code> —
+quoting required to prevent globbing of <code>arr[2]</code> against
+files in <code>cwd</code> when <code>[</code>/<code>]</code> are active
+glob characters.</li>
+<li><strong>Delete the array</strong>: <code>unset arr</code> — gone,
+attribute and all.</li>
+<li><strong>Read a file as lines</strong>:
+<code>mapfile -t arr &lt; file</code> — see §14.3.</li>
+<li><strong>Length</strong>: <code>${#arr[@]}</code> (count) versus
+<code>${#arr[i]}</code> (byte length of element <code>i</code>).</li>
+</ul>
+<h3 id="slicing-and-substring-operations">Slicing and substring
+operations</h3>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: array slicing and per-element substring</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">a</span><span class="op">=</span><span class="va">(</span>zero one two three four five<span class="va">)</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Slice: position-based, not index-based</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;%s\n&#39;</span> <span class="st">&quot;</span><span class="va">${a</span><span class="op">[@]:</span><span class="dv">1</span><span class="op">:</span><span class="dv">3</span><span class="va">}</span><span class="st">&quot;</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ one</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ two</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ three</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Slice from the end: ${a[@]: -2} (the leading space is required)</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;%s\n&#39;</span> <span class="st">&quot;</span><span class="va">${a</span><span class="op">[@]:</span> -<span class="dv">2</span><span class="va">}</span><span class="st">&quot;</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ four</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ five</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Substring of one element</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;%s\n&#39;</span> <span class="st">&quot;</span><span class="va">${a</span><span class="op">[</span><span class="dv">2</span><span class="op">]:</span><span class="dv">1</span><span class="op">:</span><span class="dv">2</span><span class="va">}</span><span class="st">&quot;</span>   <span class="co"># element 2 = &quot;two&quot;, chars 1-2 = &quot;wo&quot;</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ wo</span></span></code></pre></div>
+<p>The slice <code>${arr[@]:offset:length}</code> indexes by
+<em>position</em> in the populated-elements list, not by raw index
+value. For a sparse array this is rarely what you want; iterate
+<code>&quot;${!arr[@]}&quot;</code> instead and filter explicitly.</p>
+<h3 id="common-operations-1">Common operations</h3>
+<ul>
+<li><strong>Append</strong>: <code>arr+=(x y z)</code> — add elements at
+the next free index.</li>
+<li><strong>Element append</strong>: <code>arr[3]+=&#39;more&#39;</code> —
+append to a single element.</li>
+<li><strong>Delete one element</strong>: <code>unset &#39;arr[2]&#39;</code> —
+quoting required to prevent globbing of <code>arr[2]</code> against
+files in <code>cwd</code> when <code>[</code>/<code>]</code> are active
+glob characters.</li>
+<li><strong>Delete the array</strong>: <code>unset arr</code> — gone,
+attribute and all.</li>
+<li><strong>Empty without removing</strong>: <code>arr=()</code>.</li>
+<li><strong>Read a file as lines</strong>:
+<code>mapfile -t arr &lt; file</code> — see §14.3.</li>
+<li><strong>Length</strong>: <code>${#arr[@]}</code> (count) versus
+<code>${#arr[i]}</code> (byte length of element <code>i</code>).</li>
+<li><strong>Reverse</strong>: no built-in; iterate indices in descending
+order.</li>
+<li><strong>Sort</strong>: no built-in; pipe to <code>sort</code> and
+<code>mapfile -t</code> back.</li>
+</ul>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: sorting an array (LC_ALL=C for byte-wise stability)</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">names</span><span class="op">=</span><span class="va">(</span>carol alice bob<span class="va">)</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="ex">mapfile</span> <span class="at">-t</span> names <span class="op">&lt;</span> <span class="op">&lt;(</span><span class="bu">printf</span> <span class="st">&#39;%s\n&#39;</span> <span class="st">&quot;</span><span class="va">${names</span><span class="op">[@]</span><span class="va">}</span><span class="st">&quot;</span> <span class="kw">|</span> <span class="va">LC_ALL</span><span class="op">=</span>C <span class="fu">sort</span><span class="op">)</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-p</span> <span class="va">names</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ declare -a names=([0]=&quot;alice&quot; [1]=&quot;bob&quot; [2]=&quot;carol&quot;)</span></span></code></pre></div>
+<h3 id="pitfalls-in-one-place">Pitfalls in one place</h3>
+<ul>
+<li><strong>Unquoted expansion</strong>: <code>for x in ${arr[@]}</code>
+re-splits and globs. Always <code>&quot;${arr[@]}&quot;</code>.</li>
+<li><strong><code>unset arr[i]</code> without quoting</strong>: a
+literal file named <code>arr2</code> in the cwd will be matched and
+remove the wrong thing. Always <code>unset &#39;arr[i]&#39;</code>.</li>
+<li><strong><code>${arr}</code> with no subscript</strong> is
+<code>${arr[0]}</code> — a frequent silent bug when the array is meant
+to expand to all elements.</li>
+<li><strong>Comparing two arrays for equality</strong> is not built in —
+iterate both via <code>${!arr[@]}</code> and compare
+element-by-element.</li>
+<li><strong>Slice offsets are position-based on sparse arrays</strong>.
+Element 0 in the slice is the first <em>populated</em> element, not the
+element at index 0.</li>
+</ul>
+<h3 id="see-also">See also</h3>
+<ul>
+<li>§4.2 — positional parameters (also a sparse word array)</li>
+<li>§4.10 — associative arrays</li>
+<li>§4.13 — compound array assignment expansion rules</li>
+<li>§4.14 — <code>unset</code> semantics and quoting</li>
+<li>§14.3 — <code>mapfile</code>/<code>readarray</code> for
+line-oriented input</li>
+<li>BCS0201, BCS0206 (array declaration and discipline)</li>
+</ul>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

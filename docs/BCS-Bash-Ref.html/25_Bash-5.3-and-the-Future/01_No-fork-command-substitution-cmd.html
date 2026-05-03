@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>01_No-fork-command-substitution-cmd.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">01_No-fork-command-substitution-cmd.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="251-no-fork-command-substitution--cmd-">25.1 No-fork command
+substitution <code>${ cmd; }</code></h2>
+<p>The headline feature of Bash 5.3. The traditional <code>$(cmd)</code>
+form runs <code>cmd</code> in a subshell — <code>fork(2)</code>, then
+run, then collect stdout. The new <code>${ cmd; }</code> form runs
+<code>cmd</code> <em>in the current shell</em> and captures its stdout
+as the value of the substitution. No fork, ~1 ms saved per call on a
+modern Linux host, and — because there is no subshell — variable
+assignments and other side effects persist into the parent.</p>
+<p>The syntax requires:</p>
+<ul>
+<li>a <strong>leading space</strong> after <code>${</code>
+(distinguishing it from <code>${var…}</code>);</li>
+<li>a <strong>trailing semicolon or newline</strong> before the closing
+<code>}</code>;</li>
+<li>the body is parsed and executed as if it were a <code>{ … ; }</code>
+group.</li>
+</ul>
+<h3 id="a-worked-side-effect-persistence-demo">A worked
+side-effect-persistence demo</h3>
+<p>The clearest illustration is to run the same body under
+<code>$(…)</code> and <code>${ …; }</code> and watch what happens to the
+parent&#39;s variables:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Requires bash 5.3+.</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">((</span> <span class="va">BASH_VERSINFO</span><span class="op">[</span><span class="dv">0</span><span class="op">]</span> <span class="op">&lt;</span> <span class="dv">5</span> <span class="kw">||</span> (<span class="va">BASH_VERSINFO</span><span class="op">[</span><span class="dv">0</span><span class="op">]</span> <span class="op">==</span> <span class="dv">5</span> <span class="kw">&amp;&amp;</span> <span class="va">BASH_VERSINFO</span><span class="op">[</span><span class="dv">1</span><span class="op">]</span> <span class="op">&lt;</span> <span class="dv">3</span>) <span class="kw">));</span> <span class="cf">then</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">&#39;requires bash 5.3+\n&#39;</span> <span class="op">&gt;&amp;</span><span class="dv">2</span><span class="kw">;</span> <span class="bu">exit</span> 18</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="cf">fi</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="va">x</span><span class="op">=</span>outer</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Traditional $() — runs in a subshell, side effects are discarded.</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="va">out1</span><span class="op">=</span><span class="va">$(x</span><span class="op">=</span>inner<span class="kw">;</span> <span class="bu">echo</span> <span class="st">&quot;</span><span class="va">$x</span><span class="st">&quot;</span><span class="va">)</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;after $(): out1=%s, x=%s\n&#39;</span> <span class="st">&quot;</span><span class="va">$out1</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">$x</span><span class="st">&quot;</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ after $(): out1=inner, x=outer</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co"># New ${ ; } — runs in the current shell, side effects persist.</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="va">out2</span><span class="op">=</span><span class="va">${</span><span class="er"> x=inner; echo &quot;$x&quot;; </span><span class="va">}</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;after ${ }: out2=%s, x=%s\n&#39;</span> <span class="st">&quot;</span><span class="va">$out2</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">$x</span><span class="st">&quot;</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ after ${ }: out2=inner, x=inner</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co">#fin</span></span></code></pre></div>
+<p>Both forms produce the same captured value (<code>inner</code>); the
+difference is in the parent&#39;s <code>x</code>. Under <code>$(…)</code>,
+the parent never sees the inner assignment — that is the whole point of
+subshell isolation. Under <code>${ …; }</code>, the assignment lands in
+the parent&#39;s variable table, because there is no subshell to isolate
+it.</p>
+<h3 id="when-to-use-it">When to use it</h3>
+<p>The honest answer is: in 99% of scripts, <strong>don&#39;t
+bother</strong>. The 1 ms saved per call is invisible against any real
+workload, and the side-effect-persistence semantics is a footgun: a
+function that you mentally model as &quot;captures stdout, has no other
+effect&quot; can suddenly mutate the calling scope. <code>$(…)</code> is the
+safer default precisely because of its isolation.</p>
+<p>The exceptions worth the upgrade:</p>
+<ol type="1">
+<li><strong>Hot loops.</strong> A polling loop that calls a tiny helper
+10 000 times per minute is ~10 s of pure fork overhead with
+<code>$(…)</code>; ~0 with <code>${ …; }</code>. Build, deployment, and
+CI scripts with thousands of trivial substitutions are the canonical
+wins.</li>
+<li><strong>Functions whose entire purpose is to return a value via
+stdout AND set a variable in the caller.</strong> <code>${ …; }</code>
+lets you do both at once, which <code>$(…)</code> cannot.</li>
+<li><strong>Scripts that already commit to bash 5.3+.</strong> If the
+floor is 5.3, reach for the new form; if it is anything older, the
+forward-compatibility cost is not worth the per-call savings.</li>
+</ol>
+<h3 id="caveats">Caveats</h3>
+<ul>
+<li><strong>Not portable.</strong> Requires bash 5.3 or later. The form
+is a <em>syntax error</em> on bash 5.2 and below — it cannot be
+feature-detected at runtime in the same script.</li>
+<li><strong>Side-effect persistence is the feature, not a bug.</strong>
+Code that treats <code>${ …; }</code> as a drop-in replacement for
+<code>$(…)</code> will produce parent-scope mutations the author did not
+intend.</li>
+<li><strong>Whitespace is significant.</strong> <code>${cmd;}</code> (no
+leading space) is still parameter expansion; <code>${ cmd;}</code>
+requires the space; the trailing <code>;</code> or newline before
+<code>}</code> is mandatory.</li>
+</ul>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># wrong — no leading space; bash treats this as ${cmd;}</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="va">result</span><span class="op">=</span><span class="va">${cmd</span><span class="er">; echo hi; </span><span class="va">}</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ syntax error or attempt to expand a parameter named &quot;cmd; echo hi; &quot;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># right — leading space, trailing semicolon</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="va">result</span><span class="op">=</span><span class="va">${</span><span class="er"> cmd; echo hi; </span><span class="va">}</span></span></code></pre></div>
+<p><strong>See also</strong>: §13.4 (command substitution — the
+<code>$(…)</code> form); §24.8 (subshell forking — what
+<code>$(…)</code> is doing under the covers); §25.5
+(forward-compatibility considerations); Appendix M (bash version
+history) for the 5.3 release notes.</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

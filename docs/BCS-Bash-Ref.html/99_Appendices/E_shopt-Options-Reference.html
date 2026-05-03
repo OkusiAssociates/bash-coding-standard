@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>E_shopt-Options-Reference.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">E_shopt-Options-Reference.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="appendix-e--shopt-options-reference">Appendix E —
+<code>shopt</code> Options Reference</h2>
+<p>Selected <code>shopt</code> options for bash 5.2; the full list is
+<code>shopt</code> with no arguments. <strong>Default</strong> column
+shows the option&#39;s state in a fresh bash 5.2 invocation: <code>on</code>
+enabled at startup, <code>off</code> disabled, <code>int</code> enabled
+only in interactive shells. <strong>Since</strong> indicates the bash
+version that introduced the option (4.0 unless older). BCS-recommended
+options are flagged in the description.</p>
+<h3 id="bcs-mandated-set-always-enable">BCS-mandated set (always
+enable)</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Option</th>
+<th>Default</th>
+<th>Since</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>inherit_errexit</code></td>
+<td>off</td>
+<td>4.4</td>
+<td>Propagate <code>set -e</code> into command substitutions.
+<strong>BCS0101 mandatory</strong> — without it, <code>$( … )</code>
+silently swallows errors.</td>
+</tr>
+<tr class="even">
+<td><code>extglob</code></td>
+<td>off</td>
+<td>2.02</td>
+<td>Enable extended glob patterns (<code>?(…)</code>, <code>*(…)</code>,
+<code>+(…)</code>, <code>@(…)</code>, <code>!(…)</code>). <strong>BCS
+preamble</strong> — required by §5.12.</td>
+</tr>
+<tr class="odd">
+<td><code>nullglob</code></td>
+<td>off</td>
+<td>2.02</td>
+<td>Unmatched globs expand to nothing instead of literal pattern.
+<strong>BCS preamble</strong> — pairs with
+<code>for f in *.log; do …</code> loops.</td>
+</tr>
+<tr class="even">
+<td><code>shift_verbose</code></td>
+<td>off</td>
+<td>2.0</td>
+<td>Warn on shift past end of positional parameters. <em>Removed from
+BCS preamble in §13.6 retrospective</em>; still useful in template
+guidance.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="globbing-behaviour">Globbing behaviour</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Option</th>
+<th>Default</th>
+<th>Since</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>dotglob</code></td>
+<td>off</td>
+<td>2.0</td>
+<td>Include dotfiles (except <code>.</code> and <code>..</code>) in
+<code>*</code> expansion. (§5.11)</td>
+</tr>
+<tr class="even">
+<td><code>failglob</code></td>
+<td>off</td>
+<td>3.0</td>
+<td>Unmatched glob is an error (mutually exclusive with
+<code>nullglob</code>).</td>
+</tr>
+<tr class="odd">
+<td><code>globasciiranges</code></td>
+<td>off</td>
+<td>4.3</td>
+<td><code>[a-z]</code> matches ASCII regardless of locale; otherwise
+locale-dependent.</td>
+</tr>
+<tr class="even">
+<td><code>globskipdots</code></td>
+<td>on</td>
+<td>5.2</td>
+<td>Exclude <code>.</code> and <code>..</code> from <code>*</code> even
+when <code>dotglob</code> is set. <strong>5.2 default-on</strong>.</td>
+</tr>
+<tr class="odd">
+<td><code>globstar</code></td>
+<td>off</td>
+<td>4.0</td>
+<td><code>**</code> matches any number of directories recursively.</td>
+</tr>
+<tr class="even">
+<td><code>nocaseglob</code></td>
+<td>off</td>
+<td>2.02</td>
+<td>Case-insensitive glob matching. (§5.11)</td>
+</tr>
+<tr class="odd">
+<td><code>nocasematch</code></td>
+<td>off</td>
+<td>3.1</td>
+<td>Case-insensitive <code>[[ … = pat ]]</code> and <code>case</code>
+matching.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="history-and-interactive-features">History and interactive
+features</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Option</th>
+<th>Default</th>
+<th>Since</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>cmdhist</code></td>
+<td>int</td>
+<td>2.0</td>
+<td>Save multi-line commands as one history entry.</td>
+</tr>
+<tr class="even">
+<td><code>lithist</code></td>
+<td>off</td>
+<td>2.0</td>
+<td>Save multi-line commands with embedded newlines (vs
+<code>;</code>).</td>
+</tr>
+<tr class="odd">
+<td><code>histappend</code></td>
+<td>off</td>
+<td>2.0</td>
+<td>Append to <code>HISTFILE</code> instead of overwriting.</td>
+</tr>
+<tr class="even">
+<td><code>histreedit</code></td>
+<td>off</td>
+<td>2.0</td>
+<td>Re-edit a failed history substitution.</td>
+</tr>
+<tr class="odd">
+<td><code>histverify</code></td>
+<td>off</td>
+<td>2.0</td>
+<td>Show expanded history before executing.</td>
+</tr>
+<tr class="even">
+<td><code>huponexit</code></td>
+<td>off</td>
+<td>2.02</td>
+<td>Send SIGHUP to background jobs on shell exit.</td>
+</tr>
+<tr class="odd">
+<td><code>interactive_comments</code></td>
+<td>int</td>
+<td>1.14.7</td>
+<td><code>#</code> introduces comments in interactive shell.</td>
+</tr>
+<tr class="even">
+<td><code>mailwarn</code></td>
+<td>off</td>
+<td>2.0</td>
+<td>Warn when mail file is read and modified.</td>
+</tr>
+<tr class="odd">
+<td><code>no_empty_cmd_completion</code></td>
+<td>off</td>
+<td>2.04</td>
+<td>Don&#39;t tab-complete on an empty line.</td>
+</tr>
+<tr class="even">
+<td><code>progcomp</code></td>
+<td>on</td>
+<td>2.04</td>
+<td>Enable programmable completion (the <code>complete</code>
+builtin).</td>
+</tr>
+<tr class="odd">
+<td><code>progcomp_alias</code></td>
+<td>off</td>
+<td>4.4</td>
+<td>Aliases participate in programmable completion.</td>
+</tr>
+<tr class="even">
+<td><code>promptvars</code></td>
+<td>on</td>
+<td>2.0</td>
+<td>Expand variables and <code>\…</code> escapes in prompt strings.</td>
+</tr>
+<tr class="odd">
+<td><code>restricted_shell</code></td>
+<td>off</td>
+<td>3.0</td>
+<td>Read-only — set when bash is invoked as <code>rbash</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="directory-and-command-lookup">Directory and command lookup</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Option</th>
+<th>Default</th>
+<th>Since</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>autocd</code></td>
+<td>off</td>
+<td>4.0</td>
+<td>Bare directory name acts as <code>cd dir</code>.</td>
+</tr>
+<tr class="even">
+<td><code>cdable_vars</code></td>
+<td>off</td>
+<td>2.0</td>
+<td><code>cd VAR</code> resolves to <code>cd $VAR</code> if VAR names a
+directory.</td>
+</tr>
+<tr class="odd">
+<td><code>cdspell</code></td>
+<td>off</td>
+<td>2.0</td>
+<td>Autocorrect minor <code>cd</code> typos (interactive).</td>
+</tr>
+<tr class="even">
+<td><code>dirspell</code></td>
+<td>off</td>
+<td>4.0</td>
+<td>Autocorrect directory names during completion.</td>
+</tr>
+<tr class="odd">
+<td><code>checkhash</code></td>
+<td>off</td>
+<td>2.0</td>
+<td>Verify hashed commands still exist before invoking.</td>
+</tr>
+<tr class="even">
+<td><code>checkjobs</code></td>
+<td>off</td>
+<td>4.0</td>
+<td>Warn before exiting with stopped/running jobs.</td>
+</tr>
+<tr class="odd">
+<td><code>checkwinsize</code></td>
+<td>on</td>
+<td>2.05</td>
+<td>Update <code>LINES</code>/<code>COLUMNS</code> after each
+command.</td>
+</tr>
+<tr class="even">
+<td><code>direxpand</code></td>
+<td>off</td>
+<td>4.3</td>
+<td>Path completion replaces with expanded path.</td>
+</tr>
+<tr class="odd">
+<td><code>complete_fullquote</code></td>
+<td>on</td>
+<td>4.3</td>
+<td>Quote shell metacharacters in completion output.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="function-and-variable-behaviour">Function and variable
+behaviour</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Option</th>
+<th>Default</th>
+<th>Since</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>expand_aliases</code></td>
+<td>off</td>
+<td>1.14.7</td>
+<td>Aliases expand in non-interactive shells.</td>
+</tr>
+<tr class="even">
+<td><code>extdebug</code></td>
+<td>off</td>
+<td>3.0</td>
+<td>Enable extended debugging (<code>declare -F</code> shows
+source/lineno; <code>BASH_ARG{C,V}</code> populated; ERR trap
+inheritance).</td>
+</tr>
+<tr class="odd">
+<td><code>lastpipe</code></td>
+<td>off</td>
+<td>4.2</td>
+<td>Last pipeline command runs in current shell, not subshell.
+(§6.16)</td>
+</tr>
+<tr class="even">
+<td><code>localvar_inherit</code></td>
+<td>off</td>
+<td>4.4</td>
+<td><code>local</code> inherits parent function&#39;s value when
+re-declared.</td>
+</tr>
+<tr class="odd">
+<td><code>localvar_unset</code></td>
+<td>off</td>
+<td>4.4</td>
+<td><code>local</code> initialises to &quot;unset&quot; rather than empty.</td>
+</tr>
+<tr class="even">
+<td><code>varredir_close</code></td>
+<td>off</td>
+<td>5.2</td>
+<td><code>{var}&lt;file</code> closes fd when var goes out of scope.
+<strong>5.2-new</strong>.</td>
+</tr>
+<tr class="odd">
+<td><code>assoc_expand_once</code></td>
+<td>off</td>
+<td>5.0</td>
+<td>Associative subscripts expanded once (5.0+) —
+performance/safety.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="interaction-with-set--e-and-signals">Interaction with
+<code>set -e</code> and signals</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Option</th>
+<th>Default</th>
+<th>Since</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>inherit_errexit</code></td>
+<td>off</td>
+<td>4.4</td>
+<td>(Listed above.) <strong>BCS-mandated</strong>.</td>
+</tr>
+<tr class="even">
+<td><code>execfail</code></td>
+<td>off</td>
+<td>2.0</td>
+<td>Non-interactive shell continues on <code>exec</code> failure instead
+of exiting.</td>
+</tr>
+<tr class="odd">
+<td><code>gnu_errfmt</code></td>
+<td>off</td>
+<td>2.05</td>
+<td>Error messages in GNU <code>file:line: message</code> format.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="sourcing">Sourcing</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Option</th>
+<th>Default</th>
+<th>Since</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>sourcepath</code></td>
+<td>on</td>
+<td>2.0</td>
+<td><code>source</code>/<code>.</code> searches <code>PATH</code> for
+the script.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="compatibility-levels-do-not-enable">Compatibility levels (do not
+enable)</h3>
+<p><code>compat31</code> through <code>compat51</code> revert specific
+behaviours to older bash versions. <strong>BCS recommends not enabling
+any of them</strong>: they widen the surface for subtle bugs, and modern
+bash 5.2 already provides all documented behaviour. See §23.9 for the
+full discussion. Listed for completeness; treat as deprecated.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Option</th>
+<th>Default</th>
+<th>Since</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>compat31</code></td>
+<td>off</td>
+<td>4.0</td>
+<td>Restore bash 3.1 quoting/regex behaviour.</td>
+</tr>
+<tr class="even">
+<td><code>compat32</code></td>
+<td>off</td>
+<td>4.1</td>
+<td>Restore bash 3.2 behaviour.</td>
+</tr>
+<tr class="odd">
+<td><code>compat40</code></td>
+<td>off</td>
+<td>4.1</td>
+<td>Restore bash 4.0 behaviour.</td>
+</tr>
+<tr class="even">
+<td><code>compat41</code></td>
+<td>off</td>
+<td>4.2</td>
+<td>Restore bash 4.1 behaviour.</td>
+</tr>
+<tr class="odd">
+<td><code>compat42</code></td>
+<td>off</td>
+<td>4.3</td>
+<td>Restore bash 4.2 behaviour.</td>
+</tr>
+<tr class="even">
+<td><code>compat43</code></td>
+<td>off</td>
+<td>4.4</td>
+<td>Restore bash 4.3 behaviour.</td>
+</tr>
+<tr class="odd">
+<td><code>compat44</code></td>
+<td>off</td>
+<td>5.0</td>
+<td>Restore bash 4.4 behaviour.</td>
+</tr>
+<tr class="even">
+<td><code>compat50</code></td>
+<td>off</td>
+<td>5.1</td>
+<td>Restore bash 5.0 behaviour.</td>
+</tr>
+<tr class="odd">
+<td><code>compat51</code></td>
+<td>off</td>
+<td>5.2</td>
+<td>Restore bash 5.1 behaviour.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="miscellaneous">Miscellaneous</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Option</th>
+<th>Default</th>
+<th>Since</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>xpg_echo</code></td>
+<td>off</td>
+<td>2.04</td>
+<td><code>echo</code> interprets <code>\…</code> escapes by default
+(POSIX/SUS behaviour).</td>
+</tr>
+<tr class="even">
+<td><code>force_fignore</code></td>
+<td>on</td>
+<td>3.0</td>
+<td>Apply <code>FIGNORE</code> even when the only candidate would be
+ignored.</td>
+</tr>
+<tr class="odd">
+<td><code>patsub_replacement</code></td>
+<td>on</td>
+<td>5.2</td>
+<td><code>&amp;</code> in <code>${var/pat/repl}</code> expands to
+matched text. <strong>5.2-new</strong>.</td>
+</tr>
+<tr class="even">
+<td><code>xpg_echo</code></td>
+<td>off</td>
+<td>2.04</td>
+<td>(Duplicate row removed in source; see above.)</td>
+</tr>
+</tbody>
+</table>
+<p>The two BCS-canonical preamble lines:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span></code></pre></div>
+<p>cover the four mandatory options. Additional <code>shopt -s</code>
+lines for <code>globstar</code>, <code>nocaseglob</code>, etc. are
+situational and should appear in the script header where used.</p>
+<p><strong>See also</strong>: Appendix D (<code>set -o</code> options);
+§13.6 (the full BCS strict-mode discussion); §23.9 (compatibility levels
+and why to avoid them); BCS0101 (strict mode mandate); BCS0102
+(shebang).</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

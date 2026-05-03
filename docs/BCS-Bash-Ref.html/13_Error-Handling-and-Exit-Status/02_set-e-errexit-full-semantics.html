@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>02_set-e-errexit-full-semantics.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">02_set-e-errexit-full-semantics.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="132-set--e-errexit--full-semantics">13.2 <code>set -e</code>
+(errexit) — full semantics</h2>
+<p><code>set -e</code> (equivalently <code>set -o errexit</code>) is the
+most-misunderstood feature in bash. It does not &quot;exit on any error&quot;. It
+exits when an unchecked <em>simple command</em>, <em>pipeline</em>, or
+<em>list</em> returns a non-zero status from a context that is not
+exempt. The exemption matrix in §13.3 is canonical; this chapter
+establishes the underlying mechanics so the matrix reads as consequence
+rather than convention.</p>
+<h3 id="what-errexit-actually-triggers-on">What <code>errexit</code>
+actually triggers on</h3>
+<p>Bash evaluates a command and, if that command&#39;s final exit status is
+non-zero, asks two questions: (1) is the command in an exempt context?
+(2) is errexit <em>currently</em> in force? Only if the answer to both
+is &quot;no exempt, yes in force&quot; does bash run the ERR trap (§13.8) and exit
+with the failed command&#39;s status. Errexit is not a hook fired from the
+kernel or a wrapper around <code>wait()</code>; it is a check inside
+bash&#39;s own command dispatcher, which is why its rules are syntactic and
+rooted in how a command was invoked rather than what it does.</p>
+<p>The shell-level definition is: errexit exits the shell when a
+command&#39;s exit status, after the shell has computed it, is non-zero —
+<em>unless</em> the command is part of one of the exempt structures
+enumerated in §13.3.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: minimal demo — the simple-command rule</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail<span class="kw">;</span> <span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;before&quot;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">false</span>                                <span class="co"># ⇒ shell exits here, $? = 1</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;after&quot;</span>                         <span class="co"># ⇒ never printed</span></span></code></pre></div>
+<h3 id="pipelines">Pipelines</h3>
+<p>A pipeline&#39;s exit status is the status of its <strong>last</strong>
+component (the &quot;rightmost&quot; rule). Without <code>pipefail</code> (§13.5),
+a pipeline like <code>false | true</code> returns 0, so errexit will not
+fire. With <code>pipefail</code>, the pipeline returns the rightmost
+<em>non-zero</em> status, so the same pipeline returns 1 and errexit
+fires. The check is on the pipeline&#39;s final status, not on any
+intermediate component.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: pipeline status without and with pipefail</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-e</span>                      <span class="co"># no pipefail</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">false</span> <span class="kw">|</span> <span class="fu">true</span><span class="kw">;</span> <span class="bu">echo</span> <span class="st">&quot;</span><span class="va">$?</span><span class="st">&quot;</span>     <span class="co"># ⇒ 0  — script continues, no exit</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-o</span> pipefail</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">false</span> <span class="kw">|</span> <span class="fu">true</span>                <span class="co"># ⇒ exits, status 1</span></span></code></pre></div>
+<h3 id="compound-commands-and-lists">Compound commands and lists</h3>
+<p>For <code>if</code>, <code>while</code>, <code>until</code>,
+<code>&amp;&amp;</code>, <code>||</code>, the <em>condition</em>
+command&#39;s failure is examined deliberately by the construct itself.
+Errexit therefore must not act on it — otherwise
+<code>if grep -q foo file; then …</code> would exit on absence of
+<code>foo</code>. Inside the <em>body</em> of
+<code>if/while/until</code>, errexit is fully active again (this is the
+rule readers most often forget). For <code>&amp;&amp;</code> and
+<code>||</code>, only the <strong>left</strong> operand of the leftmost
+operator is exempt; once the chain has resolved to a single status,
+errexit applies.</p>
+<p>The bash 5.2 manual phrases this as &quot;the shell does not exit if the
+command that fails is part of the command list immediately following a
+<code>while</code> or <code>until</code> keyword, part of the test in an
+<code>if</code> statement, part of any command executed in a
+<code>&amp;&amp;</code> or <code>||</code> list except the command
+following the final <code>&amp;&amp;</code> or <code>||</code>, any
+command in a pipeline but the last, or if the command&#39;s return status is
+being inverted with <code>!</code>.&quot;</p>
+<h3 id="functions-subshells-and-command-substitution">Functions,
+subshells, and command substitution</h3>
+<p>When a function is invoked, its body executes with errexit&#39;s
+<em>effective</em> state determined by the call site: a function called
+from an exempt context (e.g. as the condition of <code>if</code>)
+inherits that exemption — its internal <code>set -e</code> does not save
+it, because the failure status will be absorbed by the surrounding
+construct. This is the single most common &quot;why didn&#39;t
+<code>set -e</code> exit my function?&quot; complaint.</p>
+<p>Subshells (<code>( ... )</code>) and command substitutions
+(<code>$(...)</code>) have their own errexit state. By default it is
+<em>not</em> inherited from the parent. Bash 4.4 introduced
+<code>shopt -s inherit_errexit</code> (§13.6) which fixes the
+substitution case; subshells must be handled by repeating
+<code>set -e</code> inside, or by ensuring their parent context will
+detect a non-zero exit.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: function called as if-condition — errexit is dormant</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">fail_if_missing()</span> <span class="kw">{</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="bu">set</span> <span class="at">-e</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="bu">test</span> <span class="at">-f</span> <span class="st">&quot;</span><span class="va">$1</span><span class="st">&quot;</span>               <span class="co"># would normally exit on absence</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">&quot;found: </span><span class="va">$1</span><span class="st">&quot;</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="ot">! </span><span class="ex">fail_if_missing</span> /no/such/file<span class="kw">;</span> <span class="cf">then</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">&quot;function returned non-zero, but did not exit shell&quot;</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="cf">fi</span></span></code></pre></div>
+<h3 id="exit-status-that-propagates">Exit status that propagates</h3>
+<p>When errexit fires, the shell exits with the <em>failing
+command&#39;s</em> status, not 1. This is load-bearing: callers can switch
+on the exit code to distinguish e.g. usage error (2) from I/O failure
+(5) from missing dependency (18) (§13.10). Inside an ERR trap (§13.8),
+<code>$?</code> holds the failing status and <code>$BASH_COMMAND</code>
+holds the literal command text.</p>
+<h3 id="toggling-errexit">Toggling errexit</h3>
+<p><code>set +e</code> disables errexit; <code>set -e</code> re-enables.
+The common idiom is to disable around a block where individual exit
+codes are inspected manually, then re-enable:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: targeted disable for code-by-code inspection</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> +e</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="va">output</span><span class="op">=</span><span class="va">$(</span><span class="ex">some_command</span> <span class="at">--probe</span><span class="va">)</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="va">rc</span><span class="op">=</span><span class="va">$?</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-e</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="cf">case</span> <span class="va">$rc</span> <span class="kw">in</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="ss">0</span><span class="kw">)</span>  <span class="bu">:</span> ok <span class="cf">;;</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="ss">3</span><span class="kw">)</span>  <span class="ex">warn</span> <span class="st">&quot;probe missing — continuing&quot;</span> <span class="cf">;;</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="pp">*</span><span class="kw">)</span>  <span class="ex">die</span> 5 <span class="st">&quot;probe failed: rc=</span><span class="va">$rc</span><span class="st">&quot;</span> <span class="cf">;;</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="cf">esac</span></span></code></pre></div>
+<p>The <code>||</code> idiom (§13.7) is normally cleaner:
+<code>output=$(some_command || true)</code>.</p>
+<h3 id="interaction-with-return-and-exit">Interaction with
+<code>return</code> and <code>exit</code></h3>
+<p><code>return N</code> from a function yields exit status
+<code>N</code> for the function call. If the call is in an unexempted
+context and <code>N</code> is non-zero, errexit will fire.
+<code>exit N</code> ends the <em>current</em> shell (or subshell)
+immediately, regardless of errexit. Inside a subshell, <code>exit</code>
+ends the subshell; the parent&#39;s errexit then applies to the subshell&#39;s
+exit status as a normal simple-command failure.</p>
+<h3 id="what-errexit-does-not-do">What errexit does <strong>not</strong>
+do</h3>
+<ul>
+<li>It does not catch errors <em>inside</em> command substitutions
+unless <code>inherit_errexit</code> is set (§13.6).
+<code>result=$(grep foo file)</code> happily swallows
+<code>grep</code>&#39;s exit status by default.</li>
+<li>It does not catch errors that the syntax marks as deliberately
+inspected (the exemption matrix in §13.3).</li>
+<li>It does not run the ERR trap on <code>exit N</code> calls — those
+bypass errexit entirely. The EXIT trap (§12.6) does fire on
+<code>exit</code>.</li>
+<li>It does not survive arithmetic that evaluates to zero.
+<code>(( count++ ))</code> when <code>count==0</code> returns status 1
+and triggers errexit — this is a documented gotcha. Use
+<code>count+=1</code> or <code>(( ++count ))</code> (BCS0505).</li>
+<li>It does not unwind nested function calls cleanly: each function
+frame collapses with the failing status, and the shell exits at the
+outermost frame. Cleanup must be done via the EXIT trap (§12.6) or
+per-frame ERR handlers.</li>
+</ul>
+<h3 id="diagnosing-errexit-didnt-fire">Diagnosing &quot;errexit didn&#39;t
+fire&quot;</h3>
+<p>Run through this short checklist when a non-zero command failed to
+halt the script:</p>
+<ol type="1">
+<li>Confirm <code>set -e</code> is actually in force at that line.
+<code>set -o | grep errexit</code> (or <code>[[ $- == *e* ]]</code>)
+reports the current state. <code>set +e</code> or a sourced helper that
+toggles errexit may have left it off.</li>
+<li>Inspect the surrounding syntax. Is the failing command in any of the
+rows of the §13.3 matrix? Most &quot;didn&#39;t fire&quot; reports collapse to row 1
+(left of <code>&amp;&amp;</code>/<code>||</code>), row 5 (non-final
+pipeline component without <code>pipefail</code>), or row 7 (inside
+<code>$(...)</code> without <code>inherit_errexit</code>).</li>
+<li>Check function-call context. If the command is inside a function and
+the function was called from an exempt position, errexit is suspended
+for the duration.</li>
+<li>Check for <code>local x=$(failing)</code> — this single-line pattern
+destroys the substitution&#39;s exit status (§13.11). The fix is to declare
+and assign on separate lines.</li>
+</ol>
+<p>If none of the above explains it, the failing command may have a
+non-obvious exemption — <code>(( expr ))</code> evaluating to zero is
+the prime suspect (§13.3 row 10).</p>
+<h3 id="practical-guidance">Practical guidance</h3>
+<p><code>set -e</code> alone is brittle. The BCS strict-mode contract
+pairs it with <code>set -u</code> (§13.4), <code>set -o pipefail</code>
+(§13.5), <code>inherit_errexit</code> (§13.6), and an ERR trap or EXIT
+trap for diagnostics (§13.8, §12.6). Together they form a defensible
+error-detection regime; alone, errexit invites the cargo-cult complaint
+that &quot;<code>set -e</code> is broken&quot;. It is not broken — it is precise,
+and the exemption matrix (§13.3) is its specification.</p>
+<p>For functions intended to fail loudly even when called as conditions,
+prefer explicit checks:
+<code>result=$(cmd) || die 5 &quot;cmd failed&quot;</code>. For library code, see
+§13.11 for the canonical exit-code propagation patterns.</p>
+<p><strong>See also</strong>: §13.3 (exemption matrix), §13.5
+(pipefail), §13.6 (inherit_errexit), §13.8 (ERR trap), §13.11
+(propagating exit codes), §12.6 (EXIT and ERR pseudo-signals), BCS0101
+(strict mode), BCS0601 (exit on error), BCS0505 (arithmetic gotchas),
+BCS-bash <code>30_43_set.md</code>.</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

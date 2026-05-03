@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>06_Process-groups-and-sessions.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">06_Process-groups-and-sessions.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="116-process-groups-and-sessions">11.6 Process groups and
+sessions</h2>
+<p>Linux organises processes into a two-level hierarchy above the bare
+PID: <strong>process groups</strong> for collective signal delivery, and
+<strong>sessions</strong> for controlling-terminal ownership. Job
+control (§11.5) and detachment (§11.11, §11.12) both rely on this model.
+Understanding it is the difference between killing one stage of a
+pipeline and killing the whole pipeline cleanly.</p>
+<h3 id="the-model">The model</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Level</th>
+<th>Identifier</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Process</td>
+<td>PID</td>
+<td>Schedulable entity</td>
+</tr>
+<tr class="even">
+<td>Process group</td>
+<td>PGID = PID of group leader</td>
+<td>Signal fan-out target</td>
+</tr>
+<tr class="odd">
+<td>Session</td>
+<td>SID = PID of session leader</td>
+<td>Owns at most one controlling terminal</td>
+</tr>
+</tbody>
+</table>
+<p>A process group is a set of processes that share a PGID; sending a
+signal to <code>-PGID</code> (negative PID) delivers it to
+<strong>every</strong> member. A session is a set of process groups that
+share a SID and, optionally, a controlling terminal
+(<code>/dev/tty</code>). The session leader is the only process that may
+acquire one.</p>
+<p>Relevant syscalls (consult <code>man 2 setpgid</code>,
+<code>man 2 setsid</code>, <code>man 3 tcsetpgrp</code> for full
+semantics):</p>
+<ul>
+<li><code>setpgid(2)</code> — move a process into a process group.</li>
+<li><code>setsid(2)</code> — start a new session; caller becomes session
+leader and loses its controlling terminal.</li>
+<li><code>getpgrp(2)</code>, <code>getsid(2)</code> — query.</li>
+<li><code>tcsetpgrp(3)</code> — set the foreground process group of a
+terminal.</li>
+</ul>
+<h3 id="how-bash-builds-them">How Bash builds them</h3>
+<p>When job control is enabled (<code>set -o monitor</code>, default in
+interactive shells, off in scripts), Bash places <strong>each
+pipeline</strong> into its own process group whose PGID equals the PID
+of the pipeline&#39;s first command. The shell uses <code>tcsetpgrp</code>
+to hand the terminal to the foreground job and reclaim it on suspension
+or exit.</p>
+<p>In scripts (<code>set +m</code>), Bash does <em>not</em> create
+per-pipeline groups — all descendants share the script&#39;s PGID — so
+<code>kill -TERM 0</code> reaches every descendant in one call. Test
+this before relying on it.</p>
+<h3 id="worked-example-inspect-pgid-and-sid">Worked example: inspect
+pgid and sid</h3>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: show pgid/sid for a script, its subshell, and a pipeline.</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">ps</span> <span class="at">-o</span> pid,ppid,pgid,sid,comm <span class="at">-p</span> <span class="st">&quot;</span><span class="va">$$</span><span class="st">&quot;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="kw">(</span> <span class="fu">ps</span> <span class="at">-o</span> pid,ppid,pgid,sid,comm <span class="at">-p</span> <span class="st">&quot;</span><span class="va">$BASHPID</span><span class="st">&quot;</span> <span class="kw">)</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">sleep</span> 5 <span class="kw">|</span> <span class="fu">sleep</span> 5 <span class="kw">&amp;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">ps</span> <span class="at">-o</span> pid,ppid,pgid,sid,comm <span class="at">--ppid</span> <span class="st">&quot;</span><span class="va">$$</span><span class="st">&quot;</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="bu">wait</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒   PID  PPID  PGID   SID COMMAND</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒  4711  4123  4711  4123 bash</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒  4712  4711  4711  4123 bash       (subshell — same PGID/SID)</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒  4713  4711  4711  4123 sleep      (pipeline left)</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒  4714  4711  4711  4123 sleep      (pipeline right)</span></span></code></pre></div>
+<p>Every descendant shares the script&#39;s PGID and SID. Re-run with
+<code>set -m</code> enabled and the pipeline acquires its own PGID —
+this is the behaviour interactive shells exhibit.</p>
+<h3 id="signal-fan-out-kill-the-group-not-the-leader">Signal fan-out:
+kill the group, not the leader</h3>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: kill a backgrounded pipeline cleanly.</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sleep</span> 5 <span class="kw">|</span> <span class="fu">sleep</span> 5 <span class="kw">&amp;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-ri</span> <span class="va">pgid</span><span class="op">=</span><span class="va">$!</span>         <span class="co"># in scripts the pipeline shares the script&#39;s PGID</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="bu">kill</span> <span class="at">-TERM</span> <span class="st">&quot;-</span><span class="va">$pgid</span><span class="st">&quot;</span>         <span class="co"># negative PID → fan out to every group member</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="bu">wait</span> <span class="st">&quot;</span><span class="va">$pgid</span><span class="st">&quot;</span> <span class="dv">2</span><span class="op">&gt;</span>/dev/null <span class="kw">||</span> <span class="fu">true</span></span></code></pre></div>
+<p>A negative <code>PID</code> argument to <code>kill(1)</code> (and to
+the Bash <code>kill</code> builtin) delivers the signal to every process
+in the group. This is the canonical way to terminate a whole pipeline or
+a subprocess that has itself spawned children.</p>
+<h3 id="footgun-orphaned-process-groups">Footgun: orphaned process
+groups</h3>
+<p>A process group whose leader has exited becomes an <em>orphaned
+process group</em>. The kernel sends <code>SIGHUP</code> followed by
+<code>SIGCONT</code> to every stopped member of an orphaned group when
+the last live ancestor exits the session. This is why <code>nohup</code>
+(§11.11) and <code>setsid</code> (§11.11) matter for survivable
+background work.</p>
+<h3 id="controlling-terminal-in-a-nutshell">Controlling terminal in a
+nutshell</h3>
+<p>The controlling terminal — <code>/dev/tty</code> for any process that
+has one — is owned by the session leader. Only one process group at a
+time can read from it (the <em>foreground</em> group); others are
+stopped with <code>SIGTTIN</code> if they try. <code>tcsetpgrp(3)</code>
+moves the foreground privilege between groups; the kernel notifies
+displaced groups with <code>SIGTTOU</code> when they attempt to write.
+Bash hides this behind <code>fg</code>/<code>bg</code>/<code>%n</code>
+job-control commands (§11.9). A daemon&#39;s first job is to
+<strong>drop</strong> the controlling terminal — that is exactly what
+<code>setsid(2)</code> achieves (§11.11).</p>
+<h3 id="common-pitfalls">Common pitfalls</h3>
+<ul>
+<li>Sending a <code>SIGTERM</code> to the pipeline leader and expecting
+downstream stages to die: in scripts (no job control), every stage
+shares the script&#39;s PGID, so the signal must go to <code>-PGID</code> to
+fan out.</li>
+<li>Using <code>kill 0</code> thinking it is harmless: <code>0</code> is
+a <em>PGID specifier</em> meaning &quot;my own group&quot; — the parent script
+will receive the signal too, often killing itself before the
+children.</li>
+<li>Assuming <code>setsid cmd</code> is enough: <code>setsid(1)</code>
+does its work only if the caller is not already a process group leader.
+Use <code>setsid --fork</code> to guarantee the call (§11.11).</li>
+</ul>
+<h3 id="strict-mode-interaction">Strict-mode interaction</h3>
+<p><code>set -e</code> does not propagate across a
+<code>kill -TERM &quot;-$pgid&quot;</code>; the backgrounded children&#39;s exit
+status is recovered by <code>wait</code>. Combine with BCS1103
+(<code>wait</code> patterns) and BCS0603 (trap handling) to drain
+process groups cleanly on
+<code>EXIT</code>/<code>INT</code>/<code>TERM</code>. A typical drain
+trap:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: ensure all background workers die when the script exits.</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">trap</span> <span class="st">&#39;kill -TERM &quot;-$$&quot; 2&gt;/dev/null || true; wait&#39;</span> EXIT</span></code></pre></div>
+<p>The negative <code>$$</code> argument fans the signal across the
+script&#39;s whole process group (in script mode, that is every descendant);
+<code>wait</code> reaps survivors so <code>EXIT</code> does not return
+before they have reported.</p>
+<p><strong>See also</strong>: §11.5 (foreground vs background), §11.7
+(job table), §11.10 (kill), §11.11 (nohup, setsid), §11.12 (detachment),
+BCS-bash <code>25_JOB-CONTROL.md</code>, BCS0603, BCS1101, BCS1103.</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

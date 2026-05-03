@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>03_The-errexit-exemption-matrix.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">03_The-errexit-exemption-matrix.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="133-the-errexit-exemption-matrix">13.3 The errexit exemption
+matrix</h2>
+<p>The contexts in which <code>set -e</code> does <em>not</em> exit on a
+non-zero status. Memorise this list — it is the single largest source of
+&quot;set -e didn&#39;t trigger&quot; complaints. This chapter is the canonical
+reference; §13.2 establishes the underlying mechanics, and every other
+§13 leaf forwards to a row here.</p>
+<h3 id="the-matrix">The matrix</h3>
+<table>
+<thead>
+<tr class="header">
+<th>#</th>
+<th>Context</th>
+<th>Errexit fires?</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>Left of <code>&amp;&amp;</code> or `</td>
+<td></td>
+<td>`</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>Condition of <code>if</code>, <code>elif</code></td>
+<td>No</td>
+<td>The construct deliberately inspects the status</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>Condition of <code>while</code>, <code>until</code></td>
+<td>No</td>
+<td>Same as above; loops on the test</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td><code>!</code>-prefixed command (negation)</td>
+<td>No</td>
+<td>Inversion implies inspection</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td>Pipeline component, not the last (no <code>pipefail</code>)</td>
+<td>No</td>
+<td>Pipeline status is the last component</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td>Pipeline component, not the last (with <code>pipefail</code>)</td>
+<td>Pipeline-level</td>
+<td>Errexit fires once on the pipeline&#39;s overall status</td>
+</tr>
+<tr class="odd">
+<td>7</td>
+<td>Command substitution <code>$(...)</code> (no
+<code>inherit_errexit</code>)</td>
+<td>No</td>
+<td>Subshell errexit is fresh-disabled</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td>Command substitution <code>$(...)</code> (with
+<code>inherit_errexit</code>)</td>
+<td>Yes</td>
+<td>Subshell inherits parent&#39;s errexit</td>
+</tr>
+<tr class="odd">
+<td>9</td>
+<td>Function called from any exempt context (1-5, 7)</td>
+<td>No</td>
+<td>Exemption propagates to the call&#39;s status</td>
+</tr>
+<tr class="even">
+<td>10</td>
+<td><code>(( expr ))</code> evaluating to 0 — counts as failure</td>
+<td>Yes (gotcha)</td>
+<td>Arithmetic 0 is shell &quot;false&quot;</td>
+</tr>
+<tr class="odd">
+<td>11</td>
+<td><code>let expr</code> evaluating to 0 — same</td>
+<td>Yes (gotcha)</td>
+<td>Same as 10</td>
+</tr>
+<tr class="even">
+<td>12</td>
+<td><code>[[ ... ]]</code> test returning false</td>
+<td>Yes</td>
+<td>Exits unless wrapped per rows 1-4</td>
+</tr>
+<tr class="odd">
+<td>13</td>
+<td>Command in an explicit subshell <code>( ... )</code></td>
+<td>Subshell-local</td>
+<td>Subshell exits; parent then sees its status per rows 1-9</td>
+</tr>
+</tbody>
+</table>
+<p>Rows 1-9 are the <em>true</em> exemptions: errexit cannot fire there
+at all (or, for row 6, fires only once at pipeline level rather than per
+component). Rows 10-12 are the <em>anti</em>-exemptions — places novice
+authors expect leniency but get strictness. Row 13 is structural: a
+subshell has its own errexit decision, after which the parent applies
+errexit to the subshell&#39;s overall exit status.</p>
+<h3 id="worked-demonstrations">Worked demonstrations</h3>
+<p>Each of these scripts assumes the BCS strict-mode preamble. The
+question in every case is: does errexit fire?</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: row 1 — left side of &amp;&amp; / ||</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail<span class="kw">;</span> <span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">false</span> <span class="kw">&amp;&amp;</span> <span class="bu">echo</span> unreached       <span class="co"># ⇒ does NOT exit; left of &amp;&amp; is exempt</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">false</span> <span class="kw">||</span> <span class="bu">echo</span> <span class="st">&quot;fallback&quot;</span>      <span class="co"># ⇒ does NOT exit; left of || is exempt</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">true</span> <span class="kw">&amp;&amp;</span> <span class="fu">false</span>                 <span class="co"># ⇒ EXITS; right of &amp;&amp; is NOT exempt</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;unreached&quot;</span>              <span class="co"># ⇒ never printed</span></span></code></pre></div>
+<p>The asymmetry on <code>&amp;&amp;</code>/<code>||</code> is the
+most-cited footgun: the <em>left</em> operand is exempt, the
+<em>right</em> (final) operand is not. Chaining
+<code>cmd1 &amp;&amp; cmd2</code> does not protect <code>cmd2</code>;
+protect it with <code>cmd2 || true</code> or by including the whole
+chain in an exempt position.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: row 2-3 — condition of if/while/until</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail<span class="kw">;</span> <span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="fu">grep</span> <span class="at">-q</span> foo /etc/hostname<span class="kw">;</span> <span class="cf">then</span>    <span class="co"># grep failure is NOT a script error</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> found</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="cf">fi</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="ot">! </span><span class="ex">mountpoint</span> <span class="at">-q</span> /mnt<span class="kw">;</span> <span class="cf">do</span>        <span class="co"># ! mountpoint is exempt</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sleep</span> 1</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;ran past while&quot;</span></span></code></pre></div>
+<p>The body of <code>if</code>/<code>while</code>/<code>until</code> is
+<em>not</em> exempt — only the test expression. A failing command inside
+the body triggers errexit normally.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: row 5-6 — pipeline non-final positions</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-e</span>                                 <span class="co"># no pipefail</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">false</span> <span class="kw">|</span> <span class="fu">true</span><span class="kw">;</span> <span class="bu">echo</span> <span class="st">&quot;rc=</span><span class="va">$?</span><span class="st">&quot;</span>             <span class="co"># ⇒ rc=0 — pipeline succeeded overall</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-o</span> pipefail</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="fu">false</span> <span class="kw">|</span> <span class="fu">true</span>                           <span class="co"># ⇒ EXITS at this line, status 1</span></span></code></pre></div>
+<p>Without <code>pipefail</code>, errexit looks only at the rightmost
+component. With <code>pipefail</code>, errexit looks at the pipeline as
+a whole; any non-zero component status surfaces and the script exits.
+See §13.5 for the full treatment.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: row 7-8 — command substitution</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-e</span>                                 <span class="co"># NO inherit_errexit</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="va">result</span><span class="op">=</span><span class="va">$(</span><span class="fu">grep</span> nope /etc/hostname<span class="kw">;</span> <span class="bu">echo</span> <span class="st">&quot;after&quot;</span><span class="va">)</span>  <span class="co"># grep fails; echo runs</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;result=</span><span class="va">$result</span><span class="st">&quot;</span>                  <span class="co"># ⇒ result=after — script keeps going</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="va">result</span><span class="op">=</span><span class="va">$(</span><span class="fu">grep</span> nope /etc/hostname<span class="kw">;</span> <span class="bu">echo</span> <span class="st">&quot;after&quot;</span><span class="va">)</span>  <span class="co"># ⇒ EXITS inside $()</span></span></code></pre></div>
+<p><code>inherit_errexit</code> is the fix for the canonical &quot;my script
+swallowed an error&quot; bug: without it, command substitutions silently
+absorb every internal failure (§13.6).</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: row 9 — function called from an exempt context</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail<span class="kw">;</span> <span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="fu">f()</span> <span class="kw">{</span> <span class="fu">false</span><span class="kw">;</span> <span class="bu">echo</span> <span class="st">&quot;f reached after-false&quot;</span><span class="kw">;</span> <span class="kw">}</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="ex">f</span><span class="kw">;</span> <span class="cf">then</span> <span class="bu">echo</span> <span class="st">&quot;f succeeded&quot;</span><span class="kw">;</span> <span class="cf">else</span> <span class="bu">echo</span> <span class="st">&quot;f returned non-zero&quot;</span><span class="kw">;</span> <span class="cf">fi</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ &quot;f reached after-false&quot;  ⇒ &quot;f returned non-zero&quot;</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Inside f, set -e is dormant because the call site is the if-condition.</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="ex">f</span>                                       <span class="co"># ⇒ EXITS — same f, non-exempt context</span></span></code></pre></div>
+<p>This is the source of the &quot;my function suddenly stopped exiting&quot; bug
+when a previously-direct call is moved under an <code>if</code>. The
+function <em>body&#39;s</em> errexit is suppressed by the call-site
+exemption.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: rows 10-11 — arithmetic-zero gotcha</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail<span class="kw">;</span> <span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-i</span> <span class="va">count</span><span class="op">=</span>0</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="kw">((</span> <span class="va">count</span><span class="op">++</span> <span class="kw">))</span>                          <span class="co"># ⇒ EXITS — post-inc returns old value 0</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;unreached&quot;</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Fixes:</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="kw">((</span> <span class="op">++</span><span class="va">count</span> <span class="kw">))</span>                          <span class="co"># ⇒ pre-inc returns new value 1; safe</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="va">count</span><span class="op">+=</span>1                               <span class="co"># ⇒ assignment, not arithmetic test; safe</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="kw">((</span> <span class="va">count</span><span class="op">++</span> <span class="kw">))</span> <span class="kw">||</span> <span class="fu">true</span>                  <span class="co"># ⇒ explicit pardon</span></span></code></pre></div>
+<p><code>(( expr ))</code> and <code>let expr</code> use the result of
+<code>expr</code> as the command&#39;s exit status with the convention &quot;0 →
+false → exit 1, non-zero → true → exit 0&quot;. This is <em>opposite</em> to
+most shell semantics. BCS0505 mandates <code>+= 1</code> over
+<code>((var++))</code> precisely to avoid this trap.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: row 13 — explicit subshell</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail<span class="kw">;</span> <span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="kw">(</span> <span class="fu">false</span><span class="kw">;</span> <span class="bu">echo</span> <span class="st">&quot;subshell after-false&quot;</span> <span class="kw">)</span>   <span class="co"># ⇒ subshell EXITS on false</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;parent rc=</span><span class="va">$?</span><span class="st">&quot;</span>                       <span class="co"># ⇒ parent rc=1; parent then exits</span></span></code></pre></div>
+<p>A subshell is a fresh shell process; its errexit applies inside. Once
+the subshell ends, its overall exit status is treated as a single
+command&#39;s status by the parent shell, where rows 1-9 apply.</p>
+<h3 id="reading-the-matrix-as-a-checklist">Reading the matrix as a
+checklist</h3>
+<p>When debugging &quot;why didn&#39;t <code>set -e</code> exit?&quot;, walk the
+matrix top-to-bottom:</p>
+<ol type="1">
+<li>Is the failing command the left of
+<code>&amp;&amp;</code>/<code>||</code>? — exempt.</li>
+<li>Is it inside an
+<code>if</code>/<code>while</code>/<code>until</code> test? —
+exempt.</li>
+<li>Is it <code>!</code>-prefixed? — exempt.</li>
+<li>Is it a non-final pipeline component without <code>pipefail</code>?
+— exempt.</li>
+<li>Is it inside <code>$(...)</code> without
+<code>inherit_errexit</code>? — exempt.</li>
+<li>Is the surrounding <em>function call</em> in an exempt context? —
+exempt.</li>
+<li>Otherwise it should have fired; check the trap (§13.8) and ensure
+<code>set -e</code> is actually in force at that line
+(<code>set -o | grep errexit</code>).</li>
+</ol>
+<h3 id="composition-with-strict-mode-allies">Composition with
+strict-mode allies</h3>
+<p>The matrix is normative when the script runs the BCS strict-mode
+contract. With only <code>set -e</code> and none of
+<code>pipefail</code>/<code>inherit_errexit</code>, rows 6 and 8
+collapse to the more-permissive variants and the script&#39;s
+error-detection coverage is materially reduced. §13.9 inlines the full
+contract.</p>
+<p><strong>See also</strong>: §13.2 (errexit semantics), §13.5
+(pipefail), §13.6 (inherit_errexit), §13.7 (<code>||:</code> idioms),
+§13.9 (strict-mode contract), §13.11 (propagating exit codes), §12.6
+(ERR pseudo-signal), BCS0101, BCS0505 (arithmetic), BCS-bash
+<code>30_43_set.md</code>.</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

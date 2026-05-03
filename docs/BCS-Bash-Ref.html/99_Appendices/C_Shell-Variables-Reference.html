@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>C_Shell-Variables-Reference.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">C_Shell-Variables-Reference.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="appendix-c--shell-variables-reference">Appendix C — Shell
+Variables Reference</h2>
+<p>Bash-defined variables in tabular form. Pinned to bash 5.2.21;
+selection biased toward variables a script-author actually reaches for.
+See <code>man bash</code> for the full list.</p>
+<p><strong>Type</strong> abbreviations: <code>s</code> = scalar string;
+<code>i</code> = integer; <code>a[]</code> = indexed array;
+<code>A[]</code> = associative array. <strong>Scope</strong>:
+<code>RO</code> = read-only (set by bash, attempt to assign is
+rejected); <code>RW</code> = user-writable; <code>env</code> = inherited
+from / exported to environment.</p>
+<h3 id="process-and-version-identity">Process and version identity</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Scope</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>BASH</code></td>
+<td>s</td>
+<td>RO</td>
+<td>Full path to the bash binary executing the script.</td>
+</tr>
+<tr class="even">
+<td><code>BASH_VERSION</code></td>
+<td>s</td>
+<td>RO</td>
+<td>Version string, e.g. <code>5.2.21(1)-release</code>.</td>
+</tr>
+<tr class="odd">
+<td><code>BASH_VERSINFO</code></td>
+<td>a[]</td>
+<td>RO</td>
+<td>6-element array: major, minor, patch, build, release-status,
+machine.</td>
+</tr>
+<tr class="even">
+<td><code>BASH_SUBSHELL</code></td>
+<td>i</td>
+<td>RO</td>
+<td>Subshell nesting depth; 0 in top-level shell, increments per
+<code>(…)</code>.</td>
+</tr>
+<tr class="odd">
+<td><code>BASHPID</code></td>
+<td>i</td>
+<td>RO</td>
+<td>PID of the current bash process (subshell-aware, unlike
+<code>$$</code>).</td>
+</tr>
+<tr class="even">
+<td><code>SHLVL</code></td>
+<td>i</td>
+<td>env</td>
+<td>Number of shell invocations deep — increments per nested
+<code>bash</code> call.</td>
+</tr>
+<tr class="odd">
+<td><code>UID</code></td>
+<td>i</td>
+<td>RO</td>
+<td>Real user ID.</td>
+</tr>
+<tr class="even">
+<td><code>EUID</code></td>
+<td>i</td>
+<td>RO</td>
+<td>Effective user ID.</td>
+</tr>
+<tr class="odd">
+<td><code>GROUPS</code></td>
+<td>a[]</td>
+<td>RO</td>
+<td>Groups the current user belongs to.</td>
+</tr>
+<tr class="even">
+<td><code>HOSTNAME</code></td>
+<td>s</td>
+<td>RO</td>
+<td>Hostname (set at startup; may not track <code>hostname</code>
+changes).</td>
+</tr>
+<tr class="odd">
+<td><code>HOSTTYPE</code>, <code>MACHTYPE</code>,
+<code>OSTYPE</code></td>
+<td>s</td>
+<td>RO</td>
+<td>Build-time architecture / OS strings.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="call-stack-introspection">Call-stack introspection</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Scope</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>BASH_SOURCE</code></td>
+<td>a[]</td>
+<td>RO</td>
+<td>Source file path of each frame in the call stack;
+<code>BASH_SOURCE[0]</code> is the current file.</td>
+</tr>
+<tr class="even">
+<td><code>BASH_LINENO</code></td>
+<td>a[]</td>
+<td>RO</td>
+<td>Caller line number for each frame; <code>BASH_LINENO[i]</code> is
+the line in <code>BASH_SOURCE[i+1]</code> from which
+<code>BASH_SOURCE[i]</code> was called.</td>
+</tr>
+<tr class="odd">
+<td><code>FUNCNAME</code></td>
+<td>a[]</td>
+<td>RO</td>
+<td>Function name for each frame; <code>FUNCNAME[0]</code> is the
+current function. Empty/unset at top level.</td>
+</tr>
+<tr class="even">
+<td><code>LINENO</code></td>
+<td>i</td>
+<td>RO</td>
+<td>Current line number in the executing script or function.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="pattern-match-results">Pattern-match results</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Scope</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>BASH_REMATCH</code></td>
+<td>a[]</td>
+<td>RO</td>
+<td>Captures from the most recent <code>[[ str =~ regex ]]</code> match;
+index 0 is whole match, 1+ are captured groups.</td>
+</tr>
+<tr class="even">
+<td><code>MAPFILE</code></td>
+<td>a[]</td>
+<td>RW</td>
+<td>Default array name for <code>mapfile</code> / <code>readarray</code>
+when none supplied.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="shell-options-and-history">Shell options and history</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Scope</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>BASHOPTS</code></td>
+<td>s</td>
+<td>RO</td>
+<td>Colon-separated list of currently-set <code>shopt</code>
+options.</td>
+</tr>
+<tr class="even">
+<td><code>SHELLOPTS</code></td>
+<td>s</td>
+<td>RO</td>
+<td>Colon-separated list of currently-set <code>set -o</code>
+options.</td>
+</tr>
+<tr class="odd">
+<td><code>HISTFILE</code></td>
+<td>s</td>
+<td>env</td>
+<td>Path to history file (default <code>~/.bash_history</code>).</td>
+</tr>
+<tr class="even">
+<td><code>HISTSIZE</code></td>
+<td>i</td>
+<td>RW</td>
+<td>Lines retained in-memory.</td>
+</tr>
+<tr class="odd">
+<td><code>HISTFILESIZE</code></td>
+<td>i</td>
+<td>RW</td>
+<td>Lines retained on disk.</td>
+</tr>
+<tr class="even">
+<td><code>HISTCONTROL</code></td>
+<td>s</td>
+<td>RW</td>
+<td>Colon-separated: <code>ignoredups</code>, <code>ignorespace</code>,
+<code>ignoreboth</code>, <code>erasedups</code>.</td>
+</tr>
+<tr class="odd">
+<td><code>HISTIGNORE</code></td>
+<td>s</td>
+<td>RW</td>
+<td>Colon-separated patterns excluded from history.</td>
+</tr>
+<tr class="even">
+<td><code>HISTTIMEFORMAT</code></td>
+<td>s</td>
+<td>RW</td>
+<td><code>strftime</code> format for <code>history</code> output; empty
+disables timestamps.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="field-separation-locale-prompts">Field separation, locale,
+prompts</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Scope</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>IFS</code></td>
+<td>s</td>
+<td>RW</td>
+<td>Internal field separator; controls word-splitting (stage 4).
+Default: space, tab, newline.</td>
+</tr>
+<tr class="even">
+<td><code>LANG</code></td>
+<td>s</td>
+<td>env</td>
+<td>Default locale; lower-priority than <code>LC_*</code>.</td>
+</tr>
+<tr class="odd">
+<td><code>LC_ALL</code>, <code>LC_CTYPE</code>, <code>LC_COLLATE</code>,
+<code>LC_NUMERIC</code>, <code>LC_MESSAGES</code>,
+<code>LC_TIME</code></td>
+<td>s</td>
+<td>env</td>
+<td>Per-category locale overrides.</td>
+</tr>
+<tr class="even">
+<td><code>LANGUAGE</code></td>
+<td>s</td>
+<td>env</td>
+<td>GNU gettext message-catalogue priority list.</td>
+</tr>
+<tr class="odd">
+<td><code>PS0</code></td>
+<td>s</td>
+<td>RW</td>
+<td>Printed <em>after</em> command read but before execution
+(5.0+).</td>
+</tr>
+<tr class="even">
+<td><code>PS1</code></td>
+<td>s</td>
+<td>RW</td>
+<td>Primary interactive prompt.</td>
+</tr>
+<tr class="odd">
+<td><code>PS2</code></td>
+<td>s</td>
+<td>RW</td>
+<td>Continuation prompt.</td>
+</tr>
+<tr class="even">
+<td><code>PS3</code></td>
+<td>s</td>
+<td>RW</td>
+<td><code>select</code> builtin prompt.</td>
+</tr>
+<tr class="odd">
+<td><code>PS4</code></td>
+<td>s</td>
+<td>RW</td>
+<td><code>set -x</code> trace prefix; default <code>&#39;+ &#39;</code>.</td>
+</tr>
+<tr class="even">
+<td><code>PROMPT_COMMAND</code></td>
+<td>s/a[]</td>
+<td>RW</td>
+<td>Command(s) executed before each <code>PS1</code> print. Array form
+(5.1+) runs each element.</td>
+</tr>
+<tr class="odd">
+<td><code>PROMPT_DIRTRIM</code></td>
+<td>i</td>
+<td>RW</td>
+<td>Truncate <code>\w</code> / <code>\W</code> prompt expansion to N
+trailing components.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="time-and-randomness">Time and randomness</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Scope</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>EPOCHSECONDS</code></td>
+<td>i</td>
+<td>RO</td>
+<td>Seconds since 1970-01-01 UTC (5.0+).</td>
+</tr>
+<tr class="even">
+<td><code>EPOCHREALTIME</code></td>
+<td>s</td>
+<td>RO</td>
+<td>Seconds since epoch with microsecond fractional part (5.0+).</td>
+</tr>
+<tr class="odd">
+<td><code>SECONDS</code></td>
+<td>i</td>
+<td>RW</td>
+<td>Seconds since shell start (or since assigned value).</td>
+</tr>
+<tr class="even">
+<td><code>TIMEFORMAT</code></td>
+<td>s</td>
+<td>RW</td>
+<td>Format string for the <code>time</code> reserved word&#39;s output.</td>
+</tr>
+<tr class="odd">
+<td><code>RANDOM</code></td>
+<td>i</td>
+<td>RO</td>
+<td>New 16-bit pseudo-random integer per read (0–32767).</td>
+</tr>
+<tr class="even">
+<td><code>SRANDOM</code></td>
+<td>i</td>
+<td>RO</td>
+<td>New 32-bit cryptographically-strong random per read (5.1+).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="filesystem-context">Filesystem context</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Scope</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>PWD</code></td>
+<td>s</td>
+<td>env</td>
+<td>Current working directory.</td>
+</tr>
+<tr class="even">
+<td><code>OLDPWD</code></td>
+<td>s</td>
+<td>env</td>
+<td>Previous working directory; set by <code>cd</code>.</td>
+</tr>
+<tr class="odd">
+<td><code>PATH</code></td>
+<td>s</td>
+<td>env</td>
+<td>Colon-separated command search list.</td>
+</tr>
+<tr class="even">
+<td><code>CDPATH</code></td>
+<td>s</td>
+<td>env</td>
+<td>Search path for <code>cd</code> (rare; use with care under
+<code>set -u</code>).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="getopts-and-completion-state"><code>getopts</code> and
+completion state</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Scope</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>OPTARG</code></td>
+<td>s</td>
+<td>RW</td>
+<td>Argument captured by <code>getopts</code> for an option that takes
+one.</td>
+</tr>
+<tr class="even">
+<td><code>OPTIND</code></td>
+<td>i</td>
+<td>RW</td>
+<td>Index of the next argument <code>getopts</code> will process; reset
+to 1 between parses.</td>
+</tr>
+<tr class="odd">
+<td><code>COMP_LINE</code></td>
+<td>s</td>
+<td>RW</td>
+<td>Current command line being completed.</td>
+</tr>
+<tr class="even">
+<td><code>COMP_POINT</code></td>
+<td>i</td>
+<td>RW</td>
+<td>Cursor position within <code>COMP_LINE</code>.</td>
+</tr>
+<tr class="odd">
+<td><code>COMP_WORDS</code></td>
+<td>a[]</td>
+<td>RW</td>
+<td>Words on the line being completed.</td>
+</tr>
+<tr class="even">
+<td><code>COMP_CWORD</code></td>
+<td>i</td>
+<td>RW</td>
+<td>Index into <code>COMP_WORDS</code> of the word containing the
+cursor.</td>
+</tr>
+<tr class="odd">
+<td><code>COMPREPLY</code></td>
+<td>a[]</td>
+<td>RW</td>
+<td>Completions to offer; populated by completion functions.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="pipeline-and-function-recursion-limits">Pipeline and
+function-recursion limits</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Scope</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>PIPESTATUS</code></td>
+<td>a[]</td>
+<td>RO</td>
+<td>Exit statuses of each command in the most recent pipeline; rightmost
+element corresponds to the last stage.</td>
+</tr>
+<tr class="even">
+<td><code>FUNCNEST</code></td>
+<td>i</td>
+<td>RW</td>
+<td>Maximum function-call nesting; 0 means unlimited. Useful as a
+recursion guard.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="readline">Readline</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Scope</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>READLINE_LINE</code></td>
+<td>s</td>
+<td>RW</td>
+<td>Current readline buffer (inside readline-bound functions).</td>
+</tr>
+<tr class="even">
+<td><code>READLINE_POINT</code></td>
+<td>i</td>
+<td>RW</td>
+<td>Cursor position in <code>READLINE_LINE</code>.</td>
+</tr>
+<tr class="odd">
+<td><code>READLINE_MARK</code></td>
+<td>i</td>
+<td>RW</td>
+<td>Mark position (5.1+).</td>
+</tr>
+<tr class="even">
+<td><code>READLINE_ARGUMENT</code></td>
+<td>s</td>
+<td>RW</td>
+<td>Numeric argument given to a readline command (5.0+).</td>
+</tr>
+</tbody>
+</table>
+<p><code>BASH_REMATCH</code> is set by <code>[[ str =~ regex ]]</code>
+matches. <code>MAPFILE</code> is the default target of
+<code>mapfile</code>/<code>readarray</code>. <code>BASH_SUBSHELL</code>
+and <code>BASHPID</code> are the canonical &quot;am I in a subshell?&quot; probes
+(§24.8). <code>EPOCHREALTIME</code> replaces the older
+<code>date +%s.%N</code>-via-command-substitution idiom.</p>
+<p>POSIX-mode-only variables (<code>POSIXLY_CORRECT</code>) are
+deliberately omitted — BCS-aligned scripts do not enable POSIX mode.</p>
+<p><strong>See also</strong>: Appendix B (special parameters:
+<code>$0</code>–<code>$9</code>, <code>$@</code>, <code>$*</code>,
+<code>$#</code>, <code>$$</code>, <code>$!</code>, <code>$?</code>,
+<code>$_</code>, <code>$-</code>); Appendix D (<code>set</code>
+options); Appendix E (<code>shopt</code> options); §12 (parameters) for
+the full grammar of parameter expansion.</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

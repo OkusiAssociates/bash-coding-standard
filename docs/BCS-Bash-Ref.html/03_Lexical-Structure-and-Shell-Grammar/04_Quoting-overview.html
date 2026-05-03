@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>04_Quoting-overview.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">04_Quoting-overview.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="34-quoting-overview">3.4 Quoting overview</h2>
+<p>Quoting is the mechanism by which the script author <strong>defers or
+suppresses</strong> Bash&#39;s expansion behaviour. There are five concrete
+forms, each with different rules about what is preserved literally and
+what is allowed to expand. Choosing the right one — almost always double
+quotes around a variable — is the single most consequential hygiene
+decision in shell programming, and the root cause of the vast majority
+of &quot;it worked until the filename had a space&quot; bugs.</p>
+<h3 id="the-expansion-suppression-hierarchy">The expansion-suppression
+hierarchy</h3>
+<p>Read this table top-to-bottom as &quot;quietest first&quot;. Each row lists
+what the form <em>allows</em> through; everything not listed is
+preserved literally.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Form</th>
+<th>Suppresses</th>
+<th>Allows</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>&#39;…&#39;</code> (single)</td>
+<td>everything</td>
+<td>nothing</td>
+<td>Cannot contain a literal <code>&#39;</code>.</td>
+</tr>
+<tr class="even">
+<td><code>$&#39;…&#39;</code> (ANSI-C)</td>
+<td>most expansion</td>
+<td>backslash escape sequences only</td>
+<td>Useful for <code>\t</code>, <code>\n</code>, <code>\xNN</code>,
+<code>\uNNNN</code>.</td>
+</tr>
+<tr class="odd">
+<td><code>&quot;…&quot;</code> (double)</td>
+<td>word splitting, pathname expansion</td>
+<td><code>$var</code>, <code>${…}</code>, <code>$(…)</code>,
+<code>$(( ))</code>, <code>`</code> (history <code>!</code> only when
+interactive)</td>
+<td>The default for parameter use.</td>
+</tr>
+<tr class="even">
+<td><code>\c</code> (backslash)</td>
+<td>meaning of one character</td>
+<td>n/a</td>
+<td>Inside <code>&quot;…&quot;</code> only escapes a small set (§3.9).</td>
+</tr>
+<tr class="odd">
+<td><code>$&quot;…&quot;</code> (locale)</td>
+<td>as <code>&quot;…&quot;</code></td>
+<td>as <code>&quot;…&quot;</code></td>
+<td>After expansion, the result is passed to <code>gettext</code>.
+Rare.</td>
+</tr>
+<tr class="even">
+<td>(unquoted)</td>
+<td>nothing</td>
+<td>everything</td>
+<td>Word splitting and pathname expansion <em>will</em> occur.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="why-var-is-the-always-correct-default">Why <code>&quot;$var&quot;</code>
+is the always-correct default</h3>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: the same variable expanded with and without quotes.</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">file</span><span class="op">=</span><span class="st">&#39;my report.txt&#39;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="va">$file</span>        <span class="co"># wrong — expands to two words: ls &quot;my&quot; &quot;report.txt&quot;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="st">&quot;</span><span class="va">$file</span><span class="st">&quot;</span>      <span class="co"># right — one argument, exactly as stored</span></span></code></pre></div>
+<p>Without quotes, the shell first expands <code>$file</code> to
+<code>my report.txt</code> and <strong>then</strong> word-splits the
+result on <code>IFS</code>, producing two arguments. With quotes,
+splitting is suppressed. This is not a stylistic preference; it is a
+correctness requirement under <code>set -u</code> and
+<code>inherit_errexit</code> (BCS0101). The only legitimate reason to
+omit the quotes is when you <em>want</em> word splitting — and in that
+case write <code>read -ra</code> or an explicit <code>IFS=</code>
+redefinition, not bare <code>$var</code>, so the intent is visible.</p>
+<h3 id="composability">Composability</h3>
+<p>Quoting forms compose by <strong>lexical adjacency</strong>, not
+nesting. There is no such thing as a single quote inside a single-quoted
+string — adjacent runs are concatenated:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: the close-escape-reopen idiom for embedding a literal &#39;.</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&#39;it&#39;</span><span class="dt">\&#39;</span><span class="st">&#39;s&#39;</span>      <span class="co"># ⇒ it&#39;s</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;it&#39;s&quot;</span>         <span class="co"># ⇒ it&#39;s   (cleaner)</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">$&#39;it</span><span class="dt">\&#39;</span><span class="st">s&#39;</span>       <span class="co"># ⇒ it&#39;s   (ANSI-C alternative)</span></span></code></pre></div>
+<p>Inside <code>$(…)</code> or <code>`…`</code>, quoting is
+<strong>independent</strong> of the outer context — the inner shell
+parses its body afresh. This is why
+<code>&quot;$(grep &#39;pattern&#39; &quot;$file&quot;)&quot;</code> works: the outer double quotes
+do not reach into the substitution.</p>
+<h3 id="when-other-forms-beat-double-quotes">When other forms beat
+double quotes</h3>
+<ul>
+<li>Single quotes when the value is a literal that should never be
+re-interpreted: regular expressions, AWK programs, JSON fragments.</li>
+<li>ANSI-C quoting (<code>$&#39;…&#39;</code>) when you need control characters
+by name (<code>$&#39;\t&#39;</code>, <code>$&#39;\n&#39;</code>, <code>$&#39;\x1b&#39;</code>) —
+see §3.7.</li>
+<li>Backslash escape (<code>\c</code>) for one or two metacharacters in
+an otherwise-unquoted command (<code>echo a\ b</code> is ugly; prefer
+<code>echo &quot;a b&quot;</code>).</li>
+</ul>
+<h3 id="common-mis-quoting-patterns">Common mis-quoting patterns</h3>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># wrong — variable will word-split if it contains whitespace.</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> <span class="va">$src</span> <span class="va">$dst</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># right — each side is one argument no matter what.</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> <span class="at">--</span> <span class="st">&quot;</span><span class="va">$src</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">$dst</span><span class="st">&quot;</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co"># wrong — single-quoted, so $HOME is literal &quot;$HOME&quot;.</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&#39;home is $HOME&#39;</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="co"># right — double-quoted preserves the literal &quot;is&quot; while expanding $HOME.</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;home is </span><span class="va">$HOME</span><span class="st">&quot;</span></span></code></pre></div>
+<p>The most frequent bug is the first form: a script that worked in
+testing because no path had a space, then failed in production because
+someone created <code>My Documents/</code>. Quote first, optimise
+later.</p>
+<h3 id="quoting-inside-command-substitution-is-independent">Quoting
+inside command substitution is independent</h3>
+<p><code>$(…)</code> and <code>`…`</code> start a fresh parsing context.
+The outer quotes do not reach inside; the inner shell tokenises and
+parses the body on its own terms:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: outer double quotes; inner single quotes are literal-mode again.</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">name</span><span class="op">=</span><span class="st">&#39;world&#39;</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">greeting</span><span class="op">=</span><span class="st">&quot;</span><span class="va">$(</span><span class="bu">printf</span> <span class="st">&#39;hello, %s\n&#39;</span> <span class="st">&quot;</span><span class="va">$name</span><span class="st">&quot;</span><span class="va">)</span><span class="st">&quot;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;%s&#39;</span> <span class="st">&quot;</span><span class="va">$greeting</span><span class="st">&quot;</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ hello, world</span></span></code></pre></div>
+<p>The inner <code>&#39;%s\n&#39;</code> is single-quoted <em>inside</em>
+<code>$(…)</code> — it does not need to be escaped from the outer
+<code>&quot;…&quot;</code>. The same is true of
+<code>$(grep &quot;pattern&quot; &quot;$file&quot;)</code> — the inner <code>&quot;…&quot;</code> is
+not a re-escape of the outer pair, it is a fresh quoting context. This
+is one of the practical advantages of <code>$(…)</code> over the legacy
+backtick form, which required cumbersome backslash-escaping for nested
+quotes.</p>
+<h3 id="strict-mode-note">Strict-mode note</h3>
+<p>Under <code>set -u</code>, an unquoted expansion of an unset variable
+still errors, but the diagnostic is far worse: word splitting may
+produce zero arguments, silently changing the command&#39;s shape before the
+unset detection fires. Quoting brings the failure forward to its true
+cause.</p>
+<p><strong>See also</strong>: §3.5 (single quotes), §3.6 (double
+quotes), §3.7 (ANSI-C quoting), §3.9 (backslash escapes), BCS0301,
+BCS0303, BCS0307.</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

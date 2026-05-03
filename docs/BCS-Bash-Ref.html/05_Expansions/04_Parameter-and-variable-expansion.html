@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>04_Parameter-and-variable-expansion.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">04_Parameter-and-variable-expansion.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="54-parameter-and-variable-expansion">5.4 Parameter and variable
+expansion</h2>
+<p>Parameter expansion is the workhorse of bash scripting — the
+construct that turns <code>${var}</code> into a value, and the only
+expansion rich enough to substitute defaults, slice substrings, edit
+text, change case, and reflect on attributes without spawning an
+external process. This chapter documents the full operator catalogue
+with one or two-line examples per group, in the order an experienced
+reader is most likely to need them.</p>
+<p>The general form is <code>${parameter}</code> or
+<code>${parameter operator argument}</code>. Braces are required for
+every operator and for any reference where the following character could
+be confused for part of the name (digits, letters, underscore). Bare
+<code>$name</code> works only for simple references followed by a
+non-name character.</p>
+<h3 id="bare-reference-and-length">Bare reference and length</h3>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: simplest references and length operator</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">name</span><span class="op">=</span><span class="st">&#39;hello&#39;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">$name</span><span class="st">&quot;</span>        <span class="co"># ⇒ hello</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${name}</span><span class="st">&quot;</span>      <span class="co"># ⇒ hello</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${</span><span class="op">#</span><span class="va">name}</span><span class="st">&quot;</span>     <span class="co"># ⇒ 5    — string length in characters</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">a</span><span class="op">=</span><span class="va">(</span>one two three<span class="va">)</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${</span><span class="op">#</span><span class="va">a</span><span class="op">[@]</span><span class="va">}</span><span class="st">&quot;</span>     <span class="co"># ⇒ 3    — element count</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${</span><span class="op">#</span><span class="va">a</span><span class="op">[</span><span class="dv">0</span><span class="op">]</span><span class="va">}</span><span class="st">&quot;</span>     <span class="co"># ⇒ 3    — length of element zero</span></span></code></pre></div>
+<p><code>${#var}</code> counts characters, not bytes; multibyte
+characters under a UTF-8 locale count as one. Cross-reference §5.13 for
+locale effects.</p>
+<h3 id="default-alternative-assign-error-the--family">Default,
+alternative, assign, error (the <code>:</code> family)</h3>
+<p>Each of these tests whether <code>var</code> is <em>unset or
+empty</em> (with the colon) versus <em>unset only</em> (without). This
+colon distinction is the single most-mis-remembered detail in parameter
+expansion.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Operator</th>
+<th>Test</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>${var:-default}</code></td>
+<td>unset or empty</td>
+<td>yield <code>default</code>; do not assign</td>
+</tr>
+<tr class="even">
+<td><code>${var-default}</code></td>
+<td>unset only</td>
+<td>yield <code>default</code>; do not assign</td>
+</tr>
+<tr class="odd">
+<td><code>${var:=default}</code></td>
+<td>unset or empty</td>
+<td>assign <code>default</code> to <code>var</code>, yield it</td>
+</tr>
+<tr class="even">
+<td><code>${var=default}</code></td>
+<td>unset only</td>
+<td>assign <code>default</code>, yield it</td>
+</tr>
+<tr class="odd">
+<td><code>${var:?msg}</code></td>
+<td>unset or empty</td>
+<td>print <code>msg</code> to stderr, exit non-zero</td>
+</tr>
+<tr class="even">
+<td><code>${var?msg}</code></td>
+<td>unset only</td>
+<td>as above</td>
+</tr>
+<tr class="odd">
+<td><code>${var:+alt}</code></td>
+<td>unset or empty</td>
+<td>yield empty; otherwise yield <code>alt</code></td>
+</tr>
+<tr class="even">
+<td><code>${var+alt}</code></td>
+<td>unset only</td>
+<td>yield empty; otherwise yield <code>alt</code></td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: defaults, assignment, and the unset-only distinction</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">empty</span><span class="op">=</span><span class="st">&#39;&#39;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">set</span><span class="op">=</span><span class="st">&#39;value&#39;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${unset</span><span class="op">:-</span>fallback<span class="va">}</span><span class="st">&quot;</span>   <span class="co"># ⇒ fallback   — unset</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${empty</span><span class="op">:-</span>fallback<span class="va">}</span><span class="st">&quot;</span>   <span class="co"># ⇒ fallback   — empty triggers `:`</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${empty</span><span class="op">-</span>fallback<span class="va">}</span><span class="st">&quot;</span>    <span class="co"># ⇒            — empty does not trigger non-`:`</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${set</span><span class="op">:-</span>fallback<span class="va">}</span><span class="st">&quot;</span>     <span class="co"># ⇒ value      — set, no fallback</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${set</span><span class="op">:+</span>yes<span class="va">}</span><span class="st">&quot;</span>          <span class="co"># ⇒ yes        — set, alt yields</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${empty</span><span class="op">:+</span>yes<span class="va">}</span><span class="st">&quot;</span>        <span class="co"># ⇒            — empty, alt yields nothing</span></span></code></pre></div>
+<p>Under <code>set -u</code> (BCS0601), <code>${var-default}</code> is
+the safe form for &quot;reference without erroring out&quot;: the <code>:-</code>
+and <code>-</code> forms are explicitly exempt from <code>nounset</code>
+because they exist precisely to handle the unset case.</p>
+<h3 id="substring-extraction">Substring extraction</h3>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: offset and length slicing</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">s</span><span class="op">=</span><span class="st">&#39;abcdefghij&#39;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${s</span><span class="op">:</span><span class="dv">0</span><span class="op">:</span><span class="dv">3</span><span class="va">}</span><span class="st">&quot;</span>     <span class="co"># ⇒ abc</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${s</span><span class="op">:</span><span class="dv">3</span><span class="va">}</span><span class="st">&quot;</span>       <span class="co"># ⇒ defghij     — to end</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${s</span><span class="op">:</span><span class="dv">3</span><span class="op">:</span><span class="dv">2</span><span class="va">}</span><span class="st">&quot;</span>     <span class="co"># ⇒ de</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${s</span><span class="op">:</span> -<span class="dv">2</span><span class="va">}</span><span class="st">&quot;</span>     <span class="co"># ⇒ ij          — leading space mandatory for negative offset</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${s</span><span class="op">:</span><span class="dv">0</span><span class="op">:</span>-<span class="dv">2</span><span class="va">}</span><span class="st">&quot;</span>    <span class="co"># ⇒ abcdefgh    — negative length means &quot;stop N chars from end&quot;</span></span></code></pre></div>
+<p>Negative offsets and negative lengths require a <em>space or
+paren</em> before the minus sign — <code>${s:-2}</code> is the default
+operator from the previous section, not a substring. Either
+<code>${s: -2}</code> or <code>${s:(-2)}</code> works.</p>
+<p>For positional parameters, <code>${@:offset:length}</code> and
+<code>${*:offset:length}</code> slice the argument list. For arrays,
+<code>${arr[@]:offset:length}</code> slices.</p>
+<h3 id="pattern-removal----">Pattern removal (<code>#</code>,
+<code>##</code>, <code>%</code>, <code>%%</code>)</h3>
+<p>These strip a glob-matched prefix or suffix. Single is shortest
+match; double is greediest.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: path manipulation without basename/dirname</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">path</span><span class="op">=</span><span class="st">&#39;/etc/cron.d/run-parts.sh&#39;</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${path</span><span class="op">##</span><span class="pp">*</span>/<span class="va">}</span><span class="st">&quot;</span>   <span class="co"># ⇒ run-parts.sh   — greedy prefix removal: basename</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${path</span><span class="op">%</span>/<span class="pp">*</span><span class="va">}</span><span class="st">&quot;</span>    <span class="co"># ⇒ /etc/cron.d    — shortest suffix removal: dirname</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${path</span><span class="op">%</span>.<span class="pp">*</span><span class="va">}</span><span class="st">&quot;</span>    <span class="co"># ⇒ /etc/cron.d/run-parts   — strip last extension</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${path</span><span class="op">##</span><span class="pp">*</span>.<span class="va">}</span><span class="st">&quot;</span>   <span class="co"># ⇒ sh             — extension only</span></span></code></pre></div>
+<p>These operators avoid the fork cost of
+<code>basename</code>/<code>dirname</code> and are the idiomatic bash
+form (BCS0207). The pattern is a glob, not a regex — see §5.9 for
+syntax.</p>
+<h3 id="pattern-substitution----">Pattern substitution (<code>/</code>,
+<code>//</code>, <code>/#</code>, <code>/%</code>)</h3>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: replace, replace-all, anchored replacement</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">s</span><span class="op">=</span><span class="st">&#39;one two two three&#39;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${s</span><span class="op">/</span><span class="ss">two</span><span class="op">/</span>TWO<span class="va">}</span><span class="st">&quot;</span>     <span class="co"># ⇒ one TWO two three     — first match</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${s</span><span class="op">//</span><span class="ss">two</span><span class="op">/</span>TWO<span class="va">}</span><span class="st">&quot;</span>    <span class="co"># ⇒ one TWO TWO three     — all matches</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${s</span><span class="op">/#</span><span class="ss">one</span><span class="op">/</span>ONE<span class="va">}</span><span class="st">&quot;</span>    <span class="co"># ⇒ ONE two two three     — anchored to start</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${s</span><span class="op">/%</span><span class="ss">three</span><span class="op">/</span>THREE<span class="va">}</span><span class="st">&quot;</span># ⇒ one two two THREE     — anchored to end</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Delete by replacing with empty</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">noisy</span><span class="op">=</span><span class="st">&#39;abc123def456&#39;</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${noisy</span><span class="op">//</span><span class="ss">[0-9]</span><span class="op">/</span><span class="va">}</span><span class="st">&quot;</span> <span class="co"># ⇒ abcdef                — delete all digits</span></span></code></pre></div>
+<p>The replacement may reference the matched text by <code>&amp;</code>
+(Bash 5.2+) or <code>\\&amp;</code>; the <code>,</code> flag (Bash 5.2+)
+lower-cases each match: <code>${s//[A-Z]/,&amp;}</code>.</p>
+<h3 id="case-conversion">Case conversion</h3>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: title-case and full-case toggles</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">title</span><span class="op">=</span><span class="st">&#39;hello world&#39;</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${title</span><span class="op">^</span><span class="va">}</span><span class="st">&quot;</span>        <span class="co"># ⇒ Hello world           — first char up</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${title</span><span class="op">^^</span><span class="va">}</span><span class="st">&quot;</span>       <span class="co"># ⇒ HELLO WORLD           — all up</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${title</span><span class="op">^^</span><span class="ss">[hw]</span><span class="va">}</span><span class="st">&quot;</span>   <span class="co"># ⇒ Hello World           — pattern-restricted</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">shout</span><span class="op">=</span><span class="st">&#39;HELLO WORLD&#39;</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${shout</span><span class="op">,</span><span class="va">}</span><span class="st">&quot;</span>        <span class="co"># ⇒ hELLO WORLD           — first char down</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${shout</span><span class="op">,,</span><span class="va">}</span><span class="st">&quot;</span>       <span class="co"># ⇒ hello world           — all down</span></span></code></pre></div>
+<p>These operators replace <code>tr [:upper:] [:lower:]</code> for ASCII
+strings without forking. Locale-sensitive case folding is correct under
+a UTF-8 locale (§5.13).</p>
+<h3 id="indirect-references-and-prefix-lists">Indirect references and
+prefix lists</h3>
+<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: dereference a name held in another variable</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">target</span><span class="op">=</span><span class="st">&#39;HOME&#39;</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${</span><span class="op">!</span><span class="va">target}</span><span class="st">&quot;</span>           <span class="co"># ⇒ /home/sysadmin     — value of $HOME</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Names matching a prefix (useful for env-var families)</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">BCS_MODEL</span><span class="op">=</span><span class="st">&#39;balanced&#39;</span> <span class="va">BCS_EFFORT</span><span class="op">=</span><span class="st">&#39;low&#39;</span> <span class="va">BCS_VERBOSE</span><span class="op">=</span>1</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;%s\n&#39;</span> <span class="st">&quot;</span><span class="va">${</span><span class="op">!</span><span class="va">BCS_</span><span class="op">@</span><span class="va">}</span><span class="st">&quot;</span>   <span class="co"># ⇒ BCS_EFFORT BCS_MODEL BCS_VERBOSE</span></span></code></pre></div>
+<p>For arrays, <code>${!arr[@]}</code> yields <em>indices</em>, not
+values — essential for sparse indexed arrays and all associative
+arrays:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-A</span> <span class="va">by_name</span><span class="op">=</span><span class="va">(</span><span class="op">[</span>alice<span class="op">]</span><span class="va">=</span>42 <span class="op">[</span>bob<span class="op">]</span><span class="va">=</span>17<span class="va">)</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k <span class="kw">in</span> <span class="st">&quot;</span><span class="va">${</span><span class="op">!</span><span class="va">by_name</span><span class="op">[@]</span><span class="va">}</span><span class="st">&quot;</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">&#39;%s=%s\n&#39;</span> <span class="st">&quot;</span><span class="va">$k</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">${by_name</span><span class="op">[</span><span class="va">$k</span><span class="op">]</span><span class="va">}</span><span class="st">&quot;</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div>
+<p>For nameref-based indirection (Bash 4.3+), prefer
+<code>declare -n</code> — namerefs are safer and more readable than
+<code>${!var}</code> for write access. See §4.11.</p>
+<h3 id="transformation-operators-">Transformation operators
+(<code>@</code>)</h3>
+<p>The <code>@</code> family inspects or transforms the parameter
+without changing its value. Each operator is a single character.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Operator</th>
+<th>Yields</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>${var@Q}</code></td>
+<td>value re-quoted as a shell-parseable literal</td>
+</tr>
+<tr class="even">
+<td><code>${var@E}</code></td>
+<td>value with backslash escapes interpreted (<code>\n</code>,
+<code>\t</code>, …)</td>
+</tr>
+<tr class="odd">
+<td><code>${var@P}</code></td>
+<td>value expanded as a <code>PS1</code>-style prompt</td>
+</tr>
+<tr class="even">
+<td><code>${var@A}</code></td>
+<td>a <code>declare</code>/<code>typeset</code> assignment statement
+that reproduces <code>var</code></td>
+</tr>
+<tr class="odd">
+<td><code>${var@a}</code></td>
+<td>the attribute flags (<code>a</code>, <code>A</code>, <code>i</code>,
+<code>r</code>, <code>x</code>, <code>n</code>, …) as a string</td>
+</tr>
+<tr class="even">
+<td><code>${var@K}</code></td>
+<td>associative-array form with quoted keys (Bash 5.2+)</td>
+</tr>
+<tr class="odd">
+<td><code>${var@k}</code></td>
+<td>associative-array form, unquoted keys (Bash 5.2+)</td>
+</tr>
+<tr class="even">
+<td><code>${var@U}</code></td>
+<td>upper-cased (entire string)</td>
+</tr>
+<tr class="odd">
+<td><code>${var@u}</code></td>
+<td>upper-cased (first character only)</td>
+</tr>
+<tr class="even">
+<td><code>${var@L}</code></td>
+<td>lower-cased (entire string)</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb9"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: @Q for safe re-emission, @A for round-trip dumps, @a for attrs</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-ai</span> <span class="va">counts</span><span class="op">=</span><span class="va">(</span><span class="op">[</span><span class="dv">0</span><span class="op">]</span><span class="va">=</span>10 <span class="op">[</span><span class="dv">3</span><span class="op">]</span><span class="va">=</span>42 <span class="op">[</span><span class="dv">7</span><span class="op">]</span><span class="va">=</span>99<span class="va">)</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${counts</span><span class="op">[@]@</span><span class="va">Q}</span><span class="st">&quot;</span>    <span class="co"># ⇒ &#39;10&#39; &#39;42&#39; &#39;99&#39;      — each element shell-quoted</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${counts</span><span class="op">@</span><span class="va">A}</span><span class="st">&quot;</span>       <span class="co"># ⇒ declare -ai counts=([0]=&quot;10&quot; [3]=&quot;42&quot; [7]=&quot;99&quot;)</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-ir</span> <span class="va">CONST</span><span class="op">=</span>7</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${CONST</span><span class="op">@</span><span class="va">a}</span><span class="st">&quot;</span>        <span class="co"># ⇒ ir                   — integer + readonly</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="co"># @P for prompt-style escapes (current dir, time, etc.)</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">p</span><span class="op">=</span><span class="st">&#39;\u@\h:\w\$ &#39;</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">${p</span><span class="op">@</span><span class="va">P}</span><span class="st">&quot;</span>            <span class="co"># ⇒ sysadmin@host:/path$</span></span></code></pre></div>
+<p><code>${var@Q}</code> is the canonical way to <em>log</em> or
+<em>re-emit</em> a variable&#39;s value without quoting bugs (BCS0306) — its
+output is guaranteed parseable when piped back into bash.</p>
+<h3 id="quoting-rules-around-expansion">Quoting rules around
+expansion</h3>
+<p>Always quote unless splitting is the intent. <code>&quot;${arr[@]}&quot;</code>
+preserves each element as a separate word; <code>${arr[@]}</code>
+(unquoted) re-splits each element on <code>IFS</code> (§5.8). The same
+applies to <code>&quot;$var&quot;</code> versus <code>$var</code>.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: quoted vs unquoted expansion of an element with spaces</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">files</span><span class="op">=</span><span class="va">(</span><span class="st">&#39;one two&#39;</span> <span class="st">&#39;three&#39;</span><span class="va">)</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;[%s]\n&#39;</span> <span class="st">&quot;</span><span class="va">${files</span><span class="op">[@]</span><span class="va">}</span><span class="st">&quot;</span>   <span class="co"># ⇒ [one two] [three]</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;[%s]\n&#39;</span> <span class="va">${files</span><span class="op">[@]</span><span class="va">}</span>     <span class="co"># ⇒ [one] [two] [three]   — splitting bug</span></span></code></pre></div>
+<p>The unquoted form is the single most common cause of Bash bugs in
+production scripts (§5.8). Quote unconditionally.</p>
+<p><strong>See also</strong>: §5.5 (arithmetic expansion shares
+variable-reference syntax), §5.8 (word splitting after expansion), §5.9
+(glob patterns used by <code>#</code>, <code>%</code>, <code>/</code>),
+§5.13 (locale effects on case operators), §4.11 (namerefs as an
+alternative to <code>${!var}</code>), BCS0207 (parameter expansion
+idioms), BCS0306 (<code>@Q</code> for safe quoting), BCS0601
+(<code>set -u</code> and the <code>${var-default}</code> exemption).</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

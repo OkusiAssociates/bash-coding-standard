@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>10_Shell-grammar.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">10_Shell-grammar.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="310-shell-grammar">3.10 Shell grammar</h2>
+<p>Bash&#39;s grammar — what the parser builds <em>after</em> the tokeniser
+of §3.1 has emitted its words and operators — is small, recursive, and
+hierarchical. Five layers wrap each other from the smallest unit up to
+the whole script. Every error message of the form &quot;syntax error near
+unexpected token …&quot; is the parser failing to fit a token into one of the
+productions below.</p>
+<h3 id="the-grammar-in-bnf-form">The grammar in BNF form</h3>
+<pre class="bnf"><code>simple-command   ::= [assignment | redirection]* WORD [WORD | redirection]*
+pipeline         ::= [&#39;time&#39;] [&#39;!&#39;] command (&#39;|&#39; | &#39;|&amp;&#39;) command)*
+and-or-list      ::= pipeline ((&#39;&amp;&amp;&#39; | &#39;||&#39;) pipeline)*
+list             ::= and-or-list ((&#39;;&#39; | &#39;&amp;&#39; | NEWLINE) and-or-list)* [&#39;;&#39; | &#39;&amp;&#39;]
+compound-command ::= brace-group | subshell | for | case | if | while | until
+                   | select | arithmetic-cmd | conditional-cmd
+command          ::= simple-command | compound-command | function-definition
+function-definition ::= [ &#39;function&#39; ] WORD [ &#39;(&#39; &#39;)&#39; ] compound-command [ redirection* ]</code></pre>
+<p>Read each production as &quot;the left side <strong>is</strong> any of the
+right-side forms&quot;. The recursion is genuine: a <code>pipeline</code> can
+be wrapped in a <code>( … )</code> (subshell, a
+<code>compound-command</code>), which makes it a <code>command</code>,
+which is the body of another <code>pipeline</code>, and so on
+indefinitely.</p>
+<h3 id="layer-by-layer-meaning">Layer-by-layer meaning</h3>
+<ul>
+<li><strong>Simple command:</strong> the leaf — a command name with
+arguments and redirections. Assignments may precede the command word
+(<code>PATH=/x cmd</code>).</li>
+<li><strong>Pipeline:</strong> one or more commands joined by
+<code>|</code> or <code>|&amp;</code>; the optional <code>time</code>
+reserved word measures wall/CPU time, and the optional <code>!</code>
+inverts the final exit status (relevant under <code>set -e</code>, see
+§13.2).</li>
+<li><strong>AND-OR list:</strong> pipelines joined by short-circuit
+<code>&amp;&amp;</code>/<code>||</code>. These are equal-precedence and
+<strong>left-associative</strong> — the source of the classic
+<code>a &amp;&amp; b || c</code> footgun (§3.11).</li>
+<li><strong>List:</strong> the largest unit Bash treats as one logical
+command. <code>;</code> and newline sequence; <code>&amp;</code>
+backgrounds. A trailing <code>;</code> is optional; a trailing
+<code>&amp;</code> is the difference between sync and async.</li>
+<li><strong>Compound command:</strong> bracketed structure
+(<code>if</code>, <code>while</code>, <code>for</code>,
+<code>case</code>, <code>(( ))</code>, <code>[[ ]]</code>,
+<code>{ … }</code>, <code>( … )</code>) that itself contains a list.
+Loops and conditionals are commands, not statements.</li>
+</ul>
+<h3 id="worked-example-parse-tree-of-a-real-pipeline">Worked example:
+parse tree of a real pipeline</h3>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: parse `time ! grep -q ERROR log | wc -l &amp;&amp; notify || true`</span></span></code></pre></div>
+<pre class="text"><code>list
+└── and-or-list
+    ├── pipeline                             ← time ! grep -q ERROR log | wc -l
+    │   ├── time              (modifier)
+    │   ├── !                 (negation)
+    │   ├── simple-command    grep -q ERROR log
+    │   └── simple-command    wc -l
+    ├── &amp;&amp;  →  pipeline / simple-command     notify
+    └── ||  →  pipeline / simple-command     true</code></pre>
+<p><code>time</code> and <code>!</code> attach to the pipeline as a
+whole; <code>&amp;&amp;</code> and <code>||</code> join pipelines into
+the and-or-list; the trailing newline (or <code>;</code>) would end the
+list. Note that <code>time</code> cannot be applied to the
+<code>and-or-list</code> as a unit — to time the whole expression you
+must wrap it in a brace group:
+<code>time { grep … | wc -l &amp;&amp; notify || true; }</code>.</p>
+<h3 id="worked-example-function-definition-is-a-compound-command">Worked
+example: function definition is a compound command</h3>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">greet()</span> <span class="kw">{</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">--</span> <span class="va">name</span><span class="op">=</span><span class="st">&quot;</span><span class="va">${1</span><span class="op">:-</span>world<span class="va">}</span><span class="st">&quot;</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">&#39;hello, %s\n&#39;</span> <span class="st">&quot;</span><span class="va">$name</span><span class="st">&quot;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span></code></pre></div>
+<p>The body <code>{ … }</code> is a brace group — itself a
+<code>compound-command</code> — which under the function-definition
+production becomes the function&#39;s body. This is why the <code>}</code>
+must be on its own line or preceded by <code>;</code> (the brace group&#39;s
+<code>list</code> production requires a terminator before the closing
+brace).</p>
+<h3 id="where-redirections-attach">Where redirections attach</h3>
+<p>A redirection (<code>&gt;</code>, <code>&lt;</code>,
+<code>2&gt;&amp;1</code>, etc.) is a child of the <strong>simple
+command</strong> at lexical level — <code>cmd &gt; out</code> redirects
+only <code>cmd</code>. To redirect the output of a <em>compound</em>
+command, the redirection must follow the closing keyword:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">{</span> <span class="ex">cmd1</span><span class="kw">;</span> <span class="ex">cmd2</span><span class="kw">;</span> <span class="kw">}</span> <span class="op">&gt;</span> combined.log    <span class="co"># right — applies to both</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">(</span> <span class="ex">cmd1</span><span class="kw">;</span> <span class="ex">cmd2</span> <span class="kw">)</span> <span class="op">&gt;</span> sub.log          <span class="co"># right — subshell with redirected stdout</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="bu">read</span> <span class="at">-r</span> <span class="va">l</span><span class="kw">;</span> <span class="cf">do</span> <span class="bu">echo</span> <span class="st">&quot;</span><span class="va">$l</span><span class="st">&quot;</span><span class="kw">;</span> <span class="cf">done</span> <span class="op">&lt;</span> input.txt</span></code></pre></div>
+<p>Redirecting the head of a pipeline only affects that head:
+<code>cmd1 &gt; x | cmd2</code> discards <code>cmd1</code>&#39;s stdout to
+<code>x</code>, leaving <code>cmd2</code> to read whatever
+<code>cmd1</code> writes to <code>&amp;3</code> or stderr.</p>
+<h3 id="why-every-layer-matters-in-practice">Why every layer matters in
+practice</h3>
+<p>Each layer above introduces a distinct error-handling rule:</p>
+<ul>
+<li><strong>Simple-command</strong> failure under <code>set -e</code>
+exits the script — unless the command is in a tested position (see
+below).</li>
+<li><strong>Pipeline</strong> exit status is the rightmost command
+(default) or the rightmost <em>non-zero</em> (under
+<code>pipefail</code>, BCS0101). Without <code>pipefail</code>,
+<code>cat missing.txt | head</code> returns success.</li>
+<li><strong>AND-OR list</strong> short-circuits:
+<code>cmd1 &amp;&amp; cmd2</code> skips <code>cmd2</code> if
+<code>cmd1</code> fails; <code>cmd1 || cmd2</code> skips
+<code>cmd2</code> if <code>cmd1</code> succeeds.</li>
+<li><strong>List</strong>: <code>cmd1; cmd2</code> always runs both;
+<code>cmd1 &amp; cmd2</code> backgrounds <code>cmd1</code> and continues
+without waiting.</li>
+</ul>
+<p>The &quot;tested position&quot; rule for <code>set -e</code> (§13.2) is defined
+in terms of the grammar layers: a simple command is tested if it is the
+LHS of <code>&amp;&amp;</code> or <code>||</code>, the head of
+<code>if</code>/<code>while</code>/<code>until</code>, or negated by
+<code>!</code>. Anything else is untested and a failure exits the
+script.</p>
+<h3 id="strict-mode-note">Strict-mode note</h3>
+<p><code>set -e</code>, <code>inherit_errexit</code>, and
+<code>pipefail</code> interact with these layers at well-defined points:
+a pipeline&#39;s exit status is the <strong>last</strong> command&#39;s by
+default, or — under <code>pipefail</code> — the rightmost non-zero;
+<code>set -e</code> triggers on any failed simple command not in a
+tested position (the LHS of <code>&amp;&amp;</code>/<code>||</code>,
+<code>if</code>/<code>while</code> head, <code>!</code>-negated). The
+grammar is the substrate; error handling (§13) is the policy on top.</p>
+<p><strong>See also</strong>: §3.1 (tokenisation), §3.2 (reserved
+words), §3.11 (operator precedence), §7 (control flow), §13.2 (errexit
+semantics), BCS0101, BCS0501, BCS0601.</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

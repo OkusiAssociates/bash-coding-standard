@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>01_Tokenisation.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">01_Tokenisation.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="31-tokenisation">3.1 Tokenisation</h2>
+<p>Bash splits its input into <strong>tokens</strong> — <em>words</em>
+and <em>operators</em> — before any expansion happens. The tokeniser is
+purely lexical: it knows about characters, quoting, and longest-match
+operator recognition, but nothing about variables, builtins, or aliases.
+Every later stage (expansion, parsing, execution) is built on top of the
+token stream this layer produces, so most &quot;why doesn&#39;t this parse?&quot;
+questions are really tokenisation questions in disguise.</p>
+<h3 id="the-character-classes">The character classes</h3>
+<p>The tokeniser recognises four classes of unquoted character:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Class</th>
+<th>Members</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Blank</td>
+<td>space, tab</td>
+<td>Ends the current word; not part of any token.</td>
+</tr>
+<tr class="even">
+<td>Metacharacter</td>
+<td>space, tab, newline, <code>|</code>, <code>&amp;</code>,
+<code>;</code>, <code>(</code>, <code>)</code>, <code>&lt;</code>,
+<code>&gt;</code></td>
+<td>Always ends a word; some begin operators.</td>
+</tr>
+<tr class="odd">
+<td>Control operator</td>
+<td><code>||</code>, <code>&amp;&amp;</code>, <code>&amp;</code>,
+<code>;</code>, <code>;;</code>, <code>;&amp;</code>,
+<code>;;&amp;</code>, <code>|</code>, <code>|&amp;</code>,
+<code>(</code>, <code>)</code>, newline</td>
+<td>A token in its own right; controls list/pipeline structure.</td>
+</tr>
+<tr class="even">
+<td>Word constituent</td>
+<td>everything else, plus <em>anything quoted</em></td>
+<td>Accumulated into the current word.</td>
+</tr>
+</tbody>
+</table>
+<p>A newline is both a blank and a metacharacter — outside an unfinished
+construct it terminates the command list; inside (<code>if</code>,
+<code>{ … }</code>, an open quote) it is just whitespace.</p>
+<h3 id="words-versus-operators">Words versus operators</h3>
+<p>A <strong>word</strong> is a maximal run of word constituents,
+possibly including quoted regions. An <strong>operator</strong> is a
+single token recognised from the control-operator set above. The
+distinction matters because:</p>
+<ul>
+<li>Operators are recognised by <strong>longest match</strong>:
+<code>&amp;&amp;</code> is one token, not two <code>&amp;</code> tokens,
+and <code>&lt;&lt;</code> is the here-doc operator, not &quot;redirect
+followed by redirect&quot;.</li>
+<li>Word boundaries are decided <em>before</em> expansion.
+<code>$var</code> is one word during tokenisation regardless of what
+<code>$var</code> later expands to (this is why unquoted expansions
+split — splitting happens later, on the expanded result).</li>
+<li>Reserved words (§3.2) are words that the <em>parser</em> later
+promotes to syntactic keywords; the tokeniser itself emits them as plain
+words.</li>
+</ul>
+<h3 id="worked-example-tokenising---f-f-">Worked example: tokenising
+<code>[[ -f $f ]]</code></h3>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: trace the token stream of a typical conditional.</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># input:  [[ -f $f ]]</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># tokens: WORD([[)  WORD(-f)  WORD($f)  WORD(]])</span></span></code></pre></div>
+<p>Four words, three blanks. The blanks are mandatory: <code>[[-f</code>
+would be a single word (<code>[[-f</code>) which is <em>not</em> the
+reserved word <code>[[</code>, so the parser would treat it as a command
+name and bash would try to execute a program literally called
+<code>[[-f</code>. The same logic explains why <code>((</code> is parsed
+as <code>( (</code> (two subshell-open tokens, not the arithmetic
+opener) when written <code>( (expr))</code> with a space — longest-match
+runs left-to-right at the <em>operator</em> level only, not across
+word/operator boundaries.</p>
+<h3 id="worked-example-quoting-freezes-word-boundaries">Worked example:
+quoting freezes word boundaries</h3>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: show that quoting overrides every blank inside it.</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">--</span> a<span class="st">&quot;b c&quot;</span>d <span class="st">&quot;e f&quot;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;[%s]\n&#39;</span> <span class="st">&quot;</span><span class="va">$@</span><span class="st">&quot;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ [ab cd]</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ [e f]</span></span></code></pre></div>
+<p>The first argument is <strong>one</strong> word — <code>a</code>, the
+quoted run <code>b c</code>, then <code>d</code> — concatenated by
+adjacency. Tokenisation respects the quotes; the embedded space never
+reaches the word-boundary logic. This is the mechanism that makes
+<code>&quot;$var&quot;</code> safe regardless of the variable&#39;s contents.</p>
+<h3 id="operator-recognition-corner-cases">Operator-recognition corner
+cases</h3>
+<p>Three patterns trip up readers and linters alike:</p>
+<ul>
+<li><strong><code>&amp;&amp;</code> versus
+<code>&amp; &amp;</code></strong>: written together, longest-match
+consumes both <code>&amp;</code> characters as one logical-AND operator.
+Separated by a space, the tokeniser emits two <code>&amp;</code> control
+operators, which the parser reads as &quot;background the empty command, then
+background again&quot; — a syntax error.</li>
+<li><strong><code>&lt;&lt;</code> versus
+<code>&lt; &lt;</code></strong>: <code>&lt;&lt;</code> is the here-doc
+operator; <code>&lt; &lt;</code> is two redirections, valid only with
+process substitution between them
+(<code>cmd &lt; &lt;(producer)</code>).</li>
+<li><strong><code>;;</code> inside <code>case</code></strong>:
+<code>;;</code>, <code>;&amp;</code>, <code>;;&amp;</code> are
+<em>only</em> recognised as control operators inside a <code>case</code>
+body. Elsewhere the parser rejects them, and a stray <code>;;</code> is
+a common cause of obscure error messages outside of
+<code>case</code>.</li>
+</ul>
+<h3 id="why--and--need-their-spaces">Why <code>((</code> and
+<code>[[</code> need their spaces</h3>
+<p>The reserved words <code>[[</code>, <code>]]</code>, <code>((</code>,
+<code>))</code> are recognised by the <em>parser</em> on a fully-formed
+word boundary. The tokeniser does not know they are special — it just
+produces words. So:</p>
+<ul>
+<li><code>[[ -f $f ]]</code> → four words <code>[[</code>,
+<code>-f</code>, <code>$f</code>, <code>]]</code>. The parser sees the
+first word and enters conditional-command mode.</li>
+<li><code>[[-f $f]]</code> → two words <code>[[-f</code> and
+<code>$f]]</code>. The parser tries to run a command literally named
+<code>[[-f</code>. The error message (&quot;command not found&quot;) arrives long
+after the real bug.</li>
+</ul>
+<p>The pattern generalises: any &quot;special&quot; syntactic marker that is
+written without a magic operator character must be space-separated from
+its arguments. This is also why <code>function name(){}</code> works
+(the <code>(</code> is itself a metacharacter that starts a new token)
+but <code>if[[…]]then</code> does not.</p>
+<h3 id="strict-mode-interaction">Strict-mode interaction</h3>
+<p><code>set -e</code> and <code>set -u</code> operate on the
+parsed/executed command, not on tokens, so token-level mistakes (a
+missing space around <code>[[</code>, a forgotten <code>;</code> before
+<code>then</code>) surface as parse errors <strong>before</strong>
+strict mode has a chance to act. They are caught by
+<code>bash -n script</code> (parse only) and by <code>shellcheck</code>,
+both of which consume the token stream directly. The remedy is
+mechanical: run <code>bash -n</code> in CI on every script, or rely on
+<code>shellcheck</code> to flag the whole class.</p>
+<p><strong>See also</strong>: §3.2 (reserved words), §3.4 (quoting
+overview), §3.10 (grammar), BCS0301.</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

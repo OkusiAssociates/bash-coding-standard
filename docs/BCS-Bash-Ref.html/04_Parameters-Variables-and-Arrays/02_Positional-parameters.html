@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>02_Positional-parameters.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">02_Positional-parameters.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="42-positional-parameters">4.2 Positional parameters</h2>
+<p>Positional parameters are the numbered arguments delivered to a
+script, to a function, or to any block introduced by
+<code>set --</code>. Bash treats all three sources through a single
+mechanism: the same <code>$1</code>, <code>$2</code>, <code>$#</code>,
+<code>$@</code>, <code>$*</code> apply unchanged, and the same quoting
+discipline matters in each context.</p>
+<h3 id="names-and-access">Names and access</h3>
+<ul>
+<li><code>$0</code> — script name as invoked. Inside a function
+<code>$0</code> still refers to the script, not the function.
+<code>$BASH_SOURCE[0]</code> is the file the code was sourced from;
+<code>$FUNCNAME[0]</code> is the current function name. If
+<code>BASH_ARGV0</code> is assigned, <code>$0</code> reflects the new
+value.</li>
+<li><code>$1</code> … <code>$9</code> — the first nine positionals,
+accessible without braces.</li>
+<li><code>${10}</code>, <code>${11}</code>, … — beyond nine,
+<strong>braces are required</strong>: <code>$10</code> parses as
+<code>$1</code> followed by the literal <code>0</code>.</li>
+<li><code>$#</code> — count of positionals currently in scope (script,
+function, or <code>set --</code> block).</li>
+<li><code>set -- a b c</code> — explicit assignment. <code>set --</code>
+with no further arguments clears all positionals.</li>
+<li><code>shift [N]</code> — discards the first <code>N</code> (default
+<code>1</code>) positionals and renumbers the remainder. Under
+<code>shopt -s shift_verbose</code>, shifting more than <code>$#</code>
+is a visible error rather than a silent no-op.</li>
+</ul>
+<h3 id="-versus---the-load-bearing-distinction"><code>&quot;$@&quot;</code> versus
+<code>&quot;$*&quot;</code> — the load-bearing distinction</h3>
+<p>Both expand to all positionals, but the quoted forms behave very
+differently:</p>
+<ul>
+<li><code>&quot;$@&quot;</code> expands to <strong>N separate words</strong>, one
+per positional, with internal whitespace and globbing characters
+preserved verbatim.</li>
+<li><code>&quot;$*&quot;</code> expands to <strong>a single word</strong>, the
+positionals joined by the first character of <code>IFS</code> (space by
+default).</li>
+</ul>
+<p>Unquoted <code>$@</code> and <code>$*</code> are essentially never
+what you want — both re-split each element on <code>IFS</code> and apply
+pathname expansion. The only correct forwarding idiom is
+<code>&quot;$@&quot;</code>.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: forwarding arguments correctly versus collapsing them</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">show()</span> <span class="kw">{</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">&#39;count=%d\n&#39;</span> <span class="st">&quot;</span><span class="va">$#</span><span class="st">&quot;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">-i</span> <span class="va">i</span><span class="op">=</span>1</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> arg <span class="kw">in</span> <span class="st">&quot;</span><span class="va">$@</span><span class="st">&quot;</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="bu">printf</span> <span class="st">&#39;  [%d]=&lt;%s&gt;\n&#39;</span> <span class="st">&quot;</span><span class="va">$i</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">$arg</span><span class="st">&quot;</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="va">i</span><span class="op">+=</span>1</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="cf">done</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">--</span> <span class="st">&#39;first arg&#39;</span> <span class="st">&#39;second arg&#39;</span> <span class="st">&#39;third&#39;</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;== &quot;$@&quot; preserves words ==\n&#39;</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> <span class="st">&quot;</span><span class="va">$@</span><span class="st">&quot;</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ count=3, three discrete entries with internal spaces intact</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;== &quot;$*&quot; collapses to one word ==\n&#39;</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> <span class="st">&quot;</span><span class="va">$*</span><span class="st">&quot;</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ count=1, the entry is &quot;first arg second arg third&quot;</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;== unquoted $@ re-splits on IFS ==\n&#39;</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> <span class="va">$@</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ count=5: &quot;first&quot;, &quot;arg&quot;, &quot;second&quot;, &quot;arg&quot;, &quot;third&quot;</span></span></code></pre></div>
+<p>The collapsing form <code>&quot;$*&quot;</code> has narrow legitimate uses —
+joining positionals into a log line, building a single shell-quoted
+string for display — but for <strong>forwarding</strong> arguments to
+another command, the only correct form is <code>&quot;$@&quot;</code>.</p>
+<h3 id="function-positionals-shadow-the-scripts">Function positionals
+shadow the script&#39;s</h3>
+<p>When a function is called, its arguments become the active
+<code>$1</code>, <code>$2</code>, …; the script&#39;s positionals are
+inaccessible from inside the function unless explicitly captured.
+<code>return</code> restores the caller&#39;s positional set.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">greet()</span> <span class="kw">{</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">&#39;function sees: %d args, first=&lt;%s&gt;\n&#39;</span> <span class="st">&quot;</span><span class="va">$#</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">${1</span><span class="op">-</span><span class="va">}</span><span class="st">&quot;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">--</span> alpha beta gamma</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="ex">greet</span> one two</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ function sees: 2 args, first=&lt;one&gt;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># script&#39;s $1 is still &quot;alpha&quot; after greet returns</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;script sees: %s\n&#39;</span> <span class="st">&quot;</span><span class="va">$1</span><span class="st">&quot;</span></span></code></pre></div>
+<p>The <code>${1-}</code> form (with a default) is needed under
+<code>set -u</code> whenever a positional may legitimately be unset —
+bare <code>$1</code> would abort the script.</p>
+<h3 id="consuming-options-with-getopts">Consuming options with
+<code>getopts</code></h3>
+<p><code>getopts</code> walks the positionals one option at a time,
+populating <code>$OPTARG</code> and <code>$OPTIND</code>. After the
+loop, <code>shift &quot;$((OPTIND - 1))&quot;</code> discards the consumed
+options, leaving the non-option arguments as the new <code>$1</code>,
+<code>$2</code>, …</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: getopts consumes options, leaving file arguments</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="va">verbose</span><span class="op">=</span>0 <span class="va">output</span><span class="op">=</span><span class="st">&#39;&#39;</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="bu">getopts</span> <span class="st">&#39;:vo:&#39;</span> <span class="va">opt</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="va">$opt</span> <span class="kw">in</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="ss">v</span><span class="kw">)</span>  <span class="va">verbose</span><span class="op">=</span>1 <span class="cf">;;</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="ss">o</span><span class="kw">)</span>  <span class="va">output</span><span class="op">=</span><span class="va">$OPTARG</span> <span class="cf">;;</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">\?</span><span class="kw">)</span> <span class="bu">printf</span> <span class="st">&#39;unknown: -%s\n&#39;</span> <span class="st">&quot;</span><span class="va">$OPTARG</span><span class="st">&quot;</span> <span class="op">&gt;&amp;</span><span class="dv">2</span><span class="kw">;</span> <span class="bu">exit</span> 2 <span class="cf">;;</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    <span class="ss">:</span><span class="kw">)</span>  <span class="bu">printf</span> <span class="st">&#39;missing arg: -%s\n&#39;</span> <span class="st">&quot;</span><span class="va">$OPTARG</span><span class="st">&quot;</span> <span class="op">&gt;&amp;</span><span class="dv">2</span><span class="kw">;</span> <span class="bu">exit</span> 2 <span class="cf">;;</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>  <span class="cf">esac</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="bu">shift</span> <span class="st">&quot;</span><span class="va">$((OPTIND</span> <span class="op">-</span> <span class="dv">1</span><span class="va">))</span><span class="st">&quot;</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;verbose=%d output=&lt;%s&gt;\n&#39;</span> <span class="st">&quot;</span><span class="va">$verbose</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">$output</span><span class="st">&quot;</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;remaining files: %d\n&#39;</span> <span class="st">&quot;</span><span class="va">$#</span><span class="st">&quot;</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> f <span class="kw">in</span> <span class="st">&quot;</span><span class="va">$@</span><span class="st">&quot;</span><span class="kw">;</span> <span class="cf">do</span> <span class="bu">printf</span> <span class="st">&#39;  %s\n&#39;</span> <span class="st">&quot;</span><span class="va">$f</span><span class="st">&quot;</span><span class="kw">;</span> <span class="cf">done</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Invoked as: ./script -v -o out.log a.txt b.txt</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ verbose=1 output=&lt;out.log&gt;, two file arguments remain</span></span></code></pre></div>
+<p><code>getopts</code> only handles short options (<code>-v</code>,
+<code>-o arg</code>, bundled <code>-vo arg</code>); for long options,
+hand-write the loop or use a dedicated parser — see §6.4 for the BCS
+pattern.</p>
+<h3 id="common-pitfalls">Common pitfalls</h3>
+<ul>
+<li><code>[[ -z $1 ]]</code> aborts under <code>set -u</code> if
+<code>$1</code> is unset; use <code>[[ -z ${1-} ]]</code>.</li>
+<li><code>for x in $@; do …</code> is wrong twice over — unquoted, and
+missing the <code>&quot;$@&quot;</code> discipline. Always write
+<code>for x in &quot;$@&quot;; do …</code>.</li>
+<li><code>shift; shift; shift</code> is fragile; prefer
+<code>shift 3</code>, or use <code>shift_verbose</code> and consume
+options through <code>getopts</code>.</li>
+</ul>
+<h3 id="see-also">See also</h3>
+<ul>
+<li>§4.3 — special parameters (<code>$#</code>, <code>$@</code>,
+<code>$*</code>, <code>$?</code>, …)</li>
+<li>§6.4 — option-parsing patterns and <code>getopts</code> idioms</li>
+<li>§4.13 — assignment-prefixed commands and positional inheritance</li>
+<li>BCS0202 (variable scoping), BCS0301 (quoting fundamentals)</li>
+</ul>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

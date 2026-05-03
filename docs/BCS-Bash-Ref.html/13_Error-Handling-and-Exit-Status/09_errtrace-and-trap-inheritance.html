@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>09_errtrace-and-trap-inheritance.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">09_errtrace-and-trap-inheritance.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="139-errtrace-and-trap-inheritance">13.9 <code>errtrace</code>
+and trap inheritance</h2>
+<p><code>set -E</code> (equivalently <code>set -o errtrace</code>)
+propagates the <code>ERR</code> trap into shell functions, command
+substitutions, and subshells. <code>set -T</code>
+(<code>functrace</code>) does the same for <code>DEBUG</code> and
+<code>RETURN</code> traps. Without these, traps installed at the top
+level are silently <em>not</em> in force inside the structures where
+most of the work happens, and an ERR trap that &quot;covers the whole script&quot;
+only covers its mainline.</p>
+<h3 id="the-canonical-bcs-strict-mode-contract">The canonical BCS
+strict-mode contract</h3>
+<p>Every BCS-compliant script begins with this preamble verbatim
+(BCS0101):</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span></code></pre></div>
+<p>Each flag earns its place:</p>
+<ul>
+<li><code>set -e</code> (errexit, §13.2) — exit on unchecked non-zero
+status.</li>
+<li><code>set -u</code> (nounset, §13.4) — error on unset variable
+references.</li>
+<li><code>set -o pipefail</code> (§13.5) — pipeline status reflects
+rightmost non-zero component, not just the last.</li>
+<li><code>shopt -s inherit_errexit</code> (§13.6) — propagate errexit
+into command substitutions; without this, <code>$(…)</code> swallows
+internal failures.</li>
+<li><code>shopt -s shift_verbose</code> — <code>shift</code> errors
+loudly when the count exceeds available positionals, instead of silently
+doing nothing.</li>
+<li><code>shopt -s extglob</code> — extended pattern matching:
+<code>@(a|b)</code>, <code>!(...)</code>, <code>?(...)</code>,
+<code>*(...)</code>, <code>+(...)</code>. Required for many BCS patterns
+(notably option bundling: <code>-[abc]?*</code>).</li>
+<li><code>shopt -s nullglob</code> — unmatched globs expand to nothing
+rather than the literal pattern. <code>for f in /etc/cron.d/*</code>
+runs zero iterations when the directory is empty, instead of operating
+on the literal string <code>/etc/cron.d/*</code>.</li>
+</ul>
+<p>Removing any single component reintroduces a documented hazard. The
+contract is normative across all BCS scripts; libraries (BCS0407)
+inherit it from the sourcing script and must not weaken it.</p>
+<h3 id="adding-set--e-for-err-trap-coverage">Adding <code>set -E</code>
+for ERR-trap coverage</h3>
+<p>The strict-mode contract above does <em>not</em> include
+<code>set -E</code>. If the script (or library) installs an ERR trap
+(§13.8) and expects it to fire from within functions, command
+substitutions, or subshells, add <code>errtrace</code> explicitly:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-eEuo</span> pipefail                                      <span class="co"># note: -eE</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="bu">trap</span> <span class="st">&#39;rc=$?; printf &gt;&amp;2 &quot;ERR rc=%d at %s:%d in %s\n&quot; \</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="st">  &quot;$rc&quot; &quot;${BASH_SOURCE[0]:-?}&quot; &quot;$LINENO&quot; &quot;${FUNCNAME[0]:-MAIN}&quot;&#39;</span> ERR</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="fu">work()</span> <span class="kw">{</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">false</span>                <span class="co"># ⇒ with set -E: trap FIRES from inside work()</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span>                      <span class="co">#    without -E: trap silent here</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="ex">work</span></span></code></pre></div>
+<p><code>set -eET -o pipefail</code> is the common longer form;
+<code>T</code> adds DEBUG / RETURN trap inheritance for tracing
+libraries.</p>
+<h3 id="what-errtrace-actually-does">What <code>errtrace</code> actually
+does</h3>
+<p>Bash maintains, per shell context (top level, function, subshell), a
+table of installed traps. By default, when a function or subshell is
+<em>entered</em>, the ERR trap is reset to its default (no action) for
+that context. The ERR trap installed at the top level still applies to
+top-level commands but not to commands run inside the function body.
+<code>set -E</code> removes this reset: the ERR trap in force at
+function-entry is propagated into the new context.</p>
+<p><code>set -T</code> (<code>functrace</code>) does the equivalent for
+DEBUG (fired before each simple command) and RETURN (fired on function
+return / sourced- script completion). Without <code>-T</code>, DEBUG and
+RETURN traps installed at the top level are absent inside function
+bodies.</p>
+<p>EXIT traps are special: they are <em>not</em> affected by
+<code>-E</code> or <code>-T</code>. Each subshell can have its own EXIT
+trap, and an EXIT trap installed at the top level fires only when the
+<em>top-level shell</em> exits. Functions do not have their own EXIT
+trap; the EXIT trap installed in the script fires once, when the script
+ends.</p>
+<h3 id="interaction-with-inherit_errexit">Interaction with
+<code>inherit_errexit</code></h3>
+<p><code>inherit_errexit</code> (§13.6) and <code>errtrace</code>
+(§13.9) are independent. The former determines whether
+<code>errexit</code> is <em>active</em> inside <code>$(…)</code>; the
+latter determines whether the <em>ERR trap</em> fires when errexit
+triggers. Neither implies the other. For full coverage — errors detected
+<em>and</em> diagnosed everywhere — enable both.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: contract + ERR trap, end-to-end</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-eEuo</span> pipefail</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="bu">trap</span> <span class="st">&#39;rc=$?; printf &gt;&amp;2 &quot;ERR rc=%d cmd=[%s] at %s:%d\n&quot; \</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="st">  &quot;$rc&quot; &quot;$BASH_COMMAND&quot; &quot;${BASH_SOURCE[0]##*/}&quot; &quot;$LINENO&quot;&#39;</span> ERR</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="bu">trap</span> <span class="st">&#39;rc=$?; (( rc )) &amp;&amp; printf &gt;&amp;2 &quot;EXIT rc=%d\n&quot; &quot;$rc&quot;&#39;</span> EXIT</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="fu">probe()</span> <span class="kw">{</span> <span class="va">result</span><span class="op">=</span><span class="va">$(</span><span class="fu">grep</span> <span class="at">-c</span> <span class="st">&quot;</span><span class="va">$1</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">$2</span><span class="st">&quot;</span><span class="va">)</span><span class="kw">;</span> <span class="bu">echo</span> <span class="st">&quot;</span><span class="va">$result</span><span class="st">&quot;</span><span class="kw">;</span> <span class="kw">}</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="ex">probe</span> <span class="st">&quot;alpha&quot;</span> /etc/hostname            <span class="co"># ⇒ if grep fails AND inherit_errexit</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>                                       <span class="co">#    is set AND errtrace is set,</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>                                       <span class="co">#    ERR fires inside probe(), then</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>                                       <span class="co">#    again in main; EXIT fires last.</span></span></code></pre></div>
+<h3 id="practical-guidance">Practical guidance</h3>
+<p>The four-line preamble at the top of this chapter is mandatory in BCS
+scripts. Add <code>set -E</code> (the <code>eE</code> shorthand) when
+ERR traps are part of the script&#39;s diagnostic contract. Add
+<code>set -T</code> only when you actually trace DEBUG/RETURN — it is a
+tracing tool, not a defensive setting. Do not toggle these mid-script;
+the contract is a header, not a runtime knob.</p>
+<p><strong>See also</strong>: §13.2 (errexit), §13.5 (pipefail), §13.6
+(inherit_errexit), §13.8 (ERR trap), §12.6 (pseudo-signals), §12.8 (trap
+inheritance), BCS0101 (strict mode), BCS0110 (cleanup and traps),
+BCS-bash <code>30_43_set.md</code>, BCS-bash
+<code>30_45_shopt.md</code>.</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>12_Extended-globs-extglob.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">12_Extended-globs-extglob.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="512-extended-globs-extglob">5.12 Extended globs (extglob)</h2>
+<p>With <code>shopt -s extglob</code> enabled, bash&#39;s pattern syntax
+gains five operators that bring it close to the expressive power of
+regular expressions, while remaining shell-style globs (matched
+literally, not anchored as regexes are). The operators apply uniformly
+to pathname expansion (§5.9), <code>[[ word == pattern ]]</code>
+matching (§8), and <code>case</code> (§7.5). The BCS strict-mode
+preamble (BCS0101) enables <code>extglob</code> unconditionally, so
+these operators are always available in a compliant script.</p>
+<h3 id="the-five-operators">The five operators</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Operator</th>
+<th>Semantics</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>?(pat)</code></td>
+<td>zero or one occurrence of <code>pat</code></td>
+</tr>
+<tr class="even">
+<td><code>*(pat)</code></td>
+<td>zero or more occurrences</td>
+</tr>
+<tr class="odd">
+<td><code>+(pat)</code></td>
+<td>one or more occurrences</td>
+</tr>
+<tr class="even">
+<td><code>@(pat)</code></td>
+<td>exactly one occurrence (alternation grouping)</td>
+</tr>
+<tr class="odd">
+<td><code>!(pat)</code></td>
+<td>anything <em>except</em> <code>pat</code></td>
+</tr>
+</tbody>
+</table>
+<p>The <code>pat</code> is a <em>pattern list</em> — one or more
+sub-patterns separated by <code>|</code>. Sub-patterns are themselves
+globs, optionally containing further extglob operators.</p>
+<h3 id="each-operator-demoed">Each operator demoed</h3>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: each extglob operator in pathname expansion</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> extglob nullglob</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Suppose the working directory contains:</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co">#   report.txt  report.md  report.html  notes.txt  archive.tar.gz</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="pp">?(</span>report<span class="pp">)</span>.txt        <span class="co"># ⇒ report.txt              — ?( ) zero-or-one</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="pp">*</span>.<span class="pp">@(</span>md<span class="pp">|</span>html<span class="pp">)</span>         <span class="co"># ⇒ report.html report.md   — @( ) one of alternates</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="pp">+(</span>[a-z]<span class="pp">)</span>.txt         <span class="co"># ⇒ notes.txt report.txt    — +( ) one or more lowercase</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="pp">*(</span>report<span class="pp">)</span>.txt        <span class="co"># ⇒ report.txt              — *( ) zero or more</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="pp">!(*</span>.tar.gz<span class="pp">)</span>          <span class="co"># ⇒ everything except archive.tar.gz</span></span></code></pre></div>
+<p>Note the difference between <code>@(a|b)</code> and a plain
+<code>[ab]</code>: the <code>@()</code> form alternates
+<em>strings</em>, while <code>[ab]</code> alternates <em>single
+characters</em>. Use <code>@()</code> whenever the alternates are
+multi-character — filenames, extensions, words.</p>
+<h3 id="the--negation-idiom">The <code>!()</code> negation idiom</h3>
+<p><code>!(pat)</code> is the operator most often missing from scripts
+that fall back to a <code>for</code> loop with a <code>case</code>
+filter. It matches &quot;anything that does not match <code>pat</code>&quot; —
+including the empty string. Combined with <code>|</code> inside, it
+becomes &quot;anything not in this list&quot;:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: clean a directory of every file except a small allow-list</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> extglob</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove everything except *.bak, *.tmp, and the &quot;keep&quot; subdirectory</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> <span class="at">-rf</span> <span class="at">--</span> <span class="pp">!(*</span>.bak<span class="pp">|*</span>.tmp<span class="pp">|</span>keep<span class="pp">)</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Iterate every non-hidden non-source file</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> f <span class="kw">in</span> <span class="pp">!(*</span>.bash<span class="pp">|*</span>.sh<span class="pp">|</span>.<span class="pp">*)</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="ex">process</span> <span class="st">&quot;</span><span class="va">$f</span><span class="st">&quot;</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div>
+<p>The <code>!(...)</code> form is particularly useful in destructive
+commands — saying &quot;everything <em>except</em> X&quot; once is safer and
+clearer than building an explicit allow-list.</p>
+<h3 id="composability">Composability</h3>
+<p>Extglob operators nest. The pattern-list separator <code>|</code>
+allows arbitrary alternation, and each alternate may itself be an
+extglob:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: composed extglob — image files except thumbnails</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> extglob nullglob</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">images</span><span class="op">=</span><span class="va">(</span> <span class="pp">*</span>.<span class="pp">@(</span>png<span class="pp">|</span>jpg<span class="pp">|</span>jpeg<span class="pp">|</span>gif<span class="pp">)</span> <span class="va">)</span>      <span class="co"># one of these extensions</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">not_thumbs</span><span class="op">=</span><span class="va">(</span> <span class="pp">!(</span>thumb_<span class="pp">*)</span>.<span class="pp">@(</span>png<span class="pp">|</span>jpg<span class="pp">)</span> <span class="va">)</span>  <span class="co"># excluding thumb_-prefixed</span></span></code></pre></div>
+<p>This is where extglob clearly outperforms POSIX sh and where reaching
+for <code>find … -name …</code> is unnecessary.</p>
+<h3 id="use-in--and-case">Use in <code>[[</code> and
+<code>case</code></h3>
+<p>The same operators work in pattern-matching contexts that do not
+involve the filesystem:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: extglob in [[ and case for input validation</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> extglob</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">input</span><span class="op">=</span><span class="st">&#39;42abc&#39;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">[[</span> <span class="va">$input</span> <span class="ot">==</span> <span class="pp">+([</span><span class="ss">0</span><span class="pp">-</span><span class="ss">9</span><span class="pp">])*([</span><span class="ss">a</span><span class="pp">-</span><span class="ss">z</span><span class="pp">])</span> <span class="kw">]];</span> <span class="cf">then</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="ex">info</span> <span class="st">&#39;digits-then-letters form&#39;</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="cf">fi</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="cf">case</span> <span class="st">&quot;</span><span class="va">$input</span><span class="st">&quot;</span> <span class="kw">in</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="pp">+(</span><span class="ss">[0-9]</span><span class="pp">)</span><span class="kw">)</span>         <span class="ex">info</span> <span class="st">&#39;pure number&#39;</span> <span class="cf">;;</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  <span class="pp">+(</span><span class="ss">[0-9]</span><span class="pp">)*(</span><span class="ss">[a-z]</span><span class="pp">)</span><span class="kw">)</span> <span class="ex">info</span> <span class="st">&#39;mixed&#39;</span> <span class="cf">;;</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  <span class="pp">*</span><span class="kw">)</span>                <span class="ex">info</span> <span class="st">&#39;other&#39;</span> <span class="cf">;;</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="cf">esac</span></span></code></pre></div>
+<p>Pattern-matching here is glob-style, so <code>+([0-9])</code> means
+&quot;one or more digits&quot;, <em>not</em> the regex equivalent — there is no
+anchoring or backreference. For full regex, use
+<code>[[ word =~ regex ]]</code> (§8).</p>
+<h3 id="pitfalls">Pitfalls</h3>
+<ul>
+<li><strong>Parsing</strong>: bash parses extglob patterns at the moment
+the shopt is <em>active</em>. A pattern read into a variable while
+<code>extglob</code> is off is then re-parsed when used? No — the
+pattern&#39;s behaviour is set at command-evaluation time, but unbalanced
+parentheses in the source <em>file</em> under <code>extglob</code>-off
+can be a syntax error. Set <code>extglob</code> early (the strict-mode
+preamble does so).</li>
+<li><strong>Quoting</strong>: the parentheses are special only when
+<code>extglob</code> is on. Inside double quotes, the operators are
+<em>not</em> expanded — <code>&quot;+(a)&quot;</code> is the literal four
+characters. Strip the quotes, or use <code>[[ x == +(a) ]]</code> where
+the right-hand side is treated as a pattern.</li>
+<li><strong>Empty match</strong>: <code>*(pat)</code> and
+<code>?(pat)</code> both match the empty string.
+<code>[[ &#39;&#39; == *(x) ]]</code> is true. This is occasionally surprising
+in validators.</li>
+</ul>
+<p><strong>See also</strong>: §5.9 (basic glob metacharacters that
+extglob extends), §5.11 (<code>extglob</code> toggle and other glob
+shopts), §7.5 (<code>case</code> pattern matching), §8
+(<code>[[ == ]]</code> pattern operands and <code>=~</code> for true
+regex), §22 (idiom: <code>!()</code> allow-list deletion), BCS0101
+(strict-mode preamble enables <code>extglob</code>), BCS0501
+(conditional and case patterns).</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

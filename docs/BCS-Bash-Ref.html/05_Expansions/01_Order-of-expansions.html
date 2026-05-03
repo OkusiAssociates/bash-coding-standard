@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>01_Order-of-expansions.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">01_Order-of-expansions.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="51-order-of-expansions">5.1 Order of expansions</h2>
+<p>The canonical sequence Bash performs between reading a command and
+calling <code>execve</code>. Memorise this order — the rest of Part V is
+one chapter per phase, in this order, and almost every expansion bug
+reduces to &quot;I expected phase <em>N</em> to run before phase
+<em>M</em>&quot;.</p>
+<h3 id="the-eight-phases-plus-quote-removal">The eight phases (plus
+quote removal)</h3>
+<ol type="1">
+<li><strong>Brace expansion</strong> (§5.2) — purely textual; cannot see
+variables.</li>
+<li><strong>Tilde expansion</strong> (§5.3) — <code>~</code> /
+<code>~user</code> to home directories.</li>
+<li><strong>Parameter and variable expansion</strong> (§5.4) —
+<code>${var}</code>, all default/slice/edit operators.</li>
+<li><strong>Arithmetic expansion</strong> (§5.5) —
+<code>$(( expr ))</code>.</li>
+<li><strong>Command substitution</strong> (§5.6) —
+<code>$(cmd)</code>.</li>
+<li><strong>Process substitution</strong> (§5.7) —
+<code>&lt;(cmd)</code>, <code>&gt;(cmd)</code>. (Bash extends the POSIX
+list with this phase.)</li>
+<li><strong>Word splitting</strong> (§5.8) — splits <em>unquoted</em>
+results on <code>IFS</code>.</li>
+<li><strong>Pathname expansion</strong> (§5.9) — globbing of
+<em>unquoted</em> results.</li>
+</ol>
+<p>Plus the implicit final step:</p>
+<ol start="9" type="1">
+<li><strong>Quote removal</strong> (§5.10) — strips user-supplied quote
+characters.</li>
+</ol>
+<p>Phases 3 and 4 (and 5 and 6) overlap in practice: parameter, command,
+and arithmetic expansion are interleaved in left-to-right order on a
+single token. The orders given here are the <em>categories</em>; within
+a single token Bash applies them in the order they appear.</p>
+<h3 id="worked-walkthrough--one-command-all-phases">Worked walkthrough —
+one command, all phases</h3>
+<p>Trace <code>cp ~/{src,dst}/file_$i_*.txt /tmp/$out</code> after the
+user has run
+<code>i=2; out=&#39;b u&#39;; touch /tmp/file_2_a.txt /tmp/file_2_b.txt</code>:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: trace a single command through every expansion phase</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-i</span> <span class="va">i</span><span class="op">=</span>2</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">out</span><span class="op">=</span><span class="st">&#39;b u&#39;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> ~/src ~/dst</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">touch</span> ~/src/file_2_a.txt ~/src/file_2_b.txt</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-x</span>   <span class="co"># show what bash actually executes (§19.5)</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> ~/<span class="dt">{src</span><span class="op">,</span><span class="dt">dst}</span>/file_<span class="va">${i}</span>_<span class="pp">*</span>.txt /tmp/<span class="va">$out</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> +x</span></code></pre></div>
+<p>Phase-by-phase rewrite of the single argument list:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Phase</th>
+<th>Token after this phase</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0. literal</td>
+<td><code>cp ~/{src,dst}/file_${i}_*.txt /tmp/$out</code></td>
+</tr>
+<tr class="even">
+<td>1. brace</td>
+<td><code>cp ~/src/file_${i}_*.txt ~/dst/file_${i}_*.txt /tmp/$out</code></td>
+</tr>
+<tr class="odd">
+<td>2. tilde</td>
+<td><code>cp /home/u/src/file_${i}_*.txt /home/u/dst/file_${i}_*.txt /tmp/$out</code></td>
+</tr>
+<tr class="even">
+<td>3. parameter</td>
+<td><code>cp /home/u/src/file_2_*.txt /home/u/dst/file_2_*.txt /tmp/b u</code></td>
+</tr>
+<tr class="odd">
+<td>4–6. arith / cmd / proc</td>
+<td>(no operators present here)</td>
+</tr>
+<tr class="even">
+<td>7. word splitting</td>
+<td><code>cp /home/u/src/file_2_*.txt /home/u/dst/file_2_*.txt /tmp/b u</code>
+(the <code>b u</code> token splits into <code>b</code> and
+<code>u</code>)</td>
+</tr>
+<tr class="odd">
+<td>8. pathname</td>
+<td><code>cp /home/u/src/file_2_a.txt /home/u/src/file_2_b.txt /home/u/dst/file_2_*.txt /tmp/b u</code>
+(left side globs; right side has no matches and stays literal under
+default <code>nullglob</code>-off, becomes empty under
+<code>nullglob</code>)</td>
+</tr>
+<tr class="even">
+<td>9. quote removal</td>
+<td>(none — nothing was quoted by the user)</td>
+</tr>
+</tbody>
+</table>
+<p>The command then runs with five separate arguments — <em>not</em> the
+four the author may have intended. Two issues fall out:</p>
+<ul>
+<li>The trailing <code>$out</code> containing a space splits at phase 7.
+Quoting (<code>&quot;/tmp/$out&quot;</code>) suppresses splitting and pathname
+expansion both — this is the BCS rule (BCS0301).</li>
+<li>The <code>~/dst/...</code> glob found no matches. Default behaviour
+leaves the unmatched pattern literal; with
+<code>shopt -s nullglob</code> it disappears, changing the argument
+count again (§5.9, §5.11).</li>
+</ul>
+<h3 id="what-quoting-suppresses-and-from-which-phase">What quoting
+suppresses, and from which phase</h3>
+<p>Quoting (<code>&quot;…&quot;</code> or <code>&#39;…&#39;</code>) is the <em>only</em>
+mechanism that disables phases <strong>7 (word splitting)</strong> and
+<strong>8 (pathname expansion)</strong> for a token. Single-quotes
+additionally disable phases 3–6. Quoting does not disable phase 1
+(brace) — <code>&quot;{a,b}&quot;</code> is two literal characters and a literal
+comma. Quoting also does not affect phase 2 (tilde) at the
+<em>start</em> of a token in assignment or default-expansion context,
+but does suppress it everywhere else.</p>
+<h3 id="bcs-posture">BCS posture</h3>
+<ul>
+<li>Quote every parameter expansion in a word context (BCS0301).</li>
+<li>Use <code>shopt -s nullglob</code> so an unmatched glob produces
+zero arguments, not the literal pattern (BCS0101, §5.11).</li>
+<li>Avoid building filenames by interpolating untrusted strings into a
+glob pattern — IFS and pathname expansion will do unexpected things
+(BCS1003, BCS1005).</li>
+</ul>
+<p><strong>See also</strong>: §5.2–§5.13 (each phase in order), §5.4
+(parameter expansion), §5.8 (word splitting and IFS), §5.11
+(<code>nullglob</code>, <code>failglob</code>), §19.5
+(<code>set -x</code>).</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

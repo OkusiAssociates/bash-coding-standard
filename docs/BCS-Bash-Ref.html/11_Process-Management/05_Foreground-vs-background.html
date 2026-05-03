@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>05_Foreground-vs-background.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">05_Foreground-vs-background.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="115-foreground-vs-background">11.5 Foreground vs background</h2>
+<p>Bash distinguishes commands the shell waits for (foreground) from
+commands launched concurrently (background, suffixed with
+<code>&amp;</code>). Background jobs are the primitive on which every
+concurrency idiom in the reference is built — parallel pools, timeouts,
+supervisor patterns, the wait-and-invert idiom (§12.10) — and
+<code>$!</code>, <code>wait</code>, <code>wait -n</code>, and
+<code>huponexit</code> are the four builtins that make them
+tractable.</p>
+<h3 id="the-basic-forms">The basic forms</h3>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">cmd</span>                                <span class="co"># foreground: shell blocks until cmd exits</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">cmd</span> <span class="kw">&amp;</span>                              <span class="co"># background: shell returns immediately</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="ex">cmd</span> <span class="op">&amp;&gt;</span> log <span class="kw">&amp;</span>                       <span class="co"># background with redirection (else inherits stdout/stderr)</span></span></code></pre></div>
+<p>A backgrounded command keeps the parent&#39;s open file descriptors. If
+you do not redirect its stdout/stderr, its output interleaves with the
+script&#39;s. For any non-trivial background job, redirect explicitly.</p>
+<h3 id="--the-just-backgrounded-pid"><code>$!</code> — the
+just-backgrounded PID</h3>
+<p><code>$!</code> is set immediately after <code>cmd &amp;</code> to
+the PID of the launched process. It is <em>only</em> set by
+<code>&amp;</code> (and coproc); it is <strong>not</strong> set by
+foreground commands or by <code>(subshell &amp;)</code>. Capture it on
+the very next line, before any other command can clobber it:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: capture child PID for later wait/kill</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">worker</span> <span class="kw">&amp;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="va">worker_pid</span><span class="op">=</span><span class="va">$!</span>                       <span class="co"># ⇒ snapshot now; $! changes on next &amp;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="ex">log_collector</span> <span class="kw">&amp;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="va">log_pid</span><span class="op">=</span><span class="va">$!</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="bu">wait</span> <span class="st">&quot;</span><span class="va">$worker_pid</span><span class="st">&quot;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="va">worker_rc</span><span class="op">=</span><span class="va">$?</span>                        <span class="co"># exit status of the specific child</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="bu">kill</span> <span class="st">&quot;</span><span class="va">$log_pid</span><span class="st">&quot;</span></span></code></pre></div>
+<p><code>$!</code> is <em>only</em> meaningful in the shell that
+launched the job. A subshell asking for <code>$!</code> after a
+<code>cmd &amp;</code> started in the parent gets the empty string;
+capture in the parent and pass through (BCS1101).</p>
+<h3 id="wait-patterns"><code>wait</code> patterns</h3>
+<p><code>wait</code> (no args) blocks until <em>all</em> known children
+exit. Its exit status is 0 if every child exited 0, and the status of
+the <em>last</em> one that did not, otherwise — a fact that is rarely
+what callers want. Prefer one of the targeted forms:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Form</th>
+<th>Semantics</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>wait $pid</code></td>
+<td>wait for one specific child; status is that child&#39;s exit status</td>
+</tr>
+<tr class="even">
+<td><code>wait -n</code></td>
+<td>wait for any one child to exit; status is that child&#39;s</td>
+</tr>
+<tr class="odd">
+<td><code>wait -n $pid1 $pid2</code></td>
+<td>wait for any of a named subset (bash 5.1+)</td>
+</tr>
+<tr class="even">
+<td><code>wait -p var -n</code></td>
+<td>wait any; place exited PID into <code>var</code> (bash 5.1+)</td>
+</tr>
+<tr class="odd">
+<td><code>wait</code></td>
+<td>wait for all; aggregated exit status as above</td>
+</tr>
+</tbody>
+</table>
+<p><code>wait -n</code> is the building block of a <strong>bounded
+worker pool</strong>: keep N children running, and as each exits, launch
+the next.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: three-wide worker pool with wait -n</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail<span class="kw">;</span> <span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-ar</span> <span class="va">TASKS</span><span class="op">=</span><span class="va">(</span>alpha bravo charlie delta echo foxtrot<span class="va">)</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-ir</span> <span class="va">N</span><span class="op">=</span>3</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-i</span> <span class="va">running</span><span class="op">=</span>0 <span class="va">i</span><span class="op">=</span>0</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="fu">run_one()</span> <span class="kw">{</span> <span class="fu">sleep</span> <span class="va">$((RANDOM</span> <span class="op">%</span> <span class="dv">3</span> <span class="op">+</span> <span class="dv">1</span><span class="va">))</span><span class="kw">;</span> <span class="bu">printf</span> <span class="st">&#39;done %s\n&#39;</span> <span class="st">&quot;</span><span class="va">$1</span><span class="st">&quot;</span><span class="kw">;</span> <span class="kw">}</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="kw">((</span> <span class="va">i</span> <span class="op">&lt;</span> <span class="va">${</span><span class="op">#</span><span class="va">TASKS</span><span class="op">[@]</span><span class="va">}</span> <span class="kw">));</span> <span class="cf">do</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="kw">((</span> <span class="va">running</span> <span class="op">&lt;</span> <span class="va">N</span> <span class="kw">));</span> <span class="cf">then</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    <span class="ex">run_one</span> <span class="st">&quot;</span><span class="va">${TASKS</span><span class="op">[</span>i<span class="op">]</span><span class="va">}</span><span class="st">&quot;</span> <span class="kw">&amp;</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    <span class="va">i</span><span class="op">+=</span>1<span class="kw">;</span> <span class="va">running</span><span class="op">+=</span>1</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    <span class="bu">wait</span> <span class="at">-n</span>                          <span class="co"># one slot frees up</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    <span class="va">running</span><span class="op">+=</span>-1</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>  <span class="cf">fi</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a><span class="bu">wait</span>                                 <span class="co"># drain remaining</span></span></code></pre></div>
+<p><code>wait</code> and <code>wait -n</code> are interruptible by traps
+(§12.10) — the interaction that makes the wait-and-invert idiom work at
+all.</p>
+<h3 id="huponexit-and-sighup-at-logout"><code>huponexit</code> and
+SIGHUP at logout</h3>
+<p>When an interactive shell exits, it sends SIGHUP to its jobs
+<strong>only if the <code>huponexit</code> shopt is set</strong>. The
+shopt is <em>off</em> by default in modern bash; an interactive
+<code>exit</code> therefore leaves backgrounded jobs running on most
+desktop systems. Turn it on if you want the shell to clean up its
+jobs:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: aggressive cleanup at logout</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> huponexit                   <span class="co"># backgrounded jobs receive SIGHUP on exit</span></span></code></pre></div>
+<p>Non-interactive scripts behave differently: when a script ends, its
+backgrounded children become orphans of init/systemd. They do
+<em>not</em> receive SIGHUP from the script&#39;s exit. To detach a job from
+the script&#39;s terminal so it survives the user&#39;s logout regardless, use
+<code>disown -h &lt;jobspec&gt;</code> (which removes the job from the
+job table and suppresses SIGHUP) or wrap it in <code>nohup</code> /
+<code>setsid</code> (§11.11, §11.12).</p>
+<h3 id="sigchld-interaction">SIGCHLD interaction</h3>
+<p>When a child exits, the kernel sends SIGCHLD to the parent. Bash&#39;s
+default behaviour (with job control on) is to reap the child and update
+the job table; under job control off, it still reaps but does not
+surface a notification. The signal interrupts any in-progress
+<code>wait</code>, which is precisely how <code>wait -n</code> returns
+as soon as <em>any</em> child exits — the SIGCHLD wakes bash, bash sees
+the dead child, <code>wait</code> returns its status.</p>
+<p>A script that traps SIGCHLD itself is unusual and competes with
+bash&#39;s reaping; the canonical idiom is to let bash handle SIGCHLD and
+use <code>wait -n</code> to consume exits one at a time.</p>
+<h3 id="strict-mode-interaction">Strict-mode interaction</h3>
+<p>Background jobs do <strong>not</strong> trigger <code>set -e</code>
+if they exit non-zero — errexit only inspects foreground commands. To
+make a failing child fatal, you must <code>wait</code> for it explicitly
+and let the resulting non-zero status be observed by errexit:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># wrong — failure invisible to set -e</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="ex">worker</span> <span class="kw">&amp;</span>                             <span class="co"># exits 1, but errexit ignores backgrounded jobs</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> continuing                      <span class="co"># ⇒ runs anyway</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># right — wait surfaces the status; set -e fires</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="ex">worker</span> <span class="kw">&amp;</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="bu">wait</span> <span class="va">$!</span>                              <span class="co"># exits 1 here; script terminates</span></span></code></pre></div>
+<p><code>pipefail</code> interacts with backgrounded jobs the same way
+it interacts with foreground pipelines: the pipeline&#39;s status is its
+rightmost non-zero, captured at the synchronous point where the pipeline
+is considered to have run. For backgrounded pipelines
+(<code>a | b &amp;</code>), capture the rightmost component&#39;s PID via
+<code>$!</code> and <code>wait</code> it explicitly to observe the
+failure (BCS1101, BCS1103).</p>
+<p><strong>See also</strong>: §11.6 (process groups and sessions), §11.7
+(job table), §11.9 (job-control builtins, <code>disown -h</code>),
+§11.11 (<code>nohup</code>/<code>setsid</code>), §12.10 (synchronous vs
+asynchronous delivery, wait-and-invert), §12.11 (signal-safe code),
+BCS1101, BCS1103, BCS1104, BCS-bash <code>25_JOB-CONTROL.md</code>.</p>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>

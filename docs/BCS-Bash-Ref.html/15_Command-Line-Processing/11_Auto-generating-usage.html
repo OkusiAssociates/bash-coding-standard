@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>11_Auto-generating-usage.md</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #6e7681; padding-left: 4px; }
+div.sourceCode
+{ color: #e6edf3; background-color: #161b22; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-weight: bold; font-style: italic; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+</style>
+  <style type="text/css">
+body {
+background-color: #0d1117;
+color: #e6edf3;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+font-size: 16px;
+line-height: 1.5;
+max-width: 55em;
+margin: 0 auto;
+padding: 2em 2em;
+word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.5em;
+margin-bottom: 0.5em;
+font-weight: 600;
+line-height: 1.25;
+color: #e6edf3;
+}
+h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid #21262d; }
+h3 { font-size: 1.25em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.875em; }
+h6 { font-size: 0.85em; color: #8b949e; }
+
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+p { margin-top: 0; margin-bottom: 1em; }
+strong { font-weight: 600; color: #e6edf3; }
+em { font-style: italic; }
+
+code {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: rgba(110,118,129,0.4);
+border-radius: 6px;
+padding: 0.2em 0.4em;
+color: #e6edf3;
+}
+
+pre {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+font-size: 85%;
+background-color: #161b22;
+border-radius: 6px;
+padding: 16px;
+overflow: auto;
+line-height: 1.45;
+}
+pre code {
+background-color: transparent;
+padding: 0;
+border-radius: 0;
+font-size: 100%;
+}
+
+div.sourceCode {
+margin: 1em 0;
+background-color: #161b22;
+border-radius: 6px;
+color: #e6edf3;
+}
+pre.sourceCode {
+margin: 0;
+background-color: #161b22;
+}
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+
+pre.numberSource code { counter-reset: source-line 0; }
+pre.numberSource code > span { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before {
+content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-moz-user-select: none; -ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #6e7681;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+@media screen {
+div.sourceCode { overflow: auto; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+
+code span.al { color: #f85149; } 
+code span.an { color: #8b949e; font-style: italic; } 
+code span.at { color: #79c0ff; } 
+code span.bn { color: #79c0ff; } 
+code span.bu { color: #ffa657; } 
+code span.cf { color: #ff7b72; } 
+code span.ch { color: #a5d6ff; } 
+code span.cn { color: #79c0ff; font-weight: bold; } 
+code span.co { color: #8b949e; font-style: italic; } 
+code span.cv { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.do { color: #8b949e; font-style: italic; } 
+code span.dt { color: #ff7b72; } 
+code span.dv { color: #79c0ff; } 
+code span.er { color: #f85149; } 
+code span.ex { color: #d2a8ff; } 
+code span.fl { color: #79c0ff; } 
+code span.fu { color: #d2a8ff; } 
+code span.im { color: #ffa657; } 
+code span.in { color: #8b949e; font-style: italic; font-weight: bold; } 
+code span.kw { color: #ff7b72; } 
+code span.op { color: #e6edf3; } 
+code span.ot { color: #79c0ff; } 
+code span.pp { color: #ff7b72; font-weight: bold; } 
+code span.sc { color: #a5d6ff; } 
+code span.ss { color: #a5d6ff; } 
+code span.st { color: #a5d6ff; } 
+code span.va { color: #ffa657; } 
+code span.vs { color: #a5d6ff; } 
+code span.wa { color: #f85149; font-weight: bold; } 
+
+blockquote {
+margin: 0 0 1em 0;
+padding: 0 1em;
+color: #8b949e;
+border-left: 0.25em solid #3b434b;
+}
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+hr {
+height: 0.25em;
+padding: 0;
+margin: 1.5em 0;
+background-color: #21262d;
+border: 0;
+}
+
+table {
+border-spacing: 0;
+border-collapse: collapse;
+margin-bottom: 1em;
+width: auto;
+overflow: auto;
+display: block;
+}
+th, td {
+padding: 6px 13px;
+border: 1px solid #30363d;
+}
+th {
+font-weight: 600;
+background-color: #161b22;
+}
+tr { background-color: #0d1117; }
+tr:nth-child(2n) { background-color: #161b22; }
+
+ul, ol { padding-left: 2em; margin-bottom: 1em; }
+li + li { margin-top: 0.25em; }
+ul.task-list { list-style: none; padding-left: 1.5em; }
+ul.task-list li input[type="checkbox"] {
+margin-right: 0.5em;
+vertical-align: middle;
+}
+
+img { max-width: 100%; border-radius: 6px; }
+
+dt { font-weight: 600; margin-top: 1em; }
+dd { margin-left: 1em; margin-bottom: 0.5em; }
+
+span.smallcaps { font-variant: small-caps; }
+span.underline { text-decoration: underline; }
+div.column { display: inline-block; vertical-align: top; width: 50%; }
+div.hanging-indent { margin-left: 1.5em; text-indent: -1.5em; }
+code { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+<header id="title-block-header">
+<h1 class="title">11_Auto-generating-usage.md</h1>
+</header>
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
+<h2 id="1511-auto-generating-usage">15.11 Auto-generating usage</h2>
+<p>The hardest bug to keep out of a CLI is <strong>drift</strong>
+between <code>--help</code> and the parser: a new option lands in the
+case loop but the help text is not updated, or vice versa. Two
+BCS-aligned patterns prevent this: single-source-of-truth (one spec
+drives both) and the deferred-action pattern (the parser writes pending
+mutations into globals, the help text reads from the same globals).</p>
+<h3 id="pattern-1--heredoc-co-located-with-parser">Pattern 1 — heredoc
+co-located with parser</h3>
+<p>The simplest approach, used by the BCS <code>complete</code>
+template: keep <code>show_help</code> and the parser in the same file,
+in adjacent functions, and discipline yourself to edit them together.
+Tests close the loop.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/bin/bash</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-r</span> <span class="va">SCRIPT_NAME</span><span class="op">=</span><span class="va">${0</span><span class="op">##</span><span class="pp">*</span>/<span class="va">}</span> <span class="va">VERSION</span><span class="op">=</span>1.0.0</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-i</span> <span class="va">VERBOSE</span><span class="op">=</span>1 <span class="va">DRY_RUN</span><span class="op">=</span>0</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">FILE</span><span class="op">=</span><span class="st">&#39;&#39;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">show_help()</span> <span class="kw">{</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span> <span class="op">&lt;&lt;HELP</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="va">$SCRIPT_NAME</span><span class="st"> </span><span class="va">$VERSION</span><span class="st"> -- demo tool</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="st">Usage: </span><span class="va">$SCRIPT_NAME</span><span class="st"> [OPTIONS] ARG</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="st">Options:</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="st">  -v, --verbose      Enable verbose output (default)</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="st">  -q, --quiet        Disable verbose output</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="st">  -n, --dry-run      Preview changes without applying</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="st">  -f, --file PATH    Input file</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="st">  -V, --version      Show version</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="st">  -h, --help         Show this help message</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="op">HELP</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="fu">main()</span> <span class="kw">{</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>  <span class="cf">while</span> <span class="kw">((</span><span class="va">$#</span><span class="kw">));</span> <span class="cf">do</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="va">$1</span> <span class="kw">in</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>      <span class="ss">-v</span><span class="kw">|</span><span class="ss">--verbose</span><span class="kw">)</span>  <span class="va">VERBOSE</span><span class="op">=</span>1 <span class="cf">;;</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>      <span class="ss">-q</span><span class="kw">|</span><span class="ss">--quiet</span><span class="kw">)</span>    <span class="va">VERBOSE</span><span class="op">=</span>0 <span class="cf">;;</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>      <span class="ss">-n</span><span class="kw">|</span><span class="ss">--dry-run</span><span class="kw">)</span>  <span class="va">DRY_RUN</span><span class="op">=</span>1 <span class="cf">;;</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>      <span class="ss">-f</span><span class="kw">|</span><span class="ss">--file</span><span class="kw">)</span>     <span class="ex">noarg</span> <span class="st">&quot;</span><span class="va">$@</span><span class="st">&quot;</span><span class="kw">;</span> <span class="bu">shift</span><span class="kw">;</span> <span class="va">FILE</span><span class="op">=</span><span class="va">$1</span> <span class="cf">;;</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>      <span class="ss">--file=</span><span class="pp">*</span><span class="kw">)</span>      <span class="va">FILE</span><span class="op">=</span><span class="va">${1</span><span class="op">#</span><span class="pp">*</span>=<span class="va">}</span> <span class="cf">;;</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>      <span class="ss">-V</span><span class="kw">|</span><span class="ss">--version</span><span class="kw">)</span>  <span class="bu">printf</span> <span class="st">&#39;%s %s\n&#39;</span> <span class="st">&quot;</span><span class="va">$SCRIPT_NAME</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">$VERSION</span><span class="st">&quot;</span><span class="kw">;</span> <span class="bu">exit</span> 0 <span class="cf">;;</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>      <span class="ss">-h</span><span class="kw">|</span><span class="ss">--help</span><span class="kw">)</span>     <span class="ex">show_help</span><span class="kw">;</span> <span class="bu">exit</span> 0 <span class="cf">;;</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>      <span class="ss">-[vqnfVh]</span><span class="pp">?*</span><span class="kw">)</span>   <span class="bu">set</span> <span class="at">--</span> <span class="st">&quot;</span><span class="va">${1</span><span class="op">:</span><span class="dv">0</span><span class="op">:</span><span class="dv">2</span><span class="va">}</span><span class="st">&quot;</span> <span class="st">&quot;-</span><span class="va">${1</span><span class="op">:</span><span class="dv">2</span><span class="va">}</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">${@</span><span class="op">:</span><span class="dv">2</span><span class="va">}</span><span class="st">&quot;</span><span class="kw">;</span> <span class="cf">continue</span> <span class="cf">;;</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>      <span class="ss">--</span><span class="kw">)</span>            <span class="bu">shift</span><span class="kw">;</span> <span class="cf">break</span> <span class="cf">;;</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>      <span class="ss">-</span><span class="pp">*</span><span class="kw">)</span>            <span class="ex">die</span> 22 <span class="st">&quot;unknown option: </span><span class="va">$1</span><span class="st">&quot;</span> <span class="cf">;;</span></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>      <span class="pp">*</span><span class="kw">)</span>             <span class="cf">break</span> <span class="cf">;;</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>    <span class="cf">esac</span></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>    <span class="bu">shift</span></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>  <span class="cf">done</span></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a><span class="ex">main</span> <span class="st">&quot;</span><span class="va">$@</span><span class="st">&quot;</span></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a><span class="co">#fin</span></span></code></pre></div>
+<p>Lock the contract with a test:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: regression-test that --help mentions every parsed option</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> opt <span class="kw">in</span> <span class="at">--verbose</span> <span class="at">--quiet</span> <span class="at">--dry-run</span> <span class="at">--file</span> <span class="at">--version</span> <span class="at">--help</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="ex">myscript</span> <span class="at">--help</span> <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-qF</span> <span class="at">--</span> <span class="st">&quot;</span><span class="va">$opt</span><span class="st">&quot;</span> <span class="dt">\</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">||</span> <span class="ex">die</span> 1 <span class="st">&quot;help text missing </span><span class="va">$opt</span><span class="st">&quot;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div>
+<h3 id="pattern-2--single-source-of-truth-spec">Pattern 2 —
+single-source-of-truth spec</h3>
+<p>For larger CLIs, drive both help and parsing from one declarative
+spec. The BCS-friendly form is an indexed array of
+<code>tab</code>-separated records, walked twice — once to render help,
+once to build the case arms via a generated dispatch table.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/bin/bash</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-r</span> <span class="va">SCRIPT_NAME</span><span class="op">=</span><span class="va">${0</span><span class="op">##</span><span class="pp">*</span>/<span class="va">}</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-i</span> <span class="va">VERBOSE</span><span class="op">=</span>1 <span class="va">DRY_RUN</span><span class="op">=</span>0</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">FILE</span><span class="op">=</span><span class="st">&#39;&#39;</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co"># spec: short&lt;TAB&gt;long&lt;TAB&gt;arg?&lt;TAB&gt;variable&lt;TAB&gt;description</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">OPTSPEC</span><span class="op">=</span><span class="va">(</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">$&#39;-v</span><span class="dt">\t</span><span class="st">--verbose</span><span class="dt">\t</span><span class="st">0</span><span class="dt">\t</span><span class="st">VERBOSE=1</span><span class="dt">\t</span><span class="st">Enable verbose output&#39;</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">$&#39;-q</span><span class="dt">\t</span><span class="st">--quiet</span><span class="dt">\t</span><span class="st">0</span><span class="dt">\t</span><span class="st">VERBOSE=0</span><span class="dt">\t</span><span class="st">Disable verbose output&#39;</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>  <span class="st">$&#39;-n</span><span class="dt">\t</span><span class="st">--dry-run</span><span class="dt">\t</span><span class="st">0</span><span class="dt">\t</span><span class="st">DRY_RUN=1</span><span class="dt">\t</span><span class="st">Preview changes only&#39;</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>  <span class="st">$&#39;-f</span><span class="dt">\t</span><span class="st">--file</span><span class="dt">\t</span><span class="st">1</span><span class="dt">\t</span><span class="st">FILE</span><span class="dt">\t</span><span class="st">Input file&#39;</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="va">)</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="fu">show_help()</span> <span class="kw">{</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">&#39;%s -- demo tool\n\nUsage: %s [OPTIONS]\n\nOptions:\n&#39;</span> <span class="dt">\</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;</span><span class="va">$SCRIPT_NAME</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">$SCRIPT_NAME</span><span class="st">&quot;</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="va">row</span> <span class="va">short</span> <span class="va">long</span> <span class="va">arg</span> <span class="va">var</span> <span class="va">desc</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> row <span class="kw">in</span> <span class="st">&quot;</span><span class="va">${OPTSPEC</span><span class="op">[@]</span><span class="va">}</span><span class="st">&quot;</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>    <span class="va">IFS</span><span class="op">=</span><span class="st">$&#39;</span><span class="dt">\t</span><span class="st">&#39;</span> <span class="bu">read</span> <span class="at">-r</span> <span class="va">short</span> <span class="va">long</span> <span class="va">arg</span> <span class="va">var</span> <span class="va">desc</span> <span class="op">&lt;&lt;&lt;</span><span class="st">&quot;</span><span class="va">$row</span><span class="st">&quot;</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">((</span><span class="va">arg</span><span class="kw">));</span> <span class="cf">then</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>      <span class="bu">printf</span> <span class="st">&#39;  %s, %s VALUE   %s\n&#39;</span> <span class="st">&quot;</span><span class="va">$short</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">$long</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">$desc</span><span class="st">&quot;</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>      <span class="bu">printf</span> <span class="st">&#39;  %s, %s          %s\n&#39;</span> <span class="st">&quot;</span><span class="va">$short</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">$long</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">$desc</span><span class="st">&quot;</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>    <span class="cf">fi</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>  <span class="cf">done</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a><span class="fu">parse_args()</span> <span class="kw">{</span></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>  <span class="cf">while</span> <span class="kw">((</span><span class="va">$#</span><span class="kw">));</span> <span class="cf">do</span></span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>    <span class="bu">local</span> <span class="va">matched</span><span class="op">=</span>0 <span class="va">row</span> <span class="va">short</span> <span class="va">long</span> <span class="va">arg</span> <span class="va">var</span></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> row <span class="kw">in</span> <span class="st">&quot;</span><span class="va">${OPTSPEC</span><span class="op">[@]</span><span class="va">}</span><span class="st">&quot;</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>      <span class="va">IFS</span><span class="op">=</span><span class="st">$&#39;</span><span class="dt">\t</span><span class="st">&#39;</span> <span class="bu">read</span> <span class="at">-r</span> <span class="va">short</span> <span class="va">long</span> <span class="va">arg</span> <span class="va">var</span> <span class="va">_</span> <span class="op">&lt;&lt;&lt;</span><span class="st">&quot;</span><span class="va">$row</span><span class="st">&quot;</span></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>      <span class="kw">[[</span> <span class="va">$1</span> <span class="ot">==</span> <span class="st">&quot;</span><span class="va">$short</span><span class="st">&quot;</span> <span class="kw">||</span> <span class="va">$1</span> <span class="ot">==</span> <span class="st">&quot;</span><span class="va">$long</span><span class="st">&quot;</span> <span class="kw">]]</span> <span class="kw">||</span> <span class="cf">continue</span></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> <span class="kw">((</span><span class="va">arg</span><span class="kw">));</span> <span class="cf">then</span> <span class="ex">noarg</span> <span class="st">&quot;</span><span class="va">$@</span><span class="st">&quot;</span><span class="kw">;</span> <span class="bu">shift</span><span class="kw">;</span> <span class="bu">printf</span> <span class="at">-v</span> <span class="st">&quot;</span><span class="va">$var</span><span class="st">&quot;</span> <span class="st">&#39;%s&#39;</span> <span class="st">&quot;</span><span class="va">$1</span><span class="st">&quot;</span></span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>      <span class="cf">else</span>             <span class="bu">eval</span> <span class="st">&quot;</span><span class="va">$var</span><span class="st">&quot;</span><span class="kw">;</span> <span class="cf">fi</span>      <span class="co"># var holds &#39;NAME=value&#39;</span></span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>      <span class="va">matched</span><span class="op">=</span>1<span class="kw">;</span> <span class="cf">break</span></span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>    <span class="cf">done</span></span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>    <span class="kw">((</span><span class="va">matched</span><span class="kw">))</span> <span class="kw">||</span> <span class="cf">case</span> <span class="va">$1</span> <span class="kw">in</span></span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>      <span class="ss">-h</span><span class="kw">|</span><span class="ss">--help</span><span class="kw">)</span> <span class="ex">show_help</span><span class="kw">;</span> <span class="bu">exit</span> 0 <span class="cf">;;</span></span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>      <span class="ss">--</span><span class="kw">)</span>        <span class="bu">shift</span><span class="kw">;</span> <span class="cf">break</span> <span class="cf">;;</span></span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>      <span class="ss">-</span><span class="pp">*</span><span class="kw">)</span>        <span class="ex">die</span> 22 <span class="st">&quot;unknown option: </span><span class="va">$1</span><span class="st">&quot;</span> <span class="cf">;;</span></span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>      <span class="pp">*</span><span class="kw">)</span>         <span class="cf">break</span> <span class="cf">;;</span></span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>    <span class="cf">esac</span></span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>    <span class="bu">shift</span></span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>  <span class="cf">done</span></span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span></code></pre></div>
+<p>The spec is the single source of truth. Adding a flag means appending
+one row; both help and parser pick it up automatically. The
+<code>eval</code> target is a string the script itself authored (BCS1004
+allows such constrained use); the value-carrying case uses
+<code>printf -v &quot;$var&quot;</code> which never evals.</p>
+<h3 id="trade-offs">Trade-offs</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Pattern</th>
+<th>Pros</th>
+<th>Cons</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Heredoc + case</td>
+<td>Simple, readable, BCS template form</td>
+<td>Manual sync; relies on tests</td>
+</tr>
+<tr class="even">
+<td>Spec array</td>
+<td>Single source of truth, no drift</td>
+<td>Indirection; harder to debug</td>
+</tr>
+</tbody>
+</table>
+<p>For most BCS scripts (≤10 options), pattern 1 plus a
+<code>--help</code> regression test is the right choice. Pattern 2
+starts paying off around 15+ options or when multiple subcommands share
+option groups.</p>
+<h3 id="see-also">See also</h3>
+<ul>
+<li>§15.4 — hand-rolled <code>while case shift</code></li>
+<li>§15.8 — subcommand dispatch</li>
+<li>§15.9 — help text conventions</li>
+<li>BCS0801 (parsing pattern), BCS0803 (argument validation), BCS0805
+(short-option bundling), BCS1004 (constrained <code>eval</code>)</li>
+</ul>
+<p>#fin</p>
+<p style="margin:0.8em 0"><a href="../index.html">[← Back]</a></p>
+</body>
+</html>
