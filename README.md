@@ -60,7 +60,7 @@ sudo make PREFIX=/usr install  # System-wide
 sudo make uninstall            # Uninstall
 ```
 
-Installs `bcs`, `bcscheck`, data files, bash completions, and the `bcs(1)` and `BCS-bash(1)` manpages.
+Installs the `bcs` CLI plus per-subcommand shims (`bcscheck`, `bcsdisplay`, `bcstemplate`, `bcscodes`, `bcsgenerate`), data files, bash completions, the `bcs(1)` and `BCS-bash(1)` manpages, and the rendered HTML reference trees under `docs/BCS-bash.html/` and `docs/BCS-Bash-Ref.html/`.
 
 **Prerequisites:** Bash 5.2+ (`bash --version`) and ShellCheck 0.8.0+ (`shellcheck --version`).
 
@@ -99,8 +99,8 @@ The Bash Coding Standard defines **98 substantive rules plus 12 section overview
 
 | Tier | Count | Severity | Behaviour |
 |------|-------|----------|-----------|
-| `core` | 33 | `[ERROR]` | Real correctness/safety bugs. Non-zero exit if any are found. |
-| `recommended` | 42 | `[WARN]` | Bash hygiene; prevents subtle issues. |
+| `core` | 34 | `[ERROR]` | Real correctness/safety bugs. Non-zero exit if any are found. |
+| `recommended` | 41 | `[WARN]` | Bash hygiene; prevents subtle issues. |
 | `style` | 23 | `[WARN]` | Taste; no correctness impact. |
 | `disabled` | -- | (silent) | Applied only via `policy.conf`; never reported. |
 
@@ -138,16 +138,16 @@ bcs template -t complete -n deploy -d 'Deploy script' -o deploy.sh -x
 
 | Type | Lines | Use |
 |------|-------|-----|
-| `minimal` | ~16 | Bare essentials |
-| `basic` | ~26 | Standard with metadata (default) |
-| `complete` | ~119 | Full toolkit (main, args, messaging, cleanup) |
-| `library` | ~40 | Sourceable library (no `main`) |
+| `minimal` | ~18 | Bare essentials |
+| `basic` | ~43 | Standard with metadata (default) |
+| `complete` | ~112 | Full toolkit (main, args, messaging, cleanup) |
+| `library` | ~37 | Sourceable library (no `main`) |
 
 ### `bcs codes`
 
 ```bash
 bcs codes                  # All rules, tier-decorated
-bcs codes -T core          # Only core-tier rules (33)
+bcs codes -T core          # Only core-tier rules (34)
 bcs codes -E BCS0101       # Explain one rule
 bcs codes -p               # Plain output (no tier decoration)
 ```
@@ -270,15 +270,21 @@ The [`ai-agents/`](ai-agents/README.md) package bundles BCS-aware agents, slash 
 
 See [`ai-agents/AGENTS.md`](ai-agents/AGENTS.md) for the flat file inventory.
 
-## Bash 5.2 Reference (`BCS-bash`)
+## Bash References (`BCS-bash`, `BCS-Bash-Ref`)
 
-BCS includes a rewritten Bash 5.2 reference manpage tailored for strict-mode scripting. It removes legacy syntax (backtick substitution, `[ ]` tests), POSIX compatibility modes, and `sh`-emulation caveats -- leaving a clean, modern reference that assumes `set -euo pipefail` and `[[ ]]` throughout.
+BCS ships two complementary Bash references, both authored for strict-mode scripting (`set -euo pipefail`, `[[ ]]`, no backtick substitution, no POSIX/`sh`-emulation caveats):
+
+| Reference | Scope | Source | Rendered |
+|-----------|-------|--------|----------|
+| **`BCS-bash`** | Rewritten Bash 5.2 manpage | [`docs/BCS-bash/`](docs/BCS-bash/) | [`docs/BCS-bash.html/`](docs/BCS-bash.html/), `man BCS-bash` |
+| **`BCS-Bash-Ref`** | Advanced Bash Reference (25 Parts + Appendices, ~350 leaves) | [`docs/BCS-Bash-Ref/`](docs/BCS-Bash-Ref/) | [`docs/BCS-Bash-Ref.html/`](docs/BCS-Bash-Ref.html/) |
 
 ```bash
-man BCS-bash    # Also: man bcs-bash
+man BCS-bash                                       # Manpage (also: man bcs-bash)
+xdg-open docs/BCS-Bash-Ref.html/index.html         # Advanced reference (HTML)
 ```
 
-Source lives in [`docs/BCS-bash/`](docs/BCS-bash/) as structured Markdown mirroring the original `bash(1)` man page sections.
+The HTML trees are checked-in artefacts. The `BCS-Bash-Ref.html/` tree is rebuilt via [`docs/BCS-Bash-Ref.html.build`](docs/BCS-Bash-Ref.html.build), which wraps `mdview --preserve-tmp` and rsyncs the rendered tree into place.
 
 ## Testing & Self-Compliance
 
