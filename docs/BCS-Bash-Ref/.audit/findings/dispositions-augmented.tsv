@@ -1,0 +1,1010 @@
+leaf_path	block_idx	source	code	level_or_bucket	label	action	confidence	rationale
+01_The-Unix-Model-from-Bash/04_Streams-and-the-standard-descriptors.md	3	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+01_The-Unix-Model-from-Bash/05_The-shell-environment.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+01_The-Unix-Model-from-Bash/05_The-shell-environment.md	4	lint	SC2034	warning	MIXED	ADD_SUPPRESSION	MEDIUM	declared to demonstrate, not consumed
+01_The-Unix-Model-from-Bash/07_Exit-status-and-process-termination.md	4	lint	SC2242	error	MIXED	REVIEW	LOW	invalid exit code — verify pedagogical intent
+02_Bash-as-a-Program/05_Startup-file-chains.md	2	lint	SC1090	warning	NEUTRAL	ADD_SUPPRESSION	HIGH	non-constant source — standard suppression idiom
+03_Lexical-Structure-and-Shell-Grammar/01_Tokenisation.md	1	lint	SC1073	error	NEUTRAL	REVIEW	LOW	parser error — possibly an intentional grammar sample
+03_Lexical-Structure-and-Shell-Grammar/01_Tokenisation.md	1	lint	SC1055	error	NEUTRAL	REVIEW	LOW	code SC1055 — first-pass triage rule not yet defined
+03_Lexical-Structure-and-Shell-Grammar/01_Tokenisation.md	1	lint	SC1072	error	NEUTRAL	REVIEW	LOW	parser error — possibly an intentional grammar sample
+03_Lexical-Structure-and-Shell-Grammar/02_Reserved-words.md	2	lint	SC1010	warning	NEUTRAL	REVIEW	LOW	code SC1010 — first-pass triage rule not yet defined
+03_Lexical-Structure-and-Shell-Grammar/02_Reserved-words.md	2	lint	SC1010	warning	NEUTRAL	REVIEW	LOW	code SC1010 — first-pass triage rule not yet defined
+03_Lexical-Structure-and-Shell-Grammar/03_Comments.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+03_Lexical-Structure-and-Shell-Grammar/03_Comments.md	2	lint	SC2034	warning	MIXED	ADD_SUPPRESSION	MEDIUM	declared to demonstrate, not consumed
+03_Lexical-Structure-and-Shell-Grammar/04_Quoting-overview.md	3	lint	SC2154	warning	MIXED	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+03_Lexical-Structure-and-Shell-Grammar/04_Quoting-overview.md	3	lint	SC2154	warning	MIXED	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+03_Lexical-Structure-and-Shell-Grammar/05_Single-quotes.md	2	lint	SC2154	warning	MIXED	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+03_Lexical-Structure-and-Shell-Grammar/06_Double-quotes.md	1	lint	SC2066	error	NEUTRAL	REVIEW	LOW	code SC2066 — first-pass triage rule not yet defined
+03_Lexical-Structure-and-Shell-Grammar/09_Backslash-escapes.md	2	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+03_Lexical-Structure-and-Shell-Grammar/10_Shell-grammar.md	2	lint	SC1073	error	NEUTRAL	REVIEW	LOW	parser error — possibly an intentional grammar sample
+03_Lexical-Structure-and-Shell-Grammar/10_Shell-grammar.md	2	lint	SC1055	error	NEUTRAL	REVIEW	LOW	code SC1055 — first-pass triage rule not yet defined
+03_Lexical-Structure-and-Shell-Grammar/10_Shell-grammar.md	2	lint	SC1072	error	NEUTRAL	REVIEW	LOW	parser error — possibly an intentional grammar sample
+04_Parameters-Variables-and-Arrays/01_Parameter-taxonomy.md	2	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+04_Parameters-Variables-and-Arrays/02_Positional-parameters.md	1	lint	SC1128	error	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+04_Parameters-Variables-and-Arrays/02_Positional-parameters.md	3	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+04_Parameters-Variables-and-Arrays/03_Special-parameters.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+04_Parameters-Variables-and-Arrays/04_Shell-variables.md	2	lint	SC2050	warning	NEUTRAL	REVIEW	LOW	code SC2050 — first-pass triage rule not yet defined
+04_Parameters-Variables-and-Arrays/05_The-declare-builtin-and-attributes.md	3	lint	SC2034	warning	RIGHT	ADD_SUPPRESSION	MEDIUM	declared to demonstrate, not consumed
+04_Parameters-Variables-and-Arrays/05_The-declare-builtin-and-attributes.md	3	lint	SC2034	warning	RIGHT	ADD_SUPPRESSION	MEDIUM	declared to demonstrate, not consumed
+04_Parameters-Variables-and-Arrays/05_The-declare-builtin-and-attributes.md	4	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+04_Parameters-Variables-and-Arrays/05_The-declare-builtin-and-attributes.md	4	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+04_Parameters-Variables-and-Arrays/06_local-and-dynamic-scope.md	1	lint	SC2034	warning	MIXED	ADD_SUPPRESSION	MEDIUM	declared to demonstrate, not consumed
+04_Parameters-Variables-and-Arrays/06_local-and-dynamic-scope.md	1	lint	SC2034	warning	MIXED	ADD_SUPPRESSION	MEDIUM	declared to demonstrate, not consumed
+04_Parameters-Variables-and-Arrays/06_local-and-dynamic-scope.md	1	lint	SC2034	warning	MIXED	ADD_SUPPRESSION	MEDIUM	declared to demonstrate, not consumed
+04_Parameters-Variables-and-Arrays/06_local-and-dynamic-scope.md	1	lint	SC2034	warning	MIXED	ADD_SUPPRESSION	MEDIUM	declared to demonstrate, not consumed
+04_Parameters-Variables-and-Arrays/06_local-and-dynamic-scope.md	4	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+04_Parameters-Variables-and-Arrays/06_local-and-dynamic-scope.md	4	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+04_Parameters-Variables-and-Arrays/06_local-and-dynamic-scope.md	4	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+04_Parameters-Variables-and-Arrays/06_local-and-dynamic-scope.md	4	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+04_Parameters-Variables-and-Arrays/06_local-and-dynamic-scope.md	4	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+04_Parameters-Variables-and-Arrays/06_local-and-dynamic-scope.md	4	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+04_Parameters-Variables-and-Arrays/07_readonly-and-immutability.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+04_Parameters-Variables-and-Arrays/07_readonly-and-immutability.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+04_Parameters-Variables-and-Arrays/07_readonly-and-immutability.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+04_Parameters-Variables-and-Arrays/07_readonly-and-immutability.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+04_Parameters-Variables-and-Arrays/07_readonly-and-immutability.md	2	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+04_Parameters-Variables-and-Arrays/09_Indexed-arrays.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+04_Parameters-Variables-and-Arrays/09_Indexed-arrays.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+04_Parameters-Variables-and-Arrays/09_Indexed-arrays.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+04_Parameters-Variables-and-Arrays/09_Indexed-arrays.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+04_Parameters-Variables-and-Arrays/10_Associative-arrays.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+04_Parameters-Variables-and-Arrays/10_Associative-arrays.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+04_Parameters-Variables-and-Arrays/10_Associative-arrays.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+04_Parameters-Variables-and-Arrays/10_Associative-arrays.md	2	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+04_Parameters-Variables-and-Arrays/10_Associative-arrays.md	3	lint	SC2034	warning	RIGHT	ADD_SUPPRESSION	MEDIUM	declared to demonstrate, not consumed
+04_Parameters-Variables-and-Arrays/10_Associative-arrays.md	7	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+04_Parameters-Variables-and-Arrays/10_Associative-arrays.md	7	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+04_Parameters-Variables-and-Arrays/11_Namerefs-n.md	3	lint	SC2125	warning	NEUTRAL	REVIEW	LOW	code SC2125 — first-pass triage rule not yet defined
+04_Parameters-Variables-and-Arrays/11_Namerefs-n.md	3	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+04_Parameters-Variables-and-Arrays/11_Namerefs-n.md	4	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+04_Parameters-Variables-and-Arrays/11_Namerefs-n.md	5	lint	SC2034	warning	MIXED	ADD_SUPPRESSION	MEDIUM	declared to demonstrate, not consumed
+04_Parameters-Variables-and-Arrays/13_Variable-assignment-semantics.md	2	lint	SC2206	warning	NEUTRAL	REVIEW	LOW	code SC2206 — first-pass triage rule not yet defined
+04_Parameters-Variables-and-Arrays/13_Variable-assignment-semantics.md	2	lint	SC2206	warning	NEUTRAL	REVIEW	LOW	code SC2206 — first-pass triage rule not yet defined
+04_Parameters-Variables-and-Arrays/13_Variable-assignment-semantics.md	4	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+04_Parameters-Variables-and-Arrays/13_Variable-assignment-semantics.md	4	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+04_Parameters-Variables-and-Arrays/13_Variable-assignment-semantics.md	5	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+04_Parameters-Variables-and-Arrays/13_Variable-assignment-semantics.md	6	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+04_Parameters-Variables-and-Arrays/14_Unsetting.md	1	lint	SC1128	error	MIXED	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+04_Parameters-Variables-and-Arrays/14_Unsetting.md	2	lint	SC1128	error	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+05_Expansions/02_Brace-expansion.md	1	lint	SC1083	warning	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+05_Expansions/02_Brace-expansion.md	1	lint	SC1083	warning	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+05_Expansions/02_Brace-expansion.md	1	lint	SC1083	warning	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+05_Expansions/02_Brace-expansion.md	1	lint	SC1083	warning	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+05_Expansions/02_Brace-expansion.md	2	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+05_Expansions/02_Brace-expansion.md	2	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+05_Expansions/02_Brace-expansion.md	2	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+05_Expansions/03_Tilde-expansion.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+05_Expansions/03_Tilde-expansion.md	1	lint	SC2088	warning	NEUTRAL	REVIEW	LOW	code SC2088 — first-pass triage rule not yet defined
+05_Expansions/03_Tilde-expansion.md	1	lint	SC2088	warning	NEUTRAL	REVIEW	LOW	code SC2088 — first-pass triage rule not yet defined
+05_Expansions/03_Tilde-expansion.md	1	lint	SC2088	warning	NEUTRAL	REVIEW	LOW	code SC2088 — first-pass triage rule not yet defined
+05_Expansions/04_Parameter-and-variable-expansion.md	7	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+05_Expansions/04_Parameter-and-variable-expansion.md	7	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+05_Expansions/04_Parameter-and-variable-expansion.md	7	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+05_Expansions/05_Arithmetic-expansion.md	2	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+05_Expansions/05_Arithmetic-expansion.md	2	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+05_Expansions/05_Arithmetic-expansion.md	2	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+05_Expansions/05_Arithmetic-expansion.md	3	lint	SC2080	error	NEUTRAL	REVIEW	LOW	code SC2080 — first-pass triage rule not yet defined
+05_Expansions/06_Command-substitution.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+05_Expansions/06_Command-substitution.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+05_Expansions/06_Command-substitution.md	4	lint	SC1010	warning	NEUTRAL	REVIEW	LOW	code SC1010 — first-pass triage rule not yet defined
+05_Expansions/06_Command-substitution.md	4	lint	SC1010	warning	NEUTRAL	REVIEW	LOW	code SC1010 — first-pass triage rule not yet defined
+05_Expansions/06_Command-substitution.md	5	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+05_Expansions/07_Process-substitution.md	3	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+05_Expansions/07_Process-substitution.md	4	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+05_Expansions/08_Word-splitting-and-IFS.md	5	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+05_Expansions/08_Word-splitting-and-IFS.md	5	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+05_Expansions/09_Pathname-expansion-globbing.md	3	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+05_Expansions/10_Quote-removal.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+05_Expansions/10_Quote-removal.md	2	lint	SC1128	error	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+05_Expansions/11_Glob-options.md	1	lint	SC2034	warning	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+05_Expansions/11_Glob-options.md	4	lint	SC2050	warning	NEUTRAL	REVIEW	LOW	code SC2050 — first-pass triage rule not yet defined
+05_Expansions/11_Glob-options.md	4	lint	SC2194	warning	NEUTRAL	REVIEW	LOW	code SC2194 — first-pass triage rule not yet defined
+05_Expansions/12_Extended-globs-extglob.md	3	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+05_Expansions/12_Extended-globs-extglob.md	3	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+05_Expansions/13_Locale-and-pattern-matching.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+05_Expansions/13_Locale-and-pattern-matching.md	3	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+06_Redirection-and-Pipelines/01_The-fd-table-from-Bashs-perspective.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+06_Redirection-and-Pipelines/01_The-fd-table-from-Bashs-perspective.md	2	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+06_Redirection-and-Pipelines/01_The-fd-table-from-Bashs-perspective.md	3	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+06_Redirection-and-Pipelines/02_Input-redirection.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+06_Redirection-and-Pipelines/02_Input-redirection.md	2	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+06_Redirection-and-Pipelines/03_Output-redirection.md	1	lint	SC1128	error	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+06_Redirection-and-Pipelines/04_Stderr-redirection-and-merging.md	1	lint	SC1128	error	MIXED	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+06_Redirection-and-Pipelines/04_Stderr-redirection-and-merging.md	1	lint	SC2069	warning	MIXED	REVIEW	LOW	code SC2069 — first-pass triage rule not yet defined
+06_Redirection-and-Pipelines/05_Reading-and-writing.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+06_Redirection-and-Pipelines/06_Duplicating-fds.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+06_Redirection-and-Pipelines/07_Moving-and-closing-fds.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+06_Redirection-and-Pipelines/07_Moving-and-closing-fds.md	2	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+06_Redirection-and-Pipelines/08_Here-documents.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+06_Redirection-and-Pipelines/08_Here-documents.md	2	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+06_Redirection-and-Pipelines/08_Here-documents.md	3	lint	SC2261	error	NEUTRAL	REVIEW	LOW	code SC2261 — first-pass triage rule not yet defined
+06_Redirection-and-Pipelines/08_Here-documents.md	3	lint	SC2259	error	NEUTRAL	REVIEW	LOW	code SC2259 — first-pass triage rule not yet defined
+06_Redirection-and-Pipelines/08_Here-documents.md	3	lint	SC2261	error	NEUTRAL	REVIEW	LOW	code SC2261 — first-pass triage rule not yet defined
+06_Redirection-and-Pipelines/09_Here-strings.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+06_Redirection-and-Pipelines/10_Process-substitution-as-redirection.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+06_Redirection-and-Pipelines/10_Process-substitution-as-redirection.md	2	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+06_Redirection-and-Pipelines/11_Order-of-evaluation.md	1	lint	SC1128	error	MIXED	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+06_Redirection-and-Pipelines/11_Order-of-evaluation.md	1	lint	SC2069	warning	MIXED	REVIEW	LOW	code SC2069 — first-pass triage rule not yet defined
+06_Redirection-and-Pipelines/12_exec-for-fd-manipulation.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+06_Redirection-and-Pipelines/12_exec-for-fd-manipulation.md	2	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+06_Redirection-and-Pipelines/12_exec-for-fd-manipulation.md	3	lint	SC1128	error	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+06_Redirection-and-Pipelines/13_Pipelines.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+06_Redirection-and-Pipelines/14_Stderr-pipelines.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+06_Redirection-and-Pipelines/15_pipefail-semantics.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+06_Redirection-and-Pipelines/15_pipefail-semantics.md	2	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+06_Redirection-and-Pipelines/16_lastpipe-semantics.md	1	lint	SC1128	error	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+06_Redirection-and-Pipelines/16_lastpipe-semantics.md	3	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+07_Control-Flow-and-Compound-Commands/02_ifelifelsefi.md	2	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+07_Control-Flow-and-Compound-Commands/02_ifelifelsefi.md	2	lint	SC1090	warning	NEUTRAL	ADD_SUPPRESSION	HIGH	non-constant source — standard suppression idiom
+07_Control-Flow-and-Compound-Commands/02_ifelifelsefi.md	2	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+07_Control-Flow-and-Compound-Commands/02_ifelifelsefi.md	2	lint	SC1090	warning	NEUTRAL	ADD_SUPPRESSION	HIGH	non-constant source — standard suppression idiom
+07_Control-Flow-and-Compound-Commands/02_ifelifelsefi.md	3	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+07_Control-Flow-and-Compound-Commands/02_ifelifelsefi.md	5	lint	SC2120	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	BCS noarg-style helper uses $#/$@ without declared params
+07_Control-Flow-and-Compound-Commands/02_ifelifelsefi.md	5	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+07_Control-Flow-and-Compound-Commands/03_caseesac.md	2	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+07_Control-Flow-and-Compound-Commands/03_caseesac.md	2	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+07_Control-Flow-and-Compound-Commands/03_caseesac.md	2	lint	SC2254	warning	NEUTRAL	REVIEW	LOW	code SC2254 — first-pass triage rule not yet defined
+07_Control-Flow-and-Compound-Commands/03_caseesac.md	3	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+07_Control-Flow-and-Compound-Commands/03_caseesac.md	4	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+07_Control-Flow-and-Compound-Commands/03_caseesac.md	5	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+07_Control-Flow-and-Compound-Commands/03_caseesac.md	6	lint	SC2154	warning	MIXED	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+07_Control-Flow-and-Compound-Commands/04_for-x-in-list.md	3	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+07_Control-Flow-and-Compound-Commands/04_for-x-in-list.md	3	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+07_Control-Flow-and-Compound-Commands/04_for-x-in-list.md	3	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+07_Control-Flow-and-Compound-Commands/04_for-x-in-list.md	3	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+07_Control-Flow-and-Compound-Commands/04_for-x-in-list.md	5	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+07_Control-Flow-and-Compound-Commands/05_C-style-for.md	2	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+07_Control-Flow-and-Compound-Commands/06_whileuntil.md	3	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+07_Control-Flow-and-Compound-Commands/06_whileuntil.md	4	lint	SC2034	warning	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+07_Control-Flow-and-Compound-Commands/06_whileuntil.md	5	lint	SC2034	warning	RIGHT	ADD_SUPPRESSION	MEDIUM	declared to demonstrate, not consumed
+07_Control-Flow-and-Compound-Commands/06_whileuntil.md	6	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+07_Control-Flow-and-Compound-Commands/06_whileuntil.md	7	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+07_Control-Flow-and-Compound-Commands/07_select.md	2	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+07_Control-Flow-and-Compound-Commands/07_select.md	2	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+07_Control-Flow-and-Compound-Commands/08_Subshell-grouping.md	2	lint	SC1128	error	MIXED	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+07_Control-Flow-and-Compound-Commands/08_Subshell-grouping.md	2	lint	SC2154	warning	MIXED	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+07_Control-Flow-and-Compound-Commands/08_Subshell-grouping.md	3	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+07_Control-Flow-and-Compound-Commands/09_Brace-grouping.md	2	lint	SC1073	error	MIXED	REVIEW	LOW	parser error — possibly an intentional grammar sample
+07_Control-Flow-and-Compound-Commands/09_Brace-grouping.md	2	lint	SC1054	error	MIXED	REVIEW	LOW	code SC1054 — first-pass triage rule not yet defined
+07_Control-Flow-and-Compound-Commands/09_Brace-grouping.md	2	lint	SC1083	warning	MIXED	REVIEW	LOW	literal { ... } in word context — diagram or footgun?
+07_Control-Flow-and-Compound-Commands/09_Brace-grouping.md	2	lint	SC1083	warning	MIXED	REVIEW	LOW	literal { ... } in word context — diagram or footgun?
+07_Control-Flow-and-Compound-Commands/09_Brace-grouping.md	2	lint	SC1056	error	MIXED	REVIEW	LOW	code-fence parser confusion — investigate per-leaf
+07_Control-Flow-and-Compound-Commands/09_Brace-grouping.md	2	lint	SC1072	error	MIXED	REVIEW	LOW	parser error — possibly an intentional grammar sample
+07_Control-Flow-and-Compound-Commands/09_Brace-grouping.md	3	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+07_Control-Flow-and-Compound-Commands/10_and-short-circuits.md	1	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+07_Control-Flow-and-Compound-Commands/10_and-short-circuits.md	2	lint	SC2154	warning	MIXED	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+07_Control-Flow-and-Compound-Commands/10_and-short-circuits.md	3	lint	SC2154	warning	RIGHT	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+07_Control-Flow-and-Compound-Commands/10_and-short-circuits.md	4	lint	SC2154	warning	RIGHT	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+07_Control-Flow-and-Compound-Commands/12_return.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+07_Control-Flow-and-Compound-Commands/13_exit.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+07_Control-Flow-and-Compound-Commands/13_exit.md	2	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+07_Control-Flow-and-Compound-Commands/14_true-false.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+08_Conditional-Expressions-and-Arithmetic/03_File-comparison-operators.md	1	lint	SC1128	error	MIXED	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+08_Conditional-Expressions-and-Arithmetic/04_String-operators.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+08_Conditional-Expressions-and-Arithmetic/06_Regex-matching-with.md	2	lint	SC2076	warning	NEUTRAL	REVIEW	LOW	code SC2076 — first-pass triage rule not yet defined
+08_Conditional-Expressions-and-Arithmetic/07_Logical-operators-and-grouping.md	1	lint	SC1128	error	MIXED	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+08_Conditional-Expressions-and-Arithmetic/07_Logical-operators-and-grouping.md	1	lint	SC1090	warning	MIXED	ADD_SUPPRESSION	HIGH	non-constant source — standard suppression idiom
+08_Conditional-Expressions-and-Arithmetic/07_Logical-operators-and-grouping.md	1	lint	SC2154	warning	MIXED	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+08_Conditional-Expressions-and-Arithmetic/07_Logical-operators-and-grouping.md	1	lint	SC2154	warning	MIXED	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+08_Conditional-Expressions-and-Arithmetic/08_Quoting-rules-inside.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+08_Conditional-Expressions-and-Arithmetic/08_Quoting-rules-inside.md	1	lint	SC2053	warning	NEUTRAL	REVIEW	LOW	code SC2053 — first-pass triage rule not yet defined
+08_Conditional-Expressions-and-Arithmetic/08_Quoting-rules-inside.md	1	lint	SC2075	error	NEUTRAL	REVIEW	LOW	code SC2075 — first-pass triage rule not yet defined
+08_Conditional-Expressions-and-Arithmetic/08_Quoting-rules-inside.md	1	lint	SC2076	warning	NEUTRAL	REVIEW	LOW	code SC2076 — first-pass triage rule not yet defined
+08_Conditional-Expressions-and-Arithmetic/11_Integer-types-overflow-base-prefixes.md	1	lint	SC1128	error	RIGHT	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+08_Conditional-Expressions-and-Arithmetic/12_Floating-point-workarounds.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+08_Conditional-Expressions-and-Arithmetic/12_Floating-point-workarounds.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+08_Conditional-Expressions-and-Arithmetic/13_let-builtin.md	1	lint	SC1128	error	MIXED	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+09_Functions/02_Argument-passing.md	2	lint	SC2068	error	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+09_Functions/03_local-and-scope.md	2	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+09_Functions/03_local-and-scope.md	2	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+09_Functions/03_local-and-scope.md	2	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+09_Functions/03_local-and-scope.md	2	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+09_Functions/03_local-and-scope.md	2	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+09_Functions/03_local-and-scope.md	2	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+09_Functions/03_local-and-scope.md	3	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+09_Functions/04_Return-value-via-return-N.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+09_Functions/04_Return-value-via-return-N.md	1	lint	SC2152	error	NEUTRAL	REVIEW	LOW	code SC2152 — first-pass triage rule not yet defined
+09_Functions/04_Return-value-via-return-N.md	1	lint	SC2152	error	NEUTRAL	REVIEW	LOW	code SC2152 — first-pass triage rule not yet defined
+09_Functions/04_Return-value-via-return-N.md	2	lint	SC1128	error	MIXED	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+09_Functions/05_Communicating-results.md	2	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+09_Functions/06_Recursion-and-FUNCNEST.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+09_Functions/07_Function-tracing.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+09_Functions/08_Listing-and-inspecting-functions.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+09_Functions/09_Exporting-functions.md	1	lint	SC1128	error	RIGHT	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+09_Functions/11_Self-locating-with-BASH_SOURCE.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+09_Functions/11_Self-locating-with-BASH_SOURCE.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+09_Functions/12_Calling-convention-discipline.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+10_Sourcing-Libraries-and-Modules/01_source-semantics.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+10_Sourcing-Libraries-and-Modules/01_source-semantics.md	2	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+10_Sourcing-Libraries-and-Modules/01_source-semantics.md	3	lint	SC1128	error	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+10_Sourcing-Libraries-and-Modules/03_Self-locating-library-pattern.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+10_Sourcing-Libraries-and-Modules/03_Self-locating-library-pattern.md	2	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+10_Sourcing-Libraries-and-Modules/06_Public-vs-private-conventions.md	1	lint	SC1128	error	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+10_Sourcing-Libraries-and-Modules/06_Public-vs-private-conventions.md	1	lint	SC2034	warning	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+10_Sourcing-Libraries-and-Modules/07_Version-negotiation.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+10_Sourcing-Libraries-and-Modules/07_Version-negotiation.md	2	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+10_Sourcing-Libraries-and-Modules/07_Version-negotiation.md	2	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+10_Sourcing-Libraries-and-Modules/07_Version-negotiation.md	2	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+10_Sourcing-Libraries-and-Modules/08_Lazy-and-conditional-loading.md	3	lint	SC2034	warning	RIGHT	ADD_SUPPRESSION	MEDIUM	declared to demonstrate, not consumed
+10_Sourcing-Libraries-and-Modules/10_API-design.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+10_Sourcing-Libraries-and-Modules/10_API-design.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+11_Process-Management/01_The-Bash-process-tree-at-runtime.md	1	lint	SC2216	warning	NEUTRAL	REVIEW	LOW	code SC2216 — first-pass triage rule not yet defined
+11_Process-Management/05_Foreground-vs-background.md	2	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+11_Process-Management/05_Foreground-vs-background.md	3	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+11_Process-Management/06_Process-groups-and-sessions.md	1	lint	SC2216	warning	RIGHT	REVIEW	LOW	code SC2216 — first-pass triage rule not yet defined
+11_Process-Management/06_Process-groups-and-sessions.md	2	lint	SC2216	warning	NEUTRAL	REVIEW	LOW	code SC2216 — first-pass triage rule not yet defined
+11_Process-Management/07_The-job-table.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+11_Process-Management/10_kill-and-signal-delivery.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+11_Process-Management/10_kill-and-signal-delivery.md	3	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+11_Process-Management/13_Environment-inheritance.md	2	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+12_Signals-and-Traps/03_Uncatchable-signals.md	1	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+12_Signals-and-Traps/04_Signal-disposition.md	2	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+12_Signals-and-Traps/05_The-trap-builtin.md	2	lint	SC2064	warning	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+12_Signals-and-Traps/05_The-trap-builtin.md	4	lint	SC2064	warning	MIXED	REVIEW	LOW	code SC2064 — first-pass triage rule not yet defined
+12_Signals-and-Traps/05_The-trap-builtin.md	5	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+12_Signals-and-Traps/06_Pseudo-signals-EXIT-ERR-DEBUG-RETURN.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+12_Signals-and-Traps/06_Pseudo-signals-EXIT-ERR-DEBUG-RETURN.md	2	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+12_Signals-and-Traps/06_Pseudo-signals-EXIT-ERR-DEBUG-RETURN.md	3	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+12_Signals-and-Traps/06_Pseudo-signals-EXIT-ERR-DEBUG-RETURN.md	4	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+12_Signals-and-Traps/08_Trap-inheritance.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+12_Signals-and-Traps/08_Trap-inheritance.md	2	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+12_Signals-and-Traps/10_Synchronous-vs-asynchronous-delivery.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+12_Signals-and-Traps/10_Synchronous-vs-asynchronous-delivery.md	2	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+12_Signals-and-Traps/11_Signal-safe-code.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+12_Signals-and-Traps/12_Idempotent-cleanup-patterns.md	1	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+12_Signals-and-Traps/12_Idempotent-cleanup-patterns.md	2	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+12_Signals-and-Traps/12_Idempotent-cleanup-patterns.md	3	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+12_Signals-and-Traps/13_Tempfile-and-tempdir-lifecycle.md	2	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+12_Signals-and-Traps/13_Tempfile-and-tempdir-lifecycle.md	2	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+12_Signals-and-Traps/13_Tempfile-and-tempdir-lifecycle.md	2	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+12_Signals-and-Traps/13_Tempfile-and-tempdir-lifecycle.md	2	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+12_Signals-and-Traps/14_Lockfile-pattern.md	1	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+12_Signals-and-Traps/14_Lockfile-pattern.md	2	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+12_Signals-and-Traps/15_Atomic-file-write.md	1	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+12_Signals-and-Traps/15_Atomic-file-write.md	2	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+12_Signals-and-Traps/15_Atomic-file-write.md	3	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+12_Signals-and-Traps/15_Atomic-file-write.md	3	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+12_Signals-and-Traps/15_Atomic-file-write.md	4	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+12_Signals-and-Traps/15_Atomic-file-write.md	5	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+12_Signals-and-Traps/15_Atomic-file-write.md	5	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+12_Signals-and-Traps/16_Reload-on-SIGHUP.md	1	lint	SC1090	warning	NEUTRAL	ADD_SUPPRESSION	HIGH	non-constant source — standard suppression idiom
+12_Signals-and-Traps/16_Reload-on-SIGHUP.md	1	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+12_Signals-and-Traps/16_Reload-on-SIGHUP.md	2	lint	SC1128	error	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+12_Signals-and-Traps/16_Reload-on-SIGHUP.md	2	lint	SC1090	warning	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+12_Signals-and-Traps/16_Reload-on-SIGHUP.md	2	lint	SC1090	warning	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	lint	SC2091	warning	NEUTRAL	REVIEW	MEDIUM	$(...) used as a command — verify
+13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	lint	SC2242	error	NEUTRAL	REVIEW	LOW	invalid exit code — verify pedagogical intent
+13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	lint	SC2091	warning	NEUTRAL	REVIEW	MEDIUM	$(...) used as a command — verify
+13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	lint	SC2242	error	NEUTRAL	REVIEW	LOW	invalid exit code — verify pedagogical intent
+13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	lint	SC2091	warning	NEUTRAL	REVIEW	MEDIUM	$(...) used as a command — verify
+13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	lint	SC2242	error	NEUTRAL	REVIEW	LOW	invalid exit code — verify pedagogical intent
+13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	lint	SC2091	warning	NEUTRAL	REVIEW	MEDIUM	$(...) used as a command — verify
+13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	lint	SC2242	error	NEUTRAL	REVIEW	LOW	invalid exit code — verify pedagogical intent
+13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	lint	SC2091	warning	NEUTRAL	REVIEW	MEDIUM	$(...) used as a command — verify
+13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	lint	SC2242	error	NEUTRAL	REVIEW	LOW	invalid exit code — verify pedagogical intent
+13_Error-Handling-and-Exit-Status/02_set-e-errexit-full-semantics.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+13_Error-Handling-and-Exit-Status/02_set-e-errexit-full-semantics.md	4	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	2	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	3	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	4	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	5	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	6	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	7	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+13_Error-Handling-and-Exit-Status/04_set-u-nounset.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+13_Error-Handling-and-Exit-Status/04_set-u-nounset.md	2	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+13_Error-Handling-and-Exit-Status/04_set-u-nounset.md	3	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+13_Error-Handling-and-Exit-Status/05_set-o-pipefail.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+13_Error-Handling-and-Exit-Status/05_set-o-pipefail.md	2	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+13_Error-Handling-and-Exit-Status/06_inherit_errexit.md	1	lint	SC1128	error	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+13_Error-Handling-and-Exit-Status/06_inherit_errexit.md	2	lint	SC1128	error	RIGHT	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+13_Error-Handling-and-Exit-Status/06_inherit_errexit.md	2	lint	SC2034	warning	RIGHT	ADD_SUPPRESSION	MEDIUM	declared to demonstrate, not consumed
+13_Error-Handling-and-Exit-Status/07_and-true-idioms.md	1	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+13_Error-Handling-and-Exit-Status/09_errtrace-and-trap-inheritance.md	2	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+13_Error-Handling-and-Exit-Status/09_errtrace-and-trap-inheritance.md	3	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+13_Error-Handling-and-Exit-Status/09_errtrace-and-trap-inheritance.md	3	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+13_Error-Handling-and-Exit-Status/10_Exit-code-conventions.md	1	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+13_Error-Handling-and-Exit-Status/10_Exit-code-conventions.md	1	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+13_Error-Handling-and-Exit-Status/11_Propagating-exit-codes.md	1	lint	SC1128	error	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+13_Error-Handling-and-Exit-Status/11_Propagating-exit-codes.md	1	lint	SC2155	warning	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+13_Error-Handling-and-Exit-Status/11_Propagating-exit-codes.md	2	lint	SC1128	error	RIGHT	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+13_Error-Handling-and-Exit-Status/11_Propagating-exit-codes.md	3	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+14_Input-Output-and-Messaging/01_Standard-streams-discipline.md	1	lint	SC1128	error	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+14_Input-Output-and-Messaging/01_Standard-streams-discipline.md	1	lint	SC2034	warning	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+14_Input-Output-and-Messaging/01_Standard-streams-discipline.md	3	lint	SC2034	warning	RIGHT	ADD_SUPPRESSION	MEDIUM	declared to demonstrate, not consumed
+14_Input-Output-and-Messaging/04_The-printf-builtin.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+14_Input-Output-and-Messaging/07_Logging-discipline.md	2	lint	SC2120	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	BCS noarg-style helper uses $#/$@ without declared params
+14_Input-Output-and-Messaging/07_Logging-discipline.md	4	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+14_Input-Output-and-Messaging/07_Logging-discipline.md	4	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+14_Input-Output-and-Messaging/07_Logging-discipline.md	6	lint	SC2154	warning	MIXED	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+14_Input-Output-and-Messaging/09_Coloured-output-and-TERM-detection.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+14_Input-Output-and-Messaging/09_Coloured-output-and-TERM-detection.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+14_Input-Output-and-Messaging/09_Coloured-output-and-TERM-detection.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+14_Input-Output-and-Messaging/09_Coloured-output-and-TERM-detection.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+14_Input-Output-and-Messaging/09_Coloured-output-and-TERM-detection.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+14_Input-Output-and-Messaging/09_Coloured-output-and-TERM-detection.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+14_Input-Output-and-Messaging/09_Coloured-output-and-TERM-detection.md	2	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+14_Input-Output-and-Messaging/09_Coloured-output-and-TERM-detection.md	2	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+14_Input-Output-and-Messaging/09_Coloured-output-and-TERM-detection.md	3	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+14_Input-Output-and-Messaging/09_Coloured-output-and-TERM-detection.md	3	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+14_Input-Output-and-Messaging/09_Coloured-output-and-TERM-detection.md	4	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+14_Input-Output-and-Messaging/09_Coloured-output-and-TERM-detection.md	4	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+14_Input-Output-and-Messaging/10_Progress-indicators.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+14_Input-Output-and-Messaging/11_Reading-binary-data.md	2	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+15_Command-Line-Processing/02_getopts-builtin.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+15_Command-Line-Processing/02_getopts-builtin.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+15_Command-Line-Processing/02_getopts-builtin.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+15_Command-Line-Processing/02_getopts-builtin.md	2	lint	SC2220	warning	NEUTRAL	REVIEW	LOW	code SC2220 — first-pass triage rule not yet defined
+15_Command-Line-Processing/02_getopts-builtin.md	2	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+15_Command-Line-Processing/02_getopts-builtin.md	2	lint	SC2220	warning	NEUTRAL	REVIEW	LOW	code SC2220 — first-pass triage rule not yet defined
+15_Command-Line-Processing/02_getopts-builtin.md	2	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+15_Command-Line-Processing/02_getopts-builtin.md	3	lint	SC2104	error	NEUTRAL	REVIEW	LOW	code SC2104 — first-pass triage rule not yet defined
+15_Command-Line-Processing/03_GNU-getopt1-external.md	1	lint	SC2120	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	BCS noarg-style helper uses $#/$@ without declared params
+15_Command-Line-Processing/03_GNU-getopt1-external.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+15_Command-Line-Processing/03_GNU-getopt1-external.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+15_Command-Line-Processing/04_Hand-rolled-while-case-shift.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+15_Command-Line-Processing/04_Hand-rolled-while-case-shift.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+15_Command-Line-Processing/04_Hand-rolled-while-case-shift.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+15_Command-Line-Processing/04_Hand-rolled-while-case-shift.md	3	lint	SC1073	error	NEUTRAL	REVIEW	LOW	parser error — possibly an intentional grammar sample
+15_Command-Line-Processing/04_Hand-rolled-while-case-shift.md	3	lint	SC1056	error	NEUTRAL	REVIEW	LOW	code-fence parser confusion — investigate per-leaf
+15_Command-Line-Processing/04_Hand-rolled-while-case-shift.md	3	lint	SC1072	error	NEUTRAL	REVIEW	LOW	parser error — possibly an intentional grammar sample
+15_Command-Line-Processing/05_Long-options.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+15_Command-Line-Processing/05_Long-options.md	2	lint	SC1073	error	NEUTRAL	REVIEW	LOW	parser error — possibly an intentional grammar sample
+15_Command-Line-Processing/05_Long-options.md	2	lint	SC1056	error	NEUTRAL	REVIEW	LOW	code-fence parser confusion — investigate per-leaf
+15_Command-Line-Processing/05_Long-options.md	2	lint	SC1072	error	NEUTRAL	REVIEW	LOW	parser error — possibly an intentional grammar sample
+15_Command-Line-Processing/06_Bundled-short-options.md	1	lint	SC1073	error	NEUTRAL	REVIEW	LOW	parser error — possibly an intentional grammar sample
+15_Command-Line-Processing/06_Bundled-short-options.md	1	lint	SC1056	error	NEUTRAL	REVIEW	LOW	code-fence parser confusion — investigate per-leaf
+15_Command-Line-Processing/06_Bundled-short-options.md	1	lint	SC1072	error	NEUTRAL	REVIEW	LOW	parser error — possibly an intentional grammar sample
+15_Command-Line-Processing/06_Bundled-short-options.md	2	lint	SC1073	error	NEUTRAL	REVIEW	LOW	parser error — possibly an intentional grammar sample
+15_Command-Line-Processing/06_Bundled-short-options.md	2	lint	SC1055	error	NEUTRAL	REVIEW	LOW	code SC1055 — first-pass triage rule not yet defined
+15_Command-Line-Processing/06_Bundled-short-options.md	2	lint	SC1072	error	NEUTRAL	REVIEW	LOW	parser error — possibly an intentional grammar sample
+15_Command-Line-Processing/06_Bundled-short-options.md	3	lint	SC1073	error	MIXED	REVIEW	LOW	parser error — possibly an intentional grammar sample
+15_Command-Line-Processing/06_Bundled-short-options.md	3	lint	SC1056	error	MIXED	REVIEW	LOW	code-fence parser confusion — investigate per-leaf
+15_Command-Line-Processing/06_Bundled-short-options.md	3	lint	SC1072	error	MIXED	REVIEW	LOW	parser error — possibly an intentional grammar sample
+15_Command-Line-Processing/07_end-of-options.md	1	lint	SC1073	error	NEUTRAL	REVIEW	LOW	parser error — possibly an intentional grammar sample
+15_Command-Line-Processing/07_end-of-options.md	1	lint	SC1056	error	NEUTRAL	REVIEW	LOW	code-fence parser confusion — investigate per-leaf
+15_Command-Line-Processing/07_end-of-options.md	1	lint	SC1072	error	NEUTRAL	REVIEW	LOW	parser error — possibly an intentional grammar sample
+15_Command-Line-Processing/07_end-of-options.md	3	lint	SC2120	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	BCS noarg-style helper uses $#/$@ without declared params
+15_Command-Line-Processing/08_Subcommand-dispatch.md	1	lint	SC2120	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	BCS noarg-style helper uses $#/$@ without declared params
+15_Command-Line-Processing/11_Auto-generating-usage.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+15_Command-Line-Processing/11_Auto-generating-usage.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+15_Command-Line-Processing/11_Auto-generating-usage.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+15_Command-Line-Processing/11_Auto-generating-usage.md	3	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+15_Command-Line-Processing/11_Auto-generating-usage.md	3	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+15_Command-Line-Processing/11_Auto-generating-usage.md	3	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+16_Concurrency-and-Parallelism/02_wait-and-wait-n.md	1	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+16_Concurrency-and-Parallelism/02_wait-and-wait-n.md	2	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+16_Concurrency-and-Parallelism/03_wait-pid-for-specific-child.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+16_Concurrency-and-Parallelism/03_wait-pid-for-specific-child.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+16_Concurrency-and-Parallelism/04_Capturing-per-child-exit-status.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+16_Concurrency-and-Parallelism/04_Capturing-per-child-exit-status.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+16_Concurrency-and-Parallelism/04_Capturing-per-child-exit-status.md	2	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+16_Concurrency-and-Parallelism/04_Capturing-per-child-exit-status.md	2	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+16_Concurrency-and-Parallelism/04_Capturing-per-child-exit-status.md	2	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+16_Concurrency-and-Parallelism/04_Capturing-per-child-exit-status.md	2	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+16_Concurrency-and-Parallelism/04_Capturing-per-child-exit-status.md	3	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+16_Concurrency-and-Parallelism/05_Bounded-concurrency-fan-out.md	1	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+16_Concurrency-and-Parallelism/05_Bounded-concurrency-fan-out.md	3	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+16_Concurrency-and-Parallelism/05_Bounded-concurrency-fan-out.md	4	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+16_Concurrency-and-Parallelism/06_The-job-table-under-concurrency.md	1	lint	SC1035	error	NEUTRAL	REVIEW	LOW	code SC1035 — first-pass triage rule not yet defined
+16_Concurrency-and-Parallelism/06_The-job-table-under-concurrency.md	1	lint	SC1073	error	NEUTRAL	REVIEW	LOW	parser error — possibly an intentional grammar sample
+16_Concurrency-and-Parallelism/06_The-job-table-under-concurrency.md	1	lint	SC1020	error	NEUTRAL	REVIEW	LOW	code SC1020 — first-pass triage rule not yet defined
+16_Concurrency-and-Parallelism/06_The-job-table-under-concurrency.md	1	lint	SC1072	error	NEUTRAL	REVIEW	LOW	parser error — possibly an intentional grammar sample
+16_Concurrency-and-Parallelism/06_The-job-table-under-concurrency.md	3	lint	SC1035	error	NEUTRAL	REVIEW	LOW	code SC1035 — first-pass triage rule not yet defined
+16_Concurrency-and-Parallelism/06_The-job-table-under-concurrency.md	3	lint	SC1073	error	NEUTRAL	REVIEW	LOW	parser error — possibly an intentional grammar sample
+16_Concurrency-and-Parallelism/06_The-job-table-under-concurrency.md	3	lint	SC1020	error	NEUTRAL	REVIEW	LOW	code SC1020 — first-pass triage rule not yet defined
+16_Concurrency-and-Parallelism/06_The-job-table-under-concurrency.md	3	lint	SC1072	error	NEUTRAL	REVIEW	LOW	parser error — possibly an intentional grammar sample
+16_Concurrency-and-Parallelism/09_Race-conditions-in-shell.md	4	lint	SC2154	warning	MIXED	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+16_Concurrency-and-Parallelism/09_Race-conditions-in-shell.md	5	lint	SC2188	warning	MIXED	REVIEW	LOW	code SC2188 — first-pass triage rule not yet defined
+16_Concurrency-and-Parallelism/09_Race-conditions-in-shell.md	6	lint	SC2154	warning	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+16_Concurrency-and-Parallelism/10_Locking-primitives.md	2	lint	SC2120	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	BCS noarg-style helper uses $#/$@ without declared params
+16_Concurrency-and-Parallelism/11_Signal-handling-under-concurrency.md	4	lint	SC2120	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	BCS noarg-style helper uses $#/$@ without declared params
+16_Concurrency-and-Parallelism/11_Signal-handling-under-concurrency.md	4	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+17_Coprocesses-and-IPC/01_The-coproc-builtin.md	1	lint	SC1083	warning	NEUTRAL	REVIEW	LOW	literal { ... } in word context — diagram or footgun?
+17_Coprocesses-and-IPC/01_The-coproc-builtin.md	1	lint	SC1083	warning	NEUTRAL	REVIEW	LOW	literal { ... } in word context — diagram or footgun?
+17_Coprocesses-and-IPC/02_Bidirectional-fd-pairs.md	1	lint	SC1083	warning	NEUTRAL	REVIEW	LOW	literal { ... } in word context — diagram or footgun?
+17_Coprocesses-and-IPC/02_Bidirectional-fd-pairs.md	1	lint	SC1083	warning	NEUTRAL	REVIEW	LOW	literal { ... } in word context — diagram or footgun?
+17_Coprocesses-and-IPC/02_Bidirectional-fd-pairs.md	2	lint	SC2034	warning	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+17_Coprocesses-and-IPC/03_Multiple-coprocesses.md	1	lint	SC1083	warning	NEUTRAL	REVIEW	LOW	literal { ... } in word context — diagram or footgun?
+17_Coprocesses-and-IPC/03_Multiple-coprocesses.md	1	lint	SC1083	warning	NEUTRAL	REVIEW	LOW	literal { ... } in word context — diagram or footgun?
+17_Coprocesses-and-IPC/03_Multiple-coprocesses.md	1	lint	SC1083	warning	NEUTRAL	REVIEW	LOW	literal { ... } in word context — diagram or footgun?
+17_Coprocesses-and-IPC/03_Multiple-coprocesses.md	1	lint	SC1083	warning	NEUTRAL	REVIEW	LOW	literal { ... } in word context — diagram or footgun?
+17_Coprocesses-and-IPC/03_Multiple-coprocesses.md	2	lint	SC1083	warning	NEUTRAL	REVIEW	LOW	literal { ... } in word context — diagram or footgun?
+17_Coprocesses-and-IPC/03_Multiple-coprocesses.md	2	lint	SC1083	warning	NEUTRAL	REVIEW	LOW	literal { ... } in word context — diagram or footgun?
+17_Coprocesses-and-IPC/03_Multiple-coprocesses.md	3	lint	SC2034	warning	MIXED	ADD_SUPPRESSION	MEDIUM	declared to demonstrate, not consumed
+17_Coprocesses-and-IPC/03_Multiple-coprocesses.md	3	lint	SC2034	warning	MIXED	ADD_SUPPRESSION	MEDIUM	declared to demonstrate, not consumed
+17_Coprocesses-and-IPC/03_Multiple-coprocesses.md	3	lint	SC2034	warning	MIXED	ADD_SUPPRESSION	MEDIUM	declared to demonstrate, not consumed
+17_Coprocesses-and-IPC/05_Anonymous-pipes.md	4	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+18_Readline-History-and-Completion/10__init_completion.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+18_Readline-History-and-Completion/10__init_completion.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+18_Readline-History-and-Completion/11_Dynamic-completion-functions.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+18_Readline-History-and-Completion/11_Dynamic-completion-functions.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+18_Readline-History-and-Completion/11_Dynamic-completion-functions.md	1	lint	SC2207	warning	NEUTRAL	REVIEW	LOW	code SC2207 — first-pass triage rule not yet defined
+18_Readline-History-and-Completion/11_Dynamic-completion-functions.md	1	lint	SC2207	warning	NEUTRAL	REVIEW	LOW	code SC2207 — first-pass triage rule not yet defined
+18_Readline-History-and-Completion/16_Terminal-capability-detection.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+19_Performance/01_The-Bash-cost-model.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+19_Performance/06_EPOCHREALTIME-for-sub-second-timing.md	2	lint	SC2034	warning	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+19_Performance/06_EPOCHREALTIME-for-sub-second-timing.md	2	lint	SC2154	warning	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+19_Performance/06_EPOCHREALTIME-for-sub-second-timing.md	2	lint	SC2154	warning	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+20_Security/01_Threat-model.md	3	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+20_Security/01_Threat-model.md	3	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+20_Security/01_Threat-model.md	4	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+20_Security/01_Threat-model.md	6	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+20_Security/01_Threat-model.md	7	lint	SC2120	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	BCS noarg-style helper uses $#/$@ without declared params
+20_Security/01_Threat-model.md	8	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+20_Security/04_eval-avoidance.md	1	lint	SC2120	warning	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+20_Security/04_eval-avoidance.md	2	lint	SC2120	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	BCS noarg-style helper uses $#/$@ without declared params
+20_Security/04_eval-avoidance.md	2	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+20_Security/04_eval-avoidance.md	3	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+20_Security/04_eval-avoidance.md	3	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+20_Security/04_eval-avoidance.md	5	lint	SC2154	warning	MIXED	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+20_Security/04_eval-avoidance.md	7	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+20_Security/04_eval-avoidance.md	7	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+20_Security/05_Command-injection-vectors.md	1	lint	SC2154	warning	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+20_Security/05_Command-injection-vectors.md	2	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+20_Security/05_Command-injection-vectors.md	3	lint	SC2154	warning	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+20_Security/05_Command-injection-vectors.md	5	lint	SC2154	warning	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+20_Security/05_Command-injection-vectors.md	6	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+20_Security/05_Command-injection-vectors.md	6	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+20_Security/05_Command-injection-vectors.md	7	lint	SC2154	warning	MIXED	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+20_Security/06_Input-validation.md	3	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+20_Security/06_Input-validation.md	4	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+20_Security/06_Input-validation.md	5	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+20_Security/07_Quoting-under-set-u.md	1	lint	SC2034	warning	RIGHT	ADD_SUPPRESSION	MEDIUM	declared to demonstrate, not consumed
+20_Security/07_Quoting-under-set-u.md	1	lint	SC2034	warning	RIGHT	ADD_SUPPRESSION	MEDIUM	declared to demonstrate, not consumed
+20_Security/09_Secrets-handling.md	5	lint	SC2154	warning	WRONG	EXPECTED_VIOLATION	HIGH	block labelled WRONG (anti-pattern demo)
+20_Security/09_Secrets-handling.md	6	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+20_Security/09_Secrets-handling.md	7	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+20_Security/11_Privilege-drop.md	3	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+20_Security/11_Privilege-drop.md	4	lint	SC2120	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	BCS noarg-style helper uses $#/$@ without declared params
+20_Security/13_Symlink-races.md	1	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+20_Security/13_Symlink-races.md	2	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+20_Security/13_Symlink-races.md	2	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+20_Security/13_Symlink-races.md	3	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+21_Static-Analysis-Formatting-and-Testing/02_ShellCheck-directives.md	1	lint	SC1073	error	NEUTRAL	REVIEW	LOW	parser error — possibly an intentional grammar sample
+21_Static-Analysis-Formatting-and-Testing/02_ShellCheck-directives.md	1	lint	SC1072	error	NEUTRAL	REVIEW	LOW	parser error — possibly an intentional grammar sample
+21_Static-Analysis-Formatting-and-Testing/02_ShellCheck-directives.md	2	lint	SC1073	error	NEUTRAL	REVIEW	LOW	parser error — possibly an intentional grammar sample
+21_Static-Analysis-Formatting-and-Testing/02_ShellCheck-directives.md	2	lint	SC1072	error	NEUTRAL	REVIEW	LOW	parser error — possibly an intentional grammar sample
+21_Static-Analysis-Formatting-and-Testing/03_Source-path-management.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+21_Static-Analysis-Formatting-and-Testing/05_bcscheck.md	1	lint	SC1073	error	NEUTRAL	REVIEW	LOW	parser error — possibly an intentional grammar sample
+21_Static-Analysis-Formatting-and-Testing/05_bcscheck.md	1	lint	SC1083	warning	NEUTRAL	REVIEW	LOW	literal { ... } in word context — diagram or footgun?
+21_Static-Analysis-Formatting-and-Testing/05_bcscheck.md	1	lint	SC1083	warning	NEUTRAL	REVIEW	LOW	literal { ... } in word context — diagram or footgun?
+21_Static-Analysis-Formatting-and-Testing/05_bcscheck.md	1	lint	SC1056	error	NEUTRAL	REVIEW	LOW	code-fence parser confusion — investigate per-leaf
+21_Static-Analysis-Formatting-and-Testing/05_bcscheck.md	1	lint	SC1072	error	NEUTRAL	REVIEW	LOW	parser error — possibly an intentional grammar sample
+21_Static-Analysis-Formatting-and-Testing/05_bcscheck.md	1	lint	SC1141	error	NEUTRAL	REVIEW	LOW	code SC1141 — first-pass triage rule not yet defined
+21_Static-Analysis-Formatting-and-Testing/05_bcscheck.md	2	lint	SC2120	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	BCS noarg-style helper uses $#/$@ without declared params
+21_Static-Analysis-Formatting-and-Testing/13_Coverage-with-kcov.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
+22_Idioms-Patterns-and-Anti-Patterns/02_Self-locating-script-directory.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+22_Idioms-Patterns-and-Anti-Patterns/02_Self-locating-script-directory.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+22_Idioms-Patterns-and-Anti-Patterns/03_Argument-parsing-skeleton.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+22_Idioms-Patterns-and-Anti-Patterns/03_Argument-parsing-skeleton.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+22_Idioms-Patterns-and-Anti-Patterns/03_Argument-parsing-skeleton.md	2	lint	SC2120	warning	MIXED	ADD_SUPPRESSION	MEDIUM	BCS noarg-style helper uses $#/$@ without declared params
+22_Idioms-Patterns-and-Anti-Patterns/03_Argument-parsing-skeleton.md	2	lint	SC2034	warning	MIXED	ADD_SUPPRESSION	MEDIUM	declared to demonstrate, not consumed
+22_Idioms-Patterns-and-Anti-Patterns/04_Default-value-patterns.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+22_Idioms-Patterns-and-Anti-Patterns/04_Default-value-patterns.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+22_Idioms-Patterns-and-Anti-Patterns/05_Lazy-initialisation.md	1	lint	SC1090	warning	NEUTRAL	ADD_SUPPRESSION	HIGH	non-constant source — standard suppression idiom
+22_Idioms-Patterns-and-Anti-Patterns/05_Lazy-initialisation.md	1	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+22_Idioms-Patterns-and-Anti-Patterns/07_Iterating-an-associative-array-deterministically.md	1	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+22_Idioms-Patterns-and-Anti-Patterns/08_Building-structured-output.md	1	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+22_Idioms-Patterns-and-Anti-Patterns/08_Building-structured-output.md	1	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+22_Idioms-Patterns-and-Anti-Patterns/08_Building-structured-output.md	1	lint	SC2154	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+22_Idioms-Patterns-and-Anti-Patterns/09_Reading-config-files-safely.md	1	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+22_Idioms-Patterns-and-Anti-Patterns/10_Atomic-file-write.md	2	lint	SC2154	warning	MIXED	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+22_Idioms-Patterns-and-Anti-Patterns/15_Stack-trace-error-reporter.md	3	lint	SC2064	warning	MIXED	REVIEW	LOW	code SC2064 — first-pass triage rule not yet defined
+22_Idioms-Patterns-and-Anti-Patterns/15_Stack-trace-error-reporter.md	3	lint	SC2064	warning	MIXED	REVIEW	LOW	code SC2064 — first-pass triage rule not yet defined
+22_Idioms-Patterns-and-Anti-Patterns/16_Self-test-mode-dual-purpose-script.md	1	lint	SC2120	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	BCS noarg-style helper uses $#/$@ without declared params
+23_POSIX-Conformance-and-Portability/05_Bash-vs-zsh.md	3	lint	SC1087	error	NEUTRAL	REVIEW	LOW	code SC1087 — first-pass triage rule not yet defined
+23_POSIX-Conformance-and-Portability/05_Bash-vs-zsh.md	3	lint	SC2128	warning	NEUTRAL	REVIEW	LOW	code SC2128 — first-pass triage rule not yet defined
+23_POSIX-Conformance-and-Portability/05_Bash-vs-zsh.md	3	lint	SC1087	error	NEUTRAL	REVIEW	LOW	code SC1087 — first-pass triage rule not yet defined
+23_POSIX-Conformance-and-Portability/05_Bash-vs-zsh.md	3	lint	SC2128	warning	NEUTRAL	REVIEW	LOW	code SC2128 — first-pass triage rule not yet defined
+23_POSIX-Conformance-and-Portability/12_Targeting-multiple-Bash-versions.md	2	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
+24_Bash-Internals/01_The-execution-pipeline.md	2	lint	SC1073	error	NEUTRAL	REVIEW	LOW	parser error — possibly an intentional grammar sample
+24_Bash-Internals/01_The-execution-pipeline.md	2	lint	SC1056	error	NEUTRAL	REVIEW	LOW	code-fence parser confusion — investigate per-leaf
+24_Bash-Internals/01_The-execution-pipeline.md	2	lint	SC1072	error	NEUTRAL	REVIEW	LOW	parser error — possibly an intentional grammar sample
+24_Bash-Internals/01_The-execution-pipeline.md	2	lint	SC1133	error	NEUTRAL	REVIEW	LOW	code SC1133 — first-pass triage rule not yet defined
+24_Bash-Internals/08_Subshell-forking.md	3	lint	SC2034	warning	MIXED	ADD_SUPPRESSION	MEDIUM	declared to demonstrate, not consumed
+25_Bash-5.3-and-the-Future/01_No-fork-command-substitution-cmd.md	2	lint	SC2154	warning	MIXED	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
+25_Bash-5.3-and-the-Future/01_No-fork-command-substitution-cmd.md	2	lint	SC2034	warning	MIXED	ADD_SUPPRESSION	MEDIUM	declared to demonstrate, not consumed
+01_The-Unix-Model-from-Bash/01_Processes-fork-exec-wait.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+01_The-Unix-Model-from-Bash/01_Processes-fork-exec-wait.md	2	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+01_The-Unix-Model-from-Bash/01_Processes-fork-exec-wait.md	3	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+01_The-Unix-Model-from-Bash/02_The-file-descriptor-model.md	2	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+01_The-Unix-Model-from-Bash/02_The-file-descriptor-model.md	3	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+01_The-Unix-Model-from-Bash/02_The-file-descriptor-model.md	4	runtime	CRASH	exit=127	MIXED	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+01_The-Unix-Model-from-Bash/03_Files-directories-and-special-files.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+01_The-Unix-Model-from-Bash/04_Streams-and-the-standard-descriptors.md	1	runtime	MISSING_ANNOT	exit=0	NEUTRAL	FIX_ANNOTATION	MEDIUM	block produced output but has no `# ⇒` annotation — opportunity to add
+01_The-Unix-Model-from-Bash/04_Streams-and-the-standard-descriptors.md	2	runtime	CRASH	exit=1	MIXED	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+01_The-Unix-Model-from-Bash/05_The-shell-environment.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+01_The-Unix-Model-from-Bash/05_The-shell-environment.md	3	runtime	CRASH	exit=128	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=128
+01_The-Unix-Model-from-Bash/05_The-shell-environment.md	4	runtime	CRASH	exit=127	MIXED	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+01_The-Unix-Model-from-Bash/07_Exit-status-and-process-termination.md	1	runtime	CRASH	exit=42	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=42
+01_The-Unix-Model-from-Bash/07_Exit-status-and-process-termination.md	3	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+01_The-Unix-Model-from-Bash/07_Exit-status-and-process-termination.md	4	runtime	CRASH	exit=232	MIXED	REVIEW	LOW	crash with no obvious sandbox cause; exit=232
+01_The-Unix-Model-from-Bash/09_The-controlling-terminal-and-TTY-layer.md	3	runtime	MISSING_ANNOT	exit=0	NEUTRAL	FIX_ANNOTATION	MEDIUM	block produced output but has no `# ⇒` annotation — opportunity to add
+02_Bash-as-a-Program/02_Bash-version-landscape.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+02_Bash-as-a-Program/03_Build-configuration-and-feature-detection.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+02_Bash-as-a-Program/03_Build-configuration-and-feature-detection.md	2	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+02_Bash-as-a-Program/04_Invocation-modes.md	2	runtime	MISMATCH	exit=0	MIXED	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+02_Bash-as-a-Program/04_Invocation-modes.md	3	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+02_Bash-as-a-Program/05_Startup-file-chains.md	2	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+02_Bash-as-a-Program/05_Startup-file-chains.md	3	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+02_Bash-as-a-Program/06_BASH_ENV-and-ENV.md	1	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block reads /etc/var/proc/sys path — sandbox may differ
+02_Bash-as-a-Program/07_Command-line-options-to-bash-itself.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+02_Bash-as-a-Program/08_Exit-and-shell-session-lifecycle.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+03_Lexical-Structure-and-Shell-Grammar/01_Tokenisation.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+03_Lexical-Structure-and-Shell-Grammar/01_Tokenisation.md	2	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+03_Lexical-Structure-and-Shell-Grammar/02_Reserved-words.md	2	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+03_Lexical-Structure-and-Shell-Grammar/02_Reserved-words.md	3	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+03_Lexical-Structure-and-Shell-Grammar/03_Comments.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+03_Lexical-Structure-and-Shell-Grammar/03_Comments.md	2	runtime	NO_EXPECTED	exit=0	MIXED	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+03_Lexical-Structure-and-Shell-Grammar/04_Quoting-overview.md	1	runtime	CRASH	exit=2	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=2
+03_Lexical-Structure-and-Shell-Grammar/04_Quoting-overview.md	2	runtime	MISMATCH	exit=0	RIGHT	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+03_Lexical-Structure-and-Shell-Grammar/04_Quoting-overview.md	3	runtime	CRASH	exit=1	MIXED	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+03_Lexical-Structure-and-Shell-Grammar/04_Quoting-overview.md	4	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+03_Lexical-Structure-and-Shell-Grammar/05_Single-quotes.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+03_Lexical-Structure-and-Shell-Grammar/05_Single-quotes.md	2	runtime	CRASH	exit=1	MIXED	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+03_Lexical-Structure-and-Shell-Grammar/06_Double-quotes.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+03_Lexical-Structure-and-Shell-Grammar/06_Double-quotes.md	2	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+03_Lexical-Structure-and-Shell-Grammar/06_Double-quotes.md	3	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+03_Lexical-Structure-and-Shell-Grammar/06_Double-quotes.md	4	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+03_Lexical-Structure-and-Shell-Grammar/07_ANSI-C-quoting.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+03_Lexical-Structure-and-Shell-Grammar/07_ANSI-C-quoting.md	2	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+03_Lexical-Structure-and-Shell-Grammar/07_ANSI-C-quoting.md	3	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+03_Lexical-Structure-and-Shell-Grammar/09_Backslash-escapes.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+03_Lexical-Structure-and-Shell-Grammar/09_Backslash-escapes.md	2	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+03_Lexical-Structure-and-Shell-Grammar/10_Shell-grammar.md	2	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+03_Lexical-Structure-and-Shell-Grammar/10_Shell-grammar.md	4	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+03_Lexical-Structure-and-Shell-Grammar/11_Operator-precedence.md	1	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+03_Lexical-Structure-and-Shell-Grammar/11_Operator-precedence.md	2	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+03_Lexical-Structure-and-Shell-Grammar/11_Operator-precedence.md	3	runtime	CRASH	exit=127	MIXED	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+03_Lexical-Structure-and-Shell-Grammar/11_Operator-precedence.md	4	runtime	CRASH	exit=2	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=2
+04_Parameters-Variables-and-Arrays/01_Parameter-taxonomy.md	2	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+04_Parameters-Variables-and-Arrays/02_Positional-parameters.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+04_Parameters-Variables-and-Arrays/02_Positional-parameters.md	2	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+04_Parameters-Variables-and-Arrays/02_Positional-parameters.md	3	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+04_Parameters-Variables-and-Arrays/03_Special-parameters.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+04_Parameters-Variables-and-Arrays/04_Shell-variables.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+04_Parameters-Variables-and-Arrays/04_Shell-variables.md	2	runtime	CRASH	exit=2	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=2
+04_Parameters-Variables-and-Arrays/04_Shell-variables.md	3	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+04_Parameters-Variables-and-Arrays/05_The-declare-builtin-and-attributes.md	1	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+04_Parameters-Variables-and-Arrays/05_The-declare-builtin-and-attributes.md	2	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+04_Parameters-Variables-and-Arrays/05_The-declare-builtin-and-attributes.md	3	runtime	OK	exit=0	RIGHT	NO_ACTION	HIGH	ran cleanly; expected output matched
+04_Parameters-Variables-and-Arrays/05_The-declare-builtin-and-attributes.md	4	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+04_Parameters-Variables-and-Arrays/05_The-declare-builtin-and-attributes.md	5	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+04_Parameters-Variables-and-Arrays/05_The-declare-builtin-and-attributes.md	6	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+04_Parameters-Variables-and-Arrays/06_local-and-dynamic-scope.md	1	runtime	MISMATCH	exit=0	MIXED	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+04_Parameters-Variables-and-Arrays/06_local-and-dynamic-scope.md	2	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+04_Parameters-Variables-and-Arrays/06_local-and-dynamic-scope.md	3	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+04_Parameters-Variables-and-Arrays/06_local-and-dynamic-scope.md	4	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+04_Parameters-Variables-and-Arrays/07_readonly-and-immutability.md	1	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+04_Parameters-Variables-and-Arrays/07_readonly-and-immutability.md	2	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+04_Parameters-Variables-and-Arrays/08_export-and-the-environment.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+04_Parameters-Variables-and-Arrays/08_export-and-the-environment.md	2	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+04_Parameters-Variables-and-Arrays/08_export-and-the-environment.md	3	runtime	MISMATCH	exit=0	RIGHT	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+04_Parameters-Variables-and-Arrays/09_Indexed-arrays.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+04_Parameters-Variables-and-Arrays/09_Indexed-arrays.md	2	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+04_Parameters-Variables-and-Arrays/09_Indexed-arrays.md	3	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+04_Parameters-Variables-and-Arrays/09_Indexed-arrays.md	4	runtime	MISSING_ANNOT	exit=0	RIGHT	FIX_ANNOTATION	MEDIUM	block produced output but has no `# ⇒` annotation — opportunity to add
+04_Parameters-Variables-and-Arrays/09_Indexed-arrays.md	5	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+04_Parameters-Variables-and-Arrays/09_Indexed-arrays.md	6	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+04_Parameters-Variables-and-Arrays/10_Associative-arrays.md	1	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+04_Parameters-Variables-and-Arrays/10_Associative-arrays.md	2	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+04_Parameters-Variables-and-Arrays/10_Associative-arrays.md	3	runtime	NO_EXPECTED	exit=0	RIGHT	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+04_Parameters-Variables-and-Arrays/10_Associative-arrays.md	4	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+04_Parameters-Variables-and-Arrays/10_Associative-arrays.md	5	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+04_Parameters-Variables-and-Arrays/10_Associative-arrays.md	6	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+04_Parameters-Variables-and-Arrays/10_Associative-arrays.md	7	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+04_Parameters-Variables-and-Arrays/11_Namerefs-n.md	2	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+04_Parameters-Variables-and-Arrays/11_Namerefs-n.md	3	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+04_Parameters-Variables-and-Arrays/11_Namerefs-n.md	4	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+04_Parameters-Variables-and-Arrays/11_Namerefs-n.md	5	runtime	MISMATCH	exit=0	MIXED	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+04_Parameters-Variables-and-Arrays/12_Integer-arithmetic-semantics.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+04_Parameters-Variables-and-Arrays/12_Integer-arithmetic-semantics.md	2	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+04_Parameters-Variables-and-Arrays/12_Integer-arithmetic-semantics.md	3	runtime	OK	exit=0	RIGHT	NO_ACTION	HIGH	ran cleanly; expected output matched
+04_Parameters-Variables-and-Arrays/13_Variable-assignment-semantics.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+04_Parameters-Variables-and-Arrays/13_Variable-assignment-semantics.md	2	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+04_Parameters-Variables-and-Arrays/13_Variable-assignment-semantics.md	3	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+04_Parameters-Variables-and-Arrays/13_Variable-assignment-semantics.md	4	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+04_Parameters-Variables-and-Arrays/13_Variable-assignment-semantics.md	5	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+04_Parameters-Variables-and-Arrays/13_Variable-assignment-semantics.md	6	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+04_Parameters-Variables-and-Arrays/14_Unsetting.md	1	runtime	MISMATCH	exit=0	MIXED	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+05_Expansions/01_Order-of-expansions.md	1	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+05_Expansions/02_Brace-expansion.md	2	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+05_Expansions/03_Tilde-expansion.md	1	runtime	MISMATCH	exit=0	NEUTRAL	FALSE_POSITIVE	MEDIUM	doc uses /home/u placeholder; runtime sees sandbox HOME
+05_Expansions/03_Tilde-expansion.md	2	runtime	MISMATCH	exit=0	NEUTRAL	FALSE_POSITIVE	MEDIUM	doc uses /home/u placeholder; runtime sees sandbox HOME
+05_Expansions/03_Tilde-expansion.md	3	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+05_Expansions/04_Parameter-and-variable-expansion.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+05_Expansions/04_Parameter-and-variable-expansion.md	2	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+05_Expansions/04_Parameter-and-variable-expansion.md	3	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+05_Expansions/04_Parameter-and-variable-expansion.md	4	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+05_Expansions/04_Parameter-and-variable-expansion.md	5	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+05_Expansions/04_Parameter-and-variable-expansion.md	6	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+05_Expansions/04_Parameter-and-variable-expansion.md	7	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+05_Expansions/04_Parameter-and-variable-expansion.md	8	runtime	MISSING_ANNOT	exit=0	NEUTRAL	FIX_ANNOTATION	MEDIUM	block produced output but has no `# ⇒` annotation — opportunity to add
+05_Expansions/04_Parameter-and-variable-expansion.md	9	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+05_Expansions/04_Parameter-and-variable-expansion.md	10	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+05_Expansions/05_Arithmetic-expansion.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+05_Expansions/05_Arithmetic-expansion.md	2	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+05_Expansions/05_Arithmetic-expansion.md	3	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+05_Expansions/06_Command-substitution.md	3	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+05_Expansions/06_Command-substitution.md	4	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+05_Expansions/06_Command-substitution.md	5	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+05_Expansions/08_Word-splitting-and-IFS.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+05_Expansions/08_Word-splitting-and-IFS.md	2	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+05_Expansions/08_Word-splitting-and-IFS.md	3	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+05_Expansions/08_Word-splitting-and-IFS.md	4	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+05_Expansions/08_Word-splitting-and-IFS.md	6	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+05_Expansions/09_Pathname-expansion-globbing.md	1	runtime	CRASH	exit=2	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=2
+05_Expansions/09_Pathname-expansion-globbing.md	2	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+05_Expansions/09_Pathname-expansion-globbing.md	3	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+05_Expansions/09_Pathname-expansion-globbing.md	4	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+05_Expansions/10_Quote-removal.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+05_Expansions/11_Glob-options.md	2	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+05_Expansions/11_Glob-options.md	3	runtime	MISSING_ANNOT	exit=0	NEUTRAL	FIX_ANNOTATION	MEDIUM	block produced output but has no `# ⇒` annotation — opportunity to add
+05_Expansions/11_Glob-options.md	4	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+05_Expansions/12_Extended-globs-extglob.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+05_Expansions/12_Extended-globs-extglob.md	3	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+05_Expansions/12_Extended-globs-extglob.md	4	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+05_Expansions/13_Locale-and-pattern-matching.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+05_Expansions/13_Locale-and-pattern-matching.md	2	runtime	CRASH	exit=127	RIGHT	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+05_Expansions/13_Locale-and-pattern-matching.md	3	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block reads /etc/var/proc/sys path — sandbox may differ
+06_Redirection-and-Pipelines/01_The-fd-table-from-Bashs-perspective.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+06_Redirection-and-Pipelines/01_The-fd-table-from-Bashs-perspective.md	2	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+06_Redirection-and-Pipelines/01_The-fd-table-from-Bashs-perspective.md	3	runtime	MISSING_ANNOT	exit=0	NEUTRAL	FIX_ANNOTATION	MEDIUM	block produced output but has no `# ⇒` annotation — opportunity to add
+06_Redirection-and-Pipelines/03_Output-redirection.md	2	runtime	CRASH	exit=1	MIXED	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+06_Redirection-and-Pipelines/04_Stderr-redirection-and-merging.md	1	runtime	MISSING_ANNOT	exit=0	MIXED	FIX_ANNOTATION	MEDIUM	block produced output but has no `# ⇒` annotation — opportunity to add
+06_Redirection-and-Pipelines/04_Stderr-redirection-and-merging.md	2	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+06_Redirection-and-Pipelines/06_Duplicating-fds.md	1	runtime	CRASH	exit=2	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=2
+06_Redirection-and-Pipelines/06_Duplicating-fds.md	2	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+06_Redirection-and-Pipelines/07_Moving-and-closing-fds.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+06_Redirection-and-Pipelines/07_Moving-and-closing-fds.md	2	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+06_Redirection-and-Pipelines/08_Here-documents.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+06_Redirection-and-Pipelines/08_Here-documents.md	2	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+06_Redirection-and-Pipelines/08_Here-documents.md	3	runtime	CRASH	exit=141	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=141
+06_Redirection-and-Pipelines/09_Here-strings.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+06_Redirection-and-Pipelines/09_Here-strings.md	2	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+06_Redirection-and-Pipelines/10_Process-substitution-as-redirection.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+06_Redirection-and-Pipelines/10_Process-substitution-as-redirection.md	2	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+06_Redirection-and-Pipelines/11_Order-of-evaluation.md	1	runtime	MISMATCH	exit=0	MIXED	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+06_Redirection-and-Pipelines/11_Order-of-evaluation.md	2	runtime	MISMATCH	exit=0	MIXED	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+06_Redirection-and-Pipelines/11_Order-of-evaluation.md	3	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+06_Redirection-and-Pipelines/12_exec-for-fd-manipulation.md	1	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block reads /etc/var/proc/sys path — sandbox may differ
+06_Redirection-and-Pipelines/12_exec-for-fd-manipulation.md	4	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+06_Redirection-and-Pipelines/13_Pipelines.md	1	runtime	CRASH	exit=127	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+06_Redirection-and-Pipelines/14_Stderr-pipelines.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+06_Redirection-and-Pipelines/15_pipefail-semantics.md	2	runtime	CRASH	exit=127	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+07_Control-Flow-and-Compound-Commands/02_ifelifelsefi.md	2	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+07_Control-Flow-and-Compound-Commands/02_ifelifelsefi.md	3	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+07_Control-Flow-and-Compound-Commands/02_ifelifelsefi.md	4	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+07_Control-Flow-and-Compound-Commands/02_ifelifelsefi.md	5	runtime	CRASH	exit=127	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+07_Control-Flow-and-Compound-Commands/03_caseesac.md	2	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+07_Control-Flow-and-Compound-Commands/03_caseesac.md	3	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+07_Control-Flow-and-Compound-Commands/03_caseesac.md	4	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+07_Control-Flow-and-Compound-Commands/03_caseesac.md	5	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+07_Control-Flow-and-Compound-Commands/03_caseesac.md	6	runtime	CRASH	exit=1	MIXED	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+07_Control-Flow-and-Compound-Commands/04_for-x-in-list.md	2	runtime	CRASH	exit=127	MIXED	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+07_Control-Flow-and-Compound-Commands/04_for-x-in-list.md	3	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+07_Control-Flow-and-Compound-Commands/04_for-x-in-list.md	4	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+07_Control-Flow-and-Compound-Commands/04_for-x-in-list.md	5	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+07_Control-Flow-and-Compound-Commands/05_C-style-for.md	2	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+07_Control-Flow-and-Compound-Commands/05_C-style-for.md	3	runtime	TIMEOUT	exit=124	NEUTRAL	REVIEW	MEDIUM	hit 10s wall — long sleep loop or accidental hang
+07_Control-Flow-and-Compound-Commands/06_whileuntil.md	2	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+07_Control-Flow-and-Compound-Commands/08_Subshell-grouping.md	2	runtime	CRASH	exit=1	MIXED	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+07_Control-Flow-and-Compound-Commands/08_Subshell-grouping.md	3	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+07_Control-Flow-and-Compound-Commands/09_Brace-grouping.md	2	runtime	CRASH	exit=127	MIXED	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+07_Control-Flow-and-Compound-Commands/09_Brace-grouping.md	3	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block reads /etc/var/proc/sys path — sandbox may differ
+07_Control-Flow-and-Compound-Commands/10_and-short-circuits.md	1	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+07_Control-Flow-and-Compound-Commands/10_and-short-circuits.md	2	runtime	CRASH	exit=1	MIXED	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+07_Control-Flow-and-Compound-Commands/10_and-short-circuits.md	3	runtime	CRASH	exit=1	RIGHT	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+07_Control-Flow-and-Compound-Commands/10_and-short-circuits.md	4	runtime	CRASH	exit=1	RIGHT	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+07_Control-Flow-and-Compound-Commands/11_break-and-continue.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+07_Control-Flow-and-Compound-Commands/11_break-and-continue.md	2	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+07_Control-Flow-and-Compound-Commands/12_return.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+07_Control-Flow-and-Compound-Commands/12_return.md	2	runtime	CRASH	exit=2	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=2
+07_Control-Flow-and-Compound-Commands/13_exit.md	1	runtime	CRASH	exit=7	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=7
+07_Control-Flow-and-Compound-Commands/13_exit.md	2	runtime	CRASH	exit=3	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=3
+07_Control-Flow-and-Compound-Commands/14_true-false.md	1	runtime	MISSING_ANNOT	exit=0	NEUTRAL	FIX_ANNOTATION	MEDIUM	block produced output but has no `# ⇒` annotation — opportunity to add
+08_Conditional-Expressions-and-Arithmetic/01_overview.md	1	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+08_Conditional-Expressions-and-Arithmetic/01_overview.md	2	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+08_Conditional-Expressions-and-Arithmetic/04_String-operators.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+08_Conditional-Expressions-and-Arithmetic/05_Pattern-matching-with.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+08_Conditional-Expressions-and-Arithmetic/05_Pattern-matching-with.md	2	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+08_Conditional-Expressions-and-Arithmetic/06_Regex-matching-with.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+08_Conditional-Expressions-and-Arithmetic/06_Regex-matching-with.md	2	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+08_Conditional-Expressions-and-Arithmetic/06_Regex-matching-with.md	3	runtime	OK	exit=0	RIGHT	NO_ACTION	HIGH	ran cleanly; expected output matched
+08_Conditional-Expressions-and-Arithmetic/07_Logical-operators-and-grouping.md	1	runtime	CRASH	exit=1	MIXED	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+08_Conditional-Expressions-and-Arithmetic/08_Quoting-rules-inside.md	1	runtime	CRASH	exit=2	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+08_Conditional-Expressions-and-Arithmetic/09_Arithmetic-context.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+08_Conditional-Expressions-and-Arithmetic/09_Arithmetic-context.md	2	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+08_Conditional-Expressions-and-Arithmetic/09_Arithmetic-context.md	3	runtime	NO_EXPECTED	exit=0	RIGHT	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+08_Conditional-Expressions-and-Arithmetic/11_Integer-types-overflow-base-prefixes.md	1	runtime	MISMATCH	exit=0	RIGHT	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+08_Conditional-Expressions-and-Arithmetic/12_Floating-point-workarounds.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+08_Conditional-Expressions-and-Arithmetic/13_let-builtin.md	1	runtime	OK	exit=0	MIXED	NO_ACTION	HIGH	ran cleanly; expected output matched
+09_Functions/01_Definition-syntax.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+09_Functions/01_Definition-syntax.md	2	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+09_Functions/01_Definition-syntax.md	3	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+09_Functions/01_Definition-syntax.md	4	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+09_Functions/02_Argument-passing.md	1	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+09_Functions/02_Argument-passing.md	3	runtime	NO_EXPECTED	exit=0	RIGHT	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+09_Functions/02_Argument-passing.md	4	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+09_Functions/03_local-and-scope.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+09_Functions/03_local-and-scope.md	2	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+09_Functions/03_local-and-scope.md	3	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+09_Functions/03_local-and-scope.md	4	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+09_Functions/03_local-and-scope.md	5	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+09_Functions/04_Return-value-via-return-N.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+09_Functions/04_Return-value-via-return-N.md	2	runtime	CRASH	exit=13	MIXED	REVIEW	LOW	crash with no obvious sandbox cause; exit=13
+09_Functions/05_Communicating-results.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+09_Functions/05_Communicating-results.md	2	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+09_Functions/05_Communicating-results.md	3	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+09_Functions/06_Recursion-and-FUNCNEST.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+09_Functions/07_Function-tracing.md	1	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+09_Functions/08_Listing-and-inspecting-functions.md	1	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+09_Functions/09_Exporting-functions.md	1	runtime	MISMATCH	exit=0	RIGHT	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+09_Functions/11_Self-locating-with-BASH_SOURCE.md	1	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+09_Functions/11_Self-locating-with-BASH_SOURCE.md	2	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+09_Functions/12_Calling-convention-discipline.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+10_Sourcing-Libraries-and-Modules/01_source-semantics.md	1	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+10_Sourcing-Libraries-and-Modules/01_source-semantics.md	2	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block reads /etc/var/proc/sys path — sandbox may differ
+10_Sourcing-Libraries-and-Modules/01_source-semantics.md	4	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+10_Sourcing-Libraries-and-Modules/02_The-BASH_SOURCE-array.md	1	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+10_Sourcing-Libraries-and-Modules/03_Self-locating-library-pattern.md	1	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+10_Sourcing-Libraries-and-Modules/03_Self-locating-library-pattern.md	2	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+10_Sourcing-Libraries-and-Modules/04_Idempotent-sourcing-guards.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+10_Sourcing-Libraries-and-Modules/04_Idempotent-sourcing-guards.md	2	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+10_Sourcing-Libraries-and-Modules/05_Namespace-prefixes.md	1	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+10_Sourcing-Libraries-and-Modules/07_Version-negotiation.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+10_Sourcing-Libraries-and-Modules/07_Version-negotiation.md	2	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+10_Sourcing-Libraries-and-Modules/08_Lazy-and-conditional-loading.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+10_Sourcing-Libraries-and-Modules/08_Lazy-and-conditional-loading.md	3	runtime	CRASH	exit=1	RIGHT	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+10_Sourcing-Libraries-and-Modules/08_Lazy-and-conditional-loading.md	4	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+10_Sourcing-Libraries-and-Modules/09_Cross-shell-sourcing-pitfalls.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+10_Sourcing-Libraries-and-Modules/10_API-design.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+11_Process-Management/01_The-Bash-process-tree-at-runtime.md	1	runtime	MISSING_ANNOT	exit=0	NEUTRAL	FIX_ANNOTATION	MEDIUM	block produced output but has no `# ⇒` annotation — opportunity to add
+11_Process-Management/02_PIDs-BASHPID-PPID.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+11_Process-Management/02_PIDs-BASHPID-PPID.md	2	runtime	NO_EXPECTED	exit=0	MIXED	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+11_Process-Management/03_Subshell-origins.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+11_Process-Management/03_Subshell-origins.md	2	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+11_Process-Management/04_BASH_SUBSHELL-depth-tracking.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+11_Process-Management/04_BASH_SUBSHELL-depth-tracking.md	2	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+11_Process-Management/05_Foreground-vs-background.md	1	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+11_Process-Management/05_Foreground-vs-background.md	3	runtime	MISSING_ANNOT	exit=0	NEUTRAL	FIX_ANNOTATION	MEDIUM	block produced output but has no `# ⇒` annotation — opportunity to add
+11_Process-Management/05_Foreground-vs-background.md	4	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+11_Process-Management/05_Foreground-vs-background.md	5	runtime	CRASH	exit=127	MIXED	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+11_Process-Management/06_Process-groups-and-sessions.md	1	runtime	MISMATCH	exit=0	RIGHT	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+11_Process-Management/09_Job-control-builtins.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+11_Process-Management/09_Job-control-builtins.md	2	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+11_Process-Management/11_nohup-and-setsid.md	1	runtime	MISSING_ANNOT	exit=0	NEUTRAL	FIX_ANNOTATION	MEDIUM	block produced output but has no `# ⇒` annotation — opportunity to add
+11_Process-Management/11_nohup-and-setsid.md	2	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block reads /etc/var/proc/sys path — sandbox may differ
+11_Process-Management/11_nohup-and-setsid.md	3	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+11_Process-Management/11_nohup-and-setsid.md	4	runtime	MISMATCH	exit=0	MIXED	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+11_Process-Management/12_Detaching-from-the-terminal.md	1	runtime	MISSING_ANNOT	exit=0	NEUTRAL	FIX_ANNOTATION	MEDIUM	block produced output but has no `# ⇒` annotation — opportunity to add
+11_Process-Management/13_Environment-inheritance.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+11_Process-Management/13_Environment-inheritance.md	2	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+11_Process-Management/13_Environment-inheritance.md	3	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+12_Signals-and-Traps/01_Signal-taxonomy.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+12_Signals-and-Traps/04_Signal-disposition.md	1	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+12_Signals-and-Traps/04_Signal-disposition.md	2	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+12_Signals-and-Traps/05_The-trap-builtin.md	1	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+12_Signals-and-Traps/05_The-trap-builtin.md	3	runtime	MISSING_ANNOT	exit=0	RIGHT	FIX_ANNOTATION	MEDIUM	block produced output but has no `# ⇒` annotation — opportunity to add
+12_Signals-and-Traps/05_The-trap-builtin.md	4	runtime	NO_EXPECTED	exit=0	MIXED	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+12_Signals-and-Traps/05_The-trap-builtin.md	5	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+12_Signals-and-Traps/05_The-trap-builtin.md	6	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+12_Signals-and-Traps/05_The-trap-builtin.md	7	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+12_Signals-and-Traps/06_Pseudo-signals-EXIT-ERR-DEBUG-RETURN.md	2	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+12_Signals-and-Traps/06_Pseudo-signals-EXIT-ERR-DEBUG-RETURN.md	3	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+12_Signals-and-Traps/06_Pseudo-signals-EXIT-ERR-DEBUG-RETURN.md	4	runtime	CRASH	exit=7	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=7
+12_Signals-and-Traps/07_trap-p-and-trap-inspection.md	1	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+12_Signals-and-Traps/07_trap-p-and-trap-inspection.md	2	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+12_Signals-and-Traps/08_Trap-inheritance.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+12_Signals-and-Traps/08_Trap-inheritance.md	2	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+12_Signals-and-Traps/09_Trap-reset-across-exec.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+12_Signals-and-Traps/10_Synchronous-vs-asynchronous-delivery.md	1	runtime	TIMEOUT	exit=124	NEUTRAL	REVIEW	MEDIUM	hit 10s wall — long sleep loop or accidental hang
+12_Signals-and-Traps/11_Signal-safe-code.md	1	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block reads /etc/var/proc/sys path — sandbox may differ
+12_Signals-and-Traps/13_Tempfile-and-tempdir-lifecycle.md	2	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+12_Signals-and-Traps/14_Lockfile-pattern.md	1	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+12_Signals-and-Traps/15_Atomic-file-write.md	1	runtime	CRASH	exit=127	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+12_Signals-and-Traps/15_Atomic-file-write.md	2	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+12_Signals-and-Traps/15_Atomic-file-write.md	3	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+12_Signals-and-Traps/16_Reload-on-SIGHUP.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	2	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+13_Error-Handling-and-Exit-Status/02_set-e-errexit-full-semantics.md	1	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+13_Error-Handling-and-Exit-Status/02_set-e-errexit-full-semantics.md	2	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+13_Error-Handling-and-Exit-Status/02_set-e-errexit-full-semantics.md	3	runtime	MISSING_ANNOT	exit=0	NEUTRAL	FIX_ANNOTATION	MEDIUM	block produced output but has no `# ⇒` annotation — opportunity to add
+13_Error-Handling-and-Exit-Status/02_set-e-errexit-full-semantics.md	4	runtime	CRASH	exit=127	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	1	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	2	runtime	TIMEOUT	exit=124	NEUTRAL	REVIEW	MEDIUM	hit 10s wall — long sleep loop or accidental hang
+13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	3	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	4	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block reads /etc/var/proc/sys path — sandbox may differ
+13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	5	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	6	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	7	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+13_Error-Handling-and-Exit-Status/04_set-u-nounset.md	1	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+13_Error-Handling-and-Exit-Status/04_set-u-nounset.md	2	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+13_Error-Handling-and-Exit-Status/04_set-u-nounset.md	3	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+13_Error-Handling-and-Exit-Status/05_set-o-pipefail.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+13_Error-Handling-and-Exit-Status/05_set-o-pipefail.md	3	runtime	CRASH	exit=141	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=141
+13_Error-Handling-and-Exit-Status/06_inherit_errexit.md	2	runtime	CRASH	exit=1	RIGHT	SANDBOX_ARTEFACT	MEDIUM	block reads /etc/var/proc/sys path — sandbox may differ
+13_Error-Handling-and-Exit-Status/07_and-true-idioms.md	1	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+13_Error-Handling-and-Exit-Status/07_and-true-idioms.md	2	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+13_Error-Handling-and-Exit-Status/07_and-true-idioms.md	3	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+13_Error-Handling-and-Exit-Status/08_The-ERR-trap.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+13_Error-Handling-and-Exit-Status/08_The-ERR-trap.md	2	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+13_Error-Handling-and-Exit-Status/08_The-ERR-trap.md	3	runtime	CRASH	exit=127	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+13_Error-Handling-and-Exit-Status/09_errtrace-and-trap-inheritance.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+13_Error-Handling-and-Exit-Status/09_errtrace-and-trap-inheritance.md	2	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+13_Error-Handling-and-Exit-Status/09_errtrace-and-trap-inheritance.md	3	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block reads /etc/var/proc/sys path — sandbox may differ
+13_Error-Handling-and-Exit-Status/10_Exit-code-conventions.md	1	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+13_Error-Handling-and-Exit-Status/11_Propagating-exit-codes.md	2	runtime	CRASH	exit=1	RIGHT	SANDBOX_ARTEFACT	MEDIUM	block reads /etc/var/proc/sys path — sandbox may differ
+13_Error-Handling-and-Exit-Status/11_Propagating-exit-codes.md	3	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+13_Error-Handling-and-Exit-Status/11_Propagating-exit-codes.md	5	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+13_Error-Handling-and-Exit-Status/11_Propagating-exit-codes.md	6	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+13_Error-Handling-and-Exit-Status/12_Rich-error-output.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+13_Error-Handling-and-Exit-Status/12_Rich-error-output.md	2	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+13_Error-Handling-and-Exit-Status/12_Rich-error-output.md	3	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+13_Error-Handling-and-Exit-Status/12_Rich-error-output.md	4	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+14_Input-Output-and-Messaging/01_Standard-streams-discipline.md	1	runtime	MISSING_ANNOT	exit=0	NEUTRAL	FIX_ANNOTATION	MEDIUM	block produced output but has no `# ⇒` annotation — opportunity to add
+14_Input-Output-and-Messaging/01_Standard-streams-discipline.md	2	runtime	CRASH	exit=127	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+14_Input-Output-and-Messaging/01_Standard-streams-discipline.md	3	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+14_Input-Output-and-Messaging/03_mapfile-readarray.md	1	runtime	MISSING_ANNOT	exit=0	NEUTRAL	FIX_ANNOTATION	MEDIUM	block produced output but has no `# ⇒` annotation — opportunity to add
+14_Input-Output-and-Messaging/03_mapfile-readarray.md	2	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+14_Input-Output-and-Messaging/04_The-printf-builtin.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+14_Input-Output-and-Messaging/04_The-printf-builtin.md	2	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+14_Input-Output-and-Messaging/05_printf-vs-echo.md	1	runtime	MISMATCH	exit=0	MIXED	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+14_Input-Output-and-Messaging/07_Logging-discipline.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+14_Input-Output-and-Messaging/07_Logging-discipline.md	2	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+14_Input-Output-and-Messaging/07_Logging-discipline.md	3	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+14_Input-Output-and-Messaging/07_Logging-discipline.md	4	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+14_Input-Output-and-Messaging/07_Logging-discipline.md	5	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+14_Input-Output-and-Messaging/07_Logging-discipline.md	6	runtime	CRASH	exit=1	MIXED	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+14_Input-Output-and-Messaging/09_Coloured-output-and-TERM-detection.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+14_Input-Output-and-Messaging/09_Coloured-output-and-TERM-detection.md	3	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+14_Input-Output-and-Messaging/09_Coloured-output-and-TERM-detection.md	4	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+14_Input-Output-and-Messaging/10_Progress-indicators.md	1	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+14_Input-Output-and-Messaging/11_Reading-binary-data.md	1	runtime	MISSING_ANNOT	exit=0	NEUTRAL	FIX_ANNOTATION	MEDIUM	block produced output but has no `# ⇒` annotation — opportunity to add
+14_Input-Output-and-Messaging/12_File-locking-for-concurrent-writes.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+14_Input-Output-and-Messaging/12_File-locking-for-concurrent-writes.md	2	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+14_Input-Output-and-Messaging/12_File-locking-for-concurrent-writes.md	3	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+15_Command-Line-Processing/01_CLI-conventions.md	1	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+15_Command-Line-Processing/01_CLI-conventions.md	2	runtime	CRASH	exit=127	RIGHT	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+15_Command-Line-Processing/02_getopts-builtin.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+15_Command-Line-Processing/02_getopts-builtin.md	2	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+15_Command-Line-Processing/02_getopts-builtin.md	3	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+15_Command-Line-Processing/03_GNU-getopt1-external.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+15_Command-Line-Processing/03_GNU-getopt1-external.md	2	runtime	CRASH	exit=127	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+15_Command-Line-Processing/04_Hand-rolled-while-case-shift.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+15_Command-Line-Processing/04_Hand-rolled-while-case-shift.md	2	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+15_Command-Line-Processing/04_Hand-rolled-while-case-shift.md	3	runtime	CRASH	exit=2	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=2
+15_Command-Line-Processing/05_Long-options.md	1	runtime	CRASH	exit=127	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+15_Command-Line-Processing/05_Long-options.md	2	runtime	CRASH	exit=2	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=2
+15_Command-Line-Processing/06_Bundled-short-options.md	1	runtime	CRASH	exit=2	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=2
+15_Command-Line-Processing/06_Bundled-short-options.md	2	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+15_Command-Line-Processing/06_Bundled-short-options.md	3	runtime	CRASH	exit=2	MIXED	REVIEW	LOW	crash with no obvious sandbox cause; exit=2
+15_Command-Line-Processing/07_end-of-options.md	1	runtime	CRASH	exit=2	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=2
+15_Command-Line-Processing/07_end-of-options.md	2	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+15_Command-Line-Processing/08_Subcommand-dispatch.md	1	runtime	CRASH	exit=127	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+15_Command-Line-Processing/08_Subcommand-dispatch.md	2	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+15_Command-Line-Processing/08_Subcommand-dispatch.md	3	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+15_Command-Line-Processing/11_Auto-generating-usage.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+15_Command-Line-Processing/11_Auto-generating-usage.md	2	runtime	CRASH	exit=127	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+15_Command-Line-Processing/11_Auto-generating-usage.md	3	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+16_Concurrency-and-Parallelism/01_Sequential-vs-background-execution.md	1	runtime	CRASH	exit=127	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+16_Concurrency-and-Parallelism/01_Sequential-vs-background-execution.md	2	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+16_Concurrency-and-Parallelism/02_wait-and-wait-n.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+16_Concurrency-and-Parallelism/02_wait-and-wait-n.md	2	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+16_Concurrency-and-Parallelism/03_wait-pid-for-specific-child.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+16_Concurrency-and-Parallelism/04_Capturing-per-child-exit-status.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+16_Concurrency-and-Parallelism/04_Capturing-per-child-exit-status.md	2	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+16_Concurrency-and-Parallelism/05_Bounded-concurrency-fan-out.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+16_Concurrency-and-Parallelism/05_Bounded-concurrency-fan-out.md	4	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+16_Concurrency-and-Parallelism/06_The-job-table-under-concurrency.md	1	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+16_Concurrency-and-Parallelism/06_The-job-table-under-concurrency.md	2	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+16_Concurrency-and-Parallelism/06_The-job-table-under-concurrency.md	3	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+16_Concurrency-and-Parallelism/07_xargs-P.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+16_Concurrency-and-Parallelism/07_xargs-P.md	2	runtime	MISSING_ANNOT	exit=0	NEUTRAL	FIX_ANNOTATION	MEDIUM	block produced output but has no `# ⇒` annotation — opportunity to add
+16_Concurrency-and-Parallelism/07_xargs-P.md	3	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+16_Concurrency-and-Parallelism/08_GNU-parallel.md	2	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+16_Concurrency-and-Parallelism/09_Race-conditions-in-shell.md	3	runtime	CRASH	exit=1	RIGHT	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+16_Concurrency-and-Parallelism/09_Race-conditions-in-shell.md	4	runtime	CRASH	exit=1	MIXED	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+16_Concurrency-and-Parallelism/09_Race-conditions-in-shell.md	5	runtime	MISMATCH	exit=0	MIXED	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+16_Concurrency-and-Parallelism/10_Locking-primitives.md	1	runtime	CRASH	exit=127	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block reads /etc/var/proc/sys path — sandbox may differ
+16_Concurrency-and-Parallelism/10_Locking-primitives.md	2	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+16_Concurrency-and-Parallelism/10_Locking-primitives.md	3	runtime	CRASH	exit=127	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+17_Coprocesses-and-IPC/03_Multiple-coprocesses.md	3	runtime	NO_EXPECTED	exit=0	MIXED	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+17_Coprocesses-and-IPC/05_Anonymous-pipes.md	1	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+17_Coprocesses-and-IPC/05_Anonymous-pipes.md	2	runtime	CRASH	exit=141	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=141
+17_Coprocesses-and-IPC/07_devshm-shared-memory.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+17_Coprocesses-and-IPC/07_devshm-shared-memory.md	3	runtime	MISMATCH	exit=0	RIGHT	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+18_Readline-History-and-Completion/15_Coloured-and-multi-line-prompts.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+19_Performance/01_The-Bash-cost-model.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+19_Performance/02_Profiling-tools.md	1	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+19_Performance/03_time-builtin-vs-time-external.md	1	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+19_Performance/04_BASH_XTRACEFD.md	1	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+19_Performance/06_EPOCHREALTIME-for-sub-second-timing.md	1	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+19_Performance/09_Pipes-vs-redirection.md	1	runtime	CRASH	exit=127	MIXED	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+19_Performance/09_Pipes-vs-redirection.md	2	runtime	CRASH	exit=127	RIGHT	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+19_Performance/11_Bash-5.3-no-fork-command-substitution.md	1	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+19_Performance/12_Memory-considerations.md	1	runtime	CRASH	exit=1	MIXED	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+20_Security/01_Threat-model.md	2	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+20_Security/01_Threat-model.md	3	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+20_Security/01_Threat-model.md	4	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block reads /etc/var/proc/sys path — sandbox may differ
+20_Security/01_Threat-model.md	5	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+20_Security/01_Threat-model.md	6	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+20_Security/01_Threat-model.md	8	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+20_Security/02_PATH-hardening.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+20_Security/03_IFS-reset.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+20_Security/03_IFS-reset.md	2	runtime	MISMATCH	exit=0	RIGHT	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+20_Security/03_IFS-reset.md	3	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+20_Security/03_IFS-reset.md	4	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+20_Security/04_eval-avoidance.md	2	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+20_Security/04_eval-avoidance.md	3	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+20_Security/04_eval-avoidance.md	4	runtime	MISSING_ANNOT	exit=0	NEUTRAL	FIX_ANNOTATION	MEDIUM	block produced output but has no `# ⇒` annotation — opportunity to add
+20_Security/04_eval-avoidance.md	6	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+20_Security/04_eval-avoidance.md	7	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+20_Security/05_Command-injection-vectors.md	2	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block reads /etc/var/proc/sys path — sandbox may differ
+20_Security/05_Command-injection-vectors.md	4	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+20_Security/05_Command-injection-vectors.md	6	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+20_Security/06_Input-validation.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+20_Security/06_Input-validation.md	2	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+20_Security/06_Input-validation.md	3	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+20_Security/06_Input-validation.md	4	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+20_Security/06_Input-validation.md	5	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+20_Security/07_Quoting-under-set-u.md	1	runtime	NO_EXPECTED	exit=0	RIGHT	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+20_Security/09_Secrets-handling.md	3	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+20_Security/09_Secrets-handling.md	4	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+20_Security/09_Secrets-handling.md	7	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+20_Security/09_Secrets-handling.md	8	runtime	CRASH	exit=127	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+20_Security/11_Privilege-drop.md	1	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+20_Security/11_Privilege-drop.md	4	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+20_Security/12_Sanitising-filenames.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+20_Security/13_Symlink-races.md	2	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+20_Security/13_Symlink-races.md	3	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+21_Static-Analysis-Formatting-and-Testing/02_ShellCheck-directives.md	2	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+21_Static-Analysis-Formatting-and-Testing/02_ShellCheck-directives.md	3	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+21_Static-Analysis-Formatting-and-Testing/03_Source-path-management.md	1	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+21_Static-Analysis-Formatting-and-Testing/05_bcscheck.md	1	runtime	CRASH	exit=2	NEUTRAL	SANDBOX_ARTEFACT	HIGH	block calls Okusi-fleet binary unavailable in sandbox
+21_Static-Analysis-Formatting-and-Testing/05_bcscheck.md	2	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_ARTEFACT	HIGH	block calls Okusi-fleet binary unavailable in sandbox
+21_Static-Analysis-Formatting-and-Testing/06_Pre-commit-hooks.md	2	runtime	CRASH	exit=127	NEUTRAL	SANDBOX_ARTEFACT	HIGH	block calls Okusi-fleet binary unavailable in sandbox
+21_Static-Analysis-Formatting-and-Testing/08_bats-core.md	2	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+21_Static-Analysis-Formatting-and-Testing/10_Bats-run-and-assertions.md	1	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+21_Static-Analysis-Formatting-and-Testing/10_Bats-run-and-assertions.md	2	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+21_Static-Analysis-Formatting-and-Testing/10_Bats-run-and-assertions.md	3	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+22_Idioms-Patterns-and-Anti-Patterns/01_The-strict-mode-preamble.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+22_Idioms-Patterns-and-Anti-Patterns/02_Self-locating-script-directory.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+22_Idioms-Patterns-and-Anti-Patterns/03_Argument-parsing-skeleton.md	1	runtime	CRASH	exit=2	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+22_Idioms-Patterns-and-Anti-Patterns/03_Argument-parsing-skeleton.md	2	runtime	NO_EXPECTED	exit=0	MIXED	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+22_Idioms-Patterns-and-Anti-Patterns/04_Default-value-patterns.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+22_Idioms-Patterns-and-Anti-Patterns/04_Default-value-patterns.md	2	runtime	CRASH	exit=127	MIXED	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+22_Idioms-Patterns-and-Anti-Patterns/05_Lazy-initialisation.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+22_Idioms-Patterns-and-Anti-Patterns/06_Memoisation.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+22_Idioms-Patterns-and-Anti-Patterns/07_Iterating-an-associative-array-deterministically.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+22_Idioms-Patterns-and-Anti-Patterns/08_Building-structured-output.md	1	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+22_Idioms-Patterns-and-Anti-Patterns/08_Building-structured-output.md	2	runtime	OK	exit=0	RIGHT	NO_ACTION	HIGH	ran cleanly; expected output matched
+22_Idioms-Patterns-and-Anti-Patterns/08_Building-structured-output.md	3	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+22_Idioms-Patterns-and-Anti-Patterns/08_Building-structured-output.md	4	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+22_Idioms-Patterns-and-Anti-Patterns/08_Building-structured-output.md	5	runtime	MISMATCH	exit=0	MIXED	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+22_Idioms-Patterns-and-Anti-Patterns/10_Atomic-file-write.md	2	runtime	CRASH	exit=1	MIXED	SANDBOX_ARTEFACT	MEDIUM	block reads /etc/var/proc/sys path — sandbox may differ
+22_Idioms-Patterns-and-Anti-Patterns/11_Exclusive-lock.md	1	runtime	TIMEOUT	exit=124	NEUTRAL	REVIEW	MEDIUM	hit 10s wall — long sleep loop or accidental hang
+22_Idioms-Patterns-and-Anti-Patterns/11_Exclusive-lock.md	2	runtime	CRASH	exit=1	MIXED	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+22_Idioms-Patterns-and-Anti-Patterns/12_Bounded-retry-with-exponential-backoff.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+22_Idioms-Patterns-and-Anti-Patterns/14_Mock-friendly-subprocess-wrapper.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+22_Idioms-Patterns-and-Anti-Patterns/15_Stack-trace-error-reporter.md	1	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+22_Idioms-Patterns-and-Anti-Patterns/15_Stack-trace-error-reporter.md	3	runtime	NO_EXPECTED	exit=0	MIXED	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+22_Idioms-Patterns-and-Anti-Patterns/16_Self-test-mode-dual-purpose-script.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+23_POSIX-Conformance-and-Portability/03_Bash-vs-dash.md	1	runtime	CRASH	exit=127	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block reads /etc/var/proc/sys path — sandbox may differ
+23_POSIX-Conformance-and-Portability/03_Bash-vs-dash.md	2	runtime	CRASH	exit=127	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block reads /etc/var/proc/sys path — sandbox may differ
+23_POSIX-Conformance-and-Portability/05_Bash-vs-zsh.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+23_POSIX-Conformance-and-Portability/05_Bash-vs-zsh.md	2	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+23_POSIX-Conformance-and-Portability/05_Bash-vs-zsh.md	3	runtime	CRASH	exit=2	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=2
+23_POSIX-Conformance-and-Portability/12_Targeting-multiple-Bash-versions.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+23_POSIX-Conformance-and-Portability/12_Targeting-multiple-Bash-versions.md	2	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+23_POSIX-Conformance-and-Portability/12_Targeting-multiple-Bash-versions.md	3	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
+24_Bash-Internals/01_The-execution-pipeline.md	1	runtime	CRASH	exit=127	NEUTRAL	SANDBOX_ARTEFACT	MEDIUM	block reads /etc/var/proc/sys path — sandbox may differ
+24_Bash-Internals/01_The-execution-pipeline.md	2	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+24_Bash-Internals/08_Subshell-forking.md	1	runtime	MISSING_ANNOT	exit=0	NEUTRAL	FIX_ANNOTATION	MEDIUM	block produced output but has no `# ⇒` annotation — opportunity to add
+24_Bash-Internals/09_Builtin-loadables.md	1	runtime	MISSING_ANNOT	exit=0	NEUTRAL	FIX_ANNOTATION	MEDIUM	block produced output but has no `# ⇒` annotation — opportunity to add
+24_Bash-Internals/09_Builtin-loadables.md	2	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+25_Bash-5.3-and-the-Future/01_No-fork-command-substitution-cmd.md	1	runtime	CRASH	exit=18	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=18
+25_Bash-5.3-and-the-Future/01_No-fork-command-substitution-cmd.md	2	runtime	CRASH	exit=1	MIXED	SANDBOX_ARTEFACT	MEDIUM	block calls BCS messaging helper not in sandbox PATH
+99_Appendices/E_shopt-Options-Reference.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
