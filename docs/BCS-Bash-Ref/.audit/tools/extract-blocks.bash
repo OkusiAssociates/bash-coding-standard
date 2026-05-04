@@ -58,12 +58,14 @@ HELP
 # dominant convention in BCS-Bash-Ref; heading-style markers are rare
 # but also detected.
 classify_label() {
-  local -- body="$1"
+  local -- body="$1" line lowered
   local -i wrong=0 right=0
   while IFS= read -r line; do
-    if [[ "$line" =~ ^[[:space:]]*\#[[:space:]]*(wrong|broken|do[[:space:]]*not|don\'t|never|anti-?pattern|footgun|pitfall|buggy|bug:) ]]; then
+    [[ "$line" =~ ^[[:space:]]*\# ]] || continue
+    lowered="${line,,}"
+    if [[ "$lowered" =~ (^|[^[:alnum:]_])(wrong|broken|do[[:space:]]*not|never|anti-?pattern|footgun|pitfall|buggy|bug:) ]]; then
       wrong+=1
-    elif [[ "$line" =~ ^[[:space:]]*\#[[:space:]]*(right|fixed|correct|prefer|idiom|good[[:space:]:,]) ]]; then
+    elif [[ "$lowered" =~ (^|[^[:alnum:]_])(right|fixed|correct|prefer|idiom)([^[:alnum:]_]|$) ]]; then
       right+=1
     fi
   done <<< "$body"
