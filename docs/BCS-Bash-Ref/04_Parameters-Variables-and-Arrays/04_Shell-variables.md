@@ -51,8 +51,10 @@ trace() {
 
 inner() { trace; }
 outer() { inner; }
-outer
-# ⇒ at outer (./script:N), at main (./script:M), …
+outer 2>&1   # merge stderr into stdout so the trace lines are captured
+# ⇒ at inner
+# ⇒ at outer
+# (line numbers vary; the trace lists each calling frame in order)
 ```
 
 ### Pipeline and regex state

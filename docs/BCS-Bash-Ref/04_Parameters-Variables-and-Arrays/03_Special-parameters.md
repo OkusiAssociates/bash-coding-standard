@@ -47,7 +47,8 @@ wait "$BGPID"
 
 # $_ — last word of previous command (volatile)
 mkdir -p "$TMPDIR_RUN" && printf 'made %s\n' "$_"
-# ⇒ made /tmp/run.<pid>
+# ⇒ made /tmp/run.
+# (the path ends with the captured SCRIPT_PID — runtime-dependent)
 
 # $0 — script name; matters for usage/help output (BCS0704)
 printf 'usage: %s [-h] FILE\n' "${0##*/}"

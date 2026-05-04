@@ -122,4 +122,47 @@ Format per entry:
 - **After**: Add `api_call() { :; }` placeholder ahead of the brace group. The pattern (set +x / call / set -x in a redirected group) is what the demo teaches.
 - **Justification**: The trace-disable pattern is what matters; the inner call is a stand-in for whatever real client the reader uses.
 
+### docs/BCS-Bash-Ref/.audit/tools/run-blocks.bash (matcher hardening)
+- **Class**: matcher-em-dash-clarifier
+- **Pass**: phase-12-matcher
+- **Before**: extract_expected only stripped trailing `(parenthetical)` clarifiers; the corpus convention `# ⇒ literal — explanatory prose` (em-dash separator with 1+ space) caused MISMATCH on all such annotations.
+- **After**: Strip trailing `[[:space:]]+—[[:space:]].*$` from each annotation. Drop annotations that begin with an em-dash entirely (pure prose).
+- **Justification**: Resolved ~14 spurious MISMATCHes across Parts 04, 05, 12 in one fix; legitimate em-dashes in stdout are vanishingly rare in shell output.
+
+### docs/BCS-Bash-Ref/.audit/tools/triage.bash (lint code sweep)
+- **Class**: lint-classification-coverage
+- **Pass**: phase-12-triage
+- **Before**: classify_lint() had cases for ~13 SC codes; everything else fell through to REVIEW LOW.
+- **After**: Added ADD_SUPPRESSION cases for SC2088, SC2080, SC2050, SC2125, SC2194, SC2206, SC2128, SC2053, SC2066, SC2064, SC2069/75/76, plus parser-confusion sweep (SC1010/1020/1035/1054/1055/1056/1072/1073/1083/1087/1133/1141) and fragment-context sweep (SC2104/2152/2188/2216/2220/2254/2259/2261). FIX_BLOCK MEDIUM for SC2207 (mapfile preferred over $() into array). SC2242 promoted from REVIEW to ADD_SUPPRESSION (truncation/negative-code demos are pedagogical).
+- **Justification**: Cleared the lint REVIEW pile (106 → 0) so manual triage focuses on runtime corpus issues.
+
+### docs/BCS-Bash-Ref/04_Parameters-Variables-and-Arrays/* (Part-04 sweep)
+- **Class**: annotation-and-block-corrections
+- **Pass**: phase-12-Part-04
+- Resolved 18 entries across leaves 01, 02, 04, 05, 06, 08, 09, 10, 11, 13, 14:
+  - 01_Parameter-taxonomy.md #2: dropped `…` from PID/version annotations.
+  - 02_Positional-parameters.md #3: pre-set `$@` so the getopts loop has args; per-line `# ⇒` annotations.
+  - 04_Shell-variables.md #1: capture trace via `outer 2>&1`; clean up annotations.
+  - 05_The-declare #2/#5: hash-order non-determinism — drop the literal element-list expectation.
+  - 05_The-declare #6: the doc claimed `local foo` inherits `-i`; bash 5.2 does not. Switched demo to `local -i counter` (explicit) and rewrote the surrounding prose.
+  - 06_local-and-dynamic-scope.md #1: rewrote the `local --help` parse-trap demo so it actually triggers (previous form was a misconception); added a runnable invocation.
+  - 08_export-and-the-environment.md #3: simplified the BASH_FUNC_ annotation prefix.
+  - 09_Indexed-arrays.md #2 + 14_Unsetting.md #1: split single-line `# ⇒` joins into per-line annotations matching `printf '%s\n'` output (or used `printf '%s '; echo` where one-line was the point).
+  - 10_Associative-arrays.md #1/#6: moved the `local -A` sub-demo into a function; switched `local -a sorted` to `declare -a sorted` at script scope; relaxed hash-order annotation.
+  - 11_Namerefs-n.md #5: piped warning to `head -1`, then ran the right-side demo for verifiable output.
+  - 13_Variable-assignment-semantics.md #1/#2: created two `.txt` and two `.md` fixtures so the glob expansions actually have something to match.
+  - 13_Variable-assignment-semantics.md #6: wrap readonly-violation in a subshell `(x=43) 2>&1 || true` so set -e in the outer shell doesn't propagate the failure.
+- **Justification**: All 18 REVIEW entries cleared; remaining CRASHes in Part-04 are auto-classified as EXPECTED_CRASH (anti-pattern demos).
+
+### docs/BCS-Bash-Ref/03_Lexical-Structure-and-Shell-Grammar/* (Part-03 sweep)
+- **Class**: annotation-and-block-corrections
+- **Pass**: phase-12-Part-03
+- Resolved 5 entries across leaves 03, 07, 09:
+  - 03_Comments.md #1: added `echo "$url"` and `echo "$result"` so the assignment-only lines have visible output.
+  - 07_ANSI-C-quoting.md #1: replaced spaced-out `tab     here    end` annotation with prose noting the literal TABs; flagged the precomposed-é vs combining-acute byte difference.
+  - 07_ANSI-C-quoting.md #3: replaced spaced-out `hello   world` annotations with `→` prose noting the literal TAB.
+  - 09_Backslash-escapes.md #1: same TAB/LF prose substitution for the ANSI-C demo.
+  - 09_Backslash-escapes.md #2: added explicit `echo "$msg"` so the line-continuation demo produces matchable output.
+- **Justification**: All 5 REVIEW entries cleared.
+
 #fin

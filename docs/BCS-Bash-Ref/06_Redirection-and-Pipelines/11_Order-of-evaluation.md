@@ -38,7 +38,7 @@ set -euo pipefail; shopt -s inherit_errexit shift_verbose extglob nullglob
 #                                               ^^^^^^^ step 2: dup fd 1 onto fd 2
 #                                                        fd 1 → out.log
 #                                                        fd 2 → out.log
-# ⇒ both messages in out.log
+# → both messages land in out.log
 
 # Form B — wrong (stderr stays on terminal)
 { echo to-stdout; echo to-stderr >&2; } 2>&1 >out2.log
@@ -48,7 +48,7 @@ set -euo pipefail; shopt -s inherit_errexit shift_verbose extglob nullglob
 #                                            ^^^^^^^^ step 2: open out2.log on fd 1
 #                                                        fd 1 → out2.log
 #                                                        fd 2 → terminal (still!)
-# ⇒ stdout in out2.log; stderr printed to terminal
+# → stdout lands in out2.log; stderr stays on the terminal
 ```
 
 The mnemonic: **target before merge**. The redirect that names a file
@@ -71,13 +71,13 @@ set -euo pipefail; shopt -s inherit_errexit shift_verbose extglob nullglob
 seq 1 5 1>race.log 2>race.log >&2 &
 seq 6 10 >>race.log &
 wait
-# ⇒ race.log content is non-deterministic; bytes from both writers interleave
+# → race.log content is non-deterministic (bytes from both writers interleave)
 
 # RIGHT — one open, two fds sharing the same description and offset
 seq 1 5 >shared.log 2>&1 &
 seq 6 10 >>shared.log &
 wait
-# ⇒ shared.log content is deterministic; each writer's lines appear intact
+# → shared.log content is deterministic (each writer's lines appear intact)
 ```
 
 The `&>` shorthand and `>file 2>&1` form both produce the

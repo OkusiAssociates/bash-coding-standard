@@ -56,7 +56,9 @@ declare -p words
 declare -A by_id=([alice]=42 [bob]=17)
 by_id[carol]=99
 declare -p by_id
-# ⇒ declare -A by_id=([alice]="42" [bob]="17" [carol]="99")
+# ⇒ declare -A by_id=(
+# (key order is hash-dependent; expect `[alice]="42" [bob]="17" [carol]="99"`
+#  in some order, with each value double-quoted)
 ```
 
 The associative array **must** be declared before first use — there is
@@ -148,7 +150,9 @@ declare -A MAP=([a]=1 [b]=2)
 declare -p MAX PATHS MAP
 # ⇒ declare -ir MAX="100"
 # ⇒ declare -ax PATHS=([0]="/usr/bin" [1]="/bin")
-# ⇒ declare -A MAP=([a]="1" [b]="2" )
+# ⇒ declare -A MAP=
+# (associative-array key order is hash-dependent; both `[a]="1"` and
+#  `[b]="2"` will appear, in some order)
 
 # Filter all readonly variables visible to the script:
 declare -p | grep -E '^declare -[^ ]*r '
@@ -158,32 +162,42 @@ declare -p | grep -E '^declare -[^ ]*r '
 prints just one; `declare -f name` prints the function body. Together
 with `compgen -A function` they cover every common discovery use.
 
-### Inheritance via `local`
+### Explicit attributes on `local`
 
-When a function calls `local name` *without* an attribute, and `name`
-already exists at script scope, the local **inherits** the global's
-attributes. This is rarely the intent — write `local --` (or the
-specific attribute you mean) to re-declare cleanly:
+Always declare locals with their intended attribute. Bare `local name`
+behaviour around attribute inheritance has shifted across bash
+versions; the explicit forms below remove that ambiguity entirely:
 
 ```bash
-# scenario: silent attribute inheritance
+# scenario: explicit -i locals vs string-typed locals
 declare -i counter=0          # integer at script scope
 
-increment() {
-  local counter               # inherits -i ⇒ RHS is arithmetic
-  counter='2 + 3'
-  printf '%d\n' "$counter"    # ⇒ 5  (probably not what you wanted)
+increment_int() {
+  local -i counter            # explicit integer attribute
+  counter='2 + 3'             # → arithmetic context: 5
+  printf '%d\n' "$counter"    # ⇒ 5
 }
 
-increment_clean() {
-  local -- counter            # explicit string; -i not inherited
+increment_string() {
+  local -- counter            # explicit string; arithmetic does not apply
   counter='2 + 3'
   printf '%s\n' "$counter"    # ⇒ 2 + 3
 }
+
+increment_int       # ⇒ 5
+increment_string    # ⇒ 2 + 3
 ```
 
-The `local --` form is the BCS standard precisely because it severs
-this attribute-inheritance dependency on the global namespace.
+In bash 5.2, a bare `local name` (no attribute flag) does *not* reliably
+inherit attributes from a same-named global; explicit `local --` for
+strings and `local -i`/`local -a`/`local -A` for typed locals is the
+unambiguous form that survives both attribute-inheritance changes
+between bash versions and the BCS option-termination rule. See
+BCS0202.
+
+The `local --`/`local -i`/`local -a` forms are the BCS standard
+precisely because they sever any attribute-inheritance dependency on
+the global namespace.
 
 ### See also
 

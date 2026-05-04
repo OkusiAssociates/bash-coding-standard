@@ -31,7 +31,7 @@ echo '\n is literal'          # ⇒ \n is literal
 echo 'C:\Users\name'          # ⇒ C:\Users\name     (no Windows-path agony)
 
 # scenario: inside ANSI-C quoting — full escape table (§3.7)
-echo $'tab\there\nend'        # ⇒ tab     here
+echo $'tab\there\nend'        # → "tab<TAB>here<LF>end"
                               # ⇒ end
 ```
 
@@ -42,7 +42,8 @@ Line continuation (`\<newline>`) works inside double quotes too — both the bac
 ```bash
 # scenario: long string built across lines
 msg="hello \
-world"                        # ⇒ "hello world"     (the \-newline is removed)
+world"
+echo "$msg"                   # ⇒ hello world
 ```
 
 BCS strongly prefers single quotes for static strings (BCS0301, BCS0307), which sidesteps this maze entirely. Reach for double quotes only when expansion is wanted; reach for `$'…'` only when control characters are needed.

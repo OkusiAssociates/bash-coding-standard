@@ -63,11 +63,12 @@ chains:
 ```bash
 # scenario: errexit exempts the if-condition
 set -euo pipefail
+cmd_that_exits_1() { return 1; }     # placeholder for some predicate
 
-if cmd_that_exits_1; then            # ⇒ exit 1 is the test result
+if cmd_that_exits_1; then            # → rc=1 from the test is exempt from set -e
   echo 'success'
 else
-  echo 'failure'                     # ⇒ runs; script does NOT abort
+  echo 'failure'                     # ⇒ failure
 fi
 ```
 

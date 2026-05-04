@@ -40,11 +40,11 @@ export -f upper                                # mark for export (BCS0404)
 bash -c 'upper hello'                          # ⇒ HELLO
 
 # CHILD #2 — sh (often dash) does NOT see it as a function.
-sh -c 'upper hello' 2>&1 || true               # ⇒ sh: upper: command not found
+sh -c 'upper hello' 2>&1 || true               # ⇒ upper: not found
 
 # CHILD #3 — env shows the encoded form bash uses to ferry the body.
 env | grep '^BASH_FUNC_upper' | head -1
-# ⇒ BASH_FUNC_upper%%=() {  local -- s="${1:?usage: upper STRING}"; ...
+# ⇒ BASH_FUNC_upper
 
 # Always pair export -f with a clear note in the script header explaining
 # why exporting the function is necessary (e.g. for use inside a `find -exec

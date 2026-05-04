@@ -49,9 +49,11 @@ inspect() {
 
 inspect alpha beta
 # ⇒ argc=2 first=alpha
-# ⇒ exit=0  pid=…
+# ⇒ exit=0
 # ⇒ mood=cheerful
-# ⇒ BASH_VERSION=5.2.x
+# ⇒ BASH_VERSION=
+# (the BASH_VERSION line ends with the running bash's version string;
+#  pid line ends with the script's PID — both runtime-dependent)
 ```
 
 ### Environment versus shell variables

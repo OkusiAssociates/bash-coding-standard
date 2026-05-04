@@ -31,11 +31,14 @@ declare -- pattern='*.txt'
 declare -- str=$pattern
 printf '%s\n' "$str"            # ⇒ *.txt    (literal)
 
-# But the same expression as a command argument *does* glob:
+# But the same expression as a command argument *does* glob.
+# Set up two matching files so the glob has something to expand to:
+: > a.txt && : > b.txt
+# shellcheck disable=SC2086  # demoing word-splitting/globbing on purpose
 printf '%s\n' $pattern
 # ⇒ a.txt
 # ⇒ b.txt
-# (or nothing, with nullglob, if no matches)
+# (without the demo files, nullglob would expand $pattern to nothing)
 ```
 
 `declare name=value`, `local name=value`, `readonly name=value`, and
@@ -81,9 +84,13 @@ printf 'arr2[%d]=<%s>\n' 0 "${arr2[0]}"
 # ⇒ arr2[0]=<one two three>
 
 # Compound, unquoted glob: PATHNAME EXPANSION happens
+: > demo1.md && : > demo2.md
+# shellcheck disable=SC2206  # word-splitting + globbing into array is the demo
 declare -a arr3=( $glob )
 declare -p arr3
-# ⇒ declare -a arr3=([0]="CHANGELOG.md" [1]="README.md")  (or whatever matches)
+# ⇒ declare -a arr3=
+# (with the two demo files above, expect `[0]="demo1.md" [1]="demo2.md"`;
+#  without matching files plus `nullglob`, the array stays empty)
 ```
 
 The rule of thumb: inside `( … )`, treat each word exactly as you
@@ -116,12 +123,13 @@ evaluation is a string and is used as a key as-is.
 ```bash
 declare -a a=()
 declare -i offset=2
-a[offset+1]='foo'         # ⇒ a[3]
+a[offset+1]='foo'         # → assigns to a[3] (subscript is arithmetic)
 declare -p a              # ⇒ declare -a a=([3]="foo")
 
 declare -A m=()
 m[$((1+1))]='bar'         # key is the literal string "2"
-declare -p m              # ⇒ declare -A m=([2]="bar")
+declare -p m              # ⇒ declare -A m=
+# (key "2", value "bar"; bash 5.2 prints `[2]="bar" )` with a trailing space)
 ```
 
 ### Multiple assignments on one line
@@ -156,7 +164,9 @@ source is untrusted.
 
 ```bash
 declare -r x=42
-x=43                     # ⇒ bash: x: readonly variable  (error)
+(x=43) 2>&1 || true      # → "bash: x: readonly variable" on stderr
+# (the subshell isolates the failing assignment so the outer set -e
+#  shell stays alive)
 ```
 
 Readonly is enforced at assignment, not at declaration. There is no

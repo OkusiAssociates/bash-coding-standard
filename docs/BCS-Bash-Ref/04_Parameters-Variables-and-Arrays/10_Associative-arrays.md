@@ -13,8 +13,11 @@ declared before first use.
 declare -A by_id                      # empty
 declare -A by_id=()                   # empty, explicit
 declare -A by_id=([alice]=42 [bob]=17)
-local -A counts=()                    # function-scoped
 declare -Ar STATIC=([a]=1 [b]=2)      # readonly + associative
+
+# Function-scoped form (`local -A`) must appear inside a function:
+demo() { local -A counts=(); declare -p counts | head -c 22; echo; }
+demo                                  # ⇒ declare -A counts=()
 ```
 
 The crucial rule: **declare with `-A` before any subscripted assignment.**
@@ -103,10 +106,10 @@ declare -A by_id=([carol]=99 [alice]=42 [bob]=17)
 for k in "${!by_id[@]}"; do
   printf '%-6s = %s\n' "$k" "${by_id[$k]}"
 done
-# ⇒ order varies
+# (the three `key = value` lines come out in some hash-dependent order)
 
 # Deterministic — sort keys explicitly
-local -a sorted=()
+declare -a sorted=()
 mapfile -t sorted < <(printf '%s\n' "${!by_id[@]}" | LC_ALL=C sort)
 for k in "${sorted[@]}"; do
   printf '%-6s = %s\n' "$k" "${by_id[$k]}"

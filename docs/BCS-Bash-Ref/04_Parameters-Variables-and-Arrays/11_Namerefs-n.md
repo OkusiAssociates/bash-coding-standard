@@ -108,13 +108,18 @@ fill() {
 }
 
 declare -a out=()
-fill out              # ⇒ bash: warning: out: circular name reference
+fill out 2>&1 | head -1   # → "warning: out: circular name reference" on stderr
 
 # right — pick an unlikely internal name
 fill() {
   local -n __fill_out=$1
   __fill_out=(a b c)
 }
+declare -a result=()
+fill result
+printf '%s\n' "${result[@]}"   # ⇒ a
+                                # ⇒ b
+                                # ⇒ c
 ```
 
 The convention is to prefix the nameref's local name with the function

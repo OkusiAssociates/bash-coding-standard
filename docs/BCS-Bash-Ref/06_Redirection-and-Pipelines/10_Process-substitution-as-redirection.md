@@ -32,10 +32,15 @@ the sorted output of two pipelines:
 #!/usr/bin/env bash
 set -euo pipefail; shopt -s inherit_errexit shift_verbose extglob nullglob
 
-diff <(ls -1 /etc/nginx/sites-enabled | sort) \
-     <(ls -1 /etc/nginx/sites-available | sort)
-# ⇒ output of diff comparing the two sorted listings
-# both sub-pipelines run in parallel; their fds are /dev/fd/63, /dev/fd/62
+# Set up two demo directory listings as input fixtures:
+mkdir -p _enabled _available
+: > _enabled/site-a.conf && : > _enabled/site-b.conf
+: > _available/site-a.conf && : > _available/site-c.conf
+
+diff <(ls -1 _enabled | sort) <(ls -1 _available | sort) || true
+# ⇒ < site-b.conf
+# ⇒ > site-c.conf
+# (each sub-pipeline runs in parallel; fds are /dev/fd/63 and /dev/fd/62)
 ```
 
 Without `<()`, the same effect requires two temp files, two `mktemp`
@@ -63,10 +68,11 @@ build_step() {
 build_step \
   > >(tee build.out)    \
   2> >(tee build.err >&2)
+wait                          # let the tee children flush before we read
 # ⇒ progress: phase 1
-# ⇒ warning: deprecated flag           (still on terminal stderr)
 # ⇒ progress: phase 2
-# build.out holds the two progress lines; build.err holds the warning
+# (build.out holds the two progress lines; build.err holds the warning,
+#  which also re-appears on terminal stderr via the inner `tee … >&2`)
 ```
 
 The `>&2` inside the second `tee` re-routes its stdout (which is

@@ -77,13 +77,14 @@ one fork.
 #!/usr/bin/env bash
 set -euo pipefail; shopt -s inherit_errexit shift_verbose extglob nullglob
 
-trace() { printf '[depth=%d pid=%d] %s\n' "$BASH_SUBSHELL" "$BASHPID" "$*" >&2; }
+trace() { printf '[depth=%d pid=%d] %s\n' "$BASH_SUBSHELL" "$BASHPID" "$*"; }
 
-trace 'top of script'                   # ⇒ depth=0
-( trace 'first subshell'                # ⇒ depth=1
-  ( trace 'nested subshell' )           # ⇒ depth=2
+trace 'top of script'                   # ⇒ [depth=0
+( trace 'first subshell'                # ⇒ [depth=1
+  ( trace 'nested subshell' )           # ⇒ [depth=2
 )
-trace 'after subshells'                 # ⇒ depth=0 (back in parent)
+trace 'after subshells'                 # ⇒ [depth=0
+# (PIDs vary; the prefix `[depth=N pid=…]` is the load-bearing part)
 ```
 
 `BASH_SUBSHELL` counts only explicit and command-substitution

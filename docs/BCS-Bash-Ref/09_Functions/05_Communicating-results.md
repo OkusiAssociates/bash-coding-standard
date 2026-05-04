@@ -28,8 +28,8 @@ upper_stdout() {
   printf '%s' "${s^^}"
 }
 
-result=$(upper_stdout 'hello')          # ⇒ result='HELLO'
-echo "$result"
+result=$(upper_stdout 'hello')          # → captures the upper-cased string
+echo "$result"                          # ⇒ HELLO
 ```
 
 stdout is the right answer most of the time. The function reads as a

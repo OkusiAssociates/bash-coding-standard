@@ -28,9 +28,13 @@ The full escape table:
 ```bash
 # scenario: tab, byte, and Unicode in a single literal
 printf '%s\n' $'tab\there\tend' $'byte=\xff' $'café'
-# ⇒ tab     here    end
-# ⇒ byte=ÿ
-# ⇒ café       (combining acute accent — ́)
+# ⇒ tab
+# ⇒ byte=
+# (line 1 contains literal TABs between words; line 2 ends with a
+#  raw 0xFF byte rendered per the terminal's locale)
+# ⇒ cafe
+# (the source uses `cafe` plus a combining-acute U+0301; the precomposed
+#  é (U+00E9) is a different byte sequence)
 ```
 
 The canonical script idiom — a strict-mode-safe `IFS` literal:
@@ -44,10 +48,10 @@ The runtime alternative is `printf '%b\n'`, which interprets backslash escapes f
 ```bash
 # scenario: parse-time vs run-time escape interpretation
 greeting=$'hello\tworld'      # interpreted at parse time
-printf '%s\n' "$greeting"     # ⇒ hello   world
+printf '%s\n' "$greeting"     # → "hello<TAB>world" (literal tab between words)
 raw='hello\tworld'            # the four characters \, t plus rest
-printf '%b\n' "$raw"          # ⇒ hello   world      (printf interprets \t at run time)
-printf '%s\n' "$raw"          # ⇒ hello\tworld       (no interpretation)
+printf '%b\n' "$raw"          # → also "hello<TAB>world" (printf interprets \t)
+printf '%s\n' "$raw"          # ⇒ hello\tworld
 ```
 
 **See also**: §3.5 (single quotes — no escapes), §3.6 (double quotes — selective escapes), §3.9 (backslash-escape contexts), §14.5 (`printf` vs `echo` — why `printf '%b'` is the safe runtime form), BCS0305 (Printf Patterns), BCS1003 (IFS Safety).

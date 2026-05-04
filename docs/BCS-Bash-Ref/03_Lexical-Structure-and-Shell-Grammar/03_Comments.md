@@ -21,11 +21,13 @@ Where `#` is **not** a comment:
 
 ```bash
 # scenario: contrast leading vs mid-word
-echo foo#bar                  # ⇒ foo#bar          (no comment)
-echo foo #bar                 # ⇒ foo              (the #bar is a comment)
-echo "foo # bar"              # ⇒ foo # bar        (inside quotes; literal)
-url=https://x#frag            # ⇒ assigns the full URL with fragment
-result=${url#https://}        # ⇒ x#frag           (parameter expansion, # is op)
+echo foo#bar                  # ⇒ foo#bar
+echo foo #bar                 # ⇒ foo
+echo "foo # bar"              # ⇒ foo # bar
+url=https://x#frag            # → assigns the full URL with fragment
+echo "$url"                   # ⇒ https://x#frag
+result=${url#https://}        # → parameter expansion, # is the strip-prefix op
+echo "$result"                # ⇒ x#frag
 ```
 
 Interactive shells with `interactive_comments` shopt **off** treat `#` as literal even at line start; the default is on, and BCS scripts run with no expectation of disabling it.

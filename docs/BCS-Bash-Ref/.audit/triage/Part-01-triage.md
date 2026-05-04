@@ -22,7 +22,7 @@ Part. Tick a decision per entry, then run the per-Part fix pass.
 
 **stdout (first 5 non-empty lines):**
 
-    Mon May  4 12:13:40 WITA 2026
+    Mon May  4 12:41:31 WITA 2026
     exit=0
 
 **stderr (first 3 non-empty lines):**

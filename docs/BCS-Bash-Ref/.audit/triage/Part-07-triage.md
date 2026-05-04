@@ -83,9 +83,9 @@ Part. Tick a decision per entry, then run the per-Part fix pass.
 
 **stderr (first 3 non-empty lines):**
 
-    [depth=0 pid=2131498] top of script
-    [depth=1 pid=2131499] first subshell
-    [depth=2 pid=2131500] nested subshell
+    [depth=0 pid=2283513] top of script
+    [depth=1 pid=2283514] first subshell
+    [depth=2 pid=2283515] nested subshell
 
 **Decision** (tick one):
 

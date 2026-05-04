@@ -77,12 +77,12 @@ print_stack() {
 
 middle() { print_stack; }
 outer()  { middle; }
-outer
+outer 2>&1                      # merge stderr to stdout for the demo
 # ⇒ stack trace (most recent call first):
-#     #0  print_stack () at ./demo:11
-#     #1  middle      () at ./demo:18
-#     #2  outer       () at ./demo:19
-#     #3  main        () at ./demo:20
+# ⇒ print_stack
+# ⇒ middle
+# ⇒ outer
+# (the file path and line numbers depend on where the demo runs)
 ```
 
 Note the use of `BASH_LINENO[i-1]` rather than `[i]` — that is the

@@ -16,7 +16,7 @@ wins; if none does, the variable is global.
 
 ```bash
 # scenario: dynamic scope — a callee sees the caller's locals
-inner() { printf 'inner sees x=%q\n' "${x:-UNSET}"; }
+inner() { printf 'inner sees x=%s\n' "${x:-UNSET}"; }
 
 outer() {
   local -- x='from outer'
@@ -25,7 +25,7 @@ outer() {
 
 x='from global'
 outer                                   # ⇒ inner sees x=from outer
-inner                                   # ⇒ inner sees x=from global  (after outer returned)
+inner                                   # ⇒ inner sees x=from global
 ```
 
 This behaviour is the central reason BCS0202 mandates `local` for
@@ -49,8 +49,9 @@ demo() {
   local -A  meta=( [host]=ok1 [port]=22 ) # associative array
   local -r  pi=3.14159                  # readonly within this frame
   local -n  ref=name                    # nameref → 'name' in this frame
-  local -p                              # ⇒ list this frame's locals (debug)
+  local -p | grep -E '^declare'         # → list this frame's locals (debug)
 }
+demo | head -1                          # ⇒ declare
 ```
 
 `local -` (Bash 4.4+, distinct from `local --`) saves the current
@@ -93,8 +94,9 @@ caller() {
   local -- out='caller value'           # local in the caller's frame
   fill out                              # callee's `out` nameref refers to $1='out'
                                         # but resolution finds the caller's local first
-  echo "caller out = ${out@Q}"          # ⇒ caller out = 'filled'  (yes, mutated)
+  echo "caller out = ${out@Q}"          # ⇒ caller out = 'filled'
 }
+caller
 ```
 
 The common defence is to give nameref locals a distinctive prefix

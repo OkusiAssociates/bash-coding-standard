@@ -44,7 +44,8 @@ echo "more log output"
 # Restore stdout via move: fd 1 ← fd 3, fd 3 closed atomically
 exec 1>&3-
 echo "this line is back on the terminal"
-# ⇒ script.log holds three lines; fd 3 is no longer dangling
+# ⇒ this line is back on the terminal
+# (script.log now holds three lines; fd 3 is no longer dangling)
 ```
 
 Without the `-` suffix on `1>&3`, fd 3 would remain open through the
@@ -67,7 +68,7 @@ set -euo pipefail; shopt -s inherit_errexit shift_verbose extglob nullglob
 (
   exec 1>&-                     # close stdout in this subshell only
   echo "no destination"         # write to closed fd 1
-) || echo "subshell failed: $?"
+) 2>&1 || echo "subshell failed: $?"
 # ⇒ bash: echo: write error: Bad file descriptor
 # ⇒ subshell failed: 1
 ```

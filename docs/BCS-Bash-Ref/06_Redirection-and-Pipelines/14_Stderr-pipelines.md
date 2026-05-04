@@ -21,13 +21,15 @@ producer() {
 
 # Form A — combined operator
 producer |& cat -n
-# ⇒      1  data line
-# ⇒      2  diagnostic line
+# ⇒ data line
+# ⇒ diagnostic line
 
 # Form B — manual stderr merge, identical result
 producer 2>&1 | cat -n
-# ⇒      1  data line
-# ⇒      2  diagnostic line
+# ⇒ data line
+# ⇒ diagnostic line
+# (cat -n prefixes each line with `<spaces>N<TAB>`; both forms feed it
+#  the same merged stream, so the numbered output is identical)
 ```
 
 The two forms compile to the same fd-table operations: open the pipe,

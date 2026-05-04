@@ -110,6 +110,8 @@ new `$1`, `$2`, …
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
+set -- -v -o out.log a.txt b.txt   # demo invocation: ./script -v -o out.log …
+
 verbose=0 output=''
 while getopts ':vo:' opt; do
   case $opt in
@@ -122,11 +124,12 @@ done
 shift "$((OPTIND - 1))"
 
 printf 'verbose=%d output=<%s>\n' "$verbose" "$output"
+# ⇒ verbose=1 output=<out.log>
 printf 'remaining files: %d\n' "$#"
+# ⇒ remaining files: 2
 for f in "$@"; do printf '  %s\n' "$f"; done
-
-# Invoked as: ./script -v -o out.log a.txt b.txt
-# ⇒ verbose=1 output=<out.log>, two file arguments remain
+# ⇒ a.txt
+# ⇒ b.txt
 ```
 
 `getopts` only handles short options (`-v`, `-o arg`, bundled `-vo

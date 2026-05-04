@@ -38,19 +38,26 @@ set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
 declare -a arr=(zero one two three)
-printf '%s\n' "${arr[@]}"           # ⇒ zero one two three
+printf '%s\n' "${arr[@]}"
+# ⇒ zero
+# ⇒ one
+# ⇒ two
+# ⇒ three
 
 # wrong — at the very least relies on glob luck:
 # unset arr[1]                      # may glob, may silently no-op
 
 # right — explicit single-quotes
 unset 'arr[1]'
-printf '%s\n' "${!arr[@]}"          # ⇒ 0 2 3   (sparse: index 1 gone)
-printf '%s\n' "${arr[@]}"           # ⇒ zero two three
+printf '%s ' "${!arr[@]}"; echo     # ⇒ 0 2 3
+printf '%s\n' "${arr[@]}"
+# ⇒ zero
+# ⇒ two
+# ⇒ three
 
 # Note: indices do **not** renumber. To compact:
 arr=("${arr[@]}")
-printf '%s\n' "${!arr[@]}"          # ⇒ 0 1 2
+printf '%s ' "${!arr[@]}"; echo     # ⇒ 0 1 2
 ```
 
 ### Nameref unset — `-n` is the loaded form

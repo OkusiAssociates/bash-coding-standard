@@ -110,7 +110,8 @@ bash -c 'greet alice'
 # ⇒ hello, alice
 
 env | grep -F BASH_FUNC_greet
-# ⇒ BASH_FUNC_greet%%=() {  printf 'hello, %s\n' "${1-world}";\n}
+# ⇒ BASH_FUNC_greet
+# (the value contains the function body, formatted across multiple lines)
 ```
 
 ### Pitfalls

@@ -109,9 +109,12 @@ has_preamble() {
 # describe output rather than enumerate it.
 extract_expected() {
   local -- body="$1"
+  # Match `# ⇒` or `#⇒` only — at most one space between hash and arrow.
+  # Deep-indented `#                  ⇒` lines are column-trace prose and
+  # must not be picked up as expected output.
   awk '
-    /[[:space:]]*#[[:space:]]*⇒/ {
-      idx = match($0, /#[[:space:]]*⇒/)
+    /#[[:space:]]?⇒/ {
+      idx = match($0, /#[[:space:]]?⇒/)
       if (idx == 0) next
       # Skip past the `#  ⇒` marker.
       rest = substr($0, idx + RLENGTH)
@@ -119,9 +122,11 @@ extract_expected() {
       sub(/[[:space:]]+$/, "", rest)
       # Strip a trailing parenthetical clarifier (one level only).
       sub(/[[:space:]]+\([^)]*\)[[:space:]]*$/, "", rest)
-      # Strip the em-dash convention (2+ spaces before — guards against
-      # legitimate inline em-dashes in output literals).
-      sub(/[[:space:]][[:space:]]+—[[:space:]].*$/, "", rest)
+      # Strip the em-dash convention (` — ` separator between literal
+      # and explanatory prose). Single space tolerated since the
+      # convention varies; legitimate output rarely contains a
+      # space-padded em-dash.
+      sub(/[[:space:]]+—[[:space:]].*$/, "", rest)
       sub(/[[:space:]]+$/, "", rest)
       if (length(rest) == 0) next
       # Drop prose-only annotations that start with a parenthesis or a

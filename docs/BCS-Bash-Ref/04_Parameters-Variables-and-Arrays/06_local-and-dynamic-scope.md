@@ -11,16 +11,20 @@ C, Python, JavaScript, or any other language with lexical scope.
 
 ```bash
 # right — terminate option processing first
-my_function() {
+my_function_right() {
   local -- name=$1
   local -i count=0
   local -a items=()
+  printf 'right: name=%s count=%d items=%d\n' "$name" "$count" "${#items[@]}"
 }
 
-# wrong — value beginning with - or -- is misparsed as an option
-my_function() {
-  local file="--help"   # ⇒ local thinks --help is its own flag
+# wrong — caller-supplied name without `--` reaches `local` as an option
+my_function_wrong() {
+  local "$1" 2>&1 || true            # `local --help` → builtin help, not assign
 }
+
+my_function_right alpha          # ⇒ right: name=alpha count=0 items=0
+my_function_wrong --help         # → triggers the local-option-parse footgun
 ```
 
 The BCS rule is: **always begin a `local` declaration with an attribute

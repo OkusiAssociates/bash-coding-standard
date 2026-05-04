@@ -23,7 +23,7 @@ Part. Tick a decision per entry, then run the per-Part fix pass.
 **stdout (first 5 non-empty lines):**
 
     tmpfs options on /dev/shm: rw,nosuid,nodev,inode64
-    16329445376
+    16342138880
 
 **stderr (first 3 non-empty lines):**
 

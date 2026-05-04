@@ -29,8 +29,12 @@ declare -ar items=(alpha beta gamma delta)
 declare -i i
 
 for ((i=0; i<${#items[@]}; i++)); do
-  printf '%d: %s\n' "$i" "${items[i]}"   # ⇒ 0: alpha … 3: delta
+  printf '%d: %s\n' "$i" "${items[i]}"
 done
+# ⇒ 0: alpha
+# ⇒ 1: beta
+# ⇒ 2: gamma
+# ⇒ 3: delta
 ```
 
 Note the bare `i` inside `${items[i]}`: array subscripts are an

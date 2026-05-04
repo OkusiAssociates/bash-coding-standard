@@ -104,10 +104,10 @@ Part. Tick a decision per entry, then run the per-Part fix pass.
 
 **stdout (first 5 non-empty lines):**
 
-    inside subshell (pid=2133183)
+    inside subshell (pid=2351638)
     after subshell
-    subshell EXIT (pid=2133184)
-    parent EXIT (pid=2133182)
+    subshell EXIT (pid=2351639)
+    parent EXIT (pid=2351637)
 
 **stderr (first 3 non-empty lines):**
 

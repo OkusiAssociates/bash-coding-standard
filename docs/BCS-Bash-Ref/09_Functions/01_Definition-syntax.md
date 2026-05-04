@@ -46,7 +46,9 @@ in_subshell() (
 )
 
 in_subshell                          # output + cleanup, $PWD unchanged in parent
-echo "$PWD"                          # ⇒ unchanged
+# → "$PWD" remains the parent's working directory
+echo "PWD-was-not-/tmp: $([[ "$PWD" != /tmp ]] && echo yes || echo no)"
+# ⇒ PWD-was-not-/tmp: yes
 ```
 
 The subshell-bodied form is rare and deliberate: use it when the

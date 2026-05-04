@@ -29,7 +29,7 @@ for row in "${rows[@]}"; do
   for cell in $row; do
     if [[ $cell == "$needle" ]]; then
       found=$cell
-      break 2                                  # ⇒ exits cell-loop AND row-loop
+      break 2                                  # → exits cell-loop AND row-loop
     fi
   done
 done
@@ -46,13 +46,18 @@ Symmetrical: `continue 2` from within an inner loop restarts the
 
 ```bash
 # scenario: skip an entire outer iteration when an inner condition fires.
+process() { printf 'processing: %s\n' "$1"; }   # placeholder
+mkdir -p src tests docs
+: > src/a.bash && : > tests/b.bash
 for dir in src tests docs; do
   [[ -d $dir ]] || continue                    # bare continue: next dir
   for f in "$dir"/*.bash; do
-    [[ -r $f ]] || continue 2                  # ⇒ unreadable file: abandon this whole dir
+    [[ -r $f ]] || continue 2                  # → unreadable file: skip this whole dir
     process "$f"
   done
 done
+# ⇒ processing: src/a.bash
+# ⇒ processing: tests/b.bash
 ```
 
 **See also**: §7.4 `for`, §7.6 `while`/`until`, §7.7 `select`, §7.3

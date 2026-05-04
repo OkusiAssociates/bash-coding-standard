@@ -53,9 +53,9 @@ Part. Tick a decision per entry, then run the per-Part fix pass.
 **stdout (first 5 non-empty lines):**
 
         PID    PPID    PGID     SID COMMAND
-    2132739 2132738 2132738 2128475 bash
+    2351226 2351225 2351225 2341275 bash
         PID    PPID    PGID     SID COMMAND
-    2132741 2132739 2132738 2128475 ps
+    2351228 2351226 2351225 2341275 ps
         PID    PPID    PGID     SID COMMAND
 
 **stderr (first 3 non-empty lines):**
@@ -83,7 +83,7 @@ Part. Tick a decision per entry, then run the per-Part fix pass.
 
 **stdout (first 5 non-empty lines):**
 
-    [1]+ 2132829 Running                 sleep 100 &
+    [1]+ 2351284 Running                 sleep 100 &
 
 **stderr (first 3 non-empty lines):**
 

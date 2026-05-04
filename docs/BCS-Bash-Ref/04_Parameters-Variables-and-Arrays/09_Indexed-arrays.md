@@ -68,7 +68,10 @@ printf 'indices: %s\n' "${!arr[*]}"
 
 # Iterating values gives elements only, in index order:
 for v in "${arr[@]}"; do printf '<%s>\n' "$v"; done
-# ⇒ <a> <c> <x> <y>
+# ⇒ <a>
+# ⇒ <c>
+# ⇒ <x>
+# ⇒ <y>
 
 # To know which index each value lives at, iterate "${!arr[@]}":
 for i in "${!arr[@]}"; do
