@@ -635,6 +635,7 @@ if [[ -t 1 ]]; then
 else
   printf '%s\n' OK
 fi
+# ⇒ OK    (green when stdout is a TTY; plain when piped)
 ```
 
 Buffering becomes visible the moment a pipeline appears. The classic trap:
@@ -3454,11 +3455,16 @@ for p in "${paths[@]}"; do
   [[ -f $p ]] || continue
   printf 'exists: %s\n' "$p"
 done
+# ⇒ exists: /etc/passwd
+# ⇒ (other paths skipped if absent)
 
 # Idiom 2: iterate indices (when you need the index)
 for i in "${!paths[@]}"; do
   printf '[%d] %s\n' "$i" "${paths[i]}"
 done
+# ⇒ [0] /etc/passwd
+# ⇒ [1] /var/log/app.log
+# ⇒ [2] name with space
 ```
 
 Always quote `"${arr[@]}"` — otherwise each element is re-split on
@@ -4740,6 +4746,8 @@ declare -A by_name=([alice]=42 [bob]=17)
 for k in "${!by_name[@]}"; do
   printf '%s=%s\n' "$k" "${by_name[$k]}"
 done
+# ⇒ alice=42
+# ⇒ bob=17    (key order is unspecified for assoc arrays)
 ```
 
 For nameref-based indirection (Bash 4.3+), prefer `declare -n` —
@@ -14810,11 +14818,13 @@ ensuring their parent context will detect a non-zero exit.
 fail_if_missing() {
   set -e
   test -f "$1"               # would normally exit on absence
-  echo "found: $1"
+  echo "found: $1"           # but it does NOT — errexit is dormant
 }
 if ! fail_if_missing /no/such/file; then
   echo "function returned non-zero, but did not exit shell"
 fi
+# ⇒ found: /no/such/file
+# ⇒ (the `if !` branch does NOT fire — echo's exit 0 masks the test failure)
 ```
 
 ### Exit status that propagates
@@ -16434,6 +16444,7 @@ The faster, safer replacement for `while read -r line; do arr+=("$line"); done`:
 declare -a lines
 mapfile -t lines < /etc/hosts
 printf 'loaded %d lines\n' "${#lines[@]}"
+# ⇒ loaded N lines   (N depends on the host's /etc/hosts)
 ```
 
 Without `-t`, each element retains its trailing newline — almost never
@@ -24241,6 +24252,7 @@ mkdir -p /tmp/builtin-demo
 # Same for realpath:
 enable -f /usr/lib/bash/realpath realpath
 realpath /etc/hosts
+# ⇒ /etc/hosts
 ```
 
 `enable -d name` removes the loadable; `enable -f -d /path/to/foo.so

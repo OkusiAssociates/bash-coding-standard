@@ -443,7 +443,9 @@ arrays:</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-A</span> <span class="va">by_name</span><span class="op">=</span><span class="va">(</span><span class="op">[</span>alice<span class="op">]</span><span class="va">=</span>42 <span class="op">[</span>bob<span class="op">]</span><span class="va">=</span>17<span class="va">)</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k <span class="kw">in</span> <span class="st">&quot;</span><span class="va">${</span><span class="op">!</span><span class="va">by_name</span><span class="op">[@]</span><span class="va">}</span><span class="st">&quot;</span><span class="kw">;</span> <span class="cf">do</span></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">&#39;%s=%s\n&#39;</span> <span class="st">&quot;</span><span class="va">$k</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">${by_name</span><span class="op">[</span><span class="va">$k</span><span class="op">]</span><span class="va">}</span><span class="st">&quot;</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ alice=42</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ bob=17    (key order is unspecified for assoc arrays)</span></span></code></pre></div>
 <p>For nameref-based indirection (Bash 4.3+), prefer
 <code>declare -n</code> — namerefs are safer and more readable than
 <code>${!var}</code> for write access. See §4.11.</p>

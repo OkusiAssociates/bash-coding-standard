@@ -355,11 +355,13 @@ detect a non-zero exit.</p>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">fail_if_missing()</span> <span class="kw">{</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="bu">set</span> <span class="at">-e</span></span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="bu">test</span> <span class="at">-f</span> <span class="st">&quot;</span><span class="va">$1</span><span class="st">&quot;</span>               <span class="co"># would normally exit on absence</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">&quot;found: </span><span class="va">$1</span><span class="st">&quot;</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">&quot;found: </span><span class="va">$1</span><span class="st">&quot;</span>           <span class="co"># but it does NOT — errexit is dormant</span></span>
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="ot">! </span><span class="ex">fail_if_missing</span> /no/such/file<span class="kw">;</span> <span class="cf">then</span></span>
 <span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">&quot;function returned non-zero, but did not exit shell&quot;</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="cf">fi</span></span></code></pre></div>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="cf">fi</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ found: /no/such/file</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ (the `if !` branch does NOT fire — echo&#39;s exit 0 masks the test failure)</span></span></code></pre></div>
 <h3 id="exit-status-that-propagates">Exit status that propagates</h3>
 <p>When errexit fires, the shell exits with the <em>failing
 command&#39;s</em> status, not 1. This is load-bearing: callers can switch
