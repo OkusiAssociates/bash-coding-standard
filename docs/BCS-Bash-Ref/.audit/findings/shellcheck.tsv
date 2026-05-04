@@ -1,5 +1,5 @@
 leaf_path	block_idx	runnability	label	sc_code	level	block_line	leaf_line	expected_violation	message
-01_The-Unix-Model-from-Bash/04_Streams-and-the-standard-descriptors.md	3	NEEDS_INPUT	NEUTRAL	SC2034	warning	3	39	0	hostname appears unused. Verify use (or export if used externally).
+01_The-Unix-Model-from-Bash/04_Streams-and-the-standard-descriptors.md	3	NEEDS_INPUT	NEUTRAL	SC2034	warning	3	40	0	hostname appears unused. Verify use (or export if used externally).
 01_The-Unix-Model-from-Bash/05_The-shell-environment.md	1	RUNNABLE	NEUTRAL	SC2034	warning	2	12	0	SHELL_ONLY appears unused. Verify use (or export if used externally).
 01_The-Unix-Model-from-Bash/05_The-shell-environment.md	4	RUNNABLE	MIXED	SC2034	warning	2	68	0	DEBUG appears unused. Verify use (or export if used externally).
 01_The-Unix-Model-from-Bash/07_Exit-status-and-process-termination.md	4	RUNNABLE	MIXED	SC2242	error	2	72	0	Can only exit with status 0-255. Other data should be written to stdout/stderr.
@@ -283,7 +283,7 @@ leaf_path	block_idx	runnability	label	sc_code	level	block_line	leaf_line	expecte
 13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	RUNNABLE	NEUTRAL	SC2091	warning	6	42	0	Remove surrounding $() to avoid executing output (or use eval if intentional).
 13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	RUNNABLE	NEUTRAL	SC2242	error	6	42	0	Can only exit with status 0-255. Other data should be written to stdout/stderr.
 13_Error-Handling-and-Exit-Status/02_set-e-errexit-full-semantics.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	28	0	The shebang must be on the first line. Delete blanks and move comments.
-13_Error-Handling-and-Exit-Status/02_set-e-errexit-full-semantics.md	4	RUNNABLE	NEUTRAL	SC2034	warning	3	113	0	output appears unused. Verify use (or export if used externally).
+13_Error-Handling-and-Exit-Status/02_set-e-errexit-full-semantics.md	4	RUNNABLE	NEUTRAL	SC2034	warning	3	115	0	output appears unused. Verify use (or export if used externally).
 13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	42	0	The shebang must be on the first line. Delete blanks and move comments.
 13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	2	RUNNABLE	NEUTRAL	SC1128	error	2	57	0	The shebang must be on the first line. Delete blanks and move comments.
 13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	3	RUNNABLE	NEUTRAL	SC1128	error	2	74	0	The shebang must be on the first line. Delete blanks and move comments.
