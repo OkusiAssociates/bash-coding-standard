@@ -115,11 +115,16 @@ for p in "${paths[@]}"; do
   [[ -f $p ]] || continue
   printf 'exists: %s\n' "$p"
 done
+# ⇒ exists: /etc/passwd
+# ⇒ (other paths skipped if absent)
 
 # Idiom 2: iterate indices (when you need the index)
 for i in "${!paths[@]}"; do
   printf '[%d] %s\n' "$i" "${paths[i]}"
 done
+# ⇒ [0] /etc/passwd
+# ⇒ [1] /var/log/app.log
+# ⇒ [2] name with space
 ```
 
 Always quote `"${arr[@]}"` — otherwise each element is re-split on

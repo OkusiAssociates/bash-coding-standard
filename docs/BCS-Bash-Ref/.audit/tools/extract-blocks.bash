@@ -147,7 +147,10 @@ extract_one_file() {
         sha="$(printf '%s' "$body" | sha1sum | cut -d' ' -f1)"
         label="$(classify_label "$body")"
         runn="$(classify_runnability "$body" "$label" "$block_lang")"
-        if [[ "$body" == *'# ⇒'* || "$body" == *'#  ⇒'* ]]; then
+        # Match any `#`-led comment containing the `⇒` glyph, regardless of
+        # padding between `#` and `⇒`. Corpus uses both `# ⇒` and aligned
+        # multi-line forms like `#         ⇒`.
+        if [[ "$body" =~ \#[[:space:]]*⇒ ]]; then
           has_annot=1
         else
           has_annot=0

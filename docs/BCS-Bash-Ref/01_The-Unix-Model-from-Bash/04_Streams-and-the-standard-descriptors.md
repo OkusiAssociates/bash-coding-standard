@@ -18,6 +18,7 @@ if [[ -t 1 ]]; then
 else
   printf '%s\n' OK
 fi
+# ⇒ OK    (green when stdout is a TTY; plain when piped)
 ```
 
 Buffering becomes visible the moment a pipeline appears. The classic trap:

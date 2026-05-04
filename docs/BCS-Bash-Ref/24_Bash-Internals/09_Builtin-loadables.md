@@ -36,6 +36,7 @@ mkdir -p /tmp/builtin-demo
 # Same for realpath:
 enable -f /usr/lib/bash/realpath realpath
 realpath /etc/hosts
+# ⇒ /etc/hosts
 ```
 
 `enable -d name` removes the loadable; `enable -f -d /path/to/foo.so

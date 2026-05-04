@@ -159,6 +159,8 @@ declare -A by_name=([alice]=42 [bob]=17)
 for k in "${!by_name[@]}"; do
   printf '%s=%s\n' "$k" "${by_name[$k]}"
 done
+# ⇒ alice=42
+# ⇒ bob=17    (key order is unspecified for assoc arrays)
 ```
 
 For nameref-based indirection (Bash 4.3+), prefer `declare -n` —

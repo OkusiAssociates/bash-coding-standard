@@ -24,6 +24,7 @@ The faster, safer replacement for `while read -r line; do arr+=("$line"); done`:
 declare -a lines
 mapfile -t lines < /etc/hosts
 printf 'loaded %d lines\n' "${#lines[@]}"
+# ⇒ loaded N lines   (N depends on the host's /etc/hosts)
 ```
 
 Without `-t`, each element retains its trailing newline — almost never

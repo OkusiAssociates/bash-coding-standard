@@ -86,11 +86,13 @@ ensuring their parent context will detect a non-zero exit.
 fail_if_missing() {
   set -e
   test -f "$1"               # would normally exit on absence
-  echo "found: $1"
+  echo "found: $1"           # but it does NOT — errexit is dormant
 }
 if ! fail_if_missing /no/such/file; then
   echo "function returned non-zero, but did not exit shell"
 fi
+# ⇒ found: /no/such/file
+# ⇒ (the `if !` branch does NOT fire — echo's exit 0 masks the test failure)
 ```
 
 ### Exit status that propagates
