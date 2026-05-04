@@ -1,0 +1,544 @@
+leaf_path	block_idx	runnability	label	sc_code	level	block_line	leaf_line	expected_violation	message
+01_The-Unix-Model-from-Bash/04_Streams-and-the-standard-descriptors.md	3	NEEDS_INPUT	NEUTRAL	SC2034	warning	3	39	0	hostname appears unused. Verify use (or export if used externally).
+01_The-Unix-Model-from-Bash/05_The-shell-environment.md	1	RUNNABLE	NEUTRAL	SC2034	warning	2	12	0	SHELL_ONLY appears unused. Verify use (or export if used externally).
+01_The-Unix-Model-from-Bash/05_The-shell-environment.md	4	RUNNABLE	MIXED	SC2034	warning	2	68	0	DEBUG appears unused. Verify use (or export if used externally).
+01_The-Unix-Model-from-Bash/07_Exit-status-and-process-termination.md	4	RUNNABLE	MIXED	SC2242	error	2	72	0	Can only exit with status 0-255. Other data should be written to stdout/stderr.
+02_Bash-as-a-Program/05_Startup-file-chains.md	2	RUNNABLE	NEUTRAL	SC1090	warning	3	46	0	ShellCheck can't follow non-constant source. Use a directive to specify location.
+03_Lexical-Structure-and-Shell-Grammar/01_Tokenisation.md	1	RUNNABLE	NEUTRAL	SC1073	error	0	45	0	Couldn't parse this brace group. Fix to allow more checks.
+03_Lexical-Structure-and-Shell-Grammar/01_Tokenisation.md	1	RUNNABLE	NEUTRAL	SC1055	error	4	49	0	You need at least one command here. Use 'true;' as a no-op.
+03_Lexical-Structure-and-Shell-Grammar/01_Tokenisation.md	1	RUNNABLE	NEUTRAL	SC1072	error	4	49	0	Unexpected keyword/token. Fix any mentioned problems and try again.
+03_Lexical-Structure-and-Shell-Grammar/02_Reserved-words.md	2	RUNNABLE	NEUTRAL	SC1010	warning	4	25	0	Use semicolon or linefeed before 'then' (or quote to make it literal).
+03_Lexical-Structure-and-Shell-Grammar/02_Reserved-words.md	2	RUNNABLE	NEUTRAL	SC1010	warning	4	25	0	Use semicolon or linefeed before 'fi' (or quote to make it literal).
+03_Lexical-Structure-and-Shell-Grammar/03_Comments.md	1	RUNNABLE	NEUTRAL	SC2034	warning	6	28	0	result appears unused. Verify use (or export if used externally).
+03_Lexical-Structure-and-Shell-Grammar/03_Comments.md	2	RUNNABLE	MIXED	SC2034	warning	5	40	0	count appears unused. Verify use (or export if used externally).
+03_Lexical-Structure-and-Shell-Grammar/04_Quoting-overview.md	3	RUNNABLE	MIXED	SC2154	warning	2	77	0	src is referenced but not assigned.
+03_Lexical-Structure-and-Shell-Grammar/04_Quoting-overview.md	3	RUNNABLE	MIXED	SC2154	warning	2	77	0	dst is referenced but not assigned.
+03_Lexical-Structure-and-Shell-Grammar/04_Quoting-overview.md	4	RUNNABLE	NEUTRAL	SC2155	warning	3	102	0	Declare and assign separately to avoid masking return values.
+03_Lexical-Structure-and-Shell-Grammar/05_Single-quotes.md	2	RUNNABLE	MIXED	SC2154	warning	6	40	0	target is referenced but not assigned.
+03_Lexical-Structure-and-Shell-Grammar/06_Double-quotes.md	1	RUNNABLE	NEUTRAL	SC2066	error	12	55	0	Since you double quoted this, it will not word split, and the loop will only run once.
+03_Lexical-Structure-and-Shell-Grammar/09_Backslash-escapes.md	2	RUNNABLE	NEUTRAL	SC2034	warning	2	44	0	msg appears unused. Verify use (or export if used externally).
+03_Lexical-Structure-and-Shell-Grammar/10_Shell-grammar.md	2	RUNNABLE	NEUTRAL	SC1073	error	0	50	0	Couldn't parse this brace group. Fix to allow more checks.
+03_Lexical-Structure-and-Shell-Grammar/10_Shell-grammar.md	2	RUNNABLE	NEUTRAL	SC1055	error	2	52	0	You need at least one command here. Use 'true;' as a no-op.
+03_Lexical-Structure-and-Shell-Grammar/10_Shell-grammar.md	2	RUNNABLE	NEUTRAL	SC1072	error	2	52	0	Unexpected keyword/token. Fix any mentioned problems and try again.
+04_Parameters-Variables-and-Arrays/01_Parameter-taxonomy.md	2	RUNNABLE	NEUTRAL	SC1128	error	2	31	0	The shebang must be on the first line. Delete blanks and move comments.
+04_Parameters-Variables-and-Arrays/02_Positional-parameters.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	43	0	The shebang must be on the first line. Delete blanks and move comments.
+04_Parameters-Variables-and-Arrays/02_Positional-parameters.md	1	RUNNABLE	NEUTRAL	SC2068	error	26	67	0	Double quote array expansions to avoid re-splitting elements.
+04_Parameters-Variables-and-Arrays/02_Positional-parameters.md	3	RUNNABLE	NEUTRAL	SC1128	error	2	107	0	The shebang must be on the first line. Delete blanks and move comments.
+04_Parameters-Variables-and-Arrays/03_Special-parameters.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	25	0	The shebang must be on the first line. Delete blanks and move comments.
+04_Parameters-Variables-and-Arrays/04_Shell-variables.md	2	RUNNABLE	NEUTRAL	SC2050	warning	6	74	0	This expression is constant. Did you forget the $ on a variable?
+04_Parameters-Variables-and-Arrays/05_The-declare-builtin-and-attributes.md	3	RUNNABLE	NEUTRAL	SC2034	warning	2	68	0	VALID_TIERS appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/05_The-declare-builtin-and-attributes.md	3	RUNNABLE	NEUTRAL	SC2034	warning	7	73	0	out appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/05_The-declare-builtin-and-attributes.md	4	RUNNABLE	NEUTRAL	SC2034	warning	3	106	0	CACHE_HITS appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/05_The-declare-builtin-and-attributes.md	4	RUNNABLE	NEUTRAL	SC2034	warning	6	109	0	CACHE appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/06_local-and-dynamic-scope.md	1	RUNNABLE	MIXED	SC2034	warning	3	15	0	name appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/06_local-and-dynamic-scope.md	1	RUNNABLE	MIXED	SC2034	warning	4	16	0	count appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/06_local-and-dynamic-scope.md	1	RUNNABLE	MIXED	SC2034	warning	5	17	0	items appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/06_local-and-dynamic-scope.md	1	RUNNABLE	MIXED	SC2034	warning	10	22	0	file appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/06_local-and-dynamic-scope.md	4	RUNNABLE	NEUTRAL	SC2034	warning	2	118	0	file appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/06_local-and-dynamic-scope.md	4	RUNNABLE	NEUTRAL	SC2034	warning	3	119	0	count appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/06_local-and-dynamic-scope.md	4	RUNNABLE	NEUTRAL	SC2034	warning	4	120	0	errors appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/06_local-and-dynamic-scope.md	4	RUNNABLE	NEUTRAL	SC2034	warning	5	121	0	by_key appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/06_local-and-dynamic-scope.md	4	RUNNABLE	NEUTRAL	SC2034	warning	6	122	0	tiers appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/06_local-and-dynamic-scope.md	4	RUNNABLE	NEUTRAL	SC2034	warning	7	123	0	out appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/07_readonly-and-immutability.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	31	0	The shebang must be on the first line. Delete blanks and move comments.
+04_Parameters-Variables-and-Arrays/07_readonly-and-immutability.md	1	RUNNABLE	NEUTRAL	SC2034	warning	6	35	0	VERSION appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/07_readonly-and-immutability.md	1	RUNNABLE	NEUTRAL	SC2155	warning	7	36	0	Declare and assign separately to avoid masking return values.
+04_Parameters-Variables-and-Arrays/07_readonly-and-immutability.md	1	RUNNABLE	NEUTRAL	SC2034	warning	10	39	0	PREFIX appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/07_readonly-and-immutability.md	1	RUNNABLE	NEUTRAL	SC2034	warning	13	42	0	SCRIPT_NAME appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/07_readonly-and-immutability.md	2	RUNNABLE	NEUTRAL	SC1128	error	2	59	0	The shebang must be on the first line. Delete blanks and move comments.
+04_Parameters-Variables-and-Arrays/09_Indexed-arrays.md	1	RUNNABLE	NEUTRAL	SC2034	warning	2	14	0	a appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/09_Indexed-arrays.md	1	RUNNABLE	NEUTRAL	SC2034	warning	3	15	0	b appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/09_Indexed-arrays.md	1	RUNNABLE	NEUTRAL	SC2034	warning	5	17	0	d appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/09_Indexed-arrays.md	1	RUNNABLE	NEUTRAL	SC2034	warning	8	20	0	e appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/10_Associative-arrays.md	1	RUNNABLE	NEUTRAL	SC2034	warning	4	15	0	by_id appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/10_Associative-arrays.md	1	RUNNABLE	NEUTRAL	SC2034	warning	5	16	0	counts appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/10_Associative-arrays.md	1	RUNNABLE	NEUTRAL	SC2034	warning	6	17	0	STATIC appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/10_Associative-arrays.md	2	RUNNABLE	NEUTRAL	SC2154	warning	2	28	0	alice is referenced but not assigned.
+04_Parameters-Variables-and-Arrays/10_Associative-arrays.md	3	RUNNABLE	RIGHT	SC2034	warning	4	45	0	m appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/10_Associative-arrays.md	7	RUNNABLE	NEUTRAL	SC2154	warning	3	136	0	src is referenced but not assigned.
+04_Parameters-Variables-and-Arrays/10_Associative-arrays.md	7	RUNNABLE	NEUTRAL	SC2034	warning	3	136	0	copy appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/11_Namerefs-n.md	3	RUNNABLE	NEUTRAL	SC2125	warning	10	72	0	Brace expansions and globs are literal in assignments. Quote it or use an array.
+04_Parameters-Variables-and-Arrays/11_Namerefs-n.md	3	RUNNABLE	NEUTRAL	SC2034	warning	11	73	0	cell appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/11_Namerefs-n.md	4	RUNNABLE	NEUTRAL	SC2034	warning	2	90	0	b appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/11_Namerefs-n.md	5	RUNNABLE	MIXED	SC2034	warning	8	110	0	out appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/13_Variable-assignment-semantics.md	2	RUNNABLE	NEUTRAL	SC2206	warning	12	72	0	Quote to prevent word splitting/globbing, or split robustly with mapfile or read -a.
+04_Parameters-Variables-and-Arrays/13_Variable-assignment-semantics.md	2	RUNNABLE	NEUTRAL	SC2206	warning	24	84	0	Quote to prevent word splitting/globbing, or split robustly with mapfile or read -a.
+04_Parameters-Variables-and-Arrays/13_Variable-assignment-semantics.md	4	RUNNABLE	NEUTRAL	SC2034	warning	2	131	0	a appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/13_Variable-assignment-semantics.md	4	RUNNABLE	NEUTRAL	SC2034	warning	2	131	0	b appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/13_Variable-assignment-semantics.md	5	RUNNABLE	NEUTRAL	SC2034	warning	4	148	0	x appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/13_Variable-assignment-semantics.md	6	RUNNABLE	NEUTRAL	SC2034	warning	2	159	0	x appears unused. Verify use (or export if used externally).
+04_Parameters-Variables-and-Arrays/14_Unsetting.md	1	RUNNABLE	MIXED	SC1128	error	2	36	0	The shebang must be on the first line. Delete blanks and move comments.
+04_Parameters-Variables-and-Arrays/14_Unsetting.md	2	RUNNABLE	NEUTRAL	SC1128	error	2	65	0	The shebang must be on the first line. Delete blanks and move comments.
+05_Expansions/02_Brace-expansion.md	1	RUNNABLE	NEUTRAL	SC1083	warning	10	33	0	This { is literal. Check expression (missing ;/\\n?) or quote it.
+05_Expansions/02_Brace-expansion.md	1	RUNNABLE	NEUTRAL	SC1083	warning	10	33	0	This } is literal. Check expression (missing ;/\\n?) or quote it.
+05_Expansions/02_Brace-expansion.md	1	RUNNABLE	NEUTRAL	SC1083	warning	15	38	0	This { is literal. Check expression (missing ;/\\n?) or quote it.
+05_Expansions/02_Brace-expansion.md	1	RUNNABLE	NEUTRAL	SC1083	warning	15	38	0	This } is literal. Check expression (missing ;/\\n?) or quote it.
+05_Expansions/02_Brace-expansion.md	2	RUNNABLE	NEUTRAL	SC1128	error	2	53	0	The shebang must be on the first line. Delete blanks and move comments.
+05_Expansions/02_Brace-expansion.md	2	RUNNABLE	NEUTRAL	SC2154	warning	7	58	0	f is referenced but not assigned.
+05_Expansions/02_Brace-expansion.md	2	RUNNABLE	NEUTRAL	SC2154	warning	13	64	0	conf is referenced but not assigned.
+05_Expansions/03_Tilde-expansion.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	26	0	The shebang must be on the first line. Delete blanks and move comments.
+05_Expansions/03_Tilde-expansion.md	1	RUNNABLE	NEUTRAL	SC2088	warning	10	34	0	Tilde does not expand in quotes. Use $HOME.
+05_Expansions/03_Tilde-expansion.md	1	RUNNABLE	NEUTRAL	SC2088	warning	11	35	0	Tilde does not expand in quotes. Use $HOME.
+05_Expansions/03_Tilde-expansion.md	1	RUNNABLE	NEUTRAL	SC2088	warning	23	47	0	Tilde does not expand in quotes. Use $HOME.
+05_Expansions/04_Parameter-and-variable-expansion.md	7	RUNNABLE	NEUTRAL	SC2034	warning	6	150	0	BCS_MODEL appears unused. Verify use (or export if used externally).
+05_Expansions/04_Parameter-and-variable-expansion.md	7	RUNNABLE	NEUTRAL	SC2034	warning	6	150	0	BCS_EFFORT appears unused. Verify use (or export if used externally).
+05_Expansions/04_Parameter-and-variable-expansion.md	7	RUNNABLE	NEUTRAL	SC2034	warning	6	150	0	BCS_VERBOSE appears unused. Verify use (or export if used externally).
+05_Expansions/04_Parameter-and-variable-expansion.md	10	RUNNABLE	NEUTRAL	SC2068	error	4	213	0	Double quote array expansions to avoid re-splitting elements.
+05_Expansions/05_Arithmetic-expansion.md	2	RUNNABLE	NEUTRAL	SC1128	error	2	48	0	The shebang must be on the first line. Delete blanks and move comments.
+05_Expansions/05_Arithmetic-expansion.md	2	RUNNABLE	NEUTRAL	SC2154	warning	7	53	0	undef is referenced but not assigned.
+05_Expansions/05_Arithmetic-expansion.md	2	RUNNABLE	NEUTRAL	SC2034	warning	13	59	0	n appears unused. Verify use (or export if used externally).
+05_Expansions/05_Arithmetic-expansion.md	3	RUNNABLE	NEUTRAL	SC2080	error	3	91	0	Numbers with leading 0 are considered octal.
+05_Expansions/06_Command-substitution.md	1	NEEDS_INPUT	NEUTRAL	SC2034	warning	7	26	0	count appears unused. Verify use (or export if used externally).
+05_Expansions/06_Command-substitution.md	1	NEEDS_INPUT	NEUTRAL	SC2034	warning	11	30	0	parent appears unused. Verify use (or export if used externally).
+05_Expansions/06_Command-substitution.md	4	RUNNABLE	NEUTRAL	SC1010	warning	4	89	0	Use semicolon or linefeed before 'done' (or quote to make it literal).
+05_Expansions/06_Command-substitution.md	4	RUNNABLE	NEUTRAL	SC1010	warning	10	95	0	Use semicolon or linefeed before 'done' (or quote to make it literal).
+05_Expansions/06_Command-substitution.md	5	RUNNABLE	NEUTRAL	SC2034	warning	10	118	0	lines appears unused. Verify use (or export if used externally).
+05_Expansions/07_Process-substitution.md	3	NEEDS_INPUT	NEUTRAL	SC2034	warning	10	74	0	fd appears unused. Verify use (or export if used externally).
+05_Expansions/07_Process-substitution.md	4	NEEDS_INPUT	NEUTRAL	SC2034	warning	3	93	0	line appears unused. Verify use (or export if used externally).
+05_Expansions/08_Word-splitting-and-IFS.md	3	RUNNABLE	NEUTRAL	SC2068	error	22	98	0	Double quote array expansions to avoid re-splitting elements.
+05_Expansions/08_Word-splitting-and-IFS.md	5	NEEDS_INPUT	NEUTRAL	SC2034	warning	3	138	0	procs appears unused. Verify use (or export if used externally).
+05_Expansions/08_Word-splitting-and-IFS.md	5	NEEDS_INPUT	NEUTRAL	SC2034	warning	7	142	0	procs2 appears unused. Verify use (or export if used externally).
+05_Expansions/09_Pathname-expansion-globbing.md	3	RUNNABLE	NEUTRAL	SC2034	warning	3	112	0	files appears unused. Verify use (or export if used externally).
+05_Expansions/10_Quote-removal.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	18	0	The shebang must be on the first line. Delete blanks and move comments.
+05_Expansions/10_Quote-removal.md	2	DESTRUCTIVE	NEUTRAL	SC1128	error	2	61	0	The shebang must be on the first line. Delete blanks and move comments.
+05_Expansions/11_Glob-options.md	1	RUNNABLE	NEUTRAL	SC2034	warning	10	47	0	inputs appears unused. Verify use (or export if used externally).
+05_Expansions/11_Glob-options.md	4	RUNNABLE	NEUTRAL	SC2050	warning	3	113	0	This expression is constant. Did you forget the $ on a variable?
+05_Expansions/11_Glob-options.md	4	RUNNABLE	NEUTRAL	SC2194	warning	5	115	0	This word is constant. Did you forget the $ on a variable?
+05_Expansions/12_Extended-globs-extglob.md	3	RUNNABLE	NEUTRAL	SC2034	warning	3	80	0	images appears unused. Verify use (or export if used externally).
+05_Expansions/12_Extended-globs-extglob.md	3	RUNNABLE	NEUTRAL	SC2034	warning	4	81	0	not_thumbs appears unused. Verify use (or export if used externally).
+05_Expansions/13_Locale-and-pattern-matching.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	32	0	The shebang must be on the first line. Delete blanks and move comments.
+05_Expansions/13_Locale-and-pattern-matching.md	2	RUNNABLE	NEUTRAL	SC2288	warning	11	66	0	This is interpreted as a command name ending with '['. Double check syntax.
+05_Expansions/13_Locale-and-pattern-matching.md	3	RUNNABLE	NEUTRAL	SC1128	error	2	77	0	The shebang must be on the first line. Delete blanks and move comments.
+06_Redirection-and-Pipelines/01_The-fd-table-from-Bashs-perspective.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	40	0	The shebang must be on the first line. Delete blanks and move comments.
+06_Redirection-and-Pipelines/01_The-fd-table-from-Bashs-perspective.md	2	RUNNABLE	NEUTRAL	SC1128	error	2	72	0	The shebang must be on the first line. Delete blanks and move comments.
+06_Redirection-and-Pipelines/01_The-fd-table-from-Bashs-perspective.md	3	RUNNABLE	NEUTRAL	SC1128	error	2	98	0	The shebang must be on the first line. Delete blanks and move comments.
+06_Redirection-and-Pipelines/02_Input-redirection.md	1	NEEDS_INPUT	NEUTRAL	SC1128	error	2	31	0	The shebang must be on the first line. Delete blanks and move comments.
+06_Redirection-and-Pipelines/02_Input-redirection.md	2	NEEDS_INPUT	NEUTRAL	SC1128	error	2	70	0	The shebang must be on the first line. Delete blanks and move comments.
+06_Redirection-and-Pipelines/03_Output-redirection.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	33	0	The shebang must be on the first line. Delete blanks and move comments.
+06_Redirection-and-Pipelines/04_Stderr-redirection-and-merging.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	33	0	The shebang must be on the first line. Delete blanks and move comments.
+06_Redirection-and-Pipelines/04_Stderr-redirection-and-merging.md	1	RUNNABLE	NEUTRAL	SC2069	warning	12	43	0	To redirect stdout+stderr, 2>&1 must be last (or use '{ cmd > file; } 2>&1' to clarify).
+06_Redirection-and-Pipelines/05_Reading-and-writing.md	1	NEEDS_INPUT	NEUTRAL	SC1128	error	2	37	0	The shebang must be on the first line. Delete blanks and move comments.
+06_Redirection-and-Pipelines/06_Duplicating-fds.md	1	RUNNABLE	NEUTRAL	SC1128	error	3	47	0	The shebang must be on the first line. Delete blanks and move comments.
+06_Redirection-and-Pipelines/07_Moving-and-closing-fds.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	34	0	The shebang must be on the first line. Delete blanks and move comments.
+06_Redirection-and-Pipelines/07_Moving-and-closing-fds.md	2	RUNNABLE	NEUTRAL	SC1128	error	2	64	0	The shebang must be on the first line. Delete blanks and move comments.
+06_Redirection-and-Pipelines/08_Here-documents.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	30	0	The shebang must be on the first line. Delete blanks and move comments.
+06_Redirection-and-Pipelines/08_Here-documents.md	2	RUNNABLE	NEUTRAL	SC1128	error	2	60	0	The shebang must be on the first line. Delete blanks and move comments.
+06_Redirection-and-Pipelines/08_Here-documents.md	3	RUNNABLE	NEUTRAL	SC2261	error	4	92	0	Multiple redirections compete for stdin. Use cat, tee, or pass filenames instead.
+06_Redirection-and-Pipelines/08_Here-documents.md	3	RUNNABLE	NEUTRAL	SC2259	error	4	92	0	This redirection overrides piped input. To use both, merge or pass filenames.
+06_Redirection-and-Pipelines/08_Here-documents.md	3	RUNNABLE	NEUTRAL	SC2261	error	4	92	0	Multiple redirections compete for stdin. Use cat, tee, or pass filenames instead.
+06_Redirection-and-Pipelines/09_Here-strings.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	30	0	The shebang must be on the first line. Delete blanks and move comments.
+06_Redirection-and-Pipelines/10_Process-substitution-as-redirection.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	32	0	The shebang must be on the first line. Delete blanks and move comments.
+06_Redirection-and-Pipelines/10_Process-substitution-as-redirection.md	2	RUNNABLE	NEUTRAL	SC1128	error	2	53	0	The shebang must be on the first line. Delete blanks and move comments.
+06_Redirection-and-Pipelines/11_Order-of-evaluation.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	30	0	The shebang must be on the first line. Delete blanks and move comments.
+06_Redirection-and-Pipelines/11_Order-of-evaluation.md	1	RUNNABLE	NEUTRAL	SC2069	warning	16	44	0	To redirect stdout+stderr, 2>&1 must be last (or use '{ cmd > file; } 2>&1' to clarify).
+06_Redirection-and-Pipelines/12_exec-for-fd-manipulation.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	31	0	The shebang must be on the first line. Delete blanks and move comments.
+06_Redirection-and-Pipelines/12_exec-for-fd-manipulation.md	2	NEEDS_INPUT	NEUTRAL	SC1128	error	2	64	0	The shebang must be on the first line. Delete blanks and move comments.
+06_Redirection-and-Pipelines/12_exec-for-fd-manipulation.md	3	RUNNABLE	NEUTRAL	SC1128	error	2	98	0	The shebang must be on the first line. Delete blanks and move comments.
+06_Redirection-and-Pipelines/13_Pipelines.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	44	0	The shebang must be on the first line. Delete blanks and move comments.
+06_Redirection-and-Pipelines/14_Stderr-pipelines.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	13	0	The shebang must be on the first line. Delete blanks and move comments.
+06_Redirection-and-Pipelines/15_pipefail-semantics.md	1	NEEDS_INPUT	NEUTRAL	SC1128	error	2	37	0	The shebang must be on the first line. Delete blanks and move comments.
+06_Redirection-and-Pipelines/15_pipefail-semantics.md	2	RUNNABLE	NEUTRAL	SC1128	error	2	86	0	The shebang must be on the first line. Delete blanks and move comments.
+06_Redirection-and-Pipelines/16_lastpipe-semantics.md	1	NEEDS_INPUT	NEUTRAL	SC1128	error	2	20	0	The shebang must be on the first line. Delete blanks and move comments.
+06_Redirection-and-Pipelines/16_lastpipe-semantics.md	3	NEEDS_INPUT	NEUTRAL	SC1128	error	2	55	0	The shebang must be on the first line. Delete blanks and move comments.
+07_Control-Flow-and-Compound-Commands/02_ifelifelsefi.md	2	RUNNABLE	NEUTRAL	SC2154	warning	2	31	0	config is referenced but not assigned.
+07_Control-Flow-and-Compound-Commands/02_ifelifelsefi.md	2	RUNNABLE	NEUTRAL	SC1090	warning	3	32	0	ShellCheck can't follow non-constant source. Use a directive to specify location.
+07_Control-Flow-and-Compound-Commands/02_ifelifelsefi.md	2	RUNNABLE	NEUTRAL	SC2154	warning	4	33	0	fallback is referenced but not assigned.
+07_Control-Flow-and-Compound-Commands/02_ifelifelsefi.md	2	RUNNABLE	NEUTRAL	SC1090	warning	5	34	0	ShellCheck can't follow non-constant source. Use a directive to specify location.
+07_Control-Flow-and-Compound-Commands/02_ifelifelsefi.md	3	RUNNABLE	NEUTRAL	SC2154	warning	2	42	0	file is referenced but not assigned (for output from commands, use "$(file ...)" ).
+07_Control-Flow-and-Compound-Commands/02_ifelifelsefi.md	5	RUNNABLE	NEUTRAL	SC2120	warning	0	82	0	_audit_main references arguments, but none are ever passed.
+07_Control-Flow-and-Compound-Commands/02_ifelifelsefi.md	5	RUNNABLE	NEUTRAL	SC2154	warning	3	85	0	dir is referenced but not assigned.
+07_Control-Flow-and-Compound-Commands/03_caseesac.md	2	RUNNABLE	NEUTRAL	SC2154	warning	2	32	0	x is referenced but not assigned.
+07_Control-Flow-and-Compound-Commands/03_caseesac.md	2	RUNNABLE	NEUTRAL	SC2154	warning	3	33	0	y is referenced but not assigned.
+07_Control-Flow-and-Compound-Commands/03_caseesac.md	2	RUNNABLE	NEUTRAL	SC2254	warning	3	33	0	Quote expansions in case patterns to match literally rather than as a glob.
+07_Control-Flow-and-Compound-Commands/03_caseesac.md	3	RUNNABLE	NEUTRAL	SC2154	warning	2	60	0	x is referenced but not assigned.
+07_Control-Flow-and-Compound-Commands/03_caseesac.md	4	RUNNABLE	NEUTRAL	SC2154	warning	2	72	0	file is referenced but not assigned (for output from commands, use "$(file ...)" ).
+07_Control-Flow-and-Compound-Commands/03_caseesac.md	5	RUNNABLE	NEUTRAL	SC2154	warning	4	95	0	arg is referenced but not assigned.
+07_Control-Flow-and-Compound-Commands/03_caseesac.md	6	RUNNABLE	MIXED	SC2154	warning	2	128	0	mode is referenced but not assigned.
+07_Control-Flow-and-Compound-Commands/04_for-x-in-list.md	3	RUNNABLE	NEUTRAL	SC2034	warning	5	54	0	value appears unused. Verify use (or export if used externally).
+07_Control-Flow-and-Compound-Commands/04_for-x-in-list.md	3	RUNNABLE	NEUTRAL	SC2034	warning	6	55	0	i appears unused. Verify use (or export if used externally).
+07_Control-Flow-and-Compound-Commands/04_for-x-in-list.md	3	RUNNABLE	NEUTRAL	SC2034	warning	7	56	0	k appears unused. Verify use (or export if used externally).
+07_Control-Flow-and-Compound-Commands/04_for-x-in-list.md	3	RUNNABLE	NEUTRAL	SC2034	warning	8	57	0	v appears unused. Verify use (or export if used externally).
+07_Control-Flow-and-Compound-Commands/04_for-x-in-list.md	5	RUNNABLE	NEUTRAL	SC2154	warning	3	94	0	files is referenced but not assigned.
+07_Control-Flow-and-Compound-Commands/05_C-style-for.md	2	RUNNABLE	NEUTRAL	SC1128	error	2	25	0	The shebang must be on the first line. Delete blanks and move comments.
+07_Control-Flow-and-Compound-Commands/06_whileuntil.md	3	NEEDS_INPUT	NEUTRAL	SC2154	warning	4	43	0	input_file is referenced but not assigned.
+07_Control-Flow-and-Compound-Commands/06_whileuntil.md	4	ANTIPATTERN	WRONG	SC2034	warning	3	69	1	line appears unused. Verify use (or export if used externally).
+07_Control-Flow-and-Compound-Commands/06_whileuntil.md	5	NEEDS_INPUT	RIGHT	SC2034	warning	3	81	0	line appears unused. Verify use (or export if used externally).
+07_Control-Flow-and-Compound-Commands/06_whileuntil.md	6	NEEDS_INPUT	NEUTRAL	SC2034	warning	6	93	0	line appears unused. Verify use (or export if used externally).
+07_Control-Flow-and-Compound-Commands/06_whileuntil.md	7	NETWORK	NEUTRAL	SC2154	warning	3	113	0	url is referenced but not assigned.
+07_Control-Flow-and-Compound-Commands/07_select.md	2	INTERACTIVE	NEUTRAL	SC1128	error	2	33	0	The shebang must be on the first line. Delete blanks and move comments.
+07_Control-Flow-and-Compound-Commands/07_select.md	2	INTERACTIVE	NEUTRAL	SC2154	warning	10	41	0	svc is referenced but not assigned.
+07_Control-Flow-and-Compound-Commands/08_Subshell-grouping.md	2	RUNNABLE	MIXED	SC1128	error	2	53	0	The shebang must be on the first line. Delete blanks and move comments.
+07_Control-Flow-and-Compound-Commands/08_Subshell-grouping.md	2	RUNNABLE	MIXED	SC2154	warning	6	57	0	build_dir is referenced but not assigned.
+07_Control-Flow-and-Compound-Commands/08_Subshell-grouping.md	3	RUNNABLE	NEUTRAL	SC1128	error	2	77	0	The shebang must be on the first line. Delete blanks and move comments.
+07_Control-Flow-and-Compound-Commands/09_Brace-grouping.md	2	RUNNABLE	MIXED	SC1073	error	2	30	0	Couldn't parse this brace group. Fix to allow more checks.
+07_Control-Flow-and-Compound-Commands/09_Brace-grouping.md	2	RUNNABLE	MIXED	SC1054	error	2	30	0	You need a space after the '{'.
+07_Control-Flow-and-Compound-Commands/09_Brace-grouping.md	2	RUNNABLE	MIXED	SC1083	warning	2	30	0	This } is literal. Check expression (missing ;/\\n?) or quote it.
+07_Control-Flow-and-Compound-Commands/09_Brace-grouping.md	2	RUNNABLE	MIXED	SC1083	warning	3	31	0	This } is literal. Check expression (missing ;/\\n?) or quote it.
+07_Control-Flow-and-Compound-Commands/09_Brace-grouping.md	2	RUNNABLE	MIXED	SC1056	error	15	43	0	Expected a '}'. If you have one, try a ; or \\n in front of it.
+07_Control-Flow-and-Compound-Commands/09_Brace-grouping.md	2	RUNNABLE	MIXED	SC1072	error	15	43	0	Missing '}'. Fix any mentioned problems and try again.
+07_Control-Flow-and-Compound-Commands/09_Brace-grouping.md	3	RUNNABLE	NEUTRAL	SC1128	error	2	53	0	The shebang must be on the first line. Delete blanks and move comments.
+07_Control-Flow-and-Compound-Commands/10_and-short-circuits.md	1	RUNNABLE	NEUTRAL	SC2154	warning	2	29	0	dir is referenced but not assigned.
+07_Control-Flow-and-Compound-Commands/10_and-short-circuits.md	2	ANTIPATTERN	WRONG	SC2154	warning	2	48	1	file is referenced but not assigned (for output from commands, use "$(file ...)" ).
+07_Control-Flow-and-Compound-Commands/10_and-short-circuits.md	3	RUNNABLE	RIGHT	SC2154	warning	2	64	0	file is referenced but not assigned (for output from commands, use "$(file ...)" ).
+07_Control-Flow-and-Compound-Commands/10_and-short-circuits.md	4	RUNNABLE	RIGHT	SC2154	warning	2	75	0	file is referenced but not assigned (for output from commands, use "$(file ...)" ).
+07_Control-Flow-and-Compound-Commands/12_return.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	26	0	The shebang must be on the first line. Delete blanks and move comments.
+07_Control-Flow-and-Compound-Commands/13_exit.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	27	0	The shebang must be on the first line. Delete blanks and move comments.
+07_Control-Flow-and-Compound-Commands/13_exit.md	2	RUNNABLE	NEUTRAL	SC1128	error	2	55	0	The shebang must be on the first line. Delete blanks and move comments.
+07_Control-Flow-and-Compound-Commands/14_true-false.md	1	RUNNABLE	NEUTRAL	SC1128	error	3	29	0	The shebang must be on the first line. Delete blanks and move comments.
+08_Conditional-Expressions-and-Arithmetic/03_File-comparison-operators.md	1	DESTRUCTIVE	MIXED	SC1128	error	2	27	0	The shebang must be on the first line. Delete blanks and move comments.
+08_Conditional-Expressions-and-Arithmetic/04_String-operators.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	30	0	The shebang must be on the first line. Delete blanks and move comments.
+08_Conditional-Expressions-and-Arithmetic/06_Regex-matching-with.md	2	RUNNABLE	NEUTRAL	SC2076	warning	4	39	0	Remove quotes from right-hand side of =~ to match as a regex rather than literally.
+08_Conditional-Expressions-and-Arithmetic/07_Logical-operators-and-grouping.md	1	RUNNABLE	MIXED	SC1128	error	2	30	0	The shebang must be on the first line. Delete blanks and move comments.
+08_Conditional-Expressions-and-Arithmetic/07_Logical-operators-and-grouping.md	1	RUNNABLE	MIXED	SC1090	warning	8	36	0	ShellCheck can't follow non-constant source. Use a directive to specify location.
+08_Conditional-Expressions-and-Arithmetic/07_Logical-operators-and-grouping.md	1	RUNNABLE	MIXED	SC2154	warning	16	44	0	dir is referenced but not assigned.
+08_Conditional-Expressions-and-Arithmetic/07_Logical-operators-and-grouping.md	1	RUNNABLE	MIXED	SC2154	warning	16	44	0	force is referenced but not assigned.
+08_Conditional-Expressions-and-Arithmetic/08_Quoting-rules-inside.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	29	0	The shebang must be on the first line. Delete blanks and move comments.
+08_Conditional-Expressions-and-Arithmetic/08_Quoting-rules-inside.md	1	RUNNABLE	NEUTRAL	SC2053	warning	12	39	0	Quote the right-hand side of == in [[ ]] to prevent glob matching.
+08_Conditional-Expressions-and-Arithmetic/08_Quoting-rules-inside.md	1	RUNNABLE	NEUTRAL	SC2075	error	19	46	0	Escaping \\< is required in [..], but invalid in [[..]]
+08_Conditional-Expressions-and-Arithmetic/08_Quoting-rules-inside.md	1	RUNNABLE	NEUTRAL	SC2076	warning	25	52	0	Remove quotes from right-hand side of =~ to match as a regex rather than literally.
+08_Conditional-Expressions-and-Arithmetic/11_Integer-types-overflow-base-prefixes.md	1	RUNNABLE	RIGHT	SC1128	error	2	27	0	The shebang must be on the first line. Delete blanks and move comments.
+08_Conditional-Expressions-and-Arithmetic/12_Floating-point-workarounds.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	24	0	The shebang must be on the first line. Delete blanks and move comments.
+08_Conditional-Expressions-and-Arithmetic/12_Floating-point-workarounds.md	1	RUNNABLE	NEUTRAL	SC2034	warning	10	32	0	cents appears unused. Verify use (or export if used externally).
+08_Conditional-Expressions-and-Arithmetic/13_let-builtin.md	1	RUNNABLE	MIXED	SC1128	error	2	25	0	The shebang must be on the first line. Delete blanks and move comments.
+09_Functions/02_Argument-passing.md	2	ANTIPATTERN	WRONG	SC2068	error	8	64	1	Double quote array expansions to avoid re-splitting elements.
+09_Functions/03_local-and-scope.md	2	RUNNABLE	NEUTRAL	SC2034	warning	3	46	0	name appears unused. Verify use (or export if used externally).
+09_Functions/03_local-and-scope.md	2	RUNNABLE	NEUTRAL	SC2034	warning	4	47	0	count appears unused. Verify use (or export if used externally).
+09_Functions/03_local-and-scope.md	2	RUNNABLE	NEUTRAL	SC2034	warning	5	48	0	files appears unused. Verify use (or export if used externally).
+09_Functions/03_local-and-scope.md	2	RUNNABLE	NEUTRAL	SC2034	warning	6	49	0	meta appears unused. Verify use (or export if used externally).
+09_Functions/03_local-and-scope.md	2	RUNNABLE	NEUTRAL	SC2034	warning	7	50	0	pi appears unused. Verify use (or export if used externally).
+09_Functions/03_local-and-scope.md	2	RUNNABLE	NEUTRAL	SC2034	warning	8	51	0	ref appears unused. Verify use (or export if used externally).
+09_Functions/03_local-and-scope.md	3	RUNNABLE	NEUTRAL	SC2034	warning	4	73	0	out appears unused. Verify use (or export if used externally).
+09_Functions/04_Return-value-via-return-N.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	27	0	The shebang must be on the first line. Delete blanks and move comments.
+09_Functions/04_Return-value-via-return-N.md	1	RUNNABLE	NEUTRAL	SC2152	error	5	30	0	Can only return 0-255. Other data should be written to stdout.
+09_Functions/04_Return-value-via-return-N.md	1	RUNNABLE	NEUTRAL	SC2152	error	9	34	0	Can only return 0-255. Other data should be written to stdout.
+09_Functions/04_Return-value-via-return-N.md	2	RUNNABLE	MIXED	SC1128	error	2	48	0	The shebang must be on the first line. Delete blanks and move comments.
+09_Functions/05_Communicating-results.md	2	RUNNABLE	NEUTRAL	SC2154	warning	9	53	0	result is referenced but not assigned.
+09_Functions/06_Recursion-and-FUNCNEST.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	33	0	The shebang must be on the first line. Delete blanks and move comments.
+09_Functions/07_Function-tracing.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	32	0	The shebang must be on the first line. Delete blanks and move comments.
+09_Functions/08_Listing-and-inspecting-functions.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	28	0	The shebang must be on the first line. Delete blanks and move comments.
+09_Functions/09_Exporting-functions.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	30	0	The shebang must be on the first line. Delete blanks and move comments.
+09_Functions/11_Self-locating-with-BASH_SOURCE.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	36	0	The shebang must be on the first line. Delete blanks and move comments.
+09_Functions/11_Self-locating-with-BASH_SOURCE.md	1	RUNNABLE	NEUTRAL	SC2155	warning	8	42	0	Declare and assign separately to avoid masking return values.
+09_Functions/11_Self-locating-with-BASH_SOURCE.md	1	RUNNABLE	NEUTRAL	SC2034	warning	11	45	0	DATA_DIR appears unused. Verify use (or export if used externally).
+09_Functions/12_Calling-convention-discipline.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	32	0	The shebang must be on the first line. Delete blanks and move comments.
+10_Sourcing-Libraries-and-Modules/01_source-semantics.md	1	RUNNABLE	NEUTRAL	SC1128	error	3	38	0	The shebang must be on the first line. Delete blanks and move comments.
+10_Sourcing-Libraries-and-Modules/01_source-semantics.md	2	RUNNABLE	NEUTRAL	SC1128	error	3	68	0	The shebang must be on the first line. Delete blanks and move comments.
+10_Sourcing-Libraries-and-Modules/01_source-semantics.md	3	RUNNABLE	NEUTRAL	SC1128	error	3	102	0	The shebang must be on the first line. Delete blanks and move comments.
+10_Sourcing-Libraries-and-Modules/03_Self-locating-library-pattern.md	1	RUNNABLE	NEUTRAL	SC2034	warning	2	9	0	data_dir appears unused. Verify use (or export if used externally).
+10_Sourcing-Libraries-and-Modules/03_Self-locating-library-pattern.md	2	RUNNABLE	NEUTRAL	SC1128	error	2	31	0	The shebang must be on the first line. Delete blanks and move comments.
+10_Sourcing-Libraries-and-Modules/06_Public-vs-private-conventions.md	1	RUNNABLE	NEUTRAL	SC1128	error	3	30	0	The shebang must be on the first line. Delete blanks and move comments.
+10_Sourcing-Libraries-and-Modules/06_Public-vs-private-conventions.md	1	RUNNABLE	NEUTRAL	SC2034	warning	23	50	0	MYLIB_VERSION appears unused. Verify use (or export if used externally).
+10_Sourcing-Libraries-and-Modules/07_Version-negotiation.md	1	RUNNABLE	NEUTRAL	SC2034	warning	3	11	0	MYLIB_VERSION_MINOR appears unused. Verify use (or export if used externally).
+10_Sourcing-Libraries-and-Modules/07_Version-negotiation.md	2	RUNNABLE	NEUTRAL	SC1128	error	2	36	0	The shebang must be on the first line. Delete blanks and move comments.
+10_Sourcing-Libraries-and-Modules/07_Version-negotiation.md	2	RUNNABLE	NEUTRAL	SC2154	warning	24	58	0	input is referenced but not assigned.
+10_Sourcing-Libraries-and-Modules/07_Version-negotiation.md	2	RUNNABLE	NEUTRAL	SC2034	warning	26	60	0	result appears unused. Verify use (or export if used externally).
+10_Sourcing-Libraries-and-Modules/08_Lazy-and-conditional-loading.md	3	RUNNABLE	NEUTRAL	SC2034	warning	5	78	0	LIB_LOAD_TIME appears unused. Verify use (or export if used externally).
+10_Sourcing-Libraries-and-Modules/10_API-design.md	1	RUNNABLE	NEUTRAL	SC1128	error	3	32	0	The shebang must be on the first line. Delete blanks and move comments.
+10_Sourcing-Libraries-and-Modules/10_API-design.md	1	RUNNABLE	NEUTRAL	SC2034	warning	26	55	0	PATH_UTILS_VERSION appears unused. Verify use (or export if used externally).
+10_Sourcing-Libraries-and-Modules/11_Distribution-and-installation.md	1	DESTRUCTIVE	NEUTRAL	SC2046	warning	6	38	0	Quote this to prevent word splitting.
+10_Sourcing-Libraries-and-Modules/11_Distribution-and-installation.md	1	DESTRUCTIVE	NEUTRAL	SC2046	warning	6	38	0	Quote this to prevent word splitting.
+10_Sourcing-Libraries-and-Modules/11_Distribution-and-installation.md	1	DESTRUCTIVE	NEUTRAL	SC2046	warning	7	39	0	Quote this to prevent word splitting.
+10_Sourcing-Libraries-and-Modules/11_Distribution-and-installation.md	1	DESTRUCTIVE	NEUTRAL	SC2046	warning	7	39	0	Quote this to prevent word splitting.
+10_Sourcing-Libraries-and-Modules/11_Distribution-and-installation.md	1	DESTRUCTIVE	NEUTRAL	SC2046	warning	8	40	0	Quote this to prevent word splitting.
+10_Sourcing-Libraries-and-Modules/11_Distribution-and-installation.md	1	DESTRUCTIVE	NEUTRAL	SC2046	warning	8	40	0	Quote this to prevent word splitting.
+10_Sourcing-Libraries-and-Modules/11_Distribution-and-installation.md	1	DESTRUCTIVE	NEUTRAL	SC2046	warning	9	41	0	Quote this to prevent word splitting.
+10_Sourcing-Libraries-and-Modules/11_Distribution-and-installation.md	1	DESTRUCTIVE	NEUTRAL	SC2046	warning	14	46	0	Quote this to prevent word splitting.
+10_Sourcing-Libraries-and-Modules/11_Distribution-and-installation.md	1	DESTRUCTIVE	NEUTRAL	SC2046	warning	23	55	0	Quote this to prevent word splitting.
+10_Sourcing-Libraries-and-Modules/11_Distribution-and-installation.md	1	DESTRUCTIVE	NEUTRAL	SC2046	warning	24	56	0	Quote this to prevent word splitting.
+10_Sourcing-Libraries-and-Modules/11_Distribution-and-installation.md	1	DESTRUCTIVE	NEUTRAL	SC2046	warning	25	57	0	Quote this to prevent word splitting.
+10_Sourcing-Libraries-and-Modules/11_Distribution-and-installation.md	1	DESTRUCTIVE	NEUTRAL	SC2034	warning	30	62	0	s appears unused. Verify use (or export if used externally).
+10_Sourcing-Libraries-and-Modules/11_Distribution-and-installation.md	1	DESTRUCTIVE	NEUTRAL	SC2046	warning	30	62	0	Quote this to prevent word splitting.
+10_Sourcing-Libraries-and-Modules/11_Distribution-and-installation.md	1	DESTRUCTIVE	NEUTRAL	SC2046	warning	33	65	0	Quote this to prevent word splitting.
+10_Sourcing-Libraries-and-Modules/11_Distribution-and-installation.md	1	DESTRUCTIVE	NEUTRAL	SC2046	warning	33	65	0	Quote this to prevent word splitting.
+10_Sourcing-Libraries-and-Modules/11_Distribution-and-installation.md	1	DESTRUCTIVE	NEUTRAL	SC2046	warning	34	66	0	Quote this to prevent word splitting.
+10_Sourcing-Libraries-and-Modules/11_Distribution-and-installation.md	1	DESTRUCTIVE	NEUTRAL	SC2046	warning	34	66	0	Quote this to prevent word splitting.
+11_Process-Management/01_The-Bash-process-tree-at-runtime.md	1	RUNNABLE	NEUTRAL	SC2216	warning	13	40	0	Piping to 'sleep', a command that doesn't read stdin. Wrong command or missing xargs?
+11_Process-Management/05_Foreground-vs-background.md	2	DESTRUCTIVE	NEUTRAL	SC2034	warning	8	38	0	worker_rc appears unused. Verify use (or export if used externally).
+11_Process-Management/05_Foreground-vs-background.md	3	RUNNABLE	NEUTRAL	SC1128	error	2	66	0	The shebang must be on the first line. Delete blanks and move comments.
+11_Process-Management/06_Process-groups-and-sessions.md	1	RUNNABLE	NEUTRAL	SC2216	warning	8	56	0	Piping to 'sleep', a command that doesn't read stdin. Wrong command or missing xargs?
+11_Process-Management/06_Process-groups-and-sessions.md	2	DESTRUCTIVE	NEUTRAL	SC2216	warning	2	74	0	Piping to 'sleep', a command that doesn't read stdin. Wrong command or missing xargs?
+11_Process-Management/07_The-job-table.md	1	DESTRUCTIVE	NEUTRAL	SC1128	error	2	36	0	The shebang must be on the first line. Delete blanks and move comments.
+11_Process-Management/10_kill-and-signal-delivery.md	1	DESTRUCTIVE	NEUTRAL	SC1128	error	2	31	0	The shebang must be on the first line. Delete blanks and move comments.
+11_Process-Management/10_kill-and-signal-delivery.md	3	DESTRUCTIVE	NEUTRAL	SC2154	warning	2	74	0	daemon_pid is referenced but not assigned.
+11_Process-Management/13_Environment-inheritance.md	2	RUNNABLE	NEUTRAL	SC2154	warning	2	44	0	file is referenced but not assigned (for output from commands, use "$(file ...)" ).
+12_Signals-and-Traps/03_Uncatchable-signals.md	1	DESTRUCTIVE	NEUTRAL	SC2154	warning	2	33	0	tmpdir is referenced but not assigned.
+12_Signals-and-Traps/04_Signal-disposition.md	2	RUNNABLE	NEUTRAL	SC1128	error	2	39	0	The shebang must be on the first line. Delete blanks and move comments.
+12_Signals-and-Traps/05_The-trap-builtin.md	2	ANTIPATTERN	WRONG	SC2064	warning	3	39	1	Use single quotes, otherwise this expands now rather than when signalled.
+12_Signals-and-Traps/05_The-trap-builtin.md	4	RUNNABLE	MIXED	SC2064	warning	2	64	0	Use single quotes, otherwise this expands now rather than when signalled.
+12_Signals-and-Traps/05_The-trap-builtin.md	5	RUNNABLE	NEUTRAL	SC1128	error	2	79	0	The shebang must be on the first line. Delete blanks and move comments.
+12_Signals-and-Traps/06_Pseudo-signals-EXIT-ERR-DEBUG-RETURN.md	1	DESTRUCTIVE	NEUTRAL	SC1128	error	2	28	0	The shebang must be on the first line. Delete blanks and move comments.
+12_Signals-and-Traps/06_Pseudo-signals-EXIT-ERR-DEBUG-RETURN.md	2	RUNNABLE	NEUTRAL	SC1128	error	2	74	0	The shebang must be on the first line. Delete blanks and move comments.
+12_Signals-and-Traps/06_Pseudo-signals-EXIT-ERR-DEBUG-RETURN.md	3	RUNNABLE	NEUTRAL	SC1128	error	2	112	0	The shebang must be on the first line. Delete blanks and move comments.
+12_Signals-and-Traps/06_Pseudo-signals-EXIT-ERR-DEBUG-RETURN.md	4	RUNNABLE	NEUTRAL	SC1128	error	2	148	0	The shebang must be on the first line. Delete blanks and move comments.
+12_Signals-and-Traps/08_Trap-inheritance.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	70	0	The shebang must be on the first line. Delete blanks and move comments.
+12_Signals-and-Traps/08_Trap-inheritance.md	2	RUNNABLE	NEUTRAL	SC1128	error	2	92	0	The shebang must be on the first line. Delete blanks and move comments.
+12_Signals-and-Traps/10_Synchronous-vs-asynchronous-delivery.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	21	0	The shebang must be on the first line. Delete blanks and move comments.
+12_Signals-and-Traps/10_Synchronous-vs-asynchronous-delivery.md	2	DESTRUCTIVE	NEUTRAL	SC1128	error	2	62	0	The shebang must be on the first line. Delete blanks and move comments.
+12_Signals-and-Traps/11_Signal-safe-code.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	52	0	The shebang must be on the first line. Delete blanks and move comments.
+12_Signals-and-Traps/12_Idempotent-cleanup-patterns.md	1	DESTRUCTIVE	NEUTRAL	SC2154	warning	5	24	0	tmpdir is referenced but not assigned.
+12_Signals-and-Traps/12_Idempotent-cleanup-patterns.md	2	DESTRUCTIVE	NEUTRAL	SC2154	warning	4	46	0	tmpdir is referenced but not assigned.
+12_Signals-and-Traps/12_Idempotent-cleanup-patterns.md	3	DESTRUCTIVE	NEUTRAL	SC2154	warning	5	67	0	tmpdir is referenced but not assigned.
+12_Signals-and-Traps/13_Tempfile-and-tempdir-lifecycle.md	2	RUNNABLE	NEUTRAL	SC1128	error	2	33	0	The shebang must be on the first line. Delete blanks and move comments.
+12_Signals-and-Traps/13_Tempfile-and-tempdir-lifecycle.md	2	RUNNABLE	NEUTRAL	SC2034	warning	22	53	0	a appears unused. Verify use (or export if used externally).
+12_Signals-and-Traps/13_Tempfile-and-tempdir-lifecycle.md	2	RUNNABLE	NEUTRAL	SC2034	warning	23	54	0	b appears unused. Verify use (or export if used externally).
+12_Signals-and-Traps/13_Tempfile-and-tempdir-lifecycle.md	2	RUNNABLE	NEUTRAL	SC2034	warning	24	55	0	c appears unused. Verify use (or export if used externally).
+12_Signals-and-Traps/14_Lockfile-pattern.md	1	RUNNABLE	NEUTRAL	SC2154	warning	2	13	0	lockfile is referenced but not assigned.
+12_Signals-and-Traps/14_Lockfile-pattern.md	2	DESTRUCTIVE	NEUTRAL	SC1128	error	2	44	0	The shebang must be on the first line. Delete blanks and move comments.
+12_Signals-and-Traps/15_Atomic-file-write.md	1	RUNNABLE	NEUTRAL	SC2154	warning	2	11	0	target is referenced but not assigned.
+12_Signals-and-Traps/15_Atomic-file-write.md	2	RUNNABLE	NEUTRAL	SC2154	warning	3	36	0	target is referenced but not assigned.
+12_Signals-and-Traps/15_Atomic-file-write.md	3	RUNNABLE	NEUTRAL	SC2154	warning	1	46	0	tmp is referenced but not assigned.
+12_Signals-and-Traps/15_Atomic-file-write.md	3	RUNNABLE	NEUTRAL	SC2154	warning	1	46	0	target is referenced but not assigned.
+12_Signals-and-Traps/15_Atomic-file-write.md	4	DESTRUCTIVE	NEUTRAL	SC2154	warning	1	56	0	target is referenced but not assigned.
+12_Signals-and-Traps/15_Atomic-file-write.md	5	DESTRUCTIVE	NEUTRAL	SC2154	warning	1	68	0	target is referenced but not assigned.
+12_Signals-and-Traps/15_Atomic-file-write.md	5	DESTRUCTIVE	NEUTRAL	SC2154	warning	1	68	0	tmp is referenced but not assigned.
+12_Signals-and-Traps/16_Reload-on-SIGHUP.md	1	RUNNABLE	NEUTRAL	SC1090	warning	3	12	0	ShellCheck can't follow non-constant source. Use a directive to specify location.
+12_Signals-and-Traps/16_Reload-on-SIGHUP.md	1	RUNNABLE	NEUTRAL	SC2154	warning	3	12	0	config_file is referenced but not assigned.
+12_Signals-and-Traps/16_Reload-on-SIGHUP.md	2	RUNNABLE	NEUTRAL	SC1128	error	2	33	0	The shebang must be on the first line. Delete blanks and move comments.
+12_Signals-and-Traps/16_Reload-on-SIGHUP.md	2	RUNNABLE	NEUTRAL	SC1090	warning	12	43	0	ShellCheck can't follow non-constant source. Use a directive to specify location.
+12_Signals-and-Traps/16_Reload-on-SIGHUP.md	2	RUNNABLE	NEUTRAL	SC1090	warning	18	49	0	ShellCheck can't follow non-constant source. Use a directive to specify location.
+13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	RUNNABLE	NEUTRAL	SC2091	warning	2	38	0	Remove surrounding $() to avoid executing output (or use eval if intentional).
+13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	RUNNABLE	NEUTRAL	SC2242	error	2	38	0	Can only exit with status 0-255. Other data should be written to stdout/stderr.
+13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	RUNNABLE	NEUTRAL	SC2091	warning	3	39	0	Remove surrounding $() to avoid executing output (or use eval if intentional).
+13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	RUNNABLE	NEUTRAL	SC2242	error	3	39	0	Can only exit with status 0-255. Other data should be written to stdout/stderr.
+13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	RUNNABLE	NEUTRAL	SC2091	warning	4	40	0	Remove surrounding $() to avoid executing output (or use eval if intentional).
+13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	RUNNABLE	NEUTRAL	SC2242	error	4	40	0	Can only exit with status 0-255. Other data should be written to stdout/stderr.
+13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	RUNNABLE	NEUTRAL	SC2091	warning	5	41	0	Remove surrounding $() to avoid executing output (or use eval if intentional).
+13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	RUNNABLE	NEUTRAL	SC2242	error	5	41	0	Can only exit with status 0-255. Other data should be written to stdout/stderr.
+13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	RUNNABLE	NEUTRAL	SC2091	warning	6	42	0	Remove surrounding $() to avoid executing output (or use eval if intentional).
+13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	RUNNABLE	NEUTRAL	SC2242	error	6	42	0	Can only exit with status 0-255. Other data should be written to stdout/stderr.
+13_Error-Handling-and-Exit-Status/02_set-e-errexit-full-semantics.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	28	0	The shebang must be on the first line. Delete blanks and move comments.
+13_Error-Handling-and-Exit-Status/02_set-e-errexit-full-semantics.md	4	RUNNABLE	NEUTRAL	SC2034	warning	3	113	0	output appears unused. Verify use (or export if used externally).
+13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	42	0	The shebang must be on the first line. Delete blanks and move comments.
+13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	2	RUNNABLE	NEUTRAL	SC1128	error	2	57	0	The shebang must be on the first line. Delete blanks and move comments.
+13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	3	RUNNABLE	NEUTRAL	SC1128	error	2	74	0	The shebang must be on the first line. Delete blanks and move comments.
+13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	4	RUNNABLE	NEUTRAL	SC1128	error	2	88	0	The shebang must be on the first line. Delete blanks and move comments.
+13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	5	RUNNABLE	NEUTRAL	SC1128	error	2	102	0	The shebang must be on the first line. Delete blanks and move comments.
+13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	6	RUNNABLE	NEUTRAL	SC1128	error	2	117	0	The shebang must be on the first line. Delete blanks and move comments.
+13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	7	RUNNABLE	NEUTRAL	SC1128	error	2	135	0	The shebang must be on the first line. Delete blanks and move comments.
+13_Error-Handling-and-Exit-Status/04_set-u-nounset.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	20	0	The shebang must be on the first line. Delete blanks and move comments.
+13_Error-Handling-and-Exit-Status/04_set-u-nounset.md	2	RUNNABLE	NEUTRAL	SC1128	error	2	72	0	The shebang must be on the first line. Delete blanks and move comments.
+13_Error-Handling-and-Exit-Status/04_set-u-nounset.md	3	RUNNABLE	NEUTRAL	SC1128	error	2	107	0	The shebang must be on the first line. Delete blanks and move comments.
+13_Error-Handling-and-Exit-Status/05_set-o-pipefail.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	31	0	The shebang must be on the first line. Delete blanks and move comments.
+13_Error-Handling-and-Exit-Status/05_set-o-pipefail.md	2	NETWORK	NEUTRAL	SC2154	warning	4	60	0	url is referenced but not assigned.
+13_Error-Handling-and-Exit-Status/06_inherit_errexit.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	30	0	The shebang must be on the first line. Delete blanks and move comments.
+13_Error-Handling-and-Exit-Status/06_inherit_errexit.md	2	RUNNABLE	NEUTRAL	SC1128	error	2	43	0	The shebang must be on the first line. Delete blanks and move comments.
+13_Error-Handling-and-Exit-Status/06_inherit_errexit.md	2	RUNNABLE	NEUTRAL	SC2034	warning	5	46	0	result appears unused. Verify use (or export if used externally).
+13_Error-Handling-and-Exit-Status/07_and-true-idioms.md	1	RUNNABLE	NEUTRAL	SC2154	warning	2	20	0	stale is referenced but not assigned.
+13_Error-Handling-and-Exit-Status/09_errtrace-and-trap-inheritance.md	2	RUNNABLE	NEUTRAL	SC2154	warning	5	57	0	rc is referenced but not assigned.
+13_Error-Handling-and-Exit-Status/09_errtrace-and-trap-inheritance.md	3	RUNNABLE	NEUTRAL	SC1128	error	2	100	0	The shebang must be on the first line. Delete blanks and move comments.
+13_Error-Handling-and-Exit-Status/09_errtrace-and-trap-inheritance.md	3	RUNNABLE	NEUTRAL	SC2154	warning	6	104	0	rc is referenced but not assigned.
+13_Error-Handling-and-Exit-Status/10_Exit-code-conventions.md	1	RUNNABLE	NEUTRAL	SC2154	warning	2	69	0	config is referenced but not assigned.
+13_Error-Handling-and-Exit-Status/10_Exit-code-conventions.md	1	RUNNABLE	NEUTRAL	SC2154	warning	4	71	0	verbose is referenced but not assigned.
+13_Error-Handling-and-Exit-Status/11_Propagating-exit-codes.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	43	0	The shebang must be on the first line. Delete blanks and move comments.
+13_Error-Handling-and-Exit-Status/11_Propagating-exit-codes.md	1	RUNNABLE	NEUTRAL	SC2155	warning	6	47	0	Declare and assign separately to avoid masking return values.
+13_Error-Handling-and-Exit-Status/11_Propagating-exit-codes.md	2	RUNNABLE	NEUTRAL	SC1128	error	2	67	0	The shebang must be on the first line. Delete blanks and move comments.
+13_Error-Handling-and-Exit-Status/11_Propagating-exit-codes.md	3	RUNNABLE	NEUTRAL	SC1128	error	2	95	0	The shebang must be on the first line. Delete blanks and move comments.
+14_Input-Output-and-Messaging/01_Standard-streams-discipline.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	25	0	The shebang must be on the first line. Delete blanks and move comments.
+14_Input-Output-and-Messaging/01_Standard-streams-discipline.md	1	RUNNABLE	NEUTRAL	SC2034	warning	7	30	0	f appears unused. Verify use (or export if used externally).
+14_Input-Output-and-Messaging/01_Standard-streams-discipline.md	2	RUNNABLE	NEUTRAL	SC2046	warning	3	43	0	Quote this to prevent word splitting.
+14_Input-Output-and-Messaging/01_Standard-streams-discipline.md	2	RUNNABLE	NEUTRAL	SC2154	warning	3	43	0	total is referenced but not assigned.
+14_Input-Output-and-Messaging/01_Standard-streams-discipline.md	3	RUNNABLE	NEUTRAL	SC2034	warning	5	59	0	f appears unused. Verify use (or export if used externally).
+14_Input-Output-and-Messaging/01_Standard-streams-discipline.md	3	RUNNABLE	NEUTRAL	SC2288	warning	10	64	0	This is interpreted as a command name ending with '.'. Double check syntax.
+14_Input-Output-and-Messaging/04_The-printf-builtin.md	1	RUNNABLE	NEUTRAL	SC2034	warning	3	30	0	key appears unused. Verify use (or export if used externally).
+14_Input-Output-and-Messaging/07_Logging-discipline.md	2	RUNNABLE	NEUTRAL	SC2120	warning	0	55	0	_audit_main references arguments, but none are ever passed.
+14_Input-Output-and-Messaging/07_Logging-discipline.md	4	RUNNABLE	NEUTRAL	SC2154	warning	1	100	0	n is referenced but not assigned.
+14_Input-Output-and-Messaging/07_Logging-discipline.md	4	RUNNABLE	NEUTRAL	SC2154	warning	1	100	0	err is referenced but not assigned.
+14_Input-Output-and-Messaging/07_Logging-discipline.md	6	RUNNABLE	MIXED	SC2154	warning	3	135	0	result is referenced but not assigned.
+14_Input-Output-and-Messaging/09_Coloured-output-and-TERM-detection.md	1	RUNNABLE	NEUTRAL	SC2034	warning	9	21	0	RED appears unused. Verify use (or export if used externally).
+14_Input-Output-and-Messaging/09_Coloured-output-and-TERM-detection.md	1	RUNNABLE	NEUTRAL	SC2034	warning	9	21	0	GREEN appears unused. Verify use (or export if used externally).
+14_Input-Output-and-Messaging/09_Coloured-output-and-TERM-detection.md	1	RUNNABLE	NEUTRAL	SC2034	warning	9	21	0	YELLOW appears unused. Verify use (or export if used externally).
+14_Input-Output-and-Messaging/09_Coloured-output-and-TERM-detection.md	1	RUNNABLE	NEUTRAL	SC2034	warning	9	21	0	CYAN appears unused. Verify use (or export if used externally).
+14_Input-Output-and-Messaging/09_Coloured-output-and-TERM-detection.md	1	RUNNABLE	NEUTRAL	SC2034	warning	9	21	0	BOLD appears unused. Verify use (or export if used externally).
+14_Input-Output-and-Messaging/09_Coloured-output-and-TERM-detection.md	1	RUNNABLE	NEUTRAL	SC2034	warning	9	21	0	NC appears unused. Verify use (or export if used externally).
+14_Input-Output-and-Messaging/09_Coloured-output-and-TERM-detection.md	2	INTERACTIVE	NEUTRAL	SC2034	warning	5	50	0	RED appears unused. Verify use (or export if used externally).
+14_Input-Output-and-Messaging/09_Coloured-output-and-TERM-detection.md	2	INTERACTIVE	NEUTRAL	SC2034	warning	5	50	0	RESET appears unused. Verify use (or export if used externally).
+14_Input-Output-and-Messaging/09_Coloured-output-and-TERM-detection.md	3	RUNNABLE	NEUTRAL	SC2034	warning	5	77	0	RED appears unused. Verify use (or export if used externally).
+14_Input-Output-and-Messaging/09_Coloured-output-and-TERM-detection.md	3	RUNNABLE	NEUTRAL	SC2034	warning	5	77	0	RESET appears unused. Verify use (or export if used externally).
+14_Input-Output-and-Messaging/09_Coloured-output-and-TERM-detection.md	4	RUNNABLE	NEUTRAL	SC2034	warning	4	93	0	RED appears unused. Verify use (or export if used externally).
+14_Input-Output-and-Messaging/09_Coloured-output-and-TERM-detection.md	4	RUNNABLE	NEUTRAL	SC2034	warning	4	93	0	RESET appears unused. Verify use (or export if used externally).
+14_Input-Output-and-Messaging/10_Progress-indicators.md	1	RUNNABLE	NEUTRAL	SC2034	warning	6	19	0	SHOW_PROGRESS appears unused. Verify use (or export if used externally).
+14_Input-Output-and-Messaging/11_Reading-binary-data.md	2	DESTRUCTIVE	NEUTRAL	SC2034	warning	3	52	0	byte appears unused. Verify use (or export if used externally).
+14_Input-Output-and-Messaging/12_File-locking-for-concurrent-writes.md	1	RUNNABLE	NEUTRAL	SC2155	warning	2	19	0	Declare and assign separately to avoid masking return values.
+15_Command-Line-Processing/02_getopts-builtin.md	1	RUNNABLE	NEUTRAL	SC2034	warning	8	46	0	VERBOSE appears unused. Verify use (or export if used externally).
+15_Command-Line-Processing/02_getopts-builtin.md	1	RUNNABLE	NEUTRAL	SC2034	warning	9	47	0	FILE appears unused. Verify use (or export if used externally).
+15_Command-Line-Processing/02_getopts-builtin.md	1	RUNNABLE	NEUTRAL	SC2034	warning	16	54	0	POSITIONAL appears unused. Verify use (or export if used externally).
+15_Command-Line-Processing/02_getopts-builtin.md	2	RUNNABLE	NEUTRAL	SC2288	warning	3	79	0	This is interpreted as a command name ending with '.'. Double check syntax.
+15_Command-Line-Processing/02_getopts-builtin.md	2	RUNNABLE	NEUTRAL	SC2034	warning	6	82	0	opt appears unused. Verify use (or export if used externally).
+15_Command-Line-Processing/02_getopts-builtin.md	2	RUNNABLE	NEUTRAL	SC2288	warning	6	82	0	This is interpreted as a command name ending with '.'. Double check syntax.
+15_Command-Line-Processing/02_getopts-builtin.md	3	RUNNABLE	NEUTRAL	SC2104	error	3	99	0	In functions, use return instead of continue.
+15_Command-Line-Processing/03_GNU-getopt1-external.md	1	RUNNABLE	NEUTRAL	SC2120	warning	0	10	0	_audit_main references arguments, but none are ever passed.
+15_Command-Line-Processing/03_GNU-getopt1-external.md	1	RUNNABLE	NEUTRAL	SC2034	warning	7	17	0	VERBOSE appears unused. Verify use (or export if used externally).
+15_Command-Line-Processing/03_GNU-getopt1-external.md	1	RUNNABLE	NEUTRAL	SC2034	warning	8	18	0	FILE appears unused. Verify use (or export if used externally).
+15_Command-Line-Processing/04_Hand-rolled-while-case-shift.md	1	RUNNABLE	NEUTRAL	SC2034	warning	6	14	0	VERBOSE appears unused. Verify use (or export if used externally).
+15_Command-Line-Processing/04_Hand-rolled-while-case-shift.md	1	RUNNABLE	NEUTRAL	SC2034	warning	7	15	0	DRY_RUN appears unused. Verify use (or export if used externally).
+15_Command-Line-Processing/04_Hand-rolled-while-case-shift.md	1	RUNNABLE	NEUTRAL	SC2034	warning	9	17	0	FILE appears unused. Verify use (or export if used externally).
+15_Command-Line-Processing/04_Hand-rolled-while-case-shift.md	3	RUNNABLE	NEUTRAL	SC1073	error	0	73	0	Couldn't parse this brace group. Fix to allow more checks.
+15_Command-Line-Processing/04_Hand-rolled-while-case-shift.md	3	RUNNABLE	NEUTRAL	SC1056	error	2	75	0	Expected a '}'. If you have one, try a ; or \\n in front of it.
+15_Command-Line-Processing/04_Hand-rolled-while-case-shift.md	3	RUNNABLE	NEUTRAL	SC1072	error	2	75	0	Missing '}'. Fix any mentioned problems and try again.
+15_Command-Line-Processing/05_Long-options.md	1	RUNNABLE	NEUTRAL	SC2034	warning	6	19	0	FILE appears unused. Verify use (or export if used externally).
+15_Command-Line-Processing/05_Long-options.md	2	RUNNABLE	NEUTRAL	SC1073	error	0	44	0	Couldn't parse this brace group. Fix to allow more checks.
+15_Command-Line-Processing/05_Long-options.md	2	RUNNABLE	NEUTRAL	SC1056	error	1	45	0	Expected a '}'. If you have one, try a ; or \\n in front of it.
+15_Command-Line-Processing/05_Long-options.md	2	RUNNABLE	NEUTRAL	SC1072	error	1	45	0	Missing '}'. Fix any mentioned problems and try again.
+15_Command-Line-Processing/06_Bundled-short-options.md	1	RUNNABLE	NEUTRAL	SC1073	error	0	10	0	Couldn't parse this brace group. Fix to allow more checks.
+15_Command-Line-Processing/06_Bundled-short-options.md	1	RUNNABLE	NEUTRAL	SC1056	error	1	11	0	Expected a '}'. If you have one, try a ; or \\n in front of it.
+15_Command-Line-Processing/06_Bundled-short-options.md	1	RUNNABLE	NEUTRAL	SC1072	error	1	11	0	Missing '}'. Fix any mentioned problems and try again.
+15_Command-Line-Processing/06_Bundled-short-options.md	2	RUNNABLE	NEUTRAL	SC1073	error	0	30	0	Couldn't parse this brace group. Fix to allow more checks.
+15_Command-Line-Processing/06_Bundled-short-options.md	2	RUNNABLE	NEUTRAL	SC1055	error	15	45	0	You need at least one command here. Use 'true;' as a no-op.
+15_Command-Line-Processing/06_Bundled-short-options.md	2	RUNNABLE	NEUTRAL	SC1072	error	15	45	0	Unexpected keyword/token. Fix any mentioned problems and try again.
+15_Command-Line-Processing/06_Bundled-short-options.md	3	RUNNABLE	MIXED	SC1073	error	0	57	0	Couldn't parse this brace group. Fix to allow more checks.
+15_Command-Line-Processing/06_Bundled-short-options.md	3	RUNNABLE	MIXED	SC1056	error	2	59	0	Expected a '}'. If you have one, try a ; or \\n in front of it.
+15_Command-Line-Processing/06_Bundled-short-options.md	3	RUNNABLE	MIXED	SC1072	error	2	59	0	Missing '}'. Fix any mentioned problems and try again.
+15_Command-Line-Processing/07_end-of-options.md	1	RUNNABLE	NEUTRAL	SC1073	error	0	11	0	Couldn't parse this brace group. Fix to allow more checks.
+15_Command-Line-Processing/07_end-of-options.md	1	RUNNABLE	NEUTRAL	SC1056	error	1	12	0	Expected a '}'. If you have one, try a ; or \\n in front of it.
+15_Command-Line-Processing/07_end-of-options.md	1	RUNNABLE	NEUTRAL	SC1072	error	1	12	0	Missing '}'. Fix any mentioned problems and try again.
+15_Command-Line-Processing/07_end-of-options.md	3	NETWORK	NEUTRAL	SC2120	warning	0	38	0	_audit_main references arguments, but none are ever passed.
+15_Command-Line-Processing/08_Subcommand-dispatch.md	1	RUNNABLE	NEUTRAL	SC2120	warning	0	9	0	_audit_main references arguments, but none are ever passed.
+15_Command-Line-Processing/11_Auto-generating-usage.md	1	RUNNABLE	NEUTRAL	SC2034	warning	29	46	0	VERBOSE appears unused. Verify use (or export if used externally).
+15_Command-Line-Processing/11_Auto-generating-usage.md	1	RUNNABLE	NEUTRAL	SC2034	warning	30	47	0	DRY_RUN appears unused. Verify use (or export if used externally).
+15_Command-Line-Processing/11_Auto-generating-usage.md	1	RUNNABLE	NEUTRAL	SC2034	warning	32	49	0	FILE appears unused. Verify use (or export if used externally).
+15_Command-Line-Processing/11_Auto-generating-usage.md	3	RUNNABLE	NEUTRAL	SC2034	warning	6	88	0	VERBOSE appears unused. Verify use (or export if used externally).
+15_Command-Line-Processing/11_Auto-generating-usage.md	3	RUNNABLE	NEUTRAL	SC2034	warning	6	88	0	DRY_RUN appears unused. Verify use (or export if used externally).
+15_Command-Line-Processing/11_Auto-generating-usage.md	3	RUNNABLE	NEUTRAL	SC2034	warning	7	89	0	FILE appears unused. Verify use (or export if used externally).
+16_Concurrency-and-Parallelism/02_wait-and-wait-n.md	1	RUNNABLE	NEUTRAL	SC2154	warning	3	40	0	tasks is referenced but not assigned (did you mean 'task'?).
+16_Concurrency-and-Parallelism/02_wait-and-wait-n.md	2	RUNNABLE	NEUTRAL	SC2154	warning	2	65	0	pids is referenced but not assigned.
+16_Concurrency-and-Parallelism/03_wait-pid-for-specific-child.md	1	RUNNABLE	NEUTRAL	SC2034	warning	3	9	0	rc1 appears unused. Verify use (or export if used externally).
+16_Concurrency-and-Parallelism/03_wait-pid-for-specific-child.md	1	RUNNABLE	NEUTRAL	SC2034	warning	4	10	0	rc2 appears unused. Verify use (or export if used externally).
+16_Concurrency-and-Parallelism/04_Capturing-per-child-exit-status.md	1	RUNNABLE	NEUTRAL	SC2034	warning	21	31	0	statuses appears unused. Verify use (or export if used externally).
+16_Concurrency-and-Parallelism/04_Capturing-per-child-exit-status.md	1	RUNNABLE	NEUTRAL	SC2034	warning	22	32	0	rc appears unused. Verify use (or export if used externally).
+16_Concurrency-and-Parallelism/04_Capturing-per-child-exit-status.md	2	RUNNABLE	NEUTRAL	SC2154	warning	2	42	0	pids is referenced but not assigned.
+16_Concurrency-and-Parallelism/04_Capturing-per-child-exit-status.md	2	RUNNABLE	NEUTRAL	SC2154	warning	3	43	0	statuses is referenced but not assigned.
+16_Concurrency-and-Parallelism/04_Capturing-per-child-exit-status.md	2	RUNNABLE	NEUTRAL	SC2154	warning	5	45	0	inputs is referenced but not assigned.
+16_Concurrency-and-Parallelism/04_Capturing-per-child-exit-status.md	2	RUNNABLE	NEUTRAL	SC2154	warning	8	48	0	rc is referenced but not assigned.
+16_Concurrency-and-Parallelism/04_Capturing-per-child-exit-status.md	3	DESTRUCTIVE	NEUTRAL	SC2154	warning	2	73	0	pids is referenced but not assigned.
+16_Concurrency-and-Parallelism/05_Bounded-concurrency-fan-out.md	1	RUNNABLE	NEUTRAL	SC2154	warning	6	16	0	tasks is referenced but not assigned (did you mean 'task'?).
+16_Concurrency-and-Parallelism/05_Bounded-concurrency-fan-out.md	3	DESTRUCTIVE	NEUTRAL	SC2154	warning	5	66	0	tasks is referenced but not assigned (did you mean 'task'?).
+16_Concurrency-and-Parallelism/05_Bounded-concurrency-fan-out.md	4	RUNNABLE	NEUTRAL	SC2154	warning	1	87	0	tasks is referenced but not assigned.
+16_Concurrency-and-Parallelism/06_The-job-table-under-concurrency.md	1	RUNNABLE	NEUTRAL	SC1035	error	3	24	0	You need a space after the [ and before the ].
+16_Concurrency-and-Parallelism/06_The-job-table-under-concurrency.md	1	RUNNABLE	NEUTRAL	SC1073	error	3	24	0	Couldn't parse this test expression. Fix to allow more checks.
+16_Concurrency-and-Parallelism/06_The-job-table-under-concurrency.md	1	RUNNABLE	NEUTRAL	SC1020	error	3	24	0	You need a space before the ].
+16_Concurrency-and-Parallelism/06_The-job-table-under-concurrency.md	1	RUNNABLE	NEUTRAL	SC1072	error	3	24	0	Missing space before ]. Fix any mentioned problems and try again.
+16_Concurrency-and-Parallelism/06_The-job-table-under-concurrency.md	3	RUNNABLE	NEUTRAL	SC1035	error	2	66	0	You need a space after the [ and before the ].
+16_Concurrency-and-Parallelism/06_The-job-table-under-concurrency.md	3	RUNNABLE	NEUTRAL	SC1073	error	2	66	0	Couldn't parse this test expression. Fix to allow more checks.
+16_Concurrency-and-Parallelism/06_The-job-table-under-concurrency.md	3	RUNNABLE	NEUTRAL	SC1020	error	2	66	0	You need a space before the ].
+16_Concurrency-and-Parallelism/06_The-job-table-under-concurrency.md	3	RUNNABLE	NEUTRAL	SC1072	error	2	66	0	Missing space before ]. Fix any mentioned problems and try again.
+16_Concurrency-and-Parallelism/09_Race-conditions-in-shell.md	4	RUNNABLE	MIXED	SC2154	warning	2	59	0	userdir is referenced but not assigned.
+16_Concurrency-and-Parallelism/09_Race-conditions-in-shell.md	5	RUNNABLE	MIXED	SC2188	warning	2	77	0	This redirection doesn't have a command. Move to its command (or use 'true' as no-op).
+16_Concurrency-and-Parallelism/09_Race-conditions-in-shell.md	6	DESTRUCTIVE	NEUTRAL	SC2154	warning	2	120	0	target is referenced but not assigned.
+16_Concurrency-and-Parallelism/10_Locking-primitives.md	2	RUNNABLE	NEUTRAL	SC2120	warning	0	38	0	_audit_main references arguments, but none are ever passed.
+16_Concurrency-and-Parallelism/11_Signal-handling-under-concurrency.md	4	DESTRUCTIVE	NEUTRAL	SC2120	warning	0	114	0	_audit_main references arguments, but none are ever passed.
+16_Concurrency-and-Parallelism/11_Signal-handling-under-concurrency.md	4	DESTRUCTIVE	NEUTRAL	SC2034	warning	3	117	0	detached_pid appears unused. Verify use (or export if used externally).
+17_Coprocesses-and-IPC/01_The-coproc-builtin.md	1	NEEDS_INPUT	NEUTRAL	SC1083	warning	11	46	0	This { is literal. Check expression (missing ;/\\n?) or quote it.
+17_Coprocesses-and-IPC/01_The-coproc-builtin.md	1	NEEDS_INPUT	NEUTRAL	SC1083	warning	11	46	0	This } is literal. Check expression (missing ;/\\n?) or quote it.
+17_Coprocesses-and-IPC/02_Bidirectional-fd-pairs.md	1	NEEDS_INPUT	NEUTRAL	SC1083	warning	15	25	0	This { is literal. Check expression (missing ;/\\n?) or quote it.
+17_Coprocesses-and-IPC/02_Bidirectional-fd-pairs.md	1	NEEDS_INPUT	NEUTRAL	SC1083	warning	15	25	0	This } is literal. Check expression (missing ;/\\n?) or quote it.
+17_Coprocesses-and-IPC/02_Bidirectional-fd-pairs.md	2	ANTIPATTERN	WRONG	SC2034	warning	4	49	1	reply appears unused. Verify use (or export if used externally).
+17_Coprocesses-and-IPC/03_Multiple-coprocesses.md	1	NEEDS_INPUT	NEUTRAL	SC1083	warning	12	22	0	This { is literal. Check expression (missing ;/\\n?) or quote it.
+17_Coprocesses-and-IPC/03_Multiple-coprocesses.md	1	NEEDS_INPUT	NEUTRAL	SC1083	warning	12	22	0	This } is literal. Check expression (missing ;/\\n?) or quote it.
+17_Coprocesses-and-IPC/03_Multiple-coprocesses.md	1	NEEDS_INPUT	NEUTRAL	SC1083	warning	12	22	0	This { is literal. Check expression (missing ;/\\n?) or quote it.
+17_Coprocesses-and-IPC/03_Multiple-coprocesses.md	1	NEEDS_INPUT	NEUTRAL	SC1083	warning	12	22	0	This } is literal. Check expression (missing ;/\\n?) or quote it.
+17_Coprocesses-and-IPC/03_Multiple-coprocesses.md	2	NEEDS_INPUT	NEUTRAL	SC1083	warning	5	37	0	This { is literal. Check expression (missing ;/\\n?) or quote it.
+17_Coprocesses-and-IPC/03_Multiple-coprocesses.md	2	NEEDS_INPUT	NEUTRAL	SC1083	warning	5	37	0	This } is literal. Check expression (missing ;/\\n?) or quote it.
+17_Coprocesses-and-IPC/03_Multiple-coprocesses.md	3	RUNNABLE	MIXED	SC2288	warning	2	54	0	This is interpreted as a command name ending with '.'. Double check syntax.
+17_Coprocesses-and-IPC/03_Multiple-coprocesses.md	3	RUNNABLE	MIXED	SC2034	warning	3	55	0	CHILD appears unused. Verify use (or export if used externally).
+17_Coprocesses-and-IPC/03_Multiple-coprocesses.md	3	RUNNABLE	MIXED	SC2288	warning	3	55	0	This is interpreted as a command name ending with '.'. Double check syntax.
+17_Coprocesses-and-IPC/03_Multiple-coprocesses.md	3	RUNNABLE	MIXED	SC2034	warning	7	59	0	PARSER appears unused. Verify use (or export if used externally).
+17_Coprocesses-and-IPC/03_Multiple-coprocesses.md	3	RUNNABLE	MIXED	SC2288	warning	7	59	0	This is interpreted as a command name ending with '.'. Double check syntax.
+17_Coprocesses-and-IPC/03_Multiple-coprocesses.md	3	RUNNABLE	MIXED	SC2034	warning	8	60	0	EMITTER appears unused. Verify use (or export if used externally).
+17_Coprocesses-and-IPC/03_Multiple-coprocesses.md	3	RUNNABLE	MIXED	SC2288	warning	8	60	0	This is interpreted as a command name ending with '.'. Double check syntax.
+17_Coprocesses-and-IPC/05_Anonymous-pipes.md	4	NEEDS_INPUT	NEUTRAL	SC2034	warning	7	77	0	line appears unused. Verify use (or export if used externally).
+18_Readline-History-and-Completion/10__init_completion.md	1	INTERACTIVE	NEUTRAL	SC2034	warning	3	15	0	words appears unused. Verify use (or export if used externally).
+18_Readline-History-and-Completion/10__init_completion.md	1	INTERACTIVE	NEUTRAL	SC2034	warning	3	15	0	cword appears unused. Verify use (or export if used externally).
+18_Readline-History-and-Completion/11_Dynamic-completion-functions.md	1	INTERACTIVE	NEUTRAL	SC2034	warning	2	8	0	words appears unused. Verify use (or export if used externally).
+18_Readline-History-and-Completion/11_Dynamic-completion-functions.md	1	INTERACTIVE	NEUTRAL	SC2034	warning	2	8	0	cword appears unused. Verify use (or export if used externally).
+18_Readline-History-and-Completion/11_Dynamic-completion-functions.md	1	INTERACTIVE	NEUTRAL	SC2207	warning	6	12	0	Prefer mapfile or read -a to split command output (or quote to avoid splitting).
+18_Readline-History-and-Completion/11_Dynamic-completion-functions.md	1	INTERACTIVE	NEUTRAL	SC2207	warning	9	15	0	Prefer mapfile or read -a to split command output (or quote to avoid splitting).
+18_Readline-History-and-Completion/16_Terminal-capability-detection.md	1	INTERACTIVE	NEUTRAL	SC2034	warning	5	20	0	RED appears unused. Verify use (or export if used externally).
+19_Performance/01_The-Bash-cost-model.md	1	RUNNABLE	NEUTRAL	SC2034	warning	10	29	0	x appears unused. Verify use (or export if used externally).
+19_Performance/06_EPOCHREALTIME-for-sub-second-timing.md	2	ANTIPATTERN	WRONG	SC2034	warning	2	30	1	delta appears unused. Verify use (or export if used externally).
+19_Performance/06_EPOCHREALTIME-for-sub-second-timing.md	2	ANTIPATTERN	WRONG	SC2154	warning	2	30	1	end is referenced but not assigned.
+19_Performance/06_EPOCHREALTIME-for-sub-second-timing.md	2	ANTIPATTERN	WRONG	SC2154	warning	2	30	1	start is referenced but not assigned.
+20_Security/01_Threat-model.md	3	RUNNABLE	NEUTRAL	SC2154	warning	2	38	0	f is referenced but not assigned.
+20_Security/01_Threat-model.md	3	RUNNABLE	NEUTRAL	SC2154	warning	2	38	0	payload is referenced but not assigned.
+20_Security/01_Threat-model.md	4	RUNNABLE	NEUTRAL	SC2154	warning	2	47	0	secret is referenced but not assigned.
+20_Security/01_Threat-model.md	6	RUNNABLE	NEUTRAL	SC2034	warning	2	66	0	out appears unused. Verify use (or export if used externally).
+20_Security/01_Threat-model.md	7	DESTRUCTIVE	NEUTRAL	SC2120	warning	0	74	0	_audit_main references arguments, but none are ever passed.
+20_Security/01_Threat-model.md	8	RUNNABLE	NEUTRAL	SC2154	warning	2	85	0	user_dir is referenced but not assigned.
+20_Security/04_eval-avoidance.md	1	ANTIPATTERN	WRONG	SC2120	warning	0	13	1	_audit_main references arguments, but none are ever passed.
+20_Security/04_eval-avoidance.md	2	RUNNABLE	NEUTRAL	SC2120	warning	0	26	0	_audit_main references arguments, but none are ever passed.
+20_Security/04_eval-avoidance.md	2	RUNNABLE	NEUTRAL	SC2034	warning	5	31	0	ref appears unused. Verify use (or export if used externally).
+20_Security/04_eval-avoidance.md	3	RUNNABLE	NEUTRAL	SC2154	warning	3	46	0	key is referenced but not assigned.
+20_Security/04_eval-avoidance.md	3	RUNNABLE	NEUTRAL	SC2154	warning	3	46	0	value is referenced but not assigned.
+20_Security/04_eval-avoidance.md	5	NEEDS_INPUT	MIXED	SC2154	warning	3	77	0	key is referenced but not assigned.
+20_Security/04_eval-avoidance.md	7	RUNNABLE	NEUTRAL	SC2154	warning	2	113	0	key is referenced but not assigned.
+20_Security/04_eval-avoidance.md	7	RUNNABLE	NEUTRAL	SC2154	warning	3	114	0	value is referenced but not assigned.
+20_Security/05_Command-injection-vectors.md	1	ANTIPATTERN	WRONG	SC2154	warning	3	15	1	logfile is referenced but not assigned.
+20_Security/05_Command-injection-vectors.md	2	RUNNABLE	NEUTRAL	SC2154	warning	2	26	0	logfile is referenced but not assigned.
+20_Security/05_Command-injection-vectors.md	3	ANTIPATTERN	WRONG	SC2154	warning	3	38	1	user_cmd is referenced but not assigned.
+20_Security/05_Command-injection-vectors.md	5	ANTIPATTERN	WRONG	SC2154	warning	3	64	1	cfg_line is referenced but not assigned.
+20_Security/05_Command-injection-vectors.md	6	RUNNABLE	NEUTRAL	SC2154	warning	2	73	0	cfg_line is referenced but not assigned.
+20_Security/05_Command-injection-vectors.md	6	RUNNABLE	NEUTRAL	SC2034	warning	5	76	0	cfg appears unused. Verify use (or export if used externally).
+20_Security/05_Command-injection-vectors.md	7	ANTIPATTERN	WRONG	SC2154	warning	2	88	1	remote_path is referenced but not assigned.
+20_Security/06_Input-validation.md	3	RUNNABLE	NEUTRAL	SC2154	warning	2	67	0	name is referenced but not assigned.
+20_Security/06_Input-validation.md	4	RUNNABLE	NEUTRAL	SC2154	warning	2	89	0	raw is referenced but not assigned.
+20_Security/06_Input-validation.md	5	RUNNABLE	NEUTRAL	SC2154	warning	2	104	0	uid is referenced but not assigned.
+20_Security/07_Quoting-under-set-u.md	1	RUNNABLE	RIGHT	SC2034	warning	12	24	0	verbose appears unused. Verify use (or export if used externally).
+20_Security/07_Quoting-under-set-u.md	1	RUNNABLE	RIGHT	SC2034	warning	13	25	0	mode appears unused. Verify use (or export if used externally).
+20_Security/09_Secrets-handling.md	5	RUNNABLE	NEUTRAL	SC2154	warning	2	84	0	user is referenced but not assigned.
+20_Security/09_Secrets-handling.md	6	NEEDS_INPUT	NEUTRAL	SC2034	warning	2	95	0	PASSPHRASE appears unused. Verify use (or export if used externally).
+20_Security/09_Secrets-handling.md	7	RUNNABLE	NEUTRAL	SC2034	warning	6	108	0	TOKEN appears unused. Verify use (or export if used externally).
+20_Security/11_Privilege-drop.md	3	DESTRUCTIVE	NEUTRAL	SC2154	warning	6	71	0	results is referenced but not assigned.
+20_Security/11_Privilege-drop.md	4	RUNNABLE	NEUTRAL	SC2120	warning	0	88	0	_audit_main references arguments, but none are ever passed.
+20_Security/13_Symlink-races.md	1	DESTRUCTIVE	NEUTRAL	SC2154	warning	8	27	0	payload is referenced but not assigned.
+20_Security/13_Symlink-races.md	2	RUNNABLE	NEUTRAL	SC2154	warning	2	60	0	f is referenced but not assigned.
+20_Security/13_Symlink-races.md	2	RUNNABLE	NEUTRAL	SC2154	warning	2	60	0	payload is referenced but not assigned.
+20_Security/13_Symlink-races.md	3	RUNNABLE	NEUTRAL	SC2154	warning	2	80	0	dir is referenced but not assigned.
+21_Static-Analysis-Formatting-and-Testing/02_ShellCheck-directives.md	1	NEEDS_INPUT	NEUTRAL	SC1073	error	1	7	0	Couldn't parse this shellcheck directive. Fix to allow more checks.
+21_Static-Analysis-Formatting-and-Testing/02_ShellCheck-directives.md	1	NEEDS_INPUT	NEUTRAL	SC1072	error	1	7	0	Expected '=' after directive key. Fix any mentioned problems and try again.
+21_Static-Analysis-Formatting-and-Testing/02_ShellCheck-directives.md	2	RUNNABLE	NEUTRAL	SC1073	error	2	37	0	Couldn't parse this shellcheck directive. Fix to allow more checks.
+21_Static-Analysis-Formatting-and-Testing/02_ShellCheck-directives.md	2	RUNNABLE	NEUTRAL	SC1072	error	2	37	0	Expected '=' after directive key. Fix any mentioned problems and try again.
+21_Static-Analysis-Formatting-and-Testing/03_Source-path-management.md	1	RUNNABLE	NEUTRAL	SC2155	warning	6	18	0	Declare and assign separately to avoid masking return values.
+21_Static-Analysis-Formatting-and-Testing/03_Source-path-management.md	1	RUNNABLE	NEUTRAL	SC2034	warning	8	20	0	SCRIPT_NAME appears unused. Verify use (or export if used externally).
+21_Static-Analysis-Formatting-and-Testing/05_bcscheck.md	1	RUNNABLE	NEUTRAL	SC1073	error	3	17	0	Couldn't parse this brace group. Fix to allow more checks.
+21_Static-Analysis-Formatting-and-Testing/05_bcscheck.md	1	RUNNABLE	NEUTRAL	SC1083	warning	5	19	0	This { is literal. Check expression (missing ;/\\n?) or quote it.
+21_Static-Analysis-Formatting-and-Testing/05_bcscheck.md	1	RUNNABLE	NEUTRAL	SC1083	warning	5	19	0	This } is literal. Check expression (missing ;/\\n?) or quote it.
+21_Static-Analysis-Formatting-and-Testing/05_bcscheck.md	1	RUNNABLE	NEUTRAL	SC1056	error	15	29	0	Expected a '}'. If you have one, try a ; or \\n in front of it.
+21_Static-Analysis-Formatting-and-Testing/05_bcscheck.md	1	RUNNABLE	NEUTRAL	SC1072	error	15	29	0	Missing '}'. Fix any mentioned problems and try again.
+21_Static-Analysis-Formatting-and-Testing/05_bcscheck.md	1	RUNNABLE	NEUTRAL	SC1141	error	15	29	0	Unexpected tokens after compound command. Bad redirection or missing ;/&&/||/|?
+21_Static-Analysis-Formatting-and-Testing/05_bcscheck.md	2	RUNNABLE	NEUTRAL	SC2120	warning	0	47	0	_audit_main references arguments, but none are ever passed.
+21_Static-Analysis-Formatting-and-Testing/13_Coverage-with-kcov.md	1	DESTRUCTIVE	NEUTRAL	SC1128	error	2	15	0	The shebang must be on the first line. Delete blanks and move comments.
+22_Idioms-Patterns-and-Anti-Patterns/02_Self-locating-script-directory.md	1	RUNNABLE	NEUTRAL	SC2034	warning	2	8	0	SCRIPT_DIR appears unused. Verify use (or export if used externally).
+22_Idioms-Patterns-and-Anti-Patterns/02_Self-locating-script-directory.md	1	RUNNABLE	NEUTRAL	SC2034	warning	3	9	0	SCRIPT_NAME appears unused. Verify use (or export if used externally).
+22_Idioms-Patterns-and-Anti-Patterns/03_Argument-parsing-skeleton.md	1	RUNNABLE	NEUTRAL	SC2034	warning	62	73	0	VERBOSE appears unused. Verify use (or export if used externally).
+22_Idioms-Patterns-and-Anti-Patterns/03_Argument-parsing-skeleton.md	1	RUNNABLE	NEUTRAL	SC2034	warning	62	73	0	DEBUG appears unused. Verify use (or export if used externally).
+22_Idioms-Patterns-and-Anti-Patterns/03_Argument-parsing-skeleton.md	2	RUNNABLE	MIXED	SC2120	warning	0	112	0	_audit_main references arguments, but none are ever passed.
+22_Idioms-Patterns-and-Anti-Patterns/03_Argument-parsing-skeleton.md	2	RUNNABLE	MIXED	SC2034	warning	8	120	0	VERBOSE appears unused. Verify use (or export if used externally).
+22_Idioms-Patterns-and-Anti-Patterns/04_Default-value-patterns.md	1	RUNNABLE	NEUTRAL	SC2034	warning	2	29	0	log_level appears unused. Verify use (or export if used externally).
+22_Idioms-Patterns-and-Anti-Patterns/04_Default-value-patterns.md	1	RUNNABLE	NEUTRAL	SC2034	warning	8	35	0	flag appears unused. Verify use (or export if used externally).
+22_Idioms-Patterns-and-Anti-Patterns/05_Lazy-initialisation.md	1	RUNNABLE	NEUTRAL	SC1090	warning	3	9	0	ShellCheck can't follow non-constant source. Use a directive to specify location.
+22_Idioms-Patterns-and-Anti-Patterns/05_Lazy-initialisation.md	1	RUNNABLE	NEUTRAL	SC2154	warning	3	9	0	config_file is referenced but not assigned.
+22_Idioms-Patterns-and-Anti-Patterns/07_Iterating-an-associative-array-deterministically.md	1	RUNNABLE	NEUTRAL	SC2154	warning	1	7	0	by_id is referenced but not assigned.
+22_Idioms-Patterns-and-Anti-Patterns/08_Building-structured-output.md	1	RUNNABLE	NEUTRAL	SC2154	warning	3	22	0	names is referenced but not assigned.
+22_Idioms-Patterns-and-Anti-Patterns/08_Building-structured-output.md	1	RUNNABLE	NEUTRAL	SC2154	warning	4	23	0	emails is referenced but not assigned.
+22_Idioms-Patterns-and-Anti-Patterns/08_Building-structured-output.md	1	RUNNABLE	NEUTRAL	SC2154	warning	4	23	0	roles is referenced but not assigned.
+22_Idioms-Patterns-and-Anti-Patterns/09_Reading-config-files-safely.md	1	NEEDS_INPUT	NEUTRAL	SC2034	warning	2	8	0	line appears unused. Verify use (or export if used externally).
+22_Idioms-Patterns-and-Anti-Patterns/10_Atomic-file-write.md	2	RUNNABLE	MIXED	SC2154	warning	4	75	0	payload is referenced but not assigned.
+22_Idioms-Patterns-and-Anti-Patterns/15_Stack-trace-error-reporter.md	3	RUNNABLE	MIXED	SC2064	warning	3	106	0	Use single quotes, otherwise this expands now rather than when signalled.
+22_Idioms-Patterns-and-Anti-Patterns/15_Stack-trace-error-reporter.md	3	RUNNABLE	MIXED	SC2064	warning	3	106	0	Use single quotes, otherwise this expands now rather than when signalled.
+22_Idioms-Patterns-and-Anti-Patterns/16_Self-test-mode-dual-purpose-script.md	1	RUNNABLE	NEUTRAL	SC2120	warning	0	6	0	_audit_main references arguments, but none are ever passed.
+23_POSIX-Conformance-and-Portability/03_Bash-vs-dash.md	1	RUNNABLE	NEUTRAL	SC1073	error	0	32	0	Couldn't parse this brace group. Fix to allow more checks.
+23_POSIX-Conformance-and-Portability/03_Bash-vs-dash.md	1	RUNNABLE	NEUTRAL	SC1036	error	3	35	0	'(' is invalid here. Did you forget to escape it?
+23_POSIX-Conformance-and-Portability/03_Bash-vs-dash.md	1	RUNNABLE	NEUTRAL	SC1056	error	3	35	0	Expected a '}'. If you have one, try a ; or \\n in front of it.
+23_POSIX-Conformance-and-Portability/03_Bash-vs-dash.md	1	RUNNABLE	NEUTRAL	SC1072	error	3	35	0	Missing '}'. Fix any mentioned problems and try again.
+23_POSIX-Conformance-and-Portability/03_Bash-vs-dash.md	2	RUNNABLE	NEUTRAL	SC1128	error	2	53	0	The shebang must be on the first line. Delete blanks and move comments.
+23_POSIX-Conformance-and-Portability/05_Bash-vs-zsh.md	3	RUNNABLE	NEUTRAL	SC1087	error	3	58	0	Use braces when expanding arrays, e.g. ${array[idx]} (or ${var}[.. to quiet).
+23_POSIX-Conformance-and-Portability/05_Bash-vs-zsh.md	3	RUNNABLE	NEUTRAL	SC2128	warning	3	58	0	Expanding an array without an index only gives the first element.
+23_POSIX-Conformance-and-Portability/05_Bash-vs-zsh.md	3	RUNNABLE	NEUTRAL	SC1087	error	4	59	0	Use braces when expanding arrays, e.g. ${array[idx]} (or ${var}[.. to quiet).
+23_POSIX-Conformance-and-Portability/05_Bash-vs-zsh.md	3	RUNNABLE	NEUTRAL	SC2128	warning	4	59	0	Expanding an array without an index only gives the first element.
+23_POSIX-Conformance-and-Portability/12_Targeting-multiple-Bash-versions.md	2	RUNNABLE	NEUTRAL	SC2034	warning	7	43	0	dst appears unused. Verify use (or export if used externally).
+24_Bash-Internals/01_The-execution-pipeline.md	2	RUNNABLE	NEUTRAL	SC1073	error	0	58	0	Couldn't parse this brace group. Fix to allow more checks.
+24_Bash-Internals/01_The-execution-pipeline.md	2	RUNNABLE	NEUTRAL	SC1056	error	2	60	0	Expected a '}'. If you have one, try a ; or \\n in front of it.
+24_Bash-Internals/01_The-execution-pipeline.md	2	RUNNABLE	NEUTRAL	SC1072	error	2	60	0	Missing '}'. Fix any mentioned problems and try again.
+24_Bash-Internals/01_The-execution-pipeline.md	2	RUNNABLE	NEUTRAL	SC1133	error	2	60	0	Unexpected start of line. If breaking lines, |/||/&& should be at the end of the previous one.
+24_Bash-Internals/08_Subshell-forking.md	3	NEEDS_INPUT	MIXED	SC2034	warning	11	94	0	line appears unused. Verify use (or export if used externally).
+25_Bash-5.3-and-the-Future/01_No-fork-command-substitution-cmd.md	2	RUNNABLE	MIXED	SC2154	warning	2	88	0	cmd is referenced but not assigned.
+25_Bash-5.3-and-the-Future/01_No-fork-command-substitution-cmd.md	2	RUNNABLE	MIXED	SC2034	warning	6	92	0	result appears unused. Verify use (or export if used externally).
