@@ -46,11 +46,15 @@ sidesteps re-parsing entirely.
 
 ```bash
 # scenario: positional pass-through; inner sh does not see user content
-find . -type f -exec sh -c '
+mkdir -p _demo && : > _demo/a.txt && : > _demo/b.txt
+find _demo -type f -exec sh -c '
   for f; do
-    process_one -- "$f"
+    printf "processed: %s\n" "$f"   # stand-in for `process_one -- "$f"`
   done
-' sh {} +                           # ⇒ {} are passed as "$@", never re-parsed
+' sh {} +                           # → {} are passed as "$@", not re-parsed
+# ⇒ processed: _demo/a.txt
+# ⇒ processed: _demo/b.txt
+# (no cleanup — illustrative; in real code remove the demo tree afterwards)
 ```
 
 The `sh` after `-c '…'` becomes `$0`; subsequent `{}` arrive as positional

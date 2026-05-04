@@ -91,7 +91,8 @@ like:
 
 ```bash
 # scenario: locate every eval call site for review
-grep -rnE '\beval\b' --include='*.bash' --include='*.sh' .
+grep -rnE '\beval\b' --include='*.bash' --include='*.sh' . || true
+# (rc=1 is fine — it just means no `eval` calls found)
 ```
 
 Triage each hit into one of three buckets: trusted-literal (keep with

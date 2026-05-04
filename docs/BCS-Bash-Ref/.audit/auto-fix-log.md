@@ -101,4 +101,25 @@ Format per entry:
 - **After**: `echo 'we get here despite cmd_a failing' # ⇒ we get here despite cmd_a failing`
 - **Justification**: Annotation must match captured stdout literally. "printed" was a meta-comment, not the captured text.
 
+### docs/BCS-Bash-Ref/20_Security/04_eval-avoidance.md (block #6)
+- **Class**: rc-1-on-empty-result
+- **Pass**: phase-12-Part-20
+- **Before**: `grep -rnE '\beval\b' --include='*.bash' --include='*.sh' .` — sandbox CWD has no .bash/.sh files; grep returns 1; block CRASHes.
+- **After**: Append `|| true` and a clarifying comment that rc=1 just means "no eval call sites".
+- **Justification**: The block teaches the audit-sweep idiom; whether the sweep finds anything is environment-dependent.
+
+### docs/BCS-Bash-Ref/20_Security/05_Command-injection-vectors.md (block #4)
+- **Class**: prose-annotation + missing-fixtures
+- **Pass**: phase-12-Part-20
+- **Before**: `find . -type f -exec sh -c '…' sh {} +` plus `# ⇒ {} are passed as "$@", never re-parsed` (descriptive, never matches stdout).
+- **After**: Set up two fixture files under a relative `_demo/` dir, `printf` inside the inner sh-c body, and add literal `# ⇒ processed: _demo/a.txt` / `b.txt` annotations.
+- **Justification**: The block now both demonstrates the positional-pass-through pattern *and* produces deterministic output that the matcher can verify.
+
+### docs/BCS-Bash-Ref/20_Security/09_Secrets-handling.md (block #4)
+- **Class**: fictional-tool
+- **Pass**: phase-12-Part-20
+- **Before**: `{ set +x; api_call --secret-from-env; set -x; } 2>/dev/null` — `api_call` does not exist; rc=127.
+- **After**: Add `api_call() { :; }` placeholder ahead of the brace group. The pattern (set +x / call / set -x in a redirected group) is what the demo teaches.
+- **Justification**: The trace-disable pattern is what matters; the inner call is a stand-in for whatever real client the reader uses.
+
 #fin

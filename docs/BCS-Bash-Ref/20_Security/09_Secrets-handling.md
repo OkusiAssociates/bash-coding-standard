@@ -66,6 +66,7 @@ In practice the simpler one-liner suffices for a single secret-using call:
 
 ```bash
 # scenario: one-shot disable, immediate restore
+api_call() { :; }     # placeholder for the real client; the trace is the demo
 { set +x; api_call --secret-from-env; set -x; } 2>/dev/null
 ```
 
