@@ -33,6 +33,7 @@ set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
 declare -r  VERSION='1.2.3'
+#shellcheck disable=SC2155
 declare -r  SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
 declare -r  SCRIPT_DIR=${SCRIPT_PATH%/*}
 declare -r  SCRIPT_NAME=${SCRIPT_PATH##*/}

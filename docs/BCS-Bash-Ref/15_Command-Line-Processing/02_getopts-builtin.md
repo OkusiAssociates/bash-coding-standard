@@ -75,11 +75,18 @@ its own slice of the arguments:
 
 ```bash
 # scenario: outer parse, then reset for inner subcommand
+declare -i outer_v=0
+declare -A inner_flags=()
+
 OPTIND=1
-while getopts ':v' opt; do ...; done
+while getopts ':v' opt; do
+  case $opt in v) outer_v=1 ;; esac
+done
 
 OPTIND=1                              # reset before second parse
-while getopts ':abc' opt; do ...; done
+while getopts ':abc' opt; do
+  case $opt in a|b|c) inner_flags[$opt]=1 ;; esac
+done
 ```
 
 ### Bundling and value-taking options

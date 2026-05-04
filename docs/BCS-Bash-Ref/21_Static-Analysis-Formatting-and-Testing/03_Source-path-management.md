@@ -15,6 +15,7 @@ set -euo pipefail
 shopt -s inherit_errexit extglob nullglob
 
 # --- Script metadata (BCS0103 canonical pattern) ---
+#shellcheck disable=SC2155
 declare -r SCRIPT_PATH="$(realpath -- "$0")"
 declare -r SCRIPT_DIR="${SCRIPT_PATH%/*}"
 declare -r SCRIPT_NAME="${SCRIPT_PATH##*/}"

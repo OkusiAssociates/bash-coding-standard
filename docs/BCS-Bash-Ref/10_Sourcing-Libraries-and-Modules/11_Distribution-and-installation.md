@@ -29,7 +29,7 @@ manager conventions: `DESTDIR` is set by deb/rpm builders to redirect
 the install into a staging tree; `PREFIX` lets users override
 `/usr/local`.
 
-```bash
+```makefile
 # scenario: BCS-compliant Makefile install target for a bash library project.
 # ── Makefile ─────────────────────────────────────────────────
 PREFIX  ?= /usr/local

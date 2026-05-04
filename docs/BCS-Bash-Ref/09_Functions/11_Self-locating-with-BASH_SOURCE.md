@@ -39,6 +39,7 @@ shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # BASH_SOURCE[0] is *this* file even when sourced or symlinked (Bash 4.4+).
 # realpath resolves any symlink chain to the canonical absolute path.
+#shellcheck disable=SC2155
 declare -r SCRIPT_PATH="$(realpath -- "${BASH_SOURCE[0]}")"
 declare -r SCRIPT_DIR="${SCRIPT_PATH%/*}"
 declare -r LIB_DIR="${SCRIPT_DIR}/lib"          # sibling lib/ directory

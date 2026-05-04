@@ -210,6 +210,8 @@ element on `IFS` (§5.8). The same applies to `"$var"` versus `$var`.
 # scenario: quoted vs unquoted expansion of an element with spaces
 declare -a files=('one two' 'three')
 printf '[%s]\n' "${files[@]}"   # ⇒ [one two] [three]
+# wrong — unquoted array expansion re-splits on IFS; demonstration only
+#shellcheck disable=SC2068
 printf '[%s]\n' ${files[@]}     # ⇒ [one] [two] [three]   — splitting bug
 ```
 

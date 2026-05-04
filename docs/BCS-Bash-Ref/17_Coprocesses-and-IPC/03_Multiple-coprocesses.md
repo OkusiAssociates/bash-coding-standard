@@ -51,13 +51,14 @@ On Bash 4.0-4.3, attempting a second `coproc` while the first is alive prints `b
 
 ```bash
 # wrong — same name reused; second coproc clobbers the first's array
-coproc CHILD { ...; }
-coproc CHILD { ...; }            # SECOND launch replaces $CHILD silently
-                                 # — first child becomes unreachable
+coproc CHILD { read -r line; printf '%s\n' "$line"; }
+coproc CHILD { read -r line; printf '%s\n' "$line"; }   # second launch
+                                                        # silently replaces $CHILD
+                                                        # — first child unreachable
 
 # right — distinct names per coproc instance
-coproc PARSER { ...; }
-coproc EMITTER { ...; }
+coproc PARSER  { while read -r line; do printf 'parsed:%s\n' "$line"; done; }
+coproc EMITTER { while read -r line; do printf 'emitted:%s\n' "$line"; done; }
 ```
 
 **See also**: §17.1 (the `coproc` builtin), §17.2 (bidirectional fd pairs and stdbuf), §1.2 (file descriptor model), §11.3 (`wait`), BCS0409 (Bash version detection), BCS1101 (background job management).

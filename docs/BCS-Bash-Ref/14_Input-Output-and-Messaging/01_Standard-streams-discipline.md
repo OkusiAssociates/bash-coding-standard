@@ -21,7 +21,7 @@ piped — the consumer cannot distinguish data from chatter.
 ### The anti-pattern
 
 ```bash
-# scenario: a script counts matching files but chats on stdout
+# wrong — script counts matching files but chats on stdout
 #!/bin/bash
 set -euo pipefail
 count_matches() {
@@ -37,7 +37,7 @@ Piped into `wc -l`, the caller sees `2` lines (`Scanning...` plus the
 count) instead of the single number it expected. The first downstream
 arithmetic operation produces nonsense:
 
-```bash
+```text
 $ count_matches | wc -l
 2                   # ⇒ should be 1; the diagnostic line was counted
 $ total=$(count_matches); echo "$((total + 1))"
@@ -52,14 +52,16 @@ Send every diagnostic to fd 2 explicitly. The BCS messaging helpers
 diagnostics, redirect with `>&2`.
 
 ```bash
-# scenario: same script, diagnostics on stderr
+# right — same script, diagnostics on stderr
 count_matches() {
   printf 'Scanning...\n' >&2       # diagnostic on stderr (correct)
   local -i n=0
   for f in *.txt; do ((n+=1)); done
   printf '%d\n' "$n"               # data on stdout
 }
+```
 
+```text
 $ count_matches | wc -l
 Scanning...
 1                   # ⇒ correct: stderr passed through to terminal,

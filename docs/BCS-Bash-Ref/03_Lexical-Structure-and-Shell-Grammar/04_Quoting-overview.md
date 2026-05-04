@@ -99,7 +99,8 @@ on its own terms:
 ```bash
 # scenario: outer double quotes; inner single quotes are literal-mode again.
 declare -- name='world'
-declare -- greeting="$(printf 'hello, %s\n' "$name")"
+declare -- greeting
+greeting="$(printf 'hello, %s\n' "$name")"
 printf '%s' "$greeting"
 # ⇒ hello, world
 ```

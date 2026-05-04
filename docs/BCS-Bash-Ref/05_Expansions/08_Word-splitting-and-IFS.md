@@ -82,7 +82,8 @@ declare -a items=('alpha beta' 'gamma' 'delta epsilon')
 printf '[%s]\n' "$spaced"
 # ⇒ [one two three]
 
-# Unquoted — split on IFS (default)
+# Unquoted — split on IFS (default); demonstration only
+#shellcheck disable=SC2086
 printf '[%s]\n' $spaced
 # ⇒ [one]
 #    [two]
@@ -94,7 +95,8 @@ printf '[%s]\n' "${items[@]}"
 #    [gamma]
 #    [delta epsilon]
 
-# Unquoted array expansion — re-splits each element
+# wrong — unquoted array expansion re-splits each element; demonstration only
+#shellcheck disable=SC2068
 printf '[%s]\n' ${items[@]}
 # ⇒ [alpha]
 #    [beta]

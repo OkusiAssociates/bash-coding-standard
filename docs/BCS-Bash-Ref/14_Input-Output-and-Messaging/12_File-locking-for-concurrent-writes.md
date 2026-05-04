@@ -16,7 +16,8 @@ Querying the local value:
 
 ```bash
 # scenario: discover the local PIPE_BUF before designing a log format
-declare -i pipe_buf=$(getconf PIPE_BUF /)
+declare -i pipe_buf
+pipe_buf=$(getconf PIPE_BUF /)
 printf 'PIPE_BUF on this filesystem: %d bytes\n' "$pipe_buf"
 # ⇒ on Linux: 4096
 ```

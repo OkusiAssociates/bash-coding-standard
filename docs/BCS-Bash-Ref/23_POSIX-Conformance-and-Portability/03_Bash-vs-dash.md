@@ -29,7 +29,7 @@ The `checkbashisms` script (Debian package `devscripts`) scans a script
 for constructs that work in bash but fail in dash. It is the standard
 test for "is this `#!/bin/sh` script actually portable?"
 
-```bash
+```text
 # scenario: audit an /etc/init.d script before shipping
 $ checkbashisms /etc/init.d/myservice
 possible bashism in /etc/init.d/myservice line 14 (echo -e):
@@ -48,14 +48,17 @@ where it happens to work in dash); `-x` follows `.` (dot) sources.
 The classic case is `[[`: bash users instinctively reach for it; dash
 treats `[[` as a syntax error because there is no such builtin.
 
+`script.sh`:
+
 ```bash
-# script.sh
 #!/bin/sh
 file=/etc/passwd
 if [[ -f "$file" ]]; then
   echo found
 fi
+```
 
+```text
 $ bash script.sh
 found
 

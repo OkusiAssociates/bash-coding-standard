@@ -54,16 +54,18 @@ read `LC_COLLATE` and `LC_CTYPE` directly.
 
 ```bash
 # scenario: prefer named POSIX classes over [a-z] range
+declare -- name='alpha'
 shopt -s globasciiranges            # confirm the default
 
 # Ambiguous (depends on shopt + locale):
-[[ name == [a-z]* ]]
+[[ "$name" == [a-z]* ]]
 
 # Unambiguous, locale-independent in the usual sense:
-[[ name == [[:lower:]]* ]]          # locale-aware "lowercase"
+[[ "$name" == [[:lower:]]* ]]       # locale-aware "lowercase"
 
-# Bytewise ASCII, regardless of locale:
-LC_ALL=C [[ name == [a-z]* ]]
+# Bytewise ASCII, regardless of locale (subshell scopes the override —
+# `VAR=val builtin` does NOT apply to `[[`):
+( LC_ALL=C; [[ "$name" == [a-z]* ]] )
 ```
 
 ### When to force `LC_ALL=C`

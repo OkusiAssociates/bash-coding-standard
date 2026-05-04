@@ -63,7 +63,9 @@ printf '== "$*" collapses to one word ==\n'
 show "$*"
 # ⇒ count=1, the entry is "first arg second arg third"
 
+# wrong — unquoted $@ re-splits on IFS; demo only
 printf '== unquoted $@ re-splits on IFS ==\n'
+#shellcheck disable=SC2068
 show $@
 # ⇒ count=5: "first", "arg", "second", "arg", "third"
 ```
