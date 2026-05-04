@@ -189,13 +189,13 @@ its value. Each operator is a single character.
 # scenario: @Q for safe re-emission, @A for round-trip dumps, @a for attrs
 declare -ai counts=([0]=10 [3]=42 [7]=99)
 echo "${counts[@]@Q}"    # ⇒ '10' '42' '99'      — each element shell-quoted
-echo "${counts@A}"       # ⇒ declare -ai counts=([0]="10" [3]="42" [7]="99")
+echo "${counts[@]@A}"    # ⇒ declare -ai counts=([0]="10" [3]="42" [7]="99")
 declare -ir CONST=7
 echo "${CONST@a}"        # ⇒ ir                   — integer + readonly
 
 # @P for prompt-style escapes (current dir, time, etc.)
 declare -- p='\u@\h:\w\$ '
-echo "${p@P}"            # ⇒ sysadmin@host:/path$
+echo "${p@P}"            # → e.g. `user@host:/path$ ` (host-dependent)
 ```
 
 `${var@Q}` is the canonical way to *log* or *re-emit* a variable's

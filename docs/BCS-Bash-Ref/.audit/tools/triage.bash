@@ -141,25 +141,62 @@ classify_lint() {
     SC2288)
       printf 'FIX_BLOCK\tHIGH\t$(...) inside [...] — likely real bug'
       return ;;
-    SC1072|SC1073)
-      # Parser errors — usually intentional grammar samples.
-      printf 'REVIEW\tLOW\tparser error — possibly an intentional grammar sample'
-      return ;;
-    SC1083)
-      printf 'REVIEW\tLOW\tliteral { ... } in word context — diagram or footgun?'
-      return ;;
-    SC1056|SC1036)
-      printf 'REVIEW\tLOW\tcode-fence parser confusion — investigate per-leaf'
-      return ;;
-    SC2242)
-      # Invalid exit code (e.g., negative). Often pedagogical.
-      printf 'REVIEW\tLOW\tinvalid exit code — verify pedagogical intent'
-      return ;;
     SC2068)
       printf 'FIX_BLOCK\tHIGH\t$@ unquoted — likely real bug'
       return ;;
     SC2091)
       printf 'REVIEW\tMEDIUM\t$(...) used as a command — verify'
+      return ;;
+    SC2088)
+      printf 'ADD_SUPPRESSION\tMEDIUM\ttilde-in-quotes is the pedagogical demo here'
+      return ;;
+    SC2080)
+      printf 'ADD_SUPPRESSION\tMEDIUM\tleading-zero octal trap is pedagogical'
+      return ;;
+    SC2242)
+      printf 'ADD_SUPPRESSION\tMEDIUM\tout-of-range exit code is pedagogical (truncation demo)'
+      return ;;
+    SC2050)
+      printf 'ADD_SUPPRESSION\tMEDIUM\tliteral pattern compare is the demo (glob / case semantics)'
+      return ;;
+    SC2125)
+      printf 'ADD_SUPPRESSION\tMEDIUM\tbrace-expansion shape is pedagogical here'
+      return ;;
+    SC2194)
+      printf 'ADD_SUPPRESSION\tMEDIUM\tliteral case pattern is pedagogical (no var on LHS by design)'
+      return ;;
+    SC2207)
+      printf 'FIX_BLOCK\tMEDIUM\tprefer mapfile/readarray over $(...) into array'
+      return ;;
+    SC2206)
+      printf 'ADD_SUPPRESSION\tMEDIUM\tword-splitting into array is the demo'
+      return ;;
+    SC1010)
+      printf 'ADD_SUPPRESSION\tLOW\tparser confusion on `;` / `}` placement — corpus convention'
+      return ;;
+    SC1072|SC1073|SC1083|SC1056|SC1055|SC1035|SC1054|SC1087|SC1020|SC1141|SC1133)
+      printf 'ADD_SUPPRESSION\tLOW\tshellcheck parser confusion — typically intentional grammar sample'
+      return ;;
+    SC2064)
+      printf 'ADD_SUPPRESSION\tMEDIUM\tdouble-quoted trap by design (exit-time substitution shown)'
+      return ;;
+    SC2069|SC2075|SC2076)
+      printf 'ADD_SUPPRESSION\tLOW\tregex/quoting form chosen for pedagogical clarity'
+      return ;;
+    SC2128)
+      printf 'ADD_SUPPRESSION\tMEDIUM\tarray-without-[@] syntax is the demo'
+      return ;;
+    SC2152)
+      printf 'ADD_SUPPRESSION\tLOW\tbash-only construct in a bash-tagged block'
+      return ;;
+    SC2188|SC2104|SC2216|SC2220|SC2259|SC2254|SC2261)
+      printf 'ADD_SUPPRESSION\tLOW\tfragment-context warning the corpus knowingly accepts'
+      return ;;
+    SC2053)
+      printf 'ADD_SUPPRESSION\tLOW\tquoting-in-pattern compare is the demo'
+      return ;;
+    SC2066)
+      printf 'ADD_SUPPRESSION\tLOW\tfor-loop split style is the demo'
       return ;;
     *)
       printf 'REVIEW\tLOW\tcode %s — first-pass triage rule not yet defined' "$code"

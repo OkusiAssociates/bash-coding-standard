@@ -22,8 +22,8 @@ Part. Tick a decision per entry, then run the per-Part fix pass.
 
 **stdout (first 5 non-empty lines):**
 
-    builtin loop:  0.010 s
-    subshell loop: 3.091 s
+    builtin loop:  0.013 s
+    subshell loop: 2.948 s
 
 **stderr (first 3 non-empty lines):**
 

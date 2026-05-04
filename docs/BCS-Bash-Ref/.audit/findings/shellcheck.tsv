@@ -272,28 +272,18 @@ leaf_path	block_idx	runnability	label	sc_code	level	block_line	leaf_line	expecte
 12_Signals-and-Traps/16_Reload-on-SIGHUP.md	2	ANTIPATTERN	WRONG	SC1128	error	2	33	1	The shebang must be on the first line. Delete blanks and move comments.
 12_Signals-and-Traps/16_Reload-on-SIGHUP.md	2	ANTIPATTERN	WRONG	SC1090	warning	12	43	1	ShellCheck can't follow non-constant source. Use a directive to specify location.
 12_Signals-and-Traps/16_Reload-on-SIGHUP.md	2	ANTIPATTERN	WRONG	SC1090	warning	18	49	1	ShellCheck can't follow non-constant source. Use a directive to specify location.
-13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	RUNNABLE	NEUTRAL	SC2091	warning	2	38	0	Remove surrounding $() to avoid executing output (or use eval if intentional).
-13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	RUNNABLE	NEUTRAL	SC2242	error	2	38	0	Can only exit with status 0-255. Other data should be written to stdout/stderr.
-13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	RUNNABLE	NEUTRAL	SC2091	warning	3	39	0	Remove surrounding $() to avoid executing output (or use eval if intentional).
-13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	RUNNABLE	NEUTRAL	SC2242	error	3	39	0	Can only exit with status 0-255. Other data should be written to stdout/stderr.
-13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	RUNNABLE	NEUTRAL	SC2091	warning	4	40	0	Remove surrounding $() to avoid executing output (or use eval if intentional).
-13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	RUNNABLE	NEUTRAL	SC2242	error	4	40	0	Can only exit with status 0-255. Other data should be written to stdout/stderr.
-13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	RUNNABLE	NEUTRAL	SC2091	warning	5	41	0	Remove surrounding $() to avoid executing output (or use eval if intentional).
-13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	RUNNABLE	NEUTRAL	SC2242	error	5	41	0	Can only exit with status 0-255. Other data should be written to stdout/stderr.
-13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	RUNNABLE	NEUTRAL	SC2091	warning	6	42	0	Remove surrounding $() to avoid executing output (or use eval if intentional).
-13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md	1	RUNNABLE	NEUTRAL	SC2242	error	6	42	0	Can only exit with status 0-255. Other data should be written to stdout/stderr.
 13_Error-Handling-and-Exit-Status/02_set-e-errexit-full-semantics.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	28	0	The shebang must be on the first line. Delete blanks and move comments.
 13_Error-Handling-and-Exit-Status/02_set-e-errexit-full-semantics.md	4	RUNNABLE	NEUTRAL	SC2034	warning	3	115	0	output appears unused. Verify use (or export if used externally).
 13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	42	0	The shebang must be on the first line. Delete blanks and move comments.
 13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	2	RUNNABLE	NEUTRAL	SC1128	error	2	57	0	The shebang must be on the first line. Delete blanks and move comments.
-13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	3	RUNNABLE	NEUTRAL	SC1128	error	2	74	0	The shebang must be on the first line. Delete blanks and move comments.
-13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	4	RUNNABLE	NEUTRAL	SC1128	error	2	88	0	The shebang must be on the first line. Delete blanks and move comments.
-13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	5	RUNNABLE	NEUTRAL	SC1128	error	2	102	0	The shebang must be on the first line. Delete blanks and move comments.
-13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	6	RUNNABLE	NEUTRAL	SC1128	error	2	117	0	The shebang must be on the first line. Delete blanks and move comments.
-13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	7	RUNNABLE	NEUTRAL	SC1128	error	2	135	0	The shebang must be on the first line. Delete blanks and move comments.
+13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	3	RUNNABLE	NEUTRAL	SC1128	error	2	80	0	The shebang must be on the first line. Delete blanks and move comments.
+13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	4	RUNNABLE	NEUTRAL	SC1128	error	2	94	0	The shebang must be on the first line. Delete blanks and move comments.
+13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	5	RUNNABLE	NEUTRAL	SC1128	error	2	108	0	The shebang must be on the first line. Delete blanks and move comments.
+13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	6	RUNNABLE	NEUTRAL	SC1128	error	2	123	0	The shebang must be on the first line. Delete blanks and move comments.
+13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md	7	RUNNABLE	NEUTRAL	SC1128	error	2	141	0	The shebang must be on the first line. Delete blanks and move comments.
 13_Error-Handling-and-Exit-Status/04_set-u-nounset.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	20	0	The shebang must be on the first line. Delete blanks and move comments.
 13_Error-Handling-and-Exit-Status/04_set-u-nounset.md	2	RUNNABLE	NEUTRAL	SC1128	error	2	72	0	The shebang must be on the first line. Delete blanks and move comments.
-13_Error-Handling-and-Exit-Status/04_set-u-nounset.md	3	RUNNABLE	NEUTRAL	SC1128	error	2	107	0	The shebang must be on the first line. Delete blanks and move comments.
+13_Error-Handling-and-Exit-Status/04_set-u-nounset.md	3	RUNNABLE	NEUTRAL	SC1128	error	2	112	0	The shebang must be on the first line. Delete blanks and move comments.
 13_Error-Handling-and-Exit-Status/05_set-o-pipefail.md	1	RUNNABLE	NEUTRAL	SC1128	error	2	31	0	The shebang must be on the first line. Delete blanks and move comments.
 13_Error-Handling-and-Exit-Status/05_set-o-pipefail.md	2	NETWORK	NEUTRAL	SC2154	warning	4	60	0	url is referenced but not assigned.
 13_Error-Handling-and-Exit-Status/06_inherit_errexit.md	1	ANTIPATTERN	WRONG	SC1128	error	2	30	1	The shebang must be on the first line. Delete blanks and move comments.
@@ -438,23 +428,23 @@ leaf_path	block_idx	runnability	label	sc_code	level	block_line	leaf_line	expecte
 20_Security/04_eval-avoidance.md	3	RUNNABLE	NEUTRAL	SC2154	warning	3	46	0	key is referenced but not assigned.
 20_Security/04_eval-avoidance.md	3	RUNNABLE	NEUTRAL	SC2154	warning	3	46	0	value is referenced but not assigned.
 20_Security/04_eval-avoidance.md	5	NEEDS_INPUT	MIXED	SC2154	warning	3	77	0	key is referenced but not assigned.
-20_Security/04_eval-avoidance.md	7	RUNNABLE	NEUTRAL	SC2154	warning	2	113	0	key is referenced but not assigned.
-20_Security/04_eval-avoidance.md	7	RUNNABLE	NEUTRAL	SC2154	warning	3	114	0	value is referenced but not assigned.
+20_Security/04_eval-avoidance.md	7	RUNNABLE	NEUTRAL	SC2154	warning	2	114	0	key is referenced but not assigned.
+20_Security/04_eval-avoidance.md	7	RUNNABLE	NEUTRAL	SC2154	warning	3	115	0	value is referenced but not assigned.
 20_Security/05_Command-injection-vectors.md	1	ANTIPATTERN	WRONG	SC2154	warning	3	15	1	logfile is referenced but not assigned.
 20_Security/05_Command-injection-vectors.md	2	RUNNABLE	NEUTRAL	SC2154	warning	2	26	0	logfile is referenced but not assigned.
 20_Security/05_Command-injection-vectors.md	3	ANTIPATTERN	WRONG	SC2154	warning	3	38	1	user_cmd is referenced but not assigned.
-20_Security/05_Command-injection-vectors.md	5	ANTIPATTERN	WRONG	SC2154	warning	3	64	1	cfg_line is referenced but not assigned.
-20_Security/05_Command-injection-vectors.md	6	RUNNABLE	NEUTRAL	SC2154	warning	2	73	0	cfg_line is referenced but not assigned.
-20_Security/05_Command-injection-vectors.md	6	RUNNABLE	NEUTRAL	SC2034	warning	5	76	0	cfg appears unused. Verify use (or export if used externally).
-20_Security/05_Command-injection-vectors.md	7	NETWORK	MIXED	SC2154	warning	2	88	0	remote_path is referenced but not assigned.
+20_Security/05_Command-injection-vectors.md	5	ANTIPATTERN	WRONG	SC2154	warning	3	68	1	cfg_line is referenced but not assigned.
+20_Security/05_Command-injection-vectors.md	6	RUNNABLE	NEUTRAL	SC2154	warning	2	77	0	cfg_line is referenced but not assigned.
+20_Security/05_Command-injection-vectors.md	6	RUNNABLE	NEUTRAL	SC2034	warning	5	80	0	cfg appears unused. Verify use (or export if used externally).
+20_Security/05_Command-injection-vectors.md	7	NETWORK	MIXED	SC2154	warning	2	92	0	remote_path is referenced but not assigned.
 20_Security/06_Input-validation.md	3	RUNNABLE	NEUTRAL	SC2154	warning	2	67	0	name is referenced but not assigned.
 20_Security/06_Input-validation.md	4	RUNNABLE	NEUTRAL	SC2154	warning	2	89	0	raw is referenced but not assigned.
 20_Security/06_Input-validation.md	5	RUNNABLE	NEUTRAL	SC2154	warning	2	104	0	uid is referenced but not assigned.
 20_Security/07_Quoting-under-set-u.md	1	RUNNABLE	RIGHT	SC2034	warning	12	24	0	verbose appears unused. Verify use (or export if used externally).
 20_Security/07_Quoting-under-set-u.md	1	RUNNABLE	RIGHT	SC2034	warning	13	25	0	mode appears unused. Verify use (or export if used externally).
-20_Security/09_Secrets-handling.md	5	ANTIPATTERN	WRONG	SC2154	warning	2	84	1	user is referenced but not assigned.
-20_Security/09_Secrets-handling.md	6	NEEDS_INPUT	NEUTRAL	SC2034	warning	2	95	0	PASSPHRASE appears unused. Verify use (or export if used externally).
-20_Security/09_Secrets-handling.md	7	RUNNABLE	NEUTRAL	SC2034	warning	6	108	0	TOKEN appears unused. Verify use (or export if used externally).
+20_Security/09_Secrets-handling.md	5	ANTIPATTERN	WRONG	SC2154	warning	2	85	1	user is referenced but not assigned.
+20_Security/09_Secrets-handling.md	6	NEEDS_INPUT	NEUTRAL	SC2034	warning	2	96	0	PASSPHRASE appears unused. Verify use (or export if used externally).
+20_Security/09_Secrets-handling.md	7	RUNNABLE	NEUTRAL	SC2034	warning	6	109	0	TOKEN appears unused. Verify use (or export if used externally).
 20_Security/11_Privilege-drop.md	3	DESTRUCTIVE	NEUTRAL	SC2154	warning	6	71	0	results is referenced but not assigned.
 20_Security/11_Privilege-drop.md	4	RUNNABLE	NEUTRAL	SC2120	warning	0	88	0	_audit_main references arguments, but none are ever passed.
 20_Security/13_Symlink-races.md	1	DESTRUCTIVE	NEUTRAL	SC2154	warning	8	27	0	payload is referenced but not assigned.

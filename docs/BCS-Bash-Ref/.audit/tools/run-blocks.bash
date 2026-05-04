@@ -102,6 +102,8 @@ has_preamble() {
 #
 # Trailing parenthetical clarifications like `value   (depends on host)`
 # are stripped — the matcher tests for the literal-output portion only.
+# The corpus also uses an em-dash convention `value    — explanatory
+# prose` (2+ spaces, em dash, prose); strip those too.
 # Likewise, prose-only annotations like `# ⇒ N is host-dependent` (no
 # leading literal text) are dropped from the expected list, since they
 # describe output rather than enumerate it.
@@ -117,12 +119,18 @@ extract_expected() {
       sub(/[[:space:]]+$/, "", rest)
       # Strip a trailing parenthetical clarifier (one level only).
       sub(/[[:space:]]+\([^)]*\)[[:space:]]*$/, "", rest)
+      # Strip the em-dash convention (2+ spaces before — guards against
+      # legitimate inline em-dashes in output literals).
+      sub(/[[:space:]][[:space:]]+—[[:space:]].*$/, "", rest)
       sub(/[[:space:]]+$/, "", rest)
       if (length(rest) == 0) next
       # Drop prose-only annotations that start with a parenthesis or a
       # leading `(` — those describe runtime behaviour rather than
       # enumerate stdout.
       if (substr(rest, 1, 1) == "(") next
+      # Drop prose-only annotations that begin with an em-dash (the
+      # entire annotation is prose, not literal output).
+      if (substr(rest, 1, 1) == "—") next
       print rest
     }
   ' <<< "$body"
