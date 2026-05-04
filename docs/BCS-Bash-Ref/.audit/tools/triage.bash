@@ -24,6 +24,7 @@ declare -r DEFAULT_INV="$REF_DIR/.audit/findings/inventory.tsv"
 declare -r DEFAULT_LINT="$REF_DIR/.audit/findings/shellcheck.tsv"
 declare -r DEFAULT_RUN="$REF_DIR/.audit/findings/runtime.tsv"
 declare -r DEFAULT_BLOCKS="$REF_DIR/.audit/blocks"
+declare -r DEFAULT_LOG_DIR="$REF_DIR/.audit/findings/runtime-log"
 declare -r DEFAULT_OUT="$REF_DIR/.audit/findings/dispositions-augmented.tsv"
 
 declare -i VERBOSE=1
@@ -53,6 +54,7 @@ Options:
   -l, --lint FILE       Shellcheck TSV (default: $DEFAULT_LINT)
   -r, --runtime FILE    Runtime TSV (default: $DEFAULT_RUN)
   -b, --blocks DIR      Materialised blocks (default: $DEFAULT_BLOCKS)
+  -L, --log-dir DIR     Per-block runtime logs (default: $DEFAULT_LOG_DIR)
   -o, --output FILE     Output TSV (default: $DEFAULT_OUT)
   -q, --quiet           Suppress informational output
   -V, --version         Show version
@@ -72,6 +74,15 @@ read_block_body() {
   flat="$(flatten_path "$leaf")"
   printf -v src '%s/%s__%03d.bash' "$blocks_dir" "$flat" "$idx"
   [[ -f "$src" ]] && awk '!/^# bcs-audit:/' "$src" || true
+}
+
+# Read captured stderr / stdout of a runtime block. Empty string if absent.
+read_log() {
+  local -- leaf="$1" idx="$2" log_dir="$3" suffix="$4"
+  local -- flat src
+  flat="$(flatten_path "$leaf")"
+  printf -v src '%s/%s__%03d.%s' "$log_dir" "$flat" "$idx" "$suffix"
+  [[ -f "$src" ]] && cat -- "$src" || true
 }
 
 # Classify one shellcheck finding into action + confidence.
@@ -156,10 +167,12 @@ classify_lint() {
   esac
 }
 
-# Classify one runtime row. Inputs: bucket, label, exit_code, body.
+# Classify one runtime row. Inputs: bucket, label, exit_code, body, stderr,
+# stdout, expected. Empty-string stderr/stdout/expected if logs missing.
 #shellcheck disable=SC2016
 classify_runtime() {
   local -- bucket="$1" label="$2" exit_code="$3" body="$4"
+  local -- stderr="${5:-}" stdout="${6:-}" expected="${7:-}"
   case "$bucket" in
     OK)
       printf 'NO_ACTION\tHIGH\tran cleanly; expected output matched'
@@ -171,41 +184,182 @@ classify_runtime() {
       printf 'FIX_ANNOTATION\tMEDIUM\tblock produced output but has no `# ⇒` annotation — opportunity to add'
       return ;;
     MISMATCH)
-      # If the documented output uses /home/u/ placeholders we cannot
-      # reproduce in the sandbox, this is a documentation pattern, not
-      # a bug.
+      # If actual stdout exposes the sandbox HOME (mktemp dir) and the
+      # expected output references a real /home/ path, that is a HOME
+      # divergence, not a corpus bug.
+      if [[ "$stdout" =~ /tmp/bcs-audit-run- ]] \
+        && [[ "$expected" =~ /home/ ]]; then
+        printf 'SANDBOX_HOME\tHIGH\tactual leaks sandbox tmp; expected references /home/'
+        return
+      fi
+      # /home/u/ placeholder convention — doc shows a literal placeholder.
       if [[ "$body" =~ /home/u(/|[[:space:]]|$) ]]; then
         printf 'FALSE_POSITIVE\tMEDIUM\tdoc uses /home/u placeholder; runtime sees sandbox HOME'
-      else
-        printf 'REVIEW\tMEDIUM\tactual stdout did not contain documented `# ⇒` text — fix doc or block'
+        return
       fi
+      # Documentation references a real user home (/home/<name>) that
+      # the sandbox cannot reproduce.
+      if [[ "$expected" =~ /home/[a-z][a-z0-9_-]+ ]]; then
+        printf 'SANDBOX_HOME\tMEDIUM\texpected references a real /home/<user> path'
+        return
+      fi
+      # Non-deterministic output — PID / BASHPID / $$.
+      if [[ "$expected" =~ (BASHPID|\$\$|PID=|PPID=|UID=) ]]; then
+        printf 'SANDBOX_NONDETERMINISTIC\tHIGH\texpected references PID/BASHPID — varies per run'
+        return
+      fi
+      # Non-deterministic output — timestamp / date.
+      if [[ "$expected" =~ (Mon|Tue|Wed|Thu|Fri|Sat|Sun)[[:space:]] ]] \
+        || [[ "$expected" =~ [0-9]{4}-[0-9]{2}-[0-9]{2} ]] \
+        || [[ "$expected" =~ [0-9]{2}:[0-9]{2}:[0-9]{2} ]] \
+        || [[ "$expected" =~ (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[[:space:]] ]]; then
+        printf 'SANDBOX_NONDETERMINISTIC\tHIGH\texpected references timestamp — varies per run'
+        return
+      fi
+      # Non-deterministic — random tmp path or mktemp output.
+      if [[ "$expected" =~ /tmp/[a-zA-Z0-9._-]+ ]] \
+        || [[ "$expected" =~ tmp\.[A-Za-z0-9]{6,} ]] \
+        || [[ "$expected" =~ \$RANDOM ]]; then
+        printf 'SANDBOX_NONDETERMINISTIC\tHIGH\texpected references random tmp path'
+        return
+      fi
+      # Live filesystem listing — `ls -l` output, depends on host state.
+      if [[ "$expected" =~ ^[[:space:]]*total[[:space:]][0-9]+ ]] \
+        || [[ "$expected" =~ -[r-][w-][x-][r-][w-][x-][r-][w-][x-] ]] \
+        || [[ "$expected" =~ drwx ]]; then
+        printf 'SANDBOX_FS\tMEDIUM\texpected lists ls -l output — depends on host filesystem state'
+        return
+      fi
+      printf 'REVIEW\tMEDIUM\tactual stdout did not contain documented `# ⇒` text — fix doc or block'
       return ;;
     CRASH)
       if [[ "$label" == 'WRONG' ]]; then
         printf 'EXPECTED_CRASH\tHIGH\tblock is anti-pattern demo; non-zero exit is the point'
         return
       fi
-      # Sandbox-isolation artefacts: blocks call project helpers
-      # (`die`, `info`, `success`, `error`, `warn`, `noarg`) or external
-      # tools (`bcscheck`, `phcs`, `ok1`/`ok2`/`ok3`) that aren't on PATH
-      # under env -i.
+      # Documentation explicitly anticipates non-zero exit — pipefail/SIGPIPE
+      # demos, errexit-exemption gotchas, etc.
+      if [[ "$expected" =~ (EXITS|exits|abort|fails|killed|SIGPIPE|rc=[1-9]|exit[[:space:]]code[[:space:]][1-9]) ]]; then
+        printf 'EXPECTED_CRASH\tHIGH\tdoc annotations describe non-zero exit as the expected outcome'
+        return
+      fi
+      # SIGPIPE — exit 141 from a producer killed by an early-closing reader.
+      if [[ "$exit_code" == '141' ]]; then
+        printf 'EXPECTED_CRASH\tHIGH\texit 141 (SIGPIPE) — likely deliberate pipefail/SIGPIPE demo'
+        return
+      fi
+      # `# scenario:` self-documents the failure intent.
+      if [[ "$body" =~ \#[[:space:]]scenario:[^$]*(EXIT|exit|abort|fail|wrong|crash|gotcha) ]]; then
+        printf 'EXPECTED_CRASH\tMEDIUM\tscenario comment marks the block as failure-demo'
+        return
+      fi
+      # Stderr-led classification (preferred — looks at the actual
+      # failure, not just the source body).
+      if [[ -n "$stderr" ]]; then
+        # Okusi fleet binary missing.
+        if [[ "$stderr" =~ (bcscheck|phcs|ok[0-3]|push-to-okusi|symlink|oknav|lhssh|lhssh-cmd)(:[[:space:]]|[[:space:]])*command\ not\ found ]]; then
+          printf 'SANDBOX_FLEET\tHIGH\tfleet binary not present in sandbox'
+          return
+        fi
+        # Common system tool missing under env -i.
+        if [[ "$stderr" =~ (curl|wget|ssh|scp|systemctl|journalctl|nft|iptables|nmcli|lsof|nc|netcat|dig|host|bats|bash5\.3|brew|apt|dpkg|snap|docker|podman|kubectl|jq)(:[[:space:]]|[[:space:]])*command\ not\ found ]]; then
+          printf 'SANDBOX_TOOL\tHIGH\tsystem tool unavailable in sandbox PATH'
+          return
+        fi
+        # Permission denied — usually system file.
+        if [[ "$stderr" =~ [Pp]ermission[[:space:]]denied ]]; then
+          printf 'SANDBOX_PERM\tHIGH\tpermission denied (sandbox lacks privilege)'
+          return
+        fi
+        # Missing system path under /etc, /var, /proc, /sys, /run.
+        if [[ "$stderr" =~ (No[[:space:]]such[[:space:]]file[[:space:]]or[[:space:]]directory|cannot[[:space:]]open|cannot[[:space:]]access|cannot[[:space:]]statx)[^$]*/(etc|var|proc|sys|run)/ ]]; then
+          printf 'SANDBOX_FS\tHIGH\tmissing system path under /etc /var /proc /sys /run'
+          return
+        fi
+        # Strict-mode unbound-variable from a fragment that pulls a name
+        # from surrounding leaf prose.
+        if [[ "$stderr" =~ unbound[[:space:]]variable ]]; then
+          printf 'ILLUSTRATIVE_FRAGMENT\tMEDIUM\tunbound var under set -u; fragment references prose-context name'
+          return
+        fi
+        # Bats / test-runner fixtures absent in sandbox.
+        if [[ "$stderr" =~ (bats|tests/?:|cd[[:space:]]+tests:[[:space:]]No[[:space:]]such) ]]; then
+          printf 'SANDBOX_TOOL\tMEDIUM\ttest-runner fixtures absent in sandbox'
+          return
+        fi
+        # Block needs root (explicit re-run-with-sudo message).
+        if [[ "$stderr" =~ needs[[:space:]]root|requires[[:space:]]root|run[[:space:]]as[[:space:]]root ]]; then
+          printf 'SANDBOX_PERM\tHIGH\tblock self-aborts: needs root'
+          return
+        fi
+        # Bash version requirement.
+        if [[ "$stderr" =~ requires[[:space:]]bash[[:space:]][0-9] ]]; then
+          printf 'SANDBOX_TOOL\tHIGH\tblock asserts a bash version newer than sandbox'
+          return
+        fi
+        # Custom error-trap output: the block is demonstrating error
+        # handling, so a non-zero exit *is* the documented outcome.
+        if [[ "$stderr" =~ ^ERR[[:space:]]rc=[0-9]+ ]] \
+          || [[ "$stderr" =~ ERR[[:space:]]rc=[0-9]+[[:space:]] ]]; then
+          printf 'EXPECTED_CRASH\tMEDIUM\tcustom error-trap output: block demos failure handling'
+          return
+        fi
+        # Catch-all for command-not-found (placeholder names like
+        # `mytool`, `cleanup`, `@test`, `mylib` or genuine missing tools
+        # that the curated list doesn't enumerate). After the fleet/
+        # tool-curated checks above, anything else is sandbox or
+        # placeholder, not a corpus bug.
+        if [[ "$stderr" =~ command[[:space:]]not[[:space:]]found ]]; then
+          printf 'SANDBOX_TOOL\tMEDIUM\tunresolved external command (sandbox lacks tool or placeholder name)'
+          return
+        fi
+        # Generic missing-file (No such file or directory, cannot open,
+        # cannot access, cannot statx) outside system paths. Most are
+        # sandbox setup gaps.
+        if [[ "$stderr" =~ (No[[:space:]]such[[:space:]]file[[:space:]]or[[:space:]]directory|cannot[[:space:]](open|access|statx)) ]]; then
+          printf 'SANDBOX_FS\tMEDIUM\tmissing file or path (sandbox setup gap)'
+          return
+        fi
+        # Syntax errors — likely intentional grammar-illustration fragment.
+        if [[ "$stderr" =~ syntax[[:space:]]error ]]; then
+          printf 'EXPECTED_CRASH\tLOW\tparser error — possibly intentional grammar sample'
+          return
+        fi
+        # Generic "fatal:" prefix from upstream tool (git/etc.) we do not
+        # have configured in the sandbox.
+        if [[ "$stderr" =~ ^fatal: ]]; then
+          printf 'SANDBOX_TOOL\tMEDIUM\tupstream tool fatal error (likely missing setup in sandbox)'
+          return
+        fi
+      else
+        # Empty stderr + non-zero exit: typically an intentional
+        # `false` / `exit N` / `return N` demonstration.
+        if [[ "$body" =~ (^|[^[:alnum:]_])(false|exit[[:space:]]+[0-9]+|return[[:space:]]+[0-9]+) ]]; then
+          printf 'EXPECTED_CRASH\tMEDIUM\tbody contains explicit false/exit/return — failure is the demo'
+          return
+        fi
+      fi
+      # Body-led fallback (still useful when stderr is empty).
       if [[ "$body" =~ (^|[^[:alnum:]_])(die|info|success|warn|error|noarg|vecho|yn)[[:space:]] ]]; then
-        printf 'SANDBOX_ARTEFACT\tMEDIUM\tblock calls BCS messaging helper not in sandbox PATH'
+        printf 'SANDBOX_ARTEFACT\tMEDIUM\tblock calls BCS messaging helper (stub-loaded but call may still fail)'
         return
       fi
-      if [[ "$body" =~ (^|[^[:alnum:]_])(bcscheck|phcs|ok[123]|push-to-okusi)[[:space:]] ]]; then
-        printf 'SANDBOX_ARTEFACT\tHIGH\tblock calls Okusi-fleet binary unavailable in sandbox'
+      if [[ "$body" =~ (^|[^[:alnum:]_])(bcscheck|phcs|ok[123]|push-to-okusi|symlink)[[:space:]] ]]; then
+        printf 'SANDBOX_FLEET\tHIGH\tbody calls Okusi-fleet binary'
         return
       fi
-      # Use of /etc/passwd, /var/, /proc/, /sys/ — system-state-dependent.
-      if [[ "$body" =~ /(etc|var|proc|sys)/ ]]; then
-        printf 'SANDBOX_ARTEFACT\tMEDIUM\tblock reads /etc/var/proc/sys path — sandbox may differ'
+      if [[ "$body" =~ /(etc|var|proc|sys|run)/ ]]; then
+        printf 'SANDBOX_FS\tMEDIUM\tbody reads /etc /var /proc /sys /run path — sandbox may differ'
         return
       fi
-      # Real candidate
       printf 'REVIEW\tLOW\tcrash with no obvious sandbox cause; exit=%s' "$exit_code"
       return ;;
     TIMEOUT)
+      # Polling/signal demos genuinely cannot run in batch.
+      if [[ "$body" =~ (^|[^[:alnum:]_])(read[[:space:]]+-r|wait[[:space:]]|kill[[:space:]]+-STOP|trap[[:space:]]+) ]]; then
+        printf 'EXPECTED_TIMEOUT\tMEDIUM\tinteractive/signal-bound demo cannot complete in batch'
+        return
+      fi
       printf 'REVIEW\tMEDIUM\thit 10s wall — long sleep loop or accidental hang'
       return ;;
     *)
@@ -215,11 +369,12 @@ classify_runtime() {
 }
 
 run() {
-  local -- inv="$1" lint="$2" runtm="$3" blocks="$4" out="$5"
+  local -- inv="$1" lint="$2" runtm="$3" blocks="$4" log_dir="$5" out="$6"
   for f in "$inv" "$lint" "$runtm"; do
     [[ -f "$f" ]] || die 3 "missing input: $f"
   done
   [[ -d "$blocks" ]] || die 3 "missing blocks dir: $blocks"
+  [[ -d "$log_dir" ]] || warn "log dir not found: $log_dir (stderr-aware rules disabled)"
 
   mkdir -p -- "${out%/*}"
   printf 'leaf_path\tblock_idx\tsource\tcode\tlevel_or_bucket\tlabel\taction\tconfidence\trationale\n' > "$out"
@@ -251,10 +406,19 @@ run() {
   done < "$lint"
 
   # Pass 2: runtime rows
+  local -- stderr_txt stdout_txt expected_txt
   while IFS=$'\t' read -r leaf idx _runn label exit_code bucket _ _ _ _; do
     [[ "$leaf" == 'leaf_path' ]] && continue
     body="$(read_block_body "$leaf" "$idx" "$blocks")"
-    runrow="$(classify_runtime "$bucket" "$label" "$exit_code" "$body")"
+    stderr_txt=''; stdout_txt=''; expected_txt=''
+    if [[ -d "$log_dir" ]]; then
+      stderr_txt="$(read_log "$leaf" "$idx" "$log_dir" stderr)"
+      stdout_txt="$(read_log "$leaf" "$idx" "$log_dir" stdout)"
+    fi
+    # Cheap re-extraction of expected: any `# ⇒` line from the body. Used
+    # only for SANDBOX_HOME detection in MISMATCH cases.
+    expected_txt="$(awk '/[[:space:]]*#[[:space:]]*⇒/' <<< "$body")"
+    runrow="$(classify_runtime "$bucket" "$label" "$exit_code" "$body" "$stderr_txt" "$stdout_txt" "$expected_txt")"
     IFS=$'\t' read -r action conf rat <<< "$runrow"
     printf '%s\t%s\truntime\t%s\t%s\t%s\t%s\t%s\t%s\n' \
       "$leaf" "$idx" "$bucket" "exit=$exit_code" "$label" "$action" "$conf" "$rat" >> "$out"
@@ -266,24 +430,25 @@ run() {
 
 main() {
   local -- inv="$DEFAULT_INV" lint="$DEFAULT_LINT" runtm="$DEFAULT_RUN"
-  local -- blocks="$DEFAULT_BLOCKS" out="$DEFAULT_OUT"
+  local -- blocks="$DEFAULT_BLOCKS" log_dir="$DEFAULT_LOG_DIR" out="$DEFAULT_OUT"
   while (($#)); do
     case "$1" in
       -i|--inventory) noarg "$@"; inv="$2"; shift 2 ;;
       -l|--lint)      noarg "$@"; lint="$2"; shift 2 ;;
       -r|--runtime)   noarg "$@"; runtm="$2"; shift 2 ;;
       -b|--blocks)    noarg "$@"; blocks="$2"; shift 2 ;;
+      -L|--log-dir)   noarg "$@"; log_dir="$2"; shift 2 ;;
       -o|--output)    noarg "$@"; out="$2"; shift 2 ;;
       -q|--quiet)     VERBOSE=0; shift ;;
       -V|--version)   printf '%s %s\n' "$SCRIPT_NAME" "$VERSION"; exit 0 ;;
       -h|--help)      show_help; exit 0 ;;
-      -[ilrboqVh]?*)  set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+      -[ilrbLoqVh]?*) set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
       --)             shift; break ;;
       -*)             die 22 "Unknown option: $1" ;;
       *)              die 22 "Unexpected argument: $1" ;;
     esac
   done
-  run "$inv" "$lint" "$runtm" "$blocks" "$out"
+  run "$inv" "$lint" "$runtm" "$blocks" "$log_dir" "$out"
 }
 
 main "$@"

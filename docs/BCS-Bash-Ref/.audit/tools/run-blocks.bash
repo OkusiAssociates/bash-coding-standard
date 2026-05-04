@@ -19,6 +19,7 @@ declare -r DEFAULT_BLOCKS_DIR="$REF_DIR/.audit/blocks"
 declare -r DEFAULT_INV="$REF_DIR/.audit/findings/inventory.tsv"
 declare -r DEFAULT_OUT="$REF_DIR/.audit/findings/runtime.tsv"
 declare -r DEFAULT_LOG_DIR="$REF_DIR/.audit/findings/runtime-log"
+declare -r STUB_PATH="$SCRIPT_DIR/lib/bcs-helpers-stub.sh"
 
 declare -i TIMEOUT_SECS=10
 declare -i VERBOSE=1
@@ -147,10 +148,15 @@ run_one_block() {
   local -- body wrapped expected
   body="$(strip_sidecar "$file")"
 
+  local -- stub_load=''
+  if [[ -f "$STUB_PATH" ]]; then
+    printf -v stub_load 'source -- %q\n' "$STUB_PATH"
+  fi
+
   if has_preamble "$body"; then
-    wrapped="$body"
+    wrapped="${stub_load}${body}"
   else
-    wrapped="${SHIM_PREAMBLE}${body}"
+    wrapped="${SHIM_PREAMBLE}${stub_load}${body}"
   fi
 
   expected="$(extract_expected "$body")"
@@ -226,6 +232,13 @@ run() {
   [[ -d "$blocks_dir" ]] || die 3 "blocks dir not found: $blocks_dir"
 
   command -v timeout > /dev/null || die 18 "timeout(1) not on PATH"
+
+  # Pre-create commonly-referenced sandbox paths so blocks that hard-code
+  # `/tmp/sandbox/{lib,bin}` (e.g. sourcing-libraries demos) don't crash on
+  # `cd` or `source` against them.
+  mkdir -p -- /tmp/sandbox/lib /tmp/sandbox/bin
+
+  [[ -f "$STUB_PATH" ]] || warn "BCS helper stub not found: $STUB_PATH"
 
   mkdir -p -- "${out%/*}" "$log_dir"
   printf 'leaf_path\tblock_idx\trunnability\tlabel\texit_code\tbucket\texpected_count\tactual_lines\texpected_match\texpected_crash\n' > "$out"
