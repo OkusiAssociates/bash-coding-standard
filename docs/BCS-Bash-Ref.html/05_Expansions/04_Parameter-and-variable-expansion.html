@@ -526,7 +526,9 @@ applies to <code>&quot;$var&quot;</code> versus <code>$var</code>.</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: quoted vs unquoted expansion of an element with spaces</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">files</span><span class="op">=</span><span class="va">(</span><span class="st">&#39;one two&#39;</span> <span class="st">&#39;three&#39;</span><span class="va">)</span></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;[%s]\n&#39;</span> <span class="st">&quot;</span><span class="va">${files</span><span class="op">[@]</span><span class="va">}</span><span class="st">&quot;</span>   <span class="co"># ⇒ [one two] [three]</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;[%s]\n&#39;</span> <span class="va">${files</span><span class="op">[@]</span><span class="va">}</span>     <span class="co"># ⇒ [one] [two] [three]   — splitting bug</span></span></code></pre></div>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co"># wrong — unquoted array expansion re-splits on IFS; demonstration only</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co">#shellcheck disable=SC2068</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;[%s]\n&#39;</span> <span class="va">${files</span><span class="op">[@]</span><span class="va">}</span>     <span class="co"># ⇒ [one] [two] [three]   — splitting bug</span></span></code></pre></div>
 <p>The unquoted form is the single most common cause of Bash bugs in
 production scripts (§5.8). Quote unconditionally.</p>
 <p><strong>See also</strong>: §5.5 (arithmetic expansion shares

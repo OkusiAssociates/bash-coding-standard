@@ -304,14 +304,14 @@ auditor</h3>
 <code>devscripts</code>) scans a script for constructs that work in bash
 but fail in dash. It is the standard test for &quot;is this
 <code>#!/bin/sh</code> script actually portable?&quot;</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: audit an /etc/init.d script before shipping</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> checkbashisms /etc/init.d/myservice</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="ex">possible</span> bashism in /etc/init.d/myservice line 14 <span class="er">(</span><span class="bu">echo</span> <span class="at">-e</span><span class="kw">)</span><span class="bu">:</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="at">-e</span> <span class="st">&quot;starting myservice\n&quot;</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="ex">possible</span> bashism in /etc/init.d/myservice line 22 <span class="er">(</span><span class="kw">[[</span> <span class="op">)</span><span class="kw">)</span><span class="bu">:</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="kw">[[</span> <span class="ot">-f</span> /var/run/myservice.pid <span class="kw">]];</span> <span class="cf">then</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="ex">possible</span> bashism in /etc/init.d/myservice line 31 <span class="er">(</span><span class="st">$&#39; ):</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="st">  printf $&#39;</span><span class="ex">\t%s\n</span><span class="st">&#39; &quot;$pid&quot;</span></span></code></pre></div>
+<pre class="text"><code># scenario: audit an /etc/init.d script before shipping
+$ checkbashisms /etc/init.d/myservice
+possible bashism in /etc/init.d/myservice line 14 (echo -e):
+  echo -e &quot;starting myservice\n&quot;
+possible bashism in /etc/init.d/myservice line 22 ([[ )):
+  if [[ -f /var/run/myservice.pid ]]; then
+possible bashism in /etc/init.d/myservice line 31 ($&#39; ):
+  printf $&#39;\t%s\n&#39; &quot;$pid&quot;</code></pre>
 <p><code>checkbashisms -p</code> is stricter (flags POSIX-undefined
 behaviour even where it happens to work in dash); <code>-x</code>
 follows <code>.</code> (dot) sources.</p>
@@ -320,18 +320,17 @@ failure</h3>
 <p>The classic case is <code>[[</code>: bash users instinctively reach
 for it; dash treats <code>[[</code> as a syntax error because there is
 no such builtin.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># script.sh</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co">#!/bin/sh</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="va">file</span><span class="op">=</span>/etc/passwd</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">[[</span> <span class="ot">-f</span> <span class="st">&quot;</span><span class="va">$file</span><span class="st">&quot;</span> <span class="kw">]];</span> <span class="cf">then</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> found</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="cf">fi</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> bash script.sh</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="ex">found</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> dash script.sh</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="ex">script.sh:</span> 3: [[: not found</span></code></pre></div>
+<p><code>script.sh</code>:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/bin/sh</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="va">file</span><span class="op">=</span>/etc/passwd</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">[[</span> <span class="ot">-f</span> <span class="st">&quot;</span><span class="va">$file</span><span class="st">&quot;</span> <span class="kw">]];</span> <span class="cf">then</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> found</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="cf">fi</span></span></code></pre></div>
+<pre class="text"><code>$ bash script.sh
+found
+
+$ dash script.sh
+script.sh: 3: [[: not found</code></pre>
 <p>Other common dashisms-by-accident: <code>local var=value</code> works
 (one keyword, one assignment) but <code>local -i n=0</code> does not
 (dash has no <code>-i</code>); <code>read -r -a arr</code> fails because

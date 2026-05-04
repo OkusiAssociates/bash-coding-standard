@@ -359,16 +359,18 @@ otherwise. The shopt does <strong>not</strong> affect
 C-library regex routines, which read <code>LC_COLLATE</code> and
 <code>LC_CTYPE</code> directly.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: prefer named POSIX classes over [a-z] range</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> globasciiranges            <span class="co"># confirm the default</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Ambiguous (depends on shopt + locale):</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="kw">[[</span> name <span class="ot">==</span> <span class="pp">[</span><span class="ss">a</span><span class="pp">-</span><span class="ss">z</span><span class="pp">]*</span> <span class="kw">]]</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Unambiguous, locale-independent in the usual sense:</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="kw">[[</span> name <span class="ot">==</span> <span class="pp">[[:</span><span class="ss">lower</span><span class="pp">:]]*</span> <span class="kw">]]</span>          <span class="co"># locale-aware &quot;lowercase&quot;</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Bytewise ASCII, regardless of locale:</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="va">LC_ALL</span><span class="op">=</span>C <span class="kw">[[</span> name <span class="ot">==</span> <span class="pp">[</span><span class="ss">a</span><span class="pp">-</span><span class="ss">z</span><span class="pp">]*</span> <span class="kw">]]</span></span></code></pre></div>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">name</span><span class="op">=</span><span class="st">&#39;alpha&#39;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> globasciiranges            <span class="co"># confirm the default</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Ambiguous (depends on shopt + locale):</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="kw">[[</span> <span class="st">&quot;</span><span class="va">$name</span><span class="st">&quot;</span> <span class="ot">==</span> <span class="pp">[</span><span class="ss">a</span><span class="pp">-</span><span class="ss">z</span><span class="pp">]*</span> <span class="kw">]]</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Unambiguous, locale-independent in the usual sense:</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="kw">[[</span> <span class="st">&quot;</span><span class="va">$name</span><span class="st">&quot;</span> <span class="ot">==</span> <span class="pp">[[:</span><span class="ss">lower</span><span class="pp">:]]*</span> <span class="kw">]]</span>       <span class="co"># locale-aware &quot;lowercase&quot;</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Bytewise ASCII, regardless of locale (subshell scopes the override —</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co"># `VAR=val builtin` does NOT apply to `[[`):</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="kw">(</span> <span class="va">LC_ALL</span><span class="op">=</span>C<span class="kw">;</span> <span class="kw">[[</span> <span class="st">&quot;</span><span class="va">$name</span><span class="st">&quot;</span> <span class="ot">==</span> <span class="pp">[</span><span class="ss">a</span><span class="pp">-</span><span class="ss">z</span><span class="pp">]*</span> <span class="kw">]]</span> <span class="kw">)</span></span></code></pre></div>
 <h3 id="when-to-force-lc_allc">When to force <code>LC_ALL=C</code></h3>
 <p>For <em>parsing</em> hashes, protocol fields, log lines, base64, hex,
 filenames-with-bytes — anything where byte-exact matching is required —

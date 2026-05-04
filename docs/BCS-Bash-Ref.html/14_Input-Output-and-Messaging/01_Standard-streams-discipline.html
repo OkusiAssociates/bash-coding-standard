@@ -294,7 +294,7 @@ should not.</li>
 captured or piped — the consumer cannot distinguish data from
 chatter.</p>
 <h3 id="the-anti-pattern">The anti-pattern</h3>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: a script counts matching files but chats on stdout</span></span>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># wrong — script counts matching files but chats on stdout</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co">#!/bin/bash</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">count_matches()</span> <span class="kw">{</span></span>
@@ -308,28 +308,27 @@ chatter.</p>
 (<code>Scanning...</code> plus the count) instead of the single number
 it expected. The first downstream arithmetic operation produces
 nonsense:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> count_matches <span class="kw">|</span> <span class="fu">wc</span> <span class="at">-l</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">2</span>                   <span class="co"># ⇒ should be 1; the diagnostic line was counted</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> total=<span class="va">$(</span><span class="ex">count_matches</span><span class="va">)</span><span class="kw">;</span> <span class="bu">echo</span> <span class="st">&quot;</span><span class="va">$((total</span> <span class="op">+</span> <span class="dv">1</span><span class="va">))</span><span class="st">&quot;</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="ex">bash:</span> Scanning...</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="ex">12</span> + 1: syntax error in expression</span></code></pre></div>
+<pre class="text"><code>$ count_matches | wc -l
+2                   # ⇒ should be 1; the diagnostic line was counted
+$ total=$(count_matches); echo &quot;$((total + 1))&quot;
+bash: Scanning...
+12 + 1: syntax error in expression</code></pre>
 <h3 id="the-correct-pattern">The correct pattern</h3>
 <p>Send every diagnostic to fd 2 explicitly. The BCS messaging helpers
 (<code>info</code>, <code>warn</code>, <code>error</code>,
 <code>die</code>) do this for you (BCS0703); for ad-hoc diagnostics,
 redirect with <code>&gt;&amp;2</code>.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: same script, diagnostics on stderr</span></span>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># right — same script, diagnostics on stderr</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">count_matches()</span> <span class="kw">{</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">&#39;Scanning...\n&#39;</span> <span class="op">&gt;&amp;</span><span class="dv">2</span>       <span class="co"># diagnostic on stderr (correct)</span></span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">-i</span> <span class="va">n</span><span class="op">=</span>0</span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> f <span class="kw">in</span> <span class="pp">*</span>.txt<span class="kw">;</span> <span class="cf">do</span> <span class="kw">((</span><span class="va">n</span><span class="op">+=</span><span class="dv">1</span><span class="kw">));</span> <span class="cf">done</span></span>
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">&#39;%d\n&#39;</span> <span class="st">&quot;</span><span class="va">$n</span><span class="st">&quot;</span>               <span class="co"># data on stdout</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> count_matches <span class="kw">|</span> <span class="fu">wc</span> <span class="at">-l</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="ex">Scanning...</span></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="ex">1</span>                   <span class="co"># ⇒ correct: stderr passed through to terminal,</span></span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>                    <span class="co">#   stdout had exactly one line for wc</span></span></code></pre></div>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span></code></pre></div>
+<pre class="text"><code>$ count_matches | wc -l
+Scanning...
+1                   # ⇒ correct: stderr passed through to terminal,
+                    #   stdout had exactly one line for wc</code></pre>
 <h3 id="rules-of-thumb">Rules of thumb</h3>
 <ul>
 <li>Never write diagnostics with bare <code>echo</code> or

@@ -345,11 +345,18 @@ arguments</h3>
 so re-parsing requires an explicit reset. The pattern matters when a
 subcommand re-parses its own slice of the arguments:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: outer parse, then reset for inner subcommand</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="va">OPTIND</span><span class="op">=</span>1</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="bu">getopts</span> <span class="st">&#39;:v&#39;</span> <span class="va">opt</span><span class="kw">;</span> <span class="cf">do</span> <span class="ex">...</span><span class="kw">;</span> <span class="cf">done</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-i</span> <span class="va">outer_v</span><span class="op">=</span>0</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-A</span> <span class="va">inner_flags</span><span class="op">=</span><span class="va">()</span></span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="va">OPTIND</span><span class="op">=</span>1                              <span class="co"># reset before second parse</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="bu">getopts</span> <span class="st">&#39;:abc&#39;</span> <span class="va">opt</span><span class="kw">;</span> <span class="cf">do</span> <span class="ex">...</span><span class="kw">;</span> <span class="cf">done</span></span></code></pre></div>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="va">OPTIND</span><span class="op">=</span>1</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="bu">getopts</span> <span class="st">&#39;:v&#39;</span> <span class="va">opt</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="va">$opt</span> <span class="kw">in</span> <span class="ss">v</span><span class="kw">)</span> <span class="va">outer_v</span><span class="op">=</span>1 <span class="cf">;;</span> <span class="cf">esac</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="va">OPTIND</span><span class="op">=</span>1                              <span class="co"># reset before second parse</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="bu">getopts</span> <span class="st">&#39;:abc&#39;</span> <span class="va">opt</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="va">$opt</span> <span class="kw">in</span> <span class="ss">a</span><span class="kw">|</span><span class="ss">b</span><span class="kw">|</span><span class="ss">c</span><span class="kw">)</span> <span class="va">inner_flags</span><span class="op">[</span><span class="va">$opt</span><span class="op">]=</span>1 <span class="cf">;;</span> <span class="cf">esac</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div>
 <h3 id="bundling-and-value-taking-options">Bundling and value-taking
 options</h3>
 <p><code>getopts</code> handles short-option bundling automatically:

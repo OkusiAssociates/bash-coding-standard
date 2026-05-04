@@ -21,7 +21,7 @@ Strict-mode assumptions throughout. Bottom-up structure: from the Unix model Bas
 
 ## About this reference
 
-This is a **structural reference guide** for advanced Bash users. It assumes Bash 5.2 or newer on Ubuntu 24.04 (or comparable Linux), strict-mode operation (`set -euo pipefail` with `shopt -s inherit_errexit`), and that the reader can already write at least basic shell scripts.
+This is a **structural reference guide** for advanced Bash users. It assumes Bash 5.2 or newer on Ubuntu 24.04 (or comparable Linux), strict-mode operation (`set -euo pipefail` with `shopt -s inherit_errexit`), and that the reader can already write at least basic shell.
 
 It is organised bottom-up: the Unix model first (because Bash is a thin language over Unix primitives), then Bash as a program, then the language proper (lexical structure, parameters, expansions, redirection, control flow), then the engineering layer (functions, libraries, process management, signals, errors, I/O, CLI, concurrency, IPC), then the interactive layer (readline), then performance, security, tooling, idioms, portability, and internals — closing on Bash 5.3 and beyond.
 
@@ -1690,7 +1690,8 @@ on its own terms:
 ```bash
 # scenario: outer double quotes; inner single quotes are literal-mode again.
 declare -- name='world'
-declare -- greeting="$(printf 'hello, %s\n' "$name")"
+declare -- greeting
+greeting="$(printf 'hello, %s\n' "$name")"
 printf '%s' "$greeting"
 # ⇒ hello, world
 ```
@@ -2404,7 +2405,9 @@ printf '== "$*" collapses to one word ==\n'
 show "$*"
 # ⇒ count=1, the entry is "first arg second arg third"
 
+# wrong — unquoted $@ re-splits on IFS; demo only
 printf '== unquoted $@ re-splits on IFS ==\n'
+#shellcheck disable=SC2068
 show $@
 # ⇒ count=5: "first", "arg", "second", "arg", "third"
 ```
@@ -3132,6 +3135,7 @@ set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
 declare -r  VERSION='1.2.3'
+#shellcheck disable=SC2155
 declare -r  SCRIPT_PATH=$(realpath -- "${BASH_SOURCE[0]}")
 declare -r  SCRIPT_DIR=${SCRIPT_PATH%/*}
 declare -r  SCRIPT_NAME=${SCRIPT_PATH##*/}
@@ -4787,6 +4791,8 @@ element on `IFS` (§5.8). The same applies to `"$var"` versus `$var`.
 # scenario: quoted vs unquoted expansion of an element with spaces
 declare -a files=('one two' 'three')
 printf '[%s]\n' "${files[@]}"   # ⇒ [one two] [three]
+# wrong — unquoted array expansion re-splits on IFS; demonstration only
+#shellcheck disable=SC2068
 printf '[%s]\n' ${files[@]}     # ⇒ [one] [two] [three]   — splitting bug
 ```
 
@@ -5254,7 +5260,8 @@ declare -a items=('alpha beta' 'gamma' 'delta epsilon')
 printf '[%s]\n' "$spaced"
 # ⇒ [one two three]
 
-# Unquoted — split on IFS (default)
+# Unquoted — split on IFS (default); demonstration only
+#shellcheck disable=SC2086
 printf '[%s]\n' $spaced
 # ⇒ [one]
 #    [two]
@@ -5266,7 +5273,8 @@ printf '[%s]\n' "${items[@]}"
 #    [gamma]
 #    [delta epsilon]
 
-# Unquoted array expansion — re-splits each element
+# wrong — unquoted array expansion re-splits each element; demonstration only
+#shellcheck disable=SC2068
 printf '[%s]\n' ${items[@]}
 # ⇒ [alpha]
 #    [beta]
@@ -5912,16 +5920,18 @@ read `LC_COLLATE` and `LC_CTYPE` directly.
 
 ```bash
 # scenario: prefer named POSIX classes over [a-z] range
+declare -- name='alpha'
 shopt -s globasciiranges            # confirm the default
 
 # Ambiguous (depends on shopt + locale):
-[[ name == [a-z]* ]]
+[[ "$name" == [a-z]* ]]
 
 # Unambiguous, locale-independent in the usual sense:
-[[ name == [[:lower:]]* ]]          # locale-aware "lowercase"
+[[ "$name" == [[:lower:]]* ]]       # locale-aware "lowercase"
 
-# Bytewise ASCII, regardless of locale:
-LC_ALL=C [[ name == [a-z]* ]]
+# Bytewise ASCII, regardless of locale (subshell scopes the override —
+# `VAR=val builtin` does NOT apply to `[[`):
+( LC_ALL=C; [[ "$name" == [a-z]* ]] )
 ```
 
 ### When to force `LC_ALL=C`
@@ -10715,6 +10725,7 @@ shopt -s inherit_errexit shift_verbose extglob nullglob
 
 # BASH_SOURCE[0] is *this* file even when sourced or symlinked (Bash 4.4+).
 # realpath resolves any symlink chain to the canonical absolute path.
+#shellcheck disable=SC2155
 declare -r SCRIPT_PATH="$(realpath -- "${BASH_SOURCE[0]}")"
 declare -r SCRIPT_DIR="${SCRIPT_PATH%/*}"
 declare -r LIB_DIR="${SCRIPT_DIR}/lib"          # sibling lib/ directory
@@ -11828,7 +11839,7 @@ manager conventions: `DESTDIR` is set by deb/rpm builders to redirect
 the install into a staging tree; `PREFIX` lets users override
 `/usr/local`.
 
-```bash
+```makefile
 # scenario: BCS-compliant Makefile install target for a bash library project.
 # ── Makefile ─────────────────────────────────────────────────
 PREFIX  ?= /usr/local
@@ -16222,7 +16233,7 @@ piped — the consumer cannot distinguish data from chatter.
 ### The anti-pattern
 
 ```bash
-# scenario: a script counts matching files but chats on stdout
+# wrong — script counts matching files but chats on stdout
 #!/bin/bash
 set -euo pipefail
 count_matches() {
@@ -16238,7 +16249,7 @@ Piped into `wc -l`, the caller sees `2` lines (`Scanning...` plus the
 count) instead of the single number it expected. The first downstream
 arithmetic operation produces nonsense:
 
-```bash
+```text
 $ count_matches | wc -l
 2                   # ⇒ should be 1; the diagnostic line was counted
 $ total=$(count_matches); echo "$((total + 1))"
@@ -16253,14 +16264,16 @@ Send every diagnostic to fd 2 explicitly. The BCS messaging helpers
 diagnostics, redirect with `>&2`.
 
 ```bash
-# scenario: same script, diagnostics on stderr
+# right — same script, diagnostics on stderr
 count_matches() {
   printf 'Scanning...\n' >&2       # diagnostic on stderr (correct)
   local -i n=0
   for f in *.txt; do ((n+=1)); done
   printf '%d\n' "$n"               # data on stdout
 }
+```
 
+```text
 $ count_matches | wc -l
 Scanning...
 1                   # ⇒ correct: stderr passed through to terminal,
@@ -17121,7 +17134,8 @@ Querying the local value:
 
 ```bash
 # scenario: discover the local PIPE_BUF before designing a log format
-declare -i pipe_buf=$(getconf PIPE_BUF /)
+declare -i pipe_buf
+pipe_buf=$(getconf PIPE_BUF /)
 printf 'PIPE_BUF on this filesystem: %d bytes\n' "$pipe_buf"
 # ⇒ on Linux: 4096
 ```
@@ -17343,11 +17357,18 @@ its own slice of the arguments:
 
 ```bash
 # scenario: outer parse, then reset for inner subcommand
+declare -i outer_v=0
+declare -A inner_flags=()
+
 OPTIND=1
-while getopts ':v' opt; do ...; done
+while getopts ':v' opt; do
+  case $opt in v) outer_v=1 ;; esac
+done
 
 OPTIND=1                              # reset before second parse
-while getopts ':abc' opt; do ...; done
+while getopts ':abc' opt; do
+  case $opt in a|b|c) inner_flags[$opt]=1 ;; esac
+done
 ```
 
 ### Bundling and value-taking options
@@ -19517,13 +19538,14 @@ On Bash 4.0-4.3, attempting a second `coproc` while the first is alive prints `b
 
 ```bash
 # wrong — same name reused; second coproc clobbers the first's array
-coproc CHILD { ...; }
-coproc CHILD { ...; }            # SECOND launch replaces $CHILD silently
-                                 # — first child becomes unreachable
+coproc CHILD { read -r line; printf '%s\n' "$line"; }
+coproc CHILD { read -r line; printf '%s\n' "$line"; }   # second launch
+                                                        # silently replaces $CHILD
+                                                        # — first child unreachable
 
 # right — distinct names per coproc instance
-coproc PARSER { ...; }
-coproc EMITTER { ...; }
+coproc PARSER  { while read -r line; do printf 'parsed:%s\n' "$line"; done; }
+coproc EMITTER { while read -r line; do printf 'emitted:%s\n' "$line"; done; }
 ```
 
 **See also**: §17.1 (the `coproc` builtin), §17.2 (bidirectional fd pairs and stdbuf), §1.2 (file descriptor model), §11.3 (`wait`), BCS0409 (Bash version detection), BCS1101 (background job management).
@@ -21902,6 +21924,7 @@ set -euo pipefail
 shopt -s inherit_errexit extglob nullglob
 
 # --- Script metadata (BCS0103 canonical pattern) ---
+#shellcheck disable=SC2155
 declare -r SCRIPT_PATH="$(realpath -- "$0")"
 declare -r SCRIPT_DIR="${SCRIPT_PATH%/*}"
 declare -r SCRIPT_NAME="${SCRIPT_PATH##*/}"
@@ -23605,7 +23628,7 @@ The `checkbashisms` script (Debian package `devscripts`) scans a script
 for constructs that work in bash but fail in dash. It is the standard
 test for "is this `#!/bin/sh` script actually portable?"
 
-```bash
+```text
 # scenario: audit an /etc/init.d script before shipping
 $ checkbashisms /etc/init.d/myservice
 possible bashism in /etc/init.d/myservice line 14 (echo -e):
@@ -23624,14 +23647,17 @@ where it happens to work in dash); `-x` follows `.` (dot) sources.
 The classic case is `[[`: bash users instinctively reach for it; dash
 treats `[[` as a syntax error because there is no such builtin.
 
+`script.sh`:
+
 ```bash
-# script.sh
 #!/bin/sh
 file=/etc/passwd
 if [[ -f "$file" ]]; then
   echo found
 fi
+```
 
+```text
 $ bash script.sh
 found
 

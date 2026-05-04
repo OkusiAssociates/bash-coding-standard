@@ -342,9 +342,11 @@ pathname expansion. The only correct forwarding idiom is
 <span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> <span class="st">&quot;</span><span class="va">$*</span><span class="st">&quot;</span></span>
 <span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ count=1, the entry is &quot;first arg second arg third&quot;</span></span>
 <span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;== unquoted $@ re-splits on IFS ==\n&#39;</span></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> <span class="va">$@</span></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ count=5: &quot;first&quot;, &quot;arg&quot;, &quot;second&quot;, &quot;arg&quot;, &quot;third&quot;</span></span></code></pre></div>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="co"># wrong — unquoted $@ re-splits on IFS; demo only</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;== unquoted $@ re-splits on IFS ==\n&#39;</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="co">#shellcheck disable=SC2068</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> <span class="va">$@</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ count=5: &quot;first&quot;, &quot;arg&quot;, &quot;second&quot;, &quot;arg&quot;, &quot;third&quot;</span></span></code></pre></div>
 <p>The collapsing form <code>&quot;$*&quot;</code> has narrow legitimate uses —
 joining positionals into a log line, building a single shell-quoted
 string for display — but for <strong>forwarding</strong> arguments to
