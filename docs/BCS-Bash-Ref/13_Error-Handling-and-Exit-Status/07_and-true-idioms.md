@@ -48,7 +48,7 @@ set -euo pipefail
 cmd_a() { echo 'a ran'; return 1; }         # this should crash the script…
 cmd_b() { echo 'b ran'; return 0; }
 cmd_a && cmd_b || true                      # …but it doesn't!
-echo 'we get here despite cmd_a failing'    # ⇒ printed
+echo 'we get here despite cmd_a failing'    # ⇒ we get here despite cmd_a failing
 ```
 
 Two ways to disambiguate:

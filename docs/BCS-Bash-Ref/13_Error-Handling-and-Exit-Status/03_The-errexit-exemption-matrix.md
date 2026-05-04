@@ -56,13 +56,19 @@ the whole chain in an exempt position.
 # scenario: row 2-3 — condition of if/while/until
 #!/usr/bin/env bash
 set -euo pipefail; shopt -s inherit_errexit shift_verbose extglob nullglob
-if grep -q foo /etc/hostname; then    # grep failure is NOT a script error
+if grep -q nonexistent-token /etc/hostname; then  # grep failure is NOT a script error
   echo found
+else
+  echo "no match — script continues despite grep rc=1"
 fi
-while ! mountpoint -q /mnt; do        # ! mountpoint is exempt
-  sleep 1
-done
-echo "ran past while"
+# `! cmd` in a `while` head is exempt; the negated test is exempt from errexit.
+if ! mountpoint -q /mnt 2>/dev/null; then         # one-shot demo of the exemption
+  echo "/mnt is not a mountpoint and we kept going"
+fi
+echo "ran past both"
+# ⇒ no match — script continues despite grep rc=1
+# ⇒ /mnt is not a mountpoint and we kept going
+# ⇒ ran past both
 ```
 
 The body of `if`/`while`/`until` is *not* exempt — only the test

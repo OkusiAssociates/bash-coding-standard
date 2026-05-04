@@ -73,4 +73,32 @@ Format per entry:
 - **After**: `globasciiranges (shopt, default on since bash 4.3) forces bracket-range globs like [a-z] to use ASCII C-locale ordering regardless of LC_COLLATE, sidestepping locale-dependent range surprises. Without it, LC_COLLATE decides whether [a-z] includes accented letters or interleaves upper/lowercase.`
 - **Justification**: Replaced unsupported "stricter UTF-8" claim with a precise, citable statement about `globasciiranges` and its interaction with `LC_COLLATE`.
 
+### docs/BCS-Bash-Ref/13_Error-Handling-and-Exit-Status/01_Exit-status-fundamentals.md (block #1)
+- **Class**: lint-noise-suppression + idiom-substitution
+- **Pass**: phase-12-Part-13
+- **Before**: `$(exit 257); echo "$?"` (5 lines, no shellcheck disable)
+- **After**: `(exit 257); echo "$?"` (subshell form, no SC2091; entire group wrapped in `{ … }` under `# shellcheck disable=SC2242` so out-of-range codes don't lint-pollute the demo).
+- **Justification**: Demo shows 8-bit truncation and negative-wrap behaviour. `(exit N)` has identical semantics to `$(exit N)` for setting `$?`. Brace-block scope of the disable directive covers all 5 demo lines.
+
+### docs/BCS-Bash-Ref/13_Error-Handling-and-Exit-Status/03_The-errexit-exemption-matrix.md (block #2)
+- **Class**: infinite-loop-in-sandbox
+- **Pass**: phase-12-Part-13
+- **Before**: `while ! mountpoint -q /mnt; do sleep 1; done` — looped forever in sandbox where /mnt is not a mountpoint.
+- **After**: `if ! mountpoint -q /mnt 2>/dev/null; then …; fi` — one-shot demo of the same `! cmd` exemption from errexit; added explicit `# ⇒` annotations for grep/mountpoint/echo lines.
+- **Justification**: Original was a TIMEOUT in batch (no mounting happens). The exemption is about `! cmd` in a test position; one `if ! mountpoint` makes the same point without the polling loop.
+
+### docs/BCS-Bash-Ref/13_Error-Handling-and-Exit-Status/04_set-u-nounset.md (block #2)
+- **Class**: errexit-aborts-demo + prose-annotation
+- **Pass**: phase-12-Part-13
+- **Before**: First loop `for x in "${results[@]}"; do …` aborted under `set -u`; the "Fix" sections never executed.
+- **After**: Replaced the broken first loop with a comment-only illustration of the error message; kept the two working fixes (default-expand and length-gate) and added literal `# ⇒` annotations.
+- **Justification**: The whole block was crashing on its first command, so the fix demos were unobservable. The didactic point is preserved by spelling out the error in a comment and keeping the runnable fix paths.
+
+### docs/BCS-Bash-Ref/13_Error-Handling-and-Exit-Status/07_and-true-idioms.md (block #2)
+- **Class**: too-terse-annotation
+- **Pass**: phase-12-Part-13
+- **Before**: `echo 'we get here despite cmd_a failing' # ⇒ printed`
+- **After**: `echo 'we get here despite cmd_a failing' # ⇒ we get here despite cmd_a failing`
+- **Justification**: Annotation must match captured stdout literally. "printed" was a meta-comment, not the captured text.
+
 #fin

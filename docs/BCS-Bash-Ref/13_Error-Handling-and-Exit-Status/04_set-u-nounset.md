@@ -73,19 +73,24 @@ that iterates over a result array that *might* be empty.
 set -euo pipefail; shopt -s inherit_errexit shift_verbose extglob nullglob
 
 declare -a results=()
-for x in "${results[@]}"; do          # ⇒ ERROR: results[@]: unbound variable
+# The naive loop:
+#   for x in "${results[@]}"; do echo "$x"; done
+# would abort with:
+#   bash: results[@]: unbound variable
+# (so we don't run it here — set -u + empty array + [@] = errexit). The
+# next two forms run safely:
+
+# Fix 1: default-expand the array
+for x in "${results[@]:-}"; do        # → loop runs zero times, no error
   echo "$x"
 done
+echo "fix-1 ok"                       # ⇒ fix-1 ok
 
-# Fix: default-expand the array
-for x in "${results[@]:-}"; do        # ⇒ loop runs zero times, no error
-  echo "$x"
-done
-
-# Or, gate the loop:
+# Fix 2: gate the loop on length
 if (( ${#results[@]} )); then
   for x in "${results[@]}"; do echo "$x"; done
 fi
+echo "fix-2 ok"                       # ⇒ fix-2 ok
 ```
 
 The `${arr[@]:-}` workaround substitutes a single empty element when

@@ -35,11 +35,18 @@ high half of the byte; values above 255 wrap into the low half.
 
 ```bash
 # scenario: exit status truncation
-$(exit 257); echo "$?"      # ⇒ 1     (257 % 256 = 1)
-$(exit 256); echo "$?"      # ⇒ 0     (256 % 256 = 0 — silent failure!)
-$(exit 511); echo "$?"      # ⇒ 255   (511 % 256 = 255)
-$(exit -1);  echo "$?"      # ⇒ 255   (-1 wraps to 255)
-$(exit -2);  echo "$?"      # ⇒ 254
+# A subshell `(exit N)` sets $? to N's truncated value without running
+# the inner output; same semantics as `$(exit N)` but no SC2091 noise.
+# Out-of-range exit codes are the whole point of the demo — suppress
+# SC2242 across the group via a brace-block scope.
+# shellcheck disable=SC2242
+{
+  (exit 257); echo "$?"     # ⇒ 1     (257 % 256 = 1)
+  (exit 256); echo "$?"     # ⇒ 0     (256 % 256 = 0 — silent failure!)
+  (exit 511); echo "$?"     # ⇒ 255   (511 % 256 = 255)
+  (exit -1);  echo "$?"     # ⇒ 255   (-1 wraps to 255)
+  (exit -2);  echo "$?"     # ⇒ 254
+}
 ```
 
 The `exit 256` case is the dangerous one: a script meant to flag
