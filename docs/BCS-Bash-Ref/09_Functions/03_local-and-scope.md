@@ -92,11 +92,13 @@ fill() {
 
 caller() {
   local -- out='caller value'           # local in the caller's frame
-  fill out                              # callee's `out` nameref refers to $1='out'
-                                        # but resolution finds the caller's local first
-  echo "caller out = ${out@Q}"          # ⇒ caller out = 'filled'
+  fill out 2>/dev/null                  # warnings about the circular ref go to stderr
+  echo "caller out = ${out@Q}"          # ⇒ caller out = 'caller value'
 }
 caller
+# (bash 5.2 detects the circular reference between caller's `out` and
+#  fill's `local -n out`; the nameref assignment is refused, so the
+#  caller's value is left intact)
 ```
 
 The common defence is to give nameref locals a distinctive prefix
@@ -125,7 +127,16 @@ fac_ok() {                              # correct
   local -i prev
   prev=$(fac_ok $((n - 1)))
   echo $((n * prev))
-}                                       # ⇒ produces 120 for fac_ok 5
+}
+
+printf 'fac_bad 5: %s\n' "$(fac_bad 5)"   # ⇒ fac_bad 5: 120
+printf 'fac_ok  5: %s\n' "$(fac_ok 5)"    # ⇒ fac_ok  5: 120
+# Both happen to compute 120 here because each recursive call is wrapped
+# in a $(…) subshell, which isolates the caller's `n` from the callee's
+# reassignment. Replace `prev=$(fac_bad …)` with a flow that shares state
+# (a global, a tempfile, or `set -- "$(…)" "$@"` accumulator without
+# locals) and the bug surfaces. The discipline rule still holds: use
+# `local` so future refactors do not turn this latent bug into a real one.
 ```
 
 The same bug occurs less dramatically in non-recursive code: a helper

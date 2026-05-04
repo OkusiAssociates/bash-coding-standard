@@ -383,7 +383,8 @@ visible.</li>
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ hello, alice</span></span>
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="fu">env</span> <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-F</span> BASH_FUNC_greet</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ BASH_FUNC_greet%%=() {  printf &#39;hello, %s\n&#39; &quot;${1-world}&quot;;\n}</span></span></code></pre></div>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ BASH_FUNC_greet</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="co"># (the value contains the function body, formatted across multiple lines)</span></span></code></pre></div>
 <h3 id="pitfalls">Pitfalls</h3>
 <ul>
 <li><code>export name</code> <em>without</em> a value exports whatever

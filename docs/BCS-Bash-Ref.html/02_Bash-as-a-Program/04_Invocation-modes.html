@@ -338,11 +338,13 @@ runtime</h3>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># run.sh contains:  ll /var/log</span></span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># wrong — depends on alias from ~/.bashrc, which cron does not source</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="ex">ll</span> /var/log                <span class="co"># ⇒ /bin/sh: ll: command not found</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="ex">ll</span> /var/log <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span> <span class="kw">||</span> <span class="fu">true</span>   <span class="co"># → &quot;ll: command not found&quot; in a minimal env</span></span>
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># right — use the real command and pin PATH (BCS1002)</span></span>
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-rx</span> <span class="va">PATH</span><span class="op">=</span><span class="st">&#39;/usr/local/bin:/usr/bin:/bin&#39;</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="at">-l</span> /var/log</span></code></pre></div>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> /tmp/_loglike <span class="kw">&amp;&amp;</span> <span class="bu">:</span> <span class="op">&gt;</span> /tmp/_loglike/syslog</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="at">-l</span> /tmp/_loglike <span class="kw">|</span> <span class="fu">head</span> <span class="at">-1</span>                       <span class="co"># ⇒ total</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co"># (in production this is `ls -l /var/log` — sandbox uses a fixture path)</span></span></code></pre></div>
 <h3 id="single-command-and-stdin-modes">Single-command and stdin
 modes</h3>
 <p><code>bash -c &#39;cmd args&#39; name arg1 arg2</code> runs the string with
@@ -350,8 +352,10 @@ modes</h3>
 <code>bash -s</code> (or no script argument) reads commands from stdin —
 useful for piping a generated script:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: pipe a script body into bash with positional args</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;%s\n&#39;</span> <span class="st">&#39;echo &quot;$0 saw $#: $*&quot;&#39;</span> <span class="kw">|</span> <span class="fu">bash</span> <span class="at">-s</span> pipeline foo bar</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ pipeline saw 2: foo bar</span></span></code></pre></div>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;%s\n&#39;</span> <span class="st">&#39;echo &quot;$0 saw $#: $*&quot;&#39;</span> <span class="kw">|</span> <span class="fu">bash</span> <span class="at">-s</span> <span class="at">--</span> foo bar</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ bash saw 2: foo bar</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># (`bash -s --` reads the script from stdin and treats the rest as $1, $2,</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co">#  ... with $0 still &quot;bash&quot;; without `--` the first arg also lands in $@)</span></span></code></pre></div>
 <h3 id="selected-flags">Selected flags</h3>
 <table>
 <thead>

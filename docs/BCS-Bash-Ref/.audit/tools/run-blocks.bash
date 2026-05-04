@@ -120,13 +120,20 @@ extract_expected() {
       rest = substr($0, idx + RLENGTH)
       sub(/^[[:space:]]+/, "", rest)
       sub(/[[:space:]]+$/, "", rest)
-      # Strip a trailing parenthetical clarifier (one level only).
-      sub(/[[:space:]]+\([^)]*\)[[:space:]]*$/, "", rest)
-      # Strip the em-dash convention (` — ` separator between literal
-      # and explanatory prose). Single space tolerated since the
-      # convention varies; legitimate output rarely contains a
-      # space-padded em-dash.
-      sub(/[[:space:]]+—[[:space:]].*$/, "", rest)
+      # Strip trailing parens AND em-dash prose, alternating until both
+      # are stable. Cases handled:
+      #   value (a)              → value
+      #   value (a) (b)          → value
+      #   value — prose          → value
+      #   value (a) — prose      → value         (em-dash exposes paren)
+      #   value — (no split)     → value         (parens-strip after em-dash)
+      # Bound the outer loop in case of pathology.
+      for (n = 0; n < 16; n++) {
+        changed = 0
+        if (sub(/[[:space:]]+\([^)]*\)[[:space:]]*$/, "", rest) > 0) changed = 1
+        if (sub(/[[:space:]]+—[[:space:]].*$/, "", rest) > 0)        changed = 1
+        if (changed == 0) break
+      }
       sub(/[[:space:]]+$/, "", rest)
       if (length(rest) == 0) next
       # Drop prose-only annotations that start with a parenthesis or a

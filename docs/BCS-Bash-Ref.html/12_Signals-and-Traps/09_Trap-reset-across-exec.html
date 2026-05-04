@@ -312,8 +312,9 @@ unreloadable address-space junk.</p>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">trap</span> <span class="st">&#39;echo &quot;HUP caught&quot;&#39;</span> HUP              <span class="co"># Caught</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">trap</span> <span class="st">&#39;&#39;</span> PIPE                              <span class="co"># Ignored</span></span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="bu">exec</span> bash <span class="at">-c</span> <span class="st">&#39;trap -p HUP PIPE&#39;</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ trap -- &quot;&quot; SIGPIPE        (ignore survived)</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">#   (no entry for HUP — caught handler reset to default)</span></span></code></pre></div>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ trap -- &#39;&#39; SIGPIPE</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># (the ignore on PIPE survived the exec; the caught handler on HUP was</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">#  reset to default, so `trap -p HUP` prints nothing)</span></span></code></pre></div>
 <p>The same rule applies to bash&#39;s <code>exec</code> builtin: handlers
 installed in the wrapper are wiped on <code>exec realprog</code>, but
 ignores stick. A normal <code>bash -c &#39;…&#39;</code> is

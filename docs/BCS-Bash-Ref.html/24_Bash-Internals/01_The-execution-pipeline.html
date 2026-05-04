@@ -333,14 +333,14 @@ bracket the pipeline. The classic diagnostic for &quot;is this a quoting bug
 or a dispatch bug?&quot; is to enable both and watch the same line appear
 twice — first verbatim from <code>-v</code>, then post-expansion from
 <code>-x</code>.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> bash <span class="at">-c</span> <span class="st">&#39;set -xv; for f in *.txt; do echo &quot;$f&quot;; done&#39;</span> <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span> <span class="kw">|</span> <span class="fu">sed</span> <span class="st">&#39;s/^/| /&#39;</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">|</span> <span class="ex">+</span> set <span class="at">-xv</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">|</span> <span class="cf">for</span> f <span class="kw">in</span> <span class="pp">*</span>.txt<span class="kw">;</span> <span class="cf">do</span> <span class="bu">echo</span> <span class="st">&quot;</span><span class="va">$f</span><span class="st">&quot;</span><span class="kw">;</span> <span class="cf">done</span>    <span class="co"># -v: pre-expansion</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">|</span> <span class="ex">+</span> for f in a.txt b.txt                <span class="co"># -x: post-expansion (stage 5)</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="kw">|</span> <span class="ex">+</span> echo a.txt</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="kw">|</span> <span class="ex">a.txt</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="kw">|</span> <span class="ex">+</span> echo b.txt</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="kw">|</span> <span class="ex">b.txt</span></span></code></pre></div>
+<pre class="text"><code>$ bash -c &#39;set -xv; for f in *.txt; do echo &quot;$f&quot;; done&#39; 2&gt;&amp;1 | sed &#39;s/^/| /&#39;
+| + set -xv
+| for f in *.txt; do echo &quot;$f&quot;; done    # -v: pre-expansion
+| + for f in a.txt b.txt                # -x: post-expansion (stage 5)
+| + echo a.txt
+| a.txt
+| + echo b.txt
+| b.txt</code></pre>
 <h3 id="why-the-order-matters">Why the order matters</h3>
 <p>A subtlety that catches people: word splitting (stage 4) happens
 <em>after</em> expansion (stage 3). So

@@ -362,15 +362,20 @@ marked &quot;do not send <code>SIGHUP</code> on shell exit&quot;. With
 <h3 id="side-by-side-comparison">Side-by-side comparison</h3>
 <div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># wrong — naive backgrounding leaves the child exposed</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sleep</span> 600 <span class="kw">&amp;</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="bu">exit</span>            <span class="co"># ⇒ child receives SIGHUP if huponexit is on</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># right (option A) — nohup ignores SIGHUP at the OS level</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="fu">nohup</span> sleep 600 <span class="op">&gt;</span>/tmp/x.log <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span> <span class="kw">&amp;</span> <span class="bu">disown</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="bu">exit</span>            <span class="co"># ⇒ child runs to completion</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co"># right (option B) — setsid puts the child in a new session</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="ex">setsid</span> <span class="at">--fork</span> bash <span class="at">-c</span> <span class="st">&#39;sleep 600&#39;</span> <span class="op">&lt;</span>/dev/null <span class="op">&gt;</span>/tmp/x.log <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="bu">exit</span>            <span class="co"># ⇒ child has no ctty, no SIGHUP source</span></span></code></pre></div>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># exit          # → on shell exit the child receives SIGHUP if huponexit is on</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="bu">kill</span> %1 <span class="dv">2</span><span class="op">&gt;</span>/dev/null<span class="kw">;</span> <span class="bu">wait</span> %1 <span class="dv">2</span><span class="op">&gt;</span>/dev/null <span class="kw">||</span> <span class="fu">true</span>   <span class="co"># tear-down for the demo</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co"># right (option A) — nohup ignores SIGHUP at the OS level</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="fu">nohup</span> sleep 600 <span class="op">&gt;</span>/tmp/x.log <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span> <span class="kw">&amp;</span> <span class="bu">disown</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co"># exit          # → child would run to completion across shell exit</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="bu">kill</span> %1 <span class="dv">2</span><span class="op">&gt;</span>/dev/null<span class="kw">;</span> <span class="bu">wait</span> %1 <span class="dv">2</span><span class="op">&gt;</span>/dev/null <span class="kw">||</span> <span class="fu">true</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co"># right (option B) — setsid puts the child in a new session</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="ex">setsid</span> <span class="at">--fork</span> bash <span class="at">-c</span> <span class="st">&#39;sleep 600&#39;</span> <span class="op">&lt;</span>/dev/null <span class="op">&gt;</span>/tmp/x.log <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co"># exit          # → child has no ctty, no SIGHUP source</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;side-by-side patterns illustrated&quot;</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ side-by-side patterns illustrated</span></span></code></pre></div>
 <p>The two right-hand forms are not equivalent: only <code>setsid</code>
 actually changes the kernel&#39;s view of the child&#39;s session. For a
 one-shot backgrounded job, <code>nohup … &amp; disown</code> is enough.

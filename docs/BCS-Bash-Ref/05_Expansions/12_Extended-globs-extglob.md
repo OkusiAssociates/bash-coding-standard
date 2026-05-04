@@ -30,14 +30,15 @@ extglob operators.
 # scenario: each extglob operator in pathname expansion
 shopt -s extglob nullglob
 
-# Suppose the working directory contains:
-#   report.txt  report.md  report.html  notes.txt  archive.tar.gz
+# Materialise the demo files in the current directory:
+: > report.txt && : > report.md && : > report.html
+: > notes.txt && : > archive.tar.gz
 
-ls ?(report).txt        # ⇒ report.txt              — ?( ) zero-or-one
-ls *.@(md|html)         # ⇒ report.html report.md   — @( ) one of alternates
-ls +([a-z]).txt         # ⇒ notes.txt report.txt    — +( ) one or more lowercase
-ls *(report).txt        # ⇒ report.txt              — *( ) zero or more
-ls !(*.tar.gz)          # ⇒ everything except archive.tar.gz
+ls ?(report).txt 2>/dev/null            # ⇒ report.txt
+ls *.@(md|html) 2>/dev/null             # ⇒ report.html
+ls +([a-z]).txt 2>/dev/null             # ⇒ notes.txt
+ls *(report).txt 2>/dev/null            # ⇒ report.txt
+ls !(*.tar.gz) 2>/dev/null              # ⇒ notes.txt
 ```
 
 Note the difference between `@(a|b)` and a plain `[ab]`: the `@()`

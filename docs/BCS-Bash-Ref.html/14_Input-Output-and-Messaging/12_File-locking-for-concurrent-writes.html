@@ -290,7 +290,8 @@ if the byte count does not exceed <code>PIPE_BUF</code>. On Linux,
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-i</span> <span class="va">pipe_buf</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="va">pipe_buf</span><span class="op">=</span><span class="va">$(</span><span class="ex">getconf</span> PIPE_BUF /<span class="va">)</span></span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;PIPE_BUF on this filesystem: %d bytes\n&#39;</span> <span class="st">&quot;</span><span class="va">$pipe_buf</span><span class="st">&quot;</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ on Linux: 4096</span></span></code></pre></div>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ PIPE_BUF on this filesystem:</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># (Linux normally reports 4096; POSIX guarantees at least 512)</span></span></code></pre></div>
 <p>The header constant lives in <code>&lt;limits.h&gt;</code>;
 <code>getconf</code> reports the value the running kernel honours for
 the given path. Network filesystems (NFS) frequently report 4096 but the
@@ -308,7 +309,8 @@ filesystems:</p>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">(</span> <span class="ex">log</span> <span class="st">&quot;worker </span><span class="va">$i</span><span class="st"> started&quot;</span><span class="kw">;</span> <span class="kw">)</span> <span class="kw">&amp;</span></span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="bu">wait</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ 8 lines appear in shared.log, none torn or interleaved</span></span></code></pre></div>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;shared.log line count: %d\n&#39;</span> <span class="st">&quot;</span><span class="va">$(</span><span class="fu">wc</span> <span class="at">-l</span> <span class="op">&lt;</span> shared.log<span class="va">)</span><span class="st">&quot;</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ shared.log line count: 8</span></span></code></pre></div>
 <p>Each <code>printf</code> produces well under 4096 bytes, so each
 <code>write(2)</code> is indivisible. No <code>flock</code>
 required.</p>

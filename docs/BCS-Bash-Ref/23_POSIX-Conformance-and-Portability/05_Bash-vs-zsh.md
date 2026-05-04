@@ -19,18 +19,17 @@ deliberately user-friendly choices, and the most reliably confusing one
 when porting:
 
 ```bash
-# scenario: the same string in bash and zsh
+# scenario: bash splits unquoted; zsh would not (this block runs under bash)
 list='red green blue'
 
-# Under bash 5.2:
+# shellcheck disable=SC2086  # word-splitting is the demo
 for x in $list; do printf '[%s]\n' "$x"; done
 # ⇒ [red]
-#   [green]
-#   [blue]
-
-# Under zsh 5.9 (default options):
-for x in $list; do printf '[%s]\n' "$x"; done
-# ⇒ [red green blue]
+# ⇒ [green]
+# ⇒ [blue]
+# (the equivalent loop in zsh 5.9 with default options would print
+#  the single line `[red green blue]` — zsh does not split unquoted
+#  parameter expansions)
 ```
 
 A bash script that loops over `$list` and silently produces one
@@ -42,7 +41,10 @@ explicitly with arrays:
 # bash-and-zsh portable: use an array, no implicit splitting
 declare -a list=(red green blue)
 for x in "${list[@]}"; do printf '[%s]\n' "$x"; done
-# ⇒ [red] [green] [blue] under both shells
+# ⇒ [red]
+# ⇒ [green]
+# ⇒ [blue]
+# (same output under bash and zsh — quoted "${arr[@]}" is the portable form)
 ```
 
 ### Array indexing — KSH_ARRAYS
@@ -52,17 +54,17 @@ zsh arrays are **1-indexed by default**. `arr[1]` is the first element;
 later behaviour). The `KSH_ARRAYS` option forces zsh into 0-indexed,
 bash-compatible mode:
 
-```bash
-# zsh, default options
+```text
+# zsh, default options (illustrative — `print` and `setopt` are zsh builtins)
 arr=(red green blue)
-print -- "$arr[1]"           # ⇒ red       (1-indexed)
-print -- "$arr[0]"           # ⇒           (empty)
-print -- "${#arr[@]}"        # ⇒ 3
+print -- "$arr[1]"           # → red       (1-indexed)
+print -- "$arr[0]"           # →           (empty)
+print -- "${#arr[@]}"        # → 3
 
 # zsh with KSH_ARRAYS enabled
 setopt KSH_ARRAYS
-print -- "${arr[0]}"         # ⇒ red       (0-indexed, like bash)
-print -- "${arr[1]}"         # ⇒ green
+print -- "${arr[0]}"         # → red       (0-indexed, like bash)
+print -- "${arr[1]}"         # → green
 ```
 
 `KSH_ARRAYS` also forces braces around any subscripted reference (zsh

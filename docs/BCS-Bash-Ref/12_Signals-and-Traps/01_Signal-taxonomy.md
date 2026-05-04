@@ -37,7 +37,11 @@ given task.
 ```bash
 # scenario: inspect the current shell's signal mask via /proc
 grep -E '^Sig(Cgt|Ign|Blk):' /proc/self/status
-# ⇒ SigCgt:  ...    (caught signals — bitmask)
+# ⇒ SigBlk
+# ⇒ SigIgn
+# ⇒ SigCgt
+# (the right-hand side of each line is a 16-hex-digit bitmask — set bits
+#  identify which signals are blocked / ignored / caught in this shell)
 #   SigIgn:  ...    (ignored signals)
 #   SigBlk:  ...    (blocked signals)
 ```

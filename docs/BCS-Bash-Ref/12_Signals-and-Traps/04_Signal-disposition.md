@@ -15,9 +15,11 @@ script. Its three forms map to the three changeable states (Default,
 Ignored, Caught); Blocked is not user-controllable from bash:
 
 ```bash
-trap 'handler args' SIGNAL    # → Caught
-trap '' SIGNAL                # → Ignored (empty handler)
-trap - SIGNAL                 # → Default (reset)
+trap 'echo USR1-caught' USR1   # → Caught
+trap -p USR1                   # ⇒ trap -- 'echo USR1-caught' SIGUSR1
+trap '' USR1                   # → Ignored (empty handler)
+trap -p USR1                   # ⇒ trap -- '' SIGUSR1
+trap - USR1                    # → Default (reset; no further `trap -p` line)
 ```
 
 ### Inheritance across `fork` and `exec`

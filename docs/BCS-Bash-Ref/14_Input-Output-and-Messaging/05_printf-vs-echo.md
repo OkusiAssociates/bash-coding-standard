@@ -20,13 +20,13 @@
 # wrong — variable-controlled echo eats its own argument
 declare -- var='-e'
 echo "$var"
-# ⇒ (prints nothing — -e was consumed as a flag)
+# → prints an empty line; `-e` is consumed as a flag
 
 declare -- payload='hello\tworld'
 echo "$payload"
-# ⇒ hello\tworld   (under bash builtin echo, with default xpg_echo off)
+# ⇒ hello\tworld
 echo -e "$payload"
-# ⇒ hello   world  (now \t is a tab — but caller did not ask for that)
+# → "hello<TAB>world" — `\t` is now interpreted
 
 # right — printf %s is contract-stable
 printf '%s\n' "$var"

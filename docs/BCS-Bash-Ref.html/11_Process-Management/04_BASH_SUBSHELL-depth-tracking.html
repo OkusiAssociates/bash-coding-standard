@@ -292,10 +292,10 @@ shell</em> and is not exported.</p>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">(</span> <span class="bu">echo</span> <span class="st">&quot;in (..): SHLVL=</span><span class="va">$SHLVL</span><span class="st"> BASH_SUBSHELL=</span><span class="va">$BASH_SUBSHELL</span><span class="st">&quot;</span></span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">(</span> <span class="bu">echo</span> <span class="st">&quot;nested:  SHLVL=</span><span class="va">$SHLVL</span><span class="st"> BASH_SUBSHELL=</span><span class="va">$BASH_SUBSHELL</span><span class="st">&quot;</span> <span class="kw">)</span> <span class="kw">)</span></span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">bash</span> <span class="at">-c</span> <span class="st">&#39;echo &quot;exec:    SHLVL=$SHLVL BASH_SUBSHELL=$BASH_SUBSHELL&quot;&#39;</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ top:    SHLVL=1 BASH_SUBSHELL=0</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ in (..):SHLVL=1 BASH_SUBSHELL=1</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ nested: SHLVL=1 BASH_SUBSHELL=2</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ exec:   SHLVL=2 BASH_SUBSHELL=0</span></span></code></pre></div>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ top: SHLVL=1 BASH_SUBSHELL=0</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ in (..): SHLVL=1 BASH_SUBSHELL=1</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ nested:  SHLVL=1 BASH_SUBSHELL=2</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ exec:    SHLVL=2 BASH_SUBSHELL=0</span></span></code></pre></div>
 <p>The <code>exec</code> line proves the distinction: a fresh
 <code>bash</code> invocation resets <code>BASH_SUBSHELL</code> to 0 but
 bumps <code>SHLVL</code> to 2.</p>

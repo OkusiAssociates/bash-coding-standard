@@ -32,7 +32,7 @@ The shell forks for every external command. The child then `execve`s the target 
 date &                  # fork; child execs /usr/bin/date
 declare -i child=$!     # PID returned by Bash's fork
 wait "$child"           # waitpid(child) — reaps the zombie
-echo "exit=$?"          # ⇒ 0 on success
+echo "exit=$?"          # ⇒ exit=0
 ```
 
 ### Zombies and orphans
@@ -44,8 +44,9 @@ A **zombie** (state `Z` in `ps`) is a terminated child whose status has not yet 
 sleep 0.1 &
 declare -i pid=$!
 sleep 0.2
-ps -o pid,stat,comm -p "$pid" 2>/dev/null   # ⇒ may show "Z" before wait
-wait "$pid" || true                         # reap; status now collected
+ps -o pid,stat,comm -p "$pid" 2>/dev/null || true   # → may show "Z" before wait
+wait "$pid" || true                                 # reap; status now collected
+echo "reaped"                                       # ⇒ reaped
 ```
 
 ### Bash `wait` versus `waitpid(2)`

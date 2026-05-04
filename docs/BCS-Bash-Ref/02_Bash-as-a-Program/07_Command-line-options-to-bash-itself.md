@@ -29,13 +29,14 @@ The bash binary accepts both single-character and `--`-prefixed long options. Th
 ```bash
 # scenario: launch a child Bash with extglob and globstar already active
 bash -O extglob -O globstar -c 'shopt extglob globstar'
-# ⇒ extglob        on
-# ⇒ globstar       on
+# ⇒ extglob
+# ⇒ globstar
+# (each line ends with `<TAB>on`; `shopt` uses tab as the separator)
 # scenario: one-shot script with positional args
 bash -c 'printf "%s\n" "$@"' _ apple banana cherry
 # ⇒ apple
 # ⇒ banana
-# ⇒ cherry            ($0 is set to "_" and discarded)
+# ⇒ cherry
 ```
 
 ```bash

@@ -76,11 +76,14 @@ probe_no_E() { set +E; false; }        # function with -E off
 probe_with_E() { set -E; false; }       # function with -E on
 
 set +E; probe_no_E   || echo "after probe_no_E rc=$?"
-# ⇒ "after probe_no_E rc=1" — ERR did NOT fire inside probe_no_E
+# ⇒ after probe_no_E rc=1
+# (ERR did NOT fire inside probe_no_E because -E is off)
 
 set -E; probe_with_E || echo "after probe_with_E rc=$?"
-# ⇒ "ERR fired at ... in probe_with_E"
-# ⇒ "after probe_with_E rc=1"
+# ⇒ after probe_with_E rc=1
+# (with -E, ERR would fire inside probe_with_E whenever the false command
+#  executes outside a tested-condition position — see §13.8 for the full
+#  fire-vs-suppress matrix)
 ```
 
 The asymmetry is the entire reason `set -E` exists. Library code that
@@ -107,8 +110,12 @@ echo "after subshell"
   trap 'echo "subshell EXIT (pid=$BASHPID)"' EXIT
   exit 0
 )
-# ⇒ "subshell EXIT (pid=...)"  — fires for the subshell only
-# ⇒ "parent EXIT (pid=...)"    — fires later, when the script ends
+# ⇒ inside subshell
+# ⇒ after subshell
+# ⇒ subshell EXIT
+# ⇒ parent EXIT
+# (PIDs vary; ordering is: subshell #1 body → parent statement → subshell #2
+#  body → its own EXIT → script EXIT → parent's EXIT trap)
 ```
 
 ### `inherit_errexit` does *not* affect trap inheritance

@@ -359,13 +359,20 @@ splitting (§5.8) and pathname expansion (§5.9):</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: quote unless splitting is the intent</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">list_with_spaces</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="va">list_with_spaces</span><span class="op">=</span><span class="st">&quot;</span><span class="va">$(</span><span class="bu">printf</span> <span class="st">&#39;foo bar\nbaz\n&#39;</span><span class="va">)</span><span class="st">&quot;</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;[%s]\n&#39;</span> <span class="st">&quot;</span><span class="va">$list_with_spaces</span><span class="st">&quot;</span>  <span class="co"># ⇒ [foo bar</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>                                     <span class="co">#    baz]</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;[%s]\n&#39;</span> <span class="va">$list_with_spaces</span>    <span class="co"># ⇒ [foo] [bar] [baz]   — split</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Idiomatic capture into an array (one element per line)</span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">lines</span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="ex">readarray</span> <span class="at">-t</span> lines <span class="op">&lt;</span> <span class="op">&lt;(</span><span class="fu">grep</span> <span class="st">&#39;^pattern&#39;</span> file.txt<span class="op">)</span></span></code></pre></div>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;[%s]\n&#39;</span> <span class="st">&quot;</span><span class="va">$list_with_spaces</span><span class="st">&quot;</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ [foo bar</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ baz]</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co"># shellcheck disable=SC2086  # word-splitting is the demo</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;[%s]\n&#39;</span> <span class="va">$list_with_spaces</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ [foo]</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ [bar]</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ [baz]</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Idiomatic capture into an array (one element per line)</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="bu">:</span> <span class="op">&gt;</span> demo-input.txt <span class="kw">&amp;&amp;</span> <span class="bu">printf</span> <span class="st">&#39;pattern A\npattern B\nother\n&#39;</span> <span class="op">&gt;</span> demo-input.txt</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">lines</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="ex">readarray</span> <span class="at">-t</span> lines <span class="op">&lt;</span> <span class="op">&lt;(</span><span class="fu">grep</span> <span class="st">&#39;^pattern&#39;</span> demo-input.txt<span class="op">)</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;lines captured: %d\n&#39;</span> <span class="st">&quot;</span><span class="va">${</span><span class="op">#</span><span class="va">lines</span><span class="op">[@]</span><span class="va">}</span><span class="st">&quot;</span>   <span class="co"># ⇒ lines captured: 2</span></span></code></pre></div>
 <p>For any capture you intend to manipulate as a single string, quote.
 For line-by-line capture into an array, prefer <code>readarray -t</code>
 with process substitution (§5.7) over <code>arr=( $(...) )</code>, which

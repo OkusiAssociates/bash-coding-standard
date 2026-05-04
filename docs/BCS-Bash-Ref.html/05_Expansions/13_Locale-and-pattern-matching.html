@@ -345,11 +345,12 @@ gotcha</h3>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="kw">[[</span> A <span class="ot">==</span> <span class="pp">[</span><span class="ss">a</span><span class="pp">-</span><span class="ss">z</span><span class="pp">]</span> <span class="kw">]]</span> <span class="kw">&amp;&amp;</span> <span class="bu">echo</span> <span class="st">&#39;C: A in [a-z]&#39;</span> <span class="kw">||</span> <span class="bu">echo</span> <span class="st">&#39;C: A not in [a-z]&#39;</span></span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ C: A not in [a-z]</span></span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># en_US.UTF-8 — collation interleaves cases for &quot;dictionary order&quot;</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># en_US.UTF-8 — collation may interleave cases for &quot;dictionary order&quot;</span></span>
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="va">LC_ALL</span><span class="op">=</span>en_US.UTF-8</span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="kw">[[</span> A <span class="ot">==</span> <span class="pp">[</span><span class="ss">a</span><span class="pp">-</span><span class="ss">z</span><span class="pp">]</span> <span class="kw">]]</span> <span class="kw">&amp;&amp;</span> <span class="bu">echo</span> <span class="st">&#39;en_US: A in [a-z]&#39;</span> <span class="kw">||</span> <span class="bu">echo</span> <span class="st">&#39;en_US: A not in [a-z]&#39;</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ en_US: A in [a-z]   (under most glibc UTF-8 locales)</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ (depends on libc; some return &quot;not in&quot;)</span></span></code></pre></div>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ en_US:</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co"># (the answer is libc- and locale-installation dependent: most glibc</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co">#  UTF-8 locales report &quot;in&quot;, some return &quot;not in&quot;)</span></span></code></pre></div>
 <p>The defence is <strong><code>shopt -s globasciiranges</code></strong>
 (default on since Bash 4.3, reaffirmed in 5.x) which forces
 <code>[a-z]</code> and <code>[A-Z]</code> in glob <em>patterns</em> to

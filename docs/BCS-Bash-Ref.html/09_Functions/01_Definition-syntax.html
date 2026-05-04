@@ -313,7 +313,9 @@ them.</p>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="kw">)</span></span>
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="ex">in_subshell</span>                          <span class="co"># output + cleanup, $PWD unchanged in parent</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">$PWD</span><span class="st">&quot;</span>                          <span class="co"># ⇒ unchanged</span></span></code></pre></div>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># → &quot;$PWD&quot; remains the parent&#39;s working directory</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;PWD-was-not-/tmp: </span><span class="va">$(</span><span class="kw">[[</span> <span class="st">&quot;</span><span class="va">$PWD</span><span class="st">&quot;</span> <span class="ot">!=</span> /tmp <span class="kw">]]</span> <span class="kw">&amp;&amp;</span> <span class="bu">echo</span> yes <span class="kw">||</span> <span class="bu">echo</span> no<span class="va">)</span><span class="st">&quot;</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ PWD-was-not-/tmp: yes</span></span></code></pre></div>
 <p>The subshell-bodied form is rare and deliberate: use it when the
 function must contain side effects (cd, trap, IFS munging) that you
 <em>want</em> to throw away on return. The cost is one fork per call;

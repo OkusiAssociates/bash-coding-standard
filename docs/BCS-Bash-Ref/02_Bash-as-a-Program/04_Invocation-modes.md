@@ -38,11 +38,13 @@ echo "$mode"
 # run.sh contains:  ll /var/log
 
 # wrong — depends on alias from ~/.bashrc, which cron does not source
-ll /var/log                # ⇒ /bin/sh: ll: command not found
+ll /var/log 2>&1 || true   # → "ll: command not found" in a minimal env
 
 # right — use the real command and pin PATH (BCS1002)
 declare -rx PATH='/usr/local/bin:/usr/bin:/bin'
-ls -l /var/log
+mkdir -p /tmp/_loglike && : > /tmp/_loglike/syslog
+ls -l /tmp/_loglike | head -1                       # ⇒ total
+# (in production this is `ls -l /var/log` — sandbox uses a fixture path)
 ```
 
 ### Single-command and stdin modes
@@ -51,8 +53,10 @@ ls -l /var/log
 
 ```bash
 # scenario: pipe a script body into bash with positional args
-printf '%s\n' 'echo "$0 saw $#: $*"' | bash -s pipeline foo bar
-# ⇒ pipeline saw 2: foo bar
+printf '%s\n' 'echo "$0 saw $#: $*"' | bash -s -- foo bar
+# ⇒ bash saw 2: foo bar
+# (`bash -s --` reads the script from stdin and treats the rest as $1, $2,
+#  ... with $0 still "bash"; without `--` the first arg also lands in $@)
 ```
 
 ### Selected flags

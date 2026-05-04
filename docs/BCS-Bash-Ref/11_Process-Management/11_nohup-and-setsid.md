@@ -71,15 +71,20 @@ disown -h "$!"   # listed by `jobs`, but huponexit cannot reach it
 ```bash
 # wrong — naive backgrounding leaves the child exposed
 sleep 600 &
-exit            # ⇒ child receives SIGHUP if huponexit is on
+# exit          # → on shell exit the child receives SIGHUP if huponexit is on
+kill %1 2>/dev/null; wait %1 2>/dev/null || true   # tear-down for the demo
 
 # right (option A) — nohup ignores SIGHUP at the OS level
 nohup sleep 600 >/tmp/x.log 2>&1 & disown
-exit            # ⇒ child runs to completion
+# exit          # → child would run to completion across shell exit
+kill %1 2>/dev/null; wait %1 2>/dev/null || true
 
 # right (option B) — setsid puts the child in a new session
 setsid --fork bash -c 'sleep 600' </dev/null >/tmp/x.log 2>&1
-exit            # ⇒ child has no ctty, no SIGHUP source
+# exit          # → child has no ctty, no SIGHUP source
+
+echo "side-by-side patterns illustrated"
+# ⇒ side-by-side patterns illustrated
 ```
 
 The two right-hand forms are not equivalent: only `setsid` actually

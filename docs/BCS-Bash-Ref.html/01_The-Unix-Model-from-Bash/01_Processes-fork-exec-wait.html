@@ -336,7 +336,7 @@ environment.</p>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">date</span> <span class="kw">&amp;</span>                  <span class="co"># fork; child execs /usr/bin/date</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-i</span> <span class="va">child</span><span class="op">=</span><span class="va">$!</span>     <span class="co"># PID returned by Bash&#39;s fork</span></span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="bu">wait</span> <span class="st">&quot;</span><span class="va">$child</span><span class="st">&quot;</span>           <span class="co"># waitpid(child) — reaps the zombie</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;exit=</span><span class="va">$?</span><span class="st">&quot;</span>          <span class="co"># ⇒ 0 on success</span></span></code></pre></div>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;exit=</span><span class="va">$?</span><span class="st">&quot;</span>          <span class="co"># ⇒ exit=0</span></span></code></pre></div>
 <h3 id="zombies-and-orphans">Zombies and orphans</h3>
 <p>A <strong>zombie</strong> (state <code>Z</code> in <code>ps</code>)
 is a terminated child whose status has not yet been reaped. Bash&#39;s
@@ -349,8 +349,9 @@ reap.</p>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sleep</span> 0.1 <span class="kw">&amp;</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-i</span> <span class="va">pid</span><span class="op">=</span><span class="va">$!</span></span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sleep</span> 0.2</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ps</span> <span class="at">-o</span> pid,stat,comm <span class="at">-p</span> <span class="st">&quot;</span><span class="va">$pid</span><span class="st">&quot;</span> <span class="dv">2</span><span class="op">&gt;</span>/dev/null   <span class="co"># ⇒ may show &quot;Z&quot; before wait</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="bu">wait</span> <span class="st">&quot;</span><span class="va">$pid</span><span class="st">&quot;</span> <span class="kw">||</span> <span class="fu">true</span>                         <span class="co"># reap; status now collected</span></span></code></pre></div>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ps</span> <span class="at">-o</span> pid,stat,comm <span class="at">-p</span> <span class="st">&quot;</span><span class="va">$pid</span><span class="st">&quot;</span> <span class="dv">2</span><span class="op">&gt;</span>/dev/null <span class="kw">||</span> <span class="fu">true</span>   <span class="co"># → may show &quot;Z&quot; before wait</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="bu">wait</span> <span class="st">&quot;</span><span class="va">$pid</span><span class="st">&quot;</span> <span class="kw">||</span> <span class="fu">true</span>                                 <span class="co"># reap; status now collected</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;reaped&quot;</span>                                       <span class="co"># ⇒ reaped</span></span></code></pre></div>
 <h3 id="bash-wait-versus-waitpid2">Bash <code>wait</code> versus
 <code>waitpid(2)</code></h3>
 <p>Bash&#39;s <code>wait</code> is a thin wrapper. <code>wait</code> (no

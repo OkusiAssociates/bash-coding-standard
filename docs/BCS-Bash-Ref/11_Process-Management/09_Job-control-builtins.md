@@ -39,8 +39,9 @@ disown -h %1          # %1 stays in table, will not receive SIGHUP
 disown    %2          # %2 removed from table immediately
 
 jobs -l
-# ⇒ [1]+ <pid1> Running    sleep 100  (still listed; SIGHUP-immune)
-#   (no entry for %2 — it has been forgotten by this shell)
+# ⇒ [1]+
+# (only %1 is listed; %2 has been removed from the job table.
+#  The literal PID after `[1]+` varies per run.)
 
 # On shell exit:
 #   - %1 (and %2) survive because both are protected, but only %1

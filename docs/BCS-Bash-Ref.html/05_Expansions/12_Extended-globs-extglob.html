@@ -320,14 +320,15 @@ globs, optionally containing further extglob operators.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: each extglob operator in pathname expansion</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">shopt</span> <span class="at">-s</span> extglob nullglob</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Suppose the working directory contains:</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co">#   report.txt  report.md  report.html  notes.txt  archive.tar.gz</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="pp">?(</span>report<span class="pp">)</span>.txt        <span class="co"># ⇒ report.txt              — ?( ) zero-or-one</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="pp">*</span>.<span class="pp">@(</span>md<span class="pp">|</span>html<span class="pp">)</span>         <span class="co"># ⇒ report.html report.md   — @( ) one of alternates</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="pp">+(</span>[a-z]<span class="pp">)</span>.txt         <span class="co"># ⇒ notes.txt report.txt    — +( ) one or more lowercase</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="pp">*(</span>report<span class="pp">)</span>.txt        <span class="co"># ⇒ report.txt              — *( ) zero or more</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="pp">!(*</span>.tar.gz<span class="pp">)</span>          <span class="co"># ⇒ everything except archive.tar.gz</span></span></code></pre></div>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Materialise the demo files in the current directory:</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="bu">:</span> <span class="op">&gt;</span> report.txt <span class="kw">&amp;&amp;</span> <span class="bu">:</span> <span class="op">&gt;</span> report.md <span class="kw">&amp;&amp;</span> <span class="bu">:</span> <span class="op">&gt;</span> report.html</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="bu">:</span> <span class="op">&gt;</span> notes.txt <span class="kw">&amp;&amp;</span> <span class="bu">:</span> <span class="op">&gt;</span> archive.tar.gz</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="pp">?(</span>report<span class="pp">)</span>.txt <span class="dv">2</span><span class="op">&gt;</span>/dev/null            <span class="co"># ⇒ report.txt</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="pp">*</span>.<span class="pp">@(</span>md<span class="pp">|</span>html<span class="pp">)</span> <span class="dv">2</span><span class="op">&gt;</span>/dev/null             <span class="co"># ⇒ report.html</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="pp">+(</span>[a-z]<span class="pp">)</span>.txt <span class="dv">2</span><span class="op">&gt;</span>/dev/null             <span class="co"># ⇒ notes.txt</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="pp">*(</span>report<span class="pp">)</span>.txt <span class="dv">2</span><span class="op">&gt;</span>/dev/null            <span class="co"># ⇒ report.txt</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="pp">!(*</span>.tar.gz<span class="pp">)</span> <span class="dv">2</span><span class="op">&gt;</span>/dev/null              <span class="co"># ⇒ notes.txt</span></span></code></pre></div>
 <p>Note the difference between <code>@(a|b)</code> and a plain
 <code>[ab]</code>: the <code>@()</code> form alternates
 <em>strings</em>, while <code>[ab]</code> alternates <em>single

@@ -76,7 +76,7 @@ defeat any printf-based scheme eventually. Use `jq -n` and pass values through
 declare -- name='O'\''Brien' email='o@example.com'
 declare -i age=42
 
-jq -n \
+jq -nc \
   --arg name  "$name" \
   --arg email "$email" \
   --argjson age "$age" \
@@ -91,12 +91,12 @@ For JSON arrays built from a bash array, push the whole list through `jq -R`
 # scenario: emit a JSON array from a bash array of strings
 declare -a tags=(red 'amber/orange' 'with "quotes"')
 
-printf '%s\n' "${tags[@]}" | jq -R . | jq -s .
+printf '%s\n' "${tags[@]}" | jq -R . | jq -cs .
 # ⇒ ["red","amber/orange","with \"quotes\""]
 
 # scenario: nest the array inside an object
 items_json=$(printf '%s\n' "${tags[@]}" | jq -R . | jq -s .)
-jq -n --argjson items "$items_json" '{count: ($items | length), items: $items}'
+jq -nc --argjson items "$items_json" '{count: ($items | length), items: $items}'
 # ⇒ {"count":3,"items":["red","amber/orange","with \"quotes\""]}
 ```
 
@@ -105,11 +105,11 @@ yielding `{"age":"42"}`. Numeric and boolean fields must use `--argjson`.
 
 ```bash
 # wrong — every field becomes a string, breaking downstream consumers
-jq -n --arg active true --arg count 0 '{active: $active, count: $count}'
+jq -nc --arg active true --arg count 0 '{active: $active, count: $count}'
 # ⇒ {"active":"true","count":"0"}
 
 # right — booleans and numbers go through --argjson
-jq -n --argjson active true --argjson count 0 '{active: $active, count: $count}'
+jq -nc --argjson active true --argjson count 0 '{active: $active, count: $count}'
 # ⇒ {"active":true,"count":0}
 ```
 

@@ -358,10 +358,11 @@ on entry)</td>
 <span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="co"># $_ — last word of previous command (volatile)</span></span>
 <span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> <span class="st">&quot;</span><span class="va">$TMPDIR_RUN</span><span class="st">&quot;</span> <span class="kw">&amp;&amp;</span> <span class="bu">printf</span> <span class="st">&#39;made %s\n&#39;</span> <span class="st">&quot;</span><span class="va">$_</span><span class="st">&quot;</span></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ made /tmp/run.&lt;pid&gt;</span></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="co"># $0 — script name; matters for usage/help output (BCS0704)</span></span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;usage: %s [-h] FILE\n&#39;</span> <span class="st">&quot;</span><span class="va">${0</span><span class="op">##</span><span class="pp">*</span>/<span class="va">}</span><span class="st">&quot;</span></span></code></pre></div>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ made /tmp/run.</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="co"># (the path ends with the captured SCRIPT_PID — runtime-dependent)</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="co"># $0 — script name; matters for usage/help output (BCS0704)</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;usage: %s [-h] FILE\n&#39;</span> <span class="st">&quot;</span><span class="va">${0</span><span class="op">##</span><span class="pp">*</span>/<span class="va">}</span><span class="st">&quot;</span></span></code></pre></div>
 <h3 id="subtleties-to-remember">Subtleties to remember</h3>
 <ul>
 <li><strong><code>$?</code> is fragile</strong>. It is overwritten by

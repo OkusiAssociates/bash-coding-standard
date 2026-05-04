@@ -316,7 +316,8 @@ fd 3 leaks into every child unless explicitly cleaned up.</p>
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Restore stdout via move: fd 1 ← fd 3, fd 3 closed atomically</span></span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="bu">exec</span> <span class="dv">1</span><span class="op">&gt;&amp;</span><span class="dv">3</span><span class="kw">-</span></span>
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;this line is back on the terminal&quot;</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ script.log holds three lines; fd 3 is no longer dangling</span></span></code></pre></div>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ this line is back on the terminal</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># (script.log now holds three lines; fd 3 is no longer dangling)</span></span></code></pre></div>
 <p>Without the <code>-</code> suffix on <code>1&gt;&amp;3</code>, fd 3
 would remain open through the rest of the script&#39;s lifetime, inherited
 by every child the script spawns. The move form is the correct
@@ -335,8 +336,8 @@ still open) and returns non-zero:</p>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="kw">(</span></span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="bu">exec</span> <span class="dv">1</span><span class="op">&gt;&amp;</span>-                     <span class="co"># close stdout in this subshell only</span></span>
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">&quot;no destination&quot;</span>         <span class="co"># write to closed fd 1</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="kw">)</span> <span class="kw">||</span> <span class="bu">echo</span> <span class="st">&quot;subshell failed: </span><span class="va">$?</span><span class="st">&quot;</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ bash: echo: write error: Bad file descriptor</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="kw">)</span> <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span> <span class="kw">||</span> <span class="bu">echo</span> <span class="st">&quot;subshell failed: </span><span class="va">$?</span><span class="st">&quot;</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ Bad file descriptor</span></span>
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ subshell failed: 1</span></span></code></pre></div>
 <p>For the SIGPIPE case proper — a <em>living</em> writer feeding a
 <em>dead</em> reader — see §6.13 and §13.5; the disposition is signal 13

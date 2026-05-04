@@ -109,13 +109,20 @@ splitting (§5.8) and pathname expansion (§5.9):
 # scenario: quote unless splitting is the intent
 declare -- list_with_spaces
 list_with_spaces="$(printf 'foo bar\nbaz\n')"
-printf '[%s]\n' "$list_with_spaces"  # ⇒ [foo bar
-                                     #    baz]
-printf '[%s]\n' $list_with_spaces    # ⇒ [foo] [bar] [baz]   — split
+printf '[%s]\n' "$list_with_spaces"
+# ⇒ [foo bar
+# ⇒ baz]
+# shellcheck disable=SC2086  # word-splitting is the demo
+printf '[%s]\n' $list_with_spaces
+# ⇒ [foo]
+# ⇒ [bar]
+# ⇒ [baz]
 
 # Idiomatic capture into an array (one element per line)
+: > demo-input.txt && printf 'pattern A\npattern B\nother\n' > demo-input.txt
 declare -a lines
-readarray -t lines < <(grep '^pattern' file.txt)
+readarray -t lines < <(grep '^pattern' demo-input.txt)
+printf 'lines captured: %d\n' "${#lines[@]}"   # ⇒ lines captured: 2
 ```
 
 For any capture you intend to manipulate as a single string, quote.

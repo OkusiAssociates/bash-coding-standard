@@ -77,9 +77,11 @@ user) — see §20.13.
 tmp="/tmp/work.$$"; > "$tmp"
 
 # right — mktemp(1) creates atomically with mode 0600
-tmp=$(mktemp) || die 'mktemp failed'
+tmp=$(mktemp) || { echo 'mktemp failed' >&2; exit 5; }
 trap 'rm -f -- "$tmp"' EXIT
-# ⇒ mktemp uses O_EXCL internally and a 0600 umask
+echo "tmp prefix:"               # ⇒ tmp prefix:
+printf '%s\n' "${tmp%%[A-Za-z0-9]*}"   # → "/tmp/" before the random suffix
+# (mktemp uses O_EXCL internally and a 0600 umask)
 ```
 
 Note: some embedded systems ship a `tempfile(1)` helper that does *not*

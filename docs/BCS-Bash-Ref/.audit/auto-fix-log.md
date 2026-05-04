@@ -165,4 +165,36 @@ Format per entry:
   - 09_Backslash-escapes.md #2: added explicit `echo "$msg"` so the line-continuation demo produces matchable output.
 - **Justification**: All 5 REVIEW entries cleared.
 
+### docs/BCS-Bash-Ref/.audit/tools/run-blocks.bash (matcher: deep-indent + multi-paren + em-dash order)
+- **Class**: matcher-tightening
+- **Pass**: phase-12-matcher-2
+- **Before**: `extract_expected` matched `#[[:space:]]*⇒` (any number of spaces between `#` and `⇒`), so deeply-indented column-trace prose like `#                  ⇒ both streams land in out.log` was treated as expected output. Trailing-paren strip ran once and missed `value (a) (b)` cases. Em-dash strip ran *after* parens, so `value (a) — prose` left `value (a)`.
+- **After**: Anchor to `#[[:space:]]?⇒` (≤1 space). Strip em-dash *before* parens. Loop the parens-strip up to 8 times so multiple parens collapse.
+- **Justification**: Cleared a wave of false-positive MISMATCHes across Parts 06, 08, 11, and others without losing the original convention semantics.
+
+### docs/BCS-Bash-Ref/06_Redirection-and-Pipelines/* (Part-06 sweep)
+- Resolved 8 entries: switched column-trace markers to `→`, set up _enabled/_available fixtures for the diff demo, replaced TAB-spaced `cat -n` annotations with a simpler form, added `2>&1` redirects for stderr-bound demos.
+
+### docs/BCS-Bash-Ref/07_Control-Flow-and-Compound-Commands/* (Part-07 sweep)
+- Resolved 7 entries: defined cmd_that_exits_1 / process placeholders, per-line annotations for the C-style for demo, literal-prefix matching for BASH_SUBSHELL depth output.
+
+### docs/BCS-Bash-Ref/09_Functions/* (Part-09 sweep)
+- Resolved 8 entries: merged stderr to stdout for stack-trace demos, rewrote local-vocabulary demo to actually exercise the function, relaxed result-capture annotations, corrected the bare `local` attribute-inheritance claim, fixed the nameref-collision demo to match bash 5.2's circular-ref detection, made the recursion demo's annotations match bash's actual `$()`-isolated behaviour.
+
+### docs/BCS-Bash-Ref/.audit/tools/triage.bash (lint sweep — second wave)
+- Added classification rules for SC2088, SC2080, SC2050, SC2125, SC2194, SC2206, SC2128, SC2053, SC2066, SC2064, SC2069/75/76, parser-confusion sweep (SC1010/1020/1035/1054/1055/1056/1072/1073/1083/1087/1133/1141), fragment-context sweep (SC2104/2152/2188/2216/2220/2254/2259/2261), FIX_BLOCK MEDIUM for SC2207. Promoted SC2242 from REVIEW to ADD_SUPPRESSION.
+
+### docs/BCS-Bash-Ref/* (final per-Part sweep)
+- **Class**: annotation-and-block-corrections
+- **Pass**: phase-12-final-batch
+- Resolved residual entries across Parts 01, 02, 05, 08, 11, 12, 14, 16, 17, 19, 22, 23, 24:
+  - Adjusted annotations to literal stdout where the doc had prose (`# →` substitutions).
+  - Added function placeholders (`cmd`, `process`, `api_call`) where the demo used a fictional binary.
+  - Rewrote zsh-only demos as `text` fences (so the runner skips them) and added bash-only equivalents where applicable.
+  - Replaced TIMEOUT-causing `sleep 30` in 22/11_Exclusive-lock with `sleep 0.05` and pointed the lockfile at `${TMPDIR:-/tmp}` for sandbox compatibility.
+  - Fixed numerical mismatches (e.g. 08/12 had wrong arithmetic in expected output; 04/05 #2 had hash-order assumptions; 04/05 #6 claimed bash inherits attributes through bare `local`, which it does not in 5.2).
+  - Added missing `echo` of computed values (e.g. 14/04 `printf -v` demo, 03/03 url assignments).
+
+REVIEW pile after all phase-12 work: 211 → ~10.
+
 #fin

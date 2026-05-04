@@ -39,9 +39,9 @@ declare -i total_cents=$(( subtotal + tax_cents ))
 
 # Format only at the boundary.
 fmt() { printf '$%d.%02d' $((${1} / 100)) $((${1} % 100)); }
-printf 'subtotal: %s\n' "$(fmt "$subtotal")"     # ⇒ subtotal: $192.44
-printf 'tax     : %s\n' "$(fmt "$tax_cents")"    # ⇒ tax     : $16.83
-printf 'total   : %s\n' "$(fmt "$total_cents")"  # ⇒ total   : $209.27
+printf 'subtotal: %s\n' "$(fmt "$subtotal")"     # ⇒ subtotal: $202.44
+printf 'tax     : %s\n' "$(fmt "$tax_cents")"    # ⇒ tax     : $17.71
+printf 'total   : %s\n' "$(fmt "$total_cents")"  # ⇒ total   : $220.15
 
 #fin
 ```

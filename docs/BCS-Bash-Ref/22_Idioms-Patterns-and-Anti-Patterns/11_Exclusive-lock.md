@@ -16,7 +16,7 @@ set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
 declare -r SCRIPT_NAME='locked-job'
-declare -r LOCKFILE="/run/lock/$SCRIPT_NAME.lock"
+declare -r LOCKFILE="${TMPDIR:-/tmp}/$SCRIPT_NAME.lock"   # production: /run/lock
 
 die() { (($# < 2)) || printf '%s: %s\n' "$SCRIPT_NAME" "${*:2}" >&2; exit "${1:-1}"; }
 
@@ -39,8 +39,8 @@ main() {
   acquire_lock "$LOCKFILE"
 
   # ... long-running work; lock is held throughout ...
-  printf 'doing the thing as PID %d\n' "$$"
-  sleep 30
+  printf 'doing the thing\n'    # ⇒ doing the thing
+  sleep 0.05                    # placeholder for real work
 
   # No explicit unlock needed. When this shell exits (normal, signal, or
   # crash) the kernel closes FD 9 and the lock is released automatically.

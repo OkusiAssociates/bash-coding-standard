@@ -18,10 +18,10 @@ echo "top: SHLVL=$SHLVL BASH_SUBSHELL=$BASH_SUBSHELL"
 ( echo "in (..): SHLVL=$SHLVL BASH_SUBSHELL=$BASH_SUBSHELL"
   ( echo "nested:  SHLVL=$SHLVL BASH_SUBSHELL=$BASH_SUBSHELL" ) )
 bash -c 'echo "exec:    SHLVL=$SHLVL BASH_SUBSHELL=$BASH_SUBSHELL"'
-# ⇒ top:    SHLVL=1 BASH_SUBSHELL=0
-# ⇒ in (..):SHLVL=1 BASH_SUBSHELL=1
-# ⇒ nested: SHLVL=1 BASH_SUBSHELL=2
-# ⇒ exec:   SHLVL=2 BASH_SUBSHELL=0
+# ⇒ top: SHLVL=1 BASH_SUBSHELL=0
+# ⇒ in (..): SHLVL=1 BASH_SUBSHELL=1
+# ⇒ nested:  SHLVL=1 BASH_SUBSHELL=2
+# ⇒ exec:    SHLVL=2 BASH_SUBSHELL=0
 ```
 
 The `exec` line proves the distinction: a fresh `bash` invocation resets

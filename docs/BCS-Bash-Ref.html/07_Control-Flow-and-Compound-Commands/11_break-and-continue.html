@@ -305,7 +305,7 @@ re-test of the condition).</p>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> cell <span class="kw">in</span> <span class="va">$row</span><span class="kw">;</span> <span class="cf">do</span></span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">[[</span> <span class="va">$cell</span> <span class="ot">==</span> <span class="st">&quot;</span><span class="va">$needle</span><span class="st">&quot;</span> <span class="kw">]];</span> <span class="cf">then</span></span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>      <span class="va">found</span><span class="op">=</span><span class="va">$cell</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>      <span class="cf">break</span> <span class="ex">2</span>                                  <span class="co"># ⇒ exits cell-loop AND row-loop</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>      <span class="cf">break</span> <span class="ex">2</span>                                  <span class="co"># → exits cell-loop AND row-loop</span></span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">fi</span></span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">done</span></span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
@@ -318,13 +318,18 @@ bug.</p>
 restarts the <em>outer</em> loop&#39;s next iteration, skipping the rest of
 both bodies.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: skip an entire outer iteration when an inner condition fires.</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> dir <span class="kw">in</span> src tests docs<span class="kw">;</span> <span class="cf">do</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">[[</span> <span class="ot">-d</span> <span class="va">$dir</span> <span class="kw">]]</span> <span class="kw">||</span> <span class="cf">continue</span>                    <span class="co"># bare continue: next dir</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> f <span class="kw">in</span> <span class="st">&quot;</span><span class="va">$dir</span><span class="st">&quot;</span>/<span class="pp">*</span>.bash<span class="kw">;</span> <span class="cf">do</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">[[</span> <span class="ot">-r</span> <span class="va">$f</span> <span class="kw">]]</span> <span class="kw">||</span> <span class="cf">continue</span> <span class="ex">2</span>                  <span class="co"># ⇒ unreadable file: abandon this whole dir</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="ex">process</span> <span class="st">&quot;</span><span class="va">$f</span><span class="st">&quot;</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">done</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">process()</span> <span class="kw">{</span> <span class="bu">printf</span> <span class="st">&#39;processing: %s\n&#39;</span> <span class="st">&quot;</span><span class="va">$1</span><span class="st">&quot;</span><span class="kw">;</span> <span class="kw">}</span>   <span class="co"># placeholder</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> src tests docs</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="bu">:</span> <span class="op">&gt;</span> src/a.bash <span class="kw">&amp;&amp;</span> <span class="bu">:</span> <span class="op">&gt;</span> tests/b.bash</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> dir <span class="kw">in</span> src tests docs<span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">[[</span> <span class="ot">-d</span> <span class="va">$dir</span> <span class="kw">]]</span> <span class="kw">||</span> <span class="cf">continue</span>                    <span class="co"># bare continue: next dir</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> f <span class="kw">in</span> <span class="st">&quot;</span><span class="va">$dir</span><span class="st">&quot;</span>/<span class="pp">*</span>.bash<span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">[[</span> <span class="ot">-r</span> <span class="va">$f</span> <span class="kw">]]</span> <span class="kw">||</span> <span class="cf">continue</span> <span class="ex">2</span>                  <span class="co"># → unreadable file: skip this whole dir</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="ex">process</span> <span class="st">&quot;</span><span class="va">$f</span><span class="st">&quot;</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">done</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ processing: src/a.bash</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ processing: tests/b.bash</span></span></code></pre></div>
 <p><strong>See also</strong>: §7.4 <code>for</code>, §7.6
 <code>while</code>/<code>until</code>, §7.7 <code>select</code>, §7.3
 <code>case</code> (note: not a loop; <code>break</code> skips past it to

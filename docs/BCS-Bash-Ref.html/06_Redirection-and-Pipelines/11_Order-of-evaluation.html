@@ -309,7 +309,7 @@ sequence; the difference in result is total:</p>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co">#                                               ^^^^^^^ step 2: dup fd 1 onto fd 2</span></span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co">#                                                        fd 1 → out.log</span></span>
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co">#                                                        fd 2 → out.log</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ both messages in out.log</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># → both messages land in out.log</span></span>
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Form B — wrong (stderr stays on terminal)</span></span>
 <span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="kw">{</span> <span class="bu">echo</span> to-stdout<span class="kw">;</span> <span class="bu">echo</span> to-stderr <span class="op">&gt;&amp;</span><span class="dv">2</span><span class="kw">;</span> <span class="kw">}</span> <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span> <span class="op">&gt;</span>out2.log</span>
@@ -319,7 +319,7 @@ sequence; the difference in result is total:</p>
 <span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="co">#                                            ^^^^^^^^ step 2: open out2.log on fd 1</span></span>
 <span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co">#                                                        fd 1 → out2.log</span></span>
 <span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="co">#                                                        fd 2 → terminal (still!)</span></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ stdout in out2.log; stderr printed to terminal</span></span></code></pre></div>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="co"># → stdout lands in out2.log; stderr stays on the terminal</span></span></code></pre></div>
 <p>The mnemonic: <strong>target before merge</strong>. The redirect that
 names a file must come before the merge that says &quot;stderr follows
 stdout&quot;. Reversed, the merge captures stale state.</p>
@@ -337,13 +337,13 @@ land in bytes another expected to occupy:</p>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">seq</span> 1 5 <span class="dv">1</span><span class="op">&gt;</span>race.log <span class="dv">2</span><span class="op">&gt;</span>race.log <span class="op">&gt;&amp;</span><span class="dv">2</span> <span class="kw">&amp;</span></span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="fu">seq</span> 6 10 <span class="op">&gt;&gt;</span>race.log <span class="kw">&amp;</span></span>
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="bu">wait</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ race.log content is non-deterministic; bytes from both writers interleave</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># → race.log content is non-deterministic (bytes from both writers interleave)</span></span>
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># RIGHT — one open, two fds sharing the same description and offset</span></span>
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="fu">seq</span> 1 5 <span class="op">&gt;</span>shared.log <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span> <span class="kw">&amp;</span></span>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="fu">seq</span> 6 10 <span class="op">&gt;&gt;</span>shared.log <span class="kw">&amp;</span></span>
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="bu">wait</span></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ shared.log content is deterministic; each writer&#39;s lines appear intact</span></span></code></pre></div>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co"># → shared.log content is deterministic (each writer&#39;s lines appear intact)</span></span></code></pre></div>
 <p>The <code>&amp;&gt;</code> shorthand and
 <code>&gt;file 2&gt;&amp;1</code> form both produce the
 single-shared-description case; <code>1&gt;file 2&gt;file</code>

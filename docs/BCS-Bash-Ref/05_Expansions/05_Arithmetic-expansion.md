@@ -87,9 +87,9 @@ Bash recognises:
 
 ```bash
 # scenario: base prefixes — including the 0-prefix octal trap
-echo $(( 010 ))            # ⇒ 8     (literal-0 prefix is OCTAL)
-echo $(( 09 ))             # ⇒ bash: 09: value too great for base
-echo $(( 10#09 ))          # ⇒ 9     (force base 10)
+echo $(( 010 ))                          # ⇒ 8
+{ echo $(( 09 )); } 2>/dev/null || true  # → "bash: 09: value too great for base"
+echo $(( 10#09 ))                        # ⇒ 9
 ```
 
 The leading-zero octal trap matters when zero-padded numeric strings

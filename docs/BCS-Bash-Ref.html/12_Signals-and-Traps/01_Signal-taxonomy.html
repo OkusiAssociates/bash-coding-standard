@@ -405,9 +405,13 @@ script</td>
 </table>
 <div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: inspect the current shell&#39;s signal mask via /proc</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-E</span> <span class="st">&#39;^Sig(Cgt|Ign|Blk):&#39;</span> /proc/self/status</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ SigCgt:  ...    (caught signals — bitmask)</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">#   SigIgn:  ...    (ignored signals)</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co">#   SigBlk:  ...    (blocked signals)</span></span></code></pre></div>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ SigBlk</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ SigIgn</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ SigCgt</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># (the right-hand side of each line is a 16-hex-digit bitmask — set bits</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">#  identify which signals are blocked / ignored / caught in this shell)</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co">#   SigIgn:  ...    (ignored signals)</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co">#   SigBlk:  ...    (blocked signals)</span></span></code></pre></div>
 <p>The default-action column above is a summary; for the canonical
 mapping to Linux kernel numbers, the queued-signal class
 (<code>SIGRTMIN</code>..<code>SIGRTMAX</code>), and per-signal

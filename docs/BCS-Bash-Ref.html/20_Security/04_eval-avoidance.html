@@ -344,7 +344,8 @@ validate <code>$key</code> as in the nameref example above.</p>
 <p>Treat every <code>eval</code> as a comment-required event. A
 repository sweep looks like:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: locate every eval call site for review</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-rnE</span> <span class="st">&#39;\beval\b&#39;</span> <span class="at">--include</span><span class="op">=</span><span class="st">&#39;*.bash&#39;</span> <span class="at">--include</span><span class="op">=</span><span class="st">&#39;*.sh&#39;</span> .</span></code></pre></div>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-rnE</span> <span class="st">&#39;\beval\b&#39;</span> <span class="at">--include</span><span class="op">=</span><span class="st">&#39;*.bash&#39;</span> <span class="at">--include</span><span class="op">=</span><span class="st">&#39;*.sh&#39;</span> . <span class="kw">||</span> <span class="fu">true</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co"># (rc=1 is fine — it just means no `eval` calls found)</span></span></code></pre></div>
 <p>Triage each hit into one of three buckets: trusted-literal (keep with
 comment), refactor-candidate (replace with
 nameref/assoc-array/<code>${!ref}</code>), or outright removal. The

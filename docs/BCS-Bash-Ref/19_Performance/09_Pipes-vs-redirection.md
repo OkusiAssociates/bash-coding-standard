@@ -9,11 +9,15 @@
 - For "log AND show", `tee` (with the pipe) is the right tool.
 
 ```bash
+cmd() { printf 'data\n'; printf 'warning\n' >&2; }   # placeholder
+
 # wrong — extra subshell, no terminal output anyway
 cmd 2>&1 | tee log.txt >/dev/null
 
 # right — pure redirection, same effect, no fork
 cmd >log.txt 2>&1
+echo "log.txt size:"            # ⇒ log.txt size:
+wc -c < log.txt                 # → byte count of the captured stream
 ```
 
 ```bash

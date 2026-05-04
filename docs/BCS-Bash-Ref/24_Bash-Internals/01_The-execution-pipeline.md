@@ -55,7 +55,7 @@ diagnostic for "is this a quoting bug or a dispatch bug?" is to enable
 both and watch the same line appear twice — first verbatim from `-v`,
 then post-expansion from `-x`.
 
-```bash
+```text
 $ bash -c 'set -xv; for f in *.txt; do echo "$f"; done' 2>&1 | sed 's/^/| /'
 | + set -xv
 | for f in *.txt; do echo "$f"; done    # -v: pre-expansion

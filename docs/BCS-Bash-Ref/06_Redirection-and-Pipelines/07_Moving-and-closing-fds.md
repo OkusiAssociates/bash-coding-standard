@@ -69,7 +69,7 @@ set -euo pipefail; shopt -s inherit_errexit shift_verbose extglob nullglob
   exec 1>&-                     # close stdout in this subshell only
   echo "no destination"         # write to closed fd 1
 ) 2>&1 || echo "subshell failed: $?"
-# ⇒ bash: echo: write error: Bad file descriptor
+# ⇒ Bad file descriptor
 # ⇒ subshell failed: 1
 ```
 

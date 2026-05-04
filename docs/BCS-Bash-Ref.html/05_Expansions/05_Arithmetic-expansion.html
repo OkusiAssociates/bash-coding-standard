@@ -360,9 +360,9 @@ reassignment.</li>
 <code>0-9 a-z A-Z @ _</code>.</li>
 </ul>
 <div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: base prefixes — including the 0-prefix octal trap</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="va">$((</span> <span class="dv">010 ))            # ⇒ 8</span>     (<span class="va">literal</span><span class="op">-</span><span class="dv">0</span> <span class="va">prefix</span> <span class="va">is</span> <span class="va">OCTAL</span>)</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="va">echo</span> <span class="va">$((</span> <span class="dv">09 ))             # ⇒ bash: 09: value too great for base</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="va">echo</span> <span class="va">$((</span> <span class="dt">10#</span><span class="bn">09</span> <span class="va">))</span>          <span class="er">#</span> ⇒ <span class="dv">9</span>     (<span class="va">force</span> <span class="va">base</span> <span class="dv">10</span>)</span></code></pre></div>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="va">$((</span> <span class="dv">010 ))                          # ⇒ 8</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="er">{</span> <span class="va">echo</span> <span class="va">$((</span> <span class="dv">09 )); } 2</span><span class="op">&gt;/</span><span class="va">dev</span><span class="op">/</span><span class="va">null</span> <span class="kw">||</span> <span class="va">true</span>  <span class="er">#</span> → <span class="st">&quot;bash: 09: value too great for base&quot;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="va">echo</span> <span class="va">$((</span> <span class="dt">10#</span><span class="bn">09</span> <span class="va">))</span>                        <span class="er">#</span> ⇒ <span class="dv">9</span></span></code></pre></div>
 <p>The leading-zero octal trap matters when zero-padded numeric strings
 arrive from <code>printf &#39;%02d&#39;</code> or external tools. Use
 <code>10#$str</code> to force base 10 (BCS0505).</p>

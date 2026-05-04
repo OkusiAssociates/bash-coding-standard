@@ -59,11 +59,13 @@ The mount option `size=` caps total RAM the tmpfs may use. To inspect:
 declare -- size_opt
 size_opt=$(awk '$2=="/dev/shm" {print $4}' /proc/mounts)
 printf 'tmpfs options on /dev/shm: %s\n' "$size_opt"
-# ⇒ rw,nosuid,nodev,inode64,size=4096000k
+# ⇒ tmpfs options on /dev/shm:
+# (the comma-separated list typically contains rw,nosuid,nodev,inode64
+#  and may end in size=NNNNk on systems that pin the cap)
 
 # numerical: bytes free right now
 df -B1 --output=avail /dev/shm | tail -n1
-# ⇒ 4194304000
+# → an integer byte count (varies per system load)
 ```
 
 `df` reports the *current* free space; the mount option reports the

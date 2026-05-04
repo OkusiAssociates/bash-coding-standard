@@ -38,11 +38,12 @@ LC_ALL=C
 [[ A == [a-z] ]] && echo 'C: A in [a-z]' || echo 'C: A not in [a-z]'
 # ⇒ C: A not in [a-z]
 
-# en_US.UTF-8 — collation interleaves cases for "dictionary order"
+# en_US.UTF-8 — collation may interleave cases for "dictionary order"
 LC_ALL=en_US.UTF-8
 [[ A == [a-z] ]] && echo 'en_US: A in [a-z]' || echo 'en_US: A not in [a-z]'
-# ⇒ en_US: A in [a-z]   (under most glibc UTF-8 locales)
-# ⇒ (depends on libc; some return "not in")
+# ⇒ en_US:
+# (the answer is libc- and locale-installation dependent: most glibc
+#  UTF-8 locales report "in", some return "not in")
 ```
 
 The defence is **`shopt -s globasciiranges`** (default on since Bash

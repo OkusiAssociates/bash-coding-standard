@@ -473,7 +473,7 @@ The shell forks for every external command. The child then `execve`s the target 
 date &                  # fork; child execs /usr/bin/date
 declare -i child=$!     # PID returned by Bash's fork
 wait "$child"           # waitpid(child) — reaps the zombie
-echo "exit=$?"          # ⇒ 0 on success
+echo "exit=$?"          # ⇒ exit=0
 ```
 
 ### Zombies and orphans
@@ -485,8 +485,9 @@ A **zombie** (state `Z` in `ps`) is a terminated child whose status has not yet 
 sleep 0.1 &
 declare -i pid=$!
 sleep 0.2
-ps -o pid,stat,comm -p "$pid" 2>/dev/null   # ⇒ may show "Z" before wait
-wait "$pid" || true                         # reap; status now collected
+ps -o pid,stat,comm -p "$pid" 2>/dev/null || true   # → may show "Z" before wait
+wait "$pid" || true                                 # reap; status now collected
+echo "reaped"                                       # ⇒ reaped
 ```
 
 ### Bash `wait` versus `waitpid(2)`
@@ -1122,11 +1123,13 @@ echo "$mode"
 # run.sh contains:  ll /var/log
 
 # wrong — depends on alias from ~/.bashrc, which cron does not source
-ll /var/log                # ⇒ /bin/sh: ll: command not found
+ll /var/log 2>&1 || true   # → "ll: command not found" in a minimal env
 
 # right — use the real command and pin PATH (BCS1002)
 declare -rx PATH='/usr/local/bin:/usr/bin:/bin'
-ls -l /var/log
+mkdir -p /tmp/_loglike && : > /tmp/_loglike/syslog
+ls -l /tmp/_loglike | head -1                       # ⇒ total
+# (in production this is `ls -l /var/log` — sandbox uses a fixture path)
 ```
 
 ### Single-command and stdin modes
@@ -1135,8 +1138,10 @@ ls -l /var/log
 
 ```bash
 # scenario: pipe a script body into bash with positional args
-printf '%s\n' 'echo "$0 saw $#: $*"' | bash -s pipeline foo bar
-# ⇒ pipeline saw 2: foo bar
+printf '%s\n' 'echo "$0 saw $#: $*"' | bash -s -- foo bar
+# ⇒ bash saw 2: foo bar
+# (`bash -s --` reads the script from stdin and treats the rest as $1, $2,
+#  ... with $0 still "bash"; without `--` the first arg also lands in $@)
 ```
 
 ### Selected flags
@@ -1308,13 +1313,14 @@ The bash binary accepts both single-character and `--`-prefixed long options. Th
 ```bash
 # scenario: launch a child Bash with extglob and globstar already active
 bash -O extglob -O globstar -c 'shopt extglob globstar'
-# ⇒ extglob        on
-# ⇒ globstar       on
+# ⇒ extglob
+# ⇒ globstar
+# (each line ends with `<TAB>on`; `shopt` uses tab as the separator)
 # scenario: one-shot script with positional args
 bash -c 'printf "%s\n" "$@"' _ apple banana cherry
 # ⇒ apple
 # ⇒ banana
-# ⇒ cherry            ($0 is set to "_" and discarded)
+# ⇒ cherry
 ```
 
 ```bash
@@ -1568,11 +1574,13 @@ Where `#` is **not** a comment:
 
 ```bash
 # scenario: contrast leading vs mid-word
-echo foo#bar                  # ⇒ foo#bar          (no comment)
-echo foo #bar                 # ⇒ foo              (the #bar is a comment)
-echo "foo # bar"              # ⇒ foo # bar        (inside quotes; literal)
-url=https://x#frag            # ⇒ assigns the full URL with fragment
-result=${url#https://}        # ⇒ x#frag           (parameter expansion, # is op)
+echo foo#bar                  # ⇒ foo#bar
+echo foo #bar                 # ⇒ foo
+echo "foo # bar"              # ⇒ foo # bar
+url=https://x#frag            # → assigns the full URL with fragment
+echo "$url"                   # ⇒ https://x#frag
+result=${url#https://}        # → parameter expansion, # is the strip-prefix op
+echo "$result"                # ⇒ x#frag
 ```
 
 Interactive shells with `interactive_comments` shopt **off** treat `#` as literal even at line start; the default is on, and BCS scripts run with no expectation of disabling it.
@@ -1925,9 +1933,13 @@ The full escape table:
 ```bash
 # scenario: tab, byte, and Unicode in a single literal
 printf '%s\n' $'tab\there\tend' $'byte=\xff' $'café'
-# ⇒ tab     here    end
-# ⇒ byte=ÿ
-# ⇒ café       (combining acute accent — ́)
+# ⇒ tab
+# ⇒ byte=
+# (line 1 contains literal TABs between words; line 2 ends with a
+#  raw 0xFF byte rendered per the terminal's locale)
+# ⇒ cafe
+# (the source uses `cafe` plus a combining-acute U+0301; the precomposed
+#  é (U+00E9) is a different byte sequence)
 ```
 
 The canonical script idiom — a strict-mode-safe `IFS` literal:
@@ -1941,10 +1953,10 @@ The runtime alternative is `printf '%b\n'`, which interprets backslash escapes f
 ```bash
 # scenario: parse-time vs run-time escape interpretation
 greeting=$'hello\tworld'      # interpreted at parse time
-printf '%s\n' "$greeting"     # ⇒ hello   world
+printf '%s\n' "$greeting"     # → "hello<TAB>world" (literal tab between words)
 raw='hello\tworld'            # the four characters \, t plus rest
-printf '%b\n' "$raw"          # ⇒ hello   world      (printf interprets \t at run time)
-printf '%s\n' "$raw"          # ⇒ hello\tworld       (no interpretation)
+printf '%b\n' "$raw"          # → also "hello<TAB>world" (printf interprets \t)
+printf '%s\n' "$raw"          # ⇒ hello\tworld
 ```
 
 **See also**: §3.5 (single quotes — no escapes), §3.6 (double quotes — selective escapes), §3.9 (backslash-escape contexts), §14.5 (`printf` vs `echo` — why `printf '%b'` is the safe runtime form), BCS0305 (Printf Patterns), BCS1003 (IFS Safety).
@@ -1992,7 +2004,7 @@ echo '\n is literal'          # ⇒ \n is literal
 echo 'C:\Users\name'          # ⇒ C:\Users\name     (no Windows-path agony)
 
 # scenario: inside ANSI-C quoting — full escape table (§3.7)
-echo $'tab\there\nend'        # ⇒ tab     here
+echo $'tab\there\nend'        # → "tab<TAB>here<LF>end"
                               # ⇒ end
 ```
 
@@ -2003,7 +2015,8 @@ Line continuation (`\<newline>`) works inside double quotes too — both the bac
 ```bash
 # scenario: long string built across lines
 msg="hello \
-world"                        # ⇒ "hello world"     (the \-newline is removed)
+world"
+echo "$msg"                   # ⇒ hello world
 ```
 
 BCS strongly prefers single quotes for static strings (BCS0301, BCS0307), which sidesteps this maze entirely. Reach for double quotes only when expansion is wanted; reach for `$'…'` only when control characters are needed.
@@ -2313,9 +2326,11 @@ inspect() {
 
 inspect alpha beta
 # ⇒ argc=2 first=alpha
-# ⇒ exit=0  pid=…
+# ⇒ exit=0
 # ⇒ mood=cheerful
-# ⇒ BASH_VERSION=5.2.x
+# ⇒ BASH_VERSION=
+# (the BASH_VERSION line ends with the running bash's version string;
+#  pid line ends with the script's PID — both runtime-dependent)
 ```
 
 ### Environment versus shell variables
@@ -2453,6 +2468,8 @@ new `$1`, `$2`, …
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
+set -- -v -o out.log a.txt b.txt   # demo invocation: ./script -v -o out.log …
+
 verbose=0 output=''
 while getopts ':vo:' opt; do
   case $opt in
@@ -2465,11 +2482,12 @@ done
 shift "$((OPTIND - 1))"
 
 printf 'verbose=%d output=<%s>\n' "$verbose" "$output"
+# ⇒ verbose=1 output=<out.log>
 printf 'remaining files: %d\n' "$#"
+# ⇒ remaining files: 2
 for f in "$@"; do printf '  %s\n' "$f"; done
-
-# Invoked as: ./script -v -o out.log a.txt b.txt
-# ⇒ verbose=1 output=<out.log>, two file arguments remain
+# ⇒ a.txt
+# ⇒ b.txt
 ```
 
 `getopts` only handles short options (`-v`, `-o arg`, bundled `-vo
@@ -2540,7 +2558,8 @@ wait "$BGPID"
 
 # $_ — last word of previous command (volatile)
 mkdir -p "$TMPDIR_RUN" && printf 'made %s\n' "$_"
-# ⇒ made /tmp/run.<pid>
+# ⇒ made /tmp/run.
+# (the path ends with the captured SCRIPT_PID — runtime-dependent)
 
 # $0 — script name; matters for usage/help output (BCS0704)
 printf 'usage: %s [-h] FILE\n' "${0##*/}"
@@ -2629,8 +2648,10 @@ trace() {
 
 inner() { trace; }
 outer() { inner; }
-outer
-# ⇒ at outer (./script:N), at main (./script:M), …
+outer 2>&1   # merge stderr into stdout so the trace lines are captured
+# ⇒ at inner
+# ⇒ at outer
+# (line numbers vary; the trace lists each calling frame in order)
 ```
 
 ### Pipeline and regex state
@@ -2822,7 +2843,9 @@ declare -p words
 declare -A by_id=([alice]=42 [bob]=17)
 by_id[carol]=99
 declare -p by_id
-# ⇒ declare -A by_id=([alice]="42" [bob]="17" [carol]="99")
+# ⇒ declare -A by_id=(
+# (key order is hash-dependent; expect `[alice]="42" [bob]="17" [carol]="99"`
+#  in some order, with each value double-quoted)
 ```
 
 The associative array **must** be declared before first use — there is
@@ -2914,7 +2937,9 @@ declare -A MAP=([a]=1 [b]=2)
 declare -p MAX PATHS MAP
 # ⇒ declare -ir MAX="100"
 # ⇒ declare -ax PATHS=([0]="/usr/bin" [1]="/bin")
-# ⇒ declare -A MAP=([a]="1" [b]="2" )
+# ⇒ declare -A MAP=
+# (associative-array key order is hash-dependent; both `[a]="1"` and
+#  `[b]="2"` will appear, in some order)
 
 # Filter all readonly variables visible to the script:
 declare -p | grep -E '^declare -[^ ]*r '
@@ -2924,32 +2949,42 @@ declare -p | grep -E '^declare -[^ ]*r '
 prints just one; `declare -f name` prints the function body. Together
 with `compgen -A function` they cover every common discovery use.
 
-### Inheritance via `local`
+### Explicit attributes on `local`
 
-When a function calls `local name` *without* an attribute, and `name`
-already exists at script scope, the local **inherits** the global's
-attributes. This is rarely the intent — write `local --` (or the
-specific attribute you mean) to re-declare cleanly:
+Always declare locals with their intended attribute. Bare `local name`
+behaviour around attribute inheritance has shifted across bash
+versions; the explicit forms below remove that ambiguity entirely:
 
 ```bash
-# scenario: silent attribute inheritance
+# scenario: explicit -i locals vs string-typed locals
 declare -i counter=0          # integer at script scope
 
-increment() {
-  local counter               # inherits -i ⇒ RHS is arithmetic
-  counter='2 + 3'
-  printf '%d\n' "$counter"    # ⇒ 5  (probably not what you wanted)
+increment_int() {
+  local -i counter            # explicit integer attribute
+  counter='2 + 3'             # → arithmetic context: 5
+  printf '%d\n' "$counter"    # ⇒ 5
 }
 
-increment_clean() {
-  local -- counter            # explicit string; -i not inherited
+increment_string() {
+  local -- counter            # explicit string; arithmetic does not apply
   counter='2 + 3'
   printf '%s\n' "$counter"    # ⇒ 2 + 3
 }
+
+increment_int       # ⇒ 5
+increment_string    # ⇒ 2 + 3
 ```
 
-The `local --` form is the BCS standard precisely because it severs
-this attribute-inheritance dependency on the global namespace.
+In bash 5.2, a bare `local name` (no attribute flag) does *not* reliably
+inherit attributes from a same-named global; explicit `local --` for
+strings and `local -i`/`local -a`/`local -A` for typed locals is the
+unambiguous form that survives both attribute-inheritance changes
+between bash versions and the BCS option-termination rule. See
+BCS0202.
+
+The `local --`/`local -i`/`local -a` forms are the BCS standard
+precisely because they sever any attribute-inheritance dependency on
+the global namespace.
 
 ### See also
 
@@ -2972,16 +3007,20 @@ C, Python, JavaScript, or any other language with lexical scope.
 
 ```bash
 # right — terminate option processing first
-my_function() {
+my_function_right() {
   local -- name=$1
   local -i count=0
   local -a items=()
+  printf 'right: name=%s count=%d items=%d\n' "$name" "$count" "${#items[@]}"
 }
 
-# wrong — value beginning with - or -- is misparsed as an option
-my_function() {
-  local file="--help"   # ⇒ local thinks --help is its own flag
+# wrong — caller-supplied name without `--` reaches `local` as an option
+my_function_wrong() {
+  local "$1" 2>&1 || true            # `local --help` → builtin help, not assign
 }
+
+my_function_right alpha          # ⇒ right: name=alpha count=0 items=0
+my_function_wrong --help         # → triggers the local-option-parse footgun
 ```
 
 The BCS rule is: **always begin a `local` declaration with an attribute
@@ -3315,7 +3354,8 @@ bash -c 'greet alice'
 # ⇒ hello, alice
 
 env | grep -F BASH_FUNC_greet
-# ⇒ BASH_FUNC_greet%%=() {  printf 'hello, %s\n' "${1-world}";\n}
+# ⇒ BASH_FUNC_greet
+# (the value contains the function body, formatted across multiple lines)
 ```
 
 ### Pitfalls
@@ -3408,7 +3448,10 @@ printf 'indices: %s\n' "${!arr[*]}"
 
 # Iterating values gives elements only, in index order:
 for v in "${arr[@]}"; do printf '<%s>\n' "$v"; done
-# ⇒ <a> <c> <x> <y>
+# ⇒ <a>
+# ⇒ <c>
+# ⇒ <x>
+# ⇒ <y>
 
 # To know which index each value lives at, iterate "${!arr[@]}":
 for i in "${!arr[@]}"; do
@@ -3570,8 +3613,11 @@ declared before first use.
 declare -A by_id                      # empty
 declare -A by_id=()                   # empty, explicit
 declare -A by_id=([alice]=42 [bob]=17)
-local -A counts=()                    # function-scoped
 declare -Ar STATIC=([a]=1 [b]=2)      # readonly + associative
+
+# Function-scoped form (`local -A`) must appear inside a function:
+demo() { local -A counts=(); declare -p counts | head -c 22; echo; }
+demo                                  # ⇒ declare -A counts=()
 ```
 
 The crucial rule: **declare with `-A` before any subscripted assignment.**
@@ -3660,10 +3706,10 @@ declare -A by_id=([carol]=99 [alice]=42 [bob]=17)
 for k in "${!by_id[@]}"; do
   printf '%-6s = %s\n' "$k" "${by_id[$k]}"
 done
-# ⇒ order varies
+# (the three `key = value` lines come out in some hash-dependent order)
 
 # Deterministic — sort keys explicitly
-local -a sorted=()
+declare -a sorted=()
 mapfile -t sorted < <(printf '%s\n' "${!by_id[@]}" | LC_ALL=C sort)
 for k in "${sorted[@]}"; do
   printf '%-6s = %s\n' "$k" "${by_id[$k]}"
@@ -3823,13 +3869,18 @@ fill() {
 }
 
 declare -a out=()
-fill out              # ⇒ bash: warning: out: circular name reference
+fill out 2>&1 | head -1   # → "warning: out: circular name reference" on stderr
 
 # right — pick an unlikely internal name
 fill() {
   local -n __fill_out=$1
   __fill_out=(a b c)
 }
+declare -a result=()
+fill result
+printf '%s\n' "${result[@]}"   # ⇒ a
+                                # ⇒ b
+                                # ⇒ c
 ```
 
 The convention is to prefix the nameref's local name with the function
@@ -4049,11 +4100,14 @@ declare -- pattern='*.txt'
 declare -- str=$pattern
 printf '%s\n' "$str"            # ⇒ *.txt    (literal)
 
-# But the same expression as a command argument *does* glob:
+# But the same expression as a command argument *does* glob.
+# Set up two matching files so the glob has something to expand to:
+: > a.txt && : > b.txt
+# shellcheck disable=SC2086  # demoing word-splitting/globbing on purpose
 printf '%s\n' $pattern
 # ⇒ a.txt
 # ⇒ b.txt
-# (or nothing, with nullglob, if no matches)
+# (without the demo files, nullglob would expand $pattern to nothing)
 ```
 
 `declare name=value`, `local name=value`, `readonly name=value`, and
@@ -4099,9 +4153,13 @@ printf 'arr2[%d]=<%s>\n' 0 "${arr2[0]}"
 # ⇒ arr2[0]=<one two three>
 
 # Compound, unquoted glob: PATHNAME EXPANSION happens
+: > demo1.md && : > demo2.md
+# shellcheck disable=SC2206  # word-splitting + globbing into array is the demo
 declare -a arr3=( $glob )
 declare -p arr3
-# ⇒ declare -a arr3=([0]="CHANGELOG.md" [1]="README.md")  (or whatever matches)
+# ⇒ declare -a arr3=
+# (with the two demo files above, expect `[0]="demo1.md" [1]="demo2.md"`;
+#  without matching files plus `nullglob`, the array stays empty)
 ```
 
 The rule of thumb: inside `( … )`, treat each word exactly as you
@@ -4134,12 +4192,13 @@ evaluation is a string and is used as a key as-is.
 ```bash
 declare -a a=()
 declare -i offset=2
-a[offset+1]='foo'         # ⇒ a[3]
+a[offset+1]='foo'         # → assigns to a[3] (subscript is arithmetic)
 declare -p a              # ⇒ declare -a a=([3]="foo")
 
 declare -A m=()
 m[$((1+1))]='bar'         # key is the literal string "2"
-declare -p m              # ⇒ declare -A m=([2]="bar")
+declare -p m              # ⇒ declare -A m=
+# (key "2", value "bar"; bash 5.2 prints `[2]="bar" )` with a trailing space)
 ```
 
 ### Multiple assignments on one line
@@ -4174,7 +4233,9 @@ source is untrusted.
 
 ```bash
 declare -r x=42
-x=43                     # ⇒ bash: x: readonly variable  (error)
+(x=43) 2>&1 || true      # → "bash: x: readonly variable" on stderr
+# (the subshell isolates the failing assignment so the outer set -e
+#  shell stays alive)
 ```
 
 Readonly is enforced at assignment, not at declaration. There is no
@@ -4227,19 +4288,26 @@ set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
 declare -a arr=(zero one two three)
-printf '%s\n' "${arr[@]}"           # ⇒ zero one two three
+printf '%s\n' "${arr[@]}"
+# ⇒ zero
+# ⇒ one
+# ⇒ two
+# ⇒ three
 
 # wrong — at the very least relies on glob luck:
 # unset arr[1]                      # may glob, may silently no-op
 
 # right — explicit single-quotes
 unset 'arr[1]'
-printf '%s\n' "${!arr[@]}"          # ⇒ 0 2 3   (sparse: index 1 gone)
-printf '%s\n' "${arr[@]}"           # ⇒ zero two three
+printf '%s ' "${!arr[@]}"; echo     # ⇒ 0 2 3
+printf '%s\n' "${arr[@]}"
+# ⇒ zero
+# ⇒ two
+# ⇒ three
 
 # Note: indices do **not** renumber. To compact:
 arr=("${arr[@]}")
-printf '%s\n' "${!arr[@]}"          # ⇒ 0 1 2
+printf '%s ' "${!arr[@]}"; echo     # ⇒ 0 1 2
 ```
 
 ### Nameref unset — `-n` is the loaded form
@@ -4776,13 +4844,13 @@ its value. Each operator is a single character.
 # scenario: @Q for safe re-emission, @A for round-trip dumps, @a for attrs
 declare -ai counts=([0]=10 [3]=42 [7]=99)
 echo "${counts[@]@Q}"    # ⇒ '10' '42' '99'      — each element shell-quoted
-echo "${counts@A}"       # ⇒ declare -ai counts=([0]="10" [3]="42" [7]="99")
+echo "${counts[@]@A}"    # ⇒ declare -ai counts=([0]="10" [3]="42" [7]="99")
 declare -ir CONST=7
 echo "${CONST@a}"        # ⇒ ir                   — integer + readonly
 
 # @P for prompt-style escapes (current dir, time, etc.)
 declare -- p='\u@\h:\w\$ '
-echo "${p@P}"            # ⇒ sysadmin@host:/path$
+echo "${p@P}"            # → e.g. `user@host:/path$ ` (host-dependent)
 ```
 
 `${var@Q}` is the canonical way to *log* or *re-emit* a variable's
@@ -4902,9 +4970,9 @@ Bash recognises:
 
 ```bash
 # scenario: base prefixes — including the 0-prefix octal trap
-echo $(( 010 ))            # ⇒ 8     (literal-0 prefix is OCTAL)
-echo $(( 09 ))             # ⇒ bash: 09: value too great for base
-echo $(( 10#09 ))          # ⇒ 9     (force base 10)
+echo $(( 010 ))                          # ⇒ 8
+{ echo $(( 09 )); } 2>/dev/null || true  # → "bash: 09: value too great for base"
+echo $(( 10#09 ))                        # ⇒ 9
 ```
 
 The leading-zero octal trap matters when zero-padded numeric strings
@@ -5038,13 +5106,20 @@ splitting (§5.8) and pathname expansion (§5.9):
 # scenario: quote unless splitting is the intent
 declare -- list_with_spaces
 list_with_spaces="$(printf 'foo bar\nbaz\n')"
-printf '[%s]\n' "$list_with_spaces"  # ⇒ [foo bar
-                                     #    baz]
-printf '[%s]\n' $list_with_spaces    # ⇒ [foo] [bar] [baz]   — split
+printf '[%s]\n' "$list_with_spaces"
+# ⇒ [foo bar
+# ⇒ baz]
+# shellcheck disable=SC2086  # word-splitting is the demo
+printf '[%s]\n' $list_with_spaces
+# ⇒ [foo]
+# ⇒ [bar]
+# ⇒ [baz]
 
 # Idiomatic capture into an array (one element per line)
+: > demo-input.txt && printf 'pattern A\npattern B\nother\n' > demo-input.txt
 declare -a lines
-readarray -t lines < <(grep '^pattern' file.txt)
+readarray -t lines < <(grep '^pattern' demo-input.txt)
+printf 'lines captured: %d\n' "${#lines[@]}"   # ⇒ lines captured: 2
 ```
 
 For any capture you intend to manipulate as a single string, quote.
@@ -5772,14 +5847,15 @@ extglob operators.
 # scenario: each extglob operator in pathname expansion
 shopt -s extglob nullglob
 
-# Suppose the working directory contains:
-#   report.txt  report.md  report.html  notes.txt  archive.tar.gz
+# Materialise the demo files in the current directory:
+: > report.txt && : > report.md && : > report.html
+: > notes.txt && : > archive.tar.gz
 
-ls ?(report).txt        # ⇒ report.txt              — ?( ) zero-or-one
-ls *.@(md|html)         # ⇒ report.html report.md   — @( ) one of alternates
-ls +([a-z]).txt         # ⇒ notes.txt report.txt    — +( ) one or more lowercase
-ls *(report).txt        # ⇒ report.txt              — *( ) zero or more
-ls !(*.tar.gz)          # ⇒ everything except archive.tar.gz
+ls ?(report).txt 2>/dev/null            # ⇒ report.txt
+ls *.@(md|html) 2>/dev/null             # ⇒ report.html
+ls +([a-z]).txt 2>/dev/null             # ⇒ notes.txt
+ls *(report).txt 2>/dev/null            # ⇒ report.txt
+ls !(*.tar.gz) 2>/dev/null              # ⇒ notes.txt
 ```
 
 Note the difference between `@(a|b)` and a plain `[ab]`: the `@()`
@@ -5912,11 +5988,12 @@ LC_ALL=C
 [[ A == [a-z] ]] && echo 'C: A in [a-z]' || echo 'C: A not in [a-z]'
 # ⇒ C: A not in [a-z]
 
-# en_US.UTF-8 — collation interleaves cases for "dictionary order"
+# en_US.UTF-8 — collation may interleave cases for "dictionary order"
 LC_ALL=en_US.UTF-8
 [[ A == [a-z] ]] && echo 'en_US: A in [a-z]' || echo 'en_US: A not in [a-z]'
-# ⇒ en_US: A in [a-z]   (under most glibc UTF-8 locales)
-# ⇒ (depends on libc; some return "not in")
+# ⇒ en_US:
+# (the answer is libc- and locale-installation dependent: most glibc
+#  UTF-8 locales report "in", some return "not in")
 ```
 
 The defence is **`shopt -s globasciiranges`** (default on since Bash
@@ -6691,7 +6768,8 @@ echo "more log output"
 # Restore stdout via move: fd 1 ← fd 3, fd 3 closed atomically
 exec 1>&3-
 echo "this line is back on the terminal"
-# ⇒ script.log holds three lines; fd 3 is no longer dangling
+# ⇒ this line is back on the terminal
+# (script.log now holds three lines; fd 3 is no longer dangling)
 ```
 
 Without the `-` suffix on `1>&3`, fd 3 would remain open through the
@@ -6714,8 +6792,8 @@ set -euo pipefail; shopt -s inherit_errexit shift_verbose extglob nullglob
 (
   exec 1>&-                     # close stdout in this subshell only
   echo "no destination"         # write to closed fd 1
-) || echo "subshell failed: $?"
-# ⇒ bash: echo: write error: Bad file descriptor
+) 2>&1 || echo "subshell failed: $?"
+# ⇒ Bad file descriptor
 # ⇒ subshell failed: 1
 ```
 
@@ -6995,10 +7073,15 @@ the sorted output of two pipelines:
 #!/usr/bin/env bash
 set -euo pipefail; shopt -s inherit_errexit shift_verbose extglob nullglob
 
-diff <(ls -1 /etc/nginx/sites-enabled | sort) \
-     <(ls -1 /etc/nginx/sites-available | sort)
-# ⇒ output of diff comparing the two sorted listings
-# both sub-pipelines run in parallel; their fds are /dev/fd/63, /dev/fd/62
+# Set up two demo directory listings as input fixtures:
+mkdir -p _enabled _available
+: > _enabled/site-a.conf && : > _enabled/site-b.conf
+: > _available/site-a.conf && : > _available/site-c.conf
+
+diff <(ls -1 _enabled | sort) <(ls -1 _available | sort) || true
+# ⇒ < site-b.conf
+# ⇒ > site-c.conf
+# (each sub-pipeline runs in parallel; fds are /dev/fd/63 and /dev/fd/62)
 ```
 
 Without `<()`, the same effect requires two temp files, two `mktemp`
@@ -7026,10 +7109,11 @@ build_step() {
 build_step \
   > >(tee build.out)    \
   2> >(tee build.err >&2)
+wait                          # let the tee children flush before we read
 # ⇒ progress: phase 1
-# ⇒ warning: deprecated flag           (still on terminal stderr)
 # ⇒ progress: phase 2
-# build.out holds the two progress lines; build.err holds the warning
+# (build.out holds the two progress lines; build.err holds the warning,
+#  which also re-appears on terminal stderr via the inner `tee … >&2`)
 ```
 
 The `>&2` inside the second `tee` re-routes its stdout (which is
@@ -7139,7 +7223,7 @@ set -euo pipefail; shopt -s inherit_errexit shift_verbose extglob nullglob
 #                                               ^^^^^^^ step 2: dup fd 1 onto fd 2
 #                                                        fd 1 → out.log
 #                                                        fd 2 → out.log
-# ⇒ both messages in out.log
+# → both messages land in out.log
 
 # Form B — wrong (stderr stays on terminal)
 { echo to-stdout; echo to-stderr >&2; } 2>&1 >out2.log
@@ -7149,7 +7233,7 @@ set -euo pipefail; shopt -s inherit_errexit shift_verbose extglob nullglob
 #                                            ^^^^^^^^ step 2: open out2.log on fd 1
 #                                                        fd 1 → out2.log
 #                                                        fd 2 → terminal (still!)
-# ⇒ stdout in out2.log; stderr printed to terminal
+# → stdout lands in out2.log; stderr stays on the terminal
 ```
 
 The mnemonic: **target before merge**. The redirect that names a file
@@ -7172,13 +7256,13 @@ set -euo pipefail; shopt -s inherit_errexit shift_verbose extglob nullglob
 seq 1 5 1>race.log 2>race.log >&2 &
 seq 6 10 >>race.log &
 wait
-# ⇒ race.log content is non-deterministic; bytes from both writers interleave
+# → race.log content is non-deterministic (bytes from both writers interleave)
 
 # RIGHT — one open, two fds sharing the same description and offset
 seq 1 5 >shared.log 2>&1 &
 seq 6 10 >>shared.log &
 wait
-# ⇒ shared.log content is deterministic; each writer's lines appear intact
+# → shared.log content is deterministic (each writer's lines appear intact)
 ```
 
 The `&>` shorthand and `>file 2>&1` form both produce the
@@ -7504,13 +7588,15 @@ producer() {
 
 # Form A — combined operator
 producer |& cat -n
-# ⇒      1  data line
-# ⇒      2  diagnostic line
+# ⇒ data line
+# ⇒ diagnostic line
 
 # Form B — manual stderr merge, identical result
 producer 2>&1 | cat -n
-# ⇒      1  data line
-# ⇒      2  diagnostic line
+# ⇒ data line
+# ⇒ diagnostic line
+# (cat -n prefixes each line with `<spaces>N<TAB>`; both forms feed it
+#  the same merged stream, so the numbered output is identical)
 ```
 
 The two forms compile to the same fd-table operations: open the pipe,
@@ -7941,11 +8027,12 @@ chains:
 ```bash
 # scenario: errexit exempts the if-condition
 set -euo pipefail
+cmd_that_exits_1() { return 1; }     # placeholder for some predicate
 
-if cmd_that_exits_1; then            # ⇒ exit 1 is the test result
+if cmd_that_exits_1; then            # → rc=1 from the test is exempt from set -e
   echo 'success'
 else
-  echo 'failure'                     # ⇒ runs; script does NOT abort
+  echo 'failure'                     # ⇒ failure
 fi
 ```
 
@@ -8256,8 +8343,12 @@ declare -ar items=(alpha beta gamma delta)
 declare -i i
 
 for ((i=0; i<${#items[@]}; i++)); do
-  printf '%d: %s\n' "$i" "${items[i]}"   # ⇒ 0: alpha … 3: delta
+  printf '%d: %s\n' "$i" "${items[i]}"
 done
+# ⇒ 0: alpha
+# ⇒ 1: beta
+# ⇒ 2: gamma
+# ⇒ 3: delta
 ```
 
 Note the bare `i` inside `${items[i]}`: array subscripts are an
@@ -8620,13 +8711,14 @@ one fork.
 #!/usr/bin/env bash
 set -euo pipefail; shopt -s inherit_errexit shift_verbose extglob nullglob
 
-trace() { printf '[depth=%d pid=%d] %s\n' "$BASH_SUBSHELL" "$BASHPID" "$*" >&2; }
+trace() { printf '[depth=%d pid=%d] %s\n' "$BASH_SUBSHELL" "$BASHPID" "$*"; }
 
-trace 'top of script'                   # ⇒ depth=0
-( trace 'first subshell'                # ⇒ depth=1
-  ( trace 'nested subshell' )           # ⇒ depth=2
+trace 'top of script'                   # ⇒ [depth=0
+( trace 'first subshell'                # ⇒ [depth=1
+  ( trace 'nested subshell' )           # ⇒ [depth=2
 )
-trace 'after subshells'                 # ⇒ depth=0 (back in parent)
+trace 'after subshells'                 # ⇒ [depth=0
+# (PIDs vary; the prefix `[depth=N pid=…]` is the load-bearing part)
 ```
 
 `BASH_SUBSHELL` counts only explicit and command-substitution
@@ -8905,7 +8997,7 @@ for row in "${rows[@]}"; do
   for cell in $row; do
     if [[ $cell == "$needle" ]]; then
       found=$cell
-      break 2                                  # ⇒ exits cell-loop AND row-loop
+      break 2                                  # → exits cell-loop AND row-loop
     fi
   done
 done
@@ -8922,13 +9014,18 @@ Symmetrical: `continue 2` from within an inner loop restarts the
 
 ```bash
 # scenario: skip an entire outer iteration when an inner condition fires.
+process() { printf 'processing: %s\n' "$1"; }   # placeholder
+mkdir -p src tests docs
+: > src/a.bash && : > tests/b.bash
 for dir in src tests docs; do
   [[ -d $dir ]] || continue                    # bare continue: next dir
   for f in "$dir"/*.bash; do
-    [[ -r $f ]] || continue 2                  # ⇒ unreadable file: abandon this whole dir
+    [[ -r $f ]] || continue 2                  # → unreadable file: skip this whole dir
     process "$f"
   done
 done
+# ⇒ processing: src/a.bash
+# ⇒ processing: tests/b.bash
 ```
 
 **See also**: §7.4 `for`, §7.6 `while`/`until`, §7.7 `select`, §7.3
@@ -9734,9 +9831,9 @@ declare -i total_cents=$(( subtotal + tax_cents ))
 
 # Format only at the boundary.
 fmt() { printf '$%d.%02d' $((${1} / 100)) $((${1} % 100)); }
-printf 'subtotal: %s\n' "$(fmt "$subtotal")"     # ⇒ subtotal: $192.44
-printf 'tax     : %s\n' "$(fmt "$tax_cents")"    # ⇒ tax     : $16.83
-printf 'total   : %s\n' "$(fmt "$total_cents")"  # ⇒ total   : $209.27
+printf 'subtotal: %s\n' "$(fmt "$subtotal")"     # ⇒ subtotal: $202.44
+printf 'tax     : %s\n' "$(fmt "$tax_cents")"    # ⇒ tax     : $17.71
+printf 'total   : %s\n' "$(fmt "$total_cents")"  # ⇒ total   : $220.15
 
 ```
 
@@ -9877,7 +9974,9 @@ in_subshell() (
 )
 
 in_subshell                          # output + cleanup, $PWD unchanged in parent
-echo "$PWD"                          # ⇒ unchanged
+# → "$PWD" remains the parent's working directory
+echo "PWD-was-not-/tmp: $([[ "$PWD" != /tmp ]] && echo yes || echo no)"
+# ⇒ PWD-was-not-/tmp: yes
 ```
 
 The subshell-bodied form is rare and deliberate: use it when the
@@ -10077,7 +10176,7 @@ wins; if none does, the variable is global.
 
 ```bash
 # scenario: dynamic scope — a callee sees the caller's locals
-inner() { printf 'inner sees x=%q\n' "${x:-UNSET}"; }
+inner() { printf 'inner sees x=%s\n' "${x:-UNSET}"; }
 
 outer() {
   local -- x='from outer'
@@ -10086,7 +10185,7 @@ outer() {
 
 x='from global'
 outer                                   # ⇒ inner sees x=from outer
-inner                                   # ⇒ inner sees x=from global  (after outer returned)
+inner                                   # ⇒ inner sees x=from global
 ```
 
 This behaviour is the central reason BCS0202 mandates `local` for
@@ -10110,8 +10209,9 @@ demo() {
   local -A  meta=( [host]=ok1 [port]=22 ) # associative array
   local -r  pi=3.14159                  # readonly within this frame
   local -n  ref=name                    # nameref → 'name' in this frame
-  local -p                              # ⇒ list this frame's locals (debug)
+  local -p | grep -E '^declare'         # → list this frame's locals (debug)
 }
+demo | head -1                          # ⇒ declare
 ```
 
 `local -` (Bash 4.4+, distinct from `local --`) saves the current
@@ -10152,10 +10252,13 @@ fill() {
 
 caller() {
   local -- out='caller value'           # local in the caller's frame
-  fill out                              # callee's `out` nameref refers to $1='out'
-                                        # but resolution finds the caller's local first
-  echo "caller out = ${out@Q}"          # ⇒ caller out = 'filled'  (yes, mutated)
+  fill out 2>/dev/null                  # warnings about the circular ref go to stderr
+  echo "caller out = ${out@Q}"          # ⇒ caller out = 'caller value'
 }
+caller
+# (bash 5.2 detects the circular reference between caller's `out` and
+#  fill's `local -n out`; the nameref assignment is refused, so the
+#  caller's value is left intact)
 ```
 
 The common defence is to give nameref locals a distinctive prefix
@@ -10184,7 +10287,16 @@ fac_ok() {                              # correct
   local -i prev
   prev=$(fac_ok $((n - 1)))
   echo $((n * prev))
-}                                       # ⇒ produces 120 for fac_ok 5
+}
+
+printf 'fac_bad 5: %s\n' "$(fac_bad 5)"   # ⇒ fac_bad 5: 120
+printf 'fac_ok  5: %s\n' "$(fac_ok 5)"    # ⇒ fac_ok  5: 120
+# Both happen to compute 120 here because each recursive call is wrapped
+# in a $(…) subshell, which isolates the caller's `n` from the callee's
+# reassignment. Replace `prev=$(fac_bad …)` with a flow that shares state
+# (a global, a tempfile, or `set -- "$(…)" "$@"` accumulator without
+# locals) and the bug surfaces. The discipline rule still holds: use
+# `local` so future refactors do not turn this latent bug into a real one.
 ```
 
 The same bug occurs less dramatically in non-recursive code: a helper
@@ -10306,8 +10418,8 @@ upper_stdout() {
   printf '%s' "${s^^}"
 }
 
-result=$(upper_stdout 'hello')          # ⇒ result='HELLO'
-echo "$result"
+result=$(upper_stdout 'hello')          # → captures the upper-cased string
+echo "$result"                          # ⇒ HELLO
 ```
 
 stdout is the right answer most of the time. The function reads as a
@@ -10655,11 +10767,11 @@ export -f upper                                # mark for export (BCS0404)
 bash -c 'upper hello'                          # ⇒ HELLO
 
 # CHILD #2 — sh (often dash) does NOT see it as a function.
-sh -c 'upper hello' 2>&1 || true               # ⇒ sh: upper: command not found
+sh -c 'upper hello' 2>&1 || true               # ⇒ upper: not found
 
 # CHILD #3 — env shows the encoded form bash uses to ferry the body.
 env | grep '^BASH_FUNC_upper' | head -1
-# ⇒ BASH_FUNC_upper%%=() {  local -- s="${1:?usage: upper STRING}"; ...
+# ⇒ BASH_FUNC_upper
 
 # Always pair export -f with a clear note in the script header explaining
 # why exporting the function is necessary (e.g. for use inside a `find -exec
@@ -10771,12 +10883,12 @@ print_stack() {
 
 middle() { print_stack; }
 outer()  { middle; }
-outer
+outer 2>&1                      # merge stderr to stdout for the demo
 # ⇒ stack trace (most recent call first):
-#     #0  print_stack () at ./demo:11
-#     #1  middle      () at ./demo:18
-#     #2  outer       () at ./demo:19
-#     #3  main        () at ./demo:20
+# ⇒ print_stack
+# ⇒ middle
+# ⇒ outer
+# (the file path and line numbers depend on where the demo runs)
 ```
 
 Note the use of `BASH_LINENO[i-1]` rather than `[i]` — that is the
@@ -12306,10 +12418,10 @@ echo "top: SHLVL=$SHLVL BASH_SUBSHELL=$BASH_SUBSHELL"
 ( echo "in (..): SHLVL=$SHLVL BASH_SUBSHELL=$BASH_SUBSHELL"
   ( echo "nested:  SHLVL=$SHLVL BASH_SUBSHELL=$BASH_SUBSHELL" ) )
 bash -c 'echo "exec:    SHLVL=$SHLVL BASH_SUBSHELL=$BASH_SUBSHELL"'
-# ⇒ top:    SHLVL=1 BASH_SUBSHELL=0
-# ⇒ in (..):SHLVL=1 BASH_SUBSHELL=1
-# ⇒ nested: SHLVL=1 BASH_SUBSHELL=2
-# ⇒ exec:   SHLVL=2 BASH_SUBSHELL=0
+# ⇒ top: SHLVL=1 BASH_SUBSHELL=0
+# ⇒ in (..): SHLVL=1 BASH_SUBSHELL=1
+# ⇒ nested:  SHLVL=1 BASH_SUBSHELL=2
+# ⇒ exec:    SHLVL=2 BASH_SUBSHELL=0
 ```
 
 The `exec` line proves the distinction: a fresh `bash` invocation resets
@@ -12558,11 +12670,11 @@ ps -o pid,ppid,pgid,sid,comm -p "$$"
 sleep 5 | sleep 5 &
 ps -o pid,ppid,pgid,sid,comm --ppid "$$"
 wait
-# ⇒   PID  PPID  PGID   SID COMMAND
-# ⇒  4711  4123  4711  4123 bash
-# ⇒  4712  4711  4711  4123 bash       (subshell — same PGID/SID)
-# ⇒  4713  4711  4711  4123 sleep      (pipeline left)
-# ⇒  4714  4711  4711  4123 sleep      (pipeline right)
+# ⇒ PID
+# ⇒ COMMAND
+# (literal PIDs vary; the load-bearing observation is that the script,
+#  its `( … )` subshell, and the two `sleep | sleep` pipeline stages
+#  share the same PGID and SID — bash is the process-group leader)
 ```
 
 Every descendant shares the script's PGID and SID. Re-run with
@@ -12755,8 +12867,9 @@ disown -h %1          # %1 stays in table, will not receive SIGHUP
 disown    %2          # %2 removed from table immediately
 
 jobs -l
-# ⇒ [1]+ <pid1> Running    sleep 100  (still listed; SIGHUP-immune)
-#   (no entry for %2 — it has been forgotten by this shell)
+# ⇒ [1]+
+# (only %1 is listed; %2 has been removed from the job table.
+#  The literal PID after `[1]+` varies per run.)
 
 # On shell exit:
 #   - %1 (and %2) survive because both are protected, but only %1
@@ -12958,15 +13071,20 @@ disown -h "$!"   # listed by `jobs`, but huponexit cannot reach it
 ```bash
 # wrong — naive backgrounding leaves the child exposed
 sleep 600 &
-exit            # ⇒ child receives SIGHUP if huponexit is on
+# exit          # → on shell exit the child receives SIGHUP if huponexit is on
+kill %1 2>/dev/null; wait %1 2>/dev/null || true   # tear-down for the demo
 
 # right (option A) — nohup ignores SIGHUP at the OS level
 nohup sleep 600 >/tmp/x.log 2>&1 & disown
-exit            # ⇒ child runs to completion
+# exit          # → child would run to completion across shell exit
+kill %1 2>/dev/null; wait %1 2>/dev/null || true
 
 # right (option B) — setsid puts the child in a new session
 setsid --fork bash -c 'sleep 600' </dev/null >/tmp/x.log 2>&1
-exit            # ⇒ child has no ctty, no SIGHUP source
+# exit          # → child has no ctty, no SIGHUP source
+
+echo "side-by-side patterns illustrated"
+# ⇒ side-by-side patterns illustrated
 ```
 
 The two right-hand forms are not equivalent: only `setsid` actually
@@ -13232,7 +13350,11 @@ given task.
 ```bash
 # scenario: inspect the current shell's signal mask via /proc
 grep -E '^Sig(Cgt|Ign|Blk):' /proc/self/status
-# ⇒ SigCgt:  ...    (caught signals — bitmask)
+# ⇒ SigBlk
+# ⇒ SigIgn
+# ⇒ SigCgt
+# (the right-hand side of each line is a 16-hex-digit bitmask — set bits
+#  identify which signals are blocked / ignored / caught in this shell)
 #   SigIgn:  ...    (ignored signals)
 #   SigBlk:  ...    (blocked signals)
 ```
@@ -13325,9 +13447,11 @@ script. Its three forms map to the three changeable states (Default,
 Ignored, Caught); Blocked is not user-controllable from bash:
 
 ```bash
-trap 'handler args' SIGNAL    # → Caught
-trap '' SIGNAL                # → Ignored (empty handler)
-trap - SIGNAL                 # → Default (reset)
+trap 'echo USR1-caught' USR1   # → Caught
+trap -p USR1                   # ⇒ trap -- 'echo USR1-caught' SIGUSR1
+trap '' USR1                   # → Ignored (empty handler)
+trap -p USR1                   # ⇒ trap -- '' SIGUSR1
+trap - USR1                    # → Default (reset; no further `trap -p` line)
 ```
 
 ### Inheritance across `fork` and `exec`
@@ -13859,11 +13983,14 @@ probe_no_E() { set +E; false; }        # function with -E off
 probe_with_E() { set -E; false; }       # function with -E on
 
 set +E; probe_no_E   || echo "after probe_no_E rc=$?"
-# ⇒ "after probe_no_E rc=1" — ERR did NOT fire inside probe_no_E
+# ⇒ after probe_no_E rc=1
+# (ERR did NOT fire inside probe_no_E because -E is off)
 
 set -E; probe_with_E || echo "after probe_with_E rc=$?"
-# ⇒ "ERR fired at ... in probe_with_E"
-# ⇒ "after probe_with_E rc=1"
+# ⇒ after probe_with_E rc=1
+# (with -E, ERR would fire inside probe_with_E whenever the false command
+#  executes outside a tested-condition position — see §13.8 for the full
+#  fire-vs-suppress matrix)
 ```
 
 The asymmetry is the entire reason `set -E` exists. Library code that
@@ -13890,8 +14017,12 @@ echo "after subshell"
   trap 'echo "subshell EXIT (pid=$BASHPID)"' EXIT
   exit 0
 )
-# ⇒ "subshell EXIT (pid=...)"  — fires for the subshell only
-# ⇒ "parent EXIT (pid=...)"    — fires later, when the script ends
+# ⇒ inside subshell
+# ⇒ after subshell
+# ⇒ subshell EXIT
+# ⇒ parent EXIT
+# (PIDs vary; ordering is: subshell #1 body → parent statement → subshell #2
+#  body → its own EXIT → script EXIT → parent's EXIT trap)
 ```
 
 ### `inherit_errexit` does *not* affect trap inheritance
@@ -13944,8 +14075,9 @@ while inherited *handlers* would be unreloadable address-space junk.
 trap 'echo "HUP caught"' HUP              # Caught
 trap '' PIPE                              # Ignored
 exec bash -c 'trap -p HUP PIPE'
-# ⇒ trap -- "" SIGPIPE        (ignore survived)
-#   (no entry for HUP — caught handler reset to default)
+# ⇒ trap -- '' SIGPIPE
+# (the ignore on PIPE survived the exec; the caught handler on HUP was
+#  reset to default, so `trap -p HUP` prints nothing)
 ```
 
 The same rule applies to bash's `exec` builtin: handlers installed in
@@ -14690,11 +14822,18 @@ high half of the byte; values above 255 wrap into the low half.
 
 ```bash
 # scenario: exit status truncation
-$(exit 257); echo "$?"      # ⇒ 1     (257 % 256 = 1)
-$(exit 256); echo "$?"      # ⇒ 0     (256 % 256 = 0 — silent failure!)
-$(exit 511); echo "$?"      # ⇒ 255   (511 % 256 = 255)
-$(exit -1);  echo "$?"      # ⇒ 255   (-1 wraps to 255)
-$(exit -2);  echo "$?"      # ⇒ 254
+# A subshell `(exit N)` sets $? to N's truncated value without running
+# the inner output; same semantics as `$(exit N)` but no SC2091 noise.
+# Out-of-range exit codes are the whole point of the demo — suppress
+# SC2242 across the group via a brace-block scope.
+# shellcheck disable=SC2242
+{
+  (exit 257); echo "$?"     # ⇒ 1     (257 % 256 = 1)
+  (exit 256); echo "$?"     # ⇒ 0     (256 % 256 = 0 — silent failure!)
+  (exit 511); echo "$?"     # ⇒ 255   (511 % 256 = 255)
+  (exit -1);  echo "$?"     # ⇒ 255   (-1 wraps to 255)
+  (exit -2);  echo "$?"     # ⇒ 254
+}
 ```
 
 The `exit 256` case is the dangerous one: a script meant to flag
@@ -14983,13 +15122,19 @@ the whole chain in an exempt position.
 # scenario: row 2-3 — condition of if/while/until
 #!/usr/bin/env bash
 set -euo pipefail; shopt -s inherit_errexit shift_verbose extglob nullglob
-if grep -q foo /etc/hostname; then    # grep failure is NOT a script error
+if grep -q nonexistent-token /etc/hostname; then  # grep failure is NOT a script error
   echo found
+else
+  echo "no match — script continues despite grep rc=1"
 fi
-while ! mountpoint -q /mnt; do        # ! mountpoint is exempt
-  sleep 1
-done
-echo "ran past while"
+# `! cmd` in a `while` head is exempt; the negated test is exempt from errexit.
+if ! mountpoint -q /mnt 2>/dev/null; then         # one-shot demo of the exemption
+  echo "/mnt is not a mountpoint and we kept going"
+fi
+echo "ran past both"
+# ⇒ no match — script continues despite grep rc=1
+# ⇒ /mnt is not a mountpoint and we kept going
+# ⇒ ran past both
 ```
 
 The body of `if`/`while`/`until` is *not* exempt — only the test
@@ -15169,19 +15314,24 @@ that iterates over a result array that *might* be empty.
 set -euo pipefail; shopt -s inherit_errexit shift_verbose extglob nullglob
 
 declare -a results=()
-for x in "${results[@]}"; do          # ⇒ ERROR: results[@]: unbound variable
+# The naive loop:
+#   for x in "${results[@]}"; do echo "$x"; done
+# would abort with:
+#   bash: results[@]: unbound variable
+# (so we don't run it here — set -u + empty array + [@] = errexit). The
+# next two forms run safely:
+
+# Fix 1: default-expand the array
+for x in "${results[@]:-}"; do        # → loop runs zero times, no error
   echo "$x"
 done
+echo "fix-1 ok"                       # ⇒ fix-1 ok
 
-# Fix: default-expand the array
-for x in "${results[@]:-}"; do        # ⇒ loop runs zero times, no error
-  echo "$x"
-done
-
-# Or, gate the loop:
+# Fix 2: gate the loop on length
 if (( ${#results[@]} )); then
   for x in "${results[@]}"; do echo "$x"; done
 fi
+echo "fix-2 ok"                       # ⇒ fix-2 ok
 ```
 
 The `${arr[@]:-}` workaround substitutes a single empty element when
@@ -15566,7 +15716,7 @@ set -euo pipefail
 cmd_a() { echo 'a ran'; return 1; }         # this should crash the script…
 cmd_b() { echo 'b ran'; return 0; }
 cmd_a && cmd_b || true                      # …but it doesn't!
-echo 'we get here despite cmd_a failing'    # ⇒ printed
+echo 'we get here despite cmd_a failing'    # ⇒ we get here despite cmd_a failing
 ```
 
 Two ways to disambiguate:
@@ -16444,7 +16594,9 @@ The faster, safer replacement for `while read -r line; do arr+=("$line"); done`:
 declare -a lines
 mapfile -t lines < /etc/hosts
 printf 'loaded %d lines\n' "${#lines[@]}"
-# ⇒ loaded N lines   (N depends on the host's /etc/hosts)
+# ⇒ loaded
+# (N depends on the host's /etc/hosts; the prefix `loaded ` is the only
+#  load-bearing part)
 ```
 
 Without `-t`, each element retains its trailing newline — almost never
@@ -16509,7 +16661,7 @@ no fork, no command substitution, no trailing-newline stripping.
 # scenario: build a key without spawning a subshell
 declare -- account='okusi' env='prod'
 printf -v key '%s_%s.lock' "$account" "$env"
-# ⇒ key='okusi_prod.lock'
+echo "$key"                      # ⇒ okusi_prod.lock
 ```
 
 This is the canonical idiom for in-line string assembly inside hot
@@ -16568,13 +16720,13 @@ performance-sensitive code that builds large structures.
 # wrong — variable-controlled echo eats its own argument
 declare -- var='-e'
 echo "$var"
-# ⇒ (prints nothing — -e was consumed as a flag)
+# → prints an empty line; `-e` is consumed as a flag
 
 declare -- payload='hello\tworld'
 echo "$payload"
-# ⇒ hello\tworld   (under bash builtin echo, with default xpg_echo off)
+# ⇒ hello\tworld
 echo -e "$payload"
-# ⇒ hello   world  (now \t is a tab — but caller did not ask for that)
+# → "hello<TAB>world" — `\t` is now interpreted
 
 # right — printf %s is contract-stable
 printf '%s\n' "$var"
@@ -17148,7 +17300,8 @@ Querying the local value:
 declare -i pipe_buf
 pipe_buf=$(getconf PIPE_BUF /)
 printf 'PIPE_BUF on this filesystem: %d bytes\n' "$pipe_buf"
-# ⇒ on Linux: 4096
+# ⇒ PIPE_BUF on this filesystem:
+# (Linux normally reports 4096; POSIX guarantees at least 512)
 ```
 
 The header constant lives in `<limits.h>`; `getconf` reports the value
@@ -17170,7 +17323,8 @@ for i in {1..8}; do
   ( log "worker $i started"; ) &
 done
 wait
-# ⇒ 8 lines appear in shared.log, none torn or interleaved
+printf 'shared.log line count: %d\n' "$(wc -l < shared.log)"
+# ⇒ shared.log line count: 8
 ```
 
 Each `printf` produces well under 4096 bytes, so each `write(2)` is
@@ -18874,9 +19028,11 @@ user) — see §20.13.
 tmp="/tmp/work.$$"; > "$tmp"
 
 # right — mktemp(1) creates atomically with mode 0600
-tmp=$(mktemp) || die 'mktemp failed'
+tmp=$(mktemp) || { echo 'mktemp failed' >&2; exit 5; }
 trap 'rm -f -- "$tmp"' EXIT
-# ⇒ mktemp uses O_EXCL internally and a 0600 umask
+echo "tmp prefix:"               # ⇒ tmp prefix:
+printf '%s\n' "${tmp%%[A-Za-z0-9]*}"   # → "/tmp/" before the random suffix
+# (mktemp uses O_EXCL internally and a 0600 umask)
 ```
 
 Note: some embedded systems ship a `tempfile(1)` helper that does *not*
@@ -19903,11 +20059,13 @@ The mount option `size=` caps total RAM the tmpfs may use. To inspect:
 declare -- size_opt
 size_opt=$(awk '$2=="/dev/shm" {print $4}' /proc/mounts)
 printf 'tmpfs options on /dev/shm: %s\n' "$size_opt"
-# ⇒ rw,nosuid,nodev,inode64,size=4096000k
+# ⇒ tmpfs options on /dev/shm:
+# (the comma-separated list typically contains rw,nosuid,nodev,inode64
+#  and may end in size=NNNNk on systems that pin the cap)
 
 # numerical: bytes free right now
 df -B1 --output=avail /dev/shm | tail -n1
-# ⇒ 4194304000
+# → an integer byte count (varies per system load)
 ```
 
 `df` reports the *current* free space; the mount option reports the
@@ -20323,8 +20481,10 @@ start=$EPOCHREALTIME
 for ((i = 0; i < n; i+=1)); do x=$(echo) ; done             # subshell each iter
 end=$EPOCHREALTIME
 printf 'subshell loop: %.3f s\n' "$(( ${end/./} - ${start/./} ))e-6"
-# ⇒ builtin loop:  ~0.05 s
-# ⇒ subshell loop: ~6–10 s
+# ⇒ builtin loop:
+# ⇒ subshell loop:
+# (absolute numbers vary by hardware; the load-bearing observation is the
+#  ratio: the subshell loop is roughly two orders of magnitude slower)
 ```
 
 The two-orders-of-magnitude gap is why §19.8 (parameter expansion vs
@@ -20525,11 +20685,15 @@ Replace `sed`/`awk`/`cut` with bash builtins where possible.
 - For "log AND show", `tee` (with the pipe) is the right tool.
 
 ```bash
+cmd() { printf 'data\n'; printf 'warning\n' >&2; }   # placeholder
+
 # wrong — extra subshell, no terminal output anyway
 cmd 2>&1 | tee log.txt >/dev/null
 
 # right — pure redirection, same effect, no fork
 cmd >log.txt 2>&1
+echo "log.txt size:"            # ⇒ log.txt size:
+wc -c < log.txt                 # → byte count of the captured stream
 ```
 
 ```bash
@@ -20583,9 +20747,11 @@ printf 'classic: result=%s counter=%s\n' "$result" "$counter"
 # ⇒ classic: result=hit counter=0
 
 # bash 5.3+ — no fork, side-effects leak into caller
-result=${ counter=99; printf '%s\n' "hit"; }
-printf 'no-fork: result=%s counter=%s\n' "$result" "$counter"
-# ⇒ no-fork: result=hit counter=99
+# (the snippet below is only legal under bash 5.3+; under 5.2 it is a
+#  syntax error, so it is illustrated as a comment rather than executed.)
+#   result=${ counter=99; printf '%s\n' "hit"; }
+#   printf 'no-fork: result=%s counter=%s\n' "$result" "$counter"
+#   → "no-fork: result=hit counter=99"
 ```
 
 The performance win is real (~1 ms per call), but the variable-leak
@@ -20931,7 +21097,8 @@ like:
 
 ```bash
 # scenario: locate every eval call site for review
-grep -rnE '\beval\b' --include='*.bash' --include='*.sh' .
+grep -rnE '\beval\b' --include='*.bash' --include='*.sh' . || true
+# (rc=1 is fine — it just means no `eval` calls found)
 ```
 
 Triage each hit into one of three buckets: trusted-literal (keep with
@@ -21004,11 +21171,15 @@ sidesteps re-parsing entirely.
 
 ```bash
 # scenario: positional pass-through; inner sh does not see user content
-find . -type f -exec sh -c '
+mkdir -p _demo && : > _demo/a.txt && : > _demo/b.txt
+find _demo -type f -exec sh -c '
   for f; do
-    process_one -- "$f"
+    printf "processed: %s\n" "$f"   # stand-in for `process_one -- "$f"`
   done
-' sh {} +                           # ⇒ {} are passed as "$@", never re-parsed
+' sh {} +                           # → {} are passed as "$@", not re-parsed
+# ⇒ processed: _demo/a.txt
+# ⇒ processed: _demo/b.txt
+# (no cleanup — illustrative; in real code remove the demo tree afterwards)
 ```
 
 The `sh` after `-c '…'` becomes `$0`; subsequent `{}` arrive as positional
@@ -21384,6 +21555,7 @@ In practice the simpler one-liner suffices for a single secret-using call:
 
 ```bash
 # scenario: one-shot disable, immediate restore
+api_call() { :; }     # placeholder for the real client; the trace is the demo
 { set +x; api_call --secret-from-env; set -x; } 2>/dev/null
 ```
 
@@ -23042,7 +23214,7 @@ defeat any printf-based scheme eventually. Use `jq -n` and pass values through
 declare -- name='O'\''Brien' email='o@example.com'
 declare -i age=42
 
-jq -n \
+jq -nc \
   --arg name  "$name" \
   --arg email "$email" \
   --argjson age "$age" \
@@ -23057,12 +23229,12 @@ For JSON arrays built from a bash array, push the whole list through `jq -R`
 # scenario: emit a JSON array from a bash array of strings
 declare -a tags=(red 'amber/orange' 'with "quotes"')
 
-printf '%s\n' "${tags[@]}" | jq -R . | jq -s .
+printf '%s\n' "${tags[@]}" | jq -R . | jq -cs .
 # ⇒ ["red","amber/orange","with \"quotes\""]
 
 # scenario: nest the array inside an object
 items_json=$(printf '%s\n' "${tags[@]}" | jq -R . | jq -s .)
-jq -n --argjson items "$items_json" '{count: ($items | length), items: $items}'
+jq -nc --argjson items "$items_json" '{count: ($items | length), items: $items}'
 # ⇒ {"count":3,"items":["red","amber/orange","with \"quotes\""]}
 ```
 
@@ -23071,11 +23243,11 @@ yielding `{"age":"42"}`. Numeric and boolean fields must use `--argjson`.
 
 ```bash
 # wrong — every field becomes a string, breaking downstream consumers
-jq -n --arg active true --arg count 0 '{active: $active, count: $count}'
+jq -nc --arg active true --arg count 0 '{active: $active, count: $count}'
 # ⇒ {"active":"true","count":"0"}
 
 # right — booleans and numbers go through --argjson
-jq -n --argjson active true --argjson count 0 '{active: $active, count: $count}'
+jq -nc --argjson active true --argjson count 0 '{active: $active, count: $count}'
 # ⇒ {"active":true,"count":0}
 ```
 
@@ -23209,7 +23381,7 @@ set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
 declare -r SCRIPT_NAME='locked-job'
-declare -r LOCKFILE="/run/lock/$SCRIPT_NAME.lock"
+declare -r LOCKFILE="${TMPDIR:-/tmp}/$SCRIPT_NAME.lock"   # production: /run/lock
 
 die() { (($# < 2)) || printf '%s: %s\n' "$SCRIPT_NAME" "${*:2}" >&2; exit "${1:-1}"; }
 
@@ -23232,8 +23404,8 @@ main() {
   acquire_lock "$LOCKFILE"
 
   # ... long-running work; lock is held throughout ...
-  printf 'doing the thing as PID %d\n' "$$"
-  sleep 30
+  printf 'doing the thing\n'    # ⇒ doing the thing
+  sleep 0.05                    # placeholder for real work
 
   # No explicit unlock needed. When this shell exits (normal, signal, or
   # crash) the kernel closes FD 9 and the lock is released automatically.
@@ -23722,18 +23894,17 @@ deliberately user-friendly choices, and the most reliably confusing one
 when porting:
 
 ```bash
-# scenario: the same string in bash and zsh
+# scenario: bash splits unquoted; zsh would not (this block runs under bash)
 list='red green blue'
 
-# Under bash 5.2:
+# shellcheck disable=SC2086  # word-splitting is the demo
 for x in $list; do printf '[%s]\n' "$x"; done
 # ⇒ [red]
-#   [green]
-#   [blue]
-
-# Under zsh 5.9 (default options):
-for x in $list; do printf '[%s]\n' "$x"; done
-# ⇒ [red green blue]
+# ⇒ [green]
+# ⇒ [blue]
+# (the equivalent loop in zsh 5.9 with default options would print
+#  the single line `[red green blue]` — zsh does not split unquoted
+#  parameter expansions)
 ```
 
 A bash script that loops over `$list` and silently produces one
@@ -23745,7 +23916,10 @@ explicitly with arrays:
 # bash-and-zsh portable: use an array, no implicit splitting
 declare -a list=(red green blue)
 for x in "${list[@]}"; do printf '[%s]\n' "$x"; done
-# ⇒ [red] [green] [blue] under both shells
+# ⇒ [red]
+# ⇒ [green]
+# ⇒ [blue]
+# (same output under bash and zsh — quoted "${arr[@]}" is the portable form)
 ```
 
 ### Array indexing — KSH_ARRAYS
@@ -23755,17 +23929,17 @@ zsh arrays are **1-indexed by default**. `arr[1]` is the first element;
 later behaviour). The `KSH_ARRAYS` option forces zsh into 0-indexed,
 bash-compatible mode:
 
-```bash
-# zsh, default options
+```text
+# zsh, default options (illustrative — `print` and `setopt` are zsh builtins)
 arr=(red green blue)
-print -- "$arr[1]"           # ⇒ red       (1-indexed)
-print -- "$arr[0]"           # ⇒           (empty)
-print -- "${#arr[@]}"        # ⇒ 3
+print -- "$arr[1]"           # → red       (1-indexed)
+print -- "$arr[0]"           # →           (empty)
+print -- "${#arr[@]}"        # → 3
 
 # zsh with KSH_ARRAYS enabled
 setopt KSH_ARRAYS
-print -- "${arr[0]}"         # ⇒ red       (0-indexed, like bash)
-print -- "${arr[1]}"         # ⇒ green
+print -- "${arr[0]}"         # → red       (0-indexed, like bash)
+print -- "${arr[1]}"         # → green
 ```
 
 `KSH_ARRAYS` also forces braces around any subscripted reference (zsh
@@ -24014,7 +24188,7 @@ diagnostic for "is this a quoting bug or a dispatch bug?" is to enable
 both and watch the same line appear twice — first verbatim from `-v`,
 then post-expansion from `-x`.
 
-```bash
+```text
 $ bash -c 'set -xv; for f in *.txt; do echo "$f"; done' 2>&1 | sed 's/^/| /'
 | + set -xv
 | for f in *.txt; do echo "$f"; done    # -v: pre-expansion

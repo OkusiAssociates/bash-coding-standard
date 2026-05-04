@@ -327,8 +327,10 @@ history of every function call, populated only when
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">inner()</span> <span class="kw">{</span> <span class="ex">trace</span><span class="kw">;</span> <span class="kw">}</span></span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="fu">outer()</span> <span class="kw">{</span> <span class="ex">inner</span><span class="kw">;</span> <span class="kw">}</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="ex">outer</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ at outer (./script:N), at main (./script:M), …</span></span></code></pre></div>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="ex">outer</span> <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span>   <span class="co"># merge stderr into stdout so the trace lines are captured</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ at inner</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ at outer</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co"># (line numbers vary; the trace lists each calling frame in order)</span></span></code></pre></div>
 <h3 id="pipeline-and-regex-state">Pipeline and regex state</h3>
 <ul>
 <li><code>PIPESTATUS[]</code> — exit codes of every stage of the last

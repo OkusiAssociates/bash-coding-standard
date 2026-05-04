@@ -325,11 +325,13 @@ To inspect:</p>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">--</span> <span class="va">size_opt</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="va">size_opt</span><span class="op">=</span><span class="va">$(</span><span class="fu">awk</span> <span class="st">&#39;$2==&quot;/dev/shm&quot; {print $4}&#39;</span> /proc/mounts<span class="va">)</span></span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;tmpfs options on /dev/shm: %s\n&#39;</span> <span class="st">&quot;</span><span class="va">$size_opt</span><span class="st">&quot;</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ rw,nosuid,nodev,inode64,size=4096000k</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co"># numerical: bytes free right now</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="fu">df</span> <span class="at">-B1</span> <span class="at">--output</span><span class="op">=</span>avail /dev/shm <span class="kw">|</span> <span class="fu">tail</span> <span class="at">-n1</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ 4194304000</span></span></code></pre></div>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ tmpfs options on /dev/shm:</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co"># (the comma-separated list typically contains rw,nosuid,nodev,inode64</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co">#  and may end in size=NNNNk on systems that pin the cap)</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co"># numerical: bytes free right now</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="fu">df</span> <span class="at">-B1</span> <span class="at">--output</span><span class="op">=</span>avail /dev/shm <span class="kw">|</span> <span class="fu">tail</span> <span class="at">-n1</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="co"># → an integer byte count (varies per system load)</span></span></code></pre></div>
 <p><code>df</code> reports the <em>current</em> free space; the mount
 option reports the configured cap. A producer should check
 <code>df</code> before writing because other tenants may have consumed

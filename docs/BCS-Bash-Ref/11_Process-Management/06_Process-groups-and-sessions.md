@@ -56,11 +56,11 @@ ps -o pid,ppid,pgid,sid,comm -p "$$"
 sleep 5 | sleep 5 &
 ps -o pid,ppid,pgid,sid,comm --ppid "$$"
 wait
-# ⇒   PID  PPID  PGID   SID COMMAND
-# ⇒  4711  4123  4711  4123 bash
-# ⇒  4712  4711  4711  4123 bash       (subshell — same PGID/SID)
-# ⇒  4713  4711  4711  4123 sleep      (pipeline left)
-# ⇒  4714  4711  4711  4123 sleep      (pipeline right)
+# ⇒ PID
+# ⇒ COMMAND
+# (literal PIDs vary; the load-bearing observation is that the script,
+#  its `( … )` subshell, and the two `sleep | sleep` pipeline stages
+#  share the same PGID and SID — bash is the process-group leader)
 ```
 
 Every descendant shares the script's PGID and SID. Re-run with

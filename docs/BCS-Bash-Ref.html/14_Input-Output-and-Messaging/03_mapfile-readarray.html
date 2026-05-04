@@ -300,7 +300,9 @@ elements (rare).</li>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-a</span> <span class="va">lines</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="ex">mapfile</span> <span class="at">-t</span> lines <span class="op">&lt;</span> /etc/hosts</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;loaded %d lines\n&#39;</span> <span class="st">&quot;</span><span class="va">${</span><span class="op">#</span><span class="va">lines</span><span class="op">[@]</span><span class="va">}</span><span class="st">&quot;</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ loaded N lines   (N depends on the host&#39;s /etc/hosts)</span></span></code></pre></div>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ loaded</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># (N depends on the host&#39;s /etc/hosts; the prefix `loaded ` is the only</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">#  load-bearing part)</span></span></code></pre></div>
 <p>Without <code>-t</code>, each element retains its trailing newline —
 almost never what callers want. The performance gap matters for files
 larger than a few thousand lines: <code>mapfile</code> reads in a single

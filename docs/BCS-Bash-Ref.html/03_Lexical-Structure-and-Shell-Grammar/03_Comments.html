@@ -304,11 +304,13 @@ worth noting <code>#</code> has another role as <code>${#var}</code>
 (length).</li>
 </ul>
 <div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: contrast leading vs mid-word</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> foo#bar                  <span class="co"># ⇒ foo#bar          (no comment)</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> foo <span class="co">#bar                 # ⇒ foo              (the #bar is a comment)</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;foo # bar&quot;</span>              <span class="co"># ⇒ foo # bar        (inside quotes; literal)</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="va">url</span><span class="op">=</span>https://x#frag            <span class="co"># ⇒ assigns the full URL with fragment</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="va">result</span><span class="op">=</span><span class="va">${url</span><span class="op">#</span>https://<span class="va">}</span>        <span class="co"># ⇒ x#frag           (parameter expansion, # is op)</span></span></code></pre></div>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> foo#bar                  <span class="co"># ⇒ foo#bar</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> foo <span class="co">#bar                 # ⇒ foo</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;foo # bar&quot;</span>              <span class="co"># ⇒ foo # bar</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="va">url</span><span class="op">=</span>https://x#frag            <span class="co"># → assigns the full URL with fragment</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">$url</span><span class="st">&quot;</span>                   <span class="co"># ⇒ https://x#frag</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="va">result</span><span class="op">=</span><span class="va">${url</span><span class="op">#</span>https://<span class="va">}</span>        <span class="co"># → parameter expansion, # is the strip-prefix op</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">$result</span><span class="st">&quot;</span>                <span class="co"># ⇒ x#frag</span></span></code></pre></div>
 <p>Interactive shells with <code>interactive_comments</code> shopt
 <strong>off</strong> treat <code>#</code> as literal even at line start;
 the default is on, and BCS scripts run with no expectation of disabling

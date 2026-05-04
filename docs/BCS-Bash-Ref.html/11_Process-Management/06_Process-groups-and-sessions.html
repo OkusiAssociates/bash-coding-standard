@@ -348,11 +348,11 @@ pgid and sid</h3>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">sleep</span> 5 <span class="kw">|</span> <span class="fu">sleep</span> 5 <span class="kw">&amp;</span></span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">ps</span> <span class="at">-o</span> pid,ppid,pgid,sid,comm <span class="at">--ppid</span> <span class="st">&quot;</span><span class="va">$$</span><span class="st">&quot;</span></span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="bu">wait</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒   PID  PPID  PGID   SID COMMAND</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒  4711  4123  4711  4123 bash</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒  4712  4711  4711  4123 bash       (subshell — same PGID/SID)</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒  4713  4711  4711  4123 sleep      (pipeline left)</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒  4714  4711  4711  4123 sleep      (pipeline right)</span></span></code></pre></div>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ PID</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ COMMAND</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># (literal PIDs vary; the load-bearing observation is that the script,</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co">#  its `( … )` subshell, and the two `sleep | sleep` pipeline stages</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co">#  share the same PGID and SID — bash is the process-group leader)</span></span></code></pre></div>
 <p>Every descendant shares the script&#39;s PGID and SID. Re-run with
 <code>set -m</code> enabled and the pipeline acquires its own PGID —
 this is the behaviour interactive shells exhibit.</p>

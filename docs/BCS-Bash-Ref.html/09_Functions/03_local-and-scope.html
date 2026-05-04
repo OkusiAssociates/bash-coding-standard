@@ -286,7 +286,7 @@ The first enclosing frame on the stack that has declared a
 <code>local</code> variable of that name wins; if none does, the
 variable is global.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: dynamic scope — a callee sees the caller&#39;s locals</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">inner()</span> <span class="kw">{</span> <span class="bu">printf</span> <span class="st">&#39;inner sees x=%q\n&#39;</span> <span class="st">&quot;</span><span class="va">${x</span><span class="op">:-</span>UNSET<span class="va">}</span><span class="st">&quot;</span><span class="kw">;</span> <span class="kw">}</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">inner()</span> <span class="kw">{</span> <span class="bu">printf</span> <span class="st">&#39;inner sees x=%s\n&#39;</span> <span class="st">&quot;</span><span class="va">${x</span><span class="op">:-</span>UNSET<span class="va">}</span><span class="st">&quot;</span><span class="kw">;</span> <span class="kw">}</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">outer()</span> <span class="kw">{</span></span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">--</span> <span class="va">x</span><span class="op">=</span><span class="st">&#39;from outer&#39;</span></span>
@@ -295,7 +295,7 @@ variable is global.</p>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="va">x</span><span class="op">=</span><span class="st">&#39;from global&#39;</span></span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="ex">outer</span>                                   <span class="co"># ⇒ inner sees x=from outer</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="ex">inner</span>                                   <span class="co"># ⇒ inner sees x=from global  (after outer returned)</span></span></code></pre></div>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="ex">inner</span>                                   <span class="co"># ⇒ inner sees x=from global</span></span></code></pre></div>
 <p>This behaviour is the central reason BCS0202 mandates
 <code>local</code> for <em>every</em> function-internal variable:
 without it, a helper function silently mutates whatever <code>x</code>
@@ -315,8 +315,9 @@ processing for <code>local</code> so that values starting with
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">-A</span>  <span class="va">meta</span><span class="op">=</span><span class="va">(</span> <span class="op">[</span>host<span class="op">]</span><span class="va">=</span>ok1 <span class="op">[</span>port<span class="op">]</span><span class="va">=</span>22 <span class="va">)</span> <span class="co"># associative array</span></span>
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">-r</span>  <span class="va">pi</span><span class="op">=</span>3.14159                  <span class="co"># readonly within this frame</span></span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">-n</span>  <span class="va">ref</span><span class="op">=</span>name                    <span class="co"># nameref → &#39;name&#39; in this frame</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">-p</span>                              <span class="co"># ⇒ list this frame&#39;s locals (debug)</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span></code></pre></div>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">-p</span> <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-E</span> <span class="st">&#39;^declare&#39;</span>         <span class="co"># → list this frame&#39;s locals (debug)</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="ex">demo</span> <span class="kw">|</span> <span class="fu">head</span> <span class="at">-1</span>                          <span class="co"># ⇒ declare</span></span></code></pre></div>
 <p><code>local -</code> (Bash 4.4+, distinct from <code>local --</code>)
 saves the current shell-option state on entry and restores it on return
 — useful when a function temporarily wants to disable
@@ -351,10 +352,13 @@ participate in it.</p>
 <span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="fu">caller()</span> <span class="kw">{</span></span>
 <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">--</span> <span class="va">out</span><span class="op">=</span><span class="st">&#39;caller value&#39;</span>           <span class="co"># local in the caller&#39;s frame</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="ex">fill</span> out                              <span class="co"># callee&#39;s `out` nameref refers to $1=&#39;out&#39;</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>                                        <span class="co"># but resolution finds the caller&#39;s local first</span></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">&quot;caller out = </span><span class="va">${out</span><span class="op">@</span><span class="va">Q}</span><span class="st">&quot;</span>          <span class="co"># ⇒ caller out = &#39;filled&#39;  (yes, mutated)</span></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span></code></pre></div>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="ex">fill</span> out <span class="dv">2</span><span class="op">&gt;</span>/dev/null                  <span class="co"># warnings about the circular ref go to stderr</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">&quot;caller out = </span><span class="va">${out</span><span class="op">@</span><span class="va">Q}</span><span class="st">&quot;</span>          <span class="co"># ⇒ caller out = &#39;caller value&#39;</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="bu">caller</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co"># (bash 5.2 detects the circular reference between caller&#39;s `out` and</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="co">#  fill&#39;s `local -n out`; the nameref assignment is refused, so the</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="co">#  caller&#39;s value is left intact)</span></span></code></pre></div>
 <p>The common defence is to give nameref locals a distinctive prefix
 (<code>_out</code>, <code>__ref_</code>, etc.) that is unlikely to
 collide with caller locals. BCS scripts conventionally use a leading
@@ -379,7 +383,16 @@ return.</p>
 <span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">-i</span> <span class="va">prev</span></span>
 <span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  <span class="va">prev</span><span class="op">=</span><span class="va">$(</span><span class="ex">fac_ok</span> <span class="va">$((n</span> <span class="op">-</span> <span class="dv">1</span><span class="va">)))</span></span>
 <span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="va">$((n</span> <span class="op">*</span> <span class="va">prev))</span></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span>                                       <span class="co"># ⇒ produces 120 for fac_ok 5</span></span></code></pre></div>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;fac_bad 5: %s\n&#39;</span> <span class="st">&quot;</span><span class="va">$(</span><span class="ex">fac_bad</span> 5<span class="va">)</span><span class="st">&quot;</span>   <span class="co"># ⇒ fac_bad 5: 120</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;fac_ok  5: %s\n&#39;</span> <span class="st">&quot;</span><span class="va">$(</span><span class="ex">fac_ok</span> 5<span class="va">)</span><span class="st">&quot;</span>    <span class="co"># ⇒ fac_ok  5: 120</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Both happen to compute 120 here because each recursive call is wrapped</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="co"># in a $(…) subshell, which isolates the caller&#39;s `n` from the callee&#39;s</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co"># reassignment. Replace `prev=$(fac_bad …)` with a flow that shares state</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co"># (a global, a tempfile, or `set -- &quot;$(…)&quot; &quot;$@&quot;` accumulator without</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="co"># locals) and the bug surfaces. The discipline rule still holds: use</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="co"># `local` so future refactors do not turn this latent bug into a real one.</span></span></code></pre></div>
 <p>The same bug occurs less dramatically in non-recursive code: a helper
 modifies a global, the caller does not notice, and weeks later a subtle
 wrong value surfaces. <code>local</code> makes the bug a syntax error in

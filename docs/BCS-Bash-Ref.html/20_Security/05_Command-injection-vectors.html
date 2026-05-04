@@ -305,11 +305,15 @@ become tokens before <code>cp</code> sees them.</p>
 inner shell re-parses the string. Passing arguments positionally to a
 fixed inner script sidesteps re-parsing entirely.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: positional pass-through; inner sh does not see user content</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">find</span> . <span class="at">-type</span> f <span class="at">-exec</span> sh <span class="at">-c</span> <span class="st">&#39;</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="st">  for f; do</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="st">    process_one -- &quot;$f&quot;</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="st">  done</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="st">&#39;</span> sh {} +                           <span class="co"># ⇒ {} are passed as &quot;$@&quot;, never re-parsed</span></span></code></pre></div>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> _demo <span class="kw">&amp;&amp;</span> <span class="bu">:</span> <span class="op">&gt;</span> _demo/a.txt <span class="kw">&amp;&amp;</span> <span class="bu">:</span> <span class="op">&gt;</span> _demo/b.txt</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">find</span> _demo <span class="at">-type</span> f <span class="at">-exec</span> sh <span class="at">-c</span> <span class="st">&#39;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="st">  for f; do</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="st">    printf &quot;processed: %s\n&quot; &quot;$f&quot;   # stand-in for `process_one -- &quot;$f&quot;`</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="st">  done</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="st">&#39;</span> sh {} +                           <span class="co"># → {} are passed as &quot;$@&quot;, not re-parsed</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ processed: _demo/a.txt</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ processed: _demo/b.txt</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co"># (no cleanup — illustrative; in real code remove the demo tree afterwards)</span></span></code></pre></div>
 <p>The <code>sh</code> after <code>-c &#39;…&#39;</code> becomes
 <code>$0</code>; subsequent <code>{}</code> arrive as positional
 arguments. No interpolation, no re-parse.</p>

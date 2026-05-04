@@ -22,8 +22,9 @@ while inherited *handlers* would be unreloadable address-space junk.
 trap 'echo "HUP caught"' HUP              # Caught
 trap '' PIPE                              # Ignored
 exec bash -c 'trap -p HUP PIPE'
-# ⇒ trap -- "" SIGPIPE        (ignore survived)
-#   (no entry for HUP — caught handler reset to default)
+# ⇒ trap -- '' SIGPIPE
+# (the ignore on PIPE survived the exec; the caught handler on HUP was
+#  reset to default, so `trap -p HUP` prints nothing)
 ```
 
 The same rule applies to bash's `exec` builtin: handlers installed in

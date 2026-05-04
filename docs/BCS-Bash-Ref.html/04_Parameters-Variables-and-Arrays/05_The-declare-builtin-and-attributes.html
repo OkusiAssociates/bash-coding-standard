@@ -388,7 +388,9 @@ and explicit defaults; never feed user-controlled data into an
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-A</span> <span class="va">by_id</span><span class="op">=</span><span class="va">(</span><span class="op">[</span>alice<span class="op">]</span><span class="va">=</span>42 <span class="op">[</span>bob<span class="op">]</span><span class="va">=</span>17<span class="va">)</span></span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="va">by_id</span><span class="op">[</span>carol<span class="op">]=</span>99</span>
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-p</span> <span class="va">by_id</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ declare -A by_id=([alice]=&quot;42&quot; [bob]=&quot;17&quot; [carol]=&quot;99&quot;)</span></span></code></pre></div>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ declare -A by_id=(</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"># (key order is hash-dependent; expect `[alice]=&quot;42&quot; [bob]=&quot;17&quot; [carol]=&quot;99&quot;`</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co">#  in some order, with each value double-quoted)</span></span></code></pre></div>
 <p>The associative array <strong>must</strong> be declared before first
 use — there is no implicit conversion; assigning to an undeclared name
 creates an indexed array with index <code>0</code>, silently masking the
@@ -475,38 +477,50 @@ attribute set.</p>
 <span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-p</span> <span class="va">MAX</span> <span class="va">PATHS</span> <span class="va">MAP</span></span>
 <span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ declare -ir MAX=&quot;100&quot;</span></span>
 <span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ declare -ax PATHS=([0]=&quot;/usr/bin&quot; [1]=&quot;/bin&quot;)</span></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ declare -A MAP=([a]=&quot;1&quot; [b]=&quot;2&quot; )</span></span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter all readonly variables visible to the script:</span></span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-p</span> <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-E</span> <span class="st">&#39;^declare -[^ ]*r &#39;</span></span></code></pre></div>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ declare -A MAP=</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co"># (associative-array key order is hash-dependent; both `[a]=&quot;1&quot;` and</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co">#  `[b]=&quot;2&quot;` will appear, in some order)</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter all readonly variables visible to the script:</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-p</span> <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-E</span> <span class="st">&#39;^declare -[^ ]*r &#39;</span></span></code></pre></div>
 <p><code>declare -F</code> lists <em>all</em> defined function names;
 <code>declare -F name</code> prints just one;
 <code>declare -f name</code> prints the function body. Together with
 <code>compgen -A function</code> they cover every common discovery
 use.</p>
-<h3 id="inheritance-via-local">Inheritance via <code>local</code></h3>
-<p>When a function calls <code>local name</code> <em>without</em> an
-attribute, and <code>name</code> already exists at script scope, the
-local <strong>inherits</strong> the global&#39;s attributes. This is rarely
-the intent — write <code>local --</code> (or the specific attribute you
-mean) to re-declare cleanly:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: silent attribute inheritance</span></span>
+<h3 id="explicit-attributes-on-local">Explicit attributes on
+<code>local</code></h3>
+<p>Always declare locals with their intended attribute. Bare
+<code>local name</code> behaviour around attribute inheritance has
+shifted across bash versions; the explicit forms below remove that
+ambiguity entirely:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: explicit -i locals vs string-typed locals</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="bu">declare</span> <span class="at">-i</span> <span class="va">counter</span><span class="op">=</span>0          <span class="co"># integer at script scope</span></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="fu">increment()</span> <span class="kw">{</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="va">counter</span>               <span class="co"># inherits -i ⇒ RHS is arithmetic</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="va">counter</span><span class="op">=</span><span class="st">&#39;2 + 3&#39;</span></span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">&#39;%d\n&#39;</span> <span class="st">&quot;</span><span class="va">$counter</span><span class="st">&quot;</span>    <span class="co"># ⇒ 5  (probably not what you wanted)</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="fu">increment_int()</span> <span class="kw">{</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">-i</span> <span class="va">counter</span>            <span class="co"># explicit integer attribute</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="va">counter</span><span class="op">=</span><span class="st">&#39;2 + 3&#39;</span>             <span class="co"># → arithmetic context: 5</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">&#39;%d\n&#39;</span> <span class="st">&quot;</span><span class="va">$counter</span><span class="st">&quot;</span>    <span class="co"># ⇒ 5</span></span>
 <span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
 <span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="fu">increment_clean()</span> <span class="kw">{</span></span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">--</span> <span class="va">counter</span>            <span class="co"># explicit string; -i not inherited</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="fu">increment_string()</span> <span class="kw">{</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>  <span class="bu">local</span> <span class="at">--</span> <span class="va">counter</span>            <span class="co"># explicit string; arithmetic does not apply</span></span>
 <span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>  <span class="va">counter</span><span class="op">=</span><span class="st">&#39;2 + 3&#39;</span></span>
 <span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">&#39;%s\n&#39;</span> <span class="st">&quot;</span><span class="va">$counter</span><span class="st">&quot;</span>    <span class="co"># ⇒ 2 + 3</span></span>
-<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span></code></pre></div>
-<p>The <code>local --</code> form is the BCS standard precisely because
-it severs this attribute-inheritance dependency on the global
-namespace.</p>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a><span class="ex">increment_int</span>       <span class="co"># ⇒ 5</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a><span class="ex">increment_string</span>    <span class="co"># ⇒ 2 + 3</span></span></code></pre></div>
+<p>In bash 5.2, a bare <code>local name</code> (no attribute flag) does
+<em>not</em> reliably inherit attributes from a same-named global;
+explicit <code>local --</code> for strings and
+<code>local -i</code>/<code>local -a</code>/<code>local -A</code> for
+typed locals is the unambiguous form that survives both
+attribute-inheritance changes between bash versions and the BCS
+option-termination rule. See BCS0202.</p>
+<p>The <code>local --</code>/<code>local -i</code>/<code>local -a</code>
+forms are the BCS standard precisely because they sever any
+attribute-inheritance dependency on the global namespace.</p>
 <h3 id="see-also">See also</h3>
 <ul>
 <li>§4.6 — <code>local</code> (a function-scoped

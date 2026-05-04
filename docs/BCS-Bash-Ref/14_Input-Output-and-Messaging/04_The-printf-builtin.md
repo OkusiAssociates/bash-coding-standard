@@ -28,7 +28,7 @@ no fork, no command substitution, no trailing-newline stripping.
 # scenario: build a key without spawning a subshell
 declare -- account='okusi' env='prod'
 printf -v key '%s_%s.lock' "$account" "$env"
-# ⇒ key='okusi_prod.lock'
+echo "$key"                      # ⇒ okusi_prod.lock
 ```
 
 This is the canonical idiom for in-line string assembly inside hot

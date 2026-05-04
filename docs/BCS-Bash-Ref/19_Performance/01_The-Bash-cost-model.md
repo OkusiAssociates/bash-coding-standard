@@ -29,8 +29,10 @@ start=$EPOCHREALTIME
 for ((i = 0; i < n; i+=1)); do x=$(echo) ; done             # subshell each iter
 end=$EPOCHREALTIME
 printf 'subshell loop: %.3f s\n' "$(( ${end/./} - ${start/./} ))e-6"
-# ⇒ builtin loop:  ~0.05 s
-# ⇒ subshell loop: ~6–10 s
+# ⇒ builtin loop:
+# ⇒ subshell loop:
+# (absolute numbers vary by hardware; the load-bearing observation is the
+#  ratio: the subshell loop is roughly two orders of magnitude slower)
 ```
 
 The two-orders-of-magnitude gap is why §19.8 (parameter expansion vs

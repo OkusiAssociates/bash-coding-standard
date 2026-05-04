@@ -231,7 +231,7 @@ leaf_path	block_idx	source	code	level_or_bucket	label	action	confidence	rational
 11_Process-Management/01_The-Bash-process-tree-at-runtime.md	1	lint	SC2216	warning	NEUTRAL	ADD_SUPPRESSION	LOW	fragment-context warning the corpus knowingly accepts
 11_Process-Management/05_Foreground-vs-background.md	2	lint	SC2034	warning	NEUTRAL	ADD_SUPPRESSION	MEDIUM	likely declared for demonstration
 11_Process-Management/05_Foreground-vs-background.md	3	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
-11_Process-Management/06_Process-groups-and-sessions.md	1	lint	SC2216	warning	RIGHT	ADD_SUPPRESSION	LOW	fragment-context warning the corpus knowingly accepts
+11_Process-Management/06_Process-groups-and-sessions.md	1	lint	SC2216	warning	NEUTRAL	ADD_SUPPRESSION	LOW	fragment-context warning the corpus knowingly accepts
 11_Process-Management/06_Process-groups-and-sessions.md	2	lint	SC2216	warning	NEUTRAL	ADD_SUPPRESSION	LOW	fragment-context warning the corpus knowingly accepts
 11_Process-Management/07_The-job-table.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
 11_Process-Management/10_kill-and-signal-delivery.md	1	lint	SC1128	error	NEUTRAL	ADD_SUPPRESSION	HIGH	corpus convention places `# scenario:` above shebang
@@ -496,8 +496,8 @@ leaf_path	block_idx	source	code	level_or_bucket	label	action	confidence	rational
 25_Bash-5.3-and-the-Future/01_No-fork-command-substitution-cmd.md	2	lint	SC2154	warning	MIXED	ADD_SUPPRESSION	MEDIUM	fragment references context var defined in prose
 25_Bash-5.3-and-the-Future/01_No-fork-command-substitution-cmd.md	2	lint	SC2034	warning	MIXED	ADD_SUPPRESSION	MEDIUM	declared to demonstrate, not consumed
 01_The-Unix-Model-from-Bash/01_Processes-fork-exec-wait.md	1	runtime	MISMATCH	exit=0	NEUTRAL	SANDBOX_NONDETERMINISTIC	HIGH	expected references PID/BASHPID — varies per run
-01_The-Unix-Model-from-Bash/01_Processes-fork-exec-wait.md	2	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
-01_The-Unix-Model-from-Bash/01_Processes-fork-exec-wait.md	3	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+01_The-Unix-Model-from-Bash/01_Processes-fork-exec-wait.md	2	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+01_The-Unix-Model-from-Bash/01_Processes-fork-exec-wait.md	3	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 01_The-Unix-Model-from-Bash/02_The-file-descriptor-model.md	2	runtime	MISMATCH	exit=0	NEUTRAL	SANDBOX_NONDETERMINISTIC	HIGH	expected references PID/BASHPID — varies per run
 01_The-Unix-Model-from-Bash/02_The-file-descriptor-model.md	3	runtime	MISMATCH	exit=0	NEUTRAL	SANDBOX_NONDETERMINISTIC	HIGH	expected references random tmp path
 01_The-Unix-Model-from-Bash/02_The-file-descriptor-model.md	4	runtime	CRASH	exit=127	MIXED	SANDBOX_TOOL	MEDIUM	unresolved external command (sandbox lacks tool or placeholder name)
@@ -514,12 +514,12 @@ leaf_path	block_idx	source	code	level_or_bucket	label	action	confidence	rational
 02_Bash-as-a-Program/02_Bash-version-landscape.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 02_Bash-as-a-Program/03_Build-configuration-and-feature-detection.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
 02_Bash-as-a-Program/03_Build-configuration-and-feature-detection.md	2	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
-02_Bash-as-a-Program/04_Invocation-modes.md	2	runtime	MISMATCH	exit=0	MIXED	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
-02_Bash-as-a-Program/04_Invocation-modes.md	3	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+02_Bash-as-a-Program/04_Invocation-modes.md	2	runtime	OK	exit=0	MIXED	NO_ACTION	HIGH	ran cleanly; expected output matched
+02_Bash-as-a-Program/04_Invocation-modes.md	3	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 02_Bash-as-a-Program/05_Startup-file-chains.md	2	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
 02_Bash-as-a-Program/05_Startup-file-chains.md	3	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
 02_Bash-as-a-Program/06_BASH_ENV-and-ENV.md	1	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_PERM	HIGH	permission denied (sandbox lacks privilege)
-02_Bash-as-a-Program/07_Command-line-options-to-bash-itself.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+02_Bash-as-a-Program/07_Command-line-options-to-bash-itself.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 02_Bash-as-a-Program/08_Exit-and-shell-session-lifecycle.md	1	runtime	MISMATCH	exit=0	NEUTRAL	SANDBOX_NONDETERMINISTIC	HIGH	expected references random tmp path
 03_Lexical-Structure-and-Shell-Grammar/01_Tokenisation.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
 03_Lexical-Structure-and-Shell-Grammar/01_Tokenisation.md	2	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
@@ -613,10 +613,10 @@ leaf_path	block_idx	source	code	level_or_bucket	label	action	confidence	rational
 05_Expansions/04_Parameter-and-variable-expansion.md	9	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 05_Expansions/05_Arithmetic-expansion.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 05_Expansions/05_Arithmetic-expansion.md	2	runtime	CRASH	exit=1	NEUTRAL	EXPECTED_CRASH	MEDIUM	scenario comment marks the block as failure-demo
-05_Expansions/05_Arithmetic-expansion.md	3	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+05_Expansions/05_Arithmetic-expansion.md	3	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 05_Expansions/06_Command-substitution.md	3	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 05_Expansions/06_Command-substitution.md	4	runtime	CRASH	exit=1	NEUTRAL	EXPECTED_CRASH	MEDIUM	scenario comment marks the block as failure-demo
-05_Expansions/06_Command-substitution.md	5	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+05_Expansions/06_Command-substitution.md	5	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 05_Expansions/08_Word-splitting-and-IFS.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 05_Expansions/08_Word-splitting-and-IFS.md	2	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
 05_Expansions/08_Word-splitting-and-IFS.md	4	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
@@ -629,10 +629,10 @@ leaf_path	block_idx	source	code	level_or_bucket	label	action	confidence	rational
 05_Expansions/11_Glob-options.md	2	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
 05_Expansions/11_Glob-options.md	3	runtime	MISSING_ANNOT	exit=0	NEUTRAL	FIX_ANNOTATION	MEDIUM	block produced output but has no `# ⇒` annotation — opportunity to add
 05_Expansions/11_Glob-options.md	4	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
-05_Expansions/12_Extended-globs-extglob.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+05_Expansions/12_Extended-globs-extglob.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 05_Expansions/12_Extended-globs-extglob.md	3	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
 05_Expansions/12_Extended-globs-extglob.md	4	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
-05_Expansions/13_Locale-and-pattern-matching.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+05_Expansions/13_Locale-and-pattern-matching.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 05_Expansions/13_Locale-and-pattern-matching.md	2	runtime	NO_EXPECTED	exit=0	RIGHT	NO_ACTION	HIGH	ran cleanly; no annotations to compare
 05_Expansions/13_Locale-and-pattern-matching.md	3	runtime	CRASH	exit=1	NEUTRAL	EXPECTED_CRASH	MEDIUM	scenario comment marks the block as failure-demo
 06_Redirection-and-Pipelines/01_The-fd-table-from-Bashs-perspective.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
@@ -644,7 +644,7 @@ leaf_path	block_idx	source	code	level_or_bucket	label	action	confidence	rational
 06_Redirection-and-Pipelines/06_Duplicating-fds.md	1	runtime	CRASH	exit=2	NEUTRAL	EXPECTED_CRASH	MEDIUM	scenario comment marks the block as failure-demo
 06_Redirection-and-Pipelines/06_Duplicating-fds.md	2	runtime	CRASH	exit=1	NEUTRAL	EXPECTED_CRASH	MEDIUM	scenario comment marks the block as failure-demo
 06_Redirection-and-Pipelines/07_Moving-and-closing-fds.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
-06_Redirection-and-Pipelines/07_Moving-and-closing-fds.md	2	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+06_Redirection-and-Pipelines/07_Moving-and-closing-fds.md	2	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 06_Redirection-and-Pipelines/08_Here-documents.md	1	runtime	MISMATCH	exit=0	NEUTRAL	SANDBOX_NONDETERMINISTIC	HIGH	expected references timestamp — varies per run
 06_Redirection-and-Pipelines/08_Here-documents.md	2	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 06_Redirection-and-Pipelines/08_Here-documents.md	3	runtime	CRASH	exit=141	NEUTRAL	EXPECTED_CRASH	HIGH	exit 141 (SIGPIPE) — likely deliberate pipefail/SIGPIPE demo
@@ -703,8 +703,8 @@ leaf_path	block_idx	source	code	level_or_bucket	label	action	confidence	rational
 08_Conditional-Expressions-and-Arithmetic/09_Arithmetic-context.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 08_Conditional-Expressions-and-Arithmetic/09_Arithmetic-context.md	2	runtime	CRASH	exit=1	NEUTRAL	EXPECTED_CRASH	HIGH	doc annotations describe non-zero exit as the expected outcome
 08_Conditional-Expressions-and-Arithmetic/09_Arithmetic-context.md	3	runtime	NO_EXPECTED	exit=0	RIGHT	NO_ACTION	HIGH	ran cleanly; no annotations to compare
-08_Conditional-Expressions-and-Arithmetic/11_Integer-types-overflow-base-prefixes.md	1	runtime	MISMATCH	exit=0	RIGHT	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
-08_Conditional-Expressions-and-Arithmetic/12_Floating-point-workarounds.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+08_Conditional-Expressions-and-Arithmetic/11_Integer-types-overflow-base-prefixes.md	1	runtime	OK	exit=0	RIGHT	NO_ACTION	HIGH	ran cleanly; expected output matched
+08_Conditional-Expressions-and-Arithmetic/12_Floating-point-workarounds.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 08_Conditional-Expressions-and-Arithmetic/13_let-builtin.md	1	runtime	OK	exit=0	MIXED	NO_ACTION	HIGH	ran cleanly; expected output matched
 09_Functions/01_Definition-syntax.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
 09_Functions/01_Definition-syntax.md	2	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
@@ -716,8 +716,7 @@ leaf_path	block_idx	source	code	level_or_bucket	label	action	confidence	rational
 09_Functions/03_local-and-scope.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 09_Functions/03_local-and-scope.md	2	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 09_Functions/03_local-and-scope.md	3	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
-09_Functions/03_local-and-scope.md	4	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
-09_Functions/03_local-and-scope.md	5	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+09_Functions/03_local-and-scope.md	4	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 09_Functions/04_Return-value-via-return-N.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 09_Functions/04_Return-value-via-return-N.md	2	runtime	CRASH	exit=13	MIXED	EXPECTED_CRASH	MEDIUM	scenario comment marks the block as failure-demo
 09_Functions/05_Communicating-results.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
@@ -751,25 +750,24 @@ leaf_path	block_idx	source	code	level_or_bucket	label	action	confidence	rational
 11_Process-Management/02_PIDs-BASHPID-PPID.md	2	runtime	NO_EXPECTED	exit=0	MIXED	NO_ACTION	HIGH	ran cleanly; no annotations to compare
 11_Process-Management/03_Subshell-origins.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 11_Process-Management/03_Subshell-origins.md	2	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
-11_Process-Management/04_BASH_SUBSHELL-depth-tracking.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+11_Process-Management/04_BASH_SUBSHELL-depth-tracking.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 11_Process-Management/04_BASH_SUBSHELL-depth-tracking.md	2	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
 11_Process-Management/05_Foreground-vs-background.md	1	runtime	CRASH	exit=127	NEUTRAL	SANDBOX_TOOL	MEDIUM	unresolved external command (sandbox lacks tool or placeholder name)
 11_Process-Management/05_Foreground-vs-background.md	3	runtime	MISSING_ANNOT	exit=0	NEUTRAL	FIX_ANNOTATION	MEDIUM	block produced output but has no `# ⇒` annotation — opportunity to add
 11_Process-Management/05_Foreground-vs-background.md	4	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
 11_Process-Management/05_Foreground-vs-background.md	5	runtime	CRASH	exit=127	MIXED	SANDBOX_TOOL	MEDIUM	unresolved external command (sandbox lacks tool or placeholder name)
-11_Process-Management/06_Process-groups-and-sessions.md	1	runtime	MISMATCH	exit=0	RIGHT	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
-11_Process-Management/09_Job-control-builtins.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+11_Process-Management/06_Process-groups-and-sessions.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+11_Process-Management/09_Job-control-builtins.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 11_Process-Management/09_Job-control-builtins.md	2	runtime	CRASH	exit=127	NEUTRAL	SANDBOX_TOOL	MEDIUM	unresolved external command (sandbox lacks tool or placeholder name)
 11_Process-Management/11_nohup-and-setsid.md	1	runtime	MISSING_ANNOT	exit=0	NEUTRAL	FIX_ANNOTATION	MEDIUM	block produced output but has no `# ⇒` annotation — opportunity to add
 11_Process-Management/11_nohup-and-setsid.md	2	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_PERM	HIGH	permission denied (sandbox lacks privilege)
 11_Process-Management/11_nohup-and-setsid.md	3	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
-11_Process-Management/11_nohup-and-setsid.md	4	runtime	MISMATCH	exit=0	MIXED	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
 11_Process-Management/12_Detaching-from-the-terminal.md	1	runtime	MISSING_ANNOT	exit=0	NEUTRAL	FIX_ANNOTATION	MEDIUM	block produced output but has no `# ⇒` annotation — opportunity to add
 11_Process-Management/13_Environment-inheritance.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 11_Process-Management/13_Environment-inheritance.md	2	runtime	CRASH	exit=1	NEUTRAL	ILLUSTRATIVE_FRAGMENT	MEDIUM	unbound var under set -u; fragment references prose-context name
 11_Process-Management/13_Environment-inheritance.md	3	runtime	CRASH	exit=127	NEUTRAL	SANDBOX_FS	MEDIUM	missing file or path (sandbox setup gap)
-12_Signals-and-Traps/01_Signal-taxonomy.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
-12_Signals-and-Traps/04_Signal-disposition.md	1	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+12_Signals-and-Traps/01_Signal-taxonomy.md	1	runtime	OK	exit=0	RIGHT	NO_ACTION	HIGH	ran cleanly; expected output matched
+12_Signals-and-Traps/04_Signal-disposition.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 12_Signals-and-Traps/04_Signal-disposition.md	2	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 12_Signals-and-Traps/05_The-trap-builtin.md	1	runtime	CRASH	exit=127	NEUTRAL	EXPECTED_CRASH	MEDIUM	scenario comment marks the block as failure-demo
 12_Signals-and-Traps/05_The-trap-builtin.md	3	runtime	MISSING_ANNOT	exit=0	RIGHT	FIX_ANNOTATION	MEDIUM	block produced output but has no `# ⇒` annotation — opportunity to add
@@ -782,9 +780,9 @@ leaf_path	block_idx	source	code	level_or_bucket	label	action	confidence	rational
 12_Signals-and-Traps/06_Pseudo-signals-EXIT-ERR-DEBUG-RETURN.md	4	runtime	CRASH	exit=7	NEUTRAL	EXPECTED_CRASH	HIGH	doc annotations describe non-zero exit as the expected outcome
 12_Signals-and-Traps/07_trap-p-and-trap-inspection.md	1	runtime	CRASH	exit=127	NEUTRAL	EXPECTED_CRASH	MEDIUM	scenario comment marks the block as failure-demo
 12_Signals-and-Traps/07_trap-p-and-trap-inspection.md	2	runtime	CRASH	exit=127	NEUTRAL	SANDBOX_TOOL	MEDIUM	unresolved external command (sandbox lacks tool or placeholder name)
-12_Signals-and-Traps/08_Trap-inheritance.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
-12_Signals-and-Traps/08_Trap-inheritance.md	2	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
-12_Signals-and-Traps/09_Trap-reset-across-exec.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+12_Signals-and-Traps/08_Trap-inheritance.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+12_Signals-and-Traps/08_Trap-inheritance.md	2	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+12_Signals-and-Traps/09_Trap-reset-across-exec.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 12_Signals-and-Traps/10_Synchronous-vs-asynchronous-delivery.md	1	runtime	TIMEOUT	exit=124	NEUTRAL	EXPECTED_TIMEOUT	MEDIUM	interactive/signal-bound demo cannot complete in batch
 12_Signals-and-Traps/11_Signal-safe-code.md	1	runtime	CRASH	exit=1	NEUTRAL	EXPECTED_CRASH	MEDIUM	scenario comment marks the block as failure-demo
 12_Signals-and-Traps/13_Tempfile-and-tempdir-lifecycle.md	2	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
@@ -831,11 +829,11 @@ leaf_path	block_idx	source	code	level_or_bucket	label	action	confidence	rational
 13_Error-Handling-and-Exit-Status/12_Rich-error-output.md	3	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
 13_Error-Handling-and-Exit-Status/12_Rich-error-output.md	4	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
 14_Input-Output-and-Messaging/01_Standard-streams-discipline.md	3	runtime	NO_EXPECTED	exit=0	RIGHT	NO_ACTION	HIGH	ran cleanly; no annotations to compare
-14_Input-Output-and-Messaging/03_mapfile-readarray.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+14_Input-Output-and-Messaging/03_mapfile-readarray.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 14_Input-Output-and-Messaging/03_mapfile-readarray.md	2	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
-14_Input-Output-and-Messaging/04_The-printf-builtin.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+14_Input-Output-and-Messaging/04_The-printf-builtin.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 14_Input-Output-and-Messaging/04_The-printf-builtin.md	2	runtime	MISMATCH	exit=0	NEUTRAL	SANDBOX_NONDETERMINISTIC	HIGH	expected references timestamp — varies per run
-14_Input-Output-and-Messaging/05_printf-vs-echo.md	1	runtime	MISMATCH	exit=0	MIXED	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+14_Input-Output-and-Messaging/05_printf-vs-echo.md	1	runtime	OK	exit=0	MIXED	NO_ACTION	HIGH	ran cleanly; expected output matched
 14_Input-Output-and-Messaging/07_Logging-discipline.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
 14_Input-Output-and-Messaging/07_Logging-discipline.md	2	runtime	CRASH	exit=1	NEUTRAL	ILLUSTRATIVE_FRAGMENT	MEDIUM	unbound var under set -u; fragment references prose-context name
 14_Input-Output-and-Messaging/07_Logging-discipline.md	3	runtime	CRASH	exit=127	NEUTRAL	SANDBOX_TOOL	MEDIUM	unresolved external command (sandbox lacks tool or placeholder name)
@@ -847,8 +845,8 @@ leaf_path	block_idx	source	code	level_or_bucket	label	action	confidence	rational
 14_Input-Output-and-Messaging/09_Coloured-output-and-TERM-detection.md	4	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
 14_Input-Output-and-Messaging/10_Progress-indicators.md	1	runtime	CRASH	exit=1	NEUTRAL	ILLUSTRATIVE_FRAGMENT	MEDIUM	unbound var under set -u; fragment references prose-context name
 14_Input-Output-and-Messaging/11_Reading-binary-data.md	1	runtime	MISSING_ANNOT	exit=0	NEUTRAL	FIX_ANNOTATION	MEDIUM	block produced output but has no `# ⇒` annotation — opportunity to add
-14_Input-Output-and-Messaging/12_File-locking-for-concurrent-writes.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
-14_Input-Output-and-Messaging/12_File-locking-for-concurrent-writes.md	2	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+14_Input-Output-and-Messaging/12_File-locking-for-concurrent-writes.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+14_Input-Output-and-Messaging/12_File-locking-for-concurrent-writes.md	2	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 14_Input-Output-and-Messaging/12_File-locking-for-concurrent-writes.md	3	runtime	CRASH	exit=1	NEUTRAL	ILLUSTRATIVE_FRAGMENT	MEDIUM	unbound var under set -u; fragment references prose-context name
 15_Command-Line-Processing/01_CLI-conventions.md	1	runtime	CRASH	exit=127	NEUTRAL	SANDBOX_TOOL	MEDIUM	unresolved external command (sandbox lacks tool or placeholder name)
 15_Command-Line-Processing/01_CLI-conventions.md	2	runtime	CRASH	exit=1	RIGHT	EXPECTED_CRASH	MEDIUM	scenario comment marks the block as failure-demo
@@ -891,23 +889,23 @@ leaf_path	block_idx	source	code	level_or_bucket	label	action	confidence	rational
 16_Concurrency-and-Parallelism/08_GNU-parallel.md	2	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
 16_Concurrency-and-Parallelism/09_Race-conditions-in-shell.md	3	runtime	CRASH	exit=1	RIGHT	EXPECTED_CRASH	HIGH	doc annotations describe non-zero exit as the expected outcome
 16_Concurrency-and-Parallelism/09_Race-conditions-in-shell.md	4	runtime	CRASH	exit=1	MIXED	ILLUSTRATIVE_FRAGMENT	MEDIUM	unbound var under set -u; fragment references prose-context name
-16_Concurrency-and-Parallelism/09_Race-conditions-in-shell.md	5	runtime	MISMATCH	exit=0	MIXED	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+16_Concurrency-and-Parallelism/09_Race-conditions-in-shell.md	5	runtime	OK	exit=0	MIXED	NO_ACTION	HIGH	ran cleanly; expected output matched
 16_Concurrency-and-Parallelism/10_Locking-primitives.md	1	runtime	CRASH	exit=127	NEUTRAL	EXPECTED_CRASH	HIGH	doc annotations describe non-zero exit as the expected outcome
 16_Concurrency-and-Parallelism/10_Locking-primitives.md	2	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
 16_Concurrency-and-Parallelism/10_Locking-primitives.md	3	runtime	CRASH	exit=127	NEUTRAL	SANDBOX_TOOL	MEDIUM	unresolved external command (sandbox lacks tool or placeholder name)
 17_Coprocesses-and-IPC/05_Anonymous-pipes.md	1	runtime	CRASH	exit=1	NEUTRAL	EXPECTED_CRASH	MEDIUM	body contains explicit false/exit/return — failure is the demo
 17_Coprocesses-and-IPC/05_Anonymous-pipes.md	2	runtime	CRASH	exit=141	NEUTRAL	EXPECTED_CRASH	HIGH	exit 141 (SIGPIPE) — likely deliberate pipefail/SIGPIPE demo
 17_Coprocesses-and-IPC/07_devshm-shared-memory.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
-17_Coprocesses-and-IPC/07_devshm-shared-memory.md	3	runtime	MISMATCH	exit=0	RIGHT	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+17_Coprocesses-and-IPC/07_devshm-shared-memory.md	3	runtime	OK	exit=0	RIGHT	NO_ACTION	HIGH	ran cleanly; expected output matched
 18_Readline-History-and-Completion/15_Coloured-and-multi-line-prompts.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
-19_Performance/01_The-Bash-cost-model.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+19_Performance/01_The-Bash-cost-model.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 19_Performance/02_Profiling-tools.md	1	runtime	CRASH	exit=127	NEUTRAL	SANDBOX_TOOL	MEDIUM	unresolved external command (sandbox lacks tool or placeholder name)
 19_Performance/03_time-builtin-vs-time-external.md	1	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_PERM	HIGH	permission denied (sandbox lacks privilege)
 19_Performance/04_BASH_XTRACEFD.md	1	runtime	CRASH	exit=1	NEUTRAL	ILLUSTRATIVE_FRAGMENT	MEDIUM	unbound var under set -u; fragment references prose-context name
 19_Performance/06_EPOCHREALTIME-for-sub-second-timing.md	1	runtime	CRASH	exit=127	NEUTRAL	SANDBOX_TOOL	MEDIUM	unresolved external command (sandbox lacks tool or placeholder name)
-19_Performance/09_Pipes-vs-redirection.md	1	runtime	CRASH	exit=127	MIXED	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
+19_Performance/09_Pipes-vs-redirection.md	1	runtime	OK	exit=0	MIXED	NO_ACTION	HIGH	ran cleanly; expected output matched
 19_Performance/09_Pipes-vs-redirection.md	2	runtime	CRASH	exit=127	RIGHT	EXPECTED_CRASH	MEDIUM	scenario comment marks the block as failure-demo
-19_Performance/11_Bash-5.3-no-fork-command-substitution.md	1	runtime	CRASH	exit=1	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=1
+19_Performance/11_Bash-5.3-no-fork-command-substitution.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 19_Performance/12_Memory-considerations.md	1	runtime	CRASH	exit=1	MIXED	SANDBOX_FS	MEDIUM	missing file or path (sandbox setup gap)
 20_Security/01_Threat-model.md	2	runtime	MISMATCH	exit=0	NEUTRAL	SANDBOX_NONDETERMINISTIC	HIGH	expected references random tmp path
 20_Security/01_Threat-model.md	3	runtime	CRASH	exit=1	NEUTRAL	ILLUSTRATIVE_FRAGMENT	MEDIUM	unbound var under set -u; fragment references prose-context name
@@ -964,11 +962,11 @@ leaf_path	block_idx	source	code	level_or_bucket	label	action	confidence	rational
 22_Idioms-Patterns-and-Anti-Patterns/07_Iterating-an-associative-array-deterministically.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
 22_Idioms-Patterns-and-Anti-Patterns/08_Building-structured-output.md	1	runtime	CRASH	exit=1	NEUTRAL	ILLUSTRATIVE_FRAGMENT	MEDIUM	unbound var under set -u; fragment references prose-context name
 22_Idioms-Patterns-and-Anti-Patterns/08_Building-structured-output.md	2	runtime	OK	exit=0	RIGHT	NO_ACTION	HIGH	ran cleanly; expected output matched
-22_Idioms-Patterns-and-Anti-Patterns/08_Building-structured-output.md	3	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
-22_Idioms-Patterns-and-Anti-Patterns/08_Building-structured-output.md	4	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
-22_Idioms-Patterns-and-Anti-Patterns/08_Building-structured-output.md	5	runtime	MISMATCH	exit=0	MIXED	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
+22_Idioms-Patterns-and-Anti-Patterns/08_Building-structured-output.md	3	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+22_Idioms-Patterns-and-Anti-Patterns/08_Building-structured-output.md	4	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+22_Idioms-Patterns-and-Anti-Patterns/08_Building-structured-output.md	5	runtime	OK	exit=0	MIXED	NO_ACTION	HIGH	ran cleanly; expected output matched
 22_Idioms-Patterns-and-Anti-Patterns/10_Atomic-file-write.md	2	runtime	CRASH	exit=1	MIXED	ILLUSTRATIVE_FRAGMENT	MEDIUM	unbound var under set -u; fragment references prose-context name
-22_Idioms-Patterns-and-Anti-Patterns/11_Exclusive-lock.md	1	runtime	TIMEOUT	exit=124	NEUTRAL	REVIEW	MEDIUM	hit 10s wall — long sleep loop or accidental hang
+22_Idioms-Patterns-and-Anti-Patterns/11_Exclusive-lock.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 22_Idioms-Patterns-and-Anti-Patterns/11_Exclusive-lock.md	2	runtime	CRASH	exit=1	MIXED	ILLUSTRATIVE_FRAGMENT	MEDIUM	unbound var under set -u; fragment references prose-context name
 22_Idioms-Patterns-and-Anti-Patterns/12_Bounded-retry-with-exponential-backoff.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
 22_Idioms-Patterns-and-Anti-Patterns/14_Mock-friendly-subprocess-wrapper.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
@@ -976,14 +974,12 @@ leaf_path	block_idx	source	code	level_or_bucket	label	action	confidence	rational
 22_Idioms-Patterns-and-Anti-Patterns/15_Stack-trace-error-reporter.md	3	runtime	NO_EXPECTED	exit=0	MIXED	NO_ACTION	HIGH	ran cleanly; no annotations to compare
 22_Idioms-Patterns-and-Anti-Patterns/16_Self-test-mode-dual-purpose-script.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
 23_POSIX-Conformance-and-Portability/03_Bash-vs-dash.md	2	runtime	MISSING_ANNOT	exit=0	NEUTRAL	FIX_ANNOTATION	MEDIUM	block produced output but has no `# ⇒` annotation — opportunity to add
-23_POSIX-Conformance-and-Portability/05_Bash-vs-zsh.md	1	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
-23_POSIX-Conformance-and-Portability/05_Bash-vs-zsh.md	2	runtime	MISMATCH	exit=0	NEUTRAL	REVIEW	MEDIUM	actual stdout did not contain documented `# ⇒` text — fix doc or block
-23_POSIX-Conformance-and-Portability/05_Bash-vs-zsh.md	3	runtime	CRASH	exit=2	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=2
+23_POSIX-Conformance-and-Portability/05_Bash-vs-zsh.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
+23_POSIX-Conformance-and-Portability/05_Bash-vs-zsh.md	2	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 23_POSIX-Conformance-and-Portability/12_Targeting-multiple-Bash-versions.md	1	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
 23_POSIX-Conformance-and-Portability/12_Targeting-multiple-Bash-versions.md	2	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
 23_POSIX-Conformance-and-Portability/12_Targeting-multiple-Bash-versions.md	3	runtime	NO_EXPECTED	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; no annotations to compare
 24_Bash-Internals/01_The-execution-pipeline.md	1	runtime	CRASH	exit=127	NEUTRAL	SANDBOX_TOOL	MEDIUM	unresolved external command (sandbox lacks tool or placeholder name)
-24_Bash-Internals/01_The-execution-pipeline.md	2	runtime	CRASH	exit=127	NEUTRAL	REVIEW	LOW	crash with no obvious sandbox cause; exit=127
 24_Bash-Internals/08_Subshell-forking.md	1	runtime	MISSING_ANNOT	exit=0	NEUTRAL	FIX_ANNOTATION	MEDIUM	block produced output but has no `# ⇒` annotation — opportunity to add
 24_Bash-Internals/09_Builtin-loadables.md	1	runtime	OK	exit=0	NEUTRAL	NO_ACTION	HIGH	ran cleanly; expected output matched
 24_Bash-Internals/09_Builtin-loadables.md	2	runtime	CRASH	exit=1	NEUTRAL	SANDBOX_FS	MEDIUM	missing file or path (sandbox setup gap)

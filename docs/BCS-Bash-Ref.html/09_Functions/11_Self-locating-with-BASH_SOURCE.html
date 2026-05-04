@@ -365,12 +365,12 @@ useful inside an ERR trap or a <code>die</code> helper.</p>
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="fu">middle()</span> <span class="kw">{</span> <span class="ex">print_stack</span><span class="kw">;</span> <span class="kw">}</span></span>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="fu">outer()</span>  <span class="kw">{</span> <span class="ex">middle</span><span class="kw">;</span> <span class="kw">}</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="ex">outer</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="ex">outer</span> <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span>                      <span class="co"># merge stderr to stdout for the demo</span></span>
 <span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ stack trace (most recent call first):</span></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co">#     #0  print_stack () at ./demo:11</span></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co">#     #1  middle      () at ./demo:18</span></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co">#     #2  outer       () at ./demo:19</span></span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="co">#     #3  main        () at ./demo:20</span></span></code></pre></div>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ print_stack</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ middle</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ outer</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="co"># (the file path and line numbers depend on where the demo runs)</span></span></code></pre></div>
 <p>Note the use of <code>BASH_LINENO[i-1]</code> rather than
 <code>[i]</code> — that is the off-by-one mentioned above.
 <code>FUNCNAME</code> ends with <code>main</code> for a script or

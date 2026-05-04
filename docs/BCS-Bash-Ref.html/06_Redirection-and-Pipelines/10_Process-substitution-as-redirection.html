@@ -304,10 +304,15 @@ sorted output of two pipelines:</p>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail<span class="kw">;</span> <span class="bu">shopt</span> <span class="at">-s</span> inherit_errexit shift_verbose extglob nullglob</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">diff</span> <span class="op">&lt;(</span><span class="fu">ls</span> <span class="at">-1</span> /etc/nginx/sites-enabled <span class="kw">|</span> <span class="fu">sort</span><span class="op">)</span> <span class="dt">\</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>     <span class="op">&lt;(</span><span class="fu">ls</span> <span class="at">-1</span> /etc/nginx/sites-available <span class="kw">|</span> <span class="fu">sort</span><span class="op">)</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ output of diff comparing the two sorted listings</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># both sub-pipelines run in parallel; their fds are /dev/fd/63, /dev/fd/62</span></span></code></pre></div>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Set up two demo directory listings as input fixtures:</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> _enabled _available</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="bu">:</span> <span class="op">&gt;</span> _enabled/site-a.conf <span class="kw">&amp;&amp;</span> <span class="bu">:</span> <span class="op">&gt;</span> _enabled/site-b.conf</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="bu">:</span> <span class="op">&gt;</span> _available/site-a.conf <span class="kw">&amp;&amp;</span> <span class="bu">:</span> <span class="op">&gt;</span> _available/site-c.conf</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">diff</span> <span class="op">&lt;(</span><span class="fu">ls</span> <span class="at">-1</span> _enabled <span class="kw">|</span> <span class="fu">sort</span><span class="op">)</span> <span class="op">&lt;(</span><span class="fu">ls</span> <span class="at">-1</span> _available <span class="kw">|</span> <span class="fu">sort</span><span class="op">)</span> <span class="kw">||</span> <span class="fu">true</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ &lt; site-b.conf</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ &gt; site-c.conf</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># (each sub-pipeline runs in parallel; fds are /dev/fd/63 and /dev/fd/62)</span></span></code></pre></div>
 <p>Without <code>&lt;()</code>, the same effect requires two temp files,
 two <code>mktemp</code> calls, and a trap to clean them up. Process
 substitution does it with zero file system state.</p>
@@ -331,10 +336,11 @@ build scripts:</p>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="ex">build_step</span> <span class="dt">\</span></span>
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>  <span class="op">&gt;</span> <span class="op">&gt;(</span><span class="fu">tee</span> build.out<span class="op">)</span>    <span class="dt">\</span></span>
 <span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  <span class="dv">2</span><span class="op">&gt;</span> <span class="op">&gt;(</span><span class="fu">tee</span> build.err <span class="op">&gt;&amp;</span><span class="dv">2</span><span class="op">)</span></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ progress: phase 1</span></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ warning: deprecated flag           (still on terminal stderr)</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="bu">wait</span>                          <span class="co"># let the tee children flush before we read</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ progress: phase 1</span></span>
 <span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co"># ⇒ progress: phase 2</span></span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="co"># build.out holds the two progress lines; build.err holds the warning</span></span></code></pre></div>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="co"># (build.out holds the two progress lines; build.err holds the warning,</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="co">#  which also re-appears on terminal stderr via the inner `tee … &gt;&amp;2`)</span></span></code></pre></div>
 <p>The <code>&gt;&amp;2</code> inside the second <code>tee</code>
 re-routes its stdout (which is <code>tee</code>&#39;s copy of the original
 stderr) back to the script&#39;s stderr, preserving the visible-on-terminal

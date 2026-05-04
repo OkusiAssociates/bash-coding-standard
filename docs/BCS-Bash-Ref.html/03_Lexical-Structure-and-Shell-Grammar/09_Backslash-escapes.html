@@ -327,7 +327,7 @@ for <code>&#39;</code>.</td>
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&#39;C:\Users\name&#39;</span>          <span class="co"># ⇒ C:\Users\name     (no Windows-path agony)</span></span>
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: inside ANSI-C quoting — full escape table (§3.7)</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">$&#39;tab</span><span class="dt">\t</span><span class="st">here</span><span class="dt">\n</span><span class="st">end&#39;</span>        <span class="co"># ⇒ tab     here</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">$&#39;tab</span><span class="dt">\t</span><span class="st">here</span><span class="dt">\n</span><span class="st">end&#39;</span>        <span class="co"># → &quot;tab&lt;TAB&gt;here&lt;LF&gt;end&quot;</span></span>
 <span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>                              <span class="co"># ⇒ end</span></span></code></pre></div>
 <p>The double-quote rule is the subtle one: only five escape sequences
 are recognised inside <code>&quot;...&quot;</code> (<code>\$</code>,
@@ -340,7 +340,8 @@ double quotes is literally backslash-n, not a newline. Reach for
 quotes too — both the backslash and the newline disappear:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: long string built across lines</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="va">msg</span><span class="op">=</span><span class="st">&quot;hello </span><span class="dt">\</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="st">world&quot;</span>                        <span class="co"># ⇒ &quot;hello world&quot;     (the \-newline is removed)</span></span></code></pre></div>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="st">world&quot;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">$msg</span><span class="st">&quot;</span>                   <span class="co"># ⇒ hello world</span></span></code></pre></div>
 <p>BCS strongly prefers single quotes for static strings (BCS0301,
 BCS0307), which sidesteps this maze entirely. Reach for double quotes
 only when expansion is wanted; reach for <code>$&#39;…&#39;</code> only when

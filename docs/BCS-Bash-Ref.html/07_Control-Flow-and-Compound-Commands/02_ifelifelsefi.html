@@ -328,12 +328,13 @@ pattern was absent. The exemption applies to the <em>whole condition
 list</em>, including pipelines and AND-OR chains:</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scenario: errexit exempts the if-condition</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="ex">cmd_that_exits_1</span><span class="kw">;</span> <span class="cf">then</span>            <span class="co"># ⇒ exit 1 is the test result</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">&#39;success&#39;</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">&#39;failure&#39;</span>                     <span class="co"># ⇒ runs; script does NOT abort</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="cf">fi</span></span></code></pre></div>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cmd_that_exits_1()</span> <span class="kw">{</span> <span class="cf">return</span> <span class="dv">1</span><span class="kw">;</span> <span class="kw">}</span>     <span class="co"># placeholder for some predicate</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="ex">cmd_that_exits_1</span><span class="kw">;</span> <span class="cf">then</span>            <span class="co"># → rc=1 from the test is exempt from set -e</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">&#39;success&#39;</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">&#39;failure&#39;</span>                     <span class="co"># ⇒ failure</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="cf">fi</span></span></code></pre></div>
 <p>The exemption is positional, not lexical. Calling a function from an
 <code>if</code> condition makes the <em>whole function</em> exempt from
 errexit for the duration of the call — including its inner commands.

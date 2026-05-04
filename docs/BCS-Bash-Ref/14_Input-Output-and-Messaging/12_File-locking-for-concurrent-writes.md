@@ -19,7 +19,8 @@ Querying the local value:
 declare -i pipe_buf
 pipe_buf=$(getconf PIPE_BUF /)
 printf 'PIPE_BUF on this filesystem: %d bytes\n' "$pipe_buf"
-# ⇒ on Linux: 4096
+# ⇒ PIPE_BUF on this filesystem:
+# (Linux normally reports 4096; POSIX guarantees at least 512)
 ```
 
 The header constant lives in `<limits.h>`; `getconf` reports the value
@@ -41,7 +42,8 @@ for i in {1..8}; do
   ( log "worker $i started"; ) &
 done
 wait
-# ⇒ 8 lines appear in shared.log, none torn or interleaved
+printf 'shared.log line count: %d\n' "$(wc -l < shared.log)"
+# ⇒ shared.log line count: 8
 ```
 
 Each `printf` produces well under 4096 bytes, so each `write(2)` is

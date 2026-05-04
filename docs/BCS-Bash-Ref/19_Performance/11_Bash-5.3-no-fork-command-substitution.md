@@ -20,9 +20,11 @@ printf 'classic: result=%s counter=%s\n' "$result" "$counter"
 # ⇒ classic: result=hit counter=0
 
 # bash 5.3+ — no fork, side-effects leak into caller
-result=${ counter=99; printf '%s\n' "hit"; }
-printf 'no-fork: result=%s counter=%s\n' "$result" "$counter"
-# ⇒ no-fork: result=hit counter=99
+# (the snippet below is only legal under bash 5.3+; under 5.2 it is a
+#  syntax error, so it is illustrated as a comment rather than executed.)
+#   result=${ counter=99; printf '%s\n' "hit"; }
+#   printf 'no-fork: result=%s counter=%s\n' "$result" "$counter"
+#   → "no-fork: result=hit counter=99"
 ```
 
 The performance win is real (~1 ms per call), but the variable-leak
