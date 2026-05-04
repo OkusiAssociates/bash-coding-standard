@@ -96,18 +96,33 @@ has_preamble() {
 
 # Extract every `# ⇒ ...` annotation as one line, with the leading
 # annotation marker stripped. Annotations may sit at end-of-command or
-# on their own line.
+# on their own line. The corpus uses both `# ⇒ value` and aligned
+# `#         ⇒ value` continuation forms.
+#
+# Trailing parenthetical clarifications like `value   (depends on host)`
+# are stripped — the matcher tests for the literal-output portion only.
+# Likewise, prose-only annotations like `# ⇒ N is host-dependent` (no
+# leading literal text) are dropped from the expected list, since they
+# describe output rather than enumerate it.
 extract_expected() {
   local -- body="$1"
   awk '
-    {
-      idx = index($0, "# ⇒")
-      if (idx > 0) {
-        rest = substr($0, idx + length("# ⇒"))
-        sub(/^[[:space:]]+/, "", rest)
-        sub(/[[:space:]]+$/, "", rest)
-        if (length(rest) > 0) print rest
-      }
+    /[[:space:]]*#[[:space:]]*⇒/ {
+      idx = match($0, /#[[:space:]]*⇒/)
+      if (idx == 0) next
+      # Skip past the `#  ⇒` marker.
+      rest = substr($0, idx + RLENGTH)
+      sub(/^[[:space:]]+/, "", rest)
+      sub(/[[:space:]]+$/, "", rest)
+      # Strip a trailing parenthetical clarifier (one level only).
+      sub(/[[:space:]]+\([^)]*\)[[:space:]]*$/, "", rest)
+      sub(/[[:space:]]+$/, "", rest)
+      if (length(rest) == 0) next
+      # Drop prose-only annotations that start with a parenthesis or a
+      # leading `(` — those describe runtime behaviour rather than
+      # enumerate stdout.
+      if (substr(rest, 1, 1) == "(") next
+      print rest
     }
   ' <<< "$body"
 }
