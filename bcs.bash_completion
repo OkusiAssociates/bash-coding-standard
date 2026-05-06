@@ -70,7 +70,7 @@ _bcs() {
         -m|--model)              mapfile -t COMPREPLY < <(compgen -W "$models" -- "$cur"); return ;;
       esac
       case $cur in
-        -*) mapfile -t COMPREPLY < <(compgen -W '-m --model -e --effort -s --strict -S --no-strict -T --tier -M --min-tier -j --json -D --debug -v --verbose -q --quiet -h --help' -- "$cur") ;;
+        -*) mapfile -t COMPREPLY < <(compgen -W '-m --model -e --effort -s --strict -S --no-strict --shellcheck --no-shellcheck -T --tier -M --min-tier -j --json -D --debug -v --verbose -q --quiet -h --help' -- "$cur") ;;
         *)  _filedir ;;
       esac
       ;;
