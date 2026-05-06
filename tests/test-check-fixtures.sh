@@ -46,8 +46,23 @@ if [[ -z $backend ]]; then
 fi
 echo "  ◉ using backend: $backend"
 
-# Per-fixture timeout. Model tier `fast` + effort `low` should finish well
-# under this ceiling on all supported backends.
+# Pick the cheapest model alias that routes to the probed backend. We avoid
+# `-m haiku` for everyone -- haiku alias-expands to claude-haiku-4-5 which
+# always routes to anthropic, so an env that only has Claude CLI on PATH (no
+# ANTHROPIC_API_KEY) would fail. The claude-code:haiku sentinel keeps the
+# Claude CLI path while still asking for the haiku model.
+declare -- fixture_model=haiku
+case $backend in
+  claude)    fixture_model=claude-code:haiku ;;
+  ollama)    fixture_model=${BCS_FIXTURES_MODEL:-qwen-small} ;;
+  openai)    fixture_model=gpt5-mini ;;
+  google)    fixture_model=flash-lite ;;
+  anthropic) fixture_model=haiku ;;
+esac
+echo "  ◉ using model:   $fixture_model"
+
+# Per-fixture timeout. The cheapest alias on the chosen backend at effort
+# `low` should finish well under this ceiling.
 declare -ri FIXTURE_TIMEOUT_S=90
 
 declare -- fixture fixture_name expected reported extras output
@@ -70,9 +85,11 @@ for fixture in "$TEST_DIR"/fixtures/*.sh; do
   fi
 
   # Run bcs check. ERROR findings return exit code 1; capture both streams.
+  # $fixture_model was chosen above to match the probed backend so the test
+  # works with whatever credentials/CLI the host has.
   exit_code=0
   output=$(timeout "$FIXTURE_TIMEOUT_S" \
-    "$BCS_CMD" check -m fast -e low --quiet -- "$fixture" 2>&1) \
+    "$BCS_CMD" check -m "$fixture_model" -e low --quiet -- "$fixture" 2>&1) \
     || exit_code=$?
 
   # Backend crash or timeout: warn but don't fail. A backend failure is not
@@ -110,7 +127,7 @@ if ((${BCS_FIXTURES_JSON:-0})); then
     begin_test 'JSON mode: envelope shape on fixture 01'
     exit_code=0
     output=$(timeout "$FIXTURE_TIMEOUT_S" \
-      "$BCS_CMD" check -j -m fast -e low --quiet -- "$json_fixture" 2>/dev/null) \
+      "$BCS_CMD" check -j -m "$fixture_model" -e low --quiet -- "$json_fixture" 2>/dev/null) \
       || exit_code=$?
     if [[ -n $output ]] && ((exit_code != 124)); then
       # Validate top-level shape.

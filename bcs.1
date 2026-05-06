@@ -1,7 +1,7 @@
 .\" BCS Manual Page
-.\" Generated: 2026-04-17
+.\" Generated: 2026-05-06
 .\"
-.TH BCS 1 "April 2026" "BCS 2.0.1" "User Commands"
+.TH BCS 1 "May 2026" "BCS 2.0.1" "User Commands"
 .\"
 .SH NAME
 bcs \- Bash Coding Standard CLI toolkit
@@ -19,6 +19,7 @@ bcs \- Bash Coding Standard CLI toolkit
 .I SCRIPT
 .br
 .B bcs codes
+.RI [ OPTIONS ]
 .br
 .B bcs generate
 .RI [ OPTIONS ]
@@ -66,10 +67,10 @@ Generate BCS-compliant script templates with placeholder substitution.
 .TP
 .BR \-t ", " \-\-type " " \fITYPE\fR
 Template type:
-.BR minimal " (~16 lines),"
-.BR basic " (~26 lines, default),"
-.BR complete " (~119 lines),"
-.BR library " (~40 lines)."
+.BR minimal " (~18 lines),"
+.BR basic " (~43 lines, default),"
+.BR complete " (~112 lines),"
+.BR library " (~37 lines)."
 .TP
 .BR \-n ", " \-\-name " " \fINAME\fR
 Script name for placeholders.
@@ -102,28 +103,30 @@ entirely from the
 model name \(em there is no separate backend flag.
 .TP
 .BR \-m ", " \-\-model " " \fIMODEL\fR
-Quality tier or concrete model ID. Tier keywords
-.BR fast ","
-.BR balanced " (default), and"
-.BR thorough
-probe available backends in order (ollama, anthropic, openai, google, claude)
-and use the first reachable one with that tier's default model. Any other
-value is passed through to the backend sniffed from the name:
+Model alias or canonical model ID. Aliases (e.g.
+.BR sonnet ", " opus ", " haiku ", " flash ", " pro ", " gpt5 )
+are expanded via the
+.B MODEL_ALIASES
+associative array (defined in the script and overridable in
+.IR bcs.conf )
+and the result is routed by name prefix:
 .BR claude\-* " \(-> anthropic,"
 .BR gemini\-* " \(-> google,"
 .BR gpt\-* / o[0\-9]* " \(-> openai,"
-.BR claude\-code[:tier|model] " \(-> Claude Code CLI,"
+.BR claude\-code[:alias|model] " \(-> Claude Code CLI,"
 anything else \(-> ollama (e.g.
 .BR minimax\-m2:cloud ")."
+Default is
+.BR sonnet
+(claude\-sonnet\-4\-6).
 Direct pass-through examples:
-.BR claude\-opus\-4\-6 ","
+.BR claude\-opus\-4\-7 ","
 .BR gemini\-2.5\-pro ","
 .BR minimax\-m2:cloud "."
-The
-.B BCS_<BACKEND>_MODEL
-environment variables still take precedence over
-.B \-m
-when set. Note: Ollama models whose names happen to match
+The legacy tier keywords
+.BR fast ", " balanced ", " thorough
+are no longer accepted and exit non\-zero with a migration hint pointing at the alias map.
+Note: Ollama models whose names happen to match
 .BR claude\-* ", " gemini\-* ", " gpt\-* " or " o[0\-9]*
 are unreachable through
 .B \-m
@@ -135,11 +138,24 @@ Analysis depth:
 .BR medium " (violations and significant warnings; default),"
 .BR high " (all violations and warnings),"
 .BR max " (exhaustive line-by-line audit)."
-Controls both the prompt guidance and output token budget.
+Controls output token budget AND thinking/reasoning depth on capable models:
+Anthropic
+.B thinking.budget_tokens
+on
+.BR opus / sonnet\-4\-6 / sonnet\-4\-7 ", "
+OpenAI
+.B reasoning_effort
+on
+.BR o[0\-9]* / gpt\-5* ", "
+Google
+.B thinkingConfig.thinkingBudget
+on the 2.5 family except
+.BR flash\-lite "."
+Backends without thinking-mode support silently ignore the budget.
 .B medium
 is the recommended default for all backends.
 .B high
-improves results for Claude backends but is marginal or harmful for others.
+improves results for Claude/OpenAI reasoning models but is marginal elsewhere.
 .B max
 should be avoided for Ollama cloud models (increases hallucination risk).
 .TP
@@ -321,8 +337,9 @@ These variables can be set in the config file or environment.
 CLI flags take precedence.
 .TP
 .B BCS_MODEL
-Default quality tier or model name (fast, balanced, thorough, or a direct
-model ID such as claude-sonnet-4-6, minimax-m2:cloud, claude-code, etc.).
+Default model alias or canonical name (e.g. sonnet, opus, gpt5,
+claude-sonnet-4-6, minimax-m2:cloud, claude-code, etc.). Default
+.BR sonnet "."
 Overridden by
 .BR \-m .
 .TP
@@ -338,17 +355,14 @@ Treat warnings as violations (0 or 1). Overridden by
 Default JSON output mode (0 or 1). Overridden by
 .BR \-j / \-\-json .
 .TP
-.B BCS_OLLAMA_MODEL
-Override the Ollama model name instead of using the tier-based default.
-.TP
-.B BCS_ANTHROPIC_MODEL
-Override the Anthropic model name instead of using the tier-based default.
-.TP
-.B BCS_GOOGLE_MODEL
-Override the Google model name instead of using the tier-based default.
-.TP
-.B BCS_OPENAI_MODEL
-Override the OpenAI model name instead of using the tier-based default.
+.B MODEL_ALIASES
+Bash associative array; extend or override the built-in alias map in
+.IR bcs.conf
+(e.g.
+.BR "MODEL_ALIASES[mymodel]=qwen3.5:14b" ").
+The four legacy
+.BR BCS_<BACKEND>_MODEL
+overrides are gone \(em set the alias instead.
 .TP
 .B OLLAMA_HOST
 Ollama server address (default: localhost:11434).
@@ -420,13 +434,26 @@ Generate a minimal template, save to file, make executable.
 Generate a sourceable library template.
 .TP
 .B bcs check myscript.sh
-Run AI-powered compliance check (auto-detects backend).
+Run AI-powered compliance check using the default
+.B sonnet
+alias (claude-sonnet-4-6 via the Anthropic API).
+.TP
+.B bcs check \-m sonnet \-e medium myscript.sh
+Equivalent to the bare form above; alias \(-> canonical name \(-> backend.
+.TP
+.B bcs check \-m gpt5 \-e high deploy.sh
+OpenAI gpt-5 with reasoning_effort=medium.
 .TP
 .B bcs check \-m minimax\-m2:cloud myscript.sh
 Check using local Ollama with a specific cloud model.
 .TP
 .B bcs check \-m claude\-code myscript.sh
-Check using the Claude Code CLI at the balanced tier.
+Check using the Claude Code CLI with the default
+.B sonnet
+alias.
+.TP
+.B bcs check \-m claude\-code:opus \-e max myscript.sh
+Check using the Claude Code CLI with opus and the deepest analysis.
 .TP
 .B bcs check \-\-strict deploy.sh
 Strict mode: treat warnings as violations.
@@ -454,25 +481,24 @@ for the full scoring matrices.
 .RS
 .TP
 .B Quick sanity check
-gpt\-5.4 at medium effort (9\(en71s; 0\(en1 FP on most scripts, noisier on
-function-free scripts)
+.B \-m gpt5 \-e medium
+(9\(en71s; 0\(en1 FP on most scripts, noisier on function-free scripts)
 .TP
 .B Daily development
-claude\-sonnet\-4\-6 at medium effort (35\(en83s; zero false positives across
-all four test scripts; reliable suppression handling)
+.B \-m sonnet \-e medium
+(35\(en83s; zero false positives across all four test scripts; reliable suppression handling)
 .TP
 .B Pre-commit review
-claude\-sonnet\-4\-6 at high effort (43\(en101s; more findings; still zero FPs
-on most scripts)
+.B \-m sonnet \-e high
+(43\(en101s; more findings; still zero FPs on most scripts)
 .TP
 .B Thorough audit
-claude\-sonnet\-4\-6 at max effort (42\(en128s; top scorer on md2ansi and
-tests/accuracy/bcs\-check\-accuracy.sh)
+.B \-m sonnet \-e max
+(42\(en128s; top scorer on md2ansi and tests/accuracy/bcs\-check\-accuracy.sh)
 .TP
 .B Pre-release audit
-claude\-code at max effort (deepest
-.B which
-analysis; very slow at 5\(en14 min on larger scripts)
+.B \-m claude\-code:opus \-e max
+(deepest analysis; very slow at 5\(en14 min on larger scripts)
 .RE
 .PP
 .B Backend ranking (2026-04-17 refresh)
@@ -489,17 +515,18 @@ Claude Code CLI \(em deepest rule citation on suppression/fence patterns.
 Tradeoff: very slow (5\(en14 min on larger scripts). Best for final pre-release
 audits.
 .IP 3. 4
-OpenAI API (gpt\-5.4) \(em fastest backend (4\(en109s). Best for quick checks.
+OpenAI API (gpt\-5 / alias
+.BR gpt5 )
+\(em fastest backend (4\(en109s). Best for quick checks.
 Degrades on function-free scripts (misapplies BCS0202). Avoid
 .B max
 effort \(em introduces false positives without adding coverage.
 .IP 4. 4
 Google API (gemini) \(em not included in the 2026-04-17 refresh matrix.
 Prior guidance stands:
-.B thorough
-tier at
-.B medium
-effort is reliable; lower tiers over-report.
+.B \-m pro
+(gemini-2.5-pro) at medium effort is reliable; smaller models in the family
+(flash, flash-lite) over-report.
 .IP 5. 4
 Ollama cloud models \(em not recommended for accuracy-sensitive work.
 .BR minimax\-m2.7:cloud
@@ -511,13 +538,14 @@ is currently unavailable (HTTP 403 "a subscription is required for access"
 via ollama.com).
 .RE
 .PP
-Tier keywords
-.RB ( fast ", " balanced ", " thorough )
-probe backends in order. When an Ollama server is running, it is probed
-first \(em this may route tier keywords to low\-accuracy cloud models.
-Use explicit model names (e.g.
-.BR \-m\ gpt\-5.4 " or " \-m\ claude\-sonnet\-4\-6 )
-for predictable quality.
+Use a built-in alias (e.g.
+.BR \-m\ sonnet ", " \-m\ opus )
+or a canonical model ID (e.g.
+.BR \-m\ gpt\-5 ", " \-m\ claude\-sonnet\-4\-6 )
+for predictable quality. Add custom aliases via
+.B MODEL_ALIASES[name]=canonical-id
+in
+.IR bcs.conf "."
 .\"
 .SH SEE ALSO
 .BR bash (1),

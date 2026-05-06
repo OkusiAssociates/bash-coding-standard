@@ -120,9 +120,10 @@ Subcommands, frequency-ordered:
 ### `bcs check`
 
 ```bash
-bcs check myscript.sh                      # Auto-detect backend (balanced tier)
-bcs check -m claude-sonnet-4-6 deploy.sh   # Anthropic API
-bcs check -m claude-code:thorough ci.sh    # Claude Code CLI, thorough tier
+bcs check myscript.sh                      # Default alias 'sonnet' (claude-sonnet-4-6)
+bcs check -m opus deploy.sh                # Alias-expanded to claude-opus-4-7
+bcs check -m gpt5 -e high deploy.sh        # OpenAI gpt-5 with reasoning_effort=medium
+bcs check -m claude-code:opus ci.sh        # Claude Code CLI with the opus alias
 bcs check --strict -T core deploy.sh       # CI gate: core-only, warnings fatal
 bcs check --no-shellcheck myscript.sh      # Skip the shellcheck static-analysis prelude
 bcscheck myscript.sh                       # Equivalent shim (defaults from bcs.conf)
@@ -162,44 +163,61 @@ bcs codes -p               # Plain output (no tier decoration)
 
 **Backend routing**
 
+The `-m` value is alias-expanded then routed by name prefix. Legacy tier
+keywords (`fast`/`balanced`/`thorough`) exit non-zero with a migration hint.
+
 | `-m` value | Backend | Notes |
 |------------|---------|-------|
-| `fast` / `balanced` / `thorough` | Probe order: claude, ollama, anthropic, openai, google | First reachable wins; tier's default model |
-| `claude-*` (e.g. `claude-opus-4-6`) | Anthropic API | Pass-through |
+| `claude-*` (e.g. `claude-opus-4-7`) | Anthropic API | Pass-through |
 | `gemini-*` (e.g. `gemini-2.5-pro`) | Google Gemini API | Pass-through |
-| `gpt-*` / `o[0-9]*` (e.g. `gpt-5.4`, `o3-mini`) | OpenAI API | Pass-through |
-| `claude-code` | Claude Code CLI | `balanced` tier default |
-| `claude-code:<tier-or-model>` | Claude Code CLI | Suffix stripped before resolution |
+| `gpt-*` / `o[0-9]*` (e.g. `gpt-5`, `o3-mini`) | OpenAI API | Pass-through |
+| `claude-code` | Claude Code CLI | `BCS_MODEL` or `sonnet` default |
+| `claude-code:<alias-or-model>` | Claude Code CLI | Suffix alias-expanded |
 | anything else (e.g. `minimax-m2:cloud`) | Local Ollama | Pass-through |
 
 ▲ Local Ollama models whose names match `claude-*`, `gemini-*`, `gpt-*`, or `o[0-9]*` are unreachable through `-m` -- rename the local model.
 
-**Tiers per backend**
+**Built-in model aliases**
 
-| Tier | Ollama | Anthropic | Google | OpenAI | Claude Code |
-|------|--------|-----------|--------|--------|-------------|
-| `fast` | qwen3.5:9b | claude-haiku-4-5 | gemini-2.5-flash-lite | gpt-4.1-mini | claude-haiku-4-5 |
-| `balanced` | qwen3.5:14b | claude-sonnet-4-6 | gemini-2.5-flash | gpt-5.4-mini | claude-sonnet-4-6 |
-| `thorough` | qwen3.5:14b | claude-opus-4-6 | gemini-2.5-pro | gpt-5.4 | claude-opus-4-6 |
+Set `MODEL_ALIASES[name]=canonical-id` in `bcs.conf` to extend or override.
+
+| Alias | Canonical ID | Backend |
+|-------|--------------|---------|
+| `opus` | `claude-opus-4-7` | Anthropic |
+| `sonnet` (default) | `claude-sonnet-4-6` | Anthropic |
+| `haiku` | `claude-haiku-4-5` | Anthropic |
+| `flash` | `gemini-2.5-flash` | Google |
+| `pro` | `gemini-2.5-pro` | Google |
+| `flash-lite` | `gemini-2.5-flash-lite` | Google |
+| `gpt5` | `gpt-5` | OpenAI |
+| `gpt5-mini` | `gpt-5-mini` | OpenAI |
+| `qwen` | `qwen3.5:14b` | Ollama |
+| `qwen-small` | `qwen3.5:9b` | Ollama |
 
 **Effort levels**
 
-| `-e` | Max tokens | Prompt guidance |
-|------|------------|------------------|
-| `low` | 4000 | Clear violations only; concise |
-| `medium` (default) | 8000 | Violations and significant warnings |
-| `high` | 32000 | All violations and warnings |
-| `max` | 64000 | Exhaustive line-by-line audit |
+`-e` sets the max output tokens AND the thinking/reasoning budget on capable
+models. Anthropic `thinking.budget_tokens` auto-applies on `opus` and
+`sonnet-4-6/4-7`; OpenAI `reasoning_effort` auto-applies on `o[0-9]*` and
+`gpt-5*`; Gemini `thinkingConfig.thinkingBudget` auto-applies on the 2.5
+family except `flash-lite`. Other models silently ignore the budget.
+
+| `-e` | Max tokens | Thinking budget | OpenAI `reasoning_effort` |
+|------|------------|------------------|---------------------------|
+| `low` | 4000 | 0 (off) | minimal |
+| `medium` (default) | 8000 | 2000 | low |
+| `high` | 32000 | 8000 | medium |
+| `max` | 64000 | 16000 | high |
 
 **Recommended defaults**
 
 | Use case | Setting |
 |----------|---------|
-| Quick sanity check | `-m gpt-5.4 -e medium` |
-| Daily development | `-m claude-sonnet-4-6 -e medium` |
-| Pre-commit review | `-m claude-sonnet-4-6 -e high` |
-| Thorough audit | `-m claude-sonnet-4-6 -e max` |
-| Pre-release audit | `-m claude-code -e max` |
+| Quick sanity check | `-m gpt5 -e medium` |
+| Daily development | `-m sonnet -e medium` |
+| Pre-commit review | `-m sonnet -e high` |
+| Thorough audit | `-m sonnet -e max` |
+| Pre-release audit | `-m claude-code:opus -e max` |
 
 **Filtering, CI gates, suppression**
 
@@ -234,13 +252,14 @@ The `BCS98xx` namespace is reserved for user rules. Place markdown files (same s
 Cascading bash-sourced config, later wins: `/etc/bcs.conf` → `/etc/bcs/bcs.conf` → `/usr/local/etc/bcs/bcs.conf` → `~/.config/bcs/bcs.conf` (XDG).
 
 ```bash
-BCS_MODEL=balanced        # fast, balanced, thorough, or a direct model name
-BCS_EFFORT=medium         # low, medium, high, max
-BCS_STRICT=0              # 0 or 1
-BCS_OPENAI_MODEL=gpt-5.4  # Per-backend override; bypasses tier mapping
+BCS_MODEL=sonnet                      # alias or canonical model ID
+BCS_EFFORT=medium                     # low, medium, high, max
+BCS_STRICT=0                          # 0 or 1
+MODEL_ALIASES[mycloud]=minimax-m2:cloud  # extend or override the alias map
+EFFORT_THINKING[high]=12000           # tune Anthropic/Google thinking budget
 ```
 
-CLI flags override config; config overrides environment. See [`bcs.conf.sample`](bcs.conf.sample) for all options including per-tier array overrides.
+CLI flags override config; config overrides environment. See [`bcs.conf.sample`](bcs.conf.sample) for all options including `MODEL_ALIASES`, `EFFORT_TOKENS`, `EFFORT_THINKING`, and `EFFORT_REASONING` overrides.
 
 ## Examples
 

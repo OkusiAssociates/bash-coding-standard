@@ -60,7 +60,42 @@ rm -f "$temp"
 # A direct model name must NOT error at the argparse stage.
 begin_test 'accepts arbitrary --model pass-through'
 assert_success 'direct model name accepted' \
-  "$BCS_CMD" check -m claude-opus-4-6 -h || true
+  "$BCS_CMD" check -m claude-opus-4-7 -h || true
+
+# Test: built-in aliases parse at argparse stage
+begin_test 'sonnet alias accepted'
+assert_success 'sonnet alias accepted' \
+  "$BCS_CMD" check -m sonnet -h || true
+
+begin_test 'opus alias accepted'
+assert_success 'opus alias accepted' \
+  "$BCS_CMD" check -m opus -h || true
+
+begin_test 'gpt5 alias accepted'
+assert_success 'gpt5 alias accepted' \
+  "$BCS_CMD" check -m gpt5 -h || true
+
+# Test: legacy tier keywords are rejected with a migration hint
+begin_test 'legacy tier keyword fast rejected'
+temp=$(mktemp --suffix=.sh)
+echo '#!/bin/bash' > "$temp"
+err=$("$BCS_CMD" check -m fast "$temp" 2>&1 || true)
+assert_contains "$err" 'no longer supported' 'fast rejected with migration hint' || true
+rm -f "$temp"
+
+begin_test 'legacy tier keyword balanced rejected'
+temp=$(mktemp --suffix=.sh)
+echo '#!/bin/bash' > "$temp"
+err=$("$BCS_CMD" check -m balanced "$temp" 2>&1 || true)
+assert_contains "$err" 'no longer supported' 'balanced rejected with migration hint' || true
+rm -f "$temp"
+
+begin_test 'legacy tier keyword thorough rejected'
+temp=$(mktemp --suffix=.sh)
+echo '#!/bin/bash' > "$temp"
+err=$("$BCS_CMD" check -m thorough "$temp" 2>&1 || true)
+assert_contains "$err" 'no longer supported' 'thorough rejected with migration hint' || true
+rm -f "$temp"
 
 # Test: check help includes --strict
 begin_test 'check help includes --strict'
@@ -110,13 +145,17 @@ assert_success 'claude-code accepted' \
 
 # Test: claude-code:<model> variant parses
 begin_test 'claude-code:MODEL variant parses'
-assert_success 'claude-code:claude-opus-4-6 accepted' \
-  "$BCS_CMD" check -m claude-code:claude-opus-4-6 -h || true
+assert_success 'claude-code:claude-opus-4-7 accepted' \
+  "$BCS_CMD" check -m claude-code:claude-opus-4-7 -h || true
 
-# Test: claude-code:fast tier variant parses
-begin_test 'claude-code:fast tier parses'
-assert_success 'claude-code:fast accepted' \
-  "$BCS_CMD" check -m claude-code:fast -h || true
+# Test: claude-code:<alias> variant parses (sentinel + alias compose)
+begin_test 'claude-code:opus alias variant parses'
+assert_success 'claude-code:opus accepted' \
+  "$BCS_CMD" check -m claude-code:opus -h || true
+
+begin_test 'claude-code:haiku alias variant parses'
+assert_success 'claude-code:haiku accepted' \
+  "$BCS_CMD" check -m claude-code:haiku -h || true
 
 # Test: help mentions claude-code sentinel
 begin_test 'check help mentions claude-code'
@@ -143,20 +182,20 @@ begin_test 'check help mentions ANTHROPIC_API_KEY'
 output=$("$BCS_CMD" check -h 2>/dev/null)
 assert_contains "$output" 'ANTHROPIC_API_KEY' 'help mentions ANTHROPIC_API_KEY' || true
 
-# Test: check help shows BCS_ANTHROPIC_MODEL env var
-begin_test 'check help mentions BCS_ANTHROPIC_MODEL'
+# Test: check help mentions MODEL_ALIASES (replaces removed BCS_<BACKEND>_MODEL vars)
+begin_test 'check help mentions MODEL_ALIASES'
 output=$("$BCS_CMD" check -h 2>/dev/null)
-assert_contains "$output" 'BCS_ANTHROPIC_MODEL' 'help mentions BCS_ANTHROPIC_MODEL' || true
+assert_contains "$output" 'MODEL_ALIASES' 'help mentions MODEL_ALIASES' || true
 
-# Test: check help shows BCS_GOOGLE_MODEL env var
-begin_test 'check help mentions BCS_GOOGLE_MODEL'
+# Test: BCS_<BACKEND>_MODEL variables removed from help
+begin_test 'check help no longer mentions BCS_ANTHROPIC_MODEL'
 output=$("$BCS_CMD" check -h 2>/dev/null)
-assert_contains "$output" 'BCS_GOOGLE_MODEL' 'help mentions BCS_GOOGLE_MODEL' || true
+assert_not_contains "$output" 'BCS_ANTHROPIC_MODEL' 'BCS_ANTHROPIC_MODEL gone' || true
 
-# Test: check help shows BCS_OPENAI_MODEL env var
-begin_test 'check help mentions BCS_OPENAI_MODEL'
+# Test: alias keys appear in help
+begin_test 'check help lists built-in aliases'
 output=$("$BCS_CMD" check -h 2>/dev/null)
-assert_contains "$output" 'BCS_OPENAI_MODEL' 'help mentions BCS_OPENAI_MODEL' || true
+assert_contains "$output" 'sonnet' 'sonnet alias listed' || true
 
 # Test: check help mentions -j / --json
 begin_test 'check help mentions --json'

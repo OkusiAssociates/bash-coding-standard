@@ -6,24 +6,27 @@
 # See: bcs check --help
 # See: tests/accuracy/LLM-ACCURACY.md for detailed backend accuracy data.
 
-# Default model. May be a tier keyword (fast, balanced, thorough) or a
-# concrete model name. The backend is resolved from the model name alone:
-#   claude-*           -> Anthropic API (e.g. claude-sonnet-4-6)
+# Default model. May be a built-in alias (sonnet, opus, haiku, flash, pro,
+# flash-lite, gpt5, gpt5-mini, qwen, qwen-small) or a canonical model ID
+# (claude-sonnet-4-6, gemini-2.5-pro, gpt-5, qwen3.5:14b, ...). The backend is
+# resolved from the alias-expanded name:
+#   claude-*           -> Anthropic API
 #   gemini-*           -> Google Gemini API
 #   gpt-* | o[0-9]*    -> OpenAI API
 #   claude-code[:...]  -> Claude Code CLI
 #   (anything else)    -> local Ollama (e.g. minimax-m2:cloud)
-# Tier keywords probe available backends in order and use that tier's default.
 #
 # Accuracy-tested recommendations (by use case):
-#   Quick check:      gpt-5.4          (10-15s, 0 false positives)
-#   Daily dev:        claude-sonnet-4-6 (28-87s, best accuracy/speed)
-#   Pre-release:      claude-code       (2-24 min, highest accuracy)
-BCS_MODEL=balanced
+#   Quick check:      gpt5             (10-15s, 0 false positives)
+#   Daily dev:        sonnet           (28-87s, best accuracy/speed)
+#   Pre-release:      claude-code:opus (2-24 min, highest accuracy)
+BCS_MODEL=sonnet
 
 # Default analysis depth: low, medium, high, max
+# Each level sets max output tokens AND (on capable models) the thinking
+# budget or reasoning_effort. See bcs check --help for the table.
 # 'medium' is the recommended default for all backends.
-# 'high' benefits Claude backends; marginal or harmful elsewhere.
+# 'high' benefits Claude/OpenAI reasoning models; marginal elsewhere.
 # 'max' should be avoided for Ollama cloud models (hallucination risk).
 BCS_EFFORT=medium
 
@@ -35,45 +38,37 @@ BCS_STRICT=0
 # Override per-call with --shellcheck / --no-shellcheck.
 BCS_SHELLCHECK=1
 
-# Override model for all tiers (per backend)
-#BCS_OLLAMA_MODEL=qwen3.5:14b
-#BCS_ANTHROPIC_MODEL=claude-sonnet-4-6
-#BCS_GOOGLE_MODEL=gemini-2.5-flash
-#BCS_OPENAI_MODEL=gpt-5.4
+# Override or extend the model alias map. Built-in aliases:
+#   opus, sonnet, haiku, flash, pro, flash-lite, gpt5, gpt5-mini, qwen, qwen-small
+# Add your own (or override defaults) with: MODEL_ALIASES[name]=canonical-id
+#MODEL_ALIASES[sonnet]=claude-sonnet-4-7
+#MODEL_ALIASES[mycloud]=minimax-m2:cloud
+#MODEL_ALIASES[reviewer]=qwen3-coder:480b-cloud
 
-# Override individual tier mappings (advanced — arrays are sourced as bash)
-# Defaults shown; uncomment and change as needed.
-#ANTHROPIC_MODELS[fast]=claude-haiku-4-5
-#ANTHROPIC_MODELS[balanced]=claude-sonnet-4-6
-#ANTHROPIC_MODELS[thorough]=claude-opus-4-6
+# Override effort -> API parameters. Defaults shown.
+# Anthropic constraint: EFFORT_THINKING[X] MUST be < EFFORT_TOKENS[X] - 1024.
+#EFFORT_TOKENS[low]=4000
+#EFFORT_TOKENS[medium]=8000
+#EFFORT_TOKENS[high]=32000
+#EFFORT_TOKENS[max]=64000
 
-#OLLAMA_MODELS[fast]=qwen3.5:9b
-#OLLAMA_MODELS[balanced]=qwen3.5:14b
-#OLLAMA_MODELS[thorough]=qwen3.5:14b
+#EFFORT_THINKING[low]=0
+#EFFORT_THINKING[medium]=2000
+#EFFORT_THINKING[high]=8000
+#EFFORT_THINKING[max]=16000
+
+#EFFORT_REASONING[low]=minimal
+#EFFORT_REASONING[medium]=low
+#EFFORT_REASONING[high]=medium
+#EFFORT_REASONING[max]=high
 
 # Ollama Cloud models (run `ollama signin` once, then `ollama pull <model>`):
 # ▲ Accuracy testing shows Ollama cloud models (minimax, glm, qwen) have
 #   very low recall (0-0.5/8 on complex scripts) and non-deterministic
 #   suppression handling. Use for offline/private checking only.
-#   Prefer gpt-5.4 (OpenAI) or claude-sonnet-4-6 (Anthropic) for accuracy.
-#BCS_OLLAMA_MODEL=minimax-m2:cloud
-#OLLAMA_MODELS[thorough]=minimax-m2:cloud
-#OLLAMA_MODELS[balanced]=qwen3-coder:480b-cloud
+#   Prefer gpt5 (OpenAI) or sonnet (Anthropic) for accuracy.
 # Available cloud models: minimax-m2:cloud, minimax-m2.7:cloud,
 # qwen3-coder:480b-cloud, glm-5.1:cloud, deepseek-v3.1:671b-cloud
-
-#GOOGLE_MODELS[fast]=gemini-2.5-flash-lite
-#GOOGLE_MODELS[balanced]=gemini-2.5-flash
-#GOOGLE_MODELS[thorough]=gemini-2.5-pro
-
-#OPENAI_MODELS[fast]=gpt-4.1-mini
-#OPENAI_MODELS[balanced]=gpt-5.4-mini
-#OPENAI_MODELS[thorough]=gpt-5.4
-
-#EFFORT_TOKENS[low]=4096
-#EFFORT_TOKENS[medium]=8192
-#EFFORT_TOKENS[high]=32768
-#EFFORT_TOKENS[max]=65536
 
 # Ollama server address
 #OLLAMA_HOST=localhost:11434

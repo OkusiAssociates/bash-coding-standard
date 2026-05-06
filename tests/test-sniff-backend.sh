@@ -25,14 +25,14 @@ assert_equal claude "$(_sniff_backend claude-code)"
 begin_test 'claude-code: (empty suffix) -> claude'
 assert_equal claude "$(_sniff_backend claude-code:)"
 
-begin_test 'claude-code:fast -> claude'
-assert_equal claude "$(_sniff_backend claude-code:fast)"
+begin_test 'claude-code:opus -> claude'
+assert_equal claude "$(_sniff_backend claude-code:opus)"
 
-begin_test 'claude-code:balanced -> claude'
-assert_equal claude "$(_sniff_backend claude-code:balanced)"
+begin_test 'claude-code:haiku -> claude'
+assert_equal claude "$(_sniff_backend claude-code:haiku)"
 
-begin_test 'claude-code:claude-opus-4-6 -> claude'
-assert_equal claude "$(_sniff_backend claude-code:claude-opus-4-6)"
+begin_test 'claude-code:claude-opus-4-7 -> claude'
+assert_equal claude "$(_sniff_backend claude-code:claude-opus-4-7)"
 
 # --- LOAD-BEARING ORDER: claude-code* must precede claude-* -------------
 

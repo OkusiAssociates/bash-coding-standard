@@ -33,14 +33,32 @@ declare -A BCS_TIERS=()
 declare -A BCS_POLICY=()
 declare -i _TIERS_LOADED=0 _POLICY_LOADED=0
 
-# Model-tier to concrete API model mapping per backend
-declare -A ANTHROPIC_MODELS=([fast]=claude-haiku-4-5 [balanced]=claude-sonnet-4-6 [thorough]=claude-opus-4-6)
-declare -A OLLAMA_MODELS=([fast]=qwen3.5:9b [balanced]=qwen3.5:14b [thorough]=qwen3.5:14b)
-declare -A GOOGLE_MODELS=([fast]=gemini-2.5-flash-lite [balanced]=gemini-2.5-flash [thorough]=gemini-2.5-pro)
-declare -A OPENAI_MODELS=([fast]=gpt-4.1-mini [balanced]=gpt-5.4-mini [thorough]=gpt-5.4)
+# Model alias map -- short names users type that expand to canonical model IDs.
+# Override or extend in bcs.conf via `MODEL_ALIASES[name]=canonical-id`.
+declare -A MODEL_ALIASES=(
+  [opus]=claude-opus-4-7
+  [sonnet]=claude-sonnet-4-6
+  [haiku]=claude-haiku-4-5
+  [flash]=gemini-2.5-flash
+  [pro]=gemini-2.5-pro
+  [flash-lite]=gemini-2.5-flash-lite
+  [gpt5]=gpt-5
+  [gpt5-mini]=gpt-5-mini
+  [qwen]=qwen3.5:14b
+  [qwen-small]=qwen3.5:9b
+)
 
-# Effort-level to max output tokens mapping for API backends
-declare -A EFFORT_TOKENS=([low]=4000 [medium]=8000 [high]=32000 [max]=64000)
+# Effort -> API parameters. EFFORT_TOKENS sets max output tokens (all backends).
+# EFFORT_THINKING sets the thinking/reasoning token budget for capable Anthropic
+# and Google models. EFFORT_REASONING maps to OpenAI's `reasoning_effort` enum
+# for o-series and gpt-5* models. Backends silently skip these on incapable
+# models (gating is done by name regex inside each _llm_* function).
+#
+# Anthropic constraint: `thinking.budget_tokens` MUST be < `max_tokens - 1024`.
+# The pairs below satisfy that envelope at every level.
+declare -A EFFORT_TOKENS=([low]=4000  [medium]=8000  [high]=32000 [max]=64000)
+declare -A EFFORT_THINKING=([low]=0   [medium]=2000  [high]=8000  [max]=16000)
+declare -A EFFORT_REASONING=([low]=minimal [medium]=low [high]=medium [max]=high)
 
 # ---- Messaging System ----
 declare -i VERBOSE=1 DEBUG=0
@@ -202,8 +220,9 @@ ${BOLD}bcs check$NC - AI-powered BCS compliance checking
 ${BOLD}Usage:$NC $SCRIPT_NAME check [OPTIONS] SCRIPT
 
 ${BOLD}Options:$NC
-  -m, --model MODEL       Quality tier or model name (${BOLD}balanced$NC, fast, thorough, or direct)
-  -e, --effort LEVEL      Analysis depth (${BOLD}medium$NC, low, high, max)
+  -m, --model MODEL       Model alias or canonical model ID (${BOLD}sonnet$NC default)
+  -e, --effort LEVEL      Analysis depth -- output tokens + thinking budget
+                          (${BOLD}medium$NC, low, high, max)
   -s, --strict            Treat warnings as violations
   -S, --no-strict         Don't treat warnings as violations (${BOLD}default$NC)
       --shellcheck        Prepend shellcheck --format=json -x output to LLM context (${BOLD}default$NC)
@@ -226,26 +245,44 @@ ${BOLD}Raw Response Dump:$NC
   it returns text directly, not JSON.
 
 ${BOLD}Model selection:$NC
-  The -m value determines which backend handles the check:
+  The -m value is alias-expanded then routed to the matching backend.
+  Canonical names pass through unchanged. Backend routing by name prefix
+  (anthropic, google, openai, ollama, claude):
 
-    fast|balanced|thorough        Probe available backends (claude, ollama,
-                                  anthropic, openai, google) and use the first
-                                  reachable one with that tier's default model.
-    claude-*                      Anthropic API (e.g. claude-opus-4-6)
-    gemini-*                      Google Gemini API (e.g. gemini-2.5-pro)
-    gpt-* | o[0-9]*               OpenAI API (e.g. gpt-5.4, o3-mini)
-    claude-code                   Claude Code CLI at the balanced tier
-    claude-code:<tier-or-model>   Claude Code CLI with specific tier/model
-    (anything else)               Local Ollama (e.g. minimax-m2:cloud)
+    claude-*                      -> anthropic API
+    gemini-*                      -> google Gemini API
+    gpt-* | o[0-9]*               -> openai API
+    claude-code                   -> claude code CLI (uses BCS_MODEL or sonnet)
+    claude-code:<alias-or-model>  -> claude code CLI with specific alias/model
+    (anything else)               -> local ollama (e.g. minimax-m2:cloud)
+
+  Built-in aliases (extend or override in bcs.conf via MODEL_ALIASES[k]=v):
+
+    opus       -> claude-opus-4-7
+    sonnet     -> claude-sonnet-4-6        (default)
+    haiku      -> claude-haiku-4-5
+    flash      -> gemini-2.5-flash
+    pro        -> gemini-2.5-pro
+    flash-lite -> gemini-2.5-flash-lite
+    gpt5       -> gpt-5
+    gpt5-mini  -> gpt-5-mini
+    qwen       -> qwen3.5:14b
+    qwen-small -> qwen3.5:9b
 
   Note: Ollama models named 'claude-*', 'gemini-*', 'gpt-*' or 'o[0-9]*' are
-  unreachable through -m — rename the local model if you need to target it.
+  unreachable through -m -- rename the local model if you need to target it.
 
 ${BOLD}Effort Levels:$NC
-  low         Clear violations only (fast, concise)
-  medium      Violations and significant warnings
-  high        All violations and warnings (thorough)
-  max         Exhaustive line-by-line audit
+  Each level sets max output tokens and (on capable models) the thinking or
+  reasoning budget. Anthropic thinking is auto-enabled on opus + sonnet-4-6/4-7
+  and skipped silently elsewhere; OpenAI reasoning_effort is auto-enabled on
+  o-series + gpt-5*; Gemini thinkingConfig is auto-enabled on the 2.5 family
+  except flash-lite. Ollama ignores both.
+
+  low         Clear violations only (4k tokens, no thinking)
+  medium      Violations and significant warnings (8k tokens, 2k thinking)
+  high        All violations and warnings (32k tokens, 8k thinking)
+  max         Exhaustive line-by-line audit (64k tokens, 16k thinking)
 
 ${BOLD}Tiers & Severity:$NC
   Rules carry a ${BOLD}**Tier:**$NC field. The check command maps tier to severity:
@@ -285,7 +322,7 @@ ${BOLD}Configuration:$NC
   CLI flags override config file settings; config overrides env vars.
 
 ${BOLD}Environment / Config Variables:$NC
-  BCS_MODEL           Default quality tier or model name (overridden by -m)
+  BCS_MODEL           Default model alias or canonical name (overridden by -m)
   BCS_EFFORT          Default analysis depth (overridden by -e)
   BCS_STRICT          Treat warnings as violations: 0 or 1
   BCS_TIER            Default --tier filter (core|recommended|style)
@@ -293,10 +330,8 @@ ${BOLD}Environment / Config Variables:$NC
   BCS_DEBUG           Default --debug (0 or 1); announces raw-response dump path
   BCS_JSON            Default --json (0 or 1); structured JSON output on stdout
   BCS_SHELLCHECK      Prepend shellcheck --format=json -x as static-analysis context (0 or 1; default 1)
-  BCS_OLLAMA_MODEL    Override Ollama model (supports :cloud tags, e.g. minimax-m2:cloud)
-  BCS_ANTHROPIC_MODEL Override Anthropic model selection
-  BCS_GOOGLE_MODEL    Override Google model selection
-  BCS_OPENAI_MODEL    Override OpenAI model selection
+  MODEL_ALIASES       Bash assoc. array; set in bcs.conf to add/override aliases
+                      (e.g. MODEL_ALIASES[mymodel]=qwen3.5:14b)
   OLLAMA_HOST         Ollama server address (default: localhost:11434)
   ANTHROPIC_API_KEY   Anthropic API key (for anthropic backend)
   GOOGLE_API_KEY      Google API key (for google backend)
@@ -316,9 +351,12 @@ ${BOLD}JSON Output:$NC
 
 ${BOLD}Examples:$NC
   $SCRIPT_NAME check myscript.sh
+  $SCRIPT_NAME check -m sonnet myscript.sh
+  $SCRIPT_NAME check -m opus -e high deploy.sh
+  $SCRIPT_NAME check -m gpt5 -e medium myscript.sh
   $SCRIPT_NAME check -m minimax-m2:cloud myscript.sh
   $SCRIPT_NAME check --effort high --strict deploy.sh
-  $SCRIPT_NAME check -m claude-code:thorough -e max deploy.sh
+  $SCRIPT_NAME check -m claude-code:opus -e max deploy.sh
   $SCRIPT_NAME check -j myscript.sh | jq '.comments[]'
 HELP
 }
@@ -594,23 +632,14 @@ _render_json_output() {
     || return 1
 }
 
-# Auto-detect available LLM backend (claude → ollama → anthropic → openai → google)
-# The Claude Code CLI wins first when available: it runs locally like ollama
-# but without needing a model server, and avoids spending API credits on
-# unconfigured default invocations.
-_detect_backend() {
-  command -v claude &>/dev/null && { echo claude; return 0; } ||:
-  local -- host=${OLLAMA_HOST:-localhost:11434}
-  curl -sf --connect-timeout 2 http://"$host"/api/tags &>/dev/null && { echo ollama; return 0; } ||:
-  [[ -n ${ANTHROPIC_API_KEY:-} ]] && { echo anthropic; return 0; } ||:
-  [[ -n ${OPENAI_API_KEY:-} ]] && { echo openai; return 0; } ||:
-  [[ -n ${GOOGLE_API_KEY:-${GEMINI_API_KEY:-}} ]] && { echo google; return 0; } ||:
-  return 1
-}
+# Expand a model alias (e.g. "opus") to its canonical ID (e.g. "claude-opus-4-7").
+# Returns the input unchanged when no alias matches -- direct model IDs and
+# unknown names pass straight through to backend resolution.
+_expand_alias() { printf '%s\n' "${MODEL_ALIASES[$1]:-$1}"; }
 
-# Sniff backend from a direct model name. Used by cmd_check() whenever the
-# user passes a concrete model ID rather than a tier keyword.
-# Matches vendor prefixes; anything unrecognised falls back to ollama.
+# Sniff backend from a direct model name. Used by cmd_check() to route an
+# alias-expanded canonical model ID to the right LLM backend. Matches vendor
+# prefixes; anything unrecognised falls back to ollama.
 #
 # ▲ LOAD-BEARING CASE ORDER ▲
 # The `claude-code*` case MUST precede `claude-*`. If reordered, the
@@ -668,19 +697,31 @@ MD
 _llm_anthropic() {
   local -- model=$1 effort=$2 sys=$3 usr=$4
   [[ -n ${ANTHROPIC_API_KEY:-} ]] || die 18 'ANTHROPIC_API_KEY not set'
-  local -- api_model=${BCS_ANTHROPIC_MODEL:-${ANTHROPIC_MODELS[$model]:-$model}}
   local -i max_tokens=${EFFORT_TOKENS[$effort]}
+  local -i think_budget=${EFFORT_THINKING[$effort]:-0}
+
+  # Capability gating: only opus and sonnet-4-6/4-7 accept the `thinking`
+  # field. Haiku and older sonnets reject it with HTTP 400.
+  # The Anthropic API also requires thinking.budget_tokens < max_tokens - 1024.
+  local -- thinking_json='null'
+  if ((think_budget > 0)) && [[ $model == @(*opus*|*sonnet-4-6*|*sonnet-4-7*) ]]; then
+    thinking_json=$(jq -n --argjson b "$think_budget" \
+      '{type: "enabled", budget_tokens: $b}') || die 1 'Failed to build thinking payload'
+  fi
 
   # Anthropic Messages API has no native JSON-mode flag; rely on prompt
   # discipline plus _strip_json_fences fallback applied by cmd_check.
   local -- payload
   payload=$(jq -n \
-    --arg model "$api_model" \
+    --arg model "$model" \
     --argjson max_tokens "$max_tokens" \
+    --argjson thinking "$thinking_json" \
     --arg system "$sys" \
     --arg user "$usr" \
     '{model: $model, max_tokens: $max_tokens, system: $system,
-      messages: [{role: "user", content: $user}]}') || die 1 'Failed to build JSON payload'
+      messages: [{role: "user", content: $user}]}
+     + ($thinking | if . == null then {} else {thinking: .} end)') \
+    || die 1 'Failed to build JSON payload'
 
   local -- raw body
   local -i http_code
@@ -706,7 +747,6 @@ _llm_anthropic() {
 # LLM backend: Ollama chat API
 _llm_ollama() {
   local -- model=$1 effort=$2 sys=$3 usr=$4
-  local -- ollama_model=${BCS_OLLAMA_MODEL:-${OLLAMA_MODELS[$model]:-$model}}
   local -- ollama_host=${OLLAMA_HOST:-localhost:11434}
   local -i num_predict=${EFFORT_TOKENS[$effort]}
 
@@ -715,7 +755,7 @@ _llm_ollama() {
   local -- payload
   if ((${BCS_JSON_MODE:-0})); then
     payload=$(jq -n \
-      --arg model "$ollama_model" \
+      --arg model "$model" \
       --argjson num_predict "$num_predict" \
       --arg system "$sys" \
       --arg user "$usr" \
@@ -725,7 +765,7 @@ _llm_ollama() {
       || die 1 'Failed to build JSON payload'
   else
     payload=$(jq -n \
-      --arg model "$ollama_model" \
+      --arg model "$model" \
       --argjson num_predict "$num_predict" \
       --arg system "$sys" \
       --arg user "$usr" \
@@ -761,31 +801,44 @@ _llm_ollama() {
 _llm_openai() {
   local -- model=$1 effort=$2 sys=$3 usr=$4
   [[ -n ${OPENAI_API_KEY:-} ]] || die 18 'OPENAI_API_KEY not set'
-  local -- api_model=${BCS_OPENAI_MODEL:-${OPENAI_MODELS[$model]:-$model}}
   local -i max_tokens=${EFFORT_TOKENS[$effort]}
 
+  # Capability gating: o-series and gpt-5* accept reasoning_effort. Older
+  # GPT-4-class models (gpt-4, gpt-4.1, gpt-4o*) reject it with HTTP 400, so
+  # match `gpt-4*` first to short-circuit -- the broader prefix already
+  # subsumes gpt-4.1, gpt-4o, gpt-4o-mini, etc.
+  local -- reasoning=''
+  case $model in
+    gpt-4*)         : ;;
+    o[0-9]*|gpt-5*) reasoning=${EFFORT_REASONING[$effort]:-} ;;
+  esac
+
   # Native JSON mode via response_format:{type:"json_object"} (GPT-4+).
-  # Forces the model to emit only valid JSON. System/user prompt must
-  # mention "JSON" somewhere -- our JSON-mode prompt satisfies that.
+  # System/user prompt must mention "JSON" somewhere -- our JSON-mode prompt
+  # satisfies that. Empty $reasoning means the field is omitted entirely.
   local -- payload
   if ((${BCS_JSON_MODE:-0})); then
     payload=$(jq -n \
-      --arg model "$api_model" \
+      --arg model "$model" \
       --argjson max_tokens "$max_tokens" \
+      --arg reasoning "$reasoning" \
       --arg system "$sys" \
       --arg user "$usr" \
       '{model: $model, max_completion_tokens: $max_tokens,
         response_format: {type: "json_object"},
-        messages: [{role: "system", content: $system}, {role: "user", content: $user}]}') \
+        messages: [{role: "system", content: $system}, {role: "user", content: $user}]}
+       + (if $reasoning == "" then {} else {reasoning_effort: $reasoning} end)') \
       || die 1 'Failed to build JSON payload'
   else
     payload=$(jq -n \
-      --arg model "$api_model" \
+      --arg model "$model" \
       --argjson max_tokens "$max_tokens" \
+      --arg reasoning "$reasoning" \
       --arg system "$sys" \
       --arg user "$usr" \
       '{model: $model, max_completion_tokens: $max_tokens,
-        messages: [{role: "system", content: $system}, {role: "user", content: $user}]}') \
+        messages: [{role: "system", content: $system}, {role: "user", content: $user}]}
+       + (if $reasoning == "" then {} else {reasoning_effort: $reasoning} end)') \
       || die 1 'Failed to build JSON payload'
   fi
 
@@ -814,8 +867,17 @@ _llm_google() {
   local -- model=$1 effort=$2 sys=$3 usr=$4
   local -- api_key=${GOOGLE_API_KEY:-${GEMINI_API_KEY:-}}
   [[ -n $api_key ]] || die 18 'GOOGLE_API_KEY or GEMINI_API_KEY not set'
-  local -- api_model=${BCS_GOOGLE_MODEL:-${GOOGLE_MODELS[$model]:-$model}}
   local -i max_tokens=${EFFORT_TOKENS[$effort]}
+  local -i think_budget=${EFFORT_THINKING[$effort]:-0}
+
+  # Capability gating: Gemini 2.5 family supports thinkingBudget under
+  # generationConfig.thinkingConfig (camelCase, nested). flash-lite is
+  # excluded -- it rejects thinkingConfig with HTTP 400.
+  local -i emit_thinking=0
+  case $model in
+    *flash-lite*)  : ;;
+    *-2.5-*)       ((think_budget == 0)) || emit_thinking=1 ;;
+  esac
 
   # Native JSON mode via generationConfig.response_mime_type. Gemini 1.5+
   # supports "application/json" to force a structured-output response.
@@ -823,25 +885,35 @@ _llm_google() {
   if ((${BCS_JSON_MODE:-0})); then
     payload=$(jq -n \
       --argjson max_tokens "$max_tokens" \
+      --argjson think_budget "$think_budget" \
+      --argjson emit_thinking "$emit_thinking" \
       --arg system "$sys" \
       --arg user "$usr" \
       '{systemInstruction: {parts: [{text: $system}]},
         contents: [{role: "user", parts: [{text: $user}]}],
-        generationConfig: {maxOutputTokens: $max_tokens,
-                           response_mime_type: "application/json"}}') \
+        generationConfig: ({maxOutputTokens: $max_tokens,
+                            response_mime_type: "application/json"}
+                           + (if $emit_thinking == 1
+                              then {thinkingConfig: {thinkingBudget: $think_budget}}
+                              else {} end))}') \
       || die 1 'Failed to build JSON payload'
   else
     payload=$(jq -n \
       --argjson max_tokens "$max_tokens" \
+      --argjson think_budget "$think_budget" \
+      --argjson emit_thinking "$emit_thinking" \
       --arg system "$sys" \
       --arg user "$usr" \
       '{systemInstruction: {parts: [{text: $system}]},
         contents: [{role: "user", parts: [{text: $user}]}],
-        generationConfig: {maxOutputTokens: $max_tokens}}') \
+        generationConfig: ({maxOutputTokens: $max_tokens}
+                           + (if $emit_thinking == 1
+                              then {thinkingConfig: {thinkingBudget: $think_budget}}
+                              else {} end))}') \
       || die 1 'Failed to build JSON payload'
   fi
 
-  local -- url=https://generativelanguage.googleapis.com/v1beta/models/"$api_model":generateContent
+  local -- url=https://generativelanguage.googleapis.com/v1beta/models/"$model":generateContent
   local -- raw body
   local -i http_code
   raw=$(curl -s --max-time 300 -w $'\n%{http_code}' \
@@ -875,8 +947,6 @@ _llm_claude_cli() {
   local -- tier_instr=${6:-} filter_instr=${7:-} policy_text=${8:-}
   local -- shellcheck_block=${9:-}
   command -v claude &>/dev/null || die 18 'Claude CLI required for claude backend'
-
-  model=${BCS_ANTHROPIC_MODEL:-${ANTHROPIC_MODELS[$model]:-$model}}
 
   local -- prompt
   if ((${BCS_JSON_MODE:-0})); then
@@ -964,9 +1034,11 @@ Respect inline suppression: eg, #bcscheck disable=BCS0101 exempts the next line/
   local -a claude_args=(--model "$model" --permission-mode bypassPermissions)
   [[ -z $effort ]] || claude_args+=(--effort "$effort")
 
-  #shellcheck disable=SC1007
   export CLAUDE_CODE_USE_OAUTH=1
   unset ANTHROPIC_API_KEY
+  # SC1007: `CLAUDECODE= claude ...` clears the env var for one command;
+  # the empty-RHS assignment is intentional, not a typo.
+  #shellcheck disable=SC1007
   CLAUDECODE= claude "${claude_args[@]}" -p "$prompt" 2>/dev/null
 }
 
@@ -1091,7 +1163,7 @@ cmd_template() {
 # Subcommand: check
 
 cmd_check() {
-  local -- script_file='' model=${BCS_MODEL:-balanced} effort=${BCS_EFFORT:-medium}
+  local -- script_file='' model=${BCS_MODEL:-sonnet} effort=${BCS_EFFORT:-medium}
   local -i strict=${BCS_STRICT:-0} debug=${BCS_DEBUG:-0} json_output=${BCS_JSON:-0}
   local -i shellcheck_ctx=${BCS_SHELLCHECK:-1}
   local -ar onoff=(off on)
@@ -1143,25 +1215,37 @@ cmd_check() {
     shellcheck_block=$(_render_shellcheck_block "$sc_json") ||:
   fi
 
-  # Resolve backend from model name alone.
-  #
-  #   fast|balanced|thorough    -> probe available backends
-  #   claude-code[:tier|model]  -> Claude Code CLI; strip sentinel prefix
-  #   anything else             -> sniff vendor prefix
-  #
-  if [[ $model == @(fast|balanced|thorough) ]]; then
-    backend=$(_detect_backend) \
-      || die 18 'No LLM backend available (start Ollama, set ANTHROPIC_API_KEY/OPENAI_API_KEY, or install claude CLI)'
-  else
-    backend=$(_sniff_backend "$model")
-    # Strip the claude-code sentinel so _llm_claude_cli sees a resolvable
-    # tier keyword or direct model ID, not the sentinel itself.
-    case $model in
-      claude-code|claude-code:)  model=balanced ;;
-      claude-code:*)             model=${model#claude-code:} ;;
-    esac
-    info "Backend ${backend@Q} inferred from model ${model@Q}"
-  fi
+  # Resolve backend from the model name. Steps:
+  #   1. Reject legacy tier keywords with a migration hint.
+  #   2. Handle the claude-code sentinel: lock the backend to claude, then
+  #      strip the prefix so the suffix can be alias-expanded like any other
+  #      model name. Empty suffix falls back to BCS_MODEL or the sonnet alias.
+  #   3. Expand alias (e.g. opus -> claude-opus-4-7). Direct IDs pass through.
+  #   4. Sniff backend from the canonical name when not already locked.
+  case $model in
+    fast|balanced|thorough)
+      die 22 "Tier keyword ${model@Q} no longer supported; use a model name or" \
+             "alias (e.g. -m sonnet, -m opus, -m gpt5). See ${SCRIPT_NAME}.conf.sample" \
+             "for the alias map, or run ${SCRIPT_NAME} help check. After updating," \
+             "reload your shell to refresh tab-completion."
+      ;;
+  esac
+
+  case $model in
+    claude-code|claude-code:)
+      backend=claude
+      model=$(_expand_alias "${BCS_MODEL:-sonnet}")
+      ;;
+    claude-code:*)
+      backend=claude
+      model=$(_expand_alias "${model#claude-code:}")
+      ;;
+    *)
+      model=$(_expand_alias "$model")
+      ;;
+  esac
+  backend=${backend:-$(_sniff_backend "$model")}
+  info "Backend ${backend@Q} resolved from model ${model@Q}"
 
   # Verify curl+jq+nl for API backends. `nl` produces the numbered-line
   # user message; without it the API receives an empty prompt and returns
