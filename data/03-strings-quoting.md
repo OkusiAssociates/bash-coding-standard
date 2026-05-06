@@ -124,6 +124,34 @@ echo -e "Line1\nLine2"              # inconsistent escape handling
 
 Use `$'...'` syntax as an alternative for escape sequences: `echo $'Line1\nLine2'`.
 
+### Exception: per-iteration constant prefix in reused format strings
+
+`printf` reuses the format string once per cycle of consumed conversion specs. When a *constant* prefix (e.g. the script name) is meant to appear on every emitted line, it must be embedded in the format string — moving it to a `%s` positional argument breaks the iteration because the prefix would consume one slot per cycle, misaligning subsequent arguments.
+
+```bash
+# correct — $SCRIPT_NAME is a per-line constant; it MUST live in the format
+die() {
+  (($# < 2)) || >&2 printf "$SCRIPT_NAME: ✗ %s\n" "${@:2}"
+  exit "${1:-0}"
+}
+
+# wrong — naive "fix" that breaks multi-arg output
+die() {
+  (($# < 2)) || >&2 printf '%s: ✗ %s\n' "$SCRIPT_NAME" "${@:2}"
+  exit "${1:-0}"
+}
+# With ${@:2} = (msg1 msg2):
+#   first cycle:  "$SCRIPT_NAME: ✗ msg1"
+#   second cycle: "msg2: ✗ "          ← prefix lost, args shift
+```
+
+Do **not** flag `"$VAR: ... %s ..."` formats when:
+
+1. The format is consumed multiple times (more positional args than `%`-specs in one cycle), AND
+2. The embedded variable is a per-line constant the caller expects on every line.
+
+This pattern is canonical for `die()`, `warn()`, `info()`, and similar diagnostic helpers across BCS-compliant scripts.
+
 ## BCS0306 Parameter Quoting with @Q
 
 **Tier:** recommended
