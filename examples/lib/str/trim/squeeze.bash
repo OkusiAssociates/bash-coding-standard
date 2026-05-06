@@ -13,13 +13,19 @@ squeeze() {
 
     local -- v
     # Process escape sequences if -e flag was used
-    ((process_escape)) && v=$(printf '%b' "$*") || v="$*"
+    if ((process_escape)); then
+      # Note: $* joins multi-arg input with IFS (space); \c halts %b output
+      printf -v v '%b' "$*"
+    else
+      # Note: $* joins multi-arg input with IFS (space)
+      v="$*"
+    fi
 
     # Squeeze consecutive blanks using pure Bash
     # First convert tabs to spaces for uniform handling
     v=${v//$'\t'/ }
     # Squeeze multiple spaces to single space
-    while [[ $v =~ '  ' ]]; do
+    while [[ $v == *'  '* ]]; do
       v=${v//  / }
     done
     printf '%s\n' "$v"
@@ -33,10 +39,10 @@ squeeze() {
       # Convert tabs to spaces
       REPLY=${REPLY//$'\t'/ }
       # Squeeze multiple spaces
-      while [[ $REPLY =~ '  ' ]]; do
+      while [[ $REPLY == *'  '* ]]; do
         REPLY=${REPLY//  / }
       done
-      echo "$REPLY"
+      printf '%s\n' "$REPLY"
     done
   fi
   return 0
@@ -45,7 +51,9 @@ squeeze() {
 # Check if the script is being sourced or executed directly
 [[ ${BASH_SOURCE[0]} == "$0" ]] || { declare -fx squeeze; return 0; }
 
-# --- command mode --------------------------------------------------------
+# --- command mode ---
+(( BASH_VERSINFO[0] > 4 || (BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 4) )) \
+  || { >&2 echo "${0##*/}: requires Bash >= 4.4 (have ${BASH_VERSION:-unknown})"; exit 2; }
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
@@ -53,7 +61,7 @@ declare -rx PATH=/usr/local/bin:/usr/bin:/bin
 
 declare -r VERSION='1.0.0' SCRIPT_NAME=${0##*/}
 
-die() { (($# < 2)) || >&2 echo "$SCRIPT_NAME: ✗ ${*:2}"; exit "${1:-0}"; }
+die() { >&2 printf "$SCRIPT_NAME: ✗ %s\n" "${@:2}"; exit "$1"; }
 
 if (($#)); then
   case $1 in
@@ -68,7 +76,8 @@ Usage: squeeze [-e] string   # Squeeze consecutive blanks to single space
        squeeze < file        # Process stdin stream
 
 Options:
-  -e             Render escape sequences in input string
+  -e             Process escape sequences in the input string
+                 Note: \\c halts further output (printf %b semantics)
   -V, --version  Display "$SCRIPT_NAME $VERSION"
   -h, --help     Display this help message
 
@@ -83,7 +92,7 @@ Source mode:
 Examples:
   str="hello    world"
   str=\$(squeeze "\$str")     # Result: "hello world"
-  echo "  multiple    spaces  " | squeeze  # Output: "  multiple spaces  "
+  echo "  multiple    spaces  " | squeeze  # Output: " multiple spaces "
 
 See also: trim, ltrim, rtrim, trimall, trimv
 HELP
@@ -93,11 +102,12 @@ HELP
         printf '%s %s\n' "$SCRIPT_NAME" "$VERSION"
         exit 0
         ;;
-    -e) ;;
     --) shift ;;
-    -*) die 22 "Unknown option ${1@Q}" ;;
+    -*) [[ $1 == '-e' ]] || die 22 "Unknown option ${1@Q}" ;;
     *)  ;;
   esac
+else
+  [[ -t 0 ]] && die 22 "Usage: $SCRIPT_NAME [-e] string  |  $SCRIPT_NAME < file"
 fi
 
 squeeze "$@"

@@ -5,16 +5,61 @@
 remblanks() {
   if (($#)); then
     # Arguments provided - process as string
-    echo "$*" | grep -v '^[[:blank:]]*#\|^[[:blank:]]*$'
+    printf '%s\n' "$@" | grep -v '^[[:space:]]*#\|^[[:space:]]*$'
   else
     # No arguments - read from stdin (pipe mode)
-    grep -v '^[[:blank:]]*#\|^[[:blank:]]*$'
+    grep -v '^[[:space:]]*#\|^[[:space:]]*$'
   fi
 }
 
 
-# If script is executed directly (not sourced), run the function
+# If sourced, export the function and return; otherwise fall through to script mode.
 [[ ${BASH_SOURCE[0]} == "$0" ]] || { declare -fx remblanks; return 0; }
+
+# --- Script Mode ---
+set -euo pipefail
+shopt -s inherit_errexit
+
+if (($#)) && [[ $1 == -h || $1 == --help ]]; then
+  declare -r VERSION=1.0.0 SCRIPT_NAME=${0##*/}
+  cat <<HELP
+$SCRIPT_NAME $VERSION - Remove #comment lines and blank lines from input or string argument
+
+Usage:
+  $SCRIPT_NAME [-h|--help]
+  $SCRIPT_NAME [STRING...]
+  $SCRIPT_NAME <FILE
+  ... | $SCRIPT_NAME
+
+Description:
+  Filters input line-by-line, dropping:
+    * lines that are empty or contain only whitespace
+    * lines whose first non-whitespace character is '#' (comments)
+
+  With one or more STRING arguments, each argument is treated as a separate
+  input line. With no arguments, input is read from stdin.
+
+  Can be sourced to expose 'remblanks' as a shell function (also exported
+  to subshells via 'declare -fx').
+
+Options:
+  -h, --help    Show this help and exit.
+
+Examples:
+  $SCRIPT_NAME <file.txt                    # filter a file
+  cat file.txt | $SCRIPT_NAME               # filter via pipe
+  $SCRIPT_NAME 'keep' '# drop' '' 'kept'    # filter argument lines
+  $SCRIPT_NAME "\${list[@]}"
+  source $SCRIPT_NAME                       # expose remblanks() function
+
+Notes:
+  CRLF input: blank lines containing only '\r' are correctly dropped, but
+  '\r' bytes inside kept lines are NOT stripped. Pre-normalise line endings
+  with 'dos2unix' if CR removal is required:
+    dos2unix <file.txt | $SCRIPT_NAME
+HELP
+  exit 0
+fi
 
 remblanks "$@"
 #fin

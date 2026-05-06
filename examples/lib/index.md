@@ -36,7 +36,7 @@ The following codebases use highly optimized patterns that should be referred to
     │   │   ├── test_ls.types.bats
     │   │   └── types.conf
     │   ├── md2ansi
-    │   │   ├── display-ansi-palette
+    │   │   ├── ansi-info
     │   │   ├── md
     │   │   ├── md2ansi
     │   │   ├── md2ansi.1
@@ -48,11 +48,14 @@ The following codebases use highly optimized patterns that should be referred to
     │   │   ├── rewrite-md-links.lua
     │   │   ├── test
     │   │   │   ├── run_tests
+    │   │   │   ├── test_ansi_info.sh
     │   │   │   ├── test_basic.sh
     │   │   │   ├── test_code.sh
     │   │   │   ├── test_edge_cases.sh
     │   │   │   ├── test_footnotes.sh
     │   │   │   ├── test_gaps.sh
+    │   │   │   ├── test_md_link_extract.sh
+    │   │   │   ├── test_md.sh
     │   │   │   ├── test_mdview.sh
     │   │   │   ├── test_options.sh
     │   │   │   ├── test_security.sh
@@ -236,12 +239,18 @@ The following codebases use highly optimized patterns that should be referred to
             ├── spacetime.php
             └── spacetime.py
     
-    51 directories, 181 files
+    51 directories, 184 files
 
 ```
 
 ---
 
+- [ansi-info](/usr/local/bin) - ansi-info 1.1.0 - Display ANSI palette and terminal capability info
+  > Renders four sections:
+  >   1. 256-colour palette (16 standard, 6x6x6 cube, grayscale ramp) with
+  >      hex/RGB labels beneath every swatch.
+  >   2. SGR text attributes (bold, dim, italic, underline, blink, etc.).
+  > (source: /usr/local/bin/ansi-info [makefile])
 - [bitwiddle](/ai/scripts/Okusi/BCS/examples/lib/sys/bitwiddle) - bitwiddle 1.0.0 - Apply bitwise operations (OR, AND, XOR) to each byte of a string.
   > Usage: bitwiddle [OPTIONS] STRING OPERATION OPERAND
   >   STRING     Input string to process (use "-" for stdin).
@@ -298,6 +307,12 @@ The following codebases use highly optimized patterns that should be referred to
   > to list files of that type. Direct invocation supports management only.
   > (source: /usr/local/bin/ls.types [makefile])
   > (manpage: man -l /usr/local/share/man/man1/ls.types.1)
+- [md](/usr/local/bin) - md 1.0.0 - Wrapper for md2ansi that pipes output through less
+  > Provides paginated viewing of markdown files via md2ansi.
+  > Usage: md [OPTIONS] file.md
+  >        cat file.md | md [OPTIONS]
+  >        md --help
+  > (source: /usr/local/bin/md [makefile])
 - [md2ansi](/usr/local/bin) - md2ansi 1.0.1 - Convert Markdown to ANSI-colored terminal output
   > A zero-dependency Bash implementation that renders markdown files with color
   > and style directly in your terminal.
@@ -314,7 +329,13 @@ The following codebases use highly optimized patterns that should be referred to
   >   -t, --theme NAME         Theme name (default: github-dark)
   >   -s, --window-size WxH    Browser window size (default: 960x1080)
   > (source: /usr/local/bin/mdview [makefile])
-- [shlock](/usr/local/bin) - shlock 2.0.0 - file-based locking system with stale lock detection
+- [remblanks](/ai/scripts/Okusi/BCS/examples/lib/str/remblanks) - remblanks 1.0.0 - Remove #comment lines and blank lines from input or string argument
+  > Usage:
+  >   remblanks [-h|--help]
+  >   remblanks [STRING...]
+  >   remblanks <FILE
+  > (source: /ai/scripts/Okusi/BCS/examples/lib/str/remblanks/remblanks [symlink])
+- [shlock](/usr/local/bin) - shlock 2.0.1 - file-based locking system with stale lock detection
   > Usage: shlock [OPTIONS] [LOCKNAME] -- COMMAND [ARGS...]
   > Runs COMMAND while holding an exclusive flock-based lock. Prevents multiple
   > instances of the same operation from running concurrently, with automatic
@@ -327,12 +348,12 @@ The following codebases use highly optimized patterns that should be referred to
   >   "DayOfWeek YYYY-MM-DD HH:MM:SS TZ Timezone"
   > With template: Returns custom format using placeholders
   > (source: /ai/scripts/Okusi/BCS/examples/lib/time/spacetime/spacetime [symlink])
-- [symlink](/usr/local/bin) - symlink 1.4.0 - Create symlinks in /usr/local/bin for executables
+- [symlink](/ai/scripts/Okusi/BCS/examples/lib/file/symlink) - symlink 1.4.1 - Create symlinks in /usr/local/bin for executables
   > Requires root privileges (auto-elevates via sudo).
   > USAGE:
   >   symlink [OPTIONS] scriptpath...     Direct linking
   >   symlink -S [OPTIONS] [startpath]    Scan for .symlink files (depth ≤5)
-  > (source: /usr/local/bin/symlink [makefile])
+  > (source: /ai/scripts/Okusi/BCS/examples/lib/file/symlink/symlink [symlink])
   > (manpage: man -l /usr/local/share/man/man1/symlink.1)
 - [which](/usr/local/bin) - which 2.0 - Locate executables in PATH
   > Usage: which [OPTIONS] [--] command ...

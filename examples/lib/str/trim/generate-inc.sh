@@ -3,21 +3,21 @@
 set -euo pipefail
 
 declare -- dest=${1:?Usage: generate-inc.sh DEST}
-declare -- dir
+declare -- dir f
 dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-{
-  echo '#!/usr/bin/env bash'
-  echo '# Bash String Trim Utilities - Combined Module File'
-  echo '# Source this file to load all trim functions:'
-  echo "#   source $dest"
-  echo '# Available functions: trim, ltrim, rtrim, trimv, trimall, squeeze'
-  echo
+{ cat <<TRIMUTILS
+#!/usr/bin/env bash
+# Bash String Trim Utilities - Combined Module File
+# Source this file to load all trim family functions:
+#   source $dest
+# Available functions: trim, ltrim, rtrim, trimv, trimall, squeeze
+TRIMUTILS
 
-  for f in trim ltrim rtrim trimv trimall squeeze; do
+  for f in *.bash; do
     #shellcheck disable=SC1090
-    source "$dir"/"$f".bash
-    declare -pf "$f"
+    source "$dir"/"$f"
+    declare -pf "${f/.bash}"
     echo
   done
 

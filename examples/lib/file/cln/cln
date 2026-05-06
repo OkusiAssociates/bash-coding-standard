@@ -5,7 +5,7 @@
 # Searches for and removes common editor backup files, crash files,
 # and other temporary files that accumulate in working directories.
 set -euo pipefail
-shopt -s inherit_errexit shift_verbose extglob nullglob
+shopt -s inherit_errexit extglob nullglob
 
 declare -rx PATH=/usr/local/bin:/usr/bin:/bin
 
@@ -27,33 +27,19 @@ else
   declare -r RED='' YELLOW='' CYAN='' NC=''
 fi
 
-_msg() {
-  local -- prefix="$SCRIPT_NAME:" msg
-  case ${FUNCNAME[1]} in
-    info)    prefix+=" ${CYAN}◉${NC}" ;;
-    warn)    prefix+=" ${YELLOW}▲${NC}" ;;
-    error)   prefix+=" ${RED}✗${NC}" ;;
-    *)       ;;
-  esac
-  for msg in "$@"; do printf '%s %s\n' "$prefix" "$msg"; done
-}
-info() { ((VERBOSE)) || return 0; >&2 _msg "$@"; }
-warn() { >&2 _msg "$@"; }
-error() { >&2 _msg "$@"; }
+_msg() { >&2 printf "$SCRIPT_NAME: $1 %s\n" "${@:2}"; }
+error() { _msg "$RED✗$NC" "$@"; }
 die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+# Optional:
+warn() { _msg "$YELLOW▲$NC" "$@"; }
+info() { ((VERBOSE)) || return 0; _msg "$CYAN◉$NC" "$@"; }
 yn() {
   local -- REPLY
-  >&2 printf '%s ' "$SCRIPT_NAME: ${YELLOW}▲${NC} ${1:-Continue?} y/n"
+  >&2 printf '%s ' "$SCRIPT_NAME: $YELLOW▲$NC ${1:-Continue?} y/n "
   read -r -n 1
-  echo >&2
+  >&2 echo
   [[ ${REPLY,,} == y ]]
 }
-
-noarg() { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }  # Validate option has argument
-decp() { declare -p "$@" 2>/dev/null | sed 's/^declare -[a-zA-Z-]* //'; }  # Print variable as name=value (help display & debug)
-
-# Pluralization helper: returns 's' if count != 1
-s() { (( ${1:-1} == 1 )) || echo -n 's'; }
 
 show_help() {
   cat <<HELP
@@ -107,6 +93,17 @@ Examples:
 HELP
 }
 
+# Validate option has argument
+# usage: noarg "$@"; shift # will die if no arg
+noarg() { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
+
+# Print variable as name=value (help display & debug)
+decp() { declare -p "$@" 2>/dev/null | sed 's/^declare -[a-zA-Z-]* //'; }
+
+# English numeric pluralization helper: returns 's' if count != 1
+# usage: s "${#oranges[@]}"
+s() { (( ${1:-1} == 1 )) || echo -n 's'; }
+
 # Load patterns from config file if exists (BCS0111 search order)
 read_conf() {
   local -- conf_file
@@ -144,45 +141,46 @@ main() {
   local -a symbolic=(-P)
 
   while (($#)); do case $1 in
-    -L)             symbolic=(-L) ;;
-    -a|--add)       noarg "$@"; shift
-                    IFS=',' read -ra add_specs_raw <<< "$1"
-                    for spec in "${add_specs_raw[@]}"; do
-                      spec="${spec#"${spec%%[![:blank:]]*}"}"; spec="${spec%"${spec##*[![:blank:]]}"}"
-                      [[ -z $spec ]] || add_specs+=("$spec")
-                    done
-                    ;;
-    -S|--set)       noarg "$@"; shift
-                    set_specs_raw=()
-                    IFS=',' read -ra set_specs_raw <<< "$1"
-                    DELETE_FILES=()
-                    for spec in "${set_specs_raw[@]}"; do
-                      spec="${spec#"${spec%%[![:blank:]]*}"}"; spec="${spec%"${spec##*[![:blank:]]}"}"
-                      [[ -z $spec ]] || DELETE_FILES+=("$spec")
-                    done
-                    ;;
-    -m|--depth)     noarg "$@"; shift
-                    [[ $1 =~ ^-?[0-9]+$ ]] || die 22 "Option '-m|--depth' requires a numeric argument, got ${1@Q}"
-                    max_depth=$1
-                    ((max_depth != -1)) || max_depth=255
-                    ;;
+    -L)           symbolic=(-L) ;;
+    -a|--add)     noarg "$@"; shift
+                  IFS=',' read -ra add_specs_raw <<< "$1"
+                  for spec in "${add_specs_raw[@]}"; do
+                    spec="${spec#"${spec%%[![:blank:]]*}"}"; spec="${spec%"${spec##*[![:blank:]]}"}"
+                    [[ -z $spec ]] || add_specs+=("$spec")
+                  done
+                  ;;
+    -S|--set)     noarg "$@"; shift
+                  set_specs_raw=()
+                  IFS=',' read -ra set_specs_raw <<< "$1"
+                  DELETE_FILES=()
+                  for spec in "${set_specs_raw[@]}"; do
+                    spec="${spec#"${spec%%[![:blank:]]*}"}"; spec="${spec%"${spec##*[![:blank:]]}"}"
+                    [[ -z $spec ]] || DELETE_FILES+=("$spec")
+                  done
+                  ;;
+    -m|--depth)   noarg "$@"; shift
+                  [[ $1 =~ ^-?[0-9]+$ ]] || die 22 "Option '-m|--depth' requires a numeric argument, got ${1@Q}"
+                  max_depth=$1
+                  ((max_depth != -1)) || max_depth=255
+                  ;;
     #bcscheck disable=BCS0806
-    -p|-n|--prompt) PROMPT=1; VERBOSE=1 ;;
+    -p|-n|--prompt)
+                  PROMPT=1; VERBOSE=1 ;;
     -P|-N|--no-prompt)
-                    PROMPT=0 ;;
-    -v|--verbose)   ((VERBOSE < 3)) && VERBOSE+=1 ||:  ;;
-    -q|--quiet)     VERBOSE=0 ;;
+                  PROMPT=0 ;;
+    -v|--verbose) ((VERBOSE < 3)) && VERBOSE+=1 ||:  ;;
+    -q|--quiet)   VERBOSE=0 ;;
 
-    -V|--version)   echo "$SCRIPT_NAME $VERSION"; return 0 ;;
-    -h|--help)      show_help; return 0 ;;
+    -V|--version) printf '%s\n' "$SCRIPT_NAME" "$VERSION"; exit 0 ;;
+    -h|--help)    show_help; exit 0 ;;
 
-    --)             shift; paths+=("$@"); break ;;
+    --)           shift; paths+=("$@"); break ;;
 
     -[LaSmpPNnvqVh]?*)
-                    set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+                  set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
 
-    -*)             die 22 "Invalid option ${1@Q}" ;;
-    *)              paths+=("$1") ;;
+    -*)           die 22 "Invalid option ${1@Q}" ;;
+    *)            paths+=("$1") ;;
   esac; shift; done
 
   # Set default path if not provided
@@ -243,4 +241,3 @@ main() {
 
 main "$@"
 #fin
-

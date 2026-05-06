@@ -39,6 +39,7 @@
 #   0   - Command executed successfully (wrapped command exit code passed through)
 #   1   - Lock held (non-timeout acquisition failure) or steal cancelled by user
 #   2   - Usage error (missing COMMAND or -- separator)
+#   5   - I/O error (failed to write PID file after acquiring lock)
 #   13  - Permission denied (no writable lock directory)
 #   22  - Invalid argument (unknown option, bad LOCKNAME, non-numeric value)
 #   24  - Timeout (--timeout N expired)
@@ -80,7 +81,7 @@ umask 0022
 declare -rx PATH=${HOME:-/root}/.local/bin:/usr/local/bin:/usr/bin:/bin
 
 # Script metadata
-declare -r VERSION=2.0.0
+declare -r VERSION=2.0.1
 declare -r SCRIPT_NAME=${0##*/}
 
 # Global variables
@@ -93,12 +94,15 @@ declare -i TIMEOUT_SECONDS=0
 declare -i TIMEOUT_SET=0
 declare -i STEAL_MODE=0
 
-# Messaging functions -----------------
+# Messaging functions
 
 warn() { >&2 echo "$SCRIPT_NAME: ▲ $*"; }
 error() { >&2 echo "$SCRIPT_NAME: ✗ $*"; }
 die() { (($# < 2)) || error "${@:2}"; exit "${1:-1}"; }
 
+# Prompt user with a y/n question on stderr (30s timeout, single keypress).
+# $1: prompt text (default 'Continue?'). Returns 0 on 'y'/'Y', 1 otherwise
+# (including timeout). Used for --steal confirmation against a running holder.
 yn() {
   local -- REPLY=''
   >&2 printf '%s: ▲ %s y/n ' "$SCRIPT_NAME" "${1:-Continue?}"
@@ -136,6 +140,7 @@ Exit codes (BCS-canonical):
   0                        Command executed successfully (wrapped exit passed through)
   1                        Lock held (non-timeout) or steal cancelled by user
   2                        Usage error (missing COMMAND or -- separator)
+  5                        I/O error (failed to write PID file)
   13                       Permission denied (no writable lock directory)
   22                       Invalid argument (unknown option, bad LOCKNAME, non-numeric)
   24                       Timeout (--timeout N expired)
@@ -165,7 +170,7 @@ Examples:
 HELP
 }
 
-# Helper functions --------------------
+# Helper functions
 
 # Validate that $2 exists and is numeric, die with error if not
 arg2_num() {
@@ -242,48 +247,54 @@ is_lock_stale() {
   ((lock_age > max_age_seconds))
 }
 
+# Remove both lock and pid files after age-based staleness is confirmed.
+# Non-fatal on rm failure (warns and continues so acquisition can still be
+# attempted; flock on the existing file will simply fail loudly if still held).
 clean_stale_lock() {
   warn "Lock is older than $MAX_AGE_HOURS hours, removing stale lock"
   rm -f "$LOCKFILE" "$PIDFILE" 2>/dev/null \
     || warn "Failed to remove stale lock files ${LOCKFILE@Q} ${PIDFILE@Q}"
 }
 
+# EXIT-trap handler (installed after flock succeeds). Removes the PID file
+# only; the lock file is retained intentionally so the next acquisition
+# reuses it without racing to recreate. flock itself is released when fd 200
+# closes at process exit. SC2317 disabled at top of file because shellcheck
+# cannot see this function is reached via trap.
 cleanup() {
   trap - EXIT
   rm -f "$PIDFILE" 2>/dev/null ||:
-  # flock is released when fd 200 closes; lock file persists for reuse
 }
 
+# Forcefully remove an existing lock (invoked by --steal).
+# Decision tree:
+#   no lock file       → noop (caller proceeds with normal acquisition)
+#   holder PID dead    → remove lock + pid automatically (no prompt)
+#   holder PID running → warn, prompt via yn(); exit 1 if user declines
+# WARNING: stealing an active lock breaks the mutual-exclusion guarantee.
 steal_lock() {
-  # Check if lock exists
   if [[ ! -f $LOCKFILE ]]; then
-    # No lock to steal, just proceed normally
     return 0
   fi
 
-  # Read holder PID
   local -- holder_pid
   holder_pid=$(read_holder_pid)
 
-  # Check if holder process is running
   if [[ $holder_pid != unknown ]] && is_process_running "$holder_pid"; then
-    # Process is RUNNING - warn and prompt for confirmation
     warn "Lock ${LOCKNAME@Q} is held by RUNNING process PID $holder_pid"
     if ! yn 'Really steal this lock?'; then
       die 1 'Lock steal cancelled by user'
     fi
     warn "Stealing lock ${LOCKNAME@Q} from running process..."
   else
-    # Process is DEAD - just clean up automatically (no prompt needed)
     warn "Removing abandoned lock ${LOCKNAME@Q} (process $holder_pid is dead)"
   fi
 
-  # Remove lock and pid files
   rm -f "$LOCKFILE" "$PIDFILE" 2>/dev/null \
-    || warn "Failed to remove lock files during steal"
+    || warn 'Failed to remove lock files during steal'
 }
 
-# Main entry --------------------------
+# Main entry
 
 main() {
   while (($#)); do
@@ -363,9 +374,9 @@ main() {
       clean_stale_lock
     elif [[ $old_pid != unknown ]] && ! is_process_running "$old_pid"; then
       # Lock within max-age but holder process is dead: reclaim
-      warn "removing abandoned lock (holder PID $old_pid no longer running)"
+      warn "Removing abandoned lock (holder PID $old_pid no longer running)"
       rm -f "$LOCKFILE" "$PIDFILE" 2>/dev/null \
-        || warn "Failed to reclaim abandoned lock"
+        || warn 'Failed to reclaim abandoned lock'
     fi
   fi
 
@@ -374,8 +385,8 @@ main() {
   fi
 
   # Try to acquire lock using flock
-  # Open file descriptor 200 for the lock file
   exec 200>"$LOCKFILE"
+  trap cleanup EXIT
 
   # Determine flock options (timeout takes priority over wait mode)
   local -a flock_opts=()
@@ -386,7 +397,6 @@ main() {
     # Wait indefinitely (no options needed for flock)
     :
   else
-    # Non-blocking mode (default)
     flock_opts=(-n)
   fi
 
@@ -405,9 +415,7 @@ main() {
     fi
   fi
 
-  echo $$ > "$PIDFILE"
-
-  trap cleanup EXIT
+  echo $$ > "$PIDFILE" || die 5 "Failed to write PID file ${PIDFILE@Q}"
 
   local -i exit_code=0
   "$@" || exit_code=$?

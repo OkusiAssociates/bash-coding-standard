@@ -29,7 +29,7 @@ A robust, production-ready file-based locking utility using `flock(1)` for safe 
 - **Lock Stealing**: Administrative override to break held or abandoned locks (`--steal`)
 - **Safe for Automation**: Ideal for cron jobs, systemd services, and CI/CD pipelines
 - **Comprehensive Error Messages**: Clear, actionable error reporting
-- **Battle-tested**: 127 comprehensive test cases
+- **Battle-tested**: 136 comprehensive test cases
 
 ## Installation
 
@@ -249,6 +249,7 @@ shlock [OPTIONS] [LOCKNAME] -- COMMAND [ARGS...]
 | 0 | Command executed successfully (wrapped command exit code passed through) |
 | 1 | Lock held (non-timeout acquisition failure) or steal cancelled by user |
 | 2 | Usage error (missing `COMMAND` or `--` separator) |
+| 5 | I/O error (lock acquired but PID file write failed — post-acquisition disk/fs failure) |
 | 13 | Permission denied (no writable lock directory) |
 | 22 | Invalid argument (unknown option, bad `LOCKNAME`, non-numeric value) |
 | 24 | Timeout (`--timeout N` expired) |
@@ -344,6 +345,7 @@ ExecStart=/usr/local/bin/shlock --wait service-name -- /usr/local/bin/your-servi
 if ! shlock --timeout 60 deploy-prod -- ./deploy.sh production; then
     case $? in
       1)  echo "Deployment already in progress (lock held)" ;;
+      5)  echo "I/O error writing PID file after lock acquired" ;;
       24) echo "Timed out waiting for deployment lock" ;;
       *)  echo "shlock or deployment failed with code $?" ;;
     esac
@@ -363,6 +365,7 @@ else
     case $exit_code in
         1)  echo "Lock is held by another process" ;;
         2)  echo "Usage error (missing COMMAND or -- separator)" ;;
+        5)  echo "I/O error: PID file write failed after lock was acquired" ;;
         13) echo "Permission denied: no writable lock directory" ;;
         22) echo "Invalid argument" ;;
         24) echo "Timeout waiting for lock" ;;
@@ -483,7 +486,7 @@ shlock --steal backup -- /usr/local/bin/backup.sh
 
 ## Testing
 
-The utility includes a comprehensive test suite with 127 test cases covering all functionality.
+The utility includes a comprehensive test suite with 136 test cases covering all functionality.
 
 ### Running Tests
 
@@ -501,11 +504,11 @@ cd /ai/scripts/lib/shlock/tests
 
 - **test_basic.sh** (21 tests): Basic functionality, argument handling, exit codes, short option bundling, wrapped command propagation
 - **test_concurrent.sh** (13 tests): Concurrent lock acquisition, race conditions
-- **test_edge_cases.sh** (24 tests): Edge cases, stress tests, special characters
-- **test_errors.sh** (36 tests): Error handling, invalid inputs, signal handling, LOCKNAME sanitization
+- **test_edge_cases.sh** (26 tests): Edge cases, stress tests, special characters
+- **test_errors.sh** (38 tests): Error handling, invalid inputs, signal handling, LOCKNAME sanitization
 - **test_stale_locks.sh** (11 tests): Stale lock detection, max-age thresholds
-- **test_steal.sh** (9 tests): Lock stealing, dead/running process handling, steal combinations
-- **test_wait_timeout.sh** (13 tests): Blocking mode, timeout behavior, queuing
+- **test_steal.sh** (12 tests): Lock stealing, dead/running process handling, steal combinations
+- **test_wait_timeout.sh** (15 tests): Blocking mode, timeout behavior, queuing
 
 ## Troubleshooting
 
@@ -755,6 +758,17 @@ This utility is part of the Okusi Group bash scripting standard library.
 
 ## Changelog
 
+### v2.0.1 (2026-04-23)
+
+Bug-fix and hardening release. No CLI or exit-code changes for successful paths.
+
+- **New exit code 5** — I/O failure writing the PID file *after* the lock has been acquired (disk full, read-only filesystem, etc.). Previously surfaced as an opaque `echo` failure.
+- **Trap ordering fix** — `trap cleanup EXIT` is now installed immediately after opening fd 200, not after `flock` succeeds. An abort between those two steps still runs cleanup.
+- **Stale-lock reclaim** — locks younger than `--max-age` but held by a dead PID are now reclaimed automatically with a warning (previously left to age-out).
+- **Installation** — `COMPDIR` default now tiers by `PREFIX`: system installs (`/usr`, `/usr/local`) place completion at `/etc/bash_completion.d/shlock`; user/custom prefixes place it at `$PREFIX/share/bash-completion/completions/shlock`. Overridable via `make COMPDIR=…` or `COMPDIR=… ./install.sh`.
+- **Tests** — +9 assertions for edge coverage; suite runs 136 cases.
+- **Help output** — minor formatting alignment (BCS0704).
+
 ### v2.0.0 (2026-04-19) — Breaking Change
 
 Exit codes remapped to BCS-canonical values. **No compatibility flag provided** — callers that branch on `$?` MUST update.
@@ -780,10 +794,10 @@ See `git log`.
 
 - `flock(1)` - Linux manual page
 - `fcntl(2)` - POSIX file locking
-- Bash Coding Standard: `/ai/scripts/Okusi/bash-coding-standard/`
+- Bash Coding Standard: `/usr/local/share/yatti/BCS/data/`
 
 ---
 
-**Version**: 2.0.0
-**Last Updated**: 2026-04-19
+**Version**: 2.0.1
+**Last Updated**: 2026-04-23
 **Maintainer**: Gary Dean (Biksu Okusi)

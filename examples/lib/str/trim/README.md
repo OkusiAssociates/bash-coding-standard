@@ -102,7 +102,7 @@ See [full documentation](#basic-usage) below.
 These utilities provide efficient text trimming operations using pure Bash parameter expansion, without external dependencies like sed or awk. Each utility works both as a standalone command-line tool and as a sourceable function in Bash scripts.
 
 **Project Stats:**
-- 6 utilities (~750 total lines of code)
+- 6 utilities (~700 total lines of code)
 - Pure Bash implementation (Bash 4.4+)
 - 20 test suites with 190+ assertions
 - Comprehensive Unicode support (preserves multi-byte characters)
@@ -125,7 +125,7 @@ These utilities provide efficient text trimming operations using pure Bash param
 |---------|-------------|----------|
 | **trimv** | Trims and assigns result to a variable | Script variables, avoiding subshells |
 | **trimall** | Normalizes whitespace (trims + collapses internal spaces) | Data normalization, comparison |
-| **squeeze** | Squeezes consecutive blanks to single spaces (preserves leading/trailing) | Formatting, aligning output |
+| **squeeze** | Collapses every run of blanks (including leading/trailing) to a single space; does not strip edges | Formatting, aligning output |
 
 ---
 
@@ -196,7 +196,7 @@ grep "pattern" file.txt | trim | sort | uniq
 # Normalize whitespace
 trimall "  multiple    spaces   here  "    # Output: "multiple spaces here"
 
-# Squeeze consecutive spaces (preserves leading/trailing)
+# Squeeze consecutive blanks — edges collapsed to single space, not stripped
 squeeze "  hello    world  "               # Output: " hello world "
 
 # Process escape sequences
@@ -378,16 +378,17 @@ ${string%"${string##*[![:blank:]]}"}
 
 ### Dual-Mode Architecture
 
-Each utility detects whether it's being executed or sourced:
+Each utility defines its function first, then a single-line guard decides the rest:
 
 ```bash
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  # Command mode: parse args, handle --help, process input
-  [process arguments and stdin]
-else
-  # Function mode: just define and export function
-  return 0
-fi
+trim() {
+  # function body using parameter expansion
+}
+
+# When sourced: export the function and stop. When executed: fall through.
+[[ ${BASH_SOURCE[0]} == "$0" ]] || { declare -fx trim; return 0; }
+
+# Command-mode boilerplate (set -euo pipefail, --help, --version, ...)
 ```
 
 This allows the same file to work as both a command and a sourceable function.

@@ -5,6 +5,37 @@ All notable changes to dux are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.4] - 2026-05-06
+
+### Fixed
+- Close trap/mktemp signal-race window (BCS §BCS0110): install
+  `SIGINT/SIGTERM/EXIT` trap *before* `mktemp`, so a signal arriving
+  between resource creation and trap installation can no longer leave
+  an orphan temporary file. `cleanup` already guards on
+  `${DIRSIZES_TMPFILE:-}`, so firing pre-mktemp is a safe no-op.
+
+## [1.4.3] - 2026-05-06
+
+### Changed
+- Refactor size-calculation loop: drop `cut` subprocess and `|| echo ''`
+  rescue in favor of direct `du -sb` capture with BCS-canonical `||:`
+  suppression and parameter-expansion size extraction. No behavior change;
+  one fewer subprocess spawned per directory iterated.
+
+## [1.4.2] - 2026-05-06
+
+### Changed
+- **BREAKING:** Exit codes aligned with BCS §BCS0602 canonical values:
+  - Directory not found (non-existent path or path is a file) now exits **3** (was 1)
+  - I/O failures (mktemp, du size calculation) now exit **5** (was 1)
+  - Codes 0, 2, 22 unchanged
+- `die` adopts BCS canonical guard: `(($# < 2)) || error "${@:2}"; exit "${1:-0}"`
+- `cleanup` adopts BCS canonical shape with `local -i exitcode=${1:-$?}`
+
+### Migration
+Scripts checking `[[ $? -eq 1 ]]` for "bad path" must update to `-eq 3`.
+I/O failures previously masked under `1` now surface as `5`.
+
 ## [1.4.1] - 2025-12-18
 
 ### Changed
@@ -64,6 +95,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for relative and absolute paths
 - Permission error handling (continues with accessible content)
 
+[1.4.4]: https://github.com/Open-Technology-Foundation/dux/compare/v1.4.3...v1.4.4
+[1.4.3]: https://github.com/Open-Technology-Foundation/dux/compare/v1.4.2...v1.4.3
+[1.4.2]: https://github.com/Open-Technology-Foundation/dux/compare/v1.4.1...v1.4.2
 [1.4.1]: https://github.com/Open-Technology-Foundation/dux/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/Open-Technology-Foundation/dux/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/Open-Technology-Foundation/dux/compare/v1.2.1...v1.3.0

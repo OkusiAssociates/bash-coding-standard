@@ -1,6 +1,6 @@
 .\" trim.1 — manpage for Bash string trimming utilities
 .\" Copyright (c) Open Technology Foundation — GPL-3.0-or-later
-.TH TRIM 1 "2026-03-09" "trim 1.0.0" "Bash String Trimming Utilities"
+.TH TRIM 1 "2026-05-05" "trim 1.0.0" "Bash String Trimming Utilities"
 .SH NAME
 trim, ltrim, rtrim, trimv, trimall, squeeze \- pure Bash string trimming utilities
 .SH SYNOPSIS
@@ -70,9 +70,12 @@ for variable assignment to work in the calling shell.
 Normalize whitespace: strip leading and trailing blanks, then collapse
 all consecutive whitespace (spaces, tabs, newlines) to single spaces.
 .SS squeeze
-Collapse consecutive blanks (spaces and tabs) to single spaces while
-.I preserving
-leading and trailing whitespace.
+Collapse every run of blanks (spaces and tabs) to a single space,
+including any runs at the leading and trailing edges. Edges are
+.B not
+stripped entirely (use
+.B trim
+for that), so empty edge whitespace is reduced to one space, not zero.
 .SH OPTIONS
 .TP
 .B \-e
@@ -202,6 +205,9 @@ Installed commands (trim, ltrim, rtrim, trimv, trimall, squeeze).
 .TP
 .I /usr/local/share/yatti/trim/trim.inc.sh
 Combined source file containing all function definitions.
+.TP
+.I /etc/bash_completion.d/trim
+Bash completion definitions for all six utilities.
 .SH SEE ALSO
 .BR bash (1),
 .BR sed (1),
