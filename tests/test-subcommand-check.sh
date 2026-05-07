@@ -237,6 +237,43 @@ begin_test '--no-shellcheck accepted at argparse stage'
 assert_success '--no-shellcheck accepted' \
   "$BCS_CMD" check --no-shellcheck -h || true
 
+# --- claude-code sentinel resolution (cycle-breaker) ---
+# Stub `claude` on PATH so _llm_claude_cli short-circuits without making a real
+# API call. info() prints the resolution message to stderr before the LLM call,
+# so capturing combined output reveals the resolved canonical model.
+# Isolate HOME/XDG_CONFIG_HOME so the user's bcs.conf cannot override BCS_MODEL.
+sentinel_dir=$(mktemp -d)
+cat > "$sentinel_dir"/claude <<'STUB'
+#!/usr/bin/env bash
+exit 1
+STUB
+chmod +x "$sentinel_dir"/claude
+sentinel_home=$(mktemp -d)
+sentinel_script=$(mktemp --suffix=.sh)
+printf '%s\n' '#!/bin/bash' 'echo hi' > "$sentinel_script"
+
+begin_test 'BCS_MODEL=claude-code on bare sentinel resolves to sonnet'
+out=$(PATH="$sentinel_dir:$PATH" HOME="$sentinel_home" XDG_CONFIG_HOME="$sentinel_home" \
+  BCS_MODEL=claude-code \
+  "$BCS_CMD" check -m claude-code -- "$sentinel_script" 2>&1 || true)
+assert_contains "$out" "resolved from model 'claude-sonnet-4-6'" \
+  'cycle broken; resolves to sonnet alias' || true
+
+begin_test 'claude-code:claude-code suffix resolves to sonnet'
+out=$(PATH="$sentinel_dir:$PATH" HOME="$sentinel_home" XDG_CONFIG_HOME="$sentinel_home" \
+  "$BCS_CMD" check -m claude-code:claude-code -- "$sentinel_script" 2>&1 || true)
+assert_contains "$out" "resolved from model 'claude-sonnet-4-6'" \
+  'literal-suffix cycle broken' || true
+
+begin_test 'BCS_MODEL=opus on bare sentinel still resolves to claude-opus-4-7'
+out=$(PATH="$sentinel_dir:$PATH" HOME="$sentinel_home" XDG_CONFIG_HOME="$sentinel_home" \
+  BCS_MODEL=opus \
+  "$BCS_CMD" check -m claude-code -- "$sentinel_script" 2>&1 || true)
+assert_contains "$out" "resolved from model 'claude-opus-4-7'" \
+  'documented BCS_MODEL fallback still honoured' || true
+
+rm -rf "$sentinel_dir" "$sentinel_home" "$sentinel_script"
+
 # Skip actual LLM invocation tests (requires running backend)
 echo '  (skipping live LLM tests - requires running backend)'
 

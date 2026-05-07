@@ -1234,11 +1234,24 @@ cmd_check() {
   case $model in
     claude-code|claude-code:)
       backend=claude
-      model=$(_expand_alias "${BCS_MODEL:-sonnet}")
+      # BCS_MODEL may itself be the sentinel (common when users default the
+      # backend to Claude Code CLI in bcs.conf) -- short-circuit to sonnet
+      # to avoid emitting the literal "claude-code" as the --model argument.
+      local -- inner=${BCS_MODEL:-sonnet}
+      case $inner in
+        claude-code|claude-code:*) inner=sonnet ;;
+      esac
+      model=$(_expand_alias "$inner")
       ;;
     claude-code:*)
       backend=claude
-      model=$(_expand_alias "${model#claude-code:}")
+      # Defensive: claude-code:claude-code (literal sentinel as suffix) would
+      # otherwise pass straight through to the CLI.
+      local -- suffix=${model#claude-code:}
+      case $suffix in
+        claude-code|claude-code:*) suffix=sonnet ;;
+      esac
+      model=$(_expand_alias "$suffix")
       ;;
     *)
       model=$(_expand_alias "$model")
