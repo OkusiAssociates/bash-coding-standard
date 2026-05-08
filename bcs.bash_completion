@@ -16,7 +16,7 @@ _bcs() {
     minimax-m2:cloud minimax-m2.7:cloud qwen3-coder:480b-cloud
     deepseek-v3.1:671b-cloud gpt-oss:120b-cloud glm-5.1:cloud
   '
-  local -r efforts='low medium high max'
+  local -r efforts='min low medium high xhigh max'
   local -r tiers='core recommended style'
   local -r tiers_full='core recommended style disabled'
   local -r template_types='minimal basic complete library'

@@ -253,10 +253,10 @@ Cascading bash-sourced config, later wins: `/etc/bcs.conf` → `/etc/bcs/bcs.con
 
 ```bash
 BCS_MODEL=sonnet                      # alias or canonical model ID
-BCS_EFFORT=medium                     # low, medium, high, max
+BCS_EFFORT=medium                     # min, low, medium, high, xhigh, max
 BCS_STRICT=0                          # 0 or 1
 MODEL_ALIASES[mycloud]=minimax-m2:cloud  # extend or override the alias map
-EFFORT_THINKING[high]=12000           # tune Anthropic/Google thinking budget
+EFFORT_THINKING[xhigh]=12000          # tune Anthropic/Google thinking budget
 ```
 
 CLI flags override config; config overrides environment. See [`bcs.conf.sample`](bcs.conf.sample) for all options including `MODEL_ALIASES`, `EFFORT_TOKENS`, `EFFORT_THINKING`, and `EFFORT_REASONING` overrides.

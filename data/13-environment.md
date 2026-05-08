@@ -37,11 +37,11 @@ Tier keywords probe available backends in order (claude → ollama → anthropic
 ### `BCS_EFFORT`
 
 - **Default:** `medium`
-- **Values:** `low`, `medium`, `high`, `max`
+- **Values:** `low` (or `min`), `medium`, `high`, `xhigh`, `max`
 - **Override flag:** `-e`, `--effort`
 - **Consumed:** `cmd_check()` initialiser
 
-Effort controls both prompt guidance and the output token budget (`EFFORT_TOKENS` array: `low=4096`, `medium=8192`, `high=32768`, `max=65536`). `max` should be avoided for Ollama cloud models (hallucination risk).
+Effort controls both prompt guidance and the output token budget (`EFFORT_TOKENS` array: `low=4000`, `medium=8000`, `high=24000`, `xhigh=40000`, `max=64000`). `min` is normalised to `low` at parse time. `max` should be avoided for Ollama cloud models (hallucination risk).
 
 ### `BCS_STRICT`
 

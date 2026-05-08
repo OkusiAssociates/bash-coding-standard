@@ -55,6 +55,16 @@ echo '#!/bin/bash' > "$temp"
 assert_fails 'invalid effort rejected' "$BCS_CMD" check --effort bogus "$temp" || true
 rm -f "$temp"
 
+# Test: check accepts xhigh effort level
+begin_test 'check accepts xhigh effort'
+assert_success 'xhigh accepted' \
+  "$BCS_CMD" check -e xhigh -h || true
+
+# Test: check accepts min as alias for low
+begin_test 'check accepts min as alias for low'
+assert_success 'min accepted' \
+  "$BCS_CMD" check -e min -h || true
+
 # Test: check accepts arbitrary --model pass-through
 # Use -h to short-circuit before any backend call; we only exercise the parser.
 # A direct model name must NOT error at the argparse stage.

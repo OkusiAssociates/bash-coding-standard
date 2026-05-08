@@ -22,7 +22,7 @@
 #   Pre-release:      claude-code:opus (2-24 min, highest accuracy)
 BCS_MODEL=sonnet
 
-# Default analysis depth: low, medium, high, max
+# Default analysis depth: low (or min), medium, high, xhigh, max
 # Each level sets max output tokens AND (on capable models) the thinking
 # budget or reasoning_effort. See bcs check --help for the table.
 # 'medium' is the recommended default for all backends.
@@ -38,8 +38,18 @@ BCS_STRICT=0
 # Override per-call with --shellcheck / --no-shellcheck.
 BCS_SHELLCHECK=1
 
-# Override or extend the model alias map. Built-in aliases:
-#   opus, sonnet, haiku, flash, pro, flash-lite, gpt5, gpt5-mini, qwen, qwen-small
+# Default tier filters (override per-call with --tier / --min-tier).
+# Values: core | recommended | style. Leave unset for no filtering.
+#BCS_TIER=
+#BCS_MIN_TIER=
+
+# Default --debug (0 or 1); announces raw-response dump path.
+#BCS_DEBUG=0
+
+# Default --json (0 or 1); emit structured JSON on stdout.
+#BCS_JSON=0
+
+# Override or extend the model alias map (built-in aliases listed above).
 # Add your own (or override defaults) with: MODEL_ALIASES[name]=canonical-id
 #MODEL_ALIASES[sonnet]=claude-sonnet-4-7
 #MODEL_ALIASES[mycloud]=minimax-m2:cloud
@@ -49,17 +59,20 @@ BCS_SHELLCHECK=1
 # Anthropic constraint: EFFORT_THINKING[X] MUST be < EFFORT_TOKENS[X] - 1024.
 #EFFORT_TOKENS[low]=4000
 #EFFORT_TOKENS[medium]=8000
-#EFFORT_TOKENS[high]=32000
+#EFFORT_TOKENS[high]=24000
+#EFFORT_TOKENS[xhigh]=40000
 #EFFORT_TOKENS[max]=64000
 
 #EFFORT_THINKING[low]=0
 #EFFORT_THINKING[medium]=2000
-#EFFORT_THINKING[high]=8000
+#EFFORT_THINKING[high]=6000
+#EFFORT_THINKING[xhigh]=12000
 #EFFORT_THINKING[max]=16000
 
 #EFFORT_REASONING[low]=minimal
 #EFFORT_REASONING[medium]=low
 #EFFORT_REASONING[high]=medium
+#EFFORT_REASONING[xhigh]=high
 #EFFORT_REASONING[max]=high
 
 # Ollama Cloud models (run `ollama signin` once, then `ollama pull <model>`):

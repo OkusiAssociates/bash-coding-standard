@@ -111,8 +111,12 @@ assert_payload_no_match() {
 # silently omitted on haiku. Both fields (type + budget_tokens) required.
 # ---------------------------------------------------------------------
 assert_payload_match anthropic claude-opus-4-7 high \
-  '.thinking.type == "enabled" and .thinking.budget_tokens == 8000' \
-  'opus -e high -> thinking.budget_tokens=8000, type=enabled'
+  '.thinking.type == "enabled" and .thinking.budget_tokens == 6000' \
+  'opus -e high -> thinking.budget_tokens=6000, type=enabled'
+
+assert_payload_match anthropic claude-opus-4-7 xhigh \
+  '.thinking.type == "enabled" and .thinking.budget_tokens == 12000' \
+  'opus -e xhigh -> thinking.budget_tokens=12000, type=enabled'
 
 assert_payload_no_match anthropic claude-opus-4-7 low \
   '.thinking != null' \
@@ -134,6 +138,10 @@ assert_payload_match openai gpt-5 high \
   '.reasoning_effort == "medium"' \
   'gpt-5 -e high -> reasoning_effort=medium'
 
+assert_payload_match openai gpt-5 xhigh \
+  '.reasoning_effort == "high"' \
+  'gpt-5 -e xhigh -> reasoning_effort=high (saturates)'
+
 assert_payload_match openai o3-mini max \
   '.reasoning_effort == "high"' \
   'o3-mini -e max -> reasoning_effort=high'
@@ -151,8 +159,12 @@ assert_payload_no_match openai gpt-4o-mini max \
 # flash-lite.
 # ---------------------------------------------------------------------
 assert_payload_match google gemini-2.5-pro high \
-  '.generationConfig.thinkingConfig.thinkingBudget == 8000' \
-  'gemini-2.5-pro -e high -> thinkingConfig.thinkingBudget=8000'
+  '.generationConfig.thinkingConfig.thinkingBudget == 6000' \
+  'gemini-2.5-pro -e high -> thinkingConfig.thinkingBudget=6000'
+
+assert_payload_match google gemini-2.5-pro xhigh \
+  '.generationConfig.thinkingConfig.thinkingBudget == 12000' \
+  'gemini-2.5-pro -e xhigh -> thinkingConfig.thinkingBudget=12000'
 
 assert_payload_no_match google gemini-2.5-flash-lite high \
   '.generationConfig.thinkingConfig != null' \
@@ -174,8 +186,20 @@ assert_payload_match openai gpt-4o medium \
   'openai max_completion_tokens follows EFFORT_TOKENS[medium]=8000'
 
 assert_payload_match google gemini-2.5-flash-lite high \
-  '.generationConfig.maxOutputTokens == 32000' \
-  'google maxOutputTokens follows EFFORT_TOKENS[high]=32000'
+  '.generationConfig.maxOutputTokens == 24000' \
+  'google maxOutputTokens follows EFFORT_TOKENS[high]=24000'
+
+assert_payload_match google gemini-2.5-flash-lite xhigh \
+  '.generationConfig.maxOutputTokens == 40000' \
+  'google maxOutputTokens follows EFFORT_TOKENS[xhigh]=40000'
+
+assert_payload_match anthropic claude-haiku-4-5 xhigh \
+  '.max_tokens == 40000' \
+  'anthropic max_tokens follows EFFORT_TOKENS[xhigh]=40000'
+
+assert_payload_match openai gpt-4o xhigh \
+  '.max_completion_tokens == 40000' \
+  'openai max_completion_tokens follows EFFORT_TOKENS[xhigh]=40000'
 
 print_summary 'effort-payload'
 #fin

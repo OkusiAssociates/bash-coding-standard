@@ -22,7 +22,7 @@ declare -ar BCS_SEARCH_PATHS=(
   /usr/share/yatti/BCS/data
 )
 
-declare -ar VALID_EFFORTS=(low medium high max)
+declare -ar VALID_EFFORTS=(low medium high xhigh max)
 declare -ar VALID_TEMPLATES=(minimal basic complete library)
 declare -ar VALID_TIERS=(core recommended style disabled)
 declare -ar VALID_TIER_FILTERS=(core recommended style)
@@ -56,9 +56,9 @@ declare -A MODEL_ALIASES=(
 #
 # Anthropic constraint: `thinking.budget_tokens` MUST be < `max_tokens - 1024`.
 # The pairs below satisfy that envelope at every level.
-declare -A EFFORT_TOKENS=([low]=4000  [medium]=8000  [high]=32000 [max]=64000)
-declare -A EFFORT_THINKING=([low]=0   [medium]=2000  [high]=8000  [max]=16000)
-declare -A EFFORT_REASONING=([low]=minimal [medium]=low [high]=medium [max]=high)
+declare -A EFFORT_TOKENS=([low]=4000 [medium]=8000 [high]=24000 [xhigh]=40000 [max]=64000)
+declare -A EFFORT_THINKING=([low]=0  [medium]=2000 [high]=6000  [xhigh]=12000 [max]=16000)
+declare -A EFFORT_REASONING=([low]=minimal [medium]=low [high]=medium [xhigh]=high [max]=high)
 
 # ---- Messaging System ----
 declare -i VERBOSE=1 DEBUG=0
@@ -222,7 +222,7 @@ ${BOLD}Usage:$NC $SCRIPT_NAME check [OPTIONS] SCRIPT
 ${BOLD}Options:$NC
   -m, --model MODEL       Model alias or canonical model ID (${BOLD}sonnet$NC default)
   -e, --effort LEVEL      Analysis depth -- output tokens + thinking budget
-                          (${BOLD}medium$NC, low, high, max)
+                          (${BOLD}medium$NC, low/min, high, xhigh, max)
   -s, --strict            Treat warnings as violations
   -S, --no-strict         Don't treat warnings as violations (${BOLD}default$NC)
       --shellcheck        Prepend shellcheck --format=json -x output to LLM context (${BOLD}default$NC)
@@ -279,9 +279,10 @@ ${BOLD}Effort Levels:$NC
   o-series + gpt-5*; Gemini thinkingConfig is auto-enabled on the 2.5 family
   except flash-lite. Ollama ignores both.
 
-  low         Clear violations only (4k tokens, no thinking)
+  low         Clear violations only (4k tokens, no thinking; alias: min)
   medium      Violations and significant warnings (8k tokens, 2k thinking)
-  high        All violations and warnings (32k tokens, 8k thinking)
+  high        All violations and warnings (24k tokens, 6k thinking)
+  xhigh       Comprehensive audit with detailed reasoning (40k tokens, 12k thinking)
   max         Exhaustive line-by-line audit (64k tokens, 16k thinking)
 
 ${BOLD}Tiers & Severity:$NC
@@ -1173,6 +1174,7 @@ cmd_check() {
   while (($#)); do case $1 in
     -m|--model)     noarg "$@"; shift; model=$1 ;;
     -e|--effort)    noarg "$@"; shift; effort=$1
+                    [[ $effort == min ]] && effort=low
                     [[ " ${VALID_EFFORTS[*]} " == *" $effort "* ]] || die 22 "Invalid effort ${effort@Q}"
                     ;;
     -s|--strict)    strict=1 ;;
@@ -1341,6 +1343,7 @@ cmd_check() {
       low)    effort_guidance='Report only clear VIOLATION findings. Be concise.' ;;
       medium) effort_guidance='Report VIOLATIONs and significant WARNINGs.' ;;
       high)   effort_guidance='Report all VIOLATIONs and WARNINGs. Be thorough.' ;;
+      xhigh)  effort_guidance='Comprehensive audit; flag all findings with detailed reasoning.' ;;
       max)    effort_guidance='Exhaustive line-by-line audit. Report every finding.' ;;
       *)      die 1 "Unexpected effort: ${effort@Q}" ;;
     esac
