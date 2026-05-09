@@ -13,7 +13,7 @@ This README is the narrative introduction. For the flat machine-readable file in
 
 ## Why It Exists
 
-BCS is 105 rules of static text. Reading the standard does not enforce it, and neither does quoting it at an AI. Two existing tools close that gap:
+BCS is 98 enforceable rules (plus 12 section overviews -- 110 codes total) of static text. Reading the standard does not enforce it, and neither does quoting it at an AI. Two existing tools close that gap:
 
 - `bcscheck` -- the on-demand AI compliance checker that scores a script against the full standard.
 - `ai-agents/` -- the package in this directory, which wires BCS knowledge directly into everyday AI sessions so enforcement happens *while you write*, not only at check time.
@@ -158,6 +158,6 @@ Hard-coded model names in these files silently break every user who has configur
 ## See Also
 
 - [../README.md](../README.md) -- top-level BCS project README
-- [../data/BASH-CODING-STANDARD.md](../data/BASH-CODING-STANDARD.md) -- the standard itself (105 rules across 12 sections)
+- [../data/BASH-CODING-STANDARD.md](../data/BASH-CODING-STANDARD.md) -- the standard itself (98 enforceable rules + 12 section overviews across 12 sections)
 - [../bcscheck](../bcscheck) -- the AI-powered compliance checker these tools shell out to
 - [AGENTS.md](AGENTS.md) -- flat machine-readable inventory of every file in this package

@@ -104,9 +104,12 @@ from the BCS LLM checker.
   tight inner-loop iteration; use `BCS_SKIP_FIXTURES=1` during
   development.
 - **Backend variance.** Different backends/models produce different
-  finding sets. The suite pins model tier `fast` and effort `low` so
-  runs are reproducible *enough*; expect the occasional drift when
-  model providers retrain.
+  finding sets. The suite pins effort `low` and the cheapest alias for
+  the reachable backend (`haiku` for anthropic, `flash-lite` for google,
+  `gpt5-mini` for openai, `qwen-small` for ollama, `claude-code:haiku`
+  for the Claude CLI; override the ollama choice with
+  `BCS_FIXTURES_MODEL`) so runs are reproducible *enough*; expect the
+  occasional drift when model providers retrain.
 - **No exact-match mode.** Deliberately — see Assertion model above.
 
 #fin

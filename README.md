@@ -204,9 +204,10 @@ family except `flash-lite`. Other models silently ignore the budget.
 
 | `-e` | Max tokens | Thinking budget | OpenAI `reasoning_effort` |
 |------|------------|------------------|---------------------------|
-| `low` | 4000 | 0 (off) | minimal |
+| `low` (alias `min`) | 4000 | 0 (off) | minimal |
 | `medium` (default) | 8000 | 2000 | low |
-| `high` | 32000 | 8000 | medium |
+| `high` | 24000 | 6000 | medium |
+| `xhigh` | 40000 | 12000 | high |
 | `max` | 64000 | 16000 | high |
 
 **Recommended defaults**
@@ -284,7 +285,7 @@ The [`ai-agents/`](ai-agents/README.md) package bundles BCS-aware agents, slash 
 | Component | Inventory | Use |
 |-----------|-----------|-----|
 | Agents | `bash-expert`, `bcs-auditor`, `script-scaffolder`, `shellcheck-fixer`, `documentation-writer` | Autonomous BCS-aware sub-agents |
-| Slash commands | `/audit-bash`, `/bcs-check`, `/bcs-codes`, `/fix-shellcheck`, `/scaffold`, `/pfu`, `/update-docs`, `/update-internal-docs` | Single-shot operations |
+| Slash commands | `/audit-bash`, `/bcs-check`, `/bcs-codes`, `/fix-shellcheck`, `/scaffold`, `/purpose-functionality-usage`, `/update-docs`, `/update-internal-docs` | Single-shot operations |
 | Rule snapshots | `bash-coding-standard.md`, `coding-principles.md`, `documentation.md`, ... | Drop-in rule files |
 
 See [`ai-agents/AGENTS.md`](ai-agents/AGENTS.md) for the flat file inventory.

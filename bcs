@@ -307,9 +307,10 @@ ${BOLD}User Rules:$NC
   Custom rules may be added in BCS9800-BCS9899 space via:
     <data-dir>/98-user.md         (single file)
     <data-dir>/98-user.d/*.md     (drop-in directory)
-  <data-dir> is resolved by FHS search (script's own data/, then
-  share/yatti/BCS/data under PREFIX, /usr/local, /usr/share — see
-  _find_data_dir). Either path may be a symlink to user-owned files.
+  <data-dir> is resolved by FHS search: script's own data/, then
+  ../share/yatti/BCS/data (relative install), \$PREFIX/share/yatti/BCS/data
+  (\$PREFIX defaults to /usr/local), then /usr/share/yatti/BCS/data — see
+  _find_data_dir. Either path may be a symlink to user-owned files.
   User rules are included in the generated BASH-CODING-STANDARD.md and
   respected by bcs check / bcs codes.
 
@@ -376,15 +377,17 @@ ${BOLD}Options:$NC
   -h, --help              Show this help
 
 Lists all BCS rule codes and titles extracted from section files and any
-user rules (98-user.md, 98-user.d/*.md). Each code is decorated with its
-effective tier (default from the rule body, overridden by policy.conf).
+user rules (98-user.md, 98-user.d/*.md). Each enforceable rule is decorated
+with its effective tier (default from the rule body, overridden by
+policy.conf). Section-overview headings (BCS##00) carry no tier and print
+without decoration.
 
 Use ${BOLD}--explain$NC to drill into a specific rule after a failed ${BOLD}bcs check$NC run --
 prints the full rule body (heading, tier, rationale, examples).
 
 ${BOLD}Example Output:$NC
   BCS0101 [core] Strict Mode
-  BCS0102 [recommended] Shebang
+  BCS0102 [core] Shebang
   BCS0107 [style] Function Organization
   [...]
 
