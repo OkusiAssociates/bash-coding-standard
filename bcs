@@ -3,6 +3,9 @@
 #shellcheck disable=SC2015
 # bcs - Bash Coding Standard CLI toolkit
 # Six subcommands for viewing, generating, and checking compliance with the Bash Coding Standard.
+# BCS0409: hard Bash 5.2+ floor -- must precede set -e and shopt (inherit_errexit needs 4.4+).
+(( BASH_VERSINFO[0] > 5 || (BASH_VERSINFO[0] == 5 && BASH_VERSINFO[1] >= 2) )) \
+  || { >&2 echo "${0##*/}: requires Bash >= 5.2 (have ${BASH_VERSION:-unknown})"; exit 2; }
 set -euo pipefail
 shopt -s inherit_errexit extglob nullglob
 
@@ -61,6 +64,9 @@ declare -A EFFORT_THINKING=([low]=0  [medium]=2000 [high]=6000  [xhigh]=12000 [m
 declare -A EFFORT_REASONING=([low]=minimal [medium]=low [high]=medium [xhigh]=high [max]=high)
 
 # ---- Messaging System ----
+# vecho()/debug() (and DEBUG) belong to the BCS reference messaging suite and
+# are kept intentionally even though bcs itself never calls them; BCS0405 is
+# suppressed on each definition below.
 declare -i VERBOSE=1 DEBUG=0
 
 if [[ -t 1 && -t 2 ]]; then
@@ -74,10 +80,12 @@ _msg() { >&2 printf "$SCRIPT_NAME: $1 %s\n" "${@:2}"; }
 error()   { _msg "$RED✗$NC" "$@"; }
 die()     { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 warn()    { _msg "$YELLOW▲$NC" "$@"; }
+#bcscheck disable=BCS0405
 vecho()   { ((VERBOSE)) || return 0; _msg '' "$@"; }
 info()    { ((VERBOSE)) || return 0; _msg "$CYAN◉$NC" "$@"; }
 success() { ((VERBOSE)) || return 0; _msg "$GREEN✓$NC" "$@"; }
-debug()   { ((DEBUG)) || return 0; _msg "${RED}DEBUG$NC" "$@"; }
+#bcscheck disable=BCS0405
+debug()   { ((DEBUG)) || return 0; _msg "$RED⦿$NC" "$@"; }
 
 noarg()   { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
 
@@ -87,6 +95,12 @@ noarg()   { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
 # Emit bcs.conf cascade paths (system first, user last).
 # Extracted as a helper so tests can override it.
 _conf_search_paths() {
+  # BCS_CONF_DIR overrides the FHS cascade with a single directory -- used for
+  # hermetic testing so a real /etc/<name>.conf cannot leak into a test run.
+  if [[ -n ${BCS_CONF_DIR:-} ]]; then
+    printf '%s\n' "$BCS_CONF_DIR"/"$SCRIPT_NAME".conf
+    return 0
+  fi
   printf '%s\n' \
     /etc/"$SCRIPT_NAME".conf \
     /etc/"$SCRIPT_NAME"/"$SCRIPT_NAME".conf \
@@ -592,7 +606,7 @@ _strip_json_fences() {
 #   $7 elapsed seconds
 _render_json_output() {
   local -- raw=$1 script_file=$2 backend=$3 model=$4 effort=$5
-  local -- strict=$6 elapsed_s=$7
+  local -i strict=$6 elapsed_s=$7
   local -- cleaned arr
   cleaned=$(_strip_json_fences "$raw")
   [[ -n $cleaned ]] || return 1
@@ -815,6 +829,7 @@ _llm_openai() {
   case $model in
     gpt-4*)         : ;;
     o[0-9]*|gpt-5*) reasoning=${EFFORT_REASONING[$effort]:-} ;;
+    *)              : ;;
   esac
 
   # Native JSON mode via response_format:{type:"json_object"} (GPT-4+).
@@ -881,6 +896,7 @@ _llm_google() {
   case $model in
     *flash-lite*)  : ;;
     *-2.5-*)       ((think_budget == 0)) || emit_thinking=1 ;;
+    *)             : ;;
   esac
 
   # Native JSON mode via generationConfig.response_mime_type. Gemini 1.5+
@@ -1234,6 +1250,7 @@ cmd_check() {
              "for the alias map, or run ${SCRIPT_NAME} help check. After updating," \
              "reload your shell to refresh tab-completion."
       ;;
+    *) : ;;
   esac
 
   case $model in
@@ -1675,6 +1692,14 @@ cmd_generate() {
 
   # First section's SPDX marker is preserved as the canonical header;
   # strip the marker from every subsequent section to avoid 14 duplicates.
+  # BCS0110: clean up the temp on interrupt/abort before the atomic mv.
+  # ${tmp_out@Q} bakes a shell-quoted literal into the trap -- injection-safe (an
+  # -o path with quotes cannot break out) and refire-safe: a RETURN trap persists
+  # and fires again when main returns, where a late "$tmp_out" would be unbound.
+  local -- tmp_out="$output_file".tmp
+  #bcscheck disable=BCS0603
+  #shellcheck disable=SC2064
+  trap "rm -f -- ${tmp_out@Q}" RETURN
   local -i first=1
   { for section_file in "${section_files[@]}"; do
       if ((first)); then
@@ -1685,8 +1710,8 @@ cmd_generate() {
         sed '/^<!-- SPDX-License-Identifier:/d' "$section_file"
       fi
     done
-  } > "$output_file".tmp
-  mv -f -- "$output_file".tmp "$output_file"
+  } > "$tmp_out"
+  mv -f -- "$tmp_out" "$output_file"
 
   # Resolve relative markdown links to absolute paths
   local -- bcs_root

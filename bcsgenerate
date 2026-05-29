@@ -3,5 +3,7 @@
 # bcsgenerate - convenience shim for `bcs generate`
 # Passes all arguments to bcs generate; defaults via ~/.config/bcs/bcs.conf
 set -euo pipefail
+shopt -s inherit_errexit
+command -v bcs >/dev/null || { >&2 echo "${0##*/}: bcs not found"; exit 18; }
 exec bcs generate "$@"
 #fin

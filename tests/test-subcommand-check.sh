@@ -264,6 +264,7 @@ printf '%s\n' '#!/bin/bash' 'echo hi' > "$sentinel_script"
 
 begin_test 'BCS_MODEL=claude-code on bare sentinel resolves to sonnet'
 out=$(PATH="$sentinel_dir:$PATH" HOME="$sentinel_home" XDG_CONFIG_HOME="$sentinel_home" \
+  BCS_CONF_DIR="$sentinel_home" \
   BCS_MODEL=claude-code \
   "$BCS_CMD" check -m claude-code -- "$sentinel_script" 2>&1 || true)
 assert_contains "$out" "resolved from model 'claude-sonnet-4-6'" \
@@ -271,12 +272,14 @@ assert_contains "$out" "resolved from model 'claude-sonnet-4-6'" \
 
 begin_test 'claude-code:claude-code suffix resolves to sonnet'
 out=$(PATH="$sentinel_dir:$PATH" HOME="$sentinel_home" XDG_CONFIG_HOME="$sentinel_home" \
+  BCS_CONF_DIR="$sentinel_home" \
   "$BCS_CMD" check -m claude-code:claude-code -- "$sentinel_script" 2>&1 || true)
 assert_contains "$out" "resolved from model 'claude-sonnet-4-6'" \
   'literal-suffix cycle broken' || true
 
 begin_test 'BCS_MODEL=opus on bare sentinel still resolves to claude-opus-4-7'
 out=$(PATH="$sentinel_dir:$PATH" HOME="$sentinel_home" XDG_CONFIG_HOME="$sentinel_home" \
+  BCS_CONF_DIR="$sentinel_home" \
   BCS_MODEL=opus \
   "$BCS_CMD" check -m claude-code -- "$sentinel_script" 2>&1 || true)
 assert_contains "$out" "resolved from model 'claude-opus-4-7'" \
