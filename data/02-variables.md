@@ -207,3 +207,38 @@ declare -- SHARE_DIR=/usr/local/share/myapp
 ```
 
 Make derived variables readonly only after all parsing and derivation is complete. Document hardcoded exceptions with comments.
+
+## BCS0210 Nameref Indirection
+
+**Tier:** recommended
+
+Use `local -n` namerefs for eval-free indirection — pass variables or arrays by reference instead of building code with `eval` (see BCS1004).
+
+```bash
+# correct — nameref aliases the caller's variable (eval-free indirection)
+set_to() {
+  local -n ref=$1
+  ref=$2
+}
+declare -- result=''
+set_to result 'done'           # result is now 'done'
+
+# correct — nameref lets a function grow the caller's array
+append_item() {
+  local -n arr=$1; shift
+  arr+=("$@")
+}
+declare -a queue=()
+append_item queue alpha beta   # queue is now (alpha beta)
+
+# correct — nameref-backed dispatch table (no eval, no indirect ${!var})
+run_action() {
+  local -n table=$1
+  "${table[$2]}"
+}
+
+# wrong — eval to assign through a variable name: quoting hell + injection risk
+eval "$1=\$2"
+```
+
+Name the nameref distinctly from any caller variable; a nameref that resolves to its own name is a fatal circular reference. Namerefs require Bash 4.3+ (BCS targets 5.2).

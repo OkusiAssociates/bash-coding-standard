@@ -13,7 +13,7 @@ cd bash-coding-standard && sudo make install
 bcs                                                  # View the standard
 bcs template -t complete -n deploy -o deploy.sh -x   # Scaffold a script
 bcs check deploy.sh                                  # AI-powered compliance check
-bcs codes                                            # List all 110 BCS rule codes
+bcs codes                                            # List all 112 BCS rule codes
 ```
 
 You now have:
@@ -78,7 +78,7 @@ See [Compliance Checking](#compliance-checking) for backend trade-offs.
 
 ## The Standard
 
-The Bash Coding Standard defines **98 substantive rules plus 12 section overviews** (110 total codes) across 12 sections in a single ~3,000-line document. Every rule carries examples, a `**Tier:**` label, and a BCS code (`BCSssrr`, four digits, zero-padded).
+The Bash Coding Standard defines **100 substantive rules plus 12 section overviews** (112 total codes) across 12 sections in a single ~3,000-line document. Every rule carries examples, a `**Tier:**` label, and a BCS code (`BCSssrr`, four digits, zero-padded).
 
 | # | Section | Focus |
 |---|---------|-------|
@@ -100,7 +100,7 @@ The Bash Coding Standard defines **98 substantive rules plus 12 section overview
 | Tier | Count | Severity | Behaviour |
 |------|-------|----------|-----------|
 | `core` | 34 | `[ERROR]` | Real correctness/safety bugs. Non-zero exit if any are found. |
-| `recommended` | 41 | `[WARN]` | Bash hygiene; prevents subtle issues. |
+| `recommended` | 43 | `[WARN]` | Bash hygiene; prevents subtle issues. |
 | `style` | 23 | `[WARN]` | Taste; no correctness impact. |
 | `disabled` | -- | (silent) | Applied only via `policy.conf`; never reported. |
 

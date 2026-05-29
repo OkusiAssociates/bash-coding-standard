@@ -215,3 +215,29 @@ fi
 # wrong
 [[ "$a" > "$b" ]]                    # string comparison, not numeric
 ```
+
+## BCS0507 Regex Captures with BASH_REMATCH
+
+**Tier:** recommended
+
+Extract substrings with the `[[ $s =~ re ]]` operator and the `BASH_REMATCH` array instead of shelling out to `grep`/`sed` for simple parsing.
+
+```bash
+# correct — capture groups land in BASH_REMATCH; [0] is the whole match
+declare -- date='2026-05-29'
+if [[ $date =~ ^([0-9]{4})-([0-9]{2})-([0-9]{2})$ ]]; then
+  declare -- year=${BASH_REMATCH[1]} month=${BASH_REMATCH[2]} day=${BASH_REMATCH[3]}
+fi
+
+# correct — copy captures out immediately; the next match overwrites BASH_REMATCH
+declare -- ver=''
+[[ $line =~ v([0-9]+\.[0-9]+) ]] && ver=${BASH_REMATCH[1]}
+
+# wrong — quoting the pattern forces a literal match (no regex, no captures)
+[[ $date =~ "^([0-9]{4})" ]]          # matches literal text; BASH_REMATCH empty
+
+# wrong — external tool for a job the shell does in-process
+year=$(echo "$date" | grep -oE '^[0-9]{4}')
+```
+
+Keep the regex unquoted — quoting any part forces a literal match. For complex patterns, assign to a variable and reference it unquoted: `[[ $s =~ $re ]]`. `BASH_REMATCH` is global and is overwritten by every successful `[[ =~ ]]`, so copy out captures before the next match. Character classes such as `[[:alpha:]]` are locale-sensitive.

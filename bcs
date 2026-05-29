@@ -388,6 +388,7 @@ ${BOLD}Options:$NC
   -E, --explain BCS####   Print the full body of a single rule and exit
   -p, --plain             Omit tier decoration (just "BCS#### Title")
   -x, --exclude-disabled  Skip rules that have been disabled via policy.conf
+  -J, --json              Emit a JSON array of {code,title,tier,section,disabled}
   -h, --help              Show this help
 
 Lists all BCS rule codes and titles extracted from section files and any
@@ -408,6 +409,10 @@ ${BOLD}Example Output:$NC
 ${BOLD}Explain a rule:$NC
   $SCRIPT_NAME codes -E BCS0606           # Print BCS0606 rule body
   $SCRIPT_NAME codes --explain BCS0101    # Same; long form
+
+${BOLD}Machine-readable export:$NC
+  $SCRIPT_NAME codes --json               # JSON array for editors/dashboards
+  $SCRIPT_NAME codes -J -T core | jq .    # JSON, core rules only
 HELP
 }
 
@@ -478,7 +483,7 @@ _find_md2ansi() {
 # headings (BCS##00, e.g. BCS0100) carry no **Tier:** field and are
 # silently skipped, leaving BCS_TIERS keyed only by enforceable rules.
 _load_tiers() {
-  ((_TIERS_LOADED)) && return 0
+  ((_TIERS_LOADED)) && return 0 ||:
   local -- data_dir
   data_dir=$(_find_data_dir) || return 1
   local -- current_code='' line
@@ -507,7 +512,7 @@ _policy_search_paths() {
 # Load policy.conf cascade (system -> user -> project; later wins).
 # Policy files are parsed line-by-line -- NEVER sourced as shell.
 _load_policy() {
-  ((_POLICY_LOADED)) && return 0
+  ((_POLICY_LOADED)) && return 0 ||:
   local -a search_paths=()
   readarray -t search_paths < <(_policy_search_paths)
   local -- path line code tier
@@ -1546,7 +1551,7 @@ $numbered_script"
 
 cmd_codes() {
   local -- tier_filter='' explain_code=''
-  local -i show_tier=1 include_disabled=1
+  local -i show_tier=1 include_disabled=1 json_mode=0
 
   while (($#)); do case $1 in
     -T|--tier)     noarg "$@"; shift; tier_filter=$1
@@ -1559,8 +1564,9 @@ cmd_codes() {
                    ;;
     -p|--plain)    show_tier=0 ;;
     -x|--exclude-disabled) include_disabled=0 ;;
+    -J|--json)     json_mode=1 ;;
     -h|--help)     show_codes_help; return 0 ;;
-    -[TEpxh]?*)    set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
+    -[TEpxhJ]?*)   set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
     -*)            die 22 "Invalid option ${1@Q}" ;;
     *)             die 2 "Unexpected argument ${1@Q}" ;;
   esac; shift; done
@@ -1591,6 +1597,10 @@ cmd_codes() {
     return 0
   fi
 
+  if ((json_mode)) && ! command -v jq &>/dev/null; then
+    die 18 'jq is required for --json output'
+  fi
+
   _load_tiers
   _load_policy
 
@@ -1599,7 +1609,8 @@ cmd_codes() {
   [[ -d $data_dir/98-user.d ]] && files+=("$data_dir"/98-user.d/*.md) ||:
 
   # Extract all ## BCS#### headers; decorate with effective tier
-  local -- line code title tier
+  local -- line code title tier section disabled_bool
+  local -a json_rows=()
   while IFS= read -r line; do
     if [[ $line =~ ^##\ (BCS[0-9]+)\ (.+)$ ]]; then
       code=${BASH_REMATCH[1]}
@@ -1607,13 +1618,37 @@ cmd_codes() {
       tier=$(_effective_tier "$code")
       [[ -z $tier_filter || $tier == "$tier_filter" ]] || continue
       ((include_disabled)) || [[ $tier != disabled ]] || continue
-      if ((show_tier)) && [[ -n $tier ]]; then
+      if ((json_mode)); then
+        # Collect a tab-separated row; jq builds the JSON so all escaping
+        # is delegated to jq (never hand-concatenate JSON). Section is the
+        # two-digit field after the BCS prefix; section overviews (empty
+        # tier) become null in the output.
+        section=${code:3:2}
+        [[ $tier == disabled ]] && disabled_bool=true || disabled_bool=false
+        json_rows+=("$(printf '%s\t%s\t%s\t%s\t%s' \
+          "$code" "$title" "$tier" "$section" "$disabled_bool")")
+      elif ((show_tier)) && [[ -n $tier ]]; then
         printf '%s [%s] %s\n' "$code" "$tier" "$title"
       else
         printf '%s %s\n' "$code" "$title"
       fi
     fi
   done < <(cat "${files[@]}" 2>/dev/null ||:)
+
+  if ((json_mode)); then
+    if ((${#json_rows[@]})); then
+      printf '%s\n' "${json_rows[@]}" \
+        | jq -R -s 'split("\n")
+            | map(select(length > 0) | split("\t"))
+            | map({code:     .[0],
+                   title:    .[1],
+                   tier:     (if .[2] == "" then null else .[2] end),
+                   section:  .[3],
+                   disabled: (.[4] == "true")})'
+    else
+      printf '[]\n'
+    fi
+  fi
 }
 
 # Subcommand: generate

@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# The LLM fixture suite (tests/test-check-fixtures.sh) needs a reachable
+# backend; skip it here so CI requires no API keys and incurs no cost.
+env:
+  BCS_SKIP_FIXTURES: '1'
+
+jobs:
+  test:
+    name: shellcheck + tests
+    runs-on: ubuntu-24.04   # ships Bash 5.2 (BCS targets 5.2+)
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install shellcheck + jq
+        run: sudo apt-get update && sudo apt-get install -y shellcheck jq
+
+      - name: Tool versions
+        run: |
+          bash --version | head -1
+          shellcheck --version
+          jq --version
+
+      - name: ShellCheck (CLI + shims + tests + fixtures + accuracy)
+        run: |
+          shellcheck -x \
+            bcs bcscheck bcscodes bcsdisplay bcsgenerate bcstemplate \
+            tests/*.sh \
+            tests/fixtures/*.sh \
+            tests/fixtures/probabilistic/*.sh \
+            tests/fixtures/clean/*.sh \
+            tests/accuracy/bcs-accuracy-score.sh \
+            tests/accuracy/bcs-check-accuracy.sh
+
+      - name: Self-compliance invariant
+        run: ./tests/test-self-compliance.sh
+
+      - name: Full test suite (LLM fixtures skipped)
+        run: ./tests/run-all-tests.sh

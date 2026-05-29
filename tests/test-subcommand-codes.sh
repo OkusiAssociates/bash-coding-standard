@@ -43,9 +43,9 @@ for i in 01 02 03 04 05 06 07 08 09 10 11 12; do
 done
 assert_equal 12 "$sections_found" 'all 12 sections have codes' || true
 
-# Test: exact code count is 110 (12 section overviews + 98 substantive rules)
-begin_test 'exactly 110 BCS codes'
-assert_equal 110 "$code_count" "exactly 110 codes (got $code_count)" || true
+# Test: exact code count is 112 (12 section overviews + 100 substantive rules)
+begin_test 'exactly 112 BCS codes'
+assert_equal 112 "$code_count" "exactly 112 codes (got $code_count)" || true
 
 # Test: codes are in ascending order
 begin_test 'codes are in ascending order'
@@ -66,6 +66,53 @@ assert_contains "$help_output" 'bcs codes' 'help has command name' || true
 # Test: codes rejects invalid options
 begin_test 'codes rejects invalid options'
 assert_fails 'rejects --bogus' "$BCS_CMD" codes --bogus || true
+
+# Tests: --json structured export (requires jq; skip cleanly if jq absent)
+if command -v jq &>/dev/null; then
+  json_output=$("$BCS_CMD" codes --json 2>/dev/null)
+
+  begin_test 'codes --json is a valid JSON array'
+  if jq -e 'type == "array"' <<<"$json_output" &>/dev/null; then
+    printf '  %s✓%s --json parses as a JSON array\n' "$GREEN" "$NC"
+    TESTS_PASSED+=1
+  else
+    printf '  %s✗%s --json did not parse as a JSON array\n' "$RED" "$NC"
+    TESTS_FAILED+=1
+  fi
+
+  begin_test 'codes --json length equals text-mode count'
+  json_count=$(jq 'length' <<<"$json_output")
+  assert_equal "$code_count" "$json_count" "json length == text count ($code_count)" || true
+
+  begin_test 'codes --json objects have required keys'
+  if jq -e 'all(.[]; has("code") and has("title") and has("tier")
+                     and has("section") and has("disabled"))' \
+       <<<"$json_output" &>/dev/null; then
+    printf '  %s✓%s every object has code/title/tier/section/disabled\n' "$GREEN" "$NC"
+    TESTS_PASSED+=1
+  else
+    printf '  %s✗%s an object is missing a required key\n' "$RED" "$NC"
+    TESTS_FAILED+=1
+  fi
+
+  begin_test 'codes --json tiers are all legal values'
+  if jq -e 'all(.[]; .tier == null
+                     or (.tier | IN("core","recommended","style","disabled")))' \
+       <<<"$json_output" &>/dev/null; then
+    printf '  %s✓%s all tiers legal (or null for overviews)\n' "$GREEN" "$NC"
+    TESTS_PASSED+=1
+  else
+    printf '  %s✗%s found an illegal tier value\n' "$RED" "$NC"
+    TESTS_FAILED+=1
+  fi
+
+  begin_test 'codes --json codes match text mode'
+  text_codes=$("$BCS_CMD" codes -p 2>/dev/null | awk '{print $1}')
+  json_codes=$(jq -r '.[].code' <<<"$json_output")
+  assert_equal "$text_codes" "$json_codes" 'json codes identical to text-mode codes' || true
+else
+  printf '  %s◉%s jq not found — skipping codes --json tests\n' "$CYAN" "$NC"
+fi
 
 print_summary 'codes'
 #fin

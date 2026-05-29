@@ -594,6 +594,41 @@ declare -- SHARE_DIR=/usr/local/share/myapp
 
 Make derived variables readonly only after all parsing and derivation is complete. Document hardcoded exceptions with comments.
 
+## BCS0210 Nameref Indirection
+
+**Tier:** recommended
+
+Use `local -n` namerefs for eval-free indirection — pass variables or arrays by reference instead of building code with `eval` (see BCS1004).
+
+```bash
+# correct — nameref aliases the caller's variable (eval-free indirection)
+set_to() {
+  local -n ref=$1
+  ref=$2
+}
+declare -- result=''
+set_to result 'done'           # result is now 'done'
+
+# correct — nameref lets a function grow the caller's array
+append_item() {
+  local -n arr=$1; shift
+  arr+=("$@")
+}
+declare -a queue=()
+append_item queue alpha beta   # queue is now (alpha beta)
+
+# correct — nameref-backed dispatch table (no eval, no indirect ${!var})
+run_action() {
+  local -n table=$1
+  "${table[$2]}"
+}
+
+# wrong — eval to assign through a variable name: quoting hell + injection risk
+eval "$1=\$2"
+```
+
+Name the nameref distinctly from any caller variable; a nameref that resolves to its own name is a fatal circular reference. Namerefs require Bash 4.3+ (BCS targets 5.2).
+
 ---
 
 # Section 03: Strings & Quoting
@@ -1414,6 +1449,32 @@ fi
 # wrong
 [[ "$a" > "$b" ]]                    # string comparison, not numeric
 ```
+
+## BCS0507 Regex Captures with BASH_REMATCH
+
+**Tier:** recommended
+
+Extract substrings with the `[[ $s =~ re ]]` operator and the `BASH_REMATCH` array instead of shelling out to `grep`/`sed` for simple parsing.
+
+```bash
+# correct — capture groups land in BASH_REMATCH; [0] is the whole match
+declare -- date='2026-05-29'
+if [[ $date =~ ^([0-9]{4})-([0-9]{2})-([0-9]{2})$ ]]; then
+  declare -- year=${BASH_REMATCH[1]} month=${BASH_REMATCH[2]} day=${BASH_REMATCH[3]}
+fi
+
+# correct — copy captures out immediately; the next match overwrites BASH_REMATCH
+declare -- ver=''
+[[ $line =~ v([0-9]+\.[0-9]+) ]] && ver=${BASH_REMATCH[1]}
+
+# wrong — quoting the pattern forces a literal match (no regex, no captures)
+[[ $date =~ "^([0-9]{4})" ]]          # matches literal text; BASH_REMATCH empty
+
+# wrong — external tool for a job the shell does in-process
+year=$(echo "$date" | grep -oE '^[0-9]{4}')
+```
+
+Keep the regex unquoted — quoting any part forces a literal match. For complex patterns, assign to a variable and reference it unquoted: `[[ $s =~ $re ]]`. `BASH_REMATCH` is global and is overwritten by every successful `[[ =~ ]]`, so copy out captures before the next match. Character classes such as `[[:alpha:]]` are locale-sensitive.
 
 ---
 

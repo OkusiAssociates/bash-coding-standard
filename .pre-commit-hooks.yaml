@@ -1,0 +1,23 @@
+# Hooks provided by the Bash Coding Standard for the pre-commit framework.
+# https://pre-commit.com  —  consume from another repo's .pre-commit-config.yaml.
+#
+# `bcs check` is an LLM grader: roughly 30–600s per file depending on backend,
+# model, and effort. Run it at PRE-PUSH (not on every commit) and pair it with a
+# fast shellcheck hook at the commit stage. A ready-to-paste .pre-commit-config.yaml
+# (shellcheck at pre-commit + bcs-check at pre-push) is in docs/CI.md.
+#
+# Requires `bcs` on PATH (`sudo make install`) and a configured LLM backend
+# (~/.config/bcs/bcs.conf). Pin a cheap model there, e.g. MODEL_DEFAULT or
+# `args: [--model, haiku]` in your config, to keep the gate affordable.
+
+- id: bcs-check
+  name: BCS check (core, strict)
+  description: >-
+    LLM-graded BCS compliance gate; fails on any core-tier violation. Slow, so
+    the default stage is pre-push. Override `args` to add `--model <alias>` or
+    widen the tier.
+  entry: bash -c 'for f; do bcs check --strict --tier core "$f" || exit 1; done' bcs-check
+  language: system
+  types: [shell]
+  require_serial: true
+  stages: [pre-push]

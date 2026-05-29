@@ -9,6 +9,23 @@ Turns the `bcs check` prompt from untested prose into a tested
 specification: if a refactor of the prompt, the backend selection, or
 the tier mapping regresses finding detection, a test will fail.
 
+## Layout
+
+```
+tests/fixtures/*.sh            gated corpus — one core-rule violation each;
+                               test-check-fixtures.sh asserts each is detected
+tests/fixtures/probabilistic/  scored-but-not-gated — recommended-tier rules and
+                               core rules cheap models catch inconsistently
+tests/fixtures/clean/          fully compliant scripts (empty expect pragma);
+                               any finding is a false positive
+```
+
+Only the top-level `*.sh` files form the `test-check-fixtures.sh` recall gate.
+The `probabilistic/` and `clean/` subdirectories are read by the accuracy scorer
+(`tests/accuracy/bcs-accuracy-score.sh`; see `../accuracy/README.md`). The
+"MUST carry a non-empty expect pragma" rule below applies to the gated top-level
+fixtures — `clean/` fixtures deliberately carry an *empty* `bcs-fixture-expect:`.
+
 ## Running the suite
 
 ```bash

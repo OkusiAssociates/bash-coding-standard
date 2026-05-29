@@ -1,0 +1,52 @@
+name: Accuracy (manual)
+
+# Opt-in run of the bcs check accuracy scorer (precision/recall/F1 + stability).
+# Requires at least one LLM backend secret configured on the repository:
+#   ANTHROPIC_API_KEY, OPENAI_API_KEY, or GOOGLE_API_KEY.
+# Never runs on push/PR — dispatch it by hand from the Actions tab.
+on:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: 'Model alias (blank = cheapest reachable backend)'
+        required: false
+        default: ''
+      effort:
+        description: 'Effort level (low|medium|high|xhigh|max)'
+        required: false
+        default: 'low'
+      runs:
+        description: 'Runs per fixture (stability sampling)'
+        required: false
+        default: '3'
+
+jobs:
+  score:
+    name: score bcs check accuracy
+    runs-on: ubuntu-24.04
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+      BCS_SCORE_MODEL: ${{ inputs.model }}
+      BCS_SCORE_EFFORT: ${{ inputs.effort }}
+      BCS_SCORE_RUNS: ${{ inputs.runs }}
+      # Dispatched on purpose: fail loudly if no backend secret is configured.
+      BCS_FIXTURES_REQUIRE_BACKEND: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install jq + curl
+        run: sudo apt-get update && sudo apt-get install -y jq curl
+
+      - name: Score accuracy
+        run: ./tests/accuracy/bcs-accuracy-score.sh
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: accuracy-reports
+          path: tests/accuracy/accuracy-*.*
+          if-no-files-found: ignore

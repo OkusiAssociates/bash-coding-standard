@@ -90,7 +90,7 @@ _bcs() {
           return
           ;;
       esac
-      mapfile -t COMPREPLY < <(compgen -W '-T --tier -E --explain -p --plain -x --exclude-disabled -h --help' -- "$cur")
+      mapfile -t COMPREPLY < <(compgen -W '-T --tier -E --explain -p --plain -x --exclude-disabled -J --json -h --help' -- "$cur")
       ;;
 
     generate)
