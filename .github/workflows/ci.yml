@@ -28,8 +28,11 @@ jobs:
           jq --version
 
       - name: ShellCheck (CLI + shims + tests + fixtures + accuracy)
+        # Gate on warning+ severity. info/style codes (SC2015 on intentional
+        # `cmd && {..} ||:`, SC2317 on mocked builtins in tests) are advisory
+        # and vary by shellcheck version; bcs + shims stay clean at all levels.
         run: |
-          shellcheck -x \
+          shellcheck -x --severity=warning \
             bcs bcscheck bcscodes bcsdisplay bcsgenerate bcstemplate \
             tests/*.sh \
             tests/fixtures/*.sh \
