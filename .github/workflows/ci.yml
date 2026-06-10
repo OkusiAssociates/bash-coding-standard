@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-24.04   # ships Bash 5.2 (BCS targets 5.2+)
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install shellcheck + jq
         run: sudo apt-get update && sudo apt-get install -y shellcheck jq

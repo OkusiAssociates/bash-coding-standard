@@ -35,7 +35,7 @@ jobs:
       BCS_FIXTURES_REQUIRE_BACKEND: '1'
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install jq + curl
         run: sudo apt-get update && sudo apt-get install -y jq curl
@@ -45,7 +45,7 @@ jobs:
 
       - name: Upload reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: accuracy-reports
           path: tests/accuracy/accuracy-*.*
