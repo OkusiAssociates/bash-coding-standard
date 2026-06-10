@@ -121,7 +121,7 @@ Subcommands, frequency-ordered:
 
 ```bash
 bcs check myscript.sh                      # Default alias 'sonnet' (claude-sonnet-4-6)
-bcs check -m opus deploy.sh                # Alias-expanded to claude-opus-4-7
+bcs check -m opus deploy.sh                # Alias-expanded to claude-opus-4-8
 bcs check -m gpt5 -e high deploy.sh        # OpenAI gpt-5 with reasoning_effort=medium
 bcs check -m claude-code:opus ci.sh        # Claude Code CLI with the opus alias
 bcs check --strict -T core deploy.sh       # CI gate: core-only, warnings fatal
@@ -168,7 +168,7 @@ keywords (`fast`/`balanced`/`thorough`) exit non-zero with a migration hint.
 
 | `-m` value | Backend | Notes |
 |------------|---------|-------|
-| `claude-*` (e.g. `claude-opus-4-7`) | Anthropic API | Pass-through |
+| `claude-*` (e.g. `claude-opus-4-8`) | Anthropic API | Pass-through |
 | `gemini-*` (e.g. `gemini-2.5-pro`) | Google Gemini API | Pass-through |
 | `gpt-*` / `o[0-9]*` (e.g. `gpt-5`, `o3-mini`) | OpenAI API | Pass-through |
 | `claude-code` | Claude Code CLI | `BCS_MODEL` or `sonnet` default |
@@ -183,7 +183,7 @@ Set `MODEL_ALIASES[name]=canonical-id` in `bcs.conf` to extend or override.
 
 | Alias | Canonical ID | Backend |
 |-------|--------------|---------|
-| `opus` | `claude-opus-4-7` | Anthropic |
+| `opus` | `claude-opus-4-8` | Anthropic |
 | `sonnet` (default) | `claude-sonnet-4-6` | Anthropic |
 | `haiku` | `claude-haiku-4-5` | Anthropic |
 | `flash` | `gemini-2.5-flash` | Google |
@@ -315,7 +315,7 @@ shellcheck -x bcs bcscheck           # Mandatory static check
 make check && make test              # Equivalent shortcuts
 ```
 
-✓ **Self-compliance:** `bcs check bcs` passes -- the `bcs` script is itself BCS-compliant. The invariant is enforced by [`tests/test-self-compliance.sh`](tests/test-self-compliance.sh) and runs as part of every test suite invocation.
+✓ **Self-compliance:** the `bcs` script is itself BCS-compliant. [`tests/test-self-compliance.sh`](tests/test-self-compliance.sh) enforces this *structurally* on every test run -- it asserts `shellcheck -x` is clean and that the mandatory structure is present (shebang, strict mode, `shopt`, `main()`, `#fin`, messaging helpers, line-count envelope). The full LLM `bcs check bcs` is available as a manual deep check but is not run in CI (slow, non-deterministic, requires a backend).
 
 ## Related Resources
 

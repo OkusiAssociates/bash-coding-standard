@@ -277,12 +277,12 @@ out=$(PATH="$sentinel_dir:$PATH" HOME="$sentinel_home" XDG_CONFIG_HOME="$sentine
 assert_contains "$out" "resolved from model 'claude-sonnet-4-6'" \
   'literal-suffix cycle broken' || true
 
-begin_test 'BCS_MODEL=opus on bare sentinel still resolves to claude-opus-4-7'
+begin_test 'BCS_MODEL=opus on bare sentinel still resolves to claude-opus-4-8'
 out=$(PATH="$sentinel_dir:$PATH" HOME="$sentinel_home" XDG_CONFIG_HOME="$sentinel_home" \
   BCS_CONF_DIR="$sentinel_home" \
   BCS_MODEL=opus \
   "$BCS_CMD" check -m claude-code -- "$sentinel_script" 2>&1 || true)
-assert_contains "$out" "resolved from model 'claude-opus-4-7'" \
+assert_contains "$out" "resolved from model 'claude-opus-4-8'" \
   'documented BCS_MODEL fallback still honoured' || true
 
 rm -rf "$sentinel_dir" "$sentinel_home" "$sentinel_script"

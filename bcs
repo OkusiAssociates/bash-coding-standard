@@ -36,10 +36,16 @@ declare -A BCS_TIERS=()
 declare -A BCS_POLICY=()
 declare -i _TIERS_LOADED=0 _POLICY_LOADED=0
 
+# Process-wide temp cleanup registry. Function-local RETURN traps remove
+# temps on the normal path, but RETURN does not fire on die/errexit/SIGINT;
+# the EXIT/signal-backed net installed by main() guarantees removal on
+# abnormal exit too.
+declare -a _TMP_CLEANUP=()
+
 # Model alias map -- short names users type that expand to canonical model IDs.
 # Override or extend in bcs.conf via `MODEL_ALIASES[name]=canonical-id`.
 declare -A MODEL_ALIASES=(
-  [opus]=claude-opus-4-7
+  [opus]=claude-opus-4-8
   [sonnet]=claude-sonnet-4-6
   [haiku]=claude-haiku-4-5
   [flash]=gemini-2.5-flash
@@ -272,7 +278,7 @@ ${BOLD}Model selection:$NC
 
   Built-in aliases (extend or override in bcs.conf via MODEL_ALIASES[k]=v):
 
-    opus       -> claude-opus-4-7
+    opus       -> claude-opus-4-8
     sonnet     -> claude-sonnet-4-6        (default)
     haiku      -> claude-haiku-4-5
     flash      -> gemini-2.5-flash
@@ -288,7 +294,7 @@ ${BOLD}Model selection:$NC
 
 ${BOLD}Effort Levels:$NC
   Each level sets max output tokens and (on capable models) the thinking or
-  reasoning budget. Anthropic thinking is auto-enabled on opus + sonnet-4-6/4-7
+  reasoning budget. Anthropic thinking is auto-enabled on opus + sonnet-4-6
   and skipped silently elsewhere; OpenAI reasoning_effort is auto-enabled on
   o-series + gpt-5*; Gemini thinkingConfig is auto-enabled on the 2.5 family
   except flash-lite. Ollama ignores both.
@@ -580,6 +586,19 @@ _dump_response() {
   printf '%s\n' "$1" > "$BCS_RESPONSE_DUMP" 2>/dev/null ||:
 }
 
+# Register a path for process-exit cleanup (see _TMP_CLEANUP).
+_register_tmp() { _TMP_CLEANUP+=("$1"); }
+
+# Remove every registered temp path. Installed as the EXIT trap by main() so
+# temps are reclaimed even when a function aborts via die/errexit/SIGINT,
+# where its local RETURN trap never fires.
+_cleanup_tmps() {
+  local -- p
+  for p in "${_TMP_CLEANUP[@]}"; do
+    [[ -z $p ]] || rm -rf -- "$p" 2>/dev/null ||:
+  done
+}
+
 # ---- JSON output helpers ----
 
 # Strip optional markdown code fences from an LLM response. Used by JSON
@@ -655,7 +674,7 @@ _render_json_output() {
     || return 1
 }
 
-# Expand a model alias (e.g. "opus") to its canonical ID (e.g. "claude-opus-4-7").
+# Expand a model alias (e.g. "opus") to its canonical ID (e.g. "claude-opus-4-8").
 # Returns the input unchanged when no alias matches -- direct model IDs and
 # unknown names pass straight through to backend resolution.
 _expand_alias() { printf '%s\n' "${MODEL_ALIASES[$1]:-$1}"; }
@@ -716,6 +735,15 @@ $json
 MD
 }
 
+# Extract and concatenate every text block from an Anthropic Messages API
+# response body (read on stdin). With extended thinking enabled the first
+# content block is a `thinking` block (no `.text`), so the old
+# `.content[0].text` read returned empty and the checker silently passed
+# everything; select blocks by the presence of `.text` instead.
+_extract_anthropic_text() {
+  jq -r '[.content[]? | select(.text != null) | .text] | join("")'
+}
+
 # LLM backend: Anthropic Messages API
 _llm_anthropic() {
   local -- model=$1 effort=$2 sys=$3 usr=$4
@@ -748,9 +776,12 @@ _llm_anthropic() {
 
   local -- raw body
   local -i http_code
+  # Pass the secret header via --config from a builtin-printf process
+  # substitution so the key never appears in curl's argv (visible in `ps`
+  # and /proc/PID/cmdline to other local users).
   raw=$(curl -s --max-time 300 -w $'\n%{http_code}' \
+    --config <(printf 'header = "x-api-key: %s"\n' "$ANTHROPIC_API_KEY") \
     -H 'Content-Type: application/json' \
-    -H 'x-api-key: '"$ANTHROPIC_API_KEY" \
     -H 'anthropic-version: 2023-06-01' \
     -d @- \
     'https://api.anthropic.com/v1/messages' <<< "$payload") || die 5 'Anthropic API connection failed'
@@ -763,7 +794,10 @@ _llm_anthropic() {
     die 5 "Anthropic API error (HTTP $http_code)" ${errmsg:+"$errmsg"}
   fi
 
-  jq -r '.content[0].text // empty' <<< "$body"
+  local -- text
+  text=$(_extract_anthropic_text <<< "$body") || die 5 'Failed to parse Anthropic response'
+  [[ -n $text ]] || die 5 'Anthropic API returned no text content (response had only thinking blocks or was empty)'
+  printf '%s\n' "$text"
   echo "___TOKENS___ $(jq -r '"in=\(.usage.input_tokens // 0) out=\(.usage.output_tokens // 0)"' <<< "$body")"
 }
 
@@ -868,9 +902,10 @@ _llm_openai() {
 
   local -- raw body
   local -i http_code
+  # Secret header via --config (builtin printf) keeps the key out of argv.
   raw=$(curl -s --max-time 300 -w $'\n%{http_code}' \
+    --config <(printf 'header = "Authorization: Bearer %s"\n' "$OPENAI_API_KEY") \
     -H 'Content-Type: application/json' \
-    -H 'Authorization: Bearer '"$OPENAI_API_KEY" \
     -d @- \
     'https://api.openai.com/v1/chat/completions' <<< "$payload") || die 5 'OpenAI API connection failed'
   http_code=${raw##*$'\n'}
@@ -941,9 +976,10 @@ _llm_google() {
   local -- url=https://generativelanguage.googleapis.com/v1beta/models/"$model":generateContent
   local -- raw body
   local -i http_code
+  # Secret header via --config (builtin printf) keeps the key out of argv.
   raw=$(curl -s --max-time 300 -w $'\n%{http_code}' \
+    --config <(printf 'header = "x-goog-api-key: %s"\n' "$api_key") \
     -H 'Content-Type: application/json' \
-    -H 'x-goog-api-key: '"$api_key" \
     -d @- \
     "$url" <<< "$payload") || die 5 'Google API connection failed'
   http_code=${raw##*$'\n'}
@@ -1050,9 +1086,12 @@ Respect inline suppression: eg, #bcscheck disable=BCS0101 exempts the next line/
   # cd to clean temp dir -- prevents claude from loading local CLAUDE.md
   local -- check_dir
   check_dir=$(mktemp -d -t 'bcs-XXXXX') || die 1 'Failed to create temp dir'
-  #bcscheck disable=BCS0603
-  #shellcheck disable=SC2064
-  trap "cd '$PWD' 2>/dev/null; rm -rf '$check_dir'" RETURN
+  _register_tmp "$check_dir"
+  # Capture the return directory in a local and reference it from a
+  # single-quoted trap (expanded at trap time, not definition time) so a
+  # cwd path containing shell metacharacters cannot inject commands.
+  local -- ret_dir=$PWD
+  trap 'cd "$ret_dir" 2>/dev/null ||:; rm -rf "$check_dir"' RETURN
   cd "$check_dir"
   [[ ! -d /run/user/"$EUID" ]] || declare -x TMPDIR=/run/user/"$EUID"
 
@@ -1246,7 +1285,7 @@ cmd_check() {
   #   2. Handle the claude-code sentinel: lock the backend to claude, then
   #      strip the prefix so the suffix can be alias-expanded like any other
   #      model name. Empty suffix falls back to BCS_MODEL or the sonnet alias.
-  #   3. Expand alias (e.g. opus -> claude-opus-4-7). Direct IDs pass through.
+  #   3. Expand alias (e.g. opus -> claude-opus-4-8). Direct IDs pass through.
   #   4. Sniff backend from the canonical name when not already locked.
   case $model in
     fast|balanced|thorough)
@@ -1486,6 +1525,13 @@ $numbered_script"
 
   ((!VERBOSE)) || info "${diag_msgs[@]}"
 
+  # An empty result from a successful call is an anomaly, not a clean pass:
+  # neither text nor JSON mode may report a non-compliant script as clean.
+  if ((exit_code == 0)) && [[ -z $result ]]; then
+    warn 'LLM returned empty result'
+    exit_code=5
+  fi
+
   # Output + severity-based exit
   if ((json_output)); then
     # JSON mode: validate raw array, wrap with envelope, emit on stdout.
@@ -1510,6 +1556,12 @@ $numbered_script"
         fi
         exit_code=5
       fi
+    else
+      # Empty result (already flagged as exit 5 above): still emit a valid
+      # envelope so JSON consumers always receive parseable output.
+      _render_json_output '[]' "$script_file" "$backend" "$model" \
+        "$effort" "$strict" "$SECONDS" 2>/dev/null \
+        || printf '%s\n' '{"source":"bcs","meta":{},"comments":[]}'
     fi
   else
     [[ -z $result ]] || echo "$result"
@@ -1519,22 +1571,14 @@ $numbered_script"
     fi
   fi
 
-  # Diagnostics on failure or debug:
-  #   - API backend failed, or
-  #   - empty result with non-claude backend (likely parse failure), or
-  #   - --debug was requested
-  # In these cases, surface the saved raw-response path so the user can
-  # diagnose without re-running. Non-API (claude-code CLI) backend does
-  # not dump -- it returns text directly, not JSON.
+  # Diagnostics on failure or debug: any non-zero exit (API failure, invalid
+  # JSON, or the empty-result anomaly promoted to 5 above), or --debug.
+  # Surface the saved raw-response path so the user can diagnose without
+  # re-running. Non-API (claude-code CLI) backend does not dump -- it returns
+  # text directly, not JSON.
   local -i dump_show=0
-  if ((debug)); then
+  if ((debug)) || ((exit_code != 0)); then
     dump_show=1
-  elif ((exit_code != 0)); then
-    dump_show=1
-  elif [[ -z $result && $backend != claude ]]; then
-    dump_show=1
-    warn 'LLM returned empty result'
-    exit_code=5
   fi
   if ((dump_show)); then
     # Re-emit diagnostics on failure even when non-verbose, plus exit code
@@ -1732,6 +1776,7 @@ cmd_generate() {
   # -o path with quotes cannot break out) and refire-safe: a RETURN trap persists
   # and fires again when main returns, where a late "$tmp_out" would be unbound.
   local -- tmp_out="$output_file".tmp
+  _register_tmp "$tmp_out"
   #bcscheck disable=BCS0603
   #shellcheck disable=SC2064
   trap "rm -f -- ${tmp_out@Q}" RETURN
@@ -1784,6 +1829,12 @@ cmd_help() {
 # ---- Main dispatcher ----
 
 main() {
+  # Process-wide temp cleanup net (covers die/errexit/SIGINT, which never
+  # fire function-local RETURN traps). Signal traps exit so EXIT then runs.
+  trap _cleanup_tmps EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+
   read_conf ||:
 
   local -- subcmd=display

@@ -19,7 +19,7 @@ echo 'Testing: _expand_alias + _sniff_backend'
 # --- _expand_alias built-ins ------------------------------------------
 
 declare -a builtins=(
-  'opus|claude-opus-4-7'
+  'opus|claude-opus-4-8'
   'sonnet|claude-sonnet-4-6'
   'haiku|claude-haiku-4-5'
   'flash|gemini-2.5-flash'

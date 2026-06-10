@@ -145,5 +145,23 @@ out=$(_render_json_output "$arr" /tmp/x.sh anthropic claude-haiku-4-5 medium 1 4
 meta_keys=$(jq -r '.meta | keys_unsorted | sort | join(",")' <<< "$out")
 assert_equal 'backend,effort,elapsed_s,file,model,strict,tool,version' "$meta_keys" 'meta keys'
 
+# ---- _extract_anthropic_text (thinking-block regression, T-01) ------------
+
+begin_test 'extract: thinking block at content[0] is skipped, text returned'
+body='{"content":[{"type":"thinking","thinking":"reasoning..."},{"type":"text","text":"[]"}]}'
+assert_equal '[]' "$(_extract_anthropic_text <<< "$body")"
+
+begin_test 'extract: multiple text blocks are concatenated in order'
+body='{"content":[{"type":"text","text":"foo"},{"type":"text","text":"bar"}]}'
+assert_equal 'foobar' "$(_extract_anthropic_text <<< "$body")"
+
+begin_test 'extract: typeless block with .text still extracted (mock-compat)'
+body='{"content":[{"text":"hi"}]}'
+assert_equal 'hi' "$(_extract_anthropic_text <<< "$body")"
+
+begin_test 'extract: thinking-only body yields empty (guarded as error upstream)'
+body='{"content":[{"type":"thinking","thinking":"only thinking"}]}'
+assert_equal '' "$(_extract_anthropic_text <<< "$body")"
+
 print_summary 'json-output'
 #fin
