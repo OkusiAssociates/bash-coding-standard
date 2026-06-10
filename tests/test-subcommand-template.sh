@@ -95,19 +95,20 @@ for ttype in minimal basic complete library; do
   assert_not_contains "$tpl_output" '{{' "no {{ in $ttype output" || true
 done
 
-# Test: all template types produce shellcheck-clean output
-# SC2034 (unused vars) and SC2155 (declare+assign) are excluded because
-# templates define scaffold variables that user code will reference.
+# Test: all template types produce genuinely shellcheck-clean output.
+# Scaffold-variable findings (SC2034/SC2155) are handled by inline
+# `#shellcheck disable=` directives in the templates themselves, so the
+# generated script must pass a plain `shellcheck -x` with no exclusions.
 for ttype in minimal basic complete library; do
   begin_test "$ttype template passes shellcheck"
   sc_file=$(mktemp --suffix=.sh)
   "$BCS_CMD" template -t "$ttype" -n testscript -o "$sc_file" -f 2>/dev/null
-  if shellcheck -e SC2034 -e SC2155 "$sc_file" 2>/dev/null; then
+  if shellcheck -x "$sc_file" 2>/dev/null; then
     printf '  %s✓%s %s shellcheck clean\n' "$GREEN" "$NC" "$ttype"
     TESTS_PASSED+=1
   else
     printf '  %s✗%s %s shellcheck has findings\n' "$RED" "$NC" "$ttype"
-    shellcheck -e SC2034 -e SC2155 "$sc_file" 2>&1 | head -20
+    shellcheck -x "$sc_file" 2>&1 | head -20
     TESTS_FAILED+=1
   fi
   rm -f "$sc_file"
@@ -138,6 +139,23 @@ assert_fails 'rejects bogus type' "$BCS_CMD" template -t bogus || true
 begin_test 'template -h shows help'
 output=$("$BCS_CMD" template -h 2>/dev/null)
 assert_contains "$output" 'bcs template' 'help has command name' || true
+
+# Test: '&' / backslash in a value is inserted literally, not as matched text
+# (patsub_replacement guard, T-28)
+begin_test 'ampersand in name inserted literally'
+out=$("$BCS_CMD" template -t basic -n 'A&B' -d 'plain' 2>/dev/null)
+assert_contains "$out" 'A&B' 'literal ampersand preserved' || true
+assert_not_contains "$out" 'A{{NAME}}B' 'ampersand not expanded to matched text' || true
+
+# Test: library template sanitizes a non-identifier name (T-07a)
+begin_test 'library name sanitized to a valid identifier'
+lib=$("$BCS_CMD" template -t library -n 'my.tool' 2>/dev/null)
+assert_contains "$lib" 'my_tool_VERSION' 'dot replaced with underscore' || true
+assert_not_contains "$lib" 'my.tool_VERSION' 'invalid identifier not emitted' || true
+lib_file=$(mktemp --suffix=.sh)
+printf '%s\n' "$lib" > "$lib_file"
+assert_success 'sanitized library parses' bash -n "$lib_file"
+rm -f "$lib_file"
 
 print_summary 'template'
 #fin

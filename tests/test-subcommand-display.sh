@@ -60,6 +60,22 @@ else
 fi
 rm -rf "$tmpdir"
 
+# Test: --symlink refuses to overwrite an existing regular file (T-30a)
+begin_test 'display --symlink refuses to clobber a regular file'
+tmpdir=$(mktemp -d)
+printf 'precious\n' > "$tmpdir"/BASH-CODING-STANDARD.md
+clobber_rc=0
+(cd "$tmpdir" && "$BCS_CMD" display --symlink &>/dev/null) || clobber_rc=$?
+if ((clobber_rc != 0)) && [[ ! -L "$tmpdir"/BASH-CODING-STANDARD.md ]] \
+   && [[ $(< "$tmpdir"/BASH-CODING-STANDARD.md) == precious ]]; then
+  printf '  %s✓%s regular file preserved, symlink refused\n' "$GREEN" "$NC"
+  TESTS_PASSED+=1
+else
+  printf '  %s✗%s regular file was clobbered by --symlink\n' "$RED" "$NC"
+  TESTS_FAILED+=1
+fi
+rm -rf "$tmpdir"
+
 # Test: invalid option
 begin_test 'display rejects invalid options'
 assert_fails 'rejects --invalid' "$BCS_CMD" display --invalid || true

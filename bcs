@@ -495,6 +495,8 @@ _load_tiers() {
   local -- current_code='' line tier
   local -a files=("$data_dir"/[0-9]*.md)
   [[ -d $data_dir/98-user.d ]] && files+=("$data_dir"/98-user.d/*.md) ||:
+  # No section files: skip rather than `cat` with no args, which reads stdin.
+  ((${#files[@]})) || { _TIERS_LOADED=1; return 0; }
   while IFS= read -r line || [[ -n $line ]]; do
     if [[ $line =~ ^##[[:space:]]+(BCS[0-9]+)[[:space:]] ]]; then
       current_code=${BASH_REMATCH[1]}
@@ -1123,7 +1125,10 @@ cmd_display() {
     -c|--cat)     force_cat=1 ;;
     -f|--file)    _find_bcs_md || die 3 'BASH-CODING-STANDARD.md not found'; return 0 ;;
     -S|--symlink) bcs_file=$(_find_bcs_md) || die 3 'BASH-CODING-STANDARD.md not found'
-                  ln -sf "$bcs_file" .
+                  local -- _link=./BASH-CODING-STANDARD.md
+                  [[ ! -e $_link || -L $_link ]] \
+                    || die 22 "Refusing to overwrite existing file ${_link@Q}"
+                  ln -sf "$bcs_file" "$_link"
                   info "Symlinked BASH-CODING-STANDARD.md → $bcs_file"
                   return 0
                   ;;
@@ -1148,7 +1153,8 @@ cmd_display() {
     local -- md2ansi_cmd
     md2ansi_cmd=$(_find_md2ansi) || md2ansi_cmd=''
     if [[ -n $md2ansi_cmd ]]; then
-      "$md2ansi_cmd" -- "$bcs_file" | less -FXRS
+      # Tolerate early pager quit (SIGPIPE on md2ansi) -- display still succeeded.
+      "$md2ansi_cmd" -- "$bcs_file" | less -FXRS ||:
       return 0
     fi
   fi
@@ -1209,12 +1215,27 @@ cmd_template() {
     die 22 "Output file already exists ${output_file@Q} (use -f to overwrite)"
   fi
 
-  # Read and substitute placeholders
+  # The library template uses {{NAME}} as a shell identifier prefix, so a name
+  # like 'my.tool' or 'my-tool' would yield invalid function/variable names.
+  # Sanitize to a valid identifier for that type only (other types use {{NAME}}
+  # only in comments/strings, where punctuation is harmless).
+  if [[ $template_type == library ]]; then
+    script_name=${script_name//[^A-Za-z0-9_]/_}
+    [[ $script_name == [0-9]* ]] && script_name=_$script_name ||:
+  fi
+
+  # Read and substitute placeholders. Disable patsub_replacement so a literal
+  # '&' or backslash in a value is inserted verbatim rather than treated as the
+  # matched text (bash 5.2 enables patsub_replacement by default).
   local -- content
   content=$(< "$template_file")
+  local -i _had_patsub=0
+  shopt -q patsub_replacement 2>/dev/null && _had_patsub=1 ||:
+  shopt -u patsub_replacement 2>/dev/null ||:
   content=${content//\{\{NAME\}\}/$script_name}
   content=${content//\{\{DESCRIPTION\}\}/$description}
   content=${content//\{\{VERSION\}\}/$version}
+  ((_had_patsub)) && shopt -s patsub_replacement 2>/dev/null ||:
 
   # Write output
   if [[ -n $output_file ]]; then
@@ -1235,7 +1256,6 @@ cmd_check() {
   local -- script_file='' model=${BCS_MODEL:-sonnet} effort=${BCS_EFFORT:-medium}
   local -i strict=${BCS_STRICT:-0} debug=${BCS_DEBUG:-0} json_output=${BCS_JSON:-0}
   local -i shellcheck_ctx=${BCS_SHELLCHECK:-1}
-  local -ar onoff=(off on)
   local -- backend=''
   local -- tier_filter=${BCS_TIER:-} min_tier_filter=${BCS_MIN_TIER:-}
 
@@ -1357,7 +1377,10 @@ cmd_check() {
   bcs_file=$(_find_bcs_md) || die 3 'BASH-CODING-STANDARD.md not found'
 
   local -- check_cmd="bcs check --model ${model@Q} --effort ${effort@Q}"
-  check_cmd+=" --strict ${onoff[strict]@Q} ${script_file@Q}"
+  # --strict is a flag, not --strict on/off; emit the correct one for replay.
+  local -- _strict_flag='--no-strict'
+  ((strict)) && _strict_flag='--strict' ||:
+  check_cmd+=" $_strict_flag ${script_file@Q}"
   ((!VERBOSE)) || info "Checking ${script_file@Q} against BCS (backend=$backend)..." "$check_cmd"
 
   # Set up raw-response dump path. Always written; only announced on
@@ -1670,6 +1693,8 @@ cmd_codes() {
   # Include BCS section files + user rule files
   local -a files=("$data_dir"/[0-9]*.md)
   [[ -d $data_dir/98-user.d ]] && files+=("$data_dir"/98-user.d/*.md) ||:
+  # No section files: error out rather than `cat` with no args (reads stdin).
+  ((${#files[@]})) || die 3 "No section files found in ${data_dir@Q}"
 
   # Extract all ## BCS#### headers; decorate with effective tier
   local -- line code title tier section disabled_bool
