@@ -126,6 +126,7 @@ bcs check -m gpt5 -e high deploy.sh        # OpenAI gpt-5 with reasoning_effort=
 bcs check -m claude-code:opus ci.sh        # Claude Code CLI with the opus alias
 bcs check --strict -T core deploy.sh       # CI gate: core-only, warnings fatal
 bcs check --no-shellcheck myscript.sh      # Skip the shellcheck static-analysis prelude
+bcs check -j ci.sh | jq '.comments[]'      # JSON output (shellcheck json1-style envelope)
 bcscheck myscript.sh                       # Equivalent shim (defaults from bcs.conf)
 ```
 
@@ -225,6 +226,7 @@ family except `flash-lite`. Other models silently ignore the budget.
 - `-T <tier>` -- only findings at that tier (e.g. `bcscheck -T core deploy.sh` as a CI gate).
 - `-M <tier>` -- that tier or stricter (`-M recommended` excludes style).
 - `--strict` -- treat warnings as violations (non-zero exit on any finding).
+- `-j` / `--json` -- emit a single `{source, meta, comments}` JSON object on stdout, schema-compatible with `shellcheck --format=json1`, for CI ingestion. Exit 5 if the LLM emits invalid JSON (raw response preserved in the dump file).
 - `#bcscheck disable=BCSdddd` on its own line suppresses a rule for the next command, function, or `{ ... }` block -- same scope rules as `shellcheck` directives.
 
 **Accuracy data** -- backend accuracy is measured against four BCS-compliant scripts (`cln`, `md2ansi`, `which`, `tests/accuracy/bcs-check-accuracy.sh`) across multiple models and effort levels. See [`tests/accuracy/LLM-ACCURACY.md`](tests/accuracy/LLM-ACCURACY.md) for the current scoring matrix and refresh date.

@@ -1,7 +1,7 @@
 .\" BCS Manual Page
-.\" Generated: 2026-05-06
+.\" Generated: 2026-06-10
 .\"
-.TH BCS 1 "May 2026" "BCS 2.0.1" "User Commands"
+.TH BCS 1 "June 2026" "BCS 2.0.1" "User Commands"
 .\"
 .SH NAME
 bcs \- Bash Coding Standard CLI toolkit
@@ -216,8 +216,10 @@ Every API response is saved to
 .IR ${XDG_STATE_HOME:\-~/.local/state}/bcs/last\-response.txt
 (or
 .I /tmp/bcs\-last\-response.XXXXXX
-via mktemp if no state directory). The Claude Code CLI backend does not
-dump \(em it returns text directly, not JSON.
+via mktemp if no state directory). The Claude Code CLI backend returns
+text directly (not JSON) and normally does not dump; with
+.BR \-\-json ,
+an invalid response is still preserved in the dump file.
 .PP
 Inline suppression:
 .B #bcscheck disable=BCS\fIxxxx\fR
@@ -274,8 +276,11 @@ Show codes help and exit.
 Regenerate
 .I BASH\-CODING\-STANDARD.md
 from the individual section source files
-.RI ( data/[0-9]*.md ).
-A table of contents header is prepended automatically.
+.RI ( data/[0-9]*.md ),
+joined with horizontal-rule separators. User rules in
+.IR data/98\-user.md " and " data/98\-user.d/*.md
+are spliced in after section 12, before the coda. The output file is
+written read-only (mode 444) to discourage direct edits.
 .TP
 .BR \-o ", " \-\-output " " \fIFILE\fR
 Output file (default:
@@ -376,6 +381,21 @@ Default JSON output mode (0 or 1). Overridden by
 Enable (1, default) or disable (0) the shellcheck static-analysis prelude.
 Overridden by
 .BR \-\-shellcheck / \-\-no\-shellcheck .
+.TP
+.B BCS_TIER
+Default tier filter (core, recommended, style). Overridden by
+.BR \-T .
+.TP
+.B BCS_MIN_TIER
+Default minimum-tier filter (core, recommended, style). Overridden by
+.BR \-M .
+.TP
+.B BCS_DEBUG
+Announce the raw-response dump path on success (0 or 1). Overridden by
+.BR \-D .
+.TP
+.B BCS_RESPONSE_DUMP
+Override the raw-response dump file path.
 .TP
 .B MODEL_ALIASES
 Bash associative array; extend or override the built-in alias map in

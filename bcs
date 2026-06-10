@@ -268,8 +268,9 @@ ${BOLD}Raw Response Dump:$NC
   Every API response is saved to \${XDG_STATE_HOME:-~/.local/state}/bcs/last-response.txt
   (or /tmp/bcs-last-response.XXXXXX via mktemp if no state dir). On failure or
   --debug, the path is printed to stderr so you can inspect the raw JSON
-  without re-running the check. The Claude Code CLI backend does not dump --
-  it returns text directly, not JSON.
+  without re-running the check. The Claude Code CLI backend returns text
+  directly (not JSON) and normally does not dump; with --json, an invalid
+  response is still preserved in the dump file.
 
 ${BOLD}Model selection:$NC
   The -m value is alias-expanded then routed to the matching backend.
@@ -301,7 +302,7 @@ ${BOLD}Model selection:$NC
 
 ${BOLD}Effort Levels:$NC
   Each level sets max output tokens and (on capable models) the thinking or
-  reasoning budget. Anthropic thinking is auto-enabled on opus + sonnet-4-6
+  reasoning budget. Anthropic thinking is auto-enabled on opus + sonnet-4-6/4-7
   and skipped silently elsewhere; OpenAI reasoning_effort is auto-enabled on
   o-series + gpt-5*; Gemini thinkingConfig is auto-enabled on the 2.5 family
   except flash-lite. Ollama ignores both.
@@ -359,6 +360,7 @@ ${BOLD}Environment / Config Variables:$NC
   BCS_DEBUG           Default --debug (0 or 1); announces raw-response dump path
   BCS_JSON            Default --json (0 or 1); structured JSON output on stdout
   BCS_SHELLCHECK      Prepend shellcheck --format=json -x as static-analysis context (0 or 1; default 1)
+  BCS_RESPONSE_DUMP   Override the raw-response dump file path
   MODEL_ALIASES       Bash assoc. array; set in bcs.conf to add/override aliases
                       (e.g. MODEL_ALIASES[mymodel]=qwen3.5:14b)
   OLLAMA_HOST         Ollama server address (default: localhost:11434)
@@ -447,6 +449,9 @@ BASH-CODING-STANDARD.md document.
 User rules in data/98-user.md and data/98-user.d/*.md are spliced into
 the output after section 12, before the coda. These files may be symlinks
 to user-owned rule files outside the BCS tree.
+
+The output file is written read-only (mode 444) to discourage direct
+edits -- edit the section files and regenerate instead.
 HELP
 }
 
@@ -1305,8 +1310,9 @@ cmd_check() {
                     ;;
   esac; shift; done
 
-  # BCS_EFFORT from env/conf bypasses the in-loop validation and the 'min'
-  # alias, so normalize and validate the final effort value here.
+  # Effort may arrive via -e, BCS_EFFORT env, or bcs.conf; none are validated
+  # at parse time, so normalize the 'min' alias and validate the final value
+  # once here.
   [[ $effort == min ]] && effort=low
   [[ " ${VALID_EFFORTS[*]} " == *" $effort "* ]] || die 22 "Invalid effort ${effort@Q}"
 
