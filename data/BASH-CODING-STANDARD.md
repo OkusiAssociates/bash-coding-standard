@@ -254,7 +254,7 @@ main "$@"
 #fin
 ```
 
-Never define `main()` at the top. Never define business logic before the utilities it calls. In some cases, nested functions are permissible within other functions.
+Never define `main()` at the top. Never define business logic before the utilities it calls. Nested function definitions are permitted only when the inner function is private to and only callable after the outer function runs (e.g. dynamically generated handlers); otherwise define all functions at top level.
 
 ## BCS0108 Main Function and Script Invocation
 
@@ -270,6 +270,7 @@ main() {
     -N|--not-dry-run) DRY_RUN=0 ;;
     -v|--verbose)     VERBOSE=1 ;;
     -q|--quiet)       VERBOSE=0 ;;
+    -*)               die 22 "Invalid option ${1@Q}" ;;
   esac; shift; done
   readonly VERBOSE DRY_RUN
 
@@ -295,7 +296,6 @@ Every script must end with `#fin\n` as the mandatory final line.
 # correct — last line of file
 main "$@"
 #fin
-
 ```
 
 ```bash
@@ -352,7 +352,7 @@ read_conf() {
 
   for conf_file in "${search_paths[@]}"; do
     [[ -f $conf_file ]] || continue
-    # shellcheck source=/dev/null
+    #shellcheck source=/dev/null
     source "$conf_file"
     loaded+=1
   done
@@ -395,7 +395,7 @@ The cascade `source`-based pattern is the standard approach. Scripts that intent
 
 ## BCS0200 Section Overview
 
-**All variables must have explicit type declarations.** This section covers declaration patterns, scoping, naming conventions, arrays, parameter expansion, and boolean flags.
+**Variables should carry explicit type declarations (`declare`/`local` with `-i`/`-a`/`-A`/`--`).** This section covers declaration patterns, scoping, naming conventions, arrays, parameter expansion, and boolean flags.
 
 ## BCS0201 Type-Specific Declarations
 
@@ -447,6 +447,8 @@ Without `local`, variables become global, overwrite same-named variables, persis
 
 **Tier:** style
 
+Constants and globals: UPPER_CASE. Locals and function names: lower_case with underscores. Private functions: leading underscore.
+
 ```bash
 # correct
 readonly MAX_RETRIES=3                # UPPER_CASE for constants/globals
@@ -464,7 +466,7 @@ my-function() { :; }                  # dashes in names
 declare -i verbose=1                  # lowercase for global
 ```
 
-Avoid use single-letter names or shell built-in names like `PATH`, `HOME`, `USER`.
+Avoid single-letter names, and never reuse special shell variable names such as `PATH`, `HOME`, `USER`, `IFS`.
 
 ## BCS0204 Constants and Environment Variables
 
@@ -482,7 +484,7 @@ declare -rx BUILD_ENV=production     # readonly + exported
 export VERSION=1.0.0                 # children rarely need VERSION
 ```
 
-Don't make user-configurable variables readonly before argument parsing is complete.
+Don't make user-configurable variables readonly prematurely (timing: see BCS0205).
 
 ## BCS0205 Readonly Patterns
 
@@ -509,7 +511,7 @@ readonly PREFIX BIN_DIR SHARE_DIR
 readonly VERBOSE=1    # can't change during arg parsing
 ```
 
-Three-step workflow: (1) declare with defaults, (2) parse/modify in main, (3) readonly after parsing.
+Three-step workflow: (1) declare with defaults, (2) parse/modify/derive in main, (3) readonly only after all parsing and derivation is complete.
 
 ## BCS0206 Arrays
 
@@ -602,7 +604,7 @@ declare -- BIN_DIR=/usr/local/bin
 declare -- SHARE_DIR=/usr/local/share/myapp
 ```
 
-Make derived variables readonly only after all parsing and derivation is complete. Document hardcoded exceptions with comments.
+Readonly timing for derived variables: see BCS0205. Document hardcoded exceptions with comments.
 
 ## BCS0210 Nameref Indirection
 
@@ -667,7 +669,7 @@ EMAIL="user@domain.com"
 VAR=""
 ```
 
-One-word alphanumeric literals (`a-zA-Z0-9_-./`) may be unquoted: `STATUS=success`, `[[ "$level" == INFO ]]`. When in doubt, quote everything.
+One-word alphanumeric literals (`a-zA-Z0-9_-./`) may be unquoted: `STATUS=success`, `[[ $level == INFO ]]`. When in doubt, quote everything.
 
 Quote variable portions separately from literal path components: write `"$PREFIX"/bin`. The combined form `"$PREFIX/bin"` is compliant and MUST NOT be flagged.
 
@@ -729,7 +731,7 @@ Inside `[[ ]]`, **no word splitting or pathname expansion occurs** — variables
 
 **Tier:** recommended
 
-Use quoted delimiter `<<'EOF'` for literal content. Use unquoted delimiter `<<EOF` for variable expansion. Use descriptive names for the delimiter.
+Use quoted delimiter `<<'EOF'` for literal content. Use unquoted delimiter `<<EOF` for variable expansion. The delimiter should name the content (`VARS`, `SQL`, `USAGE`), not be a generic `EOF`/`EOT`.
 
 This is the canonical code for here-document delimiter-quoting findings; BCS0904 covers heredocs in file-operation contexts and defers delimiter semantics here.
 
@@ -740,9 +742,9 @@ Variables like $HOME are literal text.
 VARS
 
 # correct — expansion needed
-cat <<EOT
+cat <<GREETING
 Hello $USER, your home is $HOME
-EOT
+GREETING
 
 # correct — indented (strips leading tabs, not spaces)
 if true; then
@@ -752,7 +754,7 @@ if true; then
 fi
 ```
 
-Quote here-doc delimiters for JSON, SQL, or any content with `$` characters.
+Quote the delimiter for JSON, SQL, or any content where `$`, backticks, or backslashes must remain literal — the criterion is intended expansion, not mere presence of `$`.
 
 ## BCS0305 Printf Patterns
 
@@ -912,6 +914,7 @@ main() {
   # Parse arguments
   while (($#)); do case $1 in
     -v|--verbose) VERBOSE=1 ;;
+    -n|--dry-run) DRY_RUN=1 ;;
     -h|--help)    show_help; exit 0 ;;
     -*)           die 22 "Invalid option ${1@Q}" ;;
     *)            FILES+=("$1") ;;
@@ -1079,7 +1082,17 @@ which curl &>/dev/null
 command -v sed >/dev/null || die 18 'sed required'
 ```
 
-Use lazy loading for expensive resources: initialize only when first needed.
+For expensive checks (network probes, slow tool startup), defer the check until first use with a guard variable instead of checking eagerly at startup:
+
+```bash
+# correct — lazy check: runs once, on first use
+declare -i _CURL_OK=0
+_ensure_curl() {
+  ((_CURL_OK)) && return 0
+  command -v curl >/dev/null || die 18 'curl required: apt install curl'
+  _CURL_OK=1
+}
+```
 
 ## BCS0409 Bash Version Detection
 
@@ -1531,6 +1544,8 @@ Error handling covers strict mode, exit codes, traps, return value checking, and
 
 **Tier:** core
 
+Scripts run under `set -euo pipefail` (BCS0101). Handle expected failures explicitly — `||:`, an `if` guard, or `|| die` — never by disabling strict mode with `set +e`.
+
 `set -euo pipefail` provides three protections: `-e` exits on command failure, `-u` exits on undefined variables, `-o pipefail` fails pipeline if any command fails.
 
 ```bash
@@ -1819,7 +1834,7 @@ warn()    { _msg "$YELLOW▲$NC" "$@"; }
 vecho()   { ((VERBOSE)) || return 0; _msg '' "$@"; }
 info()    { ((VERBOSE)) || return 0; _msg "$CYAN◉$NC" "$@"; }
 success() { ((VERBOSE)) || return 0; _msg "$GREEN✓$NC" "$@"; }
-debug()   { ((DEBUG)) || return 0; _msg "${RED}DEBUG$NC" "$@"; }
+debug()   { ((DEBUG)) || return 0; _msg "$RED⦿$NC" "$@"; }
 ```
 
 Rules:
@@ -2008,6 +2023,8 @@ yn 'Deploy to production?' || die 0 'Cancelled'
 
 **Tier:** style
 
+When messaging functions emit icons, use these glyphs for these purposes; do not invent alternatives.
+
 | Icon | Purpose |
 |------|---------|
 | `◉` | Info |
@@ -2016,6 +2033,8 @@ yn 'Deploy to production?' || die 0 'Cancelled'
 | `✓` | Success |
 | `✗` | Error |
 | `⚠` | Caution |
+
+`▲` is the icon for `warn()` messages; `⚠` is reserved for inline caution markers in help and documentation text.
 
 ## BCS0711 Combined Redirection
 
@@ -2182,7 +2201,7 @@ Include arg-taking options in the character class. They work correctly when last
 
 **Tier:** recommended
 
-Use consistent option letters and variable names across all BCS-compliant scripts. Avoid reassign a standard letter to a different purpose.
+Use consistent option letters and variable names across all BCS-compliant scripts. Avoid reassigning a standard letter to a different purpose.
 
 **Strongly Recommended** — include in every script that uses options:
 
@@ -2363,7 +2382,7 @@ Use `cat` only when concatenating multiple files or using cat-specific options (
 
 **Tier:** recommended
 
-Piping `find` into a loop (`find ... | while read`) creates a subshell -- any variable set in the loop body is invisible to the parent. Use process substitution when state must escape the loop; use `-exec ... +` or built-in actions when no state is needed.
+Piping `find` into a loop (`find ... | while read`) creates a subshell -- any variable set in the loop body is invisible to the parent. That lost-state defect is owned at core severity by BCS0504/BCS0903 -- cite those codes for it. This rule covers the find-specific pitfalls and performance guidance: use process substitution when state must escape the loop; use `-exec ... +` or built-in actions when no state is needed.
 
 **Stateful iteration -- process substitution + null-delimited input:**
 
@@ -2396,7 +2415,7 @@ find . -type d -empty -delete
 **Anti-patterns:**
 
 ```bash
-# wrong — subshell loses count
+# wrong — subshell loses count (core violation: cite BCS0504/BCS0903)
 declare -i count=0
 find . -name '*.log' | while read -r f; do
   count+=1
@@ -2471,8 +2490,8 @@ Never trust inherited IFS values.
 # correct — one-line IFS for single command
 IFS=',' read -ra fields <<< "$csv_data"
 
-# correct — subshell isolation
-( IFS=','; read -ra fields <<< "$data" )
+# correct — subshell isolation (results must be used inside the subshell)
+( IFS=','; read -ra fields <<< "$data"; printf '%s\n' "${fields[@]}" )
 
 # correct — local scoping in functions
 parse_csv() {
@@ -2526,7 +2545,7 @@ eval "${action}_function"
 
 **Tier:** core
 
-Validate and sanitize all user input. Use whitelist over blacklist.
+Validate and sanitize all user input. Use whitelist over blacklist. Pass `--` before any pathname operand that originates from variables or user input (`rm -- "$f"`, `cp -- "$src" "$dst"`) to prevent option injection via filenames beginning with `-`.
 
 ```bash
 # correct — validate integer
@@ -2540,7 +2559,7 @@ real_path=$(realpath -e -- "$path")
 # correct — sanitize filename
 [[ $name =~ ^[a-zA-Z0-9._-]+$ ]] || die 22 "Invalid filename ${name@Q}"
 
-# correct — always use -- before file arguments
+# correct — -- before pathname operands from variables or input
 rm -- "$user_file"
 cp -- "$source" "$dest"
 ```
@@ -2664,7 +2683,7 @@ cleanup() {
   local -i exitcode=${1:-$?}
   trap - SIGINT SIGTERM EXIT
   for pid in "${pids[@]}"; do
-    kill "$pid" 2>/dev/null || true
+    kill "$pid" 2>/dev/null ||:
   done
   exit "$exitcode"
 }
@@ -2690,7 +2709,7 @@ declare -a pids=()
 declare -i errors=0
 
 for server in "${servers[@]}"; do
-  check_server "$server" > "$temp_dir"/"$server".out 2>&1 &
+  check_server "$server" &> "$temp_dir"/"$server".out &
   pids+=($!)
 done
 
@@ -2742,7 +2761,7 @@ done
 
 **Tier:** core
 
-Wrap network operations with timeout.
+Wrap network and remote operations (`ssh`, `curl`, `wget`, `nc`) with `timeout` or tool-native timeout flags. Bounding other operations that can block indefinitely — interactive `read` (use `read -t`), long-running local commands — is recommended but not required by this rule.
 
 ```bash
 # correct
@@ -2764,7 +2783,8 @@ esac
 read -r -t 10 -p 'Enter value: ' value || value='default'
 
 # correct — SSH and curl timeouts
-ssh -o ConnectTimeout=10 -o BatchMode=yes "$host" 'command'
+# ConnectTimeout bounds connection only — wrap in `timeout` to bound total runtime
+timeout 300 ssh -o ConnectTimeout=10 -o BatchMode=yes "$host" 'command'
 curl --connect-timeout 10 --max-time 60 "$url"
 ```
 
@@ -2777,9 +2797,12 @@ Use exponential backoff for retries. Never use fixed delays.
 ```bash
 # correct
 declare -i attempt=1 max_attempts=5 delay max_delay=60 jitter
+out=$(mktemp)
+trap 'rm -f "$out"' EXIT
 
 while ((attempt <= max_attempts)); do
-  if try_operation; then
+  # Success requires both exit code 0 and non-empty output
+  if try_operation > "$out" && [[ -s "$out" ]]; then
     break
   fi
 
@@ -2798,7 +2821,7 @@ done
 while ! curl "$url"; do :; done      # floods failing services
 ```
 
-Validate success conditions beyond exit code — check output validity: `[[ -s "$temp_file" ]]`.
+Validate success conditions beyond exit code — the example treats empty output as failure via `[[ -s "$out" ]]`.
 
 ---
 
@@ -2812,11 +2835,9 @@ Code formatting, comments, development practices, debugging, dry-run patterns, a
 
 **Tier:** style
 
-```
 - 2 spaces for indentation (never tabs)
 - Lines under 120 characters (except URLs/paths)
-- Use \ for line continuation
-```
+- When a line must exceed the limit, break it with `\` continuation
 
 ## BCS1202 Comments
 
@@ -2847,8 +2868,6 @@ VERBOSE=1
 # Check if file exists
 [[ -f $file ]]
 ```
-
-Use standard documentation icons where applicable: `◉` (info), `⦿` (debug), `▲` (warn), `✓` (success), `✗` (error).
 
 LLM-based checkers should flag comments that mechanically paraphrase the next line. They should NOT flag comments that are terse but add information (e.g., the "readarray quirk:" example above).
 
@@ -3196,7 +3215,7 @@ help:
 
 **Tier:** style
 
-Prefer `printf '%()T'` (Bash 5.0+ builtin strftime) over `$(date)` for date/time formatting — avoids fork overhead (~28x faster in benchmarks).
+Prefer `printf '%()T'` (builtin strftime) over `$(date)` for date/time formatting — avoids fork overhead (~28x faster in benchmarks).
 
 ```bash
 # correct — builtin, no fork
@@ -3486,7 +3505,7 @@ The `IFS=value command` form modifies IFS only for the duration of that command.
 
 ## Common Non-Issues
 
-- `SCRIPT_DIR` omitted when unused (BCS0103 note: "Not all scripts will require all Script Metadata variables")
+- `SCRIPT_DIR` omitted when unused (BCS0103: "Not all scripts need all four" script metadata variables)
 - `return 0` from `main()` instead of `exit 0` — functionally equivalent for non-sourced scripts (WARNING at most, not VIOLATION)
 - Config search paths adjusted from the BCS0111 reference order — acceptable when documented in help text
 - `local` declarations between logical sections within a function — permitted by BCS0401 ("Declarations may appear mid-body... between logical sections"), only prohibited inside loops

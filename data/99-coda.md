@@ -52,7 +52,7 @@ The `IFS=value command` form modifies IFS only for the duration of that command.
 
 ## Common Non-Issues
 
-- `SCRIPT_DIR` omitted when unused (BCS0103 note: "Not all scripts will require all Script Metadata variables")
+- `SCRIPT_DIR` omitted when unused (BCS0103: "Not all scripts need all four" script metadata variables)
 - `return 0` from `main()` instead of `exit 0` — functionally equivalent for non-sourced scripts (WARNING at most, not VIOLATION)
 - Config search paths adjusted from the BCS0111 reference order — acceptable when documented in help text
 - `local` declarations between logical sections within a function — permitted by BCS0401 ("Declarations may appear mid-body... between logical sections"), only prohibited inside loops

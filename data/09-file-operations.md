@@ -119,7 +119,7 @@ Use `cat` only when concatenating multiple files or using cat-specific options (
 
 **Tier:** recommended
 
-Piping `find` into a loop (`find ... | while read`) creates a subshell -- any variable set in the loop body is invisible to the parent. Use process substitution when state must escape the loop; use `-exec ... +` or built-in actions when no state is needed.
+Piping `find` into a loop (`find ... | while read`) creates a subshell -- any variable set in the loop body is invisible to the parent. That lost-state defect is owned at core severity by BCS0504/BCS0903 -- cite those codes for it. This rule covers the find-specific pitfalls and performance guidance: use process substitution when state must escape the loop; use `-exec ... +` or built-in actions when no state is needed.
 
 **Stateful iteration -- process substitution + null-delimited input:**
 
@@ -152,7 +152,7 @@ find . -type d -empty -delete
 **Anti-patterns:**
 
 ```bash
-# wrong — subshell loses count
+# wrong — subshell loses count (core violation: cite BCS0504/BCS0903)
 declare -i count=0
 find . -name '*.log' | while read -r f; do
   count+=1

@@ -9,11 +9,9 @@ Code formatting, comments, development practices, debugging, dry-run patterns, a
 
 **Tier:** style
 
-```
 - 2 spaces for indentation (never tabs)
 - Lines under 120 characters (except URLs/paths)
-- Use \ for line continuation
-```
+- When a line must exceed the limit, break it with `\` continuation
 
 ## BCS1202 Comments
 
@@ -44,8 +42,6 @@ VERBOSE=1
 # Check if file exists
 [[ -f $file ]]
 ```
-
-Use standard documentation icons where applicable: `◉` (info), `⦿` (debug), `▲` (warn), `✓` (success), `✗` (error).
 
 LLM-based checkers should flag comments that mechanically paraphrase the next line. They should NOT flag comments that are terse but add information (e.g., the "readarray quirk:" example above).
 
@@ -393,7 +389,7 @@ help:
 
 **Tier:** style
 
-Prefer `printf '%()T'` (Bash 5.0+ builtin strftime) over `$(date)` for date/time formatting — avoids fork overhead (~28x faster in benchmarks).
+Prefer `printf '%()T'` (builtin strftime) over `$(date)` for date/time formatting — avoids fork overhead (~28x faster in benchmarks).
 
 ```bash
 # correct — builtin, no fork

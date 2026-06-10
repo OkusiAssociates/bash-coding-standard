@@ -73,7 +73,7 @@ warn()    { _msg "$YELLOW▲$NC" "$@"; }
 vecho()   { ((VERBOSE)) || return 0; _msg '' "$@"; }
 info()    { ((VERBOSE)) || return 0; _msg "$CYAN◉$NC" "$@"; }
 success() { ((VERBOSE)) || return 0; _msg "$GREEN✓$NC" "$@"; }
-debug()   { ((DEBUG)) || return 0; _msg "${RED}DEBUG$NC" "$@"; }
+debug()   { ((DEBUG)) || return 0; _msg "$RED⦿$NC" "$@"; }
 ```
 
 Rules:
@@ -262,6 +262,8 @@ yn 'Deploy to production?' || die 0 'Cancelled'
 
 **Tier:** style
 
+When messaging functions emit icons, use these glyphs for these purposes; do not invent alternatives.
+
 | Icon | Purpose |
 |------|---------|
 | `◉` | Info |
@@ -270,6 +272,8 @@ yn 'Deploy to production?' || die 0 'Cancelled'
 | `✓` | Success |
 | `✗` | Error |
 | `⚠` | Caution |
+
+`▲` is the icon for `warn()` messages; `⚠` is reserved for inline caution markers in help and documentation text.
 
 ## BCS0711 Combined Redirection
 

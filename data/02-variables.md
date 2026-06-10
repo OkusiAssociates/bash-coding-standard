@@ -3,7 +3,7 @@
 
 ## BCS0200 Section Overview
 
-**All variables must have explicit type declarations.** This section covers declaration patterns, scoping, naming conventions, arrays, parameter expansion, and boolean flags.
+**Variables should carry explicit type declarations (`declare`/`local` with `-i`/`-a`/`-A`/`--`).** This section covers declaration patterns, scoping, naming conventions, arrays, parameter expansion, and boolean flags.
 
 ## BCS0201 Type-Specific Declarations
 
@@ -55,6 +55,8 @@ Without `local`, variables become global, overwrite same-named variables, persis
 
 **Tier:** style
 
+Constants and globals: UPPER_CASE. Locals and function names: lower_case with underscores. Private functions: leading underscore.
+
 ```bash
 # correct
 readonly MAX_RETRIES=3                # UPPER_CASE for constants/globals
@@ -72,7 +74,7 @@ my-function() { :; }                  # dashes in names
 declare -i verbose=1                  # lowercase for global
 ```
 
-Avoid use single-letter names or shell built-in names like `PATH`, `HOME`, `USER`.
+Avoid single-letter names, and never reuse special shell variable names such as `PATH`, `HOME`, `USER`, `IFS`.
 
 ## BCS0204 Constants and Environment Variables
 
@@ -90,7 +92,7 @@ declare -rx BUILD_ENV=production     # readonly + exported
 export VERSION=1.0.0                 # children rarely need VERSION
 ```
 
-Don't make user-configurable variables readonly before argument parsing is complete.
+Don't make user-configurable variables readonly prematurely (timing: see BCS0205).
 
 ## BCS0205 Readonly Patterns
 
@@ -117,7 +119,7 @@ readonly PREFIX BIN_DIR SHARE_DIR
 readonly VERBOSE=1    # can't change during arg parsing
 ```
 
-Three-step workflow: (1) declare with defaults, (2) parse/modify in main, (3) readonly after parsing.
+Three-step workflow: (1) declare with defaults, (2) parse/modify/derive in main, (3) readonly only after all parsing and derivation is complete.
 
 ## BCS0206 Arrays
 
@@ -210,7 +212,7 @@ declare -- BIN_DIR=/usr/local/bin
 declare -- SHARE_DIR=/usr/local/share/myapp
 ```
 
-Make derived variables readonly only after all parsing and derivation is complete. Document hardcoded exceptions with comments.
+Readonly timing for derived variables: see BCS0205. Document hardcoded exceptions with comments.
 
 ## BCS0210 Nameref Indirection
 

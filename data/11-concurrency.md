@@ -31,7 +31,7 @@ cleanup() {
   local -i exitcode=${1:-$?}
   trap - SIGINT SIGTERM EXIT
   for pid in "${pids[@]}"; do
-    kill "$pid" 2>/dev/null || true
+    kill "$pid" 2>/dev/null ||:
   done
   exit "$exitcode"
 }
@@ -57,7 +57,7 @@ declare -a pids=()
 declare -i errors=0
 
 for server in "${servers[@]}"; do
-  check_server "$server" > "$temp_dir"/"$server".out 2>&1 &
+  check_server "$server" &> "$temp_dir"/"$server".out &
   pids+=($!)
 done
 
@@ -109,7 +109,7 @@ done
 
 **Tier:** core
 
-Wrap network operations with timeout.
+Wrap network and remote operations (`ssh`, `curl`, `wget`, `nc`) with `timeout` or tool-native timeout flags. Bounding other operations that can block indefinitely — interactive `read` (use `read -t`), long-running local commands — is recommended but not required by this rule.
 
 ```bash
 # correct
@@ -131,7 +131,8 @@ esac
 read -r -t 10 -p 'Enter value: ' value || value='default'
 
 # correct — SSH and curl timeouts
-ssh -o ConnectTimeout=10 -o BatchMode=yes "$host" 'command'
+# ConnectTimeout bounds connection only — wrap in `timeout` to bound total runtime
+timeout 300 ssh -o ConnectTimeout=10 -o BatchMode=yes "$host" 'command'
 curl --connect-timeout 10 --max-time 60 "$url"
 ```
 
@@ -144,9 +145,12 @@ Use exponential backoff for retries. Never use fixed delays.
 ```bash
 # correct
 declare -i attempt=1 max_attempts=5 delay max_delay=60 jitter
+out=$(mktemp)
+trap 'rm -f "$out"' EXIT
 
 while ((attempt <= max_attempts)); do
-  if try_operation; then
+  # Success requires both exit code 0 and non-empty output
+  if try_operation > "$out" && [[ -s "$out" ]]; then
     break
   fi
 
@@ -165,4 +169,4 @@ done
 while ! curl "$url"; do :; done      # floods failing services
 ```
 
-Validate success conditions beyond exit code — check output validity: `[[ -s "$temp_file" ]]`.
+Validate success conditions beyond exit code — the example treats empty output as failure via `[[ -s "$out" ]]`.

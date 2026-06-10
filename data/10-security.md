@@ -52,8 +52,8 @@ Never trust inherited IFS values.
 # correct — one-line IFS for single command
 IFS=',' read -ra fields <<< "$csv_data"
 
-# correct — subshell isolation
-( IFS=','; read -ra fields <<< "$data" )
+# correct — subshell isolation (results must be used inside the subshell)
+( IFS=','; read -ra fields <<< "$data"; printf '%s\n' "${fields[@]}" )
 
 # correct — local scoping in functions
 parse_csv() {
@@ -107,7 +107,7 @@ eval "${action}_function"
 
 **Tier:** core
 
-Validate and sanitize all user input. Use whitelist over blacklist.
+Validate and sanitize all user input. Use whitelist over blacklist. Pass `--` before any pathname operand that originates from variables or user input (`rm -- "$f"`, `cp -- "$src" "$dst"`) to prevent option injection via filenames beginning with `-`.
 
 ```bash
 # correct — validate integer
@@ -121,7 +121,7 @@ real_path=$(realpath -e -- "$path")
 # correct — sanitize filename
 [[ $name =~ ^[a-zA-Z0-9._-]+$ ]] || die 22 "Invalid filename ${name@Q}"
 
-# correct — always use -- before file arguments
+# correct — -- before pathname operands from variables or input
 rm -- "$user_file"
 cp -- "$source" "$dest"
 ```

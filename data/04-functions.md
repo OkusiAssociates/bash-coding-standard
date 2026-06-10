@@ -63,6 +63,7 @@ main() {
   # Parse arguments
   while (($#)); do case $1 in
     -v|--verbose) VERBOSE=1 ;;
+    -n|--dry-run) DRY_RUN=1 ;;
     -h|--help)    show_help; exit 0 ;;
     -*)           die 22 "Invalid option ${1@Q}" ;;
     *)            FILES+=("$1") ;;
@@ -230,7 +231,17 @@ which curl &>/dev/null
 command -v sed >/dev/null || die 18 'sed required'
 ```
 
-Use lazy loading for expensive resources: initialize only when first needed.
+For expensive checks (network probes, slow tool startup), defer the check until first use with a guard variable instead of checking eagerly at startup:
+
+```bash
+# correct — lazy check: runs once, on first use
+declare -i _CURL_OK=0
+_ensure_curl() {
+  ((_CURL_OK)) && return 0
+  command -v curl >/dev/null || die 18 'curl required: apt install curl'
+  _CURL_OK=1
+}
+```
 
 ## BCS0409 Bash Version Detection
 

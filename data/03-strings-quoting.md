@@ -25,7 +25,7 @@ EMAIL="user@domain.com"
 VAR=""
 ```
 
-One-word alphanumeric literals (`a-zA-Z0-9_-./`) may be unquoted: `STATUS=success`, `[[ "$level" == INFO ]]`. When in doubt, quote everything.
+One-word alphanumeric literals (`a-zA-Z0-9_-./`) may be unquoted: `STATUS=success`, `[[ $level == INFO ]]`. When in doubt, quote everything.
 
 Quote variable portions separately from literal path components: write `"$PREFIX"/bin`. The combined form `"$PREFIX/bin"` is compliant and MUST NOT be flagged.
 
@@ -87,7 +87,7 @@ Inside `[[ ]]`, **no word splitting or pathname expansion occurs** — variables
 
 **Tier:** recommended
 
-Use quoted delimiter `<<'EOF'` for literal content. Use unquoted delimiter `<<EOF` for variable expansion. Use descriptive names for the delimiter.
+Use quoted delimiter `<<'EOF'` for literal content. Use unquoted delimiter `<<EOF` for variable expansion. The delimiter should name the content (`VARS`, `SQL`, `USAGE`), not be a generic `EOF`/`EOT`.
 
 This is the canonical code for here-document delimiter-quoting findings; BCS0904 covers heredocs in file-operation contexts and defers delimiter semantics here.
 
@@ -98,9 +98,9 @@ Variables like $HOME are literal text.
 VARS
 
 # correct — expansion needed
-cat <<EOT
+cat <<GREETING
 Hello $USER, your home is $HOME
-EOT
+GREETING
 
 # correct — indented (strips leading tabs, not spaces)
 if true; then
@@ -110,7 +110,7 @@ if true; then
 fi
 ```
 
-Quote here-doc delimiters for JSON, SQL, or any content with `$` characters.
+Quote the delimiter for JSON, SQL, or any content where `$`, backticks, or backslashes must remain literal — the criterion is intended expansion, not mere presence of `$`.
 
 ## BCS0305 Printf Patterns
 

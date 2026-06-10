@@ -9,6 +9,8 @@ Error handling covers strict mode, exit codes, traps, return value checking, and
 
 **Tier:** core
 
+Scripts run under `set -euo pipefail` (BCS0101). Handle expected failures explicitly — `||:`, an `if` guard, or `|| die` — never by disabling strict mode with `set +e`.
+
 `set -euo pipefail` provides three protections: `-e` exits on command failure, `-u` exits on undefined variables, `-o pipefail` fails pipeline if any command fails.
 
 ```bash

@@ -217,7 +217,7 @@ main "$@"
 #fin
 ```
 
-Never define `main()` at the top. Never define business logic before the utilities it calls. In some cases, nested functions are permissible within other functions.
+Never define `main()` at the top. Never define business logic before the utilities it calls. Nested function definitions are permitted only when the inner function is private to and only callable after the outer function runs (e.g. dynamically generated handlers); otherwise define all functions at top level.
 
 ## BCS0108 Main Function and Script Invocation
 
@@ -233,6 +233,7 @@ main() {
     -N|--not-dry-run) DRY_RUN=0 ;;
     -v|--verbose)     VERBOSE=1 ;;
     -q|--quiet)       VERBOSE=0 ;;
+    -*)               die 22 "Invalid option ${1@Q}" ;;
   esac; shift; done
   readonly VERBOSE DRY_RUN
 
@@ -258,7 +259,6 @@ Every script must end with `#fin\n` as the mandatory final line.
 # correct — last line of file
 main "$@"
 #fin
-
 ```
 
 ```bash
@@ -315,7 +315,7 @@ read_conf() {
 
   for conf_file in "${search_paths[@]}"; do
     [[ -f $conf_file ]] || continue
-    # shellcheck source=/dev/null
+    #shellcheck source=/dev/null
     source "$conf_file"
     loaded+=1
   done

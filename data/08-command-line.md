@@ -142,7 +142,7 @@ Include arg-taking options in the character class. They work correctly when last
 
 **Tier:** recommended
 
-Use consistent option letters and variable names across all BCS-compliant scripts. Avoid reassign a standard letter to a different purpose.
+Use consistent option letters and variable names across all BCS-compliant scripts. Avoid reassigning a standard letter to a different purpose.
 
 **Strongly Recommended** — include in every script that uses options:
 
