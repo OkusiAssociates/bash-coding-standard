@@ -53,9 +53,17 @@ help_output=$("$BCS_CMD" generate -h 2>/dev/null)
 assert_contains "$help_output" 'bcs generate' 'help has command name' || true
 
 # Test: default output location
+# Back up and restore the tracked standard: writing the default path would
+# both dirty the working tree and neuter the drift test below (which must
+# diff a fresh regen against the *committed* file, not one this suite wrote).
 begin_test 'default generates to data/BASH-CODING-STANDARD.md'
-"$BCS_CMD" generate 2>/dev/null
-assert_file_exists "$DATA_DIR"/BASH-CODING-STANDARD.md 'default output exists' || true
+default_md="$DATA_DIR"/BASH-CODING-STANDARD.md
+gen_backup=$(mktemp --suffix=.md)
+cp -p "$default_md" "$gen_backup"
+"$BCS_CMD" generate 2>/dev/null || true
+assert_file_exists "$default_md" 'default output exists' || true
+rm -f "$default_md"
+mv "$gen_backup" "$default_md"
 
 # Test: idempotency (generate twice, same output)
 begin_test 'generate is idempotent'

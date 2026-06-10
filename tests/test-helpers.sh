@@ -14,6 +14,17 @@ declare -r PROJECT_DIR=${TEST_DIR%/*}
 #shellcheck disable=SC2034  # used by test scripts that source this file
 declare -r BCS_CMD="$PROJECT_DIR"/bcs DATA_DIR="$PROJECT_DIR"/data
 
+# Hermetic config baseline: unless a suite sets its own BCS_CONF_DIR, point
+# every `bcs` subprocess at an empty config dir so a developer's real
+# /etc/bcs.conf or ~/.config/bcs/bcs.conf cannot leak into the test run and
+# silently change output (e.g. a MODEL_ALIASES override). Suites that exercise
+# the cascade override _conf_search_paths or set BCS_CONF_DIR per-invocation,
+# so this default never gets in their way.
+if [[ -z ${BCS_CONF_DIR:-} ]]; then
+  export BCS_CONF_DIR="$TEST_DIR"/.hermetic-conf
+  mkdir -p "$BCS_CONF_DIR"
+fi
+
 # Colors (non-readonly so tests that also source bcs don't hit a
 # readonly-reassignment error; bcs itself will promote these to readonly).
 if [[ -t 1 && -t 2 ]]; then
@@ -195,11 +206,16 @@ assert_superset() {
 }
 
 # Print test summary
+# 'run' is the total number of assertions evaluated (passed + failed), so the
+# count always partitions cleanly. begin_test groups assertions under a label
+# but a single group may evaluate several assertions, so TESTS_RUN (group
+# count) is deliberately NOT used as the denominator here.
 print_summary() {
   local -- test_name=${1:-Tests}
+  local -i total=$((TESTS_PASSED + TESTS_FAILED))
   echo
   printf '%s%s Summary:%s %d run, %s%d passed%s, ' \
-    "$BOLD" "$test_name" "$NC" "$TESTS_RUN" \
+    "$BOLD" "$test_name" "$NC" "$total" \
     "$GREEN" "$TESTS_PASSED" "$NC"
   if ((TESTS_FAILED)); then
     printf '%s%d failed%s\n' "$RED" "$TESTS_FAILED" "$NC"
