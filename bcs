@@ -6,7 +6,14 @@
 # BCS0409: hard Bash 5.2+ floor -- must precede set -e and shopt (inherit_errexit needs 4.4+).
 (( BASH_VERSINFO[0] > 5 || (BASH_VERSINFO[0] == 5 && BASH_VERSINFO[1] >= 2) )) \
   || { >&2 echo "${0##*/}: requires Bash >= 5.2 (have ${BASH_VERSION:-unknown})"; exit 2; }
+# BCS0406 deviation (documented): strict mode runs before the source fence.
+# `shopt -s extglob` MUST execute before bash parses the @(...) patterns in
+# function bodies below, so it cannot move under the fence without breaking
+# `source ./bcs` with a syntax error. The only sourcing consumers are the test
+# suites, which run under their own identical strict mode.
+#bcscheck disable=BCS0406
 set -euo pipefail
+#bcscheck disable=BCS0406
 shopt -s inherit_errexit extglob nullglob
 
 declare -rx PATH="$HOME"/.local/bin:/usr/local/bin:/usr/bin:/bin
@@ -600,6 +607,7 @@ _register_tmp() { _TMP_CLEANUP+=("$1"); }
 # temps are reclaimed even when a function aborts via die/errexit/SIGINT,
 # where its local RETURN trap never fires.
 _cleanup_tmps() {
+  trap - INT TERM EXIT   # BCS0603: prevent re-entry during cleanup
   local -- p
   for p in "${_TMP_CLEANUP[@]}"; do
     [[ -z $p ]] || rm -rf -- "$p" 2>/dev/null ||:
@@ -1105,7 +1113,9 @@ Respect inline suppression: eg, #bcscheck disable=BCS0101 exempts the next line/
   local -a claude_args=(--model "$model" --permission-mode bypassPermissions)
   [[ -z $effort ]] || claude_args+=(--effort "$effort")
 
-  export CLAUDE_CODE_USE_OAUTH=1
+  # BCS0202/BCS0204: local -x exports to the claude child for this function's
+  # lifetime without leaking into the global scope.
+  local -x CLAUDE_CODE_USE_OAUTH=1
   unset ANTHROPIC_API_KEY
   # SC1007: `CLAUDECODE= claude ...` clears the env var for one command;
   # the empty-RHS assignment is intentional, not a typo.
@@ -1385,15 +1395,19 @@ cmd_check() {
 
   # Set up raw-response dump path. Always written; only announced on
   # failure or when --debug is set. Lets users diagnose empty/malformed
-  # responses without re-running the check.
-  local -- state_dir=${XDG_STATE_HOME:-$HOME/.local/state}/bcs
-  mkdir -p "$state_dir" 2>/dev/null ||:
-  if [[ -d $state_dir && -w $state_dir ]]; then
-    export BCS_RESPONSE_DUMP="$state_dir"/last-response.txt
-  else
-    BCS_RESPONSE_DUMP=$(mktemp /tmp/bcs-last-response.XXXXXX) \
-      || die 1 'Failed to create response dump file in /tmp'
-    export BCS_RESPONSE_DUMP
+  # responses without re-running the check. local -x keeps the export scoped
+  # to this call (BCS0202/BCS0204); a pre-set BCS_RESPONSE_DUMP from the
+  # environment is honoured as the redirect target (see section 13).
+  local -x BCS_RESPONSE_DUMP=${BCS_RESPONSE_DUMP:-}
+  if [[ -z $BCS_RESPONSE_DUMP ]]; then
+    local -- state_dir=${XDG_STATE_HOME:-$HOME/.local/state}/bcs
+    mkdir -p "$state_dir" 2>/dev/null ||:
+    if [[ -d $state_dir && -w $state_dir ]]; then
+      BCS_RESPONSE_DUMP="$state_dir"/last-response.txt
+    else
+      BCS_RESPONSE_DUMP=$(mktemp /tmp/bcs-last-response.XXXXXX) \
+        || die 1 'Failed to create response dump file in /tmp'
+    fi
   fi
 
   local -- result
@@ -1426,7 +1440,7 @@ cmd_check() {
   # Google response_mime_type, Ollama format) and the claude-cli prompt
   # template. Backends without native JSON mode (Anthropic, Claude CLI)
   # rely on prompt discipline plus _strip_json_fences as a fallback.
-  export BCS_JSON_MODE=$json_output
+  local -x BCS_JSON_MODE=$json_output
 
   if [[ $backend == claude ]]; then
     result=$(_llm_claude_cli "$model" "$effort" "$bcs_file" "$script_file" "$strict" \
