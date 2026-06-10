@@ -27,14 +27,14 @@ VAR=""
 
 One-word alphanumeric literals (`a-zA-Z0-9_-./`) may be unquoted: `STATUS=success`, `[[ "$level" == INFO ]]`. When in doubt, quote everything.
 
-In general, quote variable portions separately from literal path components for clarity:
+Quote variable portions separately from literal path components: write `"$PREFIX"/bin`. The combined form `"$PREFIX/bin"` is compliant and MUST NOT be flagged.
 
 ```bash
-# recommended — clear boundaries
+# preferred — clear boundaries
 "$PREFIX"/bin
 "$SCRIPT_DIR"/data/"$filename"
 
-# acceptable but less clear
+# compliant — do not flag
 "$PREFIX/bin"
 "$SCRIPT_DIR/data/$filename"
 ```
@@ -49,12 +49,15 @@ Use double quotes when strings include command substitution.
 # correct
 echo "Current time: $(printf '%(%T)T')"
 result=$(git describe --tags)        # simple assignment, quotes optional
-VERSION="$(git describe)".beta       # concatenation needs quotes
+VERSION="$(git describe)".beta       # quotes optional in assignments, even with concatenation
 echo "$result"                       # always quote when using
 
 # wrong
-echo $result                         # unquoted usage
+echo Time: $(date)                   # unquoted substitution word-splits and globs
+echo $result                         # unquoted use of substitution result
 ```
+
+This rule owns unquoted use of command substitutions and their results at core severity; BCS0307 lists the same pattern only as a catch-all summary and does not own the finding.
 
 ## BCS0303 Quoting in Conditionals
 
@@ -85,6 +88,8 @@ Inside `[[ ]]`, **no word splitting or pathname expansion occurs** — variables
 **Tier:** recommended
 
 Use quoted delimiter `<<'EOF'` for literal content. Use unquoted delimiter `<<EOF` for variable expansion. Use descriptive names for the delimiter.
+
+This is the canonical code for here-document delimiter-quoting findings; BCS0904 covers heredocs in file-operation contexts and defers delimiter semantics here.
 
 ```bash
 # correct — no expansion needed
@@ -175,12 +180,14 @@ Never use `@Q` for normal variable expansion or comparisons.
 
 **Tier:** recommended
 
-```bash
-# wrong — double quotes for static strings
-info "Starting backup..."           # use single quotes
-echo "${HOME}/bin"                  # unnecessary braces
+Catch-all summary of quoting anti-patterns. Where an example below duplicates a more specific rule, report the violation under the owning code, not BCS0307.
 
-# wrong — unquoted variables
+```bash
+# wrong — double quotes for static strings (owned by BCS0301)
+info "Starting backup..."           # use single quotes
+echo "${HOME}/bin"                  # unnecessary braces (owned by BCS0207)
+
+# wrong — unquoted expansions (core: BCS0302 scalars, BCS0206 arrays)
 echo $result
 rm $temp_file
 for item in ${items[@]}
@@ -192,5 +199,7 @@ echo "$result"
 rm "$temp_file"
 for item in "${items[@]}"
 ```
+
+The unquoted-expansion anti-patterns above (`rm $temp_file`, `for item in ${items[@]}`, `echo $result`) are genuine correctness bugs enforced at **core** severity under BCS0206 (array expansions) and BCS0302 (scalar and command-substitution results) — the [ERROR] belongs to those codes. BCS0307 itself remains a recommended-tier catch-all list and emits findings only for patterns with no more specific home.
 
 Use braces only when required: `${var:-default}`, `${file##*/}`, `${array[@]}`, `${var1}${var2}`.

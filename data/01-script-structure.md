@@ -9,7 +9,7 @@ Every BCS-compliant script follows a 13-step structure. Scripts must be self-con
 
 **Tier:** core
 
-`set -euo pipefail` is *mandatory* before script execution starts, and must be the first executable command after shebang, comments, and shellcheck directives.
+`set -euo pipefail` is *mandatory* before script execution starts, and must be the first executable command after shebang, comments, and shellcheck directives. Exception: dual-purpose scripts (BCS0106) place strict mode immediately after the source fence instead, because `set -euo pipefail` must never execute when sourced. Exception: a Bash version guard (BCS0409) may sit between `set -euo pipefail` and `shopt -s inherit_errexit`, because the guard must run before any version-dependent construct (including `inherit_errexit` itself).
 
 ```bash
 # correct
@@ -179,7 +179,9 @@ my_function "$@"
 
 Never apply `set -euo pipefail` when sourced — it alters the calling shell's environment.
 
-See also: [Source Guard Reference](../benchmarks/source-guard_reference.md) — full comparison of source fence mechanisms with benchmark data.
+This rule owns file-extension requirements. The full dual-purpose layout (function placement, fence ordering, strict-mode positioning) is owned by BCS0406 — cite BCS0406 for source-fence structure violations.
+
+See also: [Source Guard Reference](../benchmarks/source-guard_reference.md) — full comparison of source fence (source guard) mechanisms with benchmark data.
 
 ## BCS0107 Function Organization
 
@@ -244,9 +246,11 @@ main "$@"
 
 Always quote `"$@"` to preserve the argument array. Scripts under 200 lines may run directly without `main()`.
 
+This rule governs the structural placement of `main()` and its invocation (steps 11–12 of the script layout). The structure and content of `main()` itself — argument parsing, `main "$@"` vs bare `main`, readonly-after-parse — are owned by BCS0403; cite BCS0403 for main() content violations.
+
 ## BCS0109 End Marker
 
-**Tier:** style
+**Tier:** recommended
 
 Every script must end with `#fin\n` as the mandatory final line.
 
@@ -262,7 +266,7 @@ main "$@"
 main "$@"
 ```
 
-The end marker simply confirms the file is complete and not truncated. (`#end`, accepted by earlier revisions of this rule, is deprecated — use `#fin`, which is what BCS0403, BCS1206, and the shipped templates mandate.)
+The end marker simply confirms the file is complete and not truncated. (`#end`, accepted by earlier revisions of this rule, is deprecated — use `#fin`, which is what BCS0403 and the shipped templates mandate.) This rule is the sole owner of the `#fin` requirement — cite BCS0109 for a missing or malformed end marker.
 
 ## BCS0110 Cleanup and Traps
 
@@ -286,6 +290,8 @@ TEMP_DIR=$(mktemp -d)
 ```
 
 Always disable traps inside the cleanup function to prevent recursion.
+
+This rule governs structural placement: cleanup function and trap installed before any resource-creating code. The trap/cleanup pattern itself (quoting, signal lists, recursion guard) is owned by BCS0603 — cite BCS0603 for trap-content violations and BCS0110 for ordering violations.
 
 ## BCS0111 Configuration File Loading
 

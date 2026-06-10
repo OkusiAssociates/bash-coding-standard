@@ -97,7 +97,7 @@ done
 ((errors == 0)) || die 1 "$errors job(s) failed"
 
 # wrong — exit code discarded; failures silent
-wait $!
+wait "$pid" ||:
 
 # wrong — no accumulator; first failure kills script under set -e
 for pid in "${pids[@]}"; do
@@ -159,6 +159,7 @@ while ((attempt <= max_attempts)); do
 
   attempt+=1
 done
+((attempt <= max_attempts)) || die 1 "operation failed after $max_attempts attempts"
 
 # wrong — tight retry loop
 while ! curl "$url"; do :; done      # floods failing services

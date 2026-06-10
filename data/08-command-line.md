@@ -24,12 +24,16 @@ while (($#)); do case $1 in
   *)            FILES+=("$1") ;;
 esac; shift; done
 
-# wrong
-while [[ $# -gt 0 ]]; do            # use (($#)) instead
+# wrong — missing the trailing shift: $1 is never consumed, infinite loop
+while (($#)); do case $1 in
+  -v|--verbose) VERBOSE=1 ;;
+  -*)           die 22 "Invalid option ${1@Q}" ;;
+  *)            FILES+=("$1") ;;
+esac; done
 ```
 
 Key rules:
-- `(($#))` is more efficient than `[[ $# -gt 0 ]]`
+- Use `(($#))` as the loop condition, not `[[ $# -gt 0 ]]` (house style; functionally equivalent)
 - The mandatory `shift` at loop end is critical — omitting it causes infinite loops
 - For options with arguments: `noarg "$@"; shift; variable=$1`
 - For boolean flags: just set, no extra shift needed
@@ -115,7 +119,8 @@ Support bundled short options like `-vvn` expanding to `-v -v -n`.
 # correct — recommended disaggregation pattern (list valid short options explicitly)
 -[vqnoVh]?*) set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
 
-# correct — pure bash method (68% faster, no external deps); only use if speed is absolutely essential
+# correct — alternative: single-pass disaggregation (avoids re-entering the case loop per character;
+# see ../benchmarks/args-processing_reference.md); only worth it for very hot argument loops
 -[vqnoVh]?*)
   local -- opt=${1:1}
   local -a new_args=()
@@ -130,6 +135,8 @@ Support bundled short options like `-vvn` expanding to `-v -v -n`.
 Place bundling case before `-*)` invalid option handler and after all explicit option cases. List only valid short options in the pattern to prevent incorrect expansion.
 
 Include arg-taking options in the character class. They work correctly when last in the bundle — the disaggregation peels them off as a separate `-X` flag, and `shift` in their case handler picks up the argument normally. Example: `-vno output.txt` disaggregates to `-v -n -o`, then `-o` consumes `output.txt` via `shift`. The user must place arg-taking options last; `-von file` would incorrectly disaggregate to `-v -o -n`.
+
+▲ Attached option-arguments (`-oFILE`) are NOT supported by this pattern — the disaggregator prepends `-` to the remainder, so `-ooutput.txt` becomes `-o -output.txt` and the handler silently captures `-output.txt` (`noarg` cannot catch it). Option arguments must be separate words: `-o FILE`.
 
 ## BCS0806 Standard Options
 

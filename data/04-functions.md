@@ -19,6 +19,7 @@ vecho() { ((VERBOSE)) || return 0; _msg "$@"; }
 process_file() {
   local -- filename=$1
   local -i line_count=0
+  local -- line
 
   [[ -f $filename ]] || return 1
 
@@ -80,17 +81,22 @@ main "$@"
 
 Always call main with all arguments: `main "$@"`, never just `main`.
 
+This is the canonical rule for `main()` structure and content (argument parsing inside `main()`, readonly-after-parse, `main "$@"`). BCS0108 covers only the structural placement of the invocation; cite BCS0403 for main() content violations.
+
 ## BCS0404 Function Export
 
 **Tier:** recommended
 
-Export functions needed by subshells with `declare -fx`.
+Export functions needed by child bash processes (e.g. `bash -c`, `xargs bash -c`, `find -exec bash -c ... \;`) with `declare -fx`. Subshells and command substitutions inherit functions automatically and need no export.
 
 ```bash
 # correct — define first, then export
 grep() { /usr/bin/grep "$@"; }
 find() { /usr/bin/find "$@"; }
 declare -fx grep find
+
+# consumer — child bash process sees the exported functions
+find . -name '*.txt' -exec bash -c 'grep pattern "$1"' _ {} \;
 ```
 
 ## BCS0405 Production Optimization
@@ -162,6 +168,8 @@ Use idempotent initialization with version guard:
 }
 ```
 
+This is the canonical rule for dual-purpose script structure (function placement, source fence, strict-mode positioning) — cite BCS0406 for fence-structure violations. BCS0106 owns the file-extension requirements. The terms "source fence" and "source guard" refer to the same mechanism; this standard prefers "source fence".
+
 ## BCS0407 Library Patterns
 
 **Tier:** core
@@ -189,7 +197,8 @@ Libraries should only define functions, not have side effects on source. Allow c
 Source libraries with existence check:
 
 ```bash
-[[ -f $lib_path ]] && source "$lib_path" || die 1 "Missing library ${lib_path}"
+[[ -f $lib_path ]] || die 3 "Missing library ${lib_path@Q}"
+source "$lib_path" || die 1 "Failed to source ${lib_path@Q}"
 ```
 
 ## BCS0408 Dependency Management
@@ -307,6 +316,8 @@ fi
 
 Omitted components default to 0: `bash_at_least 5` accepts any 5.x; `bash_at_least 5 2` accepts 5.2.0+; `bash_at_least 5 2 21` accepts 5.2.21+.
 
+Placement of `require_bash` between `set -euo pipefail` and `shopt -s inherit_errexit` is an explicit, documented exception to BCS0101's "shopt immediately after set" ordering — see the exception note in BCS0101.
+
 ## BCS0410 Recursive Function State Discipline
 
 **Tier:** core
@@ -339,7 +350,9 @@ walk() {
 
 Values passed via positional arguments (`$1`, `$2`, ...) are automatically per-call and do not need `local`.
 
-LLM-based checkers should flag any assignment inside a recursive function that lacks a `local` declaration -- including `for VAR in ...` which implicitly assigns `VAR`.
+**Exception:** variables declared at file scope (or with `declare -g`) and intentionally used as shared accumulators are exempt -- e.g. `declare -a RESULTS` at file scope with `RESULTS+=("$f")` inside the recursive walker.
+
+LLM-based checkers should flag only assignments inside a recursive function that have neither a `local` declaration in the function nor a global declaration in the script -- including `for VAR in ...` which implicitly assigns `VAR`.
 
 ## BCS0411 Subshell Return-Value Patterns
 
@@ -350,8 +363,9 @@ When a computation runs in a subshell, choose one of four documented patterns to
 **Pattern 1 -- Command substitution** (single value or multiline text):
 
 ```bash
-local -- content=$(< "$file")
-local -- hash=$(sha256sum "$file" | cut -d' ' -f1)
+local -- content hash
+content=$(< "$file")
+hash=$(sha256sum "$file" | cut -d' ' -f1)
 ```
 
 **Pattern 2 -- Process substitution with `readarray` or `while`** (array or streaming output, preserves parent scope):
@@ -366,12 +380,13 @@ done < <(some_command)
 **Pattern 3 -- Temp file** (large output, binary data, or output consumed by multiple later passes):
 
 ```bash
-local -- tmp
-tmp=$(mktemp) || die 1 'mktemp failed'
-trap "rm -f '$tmp'" EXIT
-expensive_command > "$tmp"
-first_pass  < "$tmp"
-second_pass < "$tmp"
+# global so the single-quoted trap (BCS0603) can expand it at EXIT time
+declare -g TEMP_FILE=''
+trap '[[ -z $TEMP_FILE ]] || rm -f "$TEMP_FILE"' EXIT
+TEMP_FILE=$(mktemp) || die 1 'mktemp failed'
+expensive_command > "$TEMP_FILE"
+first_pass  < "$TEMP_FILE"
+second_pass < "$TEMP_FILE"
 ```
 
 **Pattern 4 -- Explicit file descriptor** (long-running producer, interleaved reads):

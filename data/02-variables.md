@@ -100,6 +100,7 @@ For script metadata, use `declare -r` for immediate readonly:
 
 ```bash
 declare -r VERSION=1.0.0
+#shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 ```
 
@@ -159,7 +160,10 @@ echo "${var##*/}"                    # parameter expansion
 echo "${var:-default}"               # default value
 echo "${array[@]}"                   # array access
 echo "${10}"                         # positional > 9
-echo "${var1}${var2}"                # adjacent variables
+echo "${file}_backup"                # literal name-chars follow the name
+
+# optional — braces for readability only
+echo "${var1}${var2}"                # adjacent variables; "$var1$var2" parses identically
 
 # wrong — unnecessary braces
 echo "${HOME}/bin"

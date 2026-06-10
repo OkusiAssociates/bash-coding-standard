@@ -72,5 +72,5 @@ Icons: ◉ info · ▲ caution · ✓ correct · ✗ wrong.
 
 ---
 
-*This is the core subset. `recommended` (43) and `style` (23) rules round out the standard —*
+*This is the core subset. `recommended` (44) and `style` (22) rules round out the standard —*
 *see [`data/BASH-CODING-STANDARD.md`](../data/BASH-CODING-STANDARD.md) or run `bcs codes`.*

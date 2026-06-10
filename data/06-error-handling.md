@@ -19,7 +19,8 @@ if command_that_might_fail; then
 fi
 
 # correct — handle undefined optional variables
-"${OPTIONAL_VAR:-}"
+val="${OPTIONAL_VAR:-default}"
+echo "${OPTIONAL_VAR:-}"
 
 # correct — capture failing command safely
 if result=$(failing_command); then
@@ -76,6 +77,8 @@ Reserved: 64-78 (sysexits), 126 (cannot execute), 127 (not found), 128+n (signal
 
 Install cleanup traps early, before creating any resources.
 
+This is the canonical rule for the trap/cleanup pattern (quoting, signal lists, recursion guard) — cite BCS0603 for trap-content violations. BCS0110 owns the structural-placement requirement (trap installed before resource-creating code).
+
 ```bash
 # correct
 declare -- TEMP_FILE
@@ -111,7 +114,7 @@ Never combine multiple traps for the same signal (replaces previous). Use a sing
 
 **Tier:** core
 
-Always check return values of critical operations.
+Always check return values of critical operations. Critical operations are state-changing commands whose failure needs a contextual message or cleanup -- file moves/copies/removals, command substitutions whose output is used later, network calls, and anything followed by dependent steps. For these operations, a bare command relying on `set -e` to abort with no context is a violation.
 
 ```bash
 # correct
@@ -124,9 +127,11 @@ cp "$src" "$dst" || {
   die 1 'Copy failed'
 }
 
-# correct — check PIPESTATUS for pipelines
-sort "$file" | uniq > "$output"
-((PIPESTATUS[0] == 0)) || die 1 'Sort failed'
+# correct — check PIPESTATUS for pipelines (condition context, see pitfalls)
+if ! sort "$file" | uniq > "$output"; then
+  ((PIPESTATUS[0] == 0)) || die 1 'Sort failed'
+  die 1 'Pipeline failed'
+fi
 
 # correct — check $? immediately
 cmd1
@@ -136,21 +141,25 @@ local -i result=$?
 **`PIPESTATUS` pitfalls:**
 
 - `PIPESTATUS` is overwritten by the **very next command** -- including `echo`. Snapshot it immediately if you need it across statements: `local -a ps=("${PIPESTATUS[@]}")`.
+- Under strict mode a failing pipeline aborts the script before any follow-up `PIPESTATUS` check can run. Inspect `PIPESTATUS` from a condition context (`if ! pipeline; then ...`), where it survives into the body. Appending `||:` does NOT work -- the `:` itself overwrites `PIPESTATUS`.
 - Under `set -o pipefail` (part of BCS0101 strict mode), `$?` already reflects the rightmost non-zero exit. Inspect `PIPESTATUS` only when you need to distinguish *which* stage failed.
 - `((PIPESTATUS[0]))` only tells you about the first command. For a multi-stage pipeline, iterate over a snapshot:
 
 ```bash
 # correct — snapshot, then inspect each stage
-sort "$file" | uniq | wc -l > "$output"
-local -a ps=("${PIPESTATUS[@]}")
-for i in "${!ps[@]}"; do
-  ((ps[i] == 0)) || die 1 "Stage $i failed (exit ${ps[i]})"
-done
+if ! sort "$file" | uniq | wc -l > "$output"; then
+  local -a ps=("${PIPESTATUS[@]}")
+  for i in "${!ps[@]}"; do
+    ((ps[i] == 0)) || error "Stage $i failed (exit ${ps[i]})"
+  done
+  die 1 'Pipeline failed'
+fi
 
 # wrong — echo clobbers PIPESTATUS before we read it
-sort "$file" | uniq | wc -l > "$output"
-echo 'Pipeline done'
-((PIPESTATUS[0] == 0)) || die 1 'Sort failed'   # PIPESTATUS is now echo's
+if ! sort "$file" | uniq | wc -l > "$output"; then
+  echo 'Pipeline failed'
+  ((PIPESTATUS[0] == 0)) || die 1 'Sort failed'   # PIPESTATUS is now echo's
+fi
 ```
 
 ## BCS0605 Error Suppression
@@ -161,7 +170,7 @@ Only suppress errors when failure is expected, non-critical, and explicitly safe
 
 ```bash
 # correct — safe to suppress
-command -v optional_tool &>/dev/null
+command -v optional_tool &>/dev/null ||:
 rm -f /tmp/optional_*
 rmdir "$maybe_empty" 2>/dev/null ||:
 

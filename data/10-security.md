@@ -135,12 +135,17 @@ Validate early, fail securely with clear errors, run with minimum necessary perm
 Always use `mktemp`. Never hardcode temp file paths.
 
 ```bash
-# correct
+# correct — temp file
 temp_file=$(mktemp) || die 1 'Failed to create temp file'
 trap 'rm -f "$temp_file"' EXIT
 
+# correct — temp dir (alternative; a second EXIT trap would overwrite the first)
 temp_dir=$(mktemp -d) || die 1 'Failed to create temp dir'
 trap 'rm -rf "$temp_dir"' EXIT
+
+# correct — both resources: single cleanup function, one EXIT trap
+cleanup() { rm -f "$temp_file"; rm -rf "$temp_dir"; }
+trap cleanup EXIT
 
 # correct — custom template
 mktemp /tmp/"$SCRIPT_NAME".XXXXXX

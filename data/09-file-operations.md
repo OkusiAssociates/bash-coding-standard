@@ -41,11 +41,11 @@ rm -v *                              # file named -rf would be catastrophic
 for file in *.txt; do                # less safe
 ```
 
-## BCS0903 Process Substitution
+## BCS0903 Process Substitution in File Operations
 
 **Tier:** core
 
-Use `< <(command)` with while loops to avoid subshell variable scope issues.
+Use process substitution (`<(command)`, `>(command)`) for file-operation idioms that would otherwise need temp files or lossy pipes: feeding while loops with `< <(command)`, populating arrays with `readarray`, comparing outputs with `diff <(...) <(...)`, parallel output with `tee >(...)`, and null-delimited filename handling. See BCS0504 for the pipe-to-while prohibition — cite BCS0504, not this rule, for `command | while read` violations.
 
 ```bash
 # correct — variables preserved in current shell
@@ -68,7 +68,7 @@ done < <(find /data -type f -print0)
 # correct — tee for parallel output
 tee >(grep ERROR > errors.txt) >(grep WARN > warnings.txt) < logfile
 
-# wrong — pipe loses variables
+# wrong — pipe loses variables (cite BCS0504)
 command | while read -r line; do count+=1; done
 ```
 
@@ -76,16 +76,25 @@ command | while read -r line; do count+=1; done
 
 **Tier:** recommended
 
+Quote the here-document delimiter (`<<'NOTES'`) whenever the body must be literal; leave it unquoted only when expansion is intended. An unquoted delimiter over a body containing literal `$` or `` ` `` characters is a violation.
+
+Delimiter quoting semantics are owned by BCS0304 (the canonical code for delimiter-quoting findings, including descriptive delimiter names and `<<-`); this rule covers heredocs in file-operation contexts.
+
 ```bash
 # correct — no expansion (quoted delimiter)
-cat <<'EOF'
+cat <<'NOTES'
 Variables like $HOME are not expanded.
-EOF
+NOTES
 
 # correct — with expansion (unquoted delimiter)
-cat <<EOF
+cat <<GREETING
 Hello $USER, home is $HOME
-EOF
+GREETING
+
+# wrong — body needs literal $HOME but delimiter is unquoted, so it expands
+cat <<MSG
+Set your home directory with: export HOME=$HOME
+MSG
 ```
 
 ## BCS0905 Input Redirection

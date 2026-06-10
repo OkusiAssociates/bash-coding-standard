@@ -234,8 +234,9 @@ Get terminal dimensions dynamically.
 trap 'get_terminal_size' WINCH
 cols=$(tput cols 2>/dev/null || echo 80)
 
-# correct — check Unicode support
-[[ ${LC_ALL:-${LC_CTYPE:-${LANG:-}}} == *UTF-8* ]]
+# correct — check Unicode support (guarded; bare [[ ]] would trip errexit)
+declare -i UNICODE=0
+[[ ${LC_ALL:-${LC_CTYPE:-${LANG:-}}} == *UTF-8* ]] && UNICODE=1 ||:
 ```
 
 Never hardcode terminal width. Provide graceful fallbacks for limited terminals.

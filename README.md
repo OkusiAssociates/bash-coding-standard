@@ -100,8 +100,8 @@ The Bash Coding Standard defines **100 substantive rules plus 12 section overvie
 | Tier | Count | Severity | Behaviour |
 |------|-------|----------|-----------|
 | `core` | 34 | `[ERROR]` | Real correctness/safety bugs. Non-zero exit if any are found. |
-| `recommended` | 43 | `[WARN]` | Bash hygiene; prevents subtle issues. |
-| `style` | 23 | `[WARN]` | Taste; no correctness impact. |
+| `recommended` | 44 | `[WARN]` | Bash hygiene; prevents subtle issues. |
+| `style` | 22 | `[WARN]` | Taste; no correctness impact. |
 | `disabled` | -- | (silent) | Applied only via `policy.conf`; never reported. |
 
 ## CLI Reference

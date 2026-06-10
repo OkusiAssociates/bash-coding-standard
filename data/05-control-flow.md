@@ -29,8 +29,10 @@ command -v curl >/dev/null || die 18 'curl required'
 
 # wrong
 [ -f "$file" ]                       # never use [ ]
-((count > 0))                        # use ((count)) instead
-((VERBOSE == 1))                     # use ((VERBOSE)) instead
+
+# style preference — prefer ((count)); see BCS0505. Not errors under this rule.
+((count > 0))                        # prefer ((count))
+((VERBOSE == 1))                     # prefer ((VERBOSE))
 ```
 
 ## BCS0502 Case Statements
@@ -87,7 +89,7 @@ done
 
 # wrong
 for f in $(ls *.txt); do             # never parse ls
-for ((i=0; i<10; i++)); do           # never use i++
+for ((i=0; i<10; i++)); do           # use i+=1 — increment policy: see BCS0505
 while (($# > 0)); do                 # use (($#)) instead
 ```
 
@@ -112,6 +114,11 @@ done
 
 # acceptable — special builtin, POSIX-compatible
 while :; do
+  process_item || break
+done
+
+# acceptable — regular builtin, widely used
+while true; do
   process_item || break
 done
 
@@ -146,14 +153,14 @@ See also: [While Loops Reference](../benchmarks/while-loops_reference.md) — fu
 
 **Tier:** core
 
-Never pipe to while loops — pipes create subshells where variable modifications are lost.
+Never pipe to while loops — pipes create subshells where variable modifications are lost. This is the canonical code for the pipe-to-while anti-pattern; BCS0903 covers process substitution in file-operation contexts.
 
 ```bash
 # correct — process substitution preserves variables
 declare -i count=0
 while IFS= read -r line; do
   count+=1
-done < <(grep -c '' "$file")
+done < <(grep '' "$file")
 
 # correct — readarray for collecting lines
 readarray -t lines < <(find . -name '*.txt')
@@ -184,8 +191,10 @@ declare -i count=0
 count+=1                             # increment
 
 # correct — arithmetic conditional
-((count > 10)) && warn 'High count'
-((result = x + y))                   # no $ needed inside (())
+((count > 10)) && warn 'High count'  # no $ needed inside (())
+
+# correct — assignment via arithmetic expansion never affects exit status
+result=$((x + y))
 
 # wrong — NEVER use any form of ++
 ((count++))
@@ -194,7 +203,7 @@ count++
 ((count+=1))                         # use plain count+=1
 ```
 
-Use `i+=1` for ALL increments. Integer division truncates: `((10 / 3))` equals 3.
+Use `i+=1` for ALL increments. A bare `((count++))` with count=0 evaluates to 0, returns status 1, and kills a `set -e` script — BCS0606 (core) owns that correctness hazard. Integer division truncates: `((10 / 3))` equals 3.
 
 ## BCS0506 Floating-Point Operations
 

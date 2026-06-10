@@ -148,6 +148,8 @@ declare -r SCRIPT_PATH=$(realpath -- "$0")
 
 **Tier:** recommended
 
+Gate debug output on an integer `DEBUG` variable (`declare -i DEBUG=${DEBUG:-0}`), send it to stderr, and never ship an unconditional `set -x`.
+
 ```bash
 # correct
 declare -i DEBUG=${DEBUG:-0}
@@ -370,9 +372,8 @@ uninstall:
 	rm -f $(DESTDIR)$(COMPDIR)/myscript
 
 check:
-	@command -v myscript >/dev/null 2>&1 \
-	  && echo 'myscript: OK' \
-	  || echo 'myscript: NOT FOUND (check PATH)'
+	@command -v myscript >/dev/null 2>&1 || { echo 'myscript: NOT FOUND (check PATH)'; exit 1; }
+	@echo 'myscript: OK'
 
 test:
 	cd tests && ./run_all_tests.sh

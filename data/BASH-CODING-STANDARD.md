@@ -46,7 +46,7 @@ Every BCS-compliant script follows a 13-step structure. Scripts must be self-con
 
 **Tier:** core
 
-`set -euo pipefail` is *mandatory* before script execution starts, and must be the first executable command after shebang, comments, and shellcheck directives.
+`set -euo pipefail` is *mandatory* before script execution starts, and must be the first executable command after shebang, comments, and shellcheck directives. Exception: dual-purpose scripts (BCS0106) place strict mode immediately after the source fence instead, because `set -euo pipefail` must never execute when sourced. Exception: a Bash version guard (BCS0409) may sit between `set -euo pipefail` and `shopt -s inherit_errexit`, because the guard must run before any version-dependent construct (including `inherit_errexit` itself).
 
 ```bash
 # correct
@@ -216,7 +216,9 @@ my_function "$@"
 
 Never apply `set -euo pipefail` when sourced — it alters the calling shell's environment.
 
-See also: [Source Guard Reference](../benchmarks/source-guard_reference.md) — full comparison of source fence mechanisms with benchmark data.
+This rule owns file-extension requirements. The full dual-purpose layout (function placement, fence ordering, strict-mode positioning) is owned by BCS0406 — cite BCS0406 for source-fence structure violations.
+
+See also: [Source Guard Reference](../benchmarks/source-guard_reference.md) — full comparison of source fence (source guard) mechanisms with benchmark data.
 
 ## BCS0107 Function Organization
 
@@ -281,9 +283,11 @@ main "$@"
 
 Always quote `"$@"` to preserve the argument array. Scripts under 200 lines may run directly without `main()`.
 
+This rule governs the structural placement of `main()` and its invocation (steps 11–12 of the script layout). The structure and content of `main()` itself — argument parsing, `main "$@"` vs bare `main`, readonly-after-parse — are owned by BCS0403; cite BCS0403 for main() content violations.
+
 ## BCS0109 End Marker
 
-**Tier:** style
+**Tier:** recommended
 
 Every script must end with `#fin\n` as the mandatory final line.
 
@@ -299,7 +303,7 @@ main "$@"
 main "$@"
 ```
 
-The end marker simply confirms the file is complete and not truncated. (`#end`, accepted by earlier revisions of this rule, is deprecated — use `#fin`, which is what BCS0403, BCS1206, and the shipped templates mandate.)
+The end marker simply confirms the file is complete and not truncated. (`#end`, accepted by earlier revisions of this rule, is deprecated — use `#fin`, which is what BCS0403 and the shipped templates mandate.) This rule is the sole owner of the `#fin` requirement — cite BCS0109 for a missing or malformed end marker.
 
 ## BCS0110 Cleanup and Traps
 
@@ -323,6 +327,8 @@ TEMP_DIR=$(mktemp -d)
 ```
 
 Always disable traps inside the cleanup function to prevent recursion.
+
+This rule governs structural placement: cleanup function and trap installed before any resource-creating code. The trap/cleanup pattern itself (quoting, signal lists, recursion guard) is owned by BCS0603 — cite BCS0603 for trap-content violations and BCS0110 for ordering violations.
 
 ## BCS0111 Configuration File Loading
 
@@ -486,6 +492,7 @@ For script metadata, use `declare -r` for immediate readonly:
 
 ```bash
 declare -r VERSION=1.0.0
+#shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 ```
 
@@ -545,7 +552,10 @@ echo "${var##*/}"                    # parameter expansion
 echo "${var:-default}"               # default value
 echo "${array[@]}"                   # array access
 echo "${10}"                         # positional > 9
-echo "${var1}${var2}"                # adjacent variables
+echo "${file}_backup"                # literal name-chars follow the name
+
+# optional — braces for readability only
+echo "${var1}${var2}"                # adjacent variables; "$var1$var2" parses identically
 
 # wrong — unnecessary braces
 echo "${HOME}/bin"
@@ -659,14 +669,14 @@ VAR=""
 
 One-word alphanumeric literals (`a-zA-Z0-9_-./`) may be unquoted: `STATUS=success`, `[[ "$level" == INFO ]]`. When in doubt, quote everything.
 
-In general, quote variable portions separately from literal path components for clarity:
+Quote variable portions separately from literal path components: write `"$PREFIX"/bin`. The combined form `"$PREFIX/bin"` is compliant and MUST NOT be flagged.
 
 ```bash
-# recommended — clear boundaries
+# preferred — clear boundaries
 "$PREFIX"/bin
 "$SCRIPT_DIR"/data/"$filename"
 
-# acceptable but less clear
+# compliant — do not flag
 "$PREFIX/bin"
 "$SCRIPT_DIR/data/$filename"
 ```
@@ -681,12 +691,15 @@ Use double quotes when strings include command substitution.
 # correct
 echo "Current time: $(printf '%(%T)T')"
 result=$(git describe --tags)        # simple assignment, quotes optional
-VERSION="$(git describe)".beta       # concatenation needs quotes
+VERSION="$(git describe)".beta       # quotes optional in assignments, even with concatenation
 echo "$result"                       # always quote when using
 
 # wrong
-echo $result                         # unquoted usage
+echo Time: $(date)                   # unquoted substitution word-splits and globs
+echo $result                         # unquoted use of substitution result
 ```
+
+This rule owns unquoted use of command substitutions and their results at core severity; BCS0307 lists the same pattern only as a catch-all summary and does not own the finding.
 
 ## BCS0303 Quoting in Conditionals
 
@@ -717,6 +730,8 @@ Inside `[[ ]]`, **no word splitting or pathname expansion occurs** — variables
 **Tier:** recommended
 
 Use quoted delimiter `<<'EOF'` for literal content. Use unquoted delimiter `<<EOF` for variable expansion. Use descriptive names for the delimiter.
+
+This is the canonical code for here-document delimiter-quoting findings; BCS0904 covers heredocs in file-operation contexts and defers delimiter semantics here.
 
 ```bash
 # correct — no expansion needed
@@ -807,12 +822,14 @@ Never use `@Q` for normal variable expansion or comparisons.
 
 **Tier:** recommended
 
-```bash
-# wrong — double quotes for static strings
-info "Starting backup..."           # use single quotes
-echo "${HOME}/bin"                  # unnecessary braces
+Catch-all summary of quoting anti-patterns. Where an example below duplicates a more specific rule, report the violation under the owning code, not BCS0307.
 
-# wrong — unquoted variables
+```bash
+# wrong — double quotes for static strings (owned by BCS0301)
+info "Starting backup..."           # use single quotes
+echo "${HOME}/bin"                  # unnecessary braces (owned by BCS0207)
+
+# wrong — unquoted expansions (core: BCS0302 scalars, BCS0206 arrays)
 echo $result
 rm $temp_file
 for item in ${items[@]}
@@ -824,6 +841,8 @@ echo "$result"
 rm "$temp_file"
 for item in "${items[@]}"
 ```
+
+The unquoted-expansion anti-patterns above (`rm $temp_file`, `for item in ${items[@]}`, `echo $result`) are genuine correctness bugs enforced at **core** severity under BCS0206 (array expansions) and BCS0302 (scalar and command-substitution results) — the [ERROR] belongs to those codes. BCS0307 itself remains a recommended-tier catch-all list and emits findings only for patterns with no more specific home.
 
 Use braces only when required: `${var:-default}`, `${file##*/}`, `${array[@]}`, `${var1}${var2}`.
 
@@ -849,6 +868,7 @@ vecho() { ((VERBOSE)) || return 0; _msg "$@"; }
 process_file() {
   local -- filename=$1
   local -i line_count=0
+  local -- line
 
   [[ -f $filename ]] || return 1
 
@@ -910,17 +930,22 @@ main "$@"
 
 Always call main with all arguments: `main "$@"`, never just `main`.
 
+This is the canonical rule for `main()` structure and content (argument parsing inside `main()`, readonly-after-parse, `main "$@"`). BCS0108 covers only the structural placement of the invocation; cite BCS0403 for main() content violations.
+
 ## BCS0404 Function Export
 
 **Tier:** recommended
 
-Export functions needed by subshells with `declare -fx`.
+Export functions needed by child bash processes (e.g. `bash -c`, `xargs bash -c`, `find -exec bash -c ... \;`) with `declare -fx`. Subshells and command substitutions inherit functions automatically and need no export.
 
 ```bash
 # correct — define first, then export
 grep() { /usr/bin/grep "$@"; }
 find() { /usr/bin/find "$@"; }
 declare -fx grep find
+
+# consumer — child bash process sees the exported functions
+find . -name '*.txt' -exec bash -c 'grep pattern "$1"' _ {} \;
 ```
 
 ## BCS0405 Production Optimization
@@ -992,6 +1017,8 @@ Use idempotent initialization with version guard:
 }
 ```
 
+This is the canonical rule for dual-purpose script structure (function placement, source fence, strict-mode positioning) — cite BCS0406 for fence-structure violations. BCS0106 owns the file-extension requirements. The terms "source fence" and "source guard" refer to the same mechanism; this standard prefers "source fence".
+
 ## BCS0407 Library Patterns
 
 **Tier:** core
@@ -1019,7 +1046,8 @@ Libraries should only define functions, not have side effects on source. Allow c
 Source libraries with existence check:
 
 ```bash
-[[ -f $lib_path ]] && source "$lib_path" || die 1 "Missing library ${lib_path}"
+[[ -f $lib_path ]] || die 3 "Missing library ${lib_path@Q}"
+source "$lib_path" || die 1 "Failed to source ${lib_path@Q}"
 ```
 
 ## BCS0408 Dependency Management
@@ -1137,6 +1165,8 @@ fi
 
 Omitted components default to 0: `bash_at_least 5` accepts any 5.x; `bash_at_least 5 2` accepts 5.2.0+; `bash_at_least 5 2 21` accepts 5.2.21+.
 
+Placement of `require_bash` between `set -euo pipefail` and `shopt -s inherit_errexit` is an explicit, documented exception to BCS0101's "shopt immediately after set" ordering — see the exception note in BCS0101.
+
 ## BCS0410 Recursive Function State Discipline
 
 **Tier:** core
@@ -1169,7 +1199,9 @@ walk() {
 
 Values passed via positional arguments (`$1`, `$2`, ...) are automatically per-call and do not need `local`.
 
-LLM-based checkers should flag any assignment inside a recursive function that lacks a `local` declaration -- including `for VAR in ...` which implicitly assigns `VAR`.
+**Exception:** variables declared at file scope (or with `declare -g`) and intentionally used as shared accumulators are exempt -- e.g. `declare -a RESULTS` at file scope with `RESULTS+=("$f")` inside the recursive walker.
+
+LLM-based checkers should flag only assignments inside a recursive function that have neither a `local` declaration in the function nor a global declaration in the script -- including `for VAR in ...` which implicitly assigns `VAR`.
 
 ## BCS0411 Subshell Return-Value Patterns
 
@@ -1180,8 +1212,9 @@ When a computation runs in a subshell, choose one of four documented patterns to
 **Pattern 1 -- Command substitution** (single value or multiline text):
 
 ```bash
-local -- content=$(< "$file")
-local -- hash=$(sha256sum "$file" | cut -d' ' -f1)
+local -- content hash
+content=$(< "$file")
+hash=$(sha256sum "$file" | cut -d' ' -f1)
 ```
 
 **Pattern 2 -- Process substitution with `readarray` or `while`** (array or streaming output, preserves parent scope):
@@ -1196,12 +1229,13 @@ done < <(some_command)
 **Pattern 3 -- Temp file** (large output, binary data, or output consumed by multiple later passes):
 
 ```bash
-local -- tmp
-tmp=$(mktemp) || die 1 'mktemp failed'
-trap "rm -f '$tmp'" EXIT
-expensive_command > "$tmp"
-first_pass  < "$tmp"
-second_pass < "$tmp"
+# global so the single-quoted trap (BCS0603) can expand it at EXIT time
+declare -g TEMP_FILE=''
+trap '[[ -z $TEMP_FILE ]] || rm -f "$TEMP_FILE"' EXIT
+TEMP_FILE=$(mktemp) || die 1 'mktemp failed'
+expensive_command > "$TEMP_FILE"
+first_pass  < "$TEMP_FILE"
+second_pass < "$TEMP_FILE"
 ```
 
 **Pattern 4 -- Explicit file descriptor** (long-running producer, interleaved reads):
@@ -1263,8 +1297,10 @@ command -v curl >/dev/null || die 18 'curl required'
 
 # wrong
 [ -f "$file" ]                       # never use [ ]
-((count > 0))                        # use ((count)) instead
-((VERBOSE == 1))                     # use ((VERBOSE)) instead
+
+# style preference — prefer ((count)); see BCS0505. Not errors under this rule.
+((count > 0))                        # prefer ((count))
+((VERBOSE == 1))                     # prefer ((VERBOSE))
 ```
 
 ## BCS0502 Case Statements
@@ -1321,7 +1357,7 @@ done
 
 # wrong
 for f in $(ls *.txt); do             # never parse ls
-for ((i=0; i<10; i++)); do           # never use i++
+for ((i=0; i<10; i++)); do           # use i+=1 — increment policy: see BCS0505
 while (($# > 0)); do                 # use (($#)) instead
 ```
 
@@ -1346,6 +1382,11 @@ done
 
 # acceptable — special builtin, POSIX-compatible
 while :; do
+  process_item || break
+done
+
+# acceptable — regular builtin, widely used
+while true; do
   process_item || break
 done
 
@@ -1380,14 +1421,14 @@ See also: [While Loops Reference](../benchmarks/while-loops_reference.md) — fu
 
 **Tier:** core
 
-Never pipe to while loops — pipes create subshells where variable modifications are lost.
+Never pipe to while loops — pipes create subshells where variable modifications are lost. This is the canonical code for the pipe-to-while anti-pattern; BCS0903 covers process substitution in file-operation contexts.
 
 ```bash
 # correct — process substitution preserves variables
 declare -i count=0
 while IFS= read -r line; do
   count+=1
-done < <(grep -c '' "$file")
+done < <(grep '' "$file")
 
 # correct — readarray for collecting lines
 readarray -t lines < <(find . -name '*.txt')
@@ -1418,8 +1459,10 @@ declare -i count=0
 count+=1                             # increment
 
 # correct — arithmetic conditional
-((count > 10)) && warn 'High count'
-((result = x + y))                   # no $ needed inside (())
+((count > 10)) && warn 'High count'  # no $ needed inside (())
+
+# correct — assignment via arithmetic expansion never affects exit status
+result=$((x + y))
 
 # wrong — NEVER use any form of ++
 ((count++))
@@ -1428,7 +1471,7 @@ count++
 ((count+=1))                         # use plain count+=1
 ```
 
-Use `i+=1` for ALL increments. Integer division truncates: `((10 / 3))` equals 3.
+Use `i+=1` for ALL increments. A bare `((count++))` with count=0 evaluates to 0, returns status 1, and kills a `set -e` script — BCS0606 (core) owns that correctness hazard. Integer division truncates: `((10 / 3))` equals 3.
 
 ## BCS0506 Floating-Point Operations
 
@@ -1498,7 +1541,8 @@ if command_that_might_fail; then
 fi
 
 # correct — handle undefined optional variables
-"${OPTIONAL_VAR:-}"
+val="${OPTIONAL_VAR:-default}"
+echo "${OPTIONAL_VAR:-}"
 
 # correct — capture failing command safely
 if result=$(failing_command); then
@@ -1555,6 +1599,8 @@ Reserved: 64-78 (sysexits), 126 (cannot execute), 127 (not found), 128+n (signal
 
 Install cleanup traps early, before creating any resources.
 
+This is the canonical rule for the trap/cleanup pattern (quoting, signal lists, recursion guard) — cite BCS0603 for trap-content violations. BCS0110 owns the structural-placement requirement (trap installed before resource-creating code).
+
 ```bash
 # correct
 declare -- TEMP_FILE
@@ -1590,7 +1636,7 @@ Never combine multiple traps for the same signal (replaces previous). Use a sing
 
 **Tier:** core
 
-Always check return values of critical operations.
+Always check return values of critical operations. Critical operations are state-changing commands whose failure needs a contextual message or cleanup -- file moves/copies/removals, command substitutions whose output is used later, network calls, and anything followed by dependent steps. For these operations, a bare command relying on `set -e` to abort with no context is a violation.
 
 ```bash
 # correct
@@ -1603,9 +1649,11 @@ cp "$src" "$dst" || {
   die 1 'Copy failed'
 }
 
-# correct — check PIPESTATUS for pipelines
-sort "$file" | uniq > "$output"
-((PIPESTATUS[0] == 0)) || die 1 'Sort failed'
+# correct — check PIPESTATUS for pipelines (condition context, see pitfalls)
+if ! sort "$file" | uniq > "$output"; then
+  ((PIPESTATUS[0] == 0)) || die 1 'Sort failed'
+  die 1 'Pipeline failed'
+fi
 
 # correct — check $? immediately
 cmd1
@@ -1615,21 +1663,25 @@ local -i result=$?
 **`PIPESTATUS` pitfalls:**
 
 - `PIPESTATUS` is overwritten by the **very next command** -- including `echo`. Snapshot it immediately if you need it across statements: `local -a ps=("${PIPESTATUS[@]}")`.
+- Under strict mode a failing pipeline aborts the script before any follow-up `PIPESTATUS` check can run. Inspect `PIPESTATUS` from a condition context (`if ! pipeline; then ...`), where it survives into the body. Appending `||:` does NOT work -- the `:` itself overwrites `PIPESTATUS`.
 - Under `set -o pipefail` (part of BCS0101 strict mode), `$?` already reflects the rightmost non-zero exit. Inspect `PIPESTATUS` only when you need to distinguish *which* stage failed.
 - `((PIPESTATUS[0]))` only tells you about the first command. For a multi-stage pipeline, iterate over a snapshot:
 
 ```bash
 # correct — snapshot, then inspect each stage
-sort "$file" | uniq | wc -l > "$output"
-local -a ps=("${PIPESTATUS[@]}")
-for i in "${!ps[@]}"; do
-  ((ps[i] == 0)) || die 1 "Stage $i failed (exit ${ps[i]})"
-done
+if ! sort "$file" | uniq | wc -l > "$output"; then
+  local -a ps=("${PIPESTATUS[@]}")
+  for i in "${!ps[@]}"; do
+    ((ps[i] == 0)) || error "Stage $i failed (exit ${ps[i]})"
+  done
+  die 1 'Pipeline failed'
+fi
 
 # wrong — echo clobbers PIPESTATUS before we read it
-sort "$file" | uniq | wc -l > "$output"
-echo 'Pipeline done'
-((PIPESTATUS[0] == 0)) || die 1 'Sort failed'   # PIPESTATUS is now echo's
+if ! sort "$file" | uniq | wc -l > "$output"; then
+  echo 'Pipeline failed'
+  ((PIPESTATUS[0] == 0)) || die 1 'Sort failed'   # PIPESTATUS is now echo's
+fi
 ```
 
 ## BCS0605 Error Suppression
@@ -1640,7 +1692,7 @@ Only suppress errors when failure is expected, non-critical, and explicitly safe
 
 ```bash
 # correct — safe to suppress
-command -v optional_tool &>/dev/null
+command -v optional_tool &>/dev/null ||:
 rm -f /tmp/optional_*
 rmdir "$maybe_empty" 2>/dev/null ||:
 
@@ -1928,8 +1980,9 @@ Get terminal dimensions dynamically.
 trap 'get_terminal_size' WINCH
 cols=$(tput cols 2>/dev/null || echo 80)
 
-# correct — check Unicode support
-[[ ${LC_ALL:-${LC_CTYPE:-${LANG:-}}} == *UTF-8* ]]
+# correct — check Unicode support (guarded; bare [[ ]] would trip errexit)
+declare -i UNICODE=0
+[[ ${LC_ALL:-${LC_CTYPE:-${LANG:-}}} == *UTF-8* ]] && UNICODE=1 ||:
 ```
 
 Never hardcode terminal width. Provide graceful fallbacks for limited terminals.
@@ -2011,12 +2064,16 @@ while (($#)); do case $1 in
   *)            FILES+=("$1") ;;
 esac; shift; done
 
-# wrong
-while [[ $# -gt 0 ]]; do            # use (($#)) instead
+# wrong — missing the trailing shift: $1 is never consumed, infinite loop
+while (($#)); do case $1 in
+  -v|--verbose) VERBOSE=1 ;;
+  -*)           die 22 "Invalid option ${1@Q}" ;;
+  *)            FILES+=("$1") ;;
+esac; done
 ```
 
 Key rules:
-- `(($#))` is more efficient than `[[ $# -gt 0 ]]`
+- Use `(($#))` as the loop condition, not `[[ $# -gt 0 ]]` (house style; functionally equivalent)
 - The mandatory `shift` at loop end is critical — omitting it causes infinite loops
 - For options with arguments: `noarg "$@"; shift; variable=$1`
 - For boolean flags: just set, no extra shift needed
@@ -2102,7 +2159,8 @@ Support bundled short options like `-vvn` expanding to `-v -v -n`.
 # correct — recommended disaggregation pattern (list valid short options explicitly)
 -[vqnoVh]?*) set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
 
-# correct — pure bash method (68% faster, no external deps); only use if speed is absolutely essential
+# correct — alternative: single-pass disaggregation (avoids re-entering the case loop per character;
+# see ../benchmarks/args-processing_reference.md); only worth it for very hot argument loops
 -[vqnoVh]?*)
   local -- opt=${1:1}
   local -a new_args=()
@@ -2117,6 +2175,8 @@ Support bundled short options like `-vvn` expanding to `-v -v -n`.
 Place bundling case before `-*)` invalid option handler and after all explicit option cases. List only valid short options in the pattern to prevent incorrect expansion.
 
 Include arg-taking options in the character class. They work correctly when last in the bundle — the disaggregation peels them off as a separate `-X` flag, and `shift` in their case handler picks up the argument normally. Example: `-vno output.txt` disaggregates to `-v -n -o`, then `-o` consumes `output.txt` via `shift`. The user must place arg-taking options last; `-von file` would incorrectly disaggregate to `-v -o -n`.
+
+▲ Attached option-arguments (`-oFILE`) are NOT supported by this pattern — the disaggregator prepends `-` to the remainder, so `-ooutput.txt` becomes `-o -output.txt` and the handler silently captures `-output.txt` (`noarg` cannot catch it). Option arguments must be separate words: `-o FILE`.
 
 ## BCS0806 Standard Options
 
@@ -2225,11 +2285,11 @@ rm -v *                              # file named -rf would be catastrophic
 for file in *.txt; do                # less safe
 ```
 
-## BCS0903 Process Substitution
+## BCS0903 Process Substitution in File Operations
 
 **Tier:** core
 
-Use `< <(command)` with while loops to avoid subshell variable scope issues.
+Use process substitution (`<(command)`, `>(command)`) for file-operation idioms that would otherwise need temp files or lossy pipes: feeding while loops with `< <(command)`, populating arrays with `readarray`, comparing outputs with `diff <(...) <(...)`, parallel output with `tee >(...)`, and null-delimited filename handling. See BCS0504 for the pipe-to-while prohibition — cite BCS0504, not this rule, for `command | while read` violations.
 
 ```bash
 # correct — variables preserved in current shell
@@ -2252,7 +2312,7 @@ done < <(find /data -type f -print0)
 # correct — tee for parallel output
 tee >(grep ERROR > errors.txt) >(grep WARN > warnings.txt) < logfile
 
-# wrong — pipe loses variables
+# wrong — pipe loses variables (cite BCS0504)
 command | while read -r line; do count+=1; done
 ```
 
@@ -2260,16 +2320,25 @@ command | while read -r line; do count+=1; done
 
 **Tier:** recommended
 
+Quote the here-document delimiter (`<<'NOTES'`) whenever the body must be literal; leave it unquoted only when expansion is intended. An unquoted delimiter over a body containing literal `$` or `` ` `` characters is a violation.
+
+Delimiter quoting semantics are owned by BCS0304 (the canonical code for delimiter-quoting findings, including descriptive delimiter names and `<<-`); this rule covers heredocs in file-operation contexts.
+
 ```bash
 # correct — no expansion (quoted delimiter)
-cat <<'EOF'
+cat <<'NOTES'
 Variables like $HOME are not expanded.
-EOF
+NOTES
 
 # correct — with expansion (unquoted delimiter)
-cat <<EOF
+cat <<GREETING
 Hello $USER, home is $HOME
-EOF
+GREETING
+
+# wrong — body needs literal $HOME but delimiter is unquoted, so it expands
+cat <<MSG
+Set your home directory with: export HOME=$HOME
+MSG
 ```
 
 ## BCS0905 Input Redirection
@@ -2485,12 +2554,17 @@ Validate early, fail securely with clear errors, run with minimum necessary perm
 Always use `mktemp`. Never hardcode temp file paths.
 
 ```bash
-# correct
+# correct — temp file
 temp_file=$(mktemp) || die 1 'Failed to create temp file'
 trap 'rm -f "$temp_file"' EXIT
 
+# correct — temp dir (alternative; a second EXIT trap would overwrite the first)
 temp_dir=$(mktemp -d) || die 1 'Failed to create temp dir'
 trap 'rm -rf "$temp_dir"' EXIT
+
+# correct — both resources: single cleanup function, one EXIT trap
+cleanup() { rm -f "$temp_file"; rm -rf "$temp_dir"; }
+trap cleanup EXIT
 
 # correct — custom template
 mktemp /tmp/"$SCRIPT_NAME".XXXXXX
@@ -2656,7 +2730,7 @@ done
 ((errors == 0)) || die 1 "$errors job(s) failed"
 
 # wrong — exit code discarded; failures silent
-wait $!
+wait "$pid" ||:
 
 # wrong — no accumulator; first failure kills script under set -e
 for pid in "${pids[@]}"; do
@@ -2718,6 +2792,7 @@ while ((attempt <= max_attempts)); do
 
   attempt+=1
 done
+((attempt <= max_attempts)) || die 1 "operation failed after $max_attempts attempts"
 
 # wrong — tight retry loop
 while ! curl "$url"; do :; done      # floods failing services
@@ -2875,6 +2950,8 @@ declare -r SCRIPT_PATH=$(realpath -- "$0")
 ## BCS1207 Debugging
 
 **Tier:** recommended
+
+Gate debug output on an integer `DEBUG` variable (`declare -i DEBUG=${DEBUG:-0}`), send it to stderr, and never ship an unconditional `set -x`.
 
 ```bash
 # correct
@@ -3098,9 +3175,8 @@ uninstall:
 	rm -f $(DESTDIR)$(COMPDIR)/myscript
 
 check:
-	@command -v myscript >/dev/null 2>&1 \
-	  && echo 'myscript: OK' \
-	  || echo 'myscript: NOT FOUND (check PATH)'
+	@command -v myscript >/dev/null 2>&1 || { echo 'myscript: NOT FOUND (check PATH)'; exit 1; }
+	@echo 'myscript: OK'
 
 test:
 	cd tests && ./run_all_tests.sh
