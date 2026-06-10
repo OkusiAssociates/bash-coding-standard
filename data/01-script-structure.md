@@ -248,7 +248,7 @@ Always quote `"$@"` to preserve the argument array. Scripts under 200 lines may 
 
 **Tier:** style
 
-Every script must end with `#fin\n` OR `#end\n` as the mandatory final line.
+Every script must end with `#fin\n` as the mandatory final line.
 
 ```bash
 # correct — last line of file
@@ -262,7 +262,7 @@ main "$@"
 main "$@"
 ```
 
-The #end marker simply confirms the file is complete and not truncated.
+The end marker simply confirms the file is complete and not truncated. (`#end`, accepted by earlier revisions of this rule, is deprecated — use `#fin`, which is what BCS0403, BCS1206, and the shipped templates mandate.)
 
 ## BCS0110 Cleanup and Traps
 

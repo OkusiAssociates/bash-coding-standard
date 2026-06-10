@@ -6,10 +6,10 @@ This section is the canonical reference for environment variables read by the `b
 Variables fall into six families:
 
 1. **User configuration** — defaults for `bcs check` flags, overridable per-call
-2. **Backend model overrides** — pin a concrete model regardless of `-m` tier keyword
+2. **Model aliases** — the `MODEL_ALIASES` map: short names that expand to canonical model IDs
 3. **Backend selection** — `OLLAMA_HOST` directs the local Ollama backend
 4. **Credentials** — API keys consumed by the cloud backends
-5. **Search paths** — XDG locations for config and state files
+5. **Search paths** — XDG locations for config and state files, plus the `BCS_CONF_DIR` test override
 6. **Internal / advanced** — runtime flags exported by `bcs` itself; documented for source-readers
 
 Values are resolved in this precedence (highest wins):
@@ -27,12 +27,12 @@ Default values for the `bcs check` subcommand. All have CLI flag equivalents tha
 
 ### `BCS_MODEL`
 
-- **Default:** `balanced`
-- **Values:** tier keyword (`fast`, `balanced`, `thorough`), `claude-code[:tier|:model]`, or any concrete model name routed by `_sniff_backend()` (`claude-*`, `gemini-*`, `gpt-*`, `o[0-9]*`, anything else → Ollama)
+- **Default:** `sonnet` (alias for `claude-sonnet-4-6`)
+- **Values:** a `MODEL_ALIASES` short name (e.g. `sonnet`, `opus`, `haiku`, `flash`, `gpt5`, `qwen`), `claude-code[:alias|:model]`, or any concrete model name routed by `_sniff_backend()` (`claude-*` → Anthropic, `gemini-*` → Google, `gpt-*`/`o[0-9]*` → OpenAI, anything else → Ollama)
 - **Override flag:** `-m`, `--model`
 - **Consumed:** `cmd_check()` initialiser
 
-Tier keywords probe available backends in order (claude → ollama → anthropic → openai → google) and use that tier's default model for the first reachable one. Concrete model names route directly to the matching backend without probing.
+The backend is resolved entirely from the (alias-expanded) model name — there is no probe and no separate backend flag. The legacy tier keywords (`fast`, `balanced`, `thorough`) are rejected with exit 22 and a migration hint pointing at the alias map.
 
 ### `BCS_EFFORT`
 
@@ -106,33 +106,24 @@ Reports findings at the named tier or higher severity. `BCS_MIN_TIER=recommended
 
 Set externally to direct raw API responses to a known location for inspection. The Claude Code CLI backend writes directly here (it returns text, not JSON).
 
-## 13.2 Backend Model Overrides
+## 13.2 Model Aliases
 
-Each variable pins a concrete model for one backend, taking precedence over the `-m` tier mapping (`ANTHROPIC_MODELS`, `OPENAI_MODELS`, etc.). Useful when a tier's default is unavailable in your account or you want to hold a specific model across sessions.
+The four legacy per-backend overrides (`BCS_ANTHROPIC_MODEL`, `BCS_OPENAI_MODEL`, `BCS_GOOGLE_MODEL`, `BCS_OLLAMA_MODEL`) and the tier-keyword arrays (`*_MODELS`) are gone. The single mechanism for naming models is the `MODEL_ALIASES` associative array.
 
-### `BCS_ANTHROPIC_MODEL`
+### `MODEL_ALIASES`
 
-- **Default:** unset (use `ANTHROPIC_MODELS[$tier]`)
-- **Values:** any Anthropic model ID (e.g. `claude-sonnet-4-6`, `claude-opus-4-7`)
-- **Consumed:** `_llm_anthropic()`, `_llm_claude_cli()`
+- **Default:** built-in map in `bcs` (`opus`, `sonnet`, `haiku`, `flash`, `pro`, `flash-lite`, `gpt5`, `gpt5-mini`, `qwen`, `qwen-small`)
+- **Values:** `MODEL_ALIASES[name]=canonical-id` entries, set in `bcs.conf` (it is a Bash associative array, so it can only be extended from a sourced config file — not from the environment)
+- **Consumed:** `_expand_alias()` before `_sniff_backend()` routing
 
-### `BCS_OPENAI_MODEL`
+Extend or override in `bcs.conf`:
 
-- **Default:** unset (use `OPENAI_MODELS[$tier]`)
-- **Values:** any OpenAI model ID (e.g. `gpt-5.4`, `o3-mini`)
-- **Consumed:** `_llm_openai()`
+```bash
+MODEL_ALIASES[mymodel]=qwen3.5:14b
+MODEL_ALIASES[sonnet]=claude-sonnet-4-7   # repoint a built-in alias
+```
 
-### `BCS_GOOGLE_MODEL`
-
-- **Default:** unset (use `GOOGLE_MODELS[$tier]`)
-- **Values:** any Gemini model ID (e.g. `gemini-2.5-pro`)
-- **Consumed:** `_llm_google()`
-
-### `BCS_OLLAMA_MODEL`
-
-- **Default:** unset (use `OLLAMA_MODELS[$tier]`)
-- **Values:** any Ollama model tag, including `:cloud` variants (e.g. `qwen3.5:14b`, `minimax-m2:cloud`)
-- **Consumed:** `_llm_ollama()`
+Unknown names pass through `_expand_alias()` unchanged, so canonical model IDs need no alias entry. To pin a model across sessions, set `BCS_MODEL` to an alias or canonical ID in `bcs.conf`.
 
 ## 13.3 Backend Selection (Ollama)
 
@@ -140,18 +131,18 @@ Each variable pins a concrete model for one backend, taking precedence over the 
 
 - **Default:** `localhost:11434`
 - **Values:** `host:port` or `protocol://host:port`
-- **Consumed:** `_llm_ollama()`, `_detect_backend()` reachability probe
+- **Consumed:** `_llm_ollama()`
 
 Direct the local Ollama backend at a non-default endpoint (e.g. `OLLAMA_HOST=ollama.lan:11434`).
 
 ## 13.4 Credentials
 
-API keys for the cloud backends. Resolved by `_detect_backend()` in this order: ollama (reachability) → anthropic → openai → google. The first backend with a usable credential wins under tier-keyword resolution; concrete model names always route to the matching backend regardless of probe order.
+API keys for the cloud backends. There is no key probe: the backend (and therefore which key is needed) is determined solely by the alias-expanded model name. All keys are passed to `curl` via a `--config` file descriptor, never on the command line, so they are not visible in `ps`.
 
 ### `ANTHROPIC_API_KEY`
 
-- **Required for:** Anthropic API backend (`claude-*` models, `claude-code` sentinel falls through to this when the CLI is unavailable)
-- **Consumed:** `_llm_anthropic()` HTTP header
+- **Required for:** Anthropic API backend (`claude-*` models). The `claude-code` sentinel requires the Claude Code CLI binary instead (missing CLI is exit 18, not an API fallback) and unsets `ANTHROPIC_API_KEY` for the CLI invocation so it authenticates via OAuth.
+- **Consumed:** `_llm_anthropic()` `x-api-key` header
 
 ### `OPENAI_API_KEY`
 
@@ -161,7 +152,7 @@ API keys for the cloud backends. Resolved by `_detect_backend()` in this order: 
 ### `GOOGLE_API_KEY`
 
 - **Required for:** Google Gemini API backend (`gemini-*` models)
-- **Consumed:** `_llm_google()` query parameter
+- **Consumed:** `_llm_google()` `x-goog-api-key` header
 
 ### `GEMINI_API_KEY`
 
@@ -183,6 +174,14 @@ XDG Base Directory variables that locate `bcs.conf` and the response dump. Stand
 - **Default:** `$HOME/.local/state`
 - **Affects:** default `BCS_RESPONSE_DUMP` location (`$XDG_STATE_HOME/bcs/last-response.txt`)
 - **Consumed:** `cmd_check()` state-dir setup
+
+### `BCS_CONF_DIR`
+
+- **Default:** unset (full cascade in effect)
+- **Values:** a directory path; when set, `$BCS_CONF_DIR/bcs.conf` becomes the **only** config file considered, replacing the entire cascade
+- **Consumed:** `_conf_search_paths()`
+
+Intended for hermetic testing — it prevents a real `/etc/bcs.conf` or `~/.config/bcs/bcs.conf` from leaking into a test run. The test harness (`tests/test-helpers.sh`) sets it to an empty directory by default.
 
 The data directory containing `BASH-CODING-STANDARD.md` and `data/*.md` section files is **not** XDG-resolved. It uses a four-step FHS search (development tree → relative `share/yatti/BCS/data` → `/usr/local/share/yatti/BCS/data` → `/usr/share/yatti/BCS/data`) defined in `_find_data_dir()`. There is no environment override for the data directory.
 

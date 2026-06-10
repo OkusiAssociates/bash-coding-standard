@@ -22375,7 +22375,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: install bcs
         run: |
-          git clone --depth=1 https://github.com/Okusi/BCS.git /tmp/bcs
+          git clone --depth=1 https://github.com/Open-Technology-Foundation/bash-coding-standard.git /tmp/bcs
           sudo make -C /tmp/bcs install
       - name: run bcscheck
         env:
