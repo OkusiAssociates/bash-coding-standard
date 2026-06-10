@@ -1723,7 +1723,7 @@ printf '%s\n' "$result"              # → stdout (data output)
 >&2 echo 'error: something failed'
 >&2 printf '%s\n' 'error: something failed'
 
-# wrong — >&2 at end (works but harder to spot)
+# discouraged (style, not a violation) — >&2 at end works but is harder to spot
 echo 'error: something failed' >&2
 printf '%s\n' 'error: something failed' >&2
 ```
@@ -2379,7 +2379,7 @@ For elevated privileges, use sudo, capabilities (`setcap`), compiled wrappers, P
 Secure PATH at script start to prevent command hijacking.
 
 ```bash
-# correct
+# correct — non-privileged interactive/user tooling only
 declare -rx PATH=~/.local/bin:/usr/local/bin:/usr/bin:/bin
 
 # correct — for production/security-critical scripts
@@ -2390,7 +2390,7 @@ PATH=.:$PATH                         # current directory
 PATH="/tmp:$PATH"                    # world-writable directory
 ```
 
-Never include `.`, empty elements (`::`, leading/trailing `:`), `/tmp`, or user home directories in PATH. Place PATH setting early, before any commands that depend on it.
+Never include `.`, empty elements (`::`, leading/trailing `:`), or `/tmp` in PATH. User-writable directories such as `~/.local/bin` are permitted only in non-privileged user tooling; production, security-critical, or privilege-elevated (sudo/SUID-adjacent) scripts must use the system-directories-only form. Place PATH setting early, before any commands that depend on it.
 
 ## BCS1003 IFS Safety
 
@@ -2464,8 +2464,9 @@ Validate and sanitize all user input. Use whitelist over blacklist.
 [[ $input =~ ^-?[0-9]+$ ]] || die 22 "Invalid integer: ${input@Q}"
 
 # correct — validate path within allowed directory
+# allowed_dir must be canonical (realpath output) with no trailing slash
 real_path=$(realpath -e -- "$path")
-[[ $real_path == "$allowed_dir"* ]] || die 13 'Path traversal blocked'
+[[ $real_path == "$allowed_dir"/* || $real_path == "$allowed_dir" ]] || die 13 'Path traversal blocked'
 
 # correct — sanitize filename
 [[ $name =~ ^[a-zA-Z0-9._-]+$ ]] || die 22 "Invalid filename ${name@Q}"
@@ -2612,18 +2613,20 @@ For ordered output, write results to temp files then display in order.
 temp_dir=$(mktemp -d)
 trap 'rm -rf "$temp_dir"' EXIT
 declare -a pids=()
+declare -i errors=0
 
 for server in "${servers[@]}"; do
   check_server "$server" > "$temp_dir"/"$server".out 2>&1 &
   pids+=($!)
 done
 
-# Wait and display in order
+# Wait and display in order; accumulate failures (BCS1103)
 for server in "${servers[@]}"; do
-  wait "${pids[0]}" ||:
+  wait "${pids[0]}" || errors+=1
   pids=("${pids[@]:1}")
   cat "$temp_dir"/"$server".out
 done
+((errors == 0)) || die 1 "$errors job(s) failed"
 ```
 
 Implement concurrency limits by checking `${#pids[@]}` against `max_jobs` and using `wait -n` to wait for slots.
@@ -2867,16 +2870,7 @@ declare -r SCRIPT_PATH=$(realpath -- "$0")
 - **VIOLATION**: Code is incorrect, unsafe, or clearly breaks a mandatory (MUST/SHALL) rule.
 - **WARNING**: Style deviation, SHOULD/RECOMMENDED level, or intentional design choice that deviates from a reference pattern.
 
-Always end scripts with `#fin` after `main "$@"`.
-
-Use defensive programming:
-
-```bash
-: "${VERBOSE:=0}"                    # default critical variables
-[[ -n $1 ]] || die 2 'Argument required'
-```
-
-Minimize subshells, use built-in string operations, batch operations, use process substitution over temp files.
+(End-marker requirements are defined by BCS0109; performance idioms by BCS1205.)
 
 ## BCS1207 Debugging
 
@@ -2942,13 +2936,13 @@ assert() {
 run_tests() {
   local -i passed=0 failed=0
   local -- fn
-  while IFS= read -r _ _ fn; do
+  while read -r _ _ fn; do
     if "$fn"; then
       passed+=1
     else
       failed+=1
     fi
-  done < <(declare -F | grep 'test_')
+  done < <(declare -F | grep -E '^declare -f test_')
   echo "Passed: $passed, Failed: $failed"
   ((failed == 0))
 }

@@ -54,18 +54,20 @@ For ordered output, write results to temp files then display in order.
 temp_dir=$(mktemp -d)
 trap 'rm -rf "$temp_dir"' EXIT
 declare -a pids=()
+declare -i errors=0
 
 for server in "${servers[@]}"; do
   check_server "$server" > "$temp_dir"/"$server".out 2>&1 &
   pids+=($!)
 done
 
-# Wait and display in order
+# Wait and display in order; accumulate failures (BCS1103)
 for server in "${servers[@]}"; do
-  wait "${pids[0]}" ||:
+  wait "${pids[0]}" || errors+=1
   pids=("${pids[@]:1}")
   cat "$temp_dir"/"$server".out
 done
+((errors == 0)) || die 1 "$errors job(s) failed"
 ```
 
 Implement concurrency limits by checking `${#pids[@]}` against `max_jobs` and using `wait -n` to wait for slots.

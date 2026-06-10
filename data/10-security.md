@@ -29,7 +29,7 @@ For elevated privileges, use sudo, capabilities (`setcap`), compiled wrappers, P
 Secure PATH at script start to prevent command hijacking.
 
 ```bash
-# correct
+# correct — non-privileged interactive/user tooling only
 declare -rx PATH=~/.local/bin:/usr/local/bin:/usr/bin:/bin
 
 # correct — for production/security-critical scripts
@@ -40,7 +40,7 @@ PATH=.:$PATH                         # current directory
 PATH="/tmp:$PATH"                    # world-writable directory
 ```
 
-Never include `.`, empty elements (`::`, leading/trailing `:`), `/tmp`, or user home directories in PATH. Place PATH setting early, before any commands that depend on it.
+Never include `.`, empty elements (`::`, leading/trailing `:`), or `/tmp` in PATH. User-writable directories such as `~/.local/bin` are permitted only in non-privileged user tooling; production, security-critical, or privilege-elevated (sudo/SUID-adjacent) scripts must use the system-directories-only form. Place PATH setting early, before any commands that depend on it.
 
 ## BCS1003 IFS Safety
 
@@ -114,8 +114,9 @@ Validate and sanitize all user input. Use whitelist over blacklist.
 [[ $input =~ ^-?[0-9]+$ ]] || die 22 "Invalid integer: ${input@Q}"
 
 # correct — validate path within allowed directory
+# allowed_dir must be canonical (realpath output) with no trailing slash
 real_path=$(realpath -e -- "$path")
-[[ $real_path == "$allowed_dir"* ]] || die 13 'Path traversal blocked'
+[[ $real_path == "$allowed_dir"/* || $real_path == "$allowed_dir" ]] || die 13 'Path traversal blocked'
 
 # correct — sanitize filename
 [[ $name =~ ^[a-zA-Z0-9._-]+$ ]] || die 22 "Invalid filename ${name@Q}"

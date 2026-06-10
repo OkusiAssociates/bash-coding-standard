@@ -142,16 +142,7 @@ declare -r SCRIPT_PATH=$(realpath -- "$0")
 - **VIOLATION**: Code is incorrect, unsafe, or clearly breaks a mandatory (MUST/SHALL) rule.
 - **WARNING**: Style deviation, SHOULD/RECOMMENDED level, or intentional design choice that deviates from a reference pattern.
 
-Always end scripts with `#fin` after `main "$@"`.
-
-Use defensive programming:
-
-```bash
-: "${VERBOSE:=0}"                    # default critical variables
-[[ -n $1 ]] || die 2 'Argument required'
-```
-
-Minimize subshells, use built-in string operations, batch operations, use process substitution over temp files.
+(End-marker requirements are defined by BCS0109; performance idioms by BCS1205.)
 
 ## BCS1207 Debugging
 
@@ -217,13 +208,13 @@ assert() {
 run_tests() {
   local -i passed=0 failed=0
   local -- fn
-  while IFS= read -r _ _ fn; do
+  while read -r _ _ fn; do
     if "$fn"; then
       passed+=1
     else
       failed+=1
     fi
-  done < <(declare -F | grep 'test_')
+  done < <(declare -F | grep -E '^declare -f test_')
   echo "Passed: $passed, Failed: $failed"
   ((failed == 0))
 }

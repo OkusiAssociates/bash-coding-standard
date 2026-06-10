@@ -29,7 +29,7 @@ printf '%s\n' "$result"              # → stdout (data output)
 >&2 echo 'error: something failed'
 >&2 printf '%s\n' 'error: something failed'
 
-# wrong — >&2 at end (works but harder to spot)
+# discouraged (style, not a violation) — >&2 at end works but is harder to spot
 echo 'error: something failed' >&2
 printf '%s\n' 'error: something failed' >&2
 ```
