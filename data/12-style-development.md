@@ -125,12 +125,12 @@ Suppression scope follows ShellCheck conventions — the directive covers the **
 #bcscheck disable=BCS0606
 ((DRY_RUN)) && info 'Dry-run mode' ||:
 
-# correct — suppresses a block (same as shellcheck)
+# correct — suppresses the next compound command (here a whole case block)
 #bcscheck disable=BCS0806
-{
-  -p|-n|--prompt) PROMPT=1; VERBOSE=1 ;;
+case $opt in
+  -p|-n|--prompt)    PROMPT=1; VERBOSE=1 ;;
   -P|-N|--no-prompt) PROMPT=0 ;;
-}
+esac
 
 # correct — documented shellcheck exception
 #shellcheck disable=SC2155
@@ -427,4 +427,4 @@ Use `$EPOCHSECONDS` for integer epoch timestamps (second precision) and `$EPOCHR
 
 `date(1)` is acceptable when `printf '%()T'` cannot provide the needed format (e.g., `date -d 'next Monday'` for relative date arithmetic).
 
-See also: [Date Formatting Reference](../benchmarks/date-printf-reference.md) — full `date` → `printf '%()T'` equivalence table with examples.
+See also: [Date Formatting Reference](../benchmarks/date_reference.md) — full `date` → `printf '%()T'` equivalence table with examples.

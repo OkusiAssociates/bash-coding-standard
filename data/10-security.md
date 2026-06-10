@@ -3,7 +3,7 @@
 
 ## BCS1000 Section Overview
 
-Five essential security areas: SUID/SGID prohibition, PATH security, IFS safety, eval avoidance, and input sanitization. These prevent privilege escalation, command injection, and path traversal attacks.
+Seven essential security areas: SUID/SGID prohibition, PATH security, IFS safety, eval avoidance, input sanitization, temporary file handling, and environment scrubbing before exec. These prevent privilege escalation, command injection, and path traversal attacks.
 
 ## BCS1001 SUID/SGID Prohibition
 
@@ -50,15 +50,15 @@ Never trust inherited IFS values.
 
 ```bash
 # correct — one-line IFS for single command
-IFS=',' read -ar fields <<< "$csv_data"
+IFS=',' read -ra fields <<< "$csv_data"
 
 # correct — subshell isolation
-( IFS=','; read -ar fields <<< "$data" )
+( IFS=','; read -ra fields <<< "$data" )
 
 # correct — local scoping in functions
 parse_csv() {
   local -- IFS=','
-  read -ar fields <<< "$1"
+  read -ra fields <<< "$1"
 }
 
 # correct — null-delimited input

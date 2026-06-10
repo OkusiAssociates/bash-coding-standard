@@ -179,7 +179,7 @@ my_function "$@"
 
 Never apply `set -euo pipefail` when sourced — it alters the calling shell's environment.
 
-See also: [Source Guard Reference](../benchmarks/source-guard-reference.md) — full comparison of source fence mechanisms with benchmark data.
+See also: [Source Guard Reference](../benchmarks/source-guard_reference.md) — full comparison of source fence mechanisms with benchmark data.
 
 ## BCS0107 Function Organization
 

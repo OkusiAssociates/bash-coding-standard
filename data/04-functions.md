@@ -262,13 +262,13 @@ require_bash() {
 
 `BASH_VERSINFO` indices: `[0]`=major, `[1]`=minor, `[2]`=patch, `[3]`=build, `[4]`=release status, `[5]`=machine type. Always compare integers per element; never compare `BASH_VERSION` as a string.
 
-Call `require_bash` at script start, after strict mode and before any feature-dependent code:
+Call `require_bash` at script start, after `set -euo pipefail` (safe on any Bash) but before `shopt -s inherit_errexit` and any other version-dependent code:
 
 ```bash
 #!/usr/bin/bash
 set -euo pipefail
-shopt -s inherit_errexit
 require_bash 5 2
+shopt -s inherit_errexit
 ```
 
 **Important: the guard must precede any version-dependent construct, including `shopt -s inherit_errexit` itself (which requires Bash 4.4+).** If `shopt -s inherit_errexit` runs before the version check on a Bash 3 host, the `shopt` line fails first with a cryptic `invalid shell option name`, `set -e` exits the script, and the helpful version message is never reached.

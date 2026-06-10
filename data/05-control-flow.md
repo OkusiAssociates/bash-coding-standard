@@ -140,7 +140,7 @@ done
 
 Use `break N` for nested loops (`break 2` exits two enclosing levels).
 
-See also: [While Loops Reference](../benchmarks/while-loops-reference.md) — full benchmark data and analysis of `while ((1))` vs `while :` vs `while true`.
+See also: [While Loops Reference](../benchmarks/while-loops_reference.md) — full benchmark data and analysis of `while ((1))` vs `while :` vs `while true`.
 
 ## BCS0504 Process Substitution
 

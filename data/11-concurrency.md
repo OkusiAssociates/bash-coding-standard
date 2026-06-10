@@ -64,7 +64,7 @@ done
 for server in "${servers[@]}"; do
   wait "${pids[0]}" ||:
   pids=("${pids[@]:1}")
-  cat "$temp_dir"/$server".out
+  cat "$temp_dir"/"$server".out
 done
 ```
 
@@ -114,8 +114,11 @@ Wrap network operations with timeout.
 timeout 300 ssh -o ConnectTimeout=10 "$server" 'command'
 timeout --signal=TERM --kill-after=10 60 long_command
 
-# correct — handle timeout exit code
-case $? in
+# correct — capture the exit code first; a bare command under set -e aborts
+# before any `case $?` could run, so guard with `|| rc=$?`
+declare -i rc=0
+timeout 300 ssh -o ConnectTimeout=10 "$server" 'command' || rc=$?
+case $rc in
   0)   success 'Command completed' ;;
   124) error 'Command timed out' ;;
   125) error 'Timeout itself failed' ;;

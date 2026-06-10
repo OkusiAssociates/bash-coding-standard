@@ -216,7 +216,7 @@ my_function "$@"
 
 Never apply `set -euo pipefail` when sourced — it alters the calling shell's environment.
 
-See also: [Source Guard Reference](/ai/scripts/Okusi/BCS/benchmarks/source-guard-reference.md) — full comparison of source fence mechanisms with benchmark data.
+See also: [Source Guard Reference](/ai/scripts/Okusi/BCS/benchmarks/source-guard_reference.md) — full comparison of source fence mechanisms with benchmark data.
 
 ## BCS0107 Function Organization
 
@@ -1092,13 +1092,13 @@ require_bash() {
 
 `BASH_VERSINFO` indices: `[0]`=major, `[1]`=minor, `[2]`=patch, `[3]`=build, `[4]`=release status, `[5]`=machine type. Always compare integers per element; never compare `BASH_VERSION` as a string.
 
-Call `require_bash` at script start, after strict mode and before any feature-dependent code:
+Call `require_bash` at script start, after `set -euo pipefail` (safe on any Bash) but before `shopt -s inherit_errexit` and any other version-dependent code:
 
 ```bash
 #!/usr/bin/bash
 set -euo pipefail
-shopt -s inherit_errexit
 require_bash 5 2
+shopt -s inherit_errexit
 ```
 
 **Important: the guard must precede any version-dependent construct, including `shopt -s inherit_errexit` itself (which requires Bash 4.4+).** If `shopt -s inherit_errexit` runs before the version check on a Bash 3 host, the `shopt` line fails first with a cryptic `invalid shell option name`, `set -e` exits the script, and the helpful version message is never reached.
@@ -1374,7 +1374,7 @@ done
 
 Use `break N` for nested loops (`break 2` exits two enclosing levels).
 
-See also: [While Loops Reference](/ai/scripts/Okusi/BCS/benchmarks/while-loops-reference.md) — full benchmark data and analysis of `while ((1))` vs `while :` vs `while true`.
+See also: [While Loops Reference](/ai/scripts/Okusi/BCS/benchmarks/while-loops_reference.md) — full benchmark data and analysis of `while ((1))` vs `while :` vs `while true`.
 
 ## BCS0504 Process Substitution
 
@@ -2023,7 +2023,7 @@ Key rules:
 - For exit options (`--help`, `--version`): use `exit 0`, no shift needed
 - Use `continue` after option disaggregation to re-process expanded options
 
-See also: [Argument Processing Reference](/ai/scripts/Okusi/BCS/benchmarks/args-processing-reference.md) — comparison of BCS while/case, getopts, GNU getopt, and simple while/case with benchmark data.
+See also: [Argument Processing Reference](/ai/scripts/Okusi/BCS/benchmarks/args-processing_reference.md) — comparison of BCS while/case, getopts, GNU getopt, and simple while/case with benchmark data.
 
 ## BCS0802 Version Output
 
@@ -2353,7 +2353,7 @@ Cross-references: BCS0411 (subshell return patterns), BCS0504 (process substitut
 
 ## BCS1000 Section Overview
 
-Five essential security areas: SUID/SGID prohibition, PATH security, IFS safety, eval avoidance, and input sanitization. These prevent privilege escalation, command injection, and path traversal attacks.
+Seven essential security areas: SUID/SGID prohibition, PATH security, IFS safety, eval avoidance, input sanitization, temporary file handling, and environment scrubbing before exec. These prevent privilege escalation, command injection, and path traversal attacks.
 
 ## BCS1001 SUID/SGID Prohibition
 
@@ -2400,15 +2400,15 @@ Never trust inherited IFS values.
 
 ```bash
 # correct — one-line IFS for single command
-IFS=',' read -ar fields <<< "$csv_data"
+IFS=',' read -ra fields <<< "$csv_data"
 
 # correct — subshell isolation
-( IFS=','; read -ar fields <<< "$data" )
+( IFS=','; read -ra fields <<< "$data" )
 
 # correct — local scoping in functions
 parse_csv() {
   local -- IFS=','
-  read -ar fields <<< "$1"
+  read -ra fields <<< "$1"
 }
 
 # correct — null-delimited input
@@ -2622,7 +2622,7 @@ done
 for server in "${servers[@]}"; do
   wait "${pids[0]}" ||:
   pids=("${pids[@]:1}")
-  cat "$temp_dir"/$server".out
+  cat "$temp_dir"/"$server".out
 done
 ```
 
@@ -2672,8 +2672,11 @@ Wrap network operations with timeout.
 timeout 300 ssh -o ConnectTimeout=10 "$server" 'command'
 timeout --signal=TERM --kill-after=10 60 long_command
 
-# correct — handle timeout exit code
-case $? in
+# correct — capture the exit code first; a bare command under set -e aborts
+# before any `case $?` could run, so guard with `|| rc=$?`
+declare -i rc=0
+timeout 300 ssh -o ConnectTimeout=10 "$server" 'command' || rc=$?
+case $rc in
   0)   success 'Command completed' ;;
   124) error 'Command timed out' ;;
   125) error 'Timeout itself failed' ;;
@@ -2847,12 +2850,12 @@ Suppression scope follows ShellCheck conventions — the directive covers the **
 #bcscheck disable=BCS0606
 ((DRY_RUN)) && info 'Dry-run mode' ||:
 
-# correct — suppresses a block (same as shellcheck)
+# correct — suppresses the next compound command (here a whole case block)
 #bcscheck disable=BCS0806
-{
-  -p|-n|--prompt) PROMPT=1; VERBOSE=1 ;;
+case $opt in
+  -p|-n|--prompt)    PROMPT=1; VERBOSE=1 ;;
   -P|-N|--no-prompt) PROMPT=0 ;;
-}
+esac
 
 # correct — documented shellcheck exception
 #shellcheck disable=SC2155
@@ -3149,7 +3152,7 @@ Use `$EPOCHSECONDS` for integer epoch timestamps (second precision) and `$EPOCHR
 
 `date(1)` is acceptable when `printf '%()T'` cannot provide the needed format (e.g., `date -d 'next Monday'` for relative date arithmetic).
 
-See also: [Date Formatting Reference](/ai/scripts/Okusi/BCS/benchmarks/date-printf-reference.md) — full `date` → `printf '%()T'` equivalence table with examples.
+See also: [Date Formatting Reference](/ai/scripts/Okusi/BCS/benchmarks/date_reference.md) — full `date` → `printf '%()T'` equivalence table with examples.
 
 ---
 
