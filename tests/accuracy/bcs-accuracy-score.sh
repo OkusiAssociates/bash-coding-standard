@@ -193,15 +193,27 @@ main() {
   mkdir -p -- "$OUT_DIR"
   info "model=$MODEL backend=$backend effort=$EFFORT runs=$RUNS fixtures=${#corpus[@]}"
 
-  # Precompute expected sets.
+  # Precompute expected sets. A fixture is "clean" only if it lives under
+  # clean/ (deliberately empty pragma). A fixture with NO expect pragma that
+  # is not under clean/ is mislabeled -- scoring it as clean would silently
+  # flip its real detections from TP to FP -- so exclude it with a warning.
   local -A EXP=() IS_CLEAN=()
   local -- expected
+  local -a scorable=()
   for f in "${corpus[@]}"; do
     expected=$(sed -n '1,15p' "$f" | grep -F 'bcs-fixture-expect:' \
       | grep -oE 'BCS[0-9]{4}' | sort -u || true)
     EXP[$f]=$expected
-    if [[ -z $expected || $f == */clean/* ]]; then IS_CLEAN[$f]=1; else IS_CLEAN[$f]=0; fi
+    if [[ $f == */clean/* ]]; then
+      IS_CLEAN[$f]=1; scorable+=("$f")
+    elif [[ -n $expected ]]; then
+      IS_CLEAN[$f]=0; scorable+=("$f")
+    else
+      warn "no bcs-fixture-expect pragma and not in clean/: ${f##*/} -- excluded from scoring"
+    fi
   done
+  corpus=("${scorable[@]}")
+  ((${#corpus[@]})) || die 3 'no scorable fixtures (all lacked an expect pragma)'
 
   # Per-run scratch (accumulators are module globals, reset at declaration).
   local -i run i_tp i_fp i_fn
@@ -240,6 +252,13 @@ main() {
   done
 
   _emit_reports
+
+  # CI gate: a reachable-but-unproductive backend (everything timed out or came
+  # back inconclusive) must fail loudly when a backend is required, rather than
+  # passing as an all-zero "perfect" score.
+  if ((REQUIRE_BACKEND)) && ! ((SCORED)); then
+    die 1 'no conclusive fixture-runs despite BCS_FIXTURES_REQUIRE_BACKEND=1'
+  fi
 }
 
 # Render TSV + markdown from the accumulator state (called from main scope).
@@ -267,9 +286,14 @@ _emit_reports() {
     fixb=${key%%|*}; fixb=${fixb##*/}; code=${key##*|}
     rows+=$(printf '%s\t%s\t%s\t%s\t%s\t%s' "$fixb" "$code" "$pr" "$ph" "$hr" "$st")$'\n'
   done
+  # With no expected (fixture,code) pairs (e.g. all runs inconclusive) there is
+  # nothing to be stable about; report n/a rather than a misleading 1.000.
   local -- stability
-  stability=$(awk -v s="$stable_pairs" -v t="$total_pairs" \
-    'BEGIN{printf "%.3f", (t>0)?s/t:1}')
+  if ((total_pairs)); then
+    stability=$(awk -v s="$stable_pairs" -v t="$total_pairs" 'BEGIN{printf "%.3f", s/t}')
+  else
+    stability='n/a'
+  fi
 
   # Write TSV (sorted by fixture then code).
   { printf 'fixture\tcode\truns\thits\thitrate\tstable\n'
@@ -348,6 +372,10 @@ MD
 
   success "Wrote $md"
   success "Wrote $tsv"
+  # No conclusive runs means the metrics above are all zero by default, not by
+  # measurement -- say so loudly so an unreachable/timed-out backend is not
+  # mistaken for a perfect score.
+  ((SCORED)) || warn 'no conclusive fixture-runs (backend unreachable or all timed out); metrics are NOT meaningful'
   # Console one-liner.
   printf '%sprecision=%s recall=%s F1=%s stability=%s clean-FP/run=%s%s\n' \
     "$BOLD" "$precision" "$recall" "$f1" "$stability" "$clean_rate" "$NC" >&2

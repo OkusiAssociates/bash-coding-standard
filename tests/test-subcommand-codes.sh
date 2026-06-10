@@ -47,6 +47,16 @@ assert_equal 12 "$sections_found" 'all 12 sections have codes' || true
 begin_test 'exactly 112 BCS codes'
 assert_equal 112 "$code_count" "exactly 112 codes (got $code_count)" || true
 
+# Test: -T tier filter yields the documented tier distribution (34/43/23).
+# Section overviews carry no tier, so the three filters partition the 100 rules.
+begin_test 'codes -T tier counts are 34/43/23'
+core_n=$("$BCS_CMD" codes -T core 2>/dev/null | grep -c '^BCS' || true)
+recm_n=$("$BCS_CMD" codes -T recommended 2>/dev/null | grep -c '^BCS' || true)
+styl_n=$("$BCS_CMD" codes -T style 2>/dev/null | grep -c '^BCS' || true)
+assert_equal 34 "$core_n" "core tier count (got $core_n)" || true
+assert_equal 43 "$recm_n" "recommended tier count (got $recm_n)" || true
+assert_equal 23 "$styl_n" "style tier count (got $styl_n)" || true
+
 # Test: codes are in ascending order
 begin_test 'codes are in ascending order'
 sorted_output=$(echo "$output" | sort -t' ' -k1,1)

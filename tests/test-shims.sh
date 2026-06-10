@@ -6,9 +6,10 @@ shopt -s inherit_errexit
 #shellcheck source-path=SCRIPTDIR source=test-helpers.sh
 source "$(dirname "$0")"/test-helpers.sh
 
-echo 'Testing: shim scripts (bcsdisplay, bcstemplate, bcscodes, bcsgenerate)'
+echo 'Testing: shim scripts (bcscheck, bcsdisplay, bcstemplate, bcscodes, bcsgenerate)'
 
 declare -A SHIM_CMDS=(
+  [bcscheck]='check'
   [bcsdisplay]='display'
   [bcstemplate]='template'
   [bcscodes]='codes'
