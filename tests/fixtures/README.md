@@ -116,7 +116,7 @@ from the BCS LLM checker.
 
 ## Limitations
 
-- **Runtime.** Twenty fixtures at ~10–30s each against a fast model
+- **Runtime.** The gated corpus (24 fixtures) at ~10–30s each against a fast model
   takes 2–5 minutes. Acceptable for `make test`, not for
   tight inner-loop iteration; use `BCS_SKIP_FIXTURES=1` during
   development.

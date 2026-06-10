@@ -192,6 +192,13 @@ Each comment object carries
 .BR tier ", " message ", and "
 .BR fixSuggestion .
 .TP
+.BR \-\-shellcheck ", " \-\-no\-shellcheck
+Enable (default) or disable the
+.B shellcheck \-\-format=json \-x
+static-analysis prelude that is prepended to the LLM prompt as deterministic
+context. Disable globally with
+.BR BCS_SHELLCHECK=0 .
+.TP
 .BR \-D ", " \-\-debug
 Announce the raw-response dump path on success (the dump is always written
 and auto-announced on failure).
@@ -246,6 +253,15 @@ run.
 .TP
 .BR \-p ", " \-\-plain
 Omit tier decoration (output is just "BCS#### Title").
+.TP
+.BR \-J ", " \-\-json
+Emit the rule list as a JSON array of
+.B {code, title, tier, section, disabled}
+objects (requires
+.BR jq ).
+Honours the same
+.BR \-T " and " \-x
+filters as text mode.
 .TP
 .BR \-x ", " \-\-exclude\-disabled
 Skip rules that have been disabled via
@@ -355,6 +371,11 @@ Treat warnings as violations (0 or 1). Overridden by
 .B BCS_JSON
 Default JSON output mode (0 or 1). Overridden by
 .BR \-j / \-\-json .
+.TP
+.B BCS_SHELLCHECK
+Enable (1, default) or disable (0) the shellcheck static-analysis prelude.
+Overridden by
+.BR \-\-shellcheck / \-\-no\-shellcheck .
 .TP
 .B MODEL_ALIASES
 Bash associative array; extend or override the built-in alias map in

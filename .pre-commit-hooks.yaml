@@ -7,15 +7,16 @@
 # (shellcheck at pre-commit + bcs-check at pre-push) is in docs/CI.md.
 #
 # Requires `bcs` on PATH (`sudo make install`) and a configured LLM backend
-# (~/.config/bcs/bcs.conf). Pin a cheap model there, e.g. MODEL_DEFAULT or
-# `args: [--model, haiku]` in your config, to keep the gate affordable.
+# (~/.config/bcs/bcs.conf). Pin a cheap model there with `BCS_MODEL=haiku`
+# to keep the gate affordable.
 
 - id: bcs-check
   name: BCS check (core, strict)
   description: >-
     LLM-graded BCS compliance gate; fails on any core-tier violation. Slow, so
-    the default stage is pre-push. Override `args` to add `--model <alias>` or
-    widen the tier.
+    the default stage is pre-push. Pin the model via `BCS_MODEL` in bcs.conf;
+    the wrapper consumes pre-commit `args` as filenames, so to change the
+    flags copy this entry into your own config.
   entry: bash -c 'for f; do bcs check --strict --tier core "$f" || exit 1; done' bcs-check
   language: system
   types: [shell]

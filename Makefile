@@ -32,7 +32,10 @@ install:
 	install -d $(DESTDIR)$(SHAREDIR)/data
 	install -m 644 $(srcdir)data/LICENSE $(DESTDIR)$(SHAREDIR)/data/LICENSE
 	install -m 644 $(srcdir)data/BASH-CODING-STANDARD.md $(DESTDIR)$(SHAREDIR)/data/
-	install -m 644 $(srcdir)data/[0-9]*.md $(DESTDIR)$(SHAREDIR)/data/
+	# Ship the canonical section files but never a developer's local, gitignored
+	# 98-user.md (the reserved user-rules namespace must not leak system-wide).
+	find $(srcdir)data -maxdepth 1 -name '[0-9]*.md' ! -name '98-user.md' \
+	  -exec install -m 644 {} $(DESTDIR)$(SHAREDIR)/data/ \;
 	install -d $(DESTDIR)$(SHAREDIR)/examples/templates
 	install -m 644 $(srcdir)examples/templates/*.sh.template $(DESTDIR)$(SHAREDIR)/examples/templates/
 	install -d $(DESTDIR)$(SHAREDIR)/docs
@@ -120,5 +123,5 @@ help:
 	@echo '  help        Show this message'
 	@echo ''
 	@echo 'Install from GitHub:'
-	@echo '  git clone https://github.com/Open-Technology-Foundation/BCS.git'
+	@echo '  git clone https://github.com/Open-Technology-Foundation/bash-coding-standard.git'
 	@echo '  cd BCS && sudo make install'

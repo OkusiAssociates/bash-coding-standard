@@ -86,7 +86,8 @@ BCS_SHELLCHECK=1
 # Ollama server address
 #OLLAMA_HOST=localhost:11434
 
-# API keys (one needed per backend; auto-detect tries each in order)
+# API keys (set the one for the backend your -m/MODEL_ALIASES selects; the
+# backend is resolved from the model name, not by probing keys in order)
 #ANTHROPIC_API_KEY=
 #GOOGLE_API_KEY=
 #GEMINI_API_KEY=

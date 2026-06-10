@@ -270,8 +270,8 @@ CLI flags override config; config overrides environment. See [`bcs.conf.sample`]
 
 | Script | Lines | Demonstrates |
 |--------|-------|--------------|
-| [`cln`](examples/cln) | 246 | File operations, argument parsing, arrays |
-| [`md2ansi`](examples/md2ansi) | 1430 | Large-scale text processing, ANSI formatting |
+| [`cln`](examples/cln) | 243 | File operations, argument parsing, arrays |
+| [`md2ansi`](examples/md2ansi) | 1424 | Large-scale text processing, ANSI formatting |
 | [`which`](examples/which) | 111 | Dual-purpose script pattern |
 
 ### Reference Codebase Library & Templates
@@ -312,7 +312,8 @@ The HTML trees are checked-in artefacts. The `BCS-Bash-Ref.html/` tree is rebuil
 ./tests/run-all-tests.sh             # Run all suites
 ./tests/test-subcommand-template.sh  # Run a single suite
 shellcheck -x bcs bcscheck           # Mandatory static check
-make check && make test              # Equivalent shortcuts
+make test                            # Full suite shortcut (== ./tests/run-all-tests.sh)
+make check                           # Verify an install (bcs/shims on PATH), not a lint
 ```
 
 ✓ **Self-compliance:** the `bcs` script is itself BCS-compliant. [`tests/test-self-compliance.sh`](tests/test-self-compliance.sh) enforces this *structurally* on every test run -- it asserts `shellcheck -x` is clean and that the mandatory structure is present (shebang, strict mode, `shopt`, `main()`, `#fin`, messaging helpers, line-count envelope). The full LLM `bcs check bcs` is available as a manual deep check but is not run in CI (slow, non-deterministic, requires a backend).
