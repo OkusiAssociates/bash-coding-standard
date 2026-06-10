@@ -492,14 +492,19 @@ _load_tiers() {
   ((_TIERS_LOADED)) && return 0 ||:
   local -- data_dir
   data_dir=$(_find_data_dir) || return 1
-  local -- current_code='' line
+  local -- current_code='' line tier
   local -a files=("$data_dir"/[0-9]*.md)
   [[ -d $data_dir/98-user.d ]] && files+=("$data_dir"/98-user.d/*.md) ||:
-  while IFS= read -r line; do
+  while IFS= read -r line || [[ -n $line ]]; do
     if [[ $line =~ ^##[[:space:]]+(BCS[0-9]+)[[:space:]] ]]; then
       current_code=${BASH_REMATCH[1]}
     elif [[ -n $current_code && $line =~ ^\*\*Tier:\*\*[[:space:]]+([a-z]+) ]]; then
-      BCS_TIERS[$current_code]=${BASH_REMATCH[1]}
+      tier=${BASH_REMATCH[1]}
+      if [[ " ${VALID_TIERS[*]} " == *" $tier "* ]]; then
+        BCS_TIERS[$current_code]=$tier
+      else
+        warn "${current_code}: invalid tier ${tier@Q} in section source"
+      fi
       current_code=''
     fi
   done < <(cat "${files[@]}" 2>/dev/null ||:)
@@ -526,13 +531,13 @@ _load_policy() {
   for path in "${search_paths[@]}"; do
     [[ -f $path && -r $path ]] || continue
     lineno=0
-    while IFS= read -r line; do
+    while IFS= read -r line || [[ -n $line ]]; do
       lineno+=1
       line=${line%%\#*}                         # strip comments
       line=${line#"${line%%[![:space:]]*}"}     # ltrim
       line=${line%"${line##*[![:space:]]}"}     # rtrim
       [[ -n $line ]] || continue
-      if [[ $line =~ ^(BCS[0-9]+)[[:space:]]*=[[:space:]]*([a-z]+)$ ]]; then
+      if [[ $line =~ ^(BCS[0-9]{4})[[:space:]]*=[[:space:]]*([a-z]+)$ ]]; then
         code=${BASH_REMATCH[1]}
         tier=${BASH_REMATCH[2]}
         if [[ " ${VALID_TIERS[*]} " == *" $tier "* ]]; then
@@ -1236,10 +1241,7 @@ cmd_check() {
 
   while (($#)); do case $1 in
     -m|--model)     noarg "$@"; shift; model=$1 ;;
-    -e|--effort)    noarg "$@"; shift; effort=$1
-                    [[ $effort == min ]] && effort=low
-                    [[ " ${VALID_EFFORTS[*]} " == *" $effort "* ]] || die 22 "Invalid effort ${effort@Q}"
-                    ;;
+    -e|--effort)    noarg "$@"; shift; effort=$1 ;;
     -s|--strict)    strict=1 ;;
     -S|--no-strict) strict=0 ;;
     --shellcheck)    shellcheck_ctx=1 ;;
@@ -1257,13 +1259,26 @@ cmd_check() {
     -v|--verbose)   VERBOSE=1 ;;
     -q|--quiet)     VERBOSE=0 ;;
     -h|--help)      show_check_help; return 0 ;;
-    --)             shift; [[ -n ${1:-} ]] && { script_file=$1; shift; }; break ;;
+    --)             shift
+                    # Remaining args are operands; enforce the one-file rule
+                    # here too rather than silently taking the first and
+                    # dropping the rest (or overwriting an earlier operand).
+                    while [[ -n ${1:-} ]]; do
+                      [[ -z $script_file ]] || die 2 'Only one script file allowed'
+                      script_file=$1; shift
+                    done
+                    break ;;
     -[mesSTMDvqhj]?*) set -- "${1:0:2}" "-${1:2}" "${@:2}"; continue ;;
     -*)             die 22 "Invalid option ${1@Q}" ;;
     *)              [[ -z $script_file ]] || die 2 'Only one script file allowed'
                     script_file=$1
                     ;;
   esac; shift; done
+
+  # BCS_EFFORT from env/conf bypasses the in-loop validation and the 'min'
+  # alias, so normalize and validate the final effort value here.
+  [[ $effort == min ]] && effort=low
+  [[ " ${VALID_EFFORTS[*]} " == *" $effort "* ]] || die 22 "Invalid effort ${effort@Q}"
 
   [[ -n $script_file ]] || die 2 'No script file specified'
   [[ -f $script_file ]] || die 3 "Script not found ${script_file@Q}"
@@ -1581,12 +1596,16 @@ $numbered_script"
     dump_show=1
   fi
   if ((dump_show)); then
-    # Re-emit diagnostics on failure even when non-verbose, plus exit code
-    ((VERBOSE)) || >&2 info "${diag_msgs[@]}"
+    # Failure/-D diagnostics must surface even under -q (info is VERBOSE-gated),
+    # so force VERBOSE on for this block and restore it afterwards.
+    local -i _saved_verbose=$VERBOSE
+    VERBOSE=1
+    >&2 info "${diag_msgs[@]}"
     >&2 info "Exit: $exit_code"
     if [[ $backend != claude && -s ${BCS_RESPONSE_DUMP:-} ]]; then
       >&2 info "Raw response: $BCS_RESPONSE_DUMP"
     fi
+    VERBOSE=$_saved_verbose
   fi
   return "$exit_code"
 }

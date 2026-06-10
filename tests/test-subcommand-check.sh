@@ -135,6 +135,22 @@ assert_not_contains "$err" 'Invalid option' '-se bundling parsed correctly' || t
 begin_test '-- separator works'
 assert_fails '-- then nonexistent' "$BCS_CMD" check -- /nonexistent/file.sh || true
 
+# Test: operands after -- still honour the one-file rule (T-25)
+begin_test 'two operands after -- rejected'
+assert_fails 'check -- a b' "$BCS_CMD" check -- /etc/hostname /etc/hosts || true
+
+begin_test 'operand before and after -- rejected'
+assert_fails 'check x -- y' "$BCS_CMD" check /etc/hostname -- /etc/hosts || true
+
+# Test: BCS_EFFORT from the environment is validated (T-26). test-helpers
+# forces a hermetic BCS_CONF_DIR, so no real bcs.conf masks the env value.
+begin_test 'invalid BCS_EFFORT from env rejected'
+temp_eff=$(mktemp --suffix=.sh)
+echo '#!/bin/bash' > "$temp_eff"
+assert_fails 'BCS_EFFORT=bogus rejected' \
+  env BCS_EFFORT=bogus "$BCS_CMD" check "$temp_eff" || true
+rm -f "$temp_eff"
+
 # Test: -b/--backend is gone — accepting it must error
 begin_test '-b/--backend removed from parser'
 temp=$(mktemp --suffix=.sh)

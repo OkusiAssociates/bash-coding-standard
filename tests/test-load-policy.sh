@@ -173,6 +173,32 @@ assert_equal recommended "${BCS_POLICY[BCS0002]:-UNSET}"
 assert_equal style       "${BCS_POLICY[BCS0003]:-UNSET}"
 assert_equal disabled    "${BCS_POLICY[BCS0004]:-UNSET}"
 
+# --- Trailing-newline-less final directive is honoured (T-27) ------------
+
+begin_test 'final directive without trailing newline is loaded'
+rm -f "$SYS_CONF" "$USR_CONF" "$PRJ_CONF"
+printf 'BCS0101 = style\nBCS0301 = disabled' > "$USR_CONF"   # no trailing newline
+reset_policy
+_load_policy 2>/dev/null
+assert_equal disabled "${BCS_POLICY[BCS0301]:-UNSET}" 'last line read without trailing newline'
+
+# --- Wrong-digit codes are rejected, not silent no-ops (T-27) -----------
+
+begin_test 'wrong-digit policy codes are ignored (not stored)'
+rm -f "$SYS_CONF" "$USR_CONF" "$PRJ_CONF"
+printf 'BCS302 = disabled\nBCS01010 = core\n' > "$USR_CONF"
+reset_policy
+_load_policy 2>/dev/null
+assert_equal 0 "${#BCS_POLICY[@]}" 'BCS302 / BCS01010 not accepted as policy codes'
+
+begin_test 'wrong-digit policy code warns'
+rm -f "$SYS_CONF" "$USR_CONF" "$PRJ_CONF"
+printf 'BCS302 = disabled\n' > "$USR_CONF"
+reset_policy
+_load_policy 2>"$FIXTURE_ROOT"/err.log
+err=$(< "$FIXTURE_ROOT"/err.log)
+assert_contains "$err" 'malformed policy line' 'wrong-digit code warns instead of silent no-op'
+
 # --- No files: no error, empty policy -----------------------------------
 
 begin_test 'no files: load succeeds silently with empty policy'
