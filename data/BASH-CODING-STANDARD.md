@@ -6,13 +6,13 @@
 Designed by Okusi Associates for the Indonesian Open Technology Foundation (YaTTI).
 Target audience: both human programmers and AI assistants.
 
-[BCS Bash 5.2 Reference](/ai/scripts/Okusi/BCS/docs/BCS-bash/index.md) -- the `bash(1)` man page rewritten for BCS assumptions (`set -euo pipefail`, `[[ ]]` only, no POSIX compat, etc).
+[BCS Bash 5.2 Reference](../docs/BCS-bash/index.md) -- the `bash(1)` man page rewritten for BCS assumptions (`set -euo pipefail`, `[[ ]]` only, no POSIX compat, etc).
 
-[Example exemplar BCS-compliant scripts directory](/ai/scripts/Okusi/BCS/examples/)
+[Example exemplar BCS-compliant scripts directory](../examples/)
 
-Templates for new scripts: [complete.sh.template](/ai/scripts/Okusi/BCS/examples/templates/complete.sh.template), [basic.sh.template](/ai/scripts/Okusi/BCS/examples/templates/basic.sh.template), [minimal.sh.template](/ai/scripts/Okusi/BCS/examples/templates/minimal.sh.template), [library.sh.template](/ai/scripts/Okusi/BCS/examples/templates/library.sh.template)
+Templates for new scripts: [complete.sh.template](../examples/templates/complete.sh.template), [basic.sh.template](../examples/templates/basic.sh.template), [minimal.sh.template](../examples/templates/minimal.sh.template), [library.sh.template](../examples/templates/library.sh.template)
 
-[Codebase examples](/ai/scripts/Okusi/BCS/examples/lib/index.md)
+[Codebase examples](../examples/lib/index.md)
 
 ## Coding Principles
 - K.I.S.S.
@@ -216,7 +216,7 @@ my_function "$@"
 
 Never apply `set -euo pipefail` when sourced — it alters the calling shell's environment.
 
-See also: [Source Guard Reference](/ai/scripts/Okusi/BCS/benchmarks/source-guard_reference.md) — full comparison of source fence mechanisms with benchmark data.
+See also: [Source Guard Reference](../benchmarks/source-guard_reference.md) — full comparison of source fence mechanisms with benchmark data.
 
 ## BCS0107 Function Organization
 
@@ -1374,7 +1374,7 @@ done
 
 Use `break N` for nested loops (`break 2` exits two enclosing levels).
 
-See also: [While Loops Reference](/ai/scripts/Okusi/BCS/benchmarks/while-loops_reference.md) — full benchmark data and analysis of `while ((1))` vs `while :` vs `while true`.
+See also: [While Loops Reference](../benchmarks/while-loops_reference.md) — full benchmark data and analysis of `while ((1))` vs `while :` vs `while true`.
 
 ## BCS0504 Process Substitution
 
@@ -2023,7 +2023,7 @@ Key rules:
 - For exit options (`--help`, `--version`): use `exit 0`, no shift needed
 - Use `continue` after option disaggregation to re-process expanded options
 
-See also: [Argument Processing Reference](/ai/scripts/Okusi/BCS/benchmarks/args-processing_reference.md) — comparison of BCS while/case, getopts, GNU getopt, and simple while/case with benchmark data.
+See also: [Argument Processing Reference](../benchmarks/args-processing_reference.md) — comparison of BCS while/case, getopts, GNU getopt, and simple while/case with benchmark data.
 
 ## BCS0802 Version Output
 
@@ -3152,7 +3152,7 @@ Use `$EPOCHSECONDS` for integer epoch timestamps (second precision) and `$EPOCHR
 
 `date(1)` is acceptable when `printf '%()T'` cannot provide the needed format (e.g., `date -d 'next Monday'` for relative date arithmetic).
 
-See also: [Date Formatting Reference](/ai/scripts/Okusi/BCS/benchmarks/date_reference.md) — full `date` → `printf '%()T'` equivalence table with examples.
+See also: [Date Formatting Reference](../benchmarks/date_reference.md) — full `date` → `printf '%()T'` equivalence table with examples.
 
 ---
 

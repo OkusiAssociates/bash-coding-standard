@@ -1812,14 +1812,11 @@ cmd_generate() {
   } > "$tmp_out"
   mv -f -- "$tmp_out" "$output_file"
 
-  # Resolve relative markdown links to absolute paths
-  local -- bcs_root
-  bcs_root=$(realpath -- "$data_dir/..")
-  bcs_root=${bcs_root//\\/\\\\}   # escape backslashes
-  bcs_root=${bcs_root//|/\\|}     # escape sed delimiter
-  bcs_root=${bcs_root//&/\\&}     # escape sed back-reference
-  sed -i "s|](\\.\\.\/|](${bcs_root}/|g" "$output_file" \
-    || die 1 "Failed to resolve relative links in ${output_file@Q}"
+  # Links in the section sources are relative to data/ (e.g. ../benchmarks/),
+  # which is exactly where the assembled document also lives -- so they resolve
+  # correctly as-is. Leave them relative: rewriting to absolute paths baked the
+  # producer's checkout path into the shipped file (dead links elsewhere,
+  # non-reproducible output, dev-path leak in a public repo).
 
   # Make it readonly so that users do not confuse this document with the rules sections
   chmod 444 "$output_file"
