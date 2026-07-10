@@ -1138,12 +1138,22 @@ Respect inline suppression: eg, #bcscheck disable=BCS0101 exempts the next line/
   cd "$check_dir"
   [[ ! -d /run/user/"$EUID" ]] || declare -x TMPDIR=/run/user/"$EUID"
 
-  local -a claude_args=(--model "$model" --permission-mode bypassPermissions)
+  # Read-only toolset: the checker only needs to read @script and @standard.
+  # Without this, the bypassPermissions agent can shell out -- observed in the
+  # wild recursively invoking bcscheck (stacked LLM calls, cache-laundered
+  # results) instead of analyzing directly.
+  local -a claude_args=(--model "$model" --permission-mode bypassPermissions
+                        --tools 'Read,Grep,Glob')
   [[ -z $effort ]] || claude_args+=(--effort "$effort")
 
   # BCS0202/BCS0204: local -x exports to the claude child for this function's
   # lifetime without leaking into the global scope.
   local -x CLAUDE_CODE_USE_OAUTH=1
+  # Recursion guard sentinel, checked at the top of cmd_check: any bcs check
+  # spawned from inside this session (agent shelling out, user hook) dies
+  # immediately instead of nesting LLM calls. Defense in depth alongside the
+  # read-only --tools set above.
+  local -x BCS_CHECK_ACTIVE=1
   unset ANTHROPIC_API_KEY
   # SC1007: `CLAUDECODE= claude ...` clears the env var for one command;
   # the empty-RHS assignment is intentional, not a typo.
@@ -1280,7 +1290,7 @@ cmd_template() {
     printf '%s\n' "$content" > "$output_file"
     info "Generated $template_type template ${output_file@Q}"
     if ((make_executable)); then
-      chmod +x "$output_file"
+      chmod -- +x "$output_file"
       info "Made executable ${output_file@Q}"
     fi
   else
@@ -1335,6 +1345,12 @@ cmd_check() {
                     script_file=$1
                     ;;
   esac; shift; done
+
+  # Recursion guard: _llm_claude_cli exports BCS_CHECK_ACTIVE to its child
+  # claude session. A nested bcs check (agent shelling out to bcscheck, user
+  # hook) would stack LLM calls and launder cached results -- refuse it.
+  [[ -z ${BCS_CHECK_ACTIVE:-} ]] \
+    || die 1 'Recursive bcs check detected (BCS_CHECK_ACTIVE is set); refusing to nest'
 
   # Effort may arrive via -e, BCS_EFFORT env, or bcs.conf; none are validated
   # at parse time, so normalize the 'min' alias and validate the final value
@@ -1940,7 +1956,7 @@ cmd_generate() {
   # non-reproducible output, dev-path leak in a public repo).
 
   # Make it readonly so that users do not confuse this document with the rules sections
-  chmod 444 "$output_file"
+  chmod -- 444 "$output_file"
 
   local -i line_count
   line_count=$(wc -l < "$output_file")
