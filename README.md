@@ -127,10 +127,13 @@ bcs check -m claude-code:opus ci.sh        # Claude Code CLI with the opus alias
 bcs check --strict -T core deploy.sh       # CI gate: core-only, warnings fatal
 bcs check --no-shellcheck myscript.sh      # Skip the shellcheck static-analysis prelude
 bcs check -j ci.sh | jq '.comments[]'      # JSON output (shellcheck json1-style envelope)
+bcs check --no-cache myscript.sh           # Bypass the result cache (force a fresh LLM call)
 bcscheck myscript.sh                       # Equivalent shim (defaults from bcs.conf)
 ```
 
 When `shellcheck` is on `PATH`, `bcs check` prepends its `--format=json -x` output to the LLM prompt as deterministic static-analysis context (cheap, precise AST-level findings that the LLM would otherwise rediscover). Disable per-call with `--no-shellcheck` or globally via `BCS_SHELLCHECK=0` in `bcs.conf`.
+
+Successful results are cached under `${XDG_CACHE_HOME:-~/.cache}/bcs/`, keyed on script content, standard content, model, effort, and filters — re-checking an unchanged script returns instantly at zero API cost. Bypass per-call with `--no-cache` or globally via `BCS_CACHE=0`. On the Anthropic backend the standard is additionally sent with prompt caching (`cache_control: ephemeral`), so repeated fresh checks within the server-side cache window pay a fraction of the input-token cost.
 
 ### `bcs template`
 

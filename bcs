@@ -254,6 +254,8 @@ ${BOLD}Options:$NC
   -S, --no-strict         Don't treat warnings as violations (${BOLD}default$NC)
       --shellcheck        Prepend shellcheck --format=json -x output to LLM context (${BOLD}default$NC)
       --no-shellcheck     Skip shellcheck static-analysis context
+      --cache             Reuse cached result for identical inputs (${BOLD}default$NC)
+      --no-cache          Bypass the result cache (no read, no write)
   -T, --tier TIER         Report only findings at this tier (core|recommended|style)
   -M, --min-tier TIER     Report findings at this tier or higher severity
   -j, --json              Emit findings as a single JSON object on stdout
@@ -263,6 +265,13 @@ ${BOLD}Options:$NC
   -v, --verbose           Show info messages (${BOLD}default$NC)
   -q, --quiet             Suppress info messages
   -h, --help              Show this help
+
+${BOLD}Result Cache:$NC
+  Successful results are cached under \${XDG_CACHE_HOME:-~/.cache}/bcs/, keyed
+  on the script content, standard content, model, effort, and all filters --
+  re-checking an unchanged script returns instantly at zero API cost. Any
+  change to an input produces a new key. Use ${BOLD}--no-cache$NC (or BCS_CACHE=0) to
+  force a fresh LLM call. Safe to delete the directory at any time.
 
 ${BOLD}Raw Response Dump:$NC
   Every API response is saved to \${XDG_STATE_HOME:-~/.local/state}/bcs/last-response.txt
@@ -360,6 +369,7 @@ ${BOLD}Environment / Config Variables:$NC
   BCS_DEBUG           Default --debug (0 or 1); announces raw-response dump path
   BCS_JSON            Default --json (0 or 1); structured JSON output on stdout
   BCS_SHELLCHECK      Prepend shellcheck --format=json -x as static-analysis context (0 or 1; default 1)
+  BCS_CACHE           Result cache: 0 or 1 (default 1); see Result Cache above
   BCS_RESPONSE_DUMP   Override the raw-response dump file path
   MODEL_ALIASES       Bash assoc. array; set in bcs.conf to add/override aliases
                       (e.g. MODEL_ALIASES[mymodel]=qwen3.5:14b)
@@ -782,6 +792,11 @@ _llm_anthropic() {
 
   # Anthropic Messages API has no native JSON-mode flag; rely on prompt
   # discipline plus _strip_json_fences fallback applied by cmd_check.
+  # The system prompt (the full standard, ~29k tokens) is identical across
+  # calls, so mark it with ephemeral cache_control: repeat checks within the
+  # server-side cache TTL (~5 min, refreshed on use) read it from cache --
+  # much cheaper and a faster prefill. All current claude-* models support
+  # prompt caching and the standard far exceeds the minimum cacheable size.
   local -- payload
   payload=$(jq -n \
     --arg model "$model" \
@@ -789,7 +804,9 @@ _llm_anthropic() {
     --argjson thinking "$thinking_json" \
     --arg system "$sys" \
     --arg user "$usr" \
-    '{model: $model, max_tokens: $max_tokens, system: $system,
+    '{model: $model, max_tokens: $max_tokens,
+      system: [{type: "text", text: $system,
+                cache_control: {type: "ephemeral"}}],
       messages: [{role: "user", content: $user}]}
      + ($thinking | if . == null then {} else {thinking: .} end)') \
     || die 1 'Failed to build JSON payload'
@@ -818,7 +835,13 @@ _llm_anthropic() {
   text=$(_extract_anthropic_text <<< "$body") || die 5 'Failed to parse Anthropic response'
   [[ -n $text ]] || die 5 'Anthropic API returned no text content (response had only thinking blocks or was empty)'
   printf '%s\n' "$text"
-  echo "___TOKENS___ $(jq -r '"in=\(.usage.input_tokens // 0) out=\(.usage.output_tokens // 0)"' <<< "$body")"
+  # input_tokens excludes cached prefix tokens; report cache traffic
+  # separately so users can confirm prompt caching is engaging.
+  echo "___TOKENS___ $(jq -r '"in=\(.usage.input_tokens // 0) out=\(.usage.output_tokens // 0)"
+    + (if (.usage.cache_read_input_tokens // 0) > 0
+       then " cache_read=\(.usage.cache_read_input_tokens)" else "" end)
+    + (if (.usage.cache_creation_input_tokens // 0) > 0
+       then " cache_write=\(.usage.cache_creation_input_tokens)" else "" end)' <<< "$body")"
 }
 
 # LLM backend: Ollama chat API
@@ -1087,7 +1110,7 @@ For each finding, report:
 - The specific line(s) affected
 - What is wrong and how to fix it
 
-At the end, provide a summary table: | BCS Code | Tier | Severity | Line(s) | Description |.
+Do NOT append a summary table or restate findings -- each finding appears exactly once.
 
 Respect inline suppression: eg, #bcscheck disable=BCS0101 exempts the next line/block."
   fi
@@ -1271,6 +1294,7 @@ cmd_check() {
   local -- script_file='' model=${BCS_MODEL:-sonnet} effort=${BCS_EFFORT:-medium}
   local -i strict=${BCS_STRICT:-0} debug=${BCS_DEBUG:-0} json_output=${BCS_JSON:-0}
   local -i shellcheck_ctx=${BCS_SHELLCHECK:-1}
+  local -i use_cache=${BCS_CACHE:-1}
   local -- backend=''
   local -- tier_filter=${BCS_TIER:-} min_tier_filter=${BCS_MIN_TIER:-}
 
@@ -1281,6 +1305,8 @@ cmd_check() {
     -S|--no-strict) strict=0 ;;
     --shellcheck)    shellcheck_ctx=1 ;;
     --no-shellcheck) shellcheck_ctx=0 ;;
+    --cache)         use_cache=1 ;;
+    --no-cache)      use_cache=0 ;;
     -T|--tier)      noarg "$@"; shift; tier_filter=$1
                     [[ " ${VALID_TIER_FILTERS[*]} " == *" $tier_filter "* ]] \
                       || die 22 "Invalid tier ${tier_filter@Q} (valid: ${VALID_TIER_FILTERS[*]})"
@@ -1441,6 +1467,29 @@ cmd_check() {
 
   policy_text=$(_policy_summary)
 
+  # Result cache: identical inputs build an identical prompt, so a prior
+  # accepted response is still valid. Key on every prompt ingredient (not the
+  # assembled prompt -- the claude-cli backend assembles its own) plus VERSION
+  # so prompt-template changes in new releases invalidate stale entries.
+  # Disabled with --no-cache or BCS_CACHE=0 (no read, no write).
+  local -- cache_file=''
+  local -i cache_hit=0
+  if ((use_cache)); then
+    local -- cache_dir=${XDG_CACHE_HOME:-$HOME/.cache}/bcs cache_key=''
+    cache_key=$({ printf '%s\n' "$VERSION" "$backend" "$model" "$effort" \
+                    "$strict" "$json_output" "$tier_filter" "$min_tier_filter" \
+                    "$policy_text" "$shellcheck_block"
+                  cat -- "$script_file" "$bcs_file"; } | sha256sum) ||:
+    cache_key=${cache_key%% *}
+    if [[ -n $cache_key ]]; then
+      cache_file=$cache_dir/$cache_key
+      if [[ -s $cache_file ]]; then
+        cache_hit=1
+        info 'Result cache hit (use --no-cache to force a fresh check)'
+      fi
+    fi
+  fi
+
   # Export JSON-mode switch for backends. Each _llm_* function reads this
   # env var to flip native JSON-mode payload fields (OpenAI response_format,
   # Google response_mime_type, Ollama format) and the claude-cli prompt
@@ -1448,7 +1497,11 @@ cmd_check() {
   # rely on prompt discipline plus _strip_json_fences as a fallback.
   local -x BCS_JSON_MODE=$json_output
 
-  if [[ $backend == claude ]]; then
+  if ((cache_hit)); then
+    # Cached result already validated on the run that stored it; the
+    # severity-based exit code is recomputed from content below as usual.
+    result=$(< "$cache_file")
+  elif [[ $backend == claude ]]; then
     result=$(_llm_claude_cli "$model" "$effort" "$bcs_file" "$script_file" "$strict" \
                "$tier_instr" "$filter_instr" "$policy_text" "$shellcheck_block") || exit_code=$?
   else
@@ -1548,7 +1601,7 @@ $effort_guidance"
       usr_prompt+="
 
 Format each finding as: [ERROR|WARN] BCSxxxx line N: description, then a fix recommendation.
-End with a summary table: | BCS Code | Tier | Severity | Line(s) | Description |"
+Do NOT append a summary table or restate findings -- each finding appears exactly once."
       [[ -z $shellcheck_block ]] || usr_prompt+=$'\n\n'"$shellcheck_block"
       usr_prompt+="
 
@@ -1590,6 +1643,13 @@ $numbered_script"
     exit_code=5
   fi
 
+  # Cache-write eligibility: a clean LLM round-trip with content. JSON mode
+  # additionally demands schema validation by _render_json_output below --
+  # the flag is revoked there on failure so a malformed response is never
+  # served from cache.
+  local -i cacheable=0
+  ((exit_code == 0)) && [[ -n $result ]] && cacheable=1 ||:
+
   # Output + severity-based exit
   if ((json_output)); then
     # JSON mode: validate raw array, wrap with envelope, emit on stdout.
@@ -1613,6 +1673,7 @@ $numbered_script"
           printf '%s\n' "$result" > "$BCS_RESPONSE_DUMP" 2>/dev/null ||:
         fi
         exit_code=5
+        cacheable=0
       fi
     else
       # Empty result (already flagged as exit 5 above): still emit a valid
@@ -1626,6 +1687,21 @@ $numbered_script"
     # Severity-based exit: any [ERROR] finding promotes exit code to 1
     if ((exit_code == 0)) && [[ $result == *'[ERROR]'* ]]; then
       exit_code=1
+    fi
+  fi
+
+  # Cache write: only results that survived the full output pipeline are
+  # stored (severity-promoted exit 1 is a valid, cacheable outcome -- the
+  # promotion is recomputed from content on every hit). Temp + mv keeps
+  # concurrent checks from reading a partial write. Failures are non-fatal:
+  # a missing entry just means the next run pays full price.
+  if ((use_cache && !cache_hit && cacheable)) && [[ -n $cache_file ]]; then
+    local -- cache_tmp=''
+    mkdir -p "${cache_file%/*}" 2>/dev/null ||:
+    if cache_tmp=$(mktemp "${cache_file%/*}"/.tmp.XXXXXX 2>/dev/null); then
+      printf '%s\n' "$result" > "$cache_tmp" 2>/dev/null \
+        && mv -f "$cache_tmp" "$cache_file" 2>/dev/null \
+        || rm -f "$cache_tmp" 2>/dev/null ||:
     fi
   fi
 

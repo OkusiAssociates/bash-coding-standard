@@ -89,7 +89,7 @@ for fixture in "$TEST_DIR"/fixtures/*.sh; do
   # works with whatever credentials/CLI the host has.
   exit_code=0
   output=$(timeout "$FIXTURE_TIMEOUT_S" \
-    "$BCS_CMD" check -m "$fixture_model" -e low --quiet -- "$fixture" 2>&1) \
+    "$BCS_CMD" check --no-cache -m "$fixture_model" -e low --quiet -- "$fixture" 2>&1) \
     || exit_code=$?
 
   # Backend crash or timeout: warn but don't fail. A backend failure is not
@@ -127,7 +127,7 @@ if ((${BCS_FIXTURES_JSON:-0})); then
     begin_test 'JSON mode: envelope shape on fixture 01'
     exit_code=0
     output=$(timeout "$FIXTURE_TIMEOUT_S" \
-      "$BCS_CMD" check -j -m "$fixture_model" -e low --quiet -- "$json_fixture" 2>/dev/null) \
+      "$BCS_CMD" check -j --no-cache -m "$fixture_model" -e low --quiet -- "$json_fixture" 2>/dev/null) \
       || exit_code=$?
     if [[ -n $output ]] && ((exit_code != 124)); then
       # Validate top-level shape.

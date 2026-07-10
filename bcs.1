@@ -1,7 +1,7 @@
 .\" BCS Manual Page
-.\" Generated: 2026-06-10
+.\" Generated: 2026-07-10
 .\"
-.TH BCS 1 "June 2026" "BCS 2.0.1" "User Commands"
+.TH BCS 1 "July 2026" "BCS 2.0.1" "User Commands"
 .\"
 .SH NAME
 bcs \- Bash Coding Standard CLI toolkit
@@ -199,6 +199,18 @@ static-analysis prelude that is prepended to the LLM prompt as deterministic
 context. Disable globally with
 .BR BCS_SHELLCHECK=0 .
 .TP
+.BR \-\-cache ", " \-\-no\-cache
+Enable (default) or disable the result cache. Successful check results are
+stored under
+.I ${XDG_CACHE_HOME:\-~/.cache}/bcs/
+keyed on script content, standard content, model, effort, and all filters,
+so re-checking unchanged inputs returns instantly at zero API cost. Any
+change to an input produces a new key.
+.B \-\-no\-cache
+bypasses the cache entirely (no read, no write). Disable globally with
+.BR BCS_CACHE=0 .
+The cache directory may be deleted at any time.
+.TP
 .BR \-D ", " \-\-debug
 Announce the raw-response dump path on success (the dump is always written
 and auto-announced on failure).
@@ -382,6 +394,10 @@ Enable (1, default) or disable (0) the shellcheck static-analysis prelude.
 Overridden by
 .BR \-\-shellcheck / \-\-no\-shellcheck .
 .TP
+.B BCS_CACHE
+Enable (1, default) or disable (0) the result cache. Overridden by
+.BR \-\-cache / \-\-no\-cache .
+.TP
 .B BCS_TIER
 Default tier filter (core, recommended, style). Overridden by
 .BR \-T .
@@ -448,6 +464,11 @@ Installed standard document and section files.
 .TP
 .I /usr/local/share/yatti/BCS/examples/templates/
 Script template files.
+.TP
+.I ${XDG_CACHE_HOME:\-~/.cache}/bcs/
+Result cache for
+.BR "bcs check" ;
+safe to delete at any time.
 .TP
 .I /etc/bash_completion.d/bcs
 Bash tab-completion for bcs.

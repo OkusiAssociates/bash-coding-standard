@@ -38,6 +38,12 @@ BCS_STRICT=0
 # Override per-call with --shellcheck / --no-shellcheck.
 BCS_SHELLCHECK=1
 
+# Result cache (0 or 1; default 1). Successful check results are cached
+# under ${XDG_CACHE_HOME:-~/.cache}/bcs/ keyed on script content, standard
+# content, model, effort, and filters -- re-checking unchanged inputs is
+# instant and free. Override per-call with --cache / --no-cache.
+#BCS_CACHE=1
+
 # Default tier filters (override per-call with --tier / --min-tier).
 # Values: core | recommended | style. Leave unset for no filtering.
 #BCS_TIER=
