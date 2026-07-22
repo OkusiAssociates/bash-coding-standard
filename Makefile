@@ -7,6 +7,7 @@ BINDIR   ?= $(PREFIX)/bin
 MANDIR   ?= $(PREFIX)/share/man/man1
 SHAREDIR ?= $(PREFIX)/share/yatti/BCS
 SKILLDIR ?= /etc/claude-code/.claude/skills
+CMDDIR   ?= /etc/claude-code/.claude/commands
 COMPDIR  ?= /etc/bash_completion.d
 DESTDIR  ?=
 
@@ -15,7 +16,7 @@ DESTDIR  ?=
 # picks up a like-named file from a parent directory.
 srcdir := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-.PHONY: all install uninstall check test help install-skill uninstall-skill
+.PHONY: all install uninstall check test help install-claude uninstall-claude
 
 all: help
 
@@ -90,14 +91,18 @@ uninstall:
 	rm -rf $(DESTDIR)$(SHAREDIR)
 	rm -f $(DESTDIR)$(PREFIX)/share/yatti/bash-coding-standard
 
-install-skill:
-	install -d $(DESTDIR)$(SKILLDIR)/bcscheck
+install-claude:
+	install -d $(DESTDIR)$(SKILLDIR)/bcscheck $(DESTDIR)$(SKILLDIR)/bcs-audit $(DESTDIR)$(CMDDIR)
 	install -m 644 $(srcdir)skills/bcscheck/SKILL.md $(DESTDIR)$(SKILLDIR)/bcscheck/SKILL.md
-	@echo 'Installed bcscheck skill to $(DESTDIR)$(SKILLDIR)/bcscheck'
+	install -m 644 $(srcdir)skills/bcs-audit/SKILL.md $(DESTDIR)$(SKILLDIR)/bcs-audit/SKILL.md
+	install -m 644 $(srcdir)ai-agents/commands/bcs-audit.md $(DESTDIR)$(CMDDIR)/bcs-audit.md
+	install -m 644 $(srcdir)ai-agents/commands/audit-bash.md $(DESTDIR)$(CMDDIR)/audit-bash.md
+	@echo 'Installed Claude skills (bcscheck, bcs-audit) and commands (bcs-audit, audit-bash)'
 
-uninstall-skill:
-	rm -rf $(DESTDIR)$(SKILLDIR)/bcscheck
-	@echo 'Removed bcscheck skill from $(DESTDIR)$(SKILLDIR)'
+uninstall-claude:
+	rm -rf $(DESTDIR)$(SKILLDIR)/bcscheck $(DESTDIR)$(SKILLDIR)/bcs-audit
+	rm -f $(DESTDIR)$(CMDDIR)/bcs-audit.md $(DESTDIR)$(CMDDIR)/audit-bash.md
+	@echo 'Removed Claude skills and commands'
 
 check:
 	@command -v bcs >/dev/null 2>&1 \
@@ -127,8 +132,8 @@ help:
 	@echo ''
 	@echo 'Targets:'
 	@echo '  install          Install to $(PREFIX)'
-	@echo '  install-skill    Install bcscheck Claude Code skill to $(SKILLDIR)'
-	@echo '  uninstall-skill  Remove bcscheck Claude Code skill'
+	@echo '  install-claude   Install Claude skills+commands to /etc/claude-code'
+	@echo '  uninstall-claude Remove installed Claude skills+commands'
 	@echo '  uninstall        Remove installed files'
 	@echo '  check            Verify installation'
 	@echo '  test             Run test suite'
