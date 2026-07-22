@@ -295,6 +295,15 @@ The [`ai-agents/`](ai-agents/README.md) package bundles BCS-aware agents, slash 
 
 See [`ai-agents/AGENTS.md`](ai-agents/AGENTS.md) for the flat file inventory.
 
+### Claude Code skill (`skills/bcscheck/`)
+
+A pure prompt skill that lets Claude Code audit Bash scripts against
+`BASH-CODING-STANDARD.md` directly — no `bcs` script, no API keys. Honours
+`#bcscheck disable=` directives and uses shellcheck JSON as static context.
+Install machine-wide with `sudo make install-skill`; remove with
+`sudo make uninstall-skill`. For policy.conf tiers, JSON output, or caching,
+use the real `bcs check`.
+
 ## Bash References (`BCS-bash`, `BCS-Bash-Ref`)
 
 BCS ships two complementary Bash references, both authored for strict-mode scripting (`set -euo pipefail`, `[[ ]]`, no backtick substitution, no POSIX/`sh`-emulation caveats):
