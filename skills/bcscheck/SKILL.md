@@ -88,5 +88,5 @@ suppressions were honoured.
 
 - Report-only. Never edit the target. Offer fixes only as a follow-up the
   user must request.
-- policy.conf, JSON output, caching, model selection: out of scope — direct
+- policy.conf, JSON output, caching, model/effort selection: out of scope — direct
   the user to the real `bcs check` for those.
