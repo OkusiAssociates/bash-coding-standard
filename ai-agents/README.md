@@ -72,13 +72,13 @@ End-to-end flow for "write a new deployment script":
 #    The scaffold already has strict mode, metadata, and the 13-step skeleton.
 
 # 3. Run the BCS auditor
-/bcs-check deploy
+/bcs-audit deploy
 
 # 4. If shellcheck warnings surface, hand them to the dedicated fixer
 /fix-shellcheck deploy
 
 # 5. Re-check, then commit
-/bcs-check deploy
+/bcs-audit deploy
 ```
 
 Each slash command delegates to `bcscheck`, `bcs template`, or `shellcheck` under the hood -- you stay in the AI session, the tooling stays honest, and the BCS rules travel with every step.

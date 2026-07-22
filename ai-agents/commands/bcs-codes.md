@@ -51,5 +51,5 @@ Total: <count> codes (filtered from <authoritative-total>)
 
 ## Out of Scope
 
-- Interpreting rules for the user -- that is the `/audit-bash` and `/bcs-check` job.
+- Interpreting rules for the user -- that is the `/audit-bash` and `/bcs-audit` job.
 - Writing code -- this command is listing-only.

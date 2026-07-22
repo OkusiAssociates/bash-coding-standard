@@ -290,7 +290,7 @@ The [`ai-agents/`](ai-agents/README.md) package bundles BCS-aware agents, slash 
 | Component | Inventory | Use |
 |-----------|-----------|-----|
 | Agents | `bash-expert`, `bcs-auditor`, `script-scaffolder`, `shellcheck-fixer`, `documentation-writer` | Autonomous BCS-aware sub-agents |
-| Slash commands | `/audit-bash`, `/bcs-check`, `/bcs-codes`, `/fix-shellcheck`, `/scaffold`, `/purpose-functionality-usage`, `/update-docs`, `/update-internal-docs` | Single-shot operations |
+| Slash commands | `/audit-bash`, `/bcs-audit`, `/bcs-codes`, `/fix-shellcheck`, `/scaffold`, `/purpose-functionality-usage`, `/update-docs`, `/update-internal-docs` | Single-shot operations |
 | Rule snapshots | `bash-coding-standard.md`, `coding-principles.md`, `documentation.md`, ... | Drop-in rule files |
 
 See [`ai-agents/AGENTS.md`](ai-agents/AGENTS.md) for the flat file inventory.
