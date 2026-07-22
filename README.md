@@ -295,14 +295,24 @@ The [`ai-agents/`](ai-agents/README.md) package bundles BCS-aware agents, slash 
 
 See [`ai-agents/AGENTS.md`](ai-agents/AGENTS.md) for the flat file inventory.
 
-### Claude Code skill (`skills/bcscheck/`)
+### Claude Code integration (`skills/`, enterprise install)
 
-A pure prompt skill that lets Claude Code audit Bash scripts against
-`BASH-CODING-STANDARD.md` directly — no `bcs` script, no API keys. Honours
-`#bcscheck disable=` directives and uses shellcheck JSON as static context.
-Install machine-wide with `sudo make install-skill`; remove with
-`sudo make uninstall-skill`. For policy.conf tiers, JSON output, or caching,
-use the real `bcs check`.
+One entry point per checking function — no overlap:
+
+| Function | Entry point | Mechanism |
+|----------|-------------|-----------|
+| Static lint | `shellcheck` | CLI |
+| Deep BCS check | `bcscheck` / `bcs check` | CLI, LLM backend |
+| In-session BCS check | `bcscheck` skill | Claude reads `BASH-CODING-STANDARD.md` directly — no CLI, no API keys |
+| Combined CLI audit | `/bcs-audit` | Runs shellcheck + bcscheck in parallel |
+| Whole-codebase audit | `/audit-bash` | 15-section audit prompt, saves `AUDIT-BASH.md` |
+| ShellCheck remediation | `/fix-shellcheck` | Fixes SC#### per BCS patterns (per-user, `ai-agents/`) |
+
+The `bcscheck` skill honours `#bcscheck disable=` directives and uses
+shellcheck JSON as static context; for policy.conf tiers, JSON output, or
+caching use the real `bcs check`. Sources live in `skills/*/SKILL.md` and
+`ai-agents/commands/`; install machine-wide with `sudo make install-claude`,
+remove with `sudo make uninstall-claude`.
 
 ## Bash References (`BCS-bash`, `BCS-Bash-Ref`)
 

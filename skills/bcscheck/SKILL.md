@@ -1,6 +1,6 @@
 ---
 name: bcscheck
-description: Claude-native BCS compliance audit sourced ONLY from BASH-CODING-STANDARD.md — no bcs script, no API keys. Use for "bcscheck <file>", "check this against BCS", "BCS compliance check", "is this BCS compliant", or /bcscheck <files>. Do NOT use when the user wants the real CLI tools executed (shellcheck + bcscheck binaries) — that is /bcs-audit.
+description: Claude-native BCS compliance audit sourced ONLY from BASH-CODING-STANDARD.md — no bcs script, no API keys. Use for "bcscheck <file>", "check this against BCS", "BCS compliance check", "is this BCS compliant", or "bcscheck <files>" typed in chat. Do NOT use when the user wants the real CLI tools executed (shellcheck + bcscheck binaries) — that is /bcs-audit.
 ---
 
 # bcscheck — Claude-native BCS compliance audit
@@ -82,7 +82,7 @@ suppressions were honoured.
 | Standard not found | Stop; list the three searched paths |
 | shellcheck missing | Proceed; note omission in report |
 | Non-bash file argument | Warn and skip that file |
-| No arguments, no obvious in-context target | Print usage `/bcscheck <file...>` and stop |
+| No arguments, no obvious in-context target | Print usage `bcscheck <file...>` and stop |
 
 ## 7. Boundaries
 
