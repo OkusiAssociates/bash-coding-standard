@@ -271,3 +271,20 @@ git commit -m "docs: document the native audit skill and its install targets"
 - Spec coverage: resolution (§1/Task 1), static context (§2/Task 1), hybrid dispatch (§3/Task 1), audit rules incl. heredoc caution (§4/Task 1), output format (§5/Task 1), error table (§6/Task 1), install story (Task 2), fixture acceptance (Task 3), YAGNI boundary (§7/Task 1 + README). No gaps.
 - Placeholders: none; SKILL.md content is complete and verbatim.
 - Name consistency: `bcscheck` dir name, `SKILLDIR`, `install-skill`/`uninstall-skill` used identically across Tasks 1, 2, 4.
+
+---
+
+## Acceptance Record — 2026-07-22
+
+Task 3 fixture acceptance executed per SKILL.md §1–§5 (standard resolved at
+`./data/BASH-CODING-STANDARD.md`; shellcheck JSON clean for all three targets;
+no disable directives present; three parallel `bash-expert` subagent audits):
+
+| fixture | expected | result | verdict |
+|---------|----------|--------|---------|
+| `tests/fixtures/01-missing-strict-mode.sh` | BCS0101 | `01-missing-strict-mode.sh:1 — BCS0101 [ERROR]` | PASS |
+| `tests/fixtures/14-uses-eval.sh` | BCS1004 | `14-uses-eval.sh:13 — BCS1004 [ERROR]` | PASS |
+| `tests/fixtures/clean/01-greet.sh` | (none) | NO FINDINGS | PASS |
+
+Superset assertion satisfied for both gated fixtures; zero false positives on
+the clean fixture. Acceptance: **PASS 3/3**.
