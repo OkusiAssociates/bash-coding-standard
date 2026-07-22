@@ -50,6 +50,7 @@ ln -s "$PWD"/ai-agents/rules/*    ~/.claude/rules/
 ## Commands Index
 
 - `audit-bash.md` -- `/audit-bash` -- BCS compliance auditing for Bash codebases
+- `bcs-audit.md` -- `/bcs-audit` -- Parallel shellcheck + bcscheck audit with severity-tagged findings
 - `bcs-codes.md` -- `/bcs-codes` -- List BCS rule codes, optionally filtered by section or keyword
 - `fix-shellcheck.md` -- `/fix-shellcheck` -- Fix SC#### warnings per BCS remediation patterns
 - `purpose-functionality-usage.md` -- `/pfu` -- Determine purpose and usage of a script or codebase
