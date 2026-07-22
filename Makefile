@@ -6,6 +6,7 @@ PREFIX   ?= /usr/local
 BINDIR   ?= $(PREFIX)/bin
 MANDIR   ?= $(PREFIX)/share/man/man1
 SHAREDIR ?= $(PREFIX)/share/yatti/BCS
+SKILLDIR ?= /etc/claude-code/.claude/skills
 COMPDIR  ?= /etc/bash_completion.d
 DESTDIR  ?=
 
@@ -14,7 +15,7 @@ DESTDIR  ?=
 # picks up a like-named file from a parent directory.
 srcdir := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-.PHONY: all install uninstall check test help
+.PHONY: all install uninstall check test help install-skill uninstall-skill
 
 all: help
 
@@ -89,6 +90,15 @@ uninstall:
 	rm -rf $(DESTDIR)$(SHAREDIR)
 	rm -f $(DESTDIR)$(PREFIX)/share/yatti/bash-coding-standard
 
+install-skill:
+	install -d $(DESTDIR)$(SKILLDIR)/bcscheck
+	install -m 644 skills/bcscheck/SKILL.md $(DESTDIR)$(SKILLDIR)/bcscheck/SKILL.md
+	@echo 'Installed bcscheck skill to $(DESTDIR)$(SKILLDIR)/bcscheck'
+
+uninstall-skill:
+	rm -rf $(DESTDIR)$(SKILLDIR)/bcscheck
+	@echo 'Removed bcscheck skill from $(DESTDIR)$(SKILLDIR)'
+
 check:
 	@command -v bcs >/dev/null 2>&1 \
 	  && echo 'bcs: OK' \
@@ -117,6 +127,8 @@ help:
 	@echo ''
 	@echo 'Targets:'
 	@echo '  install     Install to $(PREFIX)'
+	@echo '  install-skill    Install bcscheck Claude Code skill to $(SKILLDIR)'
+	@echo '  uninstall-skill  Remove bcscheck Claude Code skill'
 	@echo '  uninstall   Remove installed files'
 	@echo '  check       Verify installation'
 	@echo '  test        Run test suite'
