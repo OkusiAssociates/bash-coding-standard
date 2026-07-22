@@ -1134,7 +1134,7 @@ Respect inline suppression: eg, #bcscheck disable=BCS0101 exempts the next line/
   # single-quoted trap (expanded at trap time, not definition time) so a
   # cwd path containing shell metacharacters cannot inject commands.
   local -- ret_dir=$PWD
-  trap 'cd "$ret_dir" 2>/dev/null ||:; rm -rf "$check_dir"' RETURN
+  trap 'cd "$ret_dir" 2>/dev/null ||:; rm -rf -- "$check_dir"' RETURN
   cd "$check_dir"
   [[ ! -d /run/user/"$EUID" ]] || declare -x TMPDIR=/run/user/"$EUID"
 
@@ -1167,16 +1167,15 @@ Respect inline suppression: eg, #bcscheck disable=BCS0101 exempts the next line/
 
 cmd_display() {
   local -i force_cat=0
-  local -- bcs_file
+  local -- bcs_file _link=./BASH-CODING-STANDARD.md
 
   while (($#)); do case $1 in
     -c|--cat)     force_cat=1 ;;
     -f|--file)    _find_bcs_md || die 3 'BASH-CODING-STANDARD.md not found'; return 0 ;;
     -S|--symlink) bcs_file=$(_find_bcs_md) || die 3 'BASH-CODING-STANDARD.md not found'
-                  local -- _link=./BASH-CODING-STANDARD.md
                   [[ ! -e $_link || -L $_link ]] \
                     || die 22 "Refusing to overwrite existing file ${_link@Q}"
-                  ln -sf "$bcs_file" "$_link"
+                  ln -sf -- "$bcs_file" "$_link"
                   info "Symlinked BASH-CODING-STANDARD.md → $bcs_file"
                   return 0
                   ;;
@@ -1449,7 +1448,7 @@ cmd_check() {
   local -x BCS_RESPONSE_DUMP=${BCS_RESPONSE_DUMP:-}
   if [[ -z $BCS_RESPONSE_DUMP ]]; then
     local -- state_dir=${XDG_STATE_HOME:-$HOME/.local/state}/bcs
-    mkdir -p "$state_dir" 2>/dev/null ||:
+    mkdir -p -- "$state_dir" 2>/dev/null ||:
     if [[ -d $state_dir && -w $state_dir ]]; then
       BCS_RESPONSE_DUMP="$state_dir"/last-response.txt
     else
@@ -1713,11 +1712,11 @@ $numbered_script"
   # a missing entry just means the next run pays full price.
   if ((use_cache && !cache_hit && cacheable)) && [[ -n $cache_file ]]; then
     local -- cache_tmp=''
-    mkdir -p "${cache_file%/*}" 2>/dev/null ||:
+    mkdir -p -- "${cache_file%/*}" 2>/dev/null ||:
     if cache_tmp=$(mktemp "${cache_file%/*}"/.tmp.XXXXXX 2>/dev/null); then
       printf '%s\n' "$result" > "$cache_tmp" 2>/dev/null \
-        && mv -f "$cache_tmp" "$cache_file" 2>/dev/null \
-        || rm -f "$cache_tmp" 2>/dev/null ||:
+        && mv -f -- "$cache_tmp" "$cache_file" 2>/dev/null \
+        || rm -f -- "$cache_tmp" 2>/dev/null ||:
     fi
   fi
 
