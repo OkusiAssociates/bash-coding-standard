@@ -92,7 +92,7 @@ uninstall:
 
 install-skill:
 	install -d $(DESTDIR)$(SKILLDIR)/bcscheck
-	install -m 644 skills/bcscheck/SKILL.md $(DESTDIR)$(SKILLDIR)/bcscheck/SKILL.md
+	install -m 644 $(srcdir)skills/bcscheck/SKILL.md $(DESTDIR)$(SKILLDIR)/bcscheck/SKILL.md
 	@echo 'Installed bcscheck skill to $(DESTDIR)$(SKILLDIR)/bcscheck'
 
 uninstall-skill:
@@ -126,13 +126,13 @@ help:
 	@echo 'Usage: make [target]'
 	@echo ''
 	@echo 'Targets:'
-	@echo '  install     Install to $(PREFIX)'
+	@echo '  install          Install to $(PREFIX)'
 	@echo '  install-skill    Install bcscheck Claude Code skill to $(SKILLDIR)'
 	@echo '  uninstall-skill  Remove bcscheck Claude Code skill'
-	@echo '  uninstall   Remove installed files'
-	@echo '  check       Verify installation'
-	@echo '  test        Run test suite'
-	@echo '  help        Show this message'
+	@echo '  uninstall        Remove installed files'
+	@echo '  check            Verify installation'
+	@echo '  test             Run test suite'
+	@echo '  help             Show this message'
 	@echo ''
 	@echo 'Install from GitHub:'
 	@echo '  git clone https://github.com/Open-Technology-Foundation/bash-coding-standard.git'
