@@ -1,6 +1,6 @@
 ---
 name: bcscheck
-description: Claude-native BCS compliance audit sourced ONLY from BASH-CODING-STANDARD.md — no bcs script, no API keys. Use for "bcscheck <file>", "check this against BCS", "BCS compliance check", "is this BCS compliant", or "bcscheck <files>" typed in chat. Do NOT use when the user wants the real CLI tools executed (shellcheck + bcscheck binaries) — that is /bcs-audit.
+description: DEFAULT BCS compliance audit -- Claude-native, sourced ONLY from BASH-CODING-STANDARD.md; no bcs binary, no API key, no wait. Use this whenever BCS compliance is checked: "bcscheck <file>", "check this against BCS", "BCS compliance check", "is this BCS compliant", and as the compliance step before declaring bash work done. Prefer this over shelling out to the bcscheck binary. The real CLI binaries run only via /bcs-audit, and only when the user explicitly asks for them.
 ---
 
 # bcscheck — Claude-native BCS compliance audit

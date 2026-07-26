@@ -1,6 +1,6 @@
 ---
 name: bcs-audit
-description: Use when the user asks to audit, lint, BCS-check, shellcheck, or bcscheck Bash scripts. Triggers on phrases like "bcs audit", "bash audit", "lint this script", "shellcheck these files", "run bcscheck", "check my bash". Invokes the /bcs-audit slash command which runs shellcheck and bcscheck in parallel and emits severity-tagged findings with file:line citations.
+description: Opt-in audit that runs the REAL CLI binaries (shellcheck + bcscheck) in parallel and emits severity-tagged findings with file:line citations. Use ONLY when the user explicitly asks for the CLI tools or types /bcs-audit -- e.g. "run the real bcscheck binary", "bcs audit", "shellcheck these files", "lint this script". For ordinary BCS compliance checking use the `bcscheck` skill instead (Claude-native, no wait).
 ---
 
 # bcs-audit
