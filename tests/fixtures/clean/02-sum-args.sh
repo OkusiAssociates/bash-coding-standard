@@ -18,7 +18,7 @@ sum_ints() {
 
 main() {
   if [[ ${1:-} == --version ]]; then
-    printf '%s\n' "$VERSION"
+    printf '%s %s\n' "${0##*/}" "$VERSION"
     return 0
   fi
   sum_ints "$@"
