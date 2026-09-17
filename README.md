@@ -230,6 +230,7 @@ family except `flash-lite`. Other models silently ignore the budget.
 - `-M <tier>` -- that tier or stricter (`-M recommended` excludes style).
 - `--strict` -- treat warnings as violations (non-zero exit on any finding).
 - `-j` / `--json` -- emit a single `{source, meta, comments}` JSON object on stdout, schema-compatible with `shellcheck --format=json1`, for CI ingestion. Exit 5 if the LLM emits invalid JSON (raw response preserved in the dump file).
+- An empty completion is an anomaly on every backend, in text and JSON mode alike: `bcs check` exits 5, reports the API's finish reason (e.g. `finish_reason=length` when reasoning consumed the whole output budget -- raise `-e`), and does not cache the result. It is never reported as a clean pass.
 - `#bcscheck disable=BCSdddd` on its own line suppresses a rule for the next command, function, or `{ ... }` block -- same scope rules as `shellcheck` directives.
 
 **Accuracy data** -- backend accuracy is measured against four BCS-compliant scripts (`cln`, `md2ansi`, `which`, `tests/accuracy/bcs-check-accuracy.sh`) across multiple models and effort levels. See [`tests/accuracy/LLM-ACCURACY.md`](tests/accuracy/LLM-ACCURACY.md) for the current scoring matrix and refresh date.

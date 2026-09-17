@@ -337,7 +337,10 @@ File not found (standard document, data directory, template, or script).
 Permission denied (cannot read script file).
 .TP
 .B 5
-I/O error (API connection or request failure).
+I/O error: API connection or request failure, invalid JSON in
+.B \-\-json
+mode, or a completion with no text (the finish reason is reported).
+An empty completion is never reported as a clean pass and is never cached.
 .TP
 .B 18
 Missing dependency (no LLM backend available, or required tool not found).

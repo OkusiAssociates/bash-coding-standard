@@ -960,7 +960,14 @@ _llm_openai() {
     die 5 "OpenAI API error (HTTP $http_code)" ${errmsg:+"$errmsg"}
   fi
 
-  jq -r '.choices[0].message.content // empty' <<< "$body"
+  # An HTTP 200 with no text is an anomaly (e.g. finish_reason=length: the
+  # reasoning pass consumed the whole output budget), never a clean pass.
+  local -- text
+  text=$(jq -r '.choices[0].message.content // empty' <<< "$body") \
+    || die 5 'Failed to parse OpenAI response'
+  [[ -n $text ]] || die 5 'OpenAI API returned no text content' \
+    "finish_reason=$(jq -r '.choices[0].finish_reason // "unknown"' <<< "$body" 2>/dev/null ||:)"
+  printf '%s\n' "$text"
   echo "___TOKENS___ $(jq -r '"in=\(.usage.prompt_tokens // 0) out=\(.usage.completion_tokens // 0)"' <<< "$body")"
 }
 
@@ -1034,7 +1041,18 @@ _llm_google() {
     die 5 "Google API error (HTTP $http_code)" ${errmsg:+"$errmsg"}
   fi
 
-  jq -r '.candidates[0].content.parts[0].text // empty' <<< "$body"
+  # Join every text part: a multi-part answer must be neither truncated to
+  # its first part nor misread as empty. No text at all is an anomaly (safety
+  # block, MAX_TOKENS spent on thinking), never a clean pass.
+  local -- text
+  text=$(jq -r '[.candidates[0].content.parts[]? | select(.thought != true)
+                 | .text // empty] | join("")' <<< "$body") \
+    || die 5 'Failed to parse Google response'
+  [[ -n $text ]] || die 5 'Google API returned no text content' \
+    "finishReason=$(jq -r '.candidates[0].finishReason
+                           // .promptFeedback.blockReason
+                           // "unknown"' <<< "$body" 2>/dev/null ||:)"
+  printf '%s\n' "$text"
   local -- tkn
   tkn=$(jq -r \
     '"in=\(.usageMetadata.promptTokenCount // 0) out=\(.usageMetadata.candidatesTokenCount // 0)"' \
@@ -1637,7 +1655,11 @@ $numbered_script"
   local -- _llm_tokens=''
   if [[ $result == *'___TOKENS___ '* ]]; then
     _llm_tokens=${result##*___TOKENS___ }
-    result=${result%$'\n___TOKENS___ '*}
+    # Position-independent strip: a sentinel with no text before it has no
+    # leading newline to anchor on, and must leave $result empty so the
+    # empty-result guard below fires (exit 5, not cacheable).
+    result=${result%___TOKENS___ *}
+    result=${result%$'\n'}
   fi
 
   # Build diagnostic message list. Claude CLI backend does not emit token
