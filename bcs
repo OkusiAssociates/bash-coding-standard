@@ -1879,10 +1879,11 @@ $numbered_script"
   fi
   if ((dump_show)); then
     # Failure/-D diagnostics must surface even under -q (info is VERBOSE-gated),
-    # so force VERBOSE on for this block and restore it afterwards.
+    # so force VERBOSE on for this block and restore it afterwards. The
+    # token/elapsed lines were already printed above unless -q hid them.
     local -i _saved_verbose=$VERBOSE
     VERBOSE=1
-    >&2 info "${diag_msgs[@]}"
+    ((_saved_verbose)) || >&2 info "${diag_msgs[@]}"
     >&2 info "Exit: $exit_code"
     if [[ -s ${BCS_RESPONSE_DUMP:-} ]]; then
       >&2 info "Raw response: $BCS_RESPONSE_DUMP"

@@ -86,5 +86,24 @@ run_check "$(openai_body '[]')" -m gpt-5 -j
 assert_not_contains "$(jq -r '.messages[1].content' "$PAYLOAD_FILE")" \
   'No BCS violations found.' 'JSON prompt keeps its own empty-array contract' ||:
 
+# ---- Failure diagnostics: Elapsed once when verbose, still once under -q ----
+begin_test 'diagnostics printed once'
+elapsed_count() { grep -c 'Elapsed:' <<< "$ERR" ||:; }
+#shellcheck disable=SC2034  # read by the messaging helpers of the sourced bcs
+verbose_on() { VERBOSE=1; }
+reset_cache
+PRE_HOOK=verbose_on
+run_check "$(openai_body '[ERROR] BCS0202 line 8: variable not declared local')" -m gpt-5
+assert_equal 1 "$RC" 'verbose ERROR run -> exit 1' ||:
+assert_equal 1 "$(elapsed_count)" 'verbose, exit 1 -> Elapsed printed once' ||:
+assert_contains "$ERR" 'Exit: 1' 'verbose, exit 1 -> Exit line present' ||:
+reset_cache
+run_check "$(openai_body 'No BCS violations found.')" -m gpt-5 --debug
+assert_equal 1 "$(elapsed_count)" 'verbose, --debug, exit 0 -> Elapsed printed once' ||:
+PRE_HOOK=:
+reset_cache
+run_check "$(openai_body '[ERROR] BCS0202 line 8: variable not declared local')" -m gpt-5
+assert_equal 1 "$(elapsed_count)" 'quiet, exit 1 -> Elapsed still surfaced once' ||:
+
 print_summary 'check-exit-promotion'
 #fin
