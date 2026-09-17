@@ -710,14 +710,18 @@ _render_json_output() {
   cleaned=$(_strip_json_fences "$raw")
   [[ -n $cleaned ]] || return 1
   # Normalize to a bare array. OpenAI's json_object mode forbids a top-level
-  # array, so the model answers with an object instead. Four shapes occur:
-  # the array wrapped as {"findings": [...]} or similar, one bare finding
-  # object, and {} when there is nothing to report. Anything else is invalid.
+  # array, so the model answers with an object instead. _llm_openai names the
+  # wrapper it wants, {"findings": [...]}; the other shapes seen in the wild are
+  # still accepted: a similar wrapper key, one bare finding object, {} for
+  # nothing to report, and the array spelled with numeric keys ({"0": {...}}).
+  # Anything else is invalid.
   if jq -e 'type == "array"' <<< "$cleaned" &>/dev/null; then
     arr=$cleaned
   elif jq -e 'type == "object"' <<< "$cleaned" &>/dev/null; then
     arr=$(jq -c 'if has("line") and has("level") and has("bcsCode") then [.]
                  elif length == 0 then []
+                 elif (keys | all(test("^[0-9]+$"))) then
+                   [to_entries | sort_by(.key | tonumber) | .[].value] | flatten(1)
                  else (.findings // .comments // .violations // .results // empty)
                       | select(type == "array")
                  end' <<< "$cleaned" 2>/dev/null) ||:
@@ -985,8 +989,15 @@ _llm_openai() {
   # Native JSON mode via response_format:{type:"json_object"} (GPT-4+).
   # System/user prompt must mention "JSON" somewhere -- our JSON-mode prompt
   # satisfies that. Empty $reasoning means the field is omitted entirely.
+  #
+  # json_object forbids a top-level array, yet the shared prompt asks for one.
+  # Left to improvise, the model spelled the array as a bare finding, as {},
+  # or as {"0": {...}} -- a different shape from run to run. Name the wrapper.
   local -- payload
   if ((${BCS_JSON_MODE:-0})); then
+    usr+=$'\n\nThis API requires a JSON object at the top level. Return exactly'
+    usr+=$' {"findings": [ ... ]} whose value is the array described above'
+    usr+=$' (an empty array when there are no findings).'
     payload=$(jq -n \
       --arg model "$model" \
       --argjson max_tokens "$max_tokens" \

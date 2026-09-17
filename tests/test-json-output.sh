@@ -148,6 +148,14 @@ begin_test 'render: wrapper with an empty array is an empty findings list'
 out=$(_render_json_output '{"findings":[]}' /tmp/x.sh openai gpt-5-mini low 0 3) ||:
 assert_equal '0' "$(jq -r '.comments | length' <<< "$out" 2>/dev/null ||:)" '{"findings":[]} -> zero comments' ||:
 
+begin_test 'render: array spelled as an object with numeric keys'
+num='{"0":{"line":9,"level":"error","bcsCode":"BCS0501"},"1":{"line":12,"level":"warning","bcsCode":"BCS0301"}}'
+out=$(_render_json_output "$num" /tmp/x.sh openai gpt-5-mini low 0 3) ||:
+assert_equal 'BCS0501 BCS0301' "$(jq -r '[.comments[].bcsCode] | join(" ")' <<< "$out" 2>/dev/null ||:)" \
+  '{"0":{..},"1":{..}} -> two comments, in order' ||:
+out=$(_render_json_output '{"0":[]}' /tmp/x.sh openai gpt-5-mini low 0 3) ||:
+assert_equal '0' "$(jq -r '.comments | length' <<< "$out" 2>/dev/null ||:)" '{"0":[]} -> zero comments' ||:
+
 begin_test 'render: half a finding object is still rejected'
 assert_fails 'object with line but no level/bcsCode rejected' \
   _render_json_output '{"line":8,"message":"m"}' /tmp/x.sh openai gpt-5-mini low 0 3 ||:

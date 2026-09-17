@@ -154,6 +154,21 @@ assert_payload_no_match openai gpt-4o-mini max \
   '.reasoning_effort != null' \
   'gpt-4o-mini -e max -> reasoning_effort omitted'
 
+# OpenAI's json_object mode forbids the top-level array the prompt asks for.
+# Left to improvise, the model spells the array as a bare finding, {}, or
+# {"0": {...}}; the request therefore names the wrapper to use.
+BCS_JSON_MODE=1 assert_payload_match openai gpt-5-mini low \
+  '.messages[1].content | contains("{\"findings\": [")' \
+  'openai JSON mode -> user prompt names the {"findings": [...]} wrapper'
+
+assert_payload_no_match openai gpt-5-mini low \
+  '.messages[1].content | contains("findings")' \
+  'openai text mode -> no JSON wrapper instruction'
+
+BCS_JSON_MODE=1 assert_payload_no_match google gemini-2.5-flash low \
+  '.contents[0].parts[0].text | contains("findings")' \
+  'google JSON mode -> prompt untouched (top-level arrays are allowed there)'
+
 # ---------------------------------------------------------------------
 # Google: thinkingConfig.thinkingBudget auto-enabled on *-2.5-* except
 # flash-lite.
