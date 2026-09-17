@@ -42,5 +42,9 @@ jq -n --slurpfile b tests/accuracy/baseline/gpt5-mini_low.json \
 ```
 
 Recall and the clean false-positive rate are the trustworthy signals. The
-checker is an LLM, so expect small run-to-run movement in precision; a fall in
-recall, or any clean false positive, is a regression to explain.
+checker is an LLM, so expect run-to-run movement in precision: on 2026-09-17
+two runs of the byte-identical configuration gave precision 0.871 and 0.818
+(F1 0.931 and 0.900) with recall 1.000, no clean false positive and stability
+1.000 both times. The whole difference was the number of *extra* findings on
+violation fixtures (16 against 24). Treat ±0.05 in precision or F1 as noise. A
+fall in recall, or any clean false positive, is a regression to explain.

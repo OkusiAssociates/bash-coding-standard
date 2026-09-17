@@ -238,6 +238,7 @@ family and on `gemini-3.5-flash*`. Other models silently ignore the budget.
 - `-M <tier>` -- that tier or stricter (`-M recommended` excludes style).
 - `--strict` -- treat warnings as violations (non-zero exit on any finding).
 - `-j` / `--json` -- emit a single `{source, meta, comments}` JSON object on stdout, schema-compatible with `shellcheck --format=json1`, for CI ingestion. Exit 5 if the LLM emits invalid JSON (raw response preserved in the dump file).
+- Text mode asks the checker for one finding per line and nothing else: `[ERROR|WARN] BCSxxxx line N: <defect>. Fix: <remedy>` -- no preamble, no notes on rules that pass, no summary, and no finding that is then retracted. The checker is an LLM, so treat the shape as a strong convention, not a grammar; use `-j` when a program reads the result.
 - A compliant script produces the single line `No BCS violations found.` and exit 0 (text mode; JSON mode returns an empty `comments` array). Exit 1 requires a finding *header* tagged `[ERROR]` -- a sentence that merely mentions the tag does not fail the check.
 - An empty completion is an anomaly on every backend, in text and JSON mode alike: `bcs check` exits 5, reports the API's finish reason (e.g. `finish_reason=length` when reasoning consumed the whole output budget -- raise `-e`), and does not cache the result. It is never reported as a clean pass.
 - `#bcscheck disable=BCSdddd` on its own line suppresses a rule for the next command, function, or `{ ... }` block -- same scope rules as `shellcheck` directives.

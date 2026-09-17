@@ -86,6 +86,17 @@ declare -A EFFORT_REASONING=([low]=minimal [medium]=low [high]=medium [xhigh]=hi
 # within the same header. A sentence that merely mentions the tag does not
 # match, so it cannot fail a clean script.
 declare -r CLEAN_LINE='No BCS violations found.'
+# One contract for both text-mode prompt builders. The fixed shape is what
+# ERROR_FINDING_RE and the fixture gate parse; "decide silently" is aimed at
+# the measured failure where a model prints a finding and acquits it in the
+# same breath, which still reads as [ERROR] to every consumer.
+#bcscheck disable=BCS1201 — LLM prompt prose; wrapping degrades instruction quality
+declare -r OUTPUT_CONTRACT="Output format (mandatory, machine-parsed):
+- One finding per line, exactly: [ERROR|WARN] BCSxxxx line N: <defect, at most 25 words>. Fix: <remedy, at most 25 words>
+- Nothing else: no preamble, no headings, no Markdown, no code fences, no notes on rules that pass, no summary.
+- Never print a finding you then retract. Decide silently; print confirmed violations only.
+- The same rule broken on several lines: one finding per line, or one finding with \"lines N,M,O\".
+- If there are no violations, output exactly one line: $CLEAN_LINE"
 declare -r ERROR_FINDING_RE='^[[:space:]]*([-*+>#]+[[:space:]]+|[0-9]+[.)][[:space:]]+)*[*_`]*(\[ERROR\]|BCS[0-9]{4}[^[:alnum:]].{0,40}\[ERROR\])'
 
 # ---- Messaging System ----
@@ -399,6 +410,12 @@ ${BOLD}Environment / Config Variables:$NC
 
 ${BOLD}Inline suppression:$NC
   #bcscheck disable=BCS0606  # Suppress a rule for the next line or block
+
+${BOLD}Text Output:$NC
+  One finding per line, nothing else:
+    [ERROR|WARN] BCSxxxx line N: <defect>. Fix: <remedy>
+  A compliant script yields the single line "$CLEAN_LINE"
+  The checker is an LLM: treat the shape as a strong convention, not a grammar.
 
 ${BOLD}JSON Output:$NC
   With ${BOLD}-j/--json$NC, stdout contains a single JSON object shaped like:
@@ -1228,15 +1245,7 @@ Analyze @$script_file against the Bash Coding Standard defined in @$std_file.
 
 $tier_instr
 
-For each finding, report:
-- The BCS code (e.g., BCS0101)
-- The rule's tier (core, recommended, style)
-- Severity: [ERROR] for core-tier violations, [WARN] for recommended/style
-- The specific line(s) affected
-- What is wrong and how to fix it
-
-Do NOT append a summary table or restate findings -- each finding appears exactly once.
-If there are no violations, output exactly one line: $CLEAN_LINE
+$OUTPUT_CONTRACT
 
 Respect inline suppression: eg, #bcscheck disable=BCS0101 exempts the next line/block."
   fi
@@ -1666,7 +1675,7 @@ cmd_check() {
       low)    effort_guidance='Report only clear VIOLATION findings. Be concise.' ;;
       medium) effort_guidance='Report VIOLATIONs and significant WARNINGs.' ;;
       high)   effort_guidance='Report all VIOLATIONs and WARNINGs. Be thorough.' ;;
-      xhigh)  effort_guidance='Comprehensive audit; flag all findings with detailed reasoning.' ;;
+      xhigh)  effort_guidance='Comprehensive audit; report every finding, however minor.' ;;
       max)    effort_guidance='Exhaustive line-by-line audit. Report every finding.' ;;
       *)      die 1 "Unexpected effort: ${effort@Q}" ;;
     esac
@@ -1748,9 +1757,7 @@ $effort_guidance"
       ((strict)) && usr_prompt+=$'\n\nSTRICT MODE: Treat all WARNINGs as VIOLATIONs (label as [ERROR]).' ||:
       usr_prompt+="
 
-Format each finding as: [ERROR|WARN] BCSxxxx line N: description, then a fix recommendation.
-Do NOT append a summary table or restate findings -- each finding appears exactly once.
-If there are no violations, output exactly one line: $CLEAN_LINE"
+$OUTPUT_CONTRACT"
       [[ -z $shellcheck_block ]] || usr_prompt+=$'\n\n'"$shellcheck_block"
       usr_prompt+="
 

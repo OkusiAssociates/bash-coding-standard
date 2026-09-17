@@ -329,7 +329,9 @@ Success.
 .B 1
 General error; for
 .B check
-in text mode, at least one finding tagged [ERROR]. A compliant script prints the
+in text mode, at least one finding tagged [ERROR]. Text mode asks for one
+finding per line, shaped "[ERROR|WARN] BCSxxxx line N: <defect>. Fix: <remedy>",
+and nothing else. A compliant script prints the
 single line "No BCS violations found." and exits 0. Only a finding header
 promotes the exit code; a sentence that merely mentions [ERROR] does not.
 .TP

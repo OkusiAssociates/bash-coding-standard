@@ -73,5 +73,33 @@ assert_prompt 'CLI @file' "$(< "$CLI_STANDARD_FILE")"
 assert_not_contains "$(< "$CLI_ARGV_FILE")" "@$STANDARD" \
   'CLI is not pointed at the full assembled standard' ||:
 
+# ---- Text-mode output contract: identical in both prompt builders ----
+# assert_contract LABEL PROMPT
+assert_contract() {
+  local -- label=$1 prompt=$2
+  assert_contains "$prompt" 'One finding per line, exactly: [ERROR|WARN] BCSxxxx line N:' \
+    "$label: one finding per line, fixed shape" ||:
+  assert_contains "$prompt" 'Never print a finding you then retract' "$label: no retractions" ||:
+  assert_contains "$prompt" 'no notes on rules that pass' "$label: no pass notes" ||:
+  assert_contains "$prompt" 'output exactly one line: No BCS violations found.' "$label: clean line kept" ||:
+  assert_contains "$prompt" '#bcscheck disable=' "$label: suppression instruction kept" ||:
+}
+
+begin_test 'output contract'
+reset_cache; run_check "$OPENAI_OK" -m gpt-5
+assert_contract 'API text' "$(jq -r '.messages[1].content' "$PAYLOAD_FILE")"
+reset_cache; run_check "$OPENAI_OK" -m gpt-5 --strict
+assert_contains "$(jq -r '.messages[1].content' "$PAYLOAD_FILE")" 'STRICT MODE' 'API text --strict: strict line kept' ||:
+reset_cache; run_check '' -m claude-code:haiku
+assert_contract 'CLI text' "$(< "$CLI_ARGV_FILE")"
+reset_cache; run_check '{"choices":[{"message":{"content":"{\"findings\": []}"}}]}' -m gpt-5 -j
+assert_not_contains "$(jq -r '.messages[1].content' "$PAYLOAD_FILE")" 'One finding per line' \
+  'JSON mode keeps its own array contract' ||:
+
+begin_test 'effort guidance governs coverage, not length'
+reset_cache; run_check "$OPENAI_OK" -m gpt-5 -e xhigh
+assert_not_contains "$(jq -r '.messages[1].content' "$PAYLOAD_FILE")" 'detailed reasoning' \
+  '-e xhigh no longer asks for prose the contract forbids' ||:
+
 print_summary 'checker-prompt'
 #fin
