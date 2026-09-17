@@ -64,5 +64,21 @@ assert_equal 0 "$(grep -c 'commands/bcs-audit.md' "$PROJECT_DIR"/skills/bcs-audi
 assert_contains "$(< "$PROJECT_DIR"/ai-agents/commands/audit-bash.md)" \
   'the `bcscheck` skill' 'audit-bash routes BCS checks to the bcscheck skill' ||:
 
+# ---- Test targets: dry-run only, a real `make test` here would recurse ----
+begin_test 'test targets'
+run_make -n test
+assert_contains "$OUT" 'BCS_SKIP_FIXTURES=1' 'make test is the fast suite (no LLM gate)' ||:
+run_make -n test-fast
+assert_contains "$OUT" 'BCS_SKIP_FIXTURES=1' 'make test-fast skips the LLM gate' ||:
+assert_contains "$OUT" 'tests/run-all-tests.sh' 'make test-fast runs the suite runner' ||:
+run_make -n test-full
+assert_contains "$OUT" 'BCS_FIXTURES_REQUIRE_BACKEND=1' 'make test-full demands a backend' ||:
+assert_contains "$OUT" 'BCS_SKIP_FIXTURES=0' 'make test-full overrides an exported skip flag' ||:
+run_make help
+assert_contains "$OUT" 'test-fast' 'help lists test-fast' ||:
+assert_contains "$OUT" 'test-full' 'help lists test-full' ||:
+assert_contains "$(< "$PROJECT_DIR"/.github/workflows/ci.yml)" 'make test-fast' \
+  'CI runs make test-fast' ||:
+
 print_summary 'makefile'
 #fin

@@ -16,7 +16,8 @@ DESTDIR  ?=
 # picks up a like-named file from a parent directory.
 srcdir := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-.PHONY: all install uninstall check test help install-claude uninstall-claude check-claude
+.PHONY: all install uninstall check test test-fast test-full help \
+        install-claude uninstall-claude check-claude
 
 all: help
 
@@ -145,8 +146,20 @@ check:
 	  && echo 'bcsgenerate: OK' \
 	  || echo 'bcsgenerate: NOT FOUND (check PATH)'
 
-test:
-	./tests/run-all-tests.sh
+# `make test` is the fast, deterministic suite: no LLM, no API keys, a few
+# seconds. It is what CI runs on every push.
+test: test-fast
+
+test-fast:
+	BCS_SKIP_FIXTURES=1 $(srcdir)tests/run-all-tests.sh
+
+# `make test-full` adds the LLM fixture gate (tests/test-check-fixtures.sh).
+# It needs a reachable backend and FAILS, rather than skips, without one or
+# when any fixture is inconclusive. A few minutes on an API backend; about
+# 47 s per fixture on the CLI backend. BCS_SKIP_FIXTURES=0 overrides a skip
+# flag exported in the caller's environment.
+test-full:
+	BCS_SKIP_FIXTURES=0 BCS_FIXTURES_REQUIRE_BACKEND=1 $(srcdir)tests/run-all-tests.sh
 
 help:
 	@echo 'Usage: make [target]'
@@ -158,7 +171,9 @@ help:
 	@echo '  check-claude     Diff repo skills+commands against the deployed copies'
 	@echo '  uninstall        Remove installed files'
 	@echo '  check            Verify installation'
-	@echo '  test             Run test suite'
+	@echo '  test             Run the fast deterministic suite (alias of test-fast)'
+	@echo '  test-fast        Structural + unit suites; no LLM, no API keys (seconds)'
+	@echo '  test-full        test-fast + LLM fixture gate (needs a backend; minutes)'
 	@echo '  help             Show this message'
 	@echo ''
 	@echo 'Install from GitHub:'

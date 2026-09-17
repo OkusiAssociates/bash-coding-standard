@@ -24,7 +24,7 @@ How to gate code on BCS in CI and at commit/push time. Two layers:
 - `shellcheck -x` over `bcs`, the shims, every test, every fixture, and the
   accuracy scripts;
 - runs `./tests/test-self-compliance.sh` (the "bcs obeys its own standard" invariant);
-- runs `./tests/run-all-tests.sh`.
+- runs `make test-fast` (`BCS_SKIP_FIXTURES=1 ./tests/run-all-tests.sh`).
 
 It sets `BCS_SKIP_FIXTURES=1`, so the one LLM-dependent suite
 (`test-check-fixtures.sh`) skips cleanly — **no API keys, no cost, no flakiness**.

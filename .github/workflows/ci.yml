@@ -5,8 +5,9 @@ on:
     branches: [main]
   pull_request:
 
-# The LLM fixture suite (tests/test-check-fixtures.sh) needs a reachable
-# backend; skip it here so CI requires no API keys and incurs no cost.
+# `make test-fast` skips the LLM fixture suite (tests/test-check-fixtures.sh),
+# which needs a reachable backend, so CI requires no API keys and incurs no
+# cost. The env var also covers the standalone self-compliance step.
 env:
   BCS_SKIP_FIXTURES: '1'
 
@@ -44,5 +45,5 @@ jobs:
       - name: Self-compliance invariant
         run: ./tests/test-self-compliance.sh
 
-      - name: Full test suite (LLM fixtures skipped)
-        run: ./tests/run-all-tests.sh
+      - name: Fast test suite (LLM fixtures skipped)
+        run: make test-fast

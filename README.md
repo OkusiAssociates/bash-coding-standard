@@ -340,10 +340,11 @@ The HTML trees are checked-in artefacts. The `BCS-Bash-Ref.html/` tree is rebuil
 ## Testing & Self-Compliance
 
 ```bash
-./tests/run-all-tests.sh             # Run all suites
+make test                            # Fast deterministic suite: no LLM, no API keys (== make test-fast)
+make test-full                       # + LLM fixture gate; needs a backend, fails without one (minutes)
+./tests/run-all-tests.sh             # All suites; the LLM gate runs if a backend is reachable
 ./tests/test-subcommand-template.sh  # Run a single suite
 shellcheck -x bcs bcscheck           # Mandatory static check
-make test                            # Full suite shortcut (== ./tests/run-all-tests.sh)
 make check                           # Verify an install (bcs/shims on PATH), not a lint
 ```
 

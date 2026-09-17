@@ -43,8 +43,9 @@ BCS_SKIP_FIXTURES=1 ./tests/test-check-fixtures.sh
 BCS_FIXTURES_MODEL=gpt5-mini ./tests/test-check-fixtures.sh
 ```
 
-The harness also runs under `./tests/run-all-tests.sh` and `make test`
-via the auto-discovery of `test-*.sh` files.
+The harness also runs under `./tests/run-all-tests.sh` and `make test-full`
+via the auto-discovery of `test-*.sh` files. `make test` (an alias of
+`make test-fast`) sets `BCS_SKIP_FIXTURES=1` and never calls an LLM.
 
 ## Fixture format
 
@@ -119,10 +120,11 @@ from the BCS LLM checker.
 
 ## Limitations
 
-- **Runtime.** The gated corpus (24 fixtures) at ~10–30s each against a fast model
-  takes 2–5 minutes. Acceptable for `make test`, not for
-  tight inner-loop iteration; use `BCS_SKIP_FIXTURES=1` during
-  development.
+- **Runtime.** It depends on the backend. The September 2026 audit measured
+  about 47 s per fixture on the Claude Code CLI backend, roughly 19 minutes
+  for the gated corpus; API backends are far quicker, which is why the probe
+  tries them first. Either way it is too slow for the inner loop, so it runs
+  under `make test-full`, never under `make test`.
 - **Backend variance.** Different backends/models produce different
   finding sets. The suite pins effort `low` and the cheapest alias for
   the reachable backend, probed fastest first (`gpt5-mini` for openai,
