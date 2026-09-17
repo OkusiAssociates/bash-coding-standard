@@ -76,6 +76,16 @@ declare -A EFFORT_TOKENS=([low]=4000 [medium]=8000 [high]=24000 [xhigh]=40000 [m
 declare -A EFFORT_THINKING=([low]=0  [medium]=2000 [high]=6000  [xhigh]=12000 [max]=16000)
 declare -A EFFORT_REASONING=([low]=minimal [medium]=low [high]=medium [xhigh]=high [max]=high)
 
+# Text-mode answer contract. CLEAN_LINE is what both prompt builders tell the
+# model to print for a compliant script, so that an empty answer is always an
+# anomaly (exit 5). ERROR_FINDING_RE recognises a finding header tagged
+# [ERROR]: optional Markdown decoration (bullet, numbering, heading, quote,
+# bold/italic/backtick), then the tag itself or a BCS code followed by the tag
+# within the same header. A sentence that merely mentions the tag does not
+# match, so it cannot fail a clean script.
+declare -r CLEAN_LINE='No BCS violations found.'
+declare -r ERROR_FINDING_RE='^[[:space:]]*([-*+>#]+[[:space:]]+|[0-9]+[.)][[:space:]]+)*[*_`]*(\[ERROR\]|BCS[0-9]{4}[^[:alnum:]].{0,40}\[ERROR\])'
+
 # ---- Messaging System ----
 # vecho()/debug() (and DEBUG) belong to the BCS reference messaging suite and
 # are kept intentionally even though bcs itself never calls them; BCS0405 is
@@ -620,6 +630,15 @@ _dump_response() {
   printf '%s\n' "$1" > "$BCS_RESPONSE_DUMP" 2>/dev/null ||:
 }
 
+# True when the text-mode answer $1 holds a finding tagged [ERROR].
+_has_error_finding() {
+  local -- line
+  while IFS= read -r line; do
+    [[ ! $line =~ $ERROR_FINDING_RE ]] || return 0
+  done <<< "$1"
+  return 1
+}
+
 # Register a path for process-exit cleanup (see _TMP_CLEANUP).
 _register_tmp() { _TMP_CLEANUP+=("$1"); }
 
@@ -1153,6 +1172,7 @@ For each finding, report:
 - What is wrong and how to fix it
 
 Do NOT append a summary table or restate findings -- each finding appears exactly once.
+If there are no violations, output exactly one line: $CLEAN_LINE
 
 Respect inline suppression: eg, #bcscheck disable=BCS0101 exempts the next line/block."
   fi
@@ -1658,7 +1678,8 @@ $effort_guidance"
       usr_prompt+="
 
 Format each finding as: [ERROR|WARN] BCSxxxx line N: description, then a fix recommendation.
-Do NOT append a summary table or restate findings -- each finding appears exactly once."
+Do NOT append a summary table or restate findings -- each finding appears exactly once.
+If there are no violations, output exactly one line: $CLEAN_LINE"
       [[ -z $shellcheck_block ]] || usr_prompt+=$'\n\n'"$shellcheck_block"
       usr_prompt+="
 
@@ -1746,7 +1767,7 @@ $numbered_script"
   else
     [[ -z $result ]] || echo "$result"
     # Severity-based exit: any [ERROR] finding promotes exit code to 1
-    if ((exit_code == 0)) && [[ $result == *'[ERROR]'* ]]; then
+    if ((exit_code == 0)) && _has_error_finding "$result"; then
       exit_code=1
     fi
   fi

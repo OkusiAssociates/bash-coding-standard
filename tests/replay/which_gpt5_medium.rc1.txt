@@ -1,0 +1,8 @@
+[ERROR] BCS1002 line 106: PATH not hardened at script start (direct-execution block). Secure PATH early to prevent command hijacking before invoking external commands like realpath.
+Fix: add a PATH assignment immediately after set -euo pipefail (and before any external commands), e.g.:
+  declare -rx PATH=/usr/local/bin:/usr/bin:/bin
+or, for user tooling:
+  declare -rx PATH=~/.local/bin:/usr/local/bin:/usr/bin:/bin
+
+[WARN] BCS0109 line 111: Missing required end marker #fin (found deprecated #end).
+Fix: change the last line to: #fin

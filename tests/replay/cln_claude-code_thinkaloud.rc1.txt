@@ -1,0 +1,77 @@
+Now analyzing the script against the full BCS standard.
+
+**BCS0102 (core)** — Line 1: shebang is `#!/usr/bin/env bash`. This is an acceptable form per BCS0102, not a violation.
+
+**BCS0103 (recommended)** [WARN] — Lines 12-15: `VERSION` is declared *before* `SCRIPT_PATH`/`SCRIPT_NAME`, and `SCRIPT_DIR` is omitted (acceptable per BCS0103 since unused). Order itself is not specified as mandatory, so not flagging order — no issue here.
+
+**BCS0101 (core)** — Lines 7-8: `set -euo pipefail` immediately follows shebang/comments, `shopt -s inherit_errexit extglob nullglob` follows immediately after. Compliant.
+
+**BCS01002 (core)** — Line 10: `declare -rx PATH=/usr/local/bin:/usr/bin:/bin` — system-directories-only form, placed early. Compliant.
+
+**BCS0110 / BCS0603 (core)** [ERROR] — The script has no cleanup/trap despite creating no persistent temp resources (only uses `rm` on found files directly, no `mktemp`). Not applicable — no violation.
+
+**BCS0304 / BCS0904** — Line 45: `show_help() { cat <<HELP ... HELP }` — delimiter is descriptive (`HELP`, not generic `EOF`), unquoted because it needs `$SCRIPT_NAME`/`$VERSION`/`${DELETE_FILES[*]}` expansion. Compliant.
+
+★ Insight ─────────────────────────────────────
+Notice the heredoc at line 45 relies on unquoted `<<HELP` specifically because it needs `$SCRIPT_NAME`, `$VERSION`, and `${DELETE_FILES[*]}` to expand inside the body (line 52). This is the correct choice per BCS0304 — the rule is about matching quoting to *intent*, not defaulting to one style.
+─────────────────────────────────────────────────
+
+Now let me flag actual findings:
+
+**[WARN] BCS0207** — Tier: style — Line 52: `${DELETE_FILES[*]}` inside the heredoc. This is intentional (space-joined display list, not iteration), so this is fine — not a BCS0206 violation since it's not used in a `for` loop, just for display formatting. Not flagging.
+
+**[ERROR] BCS0704** — Tier: style, not core... let me check tier. BCS0704 is style tier → [WARN]. Line 44-94: `show_help()` mixes fine — no issue.
+
+**[WARN] BCS0710** — Tier: style — Lines 25, 27: only `RED YELLOW CYAN NC` are declared (no `GREEN`), and correspondingly no `success()` function is defined — this is compliant with BCS0405/0706 (only declare what's used). Not a violation.
+
+**[ERROR] BCS0501** — Tier: core — Line 171: `((VERBOSE < 3)) && VERBOSE+=1 ||:` — correctly uses `||:`. Compliant.
+
+**[ERROR] BCS0606** — checking all `&&...||:` chains:
+- Line 171: `((VERBOSE < 3)) && VERBOSE+=1 ||:` — has `||:`. OK.
+- Line 188: `((PROMPT && !VERBOSE)) && VERBOSE=1 ||:` — has `||:`. OK.
+- Line 191: `((VERBOSE)) && rm_opts+=(-v) ||:` — OK.
+- Line 212: `((VERBOSE > 1)) && info "$(decp find_expr)" ||:` — OK.
+- Line 224: `((fnd == 1)) && [[ -z ${found_files[0]} ]] && fnd=0 ||:` — OK.
+All chains properly guarded. No violation.
+
+**[WARN] BCS0806** — Tier: recommended — Line 166 has explicit `#bcscheck disable=BCS0806` suppression directly above the `-p|-n|--prompt` case block (lines 167-168), which covers the compound-command block through line 170. Per suppression rules this must not be reported. Skipping.
+
+**[ERROR] BCS01001/BCS1002** — no SUID/PATH issues found.
+
+**[WARN] BCS0301** — Tier: style — checking quoting: Line 18: `'*~' '~*' '.~*' '.*~' DEADJOE dead.letter 'wget-log*'` — mixed quoting is fine (literal patterns, some containing globs needing quotes, `DEADJOE`/`dead.letter` are safe unquoted alphanumerics). Compliant.
+
+**[ERROR] BCS0902** — Tier: core — checking wildcard expansions: none present unguarded. Compliant.
+
+**[WARN] BCS01206** — Line 2: `#shellcheck disable=SC2015` is a documented exception (comment explains why). Compliant.
+
+Now let's look more carefully for real defects:
+
+**[ERROR] BCS0604** (core) — Line 235: `rm "${rm_opts[@]}" -- "${found_files[@]}" || warn 'Some files could not be removed'` — return value is checked. Compliant.
+
+**[ERROR] BCS0303** (core) — case-statement patterns at line 143-184 are all correctly unquoted in `[[`-equivalent case matching. Compliant.
+
+Let me check **BCS01005** (core) input sanitization — `rm -- "$user_supplied_paths"` pattern. Line 235 uses `--` before `"${found_files[@]}"`. Compliant, files come from `find`, safe.
+
+**[WARN] BCS0710 / BCS0709** — `yn()` function at lines 36-42 matches the reference pattern in BCS0709 exactly. Compliant.
+
+**[ERROR] BCS0403** (recommended, not core — re-check tier) — BCS0403 tier is recommended. Line 242: `main "$@"` — correct call form.
+
+Now, one real finding:
+
+**[WARN] BCS01202** — Tier: style — Line 17: `# Default file patterns to remove (editor backups, crash files, temp files)` — this comment adds information (rationale for what's in the array) not a mechanical paraphrase; compliant, not flagged.
+
+Let me check **BCS0405** (style) for unused code — `warn()` is used (line 208, 228, 235...), `error()` is used by `die()`. All functions defined appear to be used: `_msg`, `error`, `die`, `warn`, `info`, `yn`, `show_help`, `noarg`, `decp`, `s`, `read_conf`. Checking `decp` — used at line 212. `s()` — used at lines 228, 232, 234. All used. Compliant — no dead code.
+
+After this thorough pass, I find the script is largely compliant. Here are the actual findings:
+
+---
+
+**BCS0805** — Tier: recommended — [WARN] — Line 179: `-[LaSmpPNnvqVh]?*)` — the character class omits the arg-taking short options' correct positioning warning, but more importantly it includes `-L` (a boolean, fine) alongside `-a`, `-m` (arg-taking) — per BCS0805 this is user's responsibility, not a defect (per "Common Non-Issues" section). Not flagging.
+
+**BCS1206** — Line 166 `#bcscheck disable=BCS0806` — correctly scoped, suppresses next block. No issue.
+
+**BCS0111** — Tier: recommended — [WARN] — Line 107-124: `read_conf()` implements a **first-match-wins** pattern (returns after first found file) rather than BCS0111's cascade-source pattern where all matching files are sourced in order. BCS0111 explicitly permits this: "Scripts that intentionally use alternative methods (e.g., first-match-wins semantics... or restricted parsing for security) should document the deviation." The function has a comment on line 107 noting "(BCS0111 search order)" but does not explicitly document *why* it deviates to first-match-wins/readarray instead of cascade-source. This is a minor documentation gap.
+
+- **BCS0111** [WARN] (Tier: recommended) — Lines 108-124: `read_conf()` uses first-match-wins + `readarray` (parsing config as data lines, not sourcing as Bash) instead of the cascading `source` pattern. This is an explicitly permitted deviation, but the standard requires it be *documented as a deviation*; the inline comment references "BCS0111 search order" without noting that the loading mechanism (data-file parsing vs. source-cascade) intentionally differs. Recommend adding a brief comment noting this is deliberate restricted-parsing for security (avoids executing arbitrary Bash from a config file), which actually strengthens the justification.
+
+That is the only substantive finding. Everything else in the script — strict mode setup, PATH hardening, messaging system, argument parsing, quoting, array handling, `find`/`readarray` usage, `rm --` safety, heredoc quoting, and the `#fin` end marker (line 243) — complies with the standard.

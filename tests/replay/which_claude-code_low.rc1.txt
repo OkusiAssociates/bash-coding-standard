@@ -1,0 +1,25 @@
+## BCS Compliance Findings — `which`
+
+**[ERROR] BCS0102** (Tier: core) — Line 6
+The `#shellcheck disable=SC2317` directive appears after the description comment (lines 2–5) instead of immediately after the shebang. BCS0102 specifies the canonical order: shebang → optional `#shellcheck`/`#bcscheck` directives → brief description comment. Move line 6 to directly follow line 1.
+
+**[WARN] BCS0107** (Tier: style) — Lines 13–28
+`_which_help()` is defined as a nested function inside `which()`, so it is re-defined on every invocation of `which()`. BCS0107's exception for nested functions applies only when "the inner function is private to and only callable after the outer function runs (e.g. dynamically generated handlers)" — this is a static help-text helper, not a dynamically generated handler, so it should be defined at top level (bottom-up: before `which()`), not re-created per call.
+
+**[WARN] BCS0201** (Tier: style) — Line 11
+```bash
+local target path full_path resolved
+```
+These string-type locals lack the `--` type separator and are undeclared (no `=''`/assignment). Per BCS0201, string variables should use the `--` separator to make the semantic type choice explicit, e.g. `local -- target='' path='' full_path='' resolved=''`.
+
+**[WARN] BCS0201** (Tier: style) — Line 49
+```bash
+local _path=${PATH:-}
+```
+Missing the `--` separator for a string-type local, e.g. `local -- _path=${PATH:-}`.
+
+**[WARN] BCS0109** (Tier: recommended) — Line 111
+```bash
+#end
+```
+`#end` is the deprecated end marker. BCS0109 requires `#fin` as the mandatory final line — `#end` is explicitly noted as deprecated ("accepted by earlier revisions of this rule... use `#fin`"). Replace with `#fin`, and remove the trailing blank line after it so `#fin` is the actual final line of the file.

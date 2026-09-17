@@ -1,0 +1,37 @@
+## Findings
+
+**BCS0201** — Tier: style — [WARN] — Line 11
+
+```bash
+local target path full_path resolved
+```
+
+These four locals are declared without the `--` string-type separator (or any type flag). BCS0201 requires explicit type declarations even for plain strings — the `--` is "purely semantic" but still required to signal a conscious type choice. Fix:
+
+```bash
+local -- target path full_path resolved
+```
+
+**BCS0201** — Tier: style — [WARN] — Line 49
+
+```bash
+local _path=${PATH:-}
+```
+
+Same issue: a string-typed local declared without the `--` separator. Fix:
+
+```bash
+local -- _path=${PATH:-}
+```
+
+**BCS0109** — Tier: recommended — [WARN] — Line 111
+
+```bash
+#end
+```
+
+`#fin` is the mandatory end marker; `#end` is explicitly deprecated by BCS0109 ("accepted by earlier revisions of this rule... deprecated — use `#fin`"). Fix:
+
+```bash
+#fin
+```

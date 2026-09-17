@@ -1,0 +1,3 @@
+[WARN] BCS0802 line 174: Version output should be a single line in the form "scriptname X.Y.Z"; current code prints name and version on separate lines.
+Fix: replace with a one-line output, e.g.:
+  -V|--version) printf '%s %s\n' "$SCRIPT_NAME" "$VERSION"; exit 0 ;;

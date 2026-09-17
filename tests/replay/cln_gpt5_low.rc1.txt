@@ -1,0 +1,11 @@
+[WARN] BCS0704 line 174: Version output prints on two separate lines. Format should be "scriptname X.Y.Z" on a single line. Fix: change to printf '%s %s\n' "$SCRIPT_NAME" "$VERSION".
+
+[ERROR] BCS0702 line 174: Version output should go to stdout (ok) but help text must also go to stdout; however, later status/info messages are correctly to stderr. No error here — retract.
+
+[ERROR] BCS0801 line 174: Version option handler should exit without consuming the argument via the loop’s final shift; current placement is fine since no shift occurs after exit. No violation — retract.
+
+[ERROR] BCS0703 line 38: The prompt line uses printf with a format string that embeds variables; since printf reuses the format per cycle, embed per-line constants only. Here, using a single %s with a constructed string is simpler and avoids accidental format interpretation. Fix: use >&2 printf '%s ' "$SCRIPT_NAME: $YELLOW▲$NC ${1:-Continue?} y/n " or split with two arguments: >&2 printf '%s: %s %s ' "$SCRIPT_NAME" "$YELLOW▲$NC" "${1:-Continue?} y/n ".
+
+[WARN] BCS0502 line 179: Short-option bundling pattern includes arg-taking option m without enforcing that it be last in the bundle; this pattern is acceptable per BCS0805 but should document that arg-taking options must appear last. Fix: note this in help or adopt a single-pass disaggregator that preserves attached arguments.
+
+[ERROR] BCS0702 line 209: Warning messages must go to stderr; warn() already writes to stderr, so this is correct. No violation — retract.

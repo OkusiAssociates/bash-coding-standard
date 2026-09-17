@@ -1,0 +1,40 @@
+## Findings
+
+**BCS0409** — Tier: core — [ERROR] — Line 8
+
+No Bash version guard exists anywhere in the script. `shopt -s inherit_errexit` (line 8) requires Bash 4.4+, but is executed with no preceding `bash_at_least`/`require_bash` check or inline version guard between `set -euo pipefail` (line 7) and this `shopt` call — exactly the failure mode BCS0409 warns about (a pre-4.4 shell would die on the `shopt` line with a cryptic error before any helpful version message could be shown). Fix: add a guard before line 8, e.g. the quick one-liner form:
+```bash
+(( BASH_VERSINFO[0] > 5 || (BASH_VERSINFO[0] == 5 && BASH_VERSINFO[1] >= 2) )) \
+  || { >&2 echo "${0##*/}: requires Bash >= 5.2"; exit 2; }
+```
+
+**BCS1005** — Tier: core — [ERROR] — Line 215
+
+`find "${symbolic[@]}" "$path" -maxdepth "$max_depth" ...` passes the loop variable `$path` (user-supplied, from CLI arguments) directly to `find` without a preceding `--`. A path value beginning with `-` (e.g. a directory literally named `-foo`, or a relative path typed as `-something`) would be interpreted as a `find` option rather than a pathname operand. Fix: insert `--` before `"$path"`:
+```bash
+find "${symbolic[@]}" -- "$path" -maxdepth "$max_depth" ...
+```
+
+**BCS0802** — Tier: style — [WARN] — Line 174
+
+`printf '%s\n' "$SCRIPT_NAME" "$VERSION"` recycles the one-conversion-spec format string across both positional arguments, producing two output lines (`cln` then `1.1.0`) instead of the required single-line `scriptname X.Y.Z` form. Fix: `printf '%s %s\n' "$SCRIPT_NAME" "$VERSION"` or `echo "$SCRIPT_NAME $VERSION"`.
+
+**BCS0806** — Tier: recommended — [WARN] — Line 169
+
+`-P|-N|--no-prompt)` reassigns the standard letters `-P` (`--prefix`) and `-N` (`--not-dry-run`) to an unrelated purpose (`--no-prompt`). The `#bcscheck disable=BCS0806` directive on line 166 only suppresses the next case arm (`-p|-n|--prompt)` at lines 167–168); it does not extend to this separate arm. Fix: either add its own suppression directive, or choose non-conflicting letters.
+
+**BCS1204** — Tier: style — [WARN] — Lines 20-21
+
+```
+# Messaging system - color-coded output with TTY detection
+# _msg: base formatter; vecho/warn/error: level wrappers; die: fatal exit; yn: yes/no prompt
+```
+This two-line, multi-clause block functions as a section header for the messaging code that follows but violates the required single-line, 2–4-word section-comment format. Fix: shorten to a single-line header (e.g. `# Messaging system`) and move the function-mapping detail into per-function comments if still needed.
+
+**BCS1201** — Tier: style — [WARN] — Line 221
+
+The closing `)` of the `readarray -t found_files < <( ... )` process substitution is indented 10 spaces, matching neither the opening `readarray` line (4 spaces) nor the `find` continuation lines (8/12 spaces), breaking the otherwise-consistent 2-space-increment indentation used throughout the rest of the script.
+
+**BCS0301** — Tier: style — [WARN] — Lines 228, 232, 234
+
+`$(s $fnd)` passes `$fnd` unquoted as the argument to the `s()` command substitution (e.g. `warn "Found $fnd file$(s $fnd) to remove:"`). Although safe here since `fnd` is declared `local -i`, this deviates from the default `"$var"` quoting form. Fix: `$(s "$fnd")`.

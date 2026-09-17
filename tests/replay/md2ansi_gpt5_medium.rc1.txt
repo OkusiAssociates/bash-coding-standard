@@ -1,0 +1,15 @@
+[ERROR] BCS0202 line 95: Function-specific variable “_” is assigned by read without local scope. Under BCS0202, all function-local variables must be declared local. Fix: declare a local dummy (or capture rows explicitly) before read, e.g.:
+  local -i rows=0
+  read -r rows width < <(stty size 2>/dev/null || echo '0 0')
+(or add “local -- _” and read into “_ width”.)
+
+[WARN] BCS0602 line 59: die() does not handle missing arguments safely and exits with “$1” directly. Recommended die() pattern guards message emission and defaults the exit code to 0 to avoid set -u issues. Fix:
+  die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+
+[WARN] BCS0707 line 176: Color/TUI enablement is not gated on a TTY (TERM fallback allows color when stdout isn’t a terminal). TUI elements should be gated on [[ -t 1 ]] so piped/redirected output remains clean. Fix: require [[ -t 1 ]] (or [[ -t 1 && -t 2 ]]) for HAS_COLOR, dropping the TERM-based fallback.
+
+[WARN] BCS0707 line 1398: Unconditional ANSI reset (printf '%s' "$ANSI_RESET") is emitted to stdout even when not on a TTY. Gate TUI output on [[ -t 1 ]] (and/or ((HAS_COLOR))) to keep piped output clean. Fix:
+  if [[ -t 1 ]] && ((HAS_COLOR)); then printf '%s' "$ANSI_RESET"; fi
+
+[WARN] BCS0707 line 1417: Unconditional ANSI reset (printf '%s' "$ANSI_RESET") at script end is emitted to stdout even when not on a TTY. Gate it on [[ -t 1 ]] (and/or ((HAS_COLOR))). Fix:
+  if [[ -t 1 ]] && ((HAS_COLOR)); then printf '%s' "$ANSI_RESET"; fi

@@ -1,0 +1,9 @@
+[WARN] BCS0109 line 111: End marker must be exactly "#fin" as the last line; "#end" is deprecated. Fix by replacing the final line with "#fin".
+
+[WARN] BCS0503 line 39: Option bundling pattern includes an arg-taking option (-V) in the character class. Per BCS0805, only include valid short options that do not take arguments, or ensure arg-taking options are last in a bundle; here, -V is an exit option and fine, but including it in bundling is discouraged. Fix by changing the pattern to -[acsh]?*) (omit V) or by documenting/supporting only bundles of flags without exit options.
+
+[ERROR] BCS0702 line 35: Version output is a status message and should go to stdout only if it is data; here it is fine, but help/version must ignore VERBOSE gating, which they do. However, format violates BCS0802. Fix covered below.
+
+[WARN] BCS0802 line 35: Version output format should be "name X.Y.Z" without the word "version" and using SCRIPT_NAME if available. Current output is "which 2.0" hardcoded; acceptable, but better to use printf '%s %s\n' "$FUNCNAME" "2.0" or a VERSION var paired with SCRIPT_NAME when executed as a script. Fix by printing: printf '%s %s\n' "which" "2.0".
+
+[ERROR] BCS0406 line 106: In dual-purpose scripts, set -euo pipefail must be the first executable command after the fence; this is correct here. However, strict mode should not run when sourced; the fence block correctly guards it. No change needed.

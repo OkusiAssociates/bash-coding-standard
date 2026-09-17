@@ -1,0 +1,22 @@
+I've reviewed the fixture against the full BCS ruleset (sections 01–05 read in detail; sections 07–12 checked via targeted searches for anything applicable to this script's constructs — messaging, printf, blank lines, end markers, function structure).
+
+**No violations found.**
+
+Walking through what the script does and why each construct is compliant:
+
+- Line 1: `#!/usr/bin/env bash` — valid shebang form (BCS0102).
+- Lines 2-3: fixture metadata comments before strict mode — permitted (BCS0101 allows comments before `set`).
+- Line 4: `set -euo pipefail` is the first executable statement (BCS0101).
+- Line 5: `shopt -s inherit_errexit shift_verbose extglob nullglob` immediately follows (BCS0101).
+- Line 7: `declare -r VERSION='1.0.0'` — readonly metadata declared immediately, single-quoted static string (BCS0103, BCS0301).
+- Line 9: `main()` defined before invocation, bottom-up placement is trivially satisfied since it's the only function (BCS0107).
+- Line 10: `[[ ${1:-} == --version ]]` — unquoted inside `[[ ]]` is safe, `==` right-hand side is an unquoted literal, correctly unquoted (BCS0303).
+- Line 11: `printf '%s\n' "$VERSION"` — single-quoted format string, double-quoted variable argument (BCS0305).
+- Line 14: `local -- name=${1:-world}` — explicit type declaration with `--` separator, local-scoped (BCS0201, BCS0202).
+- Line 15: `printf 'Hello, %s\n' "$name"` — same correct printf pattern.
+- Line 18: `main "$@"` — quoted, called with all arguments, placed just before the end marker (BCS0403).
+- Line 19: `#fin` — mandatory end marker present (BCS0109).
+
+`★ Insight ─────────────────────────────────────`
+Two details worth noting from this pass: first, BCS0303 exists specifically because `[[ ]]` in Bash performs no word-splitting or pathname expansion on its operands — this is what makes `[[ ${1:-} == --version ]]` safe unquoted, whereas the same expression inside single-bracket `[ ]` would need quoting to avoid breaking on empty/multi-word values. Second, the `--` in `local -- name=...` (BCS0201) is a pure convention with zero functional effect — it's the "explicit string type" counterpart to `-i`/`-a`/`-A`, existing only so a reader (human or AI) can tell at a glance that the omission of a type flag was a deliberate choice, not an oversight.
+`─────────────────────────────────────────────────`

@@ -12,43 +12,10 @@ shopt -s inherit_errexit
 
 #shellcheck source-path=SCRIPTDIR source=test-helpers.sh
 source "$(dirname "$0")"/test-helpers.sh
-#shellcheck source=../bcs disable=SC1091
-source "$BCS_CMD"
+#shellcheck source-path=SCRIPTDIR source=check-harness.sh
+source "$TEST_DIR"/check-harness.sh
 
 echo 'Testing: empty LLM completion handling'
-
-# Per-case state: run_check() fills RC/OUT/ERR; PRE_HOOK names a command run
-# inside the check subshell before cmd_check (used to stub a backend).
-declare -- SANDBOX='' OUT='' ERR='' PRE_HOOK=:
-declare -i RC=0
-declare -x MOCK_BODY=''
-
-# Sandbox every path cmd_check writes to (cache, response dump, policy).
-trap '[[ -z $SANDBOX ]] || rm -rf -- "$SANDBOX"' EXIT
-SANDBOX=$(mktemp -d "${TMPDIR:-/tmp}"/bcs-empty.XXXXXX) \
-  || die 1 'Failed to create sandbox directory'
-declare -x XDG_CACHE_HOME="$SANDBOX"/cache XDG_STATE_HOME="$SANDBOX"/state \
-           XDG_CONFIG_HOME="$SANDBOX"/config BCS_CONF_DIR="$SANDBOX"/conf
-mkdir -p "$XDG_CACHE_HOME" "$XDG_STATE_HOME" "$XDG_CONFIG_HOME" "$BCS_CONF_DIR"
-unset BCS_MODEL BCS_EFFORT BCS_STRICT BCS_JSON BCS_CACHE BCS_TIER BCS_MIN_TIER \
-      BCS_DEBUG BCS_RESPONSE_DUMP
-
-declare -x ANTHROPIC_API_KEY=test-anthropic OPENAI_API_KEY=test-openai \
-           GOOGLE_API_KEY=test-google
-
-# Read by the messaging helpers of the sourced script; not unused here.
-# shellcheck disable=SC2034
-VERBOSE=0
-
-declare -r FIXTURE="$TEST_DIR"/fixtures/02-undeclared-local.sh
-
-# Mock curl: drain the request body, replay $MOCK_BODY plus the HTTP code
-# trailer that the backends split off.
-curl() {
-  cat >/dev/null ||:
-  printf '%s\n200\n' "$MOCK_BODY"
-}
-declare -fx curl
 
 # Canned bodies: HTTP 200, well-formed, no text.
 declare -r OPENAI_EMPTY='{"choices":[{"message":{"role":"assistant"},"finish_reason":"length"}],
@@ -67,31 +34,12 @@ declare -r GOOGLE_MULTIPART='{"candidates":[{"content":{"parts":[
   "finishReason":"STOP"}],
   "usageMetadata":{"promptTokenCount":31000,"candidatesTokenCount":20}}'
 
-# run_check BODY [cmd_check args...]
-# cmd_check runs in a subshell because die() exits. The subshell is a
-# background job so that errexit stays live inside it, as in production: a
-# `( ... ) || RC=$?` list would switch errexit off for everything it runs.
-run_check() {
-  local -i pid
-  MOCK_BODY=$1; shift
-  RC=0
-  ( "$PRE_HOOK"; cmd_check --no-shellcheck "$@" "$FIXTURE" ) \
-    >"$SANDBOX"/out 2>"$SANDBOX"/err &
-  pid=$!
-  wait "$pid" || RC=$?
-  OUT=$(< "$SANDBOX"/out)
-  ERR=$(< "$SANDBOX"/err)
-}
-
 # Replaces the OpenAI backend with one that emits only the token sentinel.
 stub_openai_orphan() {
   # Invoked indirectly, by cmd_check's backend dispatch.
   #shellcheck disable=SC2329
   _llm_openai() { echo '___TOKENS___ in=1 out=0'; }
 }
-
-reset_cache() { rm -rf -- "$XDG_CACHE_HOME"/bcs; }
-cache_count() { find "$XDG_CACHE_HOME" -type f | wc -l; }
 
 # 1. OpenAI: no message.content (reasoning consumed the output budget)
 begin_test 'openai empty completion'
