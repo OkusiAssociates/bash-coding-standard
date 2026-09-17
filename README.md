@@ -294,7 +294,7 @@ CLI flags override config; config overrides environment. See [`bcs.conf.sample`]
 
 | Script | Lines | Demonstrates |
 |--------|-------|--------------|
-| [`cln`](examples/cln) | 243 | File operations, argument parsing, arrays |
+| [`cln`](examples/cln) | 241 | File operations, argument parsing, arrays |
 | [`md2ansi`](examples/md2ansi) | 1424 | Large-scale text processing, ANSI formatting |
 | [`which`](examples/which) | 111 | Dual-purpose script pattern |
 

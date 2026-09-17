@@ -14,13 +14,12 @@ declare -r VERSION=1.1.0
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_NAME=${SCRIPT_PATH##*/}
 
-# Default file patterns to remove (editor backups, crash files, temp files)
+# Default file patterns
 declare -a DELETE_FILES=('*~' '~*' '.~*' '.*~' DEADJOE dead.letter 'wget-log*')
 
-# Messaging system - color-coded output with TTY detection
-# _msg: base formatter; vecho/warn/error: level wrappers; die: fatal exit; yn: yes/no prompt
+# Messaging system
 declare -i VERBOSE=1 PROMPT=1
-# Enable colors only when both stdout and stderr are terminals
+# Color detection
 if [[ -t 1 && -t 2 ]]; then
   declare -r RED=$'\033[0;31m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' NC=$'\033[0m'
 else
@@ -166,12 +165,13 @@ main() {
     #bcscheck disable=BCS0806
     -p|-n|--prompt)
                   PROMPT=1; VERBOSE=1 ;;
+    #bcscheck disable=BCS0806
     -P|-N|--no-prompt)
                   PROMPT=0 ;;
     -v|--verbose) ((VERBOSE < 3)) && VERBOSE+=1 ||:  ;;
     -q|--quiet)   VERBOSE=0 ;;
 
-    -V|--version) printf '%s\n' "$SCRIPT_NAME" "$VERSION"; exit 0 ;;
+    -V|--version) printf '%s %s\n' "$SCRIPT_NAME" "$VERSION"; exit 0 ;;
     -h|--help)    show_help; exit 0 ;;
 
     --)           shift; paths+=("$@"); break ;;
@@ -201,7 +201,6 @@ main() {
   # Remove the last -o
   unset 'find_expr[-1]'
 
-  # Iterate over each path
   local -- file
   for path in "${paths[@]}"; do
     if [[ ! -d $path ]]; then
@@ -222,7 +221,6 @@ main() {
     fnd=${#found_files[@]}
     # Handle readarray quirk: single empty element means no results
     ((fnd == 1)) && [[ -z ${found_files[0]} ]] && fnd=0 ||:
-    # Only proceed if files were found
     if ((fnd)); then
       if ((PROMPT)); then
         warn "Found $fnd file$(s $fnd) to remove:"
