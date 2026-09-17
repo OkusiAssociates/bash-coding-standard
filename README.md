@@ -57,8 +57,11 @@ git clone https://github.com/Open-Technology-Foundation/bash-coding-standard.git
 cd bash-coding-standard
 sudo make install              # Install to /usr/local (default)
 sudo make PREFIX=/usr install  # System-wide
+make PREFIX=~/.local install   # Per-user, no sudo
 sudo make uninstall            # Uninstall
 ```
+
+Bash completions go to `/etc/bash_completion.d` for the system prefixes (`/usr`, `/usr/local`) and to `$(PREFIX)/share/bash-completion/completions` for any other `PREFIX`, so a per-user or sandbox install never writes to, and its uninstall never removes from, the host's `/etc`. Override with `COMPDIR=`.
 
 Installs the `bcs` CLI plus per-subcommand shims (`bcscheck`, `bcsdisplay`, `bcstemplate`, `bcscodes`, `bcsgenerate`), data files, bash completions, the `bcs(1)` and `BCS-bash(1)` manpages, and the rendered HTML reference trees under `docs/BCS-bash.html/` and `docs/BCS-Bash-Ref.html/`.
 
@@ -173,7 +176,7 @@ keywords (`fast`/`balanced`/`thorough`) exit non-zero with a migration hint.
 | `-m` value | Backend | Notes |
 |------------|---------|-------|
 | `claude-*` (e.g. `claude-opus-4-8`) | Anthropic API | Pass-through |
-| `gemini-*` (e.g. `gemini-2.5-pro`) | Google Gemini API | Pass-through |
+| `gemini-*` (e.g. `gemini-2.5-flash`) | Google Gemini API | Pass-through |
 | `gpt-*` / `o[0-9]*` (e.g. `gpt-5`, `o3-mini`) | OpenAI API | Pass-through |
 | `claude-code` | Claude Code CLI | `BCS_MODEL` or `sonnet` default |
 | `claude-code:<alias-or-model>` | Claude Code CLI | Suffix alias-expanded |
@@ -193,8 +196,8 @@ Set `MODEL_ALIASES[name]=canonical-id` in `bcs.conf` to extend or override.
 | `sonnet` (default) | `claude-sonnet-4-6` | Anthropic |
 | `haiku` | `claude-haiku-4-5` | Anthropic |
 | `flash` | `gemini-2.5-flash` | Google |
-| `pro` | `gemini-2.5-pro` | Google |
-| `flash-lite` | `gemini-2.5-flash-lite` | Google |
+| `pro` | `gemini-3.1-pro-preview` | Google |
+| `flash-lite` | `gemini-3.5-flash-lite` | Google |
 | `gpt5` | `gpt-5` | OpenAI |
 | `gpt5-mini` | `gpt-5-mini` | OpenAI |
 | `qwen` | `qwen3.5:14b` | Ollama |
@@ -206,7 +209,7 @@ Set `MODEL_ALIASES[name]=canonical-id` in `bcs.conf` to extend or override.
 models. Anthropic `thinking.budget_tokens` auto-applies on `opus` and
 `sonnet-4-6/4-7`; OpenAI `reasoning_effort` auto-applies on `o[0-9]*` and
 `gpt-5*`; Gemini `thinkingConfig.thinkingBudget` auto-applies on the 2.5
-family except `flash-lite`. Other models silently ignore the budget.
+family and on `gemini-3.5-flash*`. Other models silently ignore the budget.
 
 | `-e` | Max tokens | Thinking budget | OpenAI `reasoning_effort` |
 |------|------------|------------------|---------------------------|

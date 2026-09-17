@@ -131,6 +131,27 @@ else
   TESTS_PASSED+=1
 fi
 
+# OpenAI's json_object mode forbids a top-level array, so the model answers
+# with one bare finding object, or with {} when it has nothing to report.
+begin_test 'render: bare finding object wrapped into a one-element array'
+obj='{"line":8,"endLine":9,"level":"error","code":202,"bcsCode":"BCS0202","tier":"core","message":"m","fixSuggestion":"f"}'
+out=$(_render_json_output "$obj" /tmp/x.sh openai gpt-5-mini low 0 3) ||:
+assert_equal '1' "$(jq -r '.comments | length' <<< "$out" 2>/dev/null ||:)" 'bare object -> one comment' ||:
+assert_equal 'BCS0202' "$(jq -r '.comments[0].bcsCode' <<< "$out" 2>/dev/null ||:)" 'bare object -> bcsCode kept' ||:
+
+begin_test 'render: empty object is an empty findings list'
+out=$(_render_json_output '{}' /tmp/x.sh openai gpt-5-mini low 0 3) ||:
+assert_equal '0' "$(jq -r '.comments | length' <<< "$out" 2>/dev/null ||:)" '{} -> zero comments' ||:
+assert_equal 'bcs' "$(jq -r '.source' <<< "$out" 2>/dev/null ||:)" '{} -> valid envelope' ||:
+
+begin_test 'render: wrapper with an empty array is an empty findings list'
+out=$(_render_json_output '{"findings":[]}' /tmp/x.sh openai gpt-5-mini low 0 3) ||:
+assert_equal '0' "$(jq -r '.comments | length' <<< "$out" 2>/dev/null ||:)" '{"findings":[]} -> zero comments' ||:
+
+begin_test 'render: half a finding object is still rejected'
+assert_fails 'object with line but no level/bcsCode rejected' \
+  _render_json_output '{"line":8,"message":"m"}' /tmp/x.sh openai gpt-5-mini low 0 3 ||:
+
 # ---- envelope shape assertions (shellcheck json1 compatibility) ----------
 
 begin_test 'envelope: top level has source, meta, comments'

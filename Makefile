@@ -8,8 +8,16 @@ MANDIR   ?= $(PREFIX)/share/man/man1
 SHAREDIR ?= $(PREFIX)/share/yatti/BCS
 SKILLDIR ?= /etc/claude-code/.claude/skills
 CMDDIR   ?= /etc/claude-code/.claude/commands
-COMPDIR  ?= /etc/bash_completion.d
 DESTDIR  ?=
+
+# Completions go to the system directory only for a system PREFIX. Any other
+# PREFIX (a sandbox, ~/.local) keeps them under itself, where bash-completion
+# also looks, so that install and uninstall can never touch the host's /etc.
+ifeq ($(filter /usr /usr/local,$(PREFIX)),)
+COMPDIR  ?= $(PREFIX)/share/bash-completion/completions
+else
+COMPDIR  ?= /etc/bash_completion.d
+endif
 
 # Directory of this Makefile (trailing slash). Used to anchor all source
 # paths so 'make install' works regardless of the invoking CWD and never
@@ -58,6 +66,8 @@ install:
 	install -m 644 $(srcdir)bcs.1 $(DESTDIR)$(MANDIR)/bcs.1
 	install -m 644 $(srcdir)docs/BCS-bash.1 $(DESTDIR)$(MANDIR)/BCS-bash.1
 	ln -sfn BCS-bash.1 $(DESTDIR)$(MANDIR)/bcs-bash.1
+	@# A COMPDIR under PREFIX is ours to create; a system one is only used if present.
+	@case "$(COMPDIR)" in "$(PREFIX)"/*) install -d $(DESTDIR)$(COMPDIR) ;; esac
 	@if [ -d $(DESTDIR)$(COMPDIR) ]; then \
 	  install -m 644 $(srcdir)bcs.bash_completion $(DESTDIR)$(COMPDIR)/bcs; \
 	  ln -sfn bcs $(DESTDIR)$(COMPDIR)/bcscheck; \

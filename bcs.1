@@ -121,7 +121,7 @@ Default is
 (claude\-sonnet\-4\-6).
 Direct pass-through examples:
 .BR claude\-opus\-4\-8 ","
-.BR gemini\-2.5\-pro ","
+.BR gemini\-2.5\-flash ","
 .BR minimax\-m2:cloud "."
 The legacy tier keywords
 .BR fast ", " balanced ", " thorough
@@ -611,7 +611,9 @@ effort \(em introduces false positives without adding coverage.
 Google API (gemini) \(em not included in the 2026-04-17 refresh matrix.
 Prior guidance stands:
 .B \-m pro
-(gemini-2.5-pro) at medium effort is reliable; smaller models in the family
+(then gemini-2.5-pro, since retired by Google;
+.B pro
+now expands to gemini-3.1-pro-preview, not yet measured) at medium effort was reliable; smaller models in the family
 (flash, flash-lite) over-report.
 .IP 5. 4
 Ollama cloud models \(em not recommended for accuracy-sensitive work.

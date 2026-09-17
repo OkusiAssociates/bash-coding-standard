@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # test-makefile.sh - Makefile targets behave as documented
 #
-# Every install here is staged into a sandbox (SKILLDIR/CMDDIR overrides);
-# nothing under /etc or /usr is read for comparison or written.
+# Every install here is either a dry run or staged into a sandbox
+# (SKILLDIR/CMDDIR overrides); nothing on the host is written.
 set -euo pipefail
 shopt -s inherit_errexit
 
@@ -63,6 +63,21 @@ assert_equal 0 "$(grep -c 'commands/bcs-audit.md' "$PROJECT_DIR"/skills/bcs-audi
 #shellcheck disable=SC2016
 assert_contains "$(< "$PROJECT_DIR"/ai-agents/commands/audit-bash.md)" \
   'the `bcscheck` skill' 'audit-bash routes BCS checks to the bcscheck skill' ||:
+
+# ---- Completion directory follows PREFIX (dry-run; never touches the host) ----
+begin_test 'COMPDIR'
+run_make -n install PREFIX="$SANDBOX"/prefix
+assert_not_contains "$OUT" '/etc/' 'install with a custom PREFIX writes nothing under /etc' ||:
+assert_contains "$OUT" "$SANDBOX/prefix/share/bash-completion/completions" \
+  'install with a custom PREFIX keeps completions under PREFIX' ||:
+run_make -n uninstall PREFIX="$SANDBOX"/prefix
+assert_not_contains "$OUT" '/etc/' 'uninstall with a custom PREFIX removes nothing under /etc' ||:
+run_make -n install
+assert_contains "$OUT" '/etc/bash_completion.d' 'default PREFIX keeps the system completion dir' ||:
+run_make -n install PREFIX=/usr
+assert_contains "$OUT" '/etc/bash_completion.d' 'PREFIX=/usr keeps the system completion dir' ||:
+run_make -n install PREFIX="$SANDBOX"/prefix COMPDIR="$SANDBOX"/comp
+assert_contains "$OUT" "$SANDBOX/comp" 'an explicit COMPDIR still wins' ||:
 
 # ---- Test targets: dry-run only, a real `make test` here would recurse ----
 begin_test 'test targets'

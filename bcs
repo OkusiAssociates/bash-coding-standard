@@ -56,8 +56,8 @@ declare -A MODEL_ALIASES=(
   [sonnet]=claude-sonnet-4-6
   [haiku]=claude-haiku-4-5
   [flash]=gemini-2.5-flash
-  [pro]=gemini-2.5-pro
-  [flash-lite]=gemini-2.5-flash-lite
+  [pro]=gemini-3.1-pro-preview
+  [flash-lite]=gemini-3.5-flash-lite
   [gpt5]=gpt-5
   [gpt5-mini]=gpt-5-mini
   [qwen]=qwen3.5:14b
@@ -309,8 +309,8 @@ ${BOLD}Model selection:$NC
     sonnet     -> claude-sonnet-4-6        (default)
     haiku      -> claude-haiku-4-5
     flash      -> gemini-2.5-flash
-    pro        -> gemini-2.5-pro
-    flash-lite -> gemini-2.5-flash-lite
+    pro        -> gemini-3.1-pro-preview
+    flash-lite -> gemini-3.5-flash-lite
     gpt5       -> gpt-5
     gpt5-mini  -> gpt-5-mini
     qwen       -> qwen3.5:14b
@@ -324,7 +324,7 @@ ${BOLD}Effort Levels:$NC
   reasoning budget. Anthropic thinking is auto-enabled on opus + sonnet-4-6/4-7
   and skipped silently elsewhere; OpenAI reasoning_effort is auto-enabled on
   o-series + gpt-5*; Gemini thinkingConfig is auto-enabled on the 2.5 family
-  except flash-lite. Ollama ignores both.
+  and on gemini-3.5-flash*. Ollama ignores both.
 
   low         Clear violations only (4k tokens, no thinking; alias: min)
   medium      Violations and significant warnings (8k tokens, 2k thinking)
@@ -688,14 +688,18 @@ _render_json_output() {
   local -- cleaned arr
   cleaned=$(_strip_json_fences "$raw")
   [[ -n $cleaned ]] || return 1
-  # Normalize to a bare array. OpenAI's json_object mode requires the
-  # top level be an object, so models often wrap the array as
-  # {"findings": [...]} or similar. Accept either form.
+  # Normalize to a bare array. OpenAI's json_object mode forbids a top-level
+  # array, so the model answers with an object instead. Four shapes occur:
+  # the array wrapped as {"findings": [...]} or similar, one bare finding
+  # object, and {} when there is nothing to report. Anything else is invalid.
   if jq -e 'type == "array"' <<< "$cleaned" &>/dev/null; then
     arr=$cleaned
   elif jq -e 'type == "object"' <<< "$cleaned" &>/dev/null; then
-    arr=$(jq -c '(.findings // .comments // .violations // .results // empty)
-                 | select(type == "array")' <<< "$cleaned" 2>/dev/null) ||:
+    arr=$(jq -c 'if has("line") and has("level") and has("bcsCode") then [.]
+                 elif length == 0 then []
+                 else (.findings // .comments // .violations // .results // empty)
+                      | select(type == "array")
+                 end' <<< "$cleaned" 2>/dev/null) ||:
     [[ -n $arr ]] || return 1
   else
     return 1
@@ -1022,14 +1026,18 @@ _llm_google() {
   local -i max_tokens=${EFFORT_TOKENS[$effort]}
   local -i think_budget=${EFFORT_THINKING[$effort]:-0}
 
-  # Capability gating: Gemini 2.5 family supports thinkingBudget under
-  # generationConfig.thinkingConfig (camelCase, nested). flash-lite is
-  # excluded -- it rejects thinkingConfig with HTTP 400.
+  # Capability gating: thinkingBudget lives under
+  # generationConfig.thinkingConfig (camelCase, nested). The gate lists only
+  # what the API was seen to accept (probed 2026-09-17): the 2.5 family,
+  # gemini-3.5-flash and gemini-3.5-flash-lite. A zero budget is never sent --
+  # gemini-3.5-flash-lite answers it with HTTP 400, as the retired
+  # gemini-2.5-flash-lite did any thinkingConfig. Unlisted models (e.g.
+  # gemini-3.1-pro-preview, unprobed) get no budget, which every model accepts.
   local -i emit_thinking=0
   case $model in
-    *flash-lite*)  : ;;
-    *-2.5-*)       ((think_budget == 0)) || emit_thinking=1 ;;
-    *)             : ;;
+    gemini-2.5-flash-lite*)     : ;;
+    *-2.5-*|gemini-3.5-flash*)  ((think_budget == 0)) || emit_thinking=1 ;;
+    *)                          : ;;
   esac
 
   # Native JSON mode via generationConfig.response_mime_type. Gemini 1.5+

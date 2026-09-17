@@ -174,6 +174,26 @@ assert_payload_no_match google gemini-2.5-pro low \
   '.generationConfig.thinkingConfig != null' \
   'gemini-2.5-pro -e low -> thinkingConfig omitted (budget=0)'
 
+# Gate follows what the API accepts (probed live 2026-09-17): gemini-3.5-flash
+# and gemini-3.5-flash-lite take a positive budget; 3.5-flash-lite answers
+# HTTP 400 to budget 0, which the zero-budget skip never sends. No quota to
+# probe gemini-3.1-pro-preview, so its budget is omitted (always accepted).
+assert_payload_match google gemini-3.5-flash-lite high \
+  '.generationConfig.thinkingConfig.thinkingBudget == 6000' \
+  'gemini-3.5-flash-lite -e high -> thinkingBudget=6000'
+
+assert_payload_match google gemini-3.5-flash medium \
+  '.generationConfig.thinkingConfig.thinkingBudget == 2000' \
+  'gemini-3.5-flash -e medium -> thinkingBudget=2000'
+
+assert_payload_no_match google gemini-3.5-flash-lite low \
+  '.generationConfig.thinkingConfig != null' \
+  'gemini-3.5-flash-lite -e low -> thinkingConfig omitted (budget 0 is HTTP 400)'
+
+assert_payload_no_match google gemini-3.1-pro-preview high \
+  '.generationConfig.thinkingConfig != null' \
+  'gemini-3.1-pro-preview -e high -> thinkingConfig omitted (unverified)'
+
 # ---------------------------------------------------------------------
 # Ollama: options.num_ctx and keep_alive reach both payload branches.
 # Without num_ctx the server truncates the prompt to its 4096 default and
