@@ -2,14 +2,15 @@
 set -euo pipefail
 shopt -s inherit_errexit
 # bcs-fixture-expect: BCS0501
-# bcs-fixture-description: Uses single-bracket `[ ... ]` conditionals; BCS0501 mandates `[[ ... ]]` for strings and files.
+# bcs-fixture-description: Uses single-bracket `[ ... ]` conditionals on strings and numbers; BCS0501 mandates `[[ ... ]]` and `(( ... ))`. (File tests in `[ ]` belong to BCS0901.)
 
 main() {
-  local -- file=${1:-/etc/hosts}
-  if [ -f "$file" ] && [ -r "$file" ]; then
-    echo 'readable'
+  local -- mode=${1:-staging}
+  local -i retries=${2:-3}
+  if [ "$mode" = production ] && [ "$retries" -gt 5 ]; then
+    echo 'production, many retries'
   else
-    echo 'not readable'
+    echo 'default settings'
   fi
 }
 

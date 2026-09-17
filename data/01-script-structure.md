@@ -281,12 +281,12 @@ declare -- TEMP_DIR
 cleanup() {
   local -i exitcode=${1:-$?}
   trap - SIGINT SIGTERM EXIT
-  [[ -z ${TEMP_DIR:-} ]] || rm -rf "$TEMP_DIR"
+  [[ -z ${TEMP_DIR:-} ]] || rm -rf -- "$TEMP_DIR"
   exit "$exitcode"
 }
 trap 'cleanup $?' SIGINT SIGTERM EXIT
 #...
-TEMP_DIR=$(mktemp -d)
+TEMP_DIR=$(mktemp -d) || die 1 'Failed to create temp dir'
 ```
 
 Always disable traps inside the cleanup function to prevent recursion.

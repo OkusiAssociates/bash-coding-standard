@@ -135,16 +135,21 @@ Validate early, fail securely with clear errors, run with minimum necessary perm
 Always use `mktemp`. Never hardcode temp file paths.
 
 ```bash
-# correct — temp file
+# correct — temp file: trap first (BCS0110), guarded while the name is still empty
+declare -- temp_file=''
+trap '[[ -z $temp_file ]] || rm -f -- "$temp_file"' EXIT
 temp_file=$(mktemp) || die 1 'Failed to create temp file'
-trap 'rm -f "$temp_file"' EXIT
 
 # correct — temp dir (alternative; a second EXIT trap would overwrite the first)
+declare -- temp_dir=''
+trap '[[ -z $temp_dir ]] || rm -rf -- "$temp_dir"' EXIT
 temp_dir=$(mktemp -d) || die 1 'Failed to create temp dir'
-trap 'rm -rf "$temp_dir"' EXIT
 
-# correct — both resources: single cleanup function, one EXIT trap
-cleanup() { rm -f "$temp_file"; rm -rf "$temp_dir"; }
+# correct — both resources: single cleanup function, one EXIT trap, set before either mktemp
+cleanup() {
+  [[ -z $temp_file ]] || rm -f -- "$temp_file"
+  [[ -z $temp_dir ]] || rm -rf -- "$temp_dir"
+}
 trap cleanup EXIT
 
 # correct — custom template

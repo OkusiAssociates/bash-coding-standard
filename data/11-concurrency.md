@@ -51,8 +51,9 @@ For ordered output, write results to temp files then display in order.
 
 ```bash
 # correct — parallel with ordered output
-temp_dir=$(mktemp -d)
-trap 'rm -rf "$temp_dir"' EXIT
+declare -- temp_dir=''
+trap '[[ -z $temp_dir ]] || rm -rf -- "$temp_dir"' EXIT
+temp_dir=$(mktemp -d) || die 1 'Failed to create temp dir'
 declare -a pids=()
 declare -i errors=0
 
@@ -145,8 +146,9 @@ Use exponential backoff for retries. Never use fixed delays.
 ```bash
 # correct
 declare -i attempt=1 max_attempts=5 delay max_delay=60 jitter
-out=$(mktemp)
-trap 'rm -f "$out"' EXIT
+declare -- out=''
+trap '[[ -z $out ]] || rm -f -- "$out"' EXIT
+out=$(mktemp) || die 1 'Failed to create temp file'
 
 while ((attempt <= max_attempts)); do
   # Success requires both exit code 0 and non-empty output

@@ -10,6 +10,8 @@ This section summarises key rules that are frequently misapplied during automate
 
 When a rule says "prefer X over Y", using Y is a WARNING at most — not a VIOLATION.
 
+A finding's severity comes from the rule's **Tier:** line and from nothing else: a `core` rule yields a VIOLATION, reported as `[ERROR]`; a `recommended` or `style` rule yields a WARNING, reported as `[WARN]`. Words such as "must" or "mandatory" inside a recommended- or style-tier rule say how to satisfy that rule; they do not raise its findings to `[ERROR]`.
+
 ## Production Optimization Takes Precedence (BCS0405)
 
 Reference implementations in BCS0703, BCS0706, and BCS0701 show the full messaging suite, color set, and flag set. These are templates — not mandatory checklists. Per BCS0405:

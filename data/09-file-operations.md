@@ -15,13 +15,16 @@ Use `[[ ]]` for all file tests. Always include filenames in error messages for d
 # correct
 [[ -f $file ]] || die 3 "Not found ${file@Q}"
 [[ -f $file && -r $file ]] || die 5 "Cannot read ${file@Q}"
-[[ -d $dir ]] || mkdir -p "$dir" || die 1 "Cannot create ${dir@Q}"
+[[ -d $dir ]] || mkdir -p -- "$dir" || die 1 "Cannot create ${dir@Q}"
 [[ -s $logfile ]] || warn 'Log file is empty'
-[[ $source -nt $destination ]] && cp "$source" "$destination" ||:
+[[ $source -nt $destination ]] && cp -- "$source" "$destination" ||:
 
 # wrong
 [ -f "$file" ]                       # old test syntax
+test -r "$file"                      # same defect, spelled with the test builtin
 ```
+
+This rule owns every file test not written with `[[ ]]` — `[ -f "$file" ]` and `test -f "$file"` alike. Cite BCS0901 for them, not BCS0501, which owns `[ ]` and `test` on strings and numbers.
 
 ## BCS0902 Wildcard Expansion
 

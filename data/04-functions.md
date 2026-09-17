@@ -295,13 +295,13 @@ shopt -s inherit_errexit
 
 ### Quick one-liner form
 
-For scripts that need only a single hard floor (no graceful degradation, no shared helper to reuse, no library-style use), the predicate pair can be inlined as one statement. This must come **before** `set -e` and `shopt -s inherit_errexit` for the same reason — the guard owns the very first runtime check:
+For scripts that need only a single hard floor (no graceful degradation, no shared helper to reuse, no library-style use), the predicate pair can be inlined as one statement. It sits in the same slot as `require_bash`: after `set -euo pipefail`, which is safe on any Bash, and before `shopt -s inherit_errexit` and every other version-dependent construct. That slot is the one exception BCS0101 makes to "shopt immediately after set"; nothing may run before `set -euo pipefail`. The `||` branch keeps a failed test from tripping `set -e` before the message prints:
 
 ```bash
 #!/usr/bin/bash
+set -euo pipefail
 (( BASH_VERSINFO[0] > 5 || (BASH_VERSINFO[0] == 5 && BASH_VERSINFO[1] >= 2) )) \
   || { >&2 echo "${0##*/}: requires Bash >= 5.2 (have ${BASH_VERSION:-unknown})"; exit 2; }
-set -euo pipefail
 shopt -s inherit_errexit
 ```
 
@@ -393,7 +393,7 @@ done < <(some_command)
 ```bash
 # global so the single-quoted trap (BCS0603) can expand it at EXIT time
 declare -g TEMP_FILE=''
-trap '[[ -z $TEMP_FILE ]] || rm -f "$TEMP_FILE"' EXIT
+trap '[[ -z $TEMP_FILE ]] || rm -f -- "$TEMP_FILE"' EXIT
 TEMP_FILE=$(mktemp) || die 1 'mktemp failed'
 expensive_command > "$TEMP_FILE"
 first_pass  < "$TEMP_FILE"

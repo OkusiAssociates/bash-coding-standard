@@ -88,12 +88,12 @@ declare -- TEMP_FILE
 cleanup() {
   local -i exitcode=${1:-$?}
   trap - SIGINT SIGTERM EXIT         # prevent recursion
-  [[ -z ${TEMP_FILE:-} ]] || rm -f "$TEMP_FILE"
+  [[ -z ${TEMP_FILE:-} ]] || rm -f -- "$TEMP_FILE"
   exit "$exitcode"
 }
 trap 'cleanup $?' SIGINT SIGTERM EXIT
 #...
-TEMP_FILE=$(mktemp)
+TEMP_FILE=$(mktemp) || die 1 'Failed to create temp file'
 readonly TEMP_FILE
 ```
 
@@ -101,7 +101,7 @@ Use single quotes for trap commands to delay variable expansion. Use `||:` for c
 
 ```bash
 # correct — single quotes delay expansion
-trap 'rm -f "$temp_file"' EXIT
+trap 'rm -f -- "$temp_file"' EXIT
 
 # correct — kill background processes in cleanup
 ((bg_pid)) && kill "$bg_pid" 2>/dev/null ||:
@@ -120,12 +120,12 @@ Always check return values of critical operations. Critical operations are state
 
 ```bash
 # correct
-mv "$file" "$dest" || die 1 "Failed to move ${file@Q}"
+mv -- "$file" "$dest" || die 1 "Failed to move ${file@Q}"
 output=$(command) || die 1 'Command failed'
 
 # correct — command group with cleanup on failure
-cp "$src" "$dst" || {
-  rm -f "$dst"
+cp -- "$src" "$dst" || {
+  rm -f -- "$dst"
   die 1 'Copy failed'
 }
 
@@ -174,7 +174,7 @@ Only suppress errors when failure is expected, non-critical, and explicitly safe
 # correct — safe to suppress
 command -v optional_tool &>/dev/null ||:
 rm -f /tmp/optional_*
-rmdir "$maybe_empty" 2>/dev/null ||:
+rmdir -- "$maybe_empty" 2>/dev/null ||:
 
 # correct — suppress message but check return
 if result=$(command 2>/dev/null); then

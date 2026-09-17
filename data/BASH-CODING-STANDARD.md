@@ -318,12 +318,12 @@ declare -- TEMP_DIR
 cleanup() {
   local -i exitcode=${1:-$?}
   trap - SIGINT SIGTERM EXIT
-  [[ -z ${TEMP_DIR:-} ]] || rm -rf "$TEMP_DIR"
+  [[ -z ${TEMP_DIR:-} ]] || rm -rf -- "$TEMP_DIR"
   exit "$exitcode"
 }
 trap 'cleanup $?' SIGINT SIGTERM EXIT
 #...
-TEMP_DIR=$(mktemp -d)
+TEMP_DIR=$(mktemp -d) || die 1 'Failed to create temp dir'
 ```
 
 Always disable traps inside the cleanup function to prevent recursion.
@@ -723,7 +723,7 @@ Inside `[[ ]]`, **no word splitting or pathname expansion occurs** — variables
 [[ $email =~ ^[a-z]+@[a-z]+$ ]]
 
 # wrong
-[ -f $file ]                         # **never** use [ ]; it requires quoting
+[ -f $file ]                         # **never** use [ ]; it requires quoting (cite BCS0901: a file test)
 [[ $input =~ "$pattern" ]]           # quoted regex disables matching
 ```
 
@@ -840,7 +840,7 @@ for item in ${items[@]}
 info 'Starting backup...'
 echo "$HOME"/bin
 echo "$result"
-rm "$temp_file"
+rm -- "$temp_file"
 for item in "${items[@]}"
 ```
 
@@ -1146,13 +1146,13 @@ shopt -s inherit_errexit
 
 ### Quick one-liner form
 
-For scripts that need only a single hard floor (no graceful degradation, no shared helper to reuse, no library-style use), the predicate pair can be inlined as one statement. This must come **before** `set -e` and `shopt -s inherit_errexit` for the same reason — the guard owns the very first runtime check:
+For scripts that need only a single hard floor (no graceful degradation, no shared helper to reuse, no library-style use), the predicate pair can be inlined as one statement. It sits in the same slot as `require_bash`: after `set -euo pipefail`, which is safe on any Bash, and before `shopt -s inherit_errexit` and every other version-dependent construct. That slot is the one exception BCS0101 makes to "shopt immediately after set"; nothing may run before `set -euo pipefail`. The `||` branch keeps a failed test from tripping `set -e` before the message prints:
 
 ```bash
 #!/usr/bin/bash
+set -euo pipefail
 (( BASH_VERSINFO[0] > 5 || (BASH_VERSINFO[0] == 5 && BASH_VERSINFO[1] >= 2) )) \
   || { >&2 echo "${0##*/}: requires Bash >= 5.2 (have ${BASH_VERSION:-unknown})"; exit 2; }
-set -euo pipefail
 shopt -s inherit_errexit
 ```
 
@@ -1244,7 +1244,7 @@ done < <(some_command)
 ```bash
 # global so the single-quoted trap (BCS0603) can expand it at EXIT time
 declare -g TEMP_FILE=''
-trap '[[ -z $TEMP_FILE ]] || rm -f "$TEMP_FILE"' EXIT
+trap '[[ -z $TEMP_FILE ]] || rm -f -- "$TEMP_FILE"' EXIT
 TEMP_FILE=$(mktemp) || die 1 'mktemp failed'
 expensive_command > "$TEMP_FILE"
 first_pass  < "$TEMP_FILE"
@@ -1309,12 +1309,15 @@ Use `[[ ]]` for string and file tests, `(())` for arithmetic. Never use `[ ]`. T
 command -v curl >/dev/null || die 18 'curl required'
 
 # wrong
-[ -f "$file" ]                       # never use [ ]
+[ "$name" = "$expected" ]            # never use [ ]
+[ "$count" -gt 5 ]                   # never use [ ]; arithmetic belongs in (())
 
 # style preference — prefer ((count)); see BCS0505. Not errors under this rule.
 ((count > 0))                        # prefer ((count))
 ((VERBOSE == 1))                     # prefer ((VERBOSE))
 ```
+
+This is the canonical code for a `[ ]` or `test` conditional on strings or numbers. When what is tested is a file (`-f`, `-d`, `-r`, `-s`, `-nt`, ...), cite BCS0901 instead, in either spelling. BCS0303 and BCS1205 show `[ ]` only as an anti-pattern and own no `[ ]` finding.
 
 ## BCS0502 Case Statements
 
@@ -1623,12 +1626,12 @@ declare -- TEMP_FILE
 cleanup() {
   local -i exitcode=${1:-$?}
   trap - SIGINT SIGTERM EXIT         # prevent recursion
-  [[ -z ${TEMP_FILE:-} ]] || rm -f "$TEMP_FILE"
+  [[ -z ${TEMP_FILE:-} ]] || rm -f -- "$TEMP_FILE"
   exit "$exitcode"
 }
 trap 'cleanup $?' SIGINT SIGTERM EXIT
 #...
-TEMP_FILE=$(mktemp)
+TEMP_FILE=$(mktemp) || die 1 'Failed to create temp file'
 readonly TEMP_FILE
 ```
 
@@ -1636,7 +1639,7 @@ Use single quotes for trap commands to delay variable expansion. Use `||:` for c
 
 ```bash
 # correct — single quotes delay expansion
-trap 'rm -f "$temp_file"' EXIT
+trap 'rm -f -- "$temp_file"' EXIT
 
 # correct — kill background processes in cleanup
 ((bg_pid)) && kill "$bg_pid" 2>/dev/null ||:
@@ -1655,12 +1658,12 @@ Always check return values of critical operations. Critical operations are state
 
 ```bash
 # correct
-mv "$file" "$dest" || die 1 "Failed to move ${file@Q}"
+mv -- "$file" "$dest" || die 1 "Failed to move ${file@Q}"
 output=$(command) || die 1 'Command failed'
 
 # correct — command group with cleanup on failure
-cp "$src" "$dst" || {
-  rm -f "$dst"
+cp -- "$src" "$dst" || {
+  rm -f -- "$dst"
   die 1 'Copy failed'
 }
 
@@ -1709,7 +1712,7 @@ Only suppress errors when failure is expected, non-critical, and explicitly safe
 # correct — safe to suppress
 command -v optional_tool &>/dev/null ||:
 rm -f /tmp/optional_*
-rmdir "$maybe_empty" 2>/dev/null ||:
+rmdir -- "$maybe_empty" 2>/dev/null ||:
 
 # correct — suppress message but check return
 if result=$(command 2>/dev/null); then
@@ -2278,13 +2281,16 @@ Use `[[ ]]` for all file tests. Always include filenames in error messages for d
 # correct
 [[ -f $file ]] || die 3 "Not found ${file@Q}"
 [[ -f $file && -r $file ]] || die 5 "Cannot read ${file@Q}"
-[[ -d $dir ]] || mkdir -p "$dir" || die 1 "Cannot create ${dir@Q}"
+[[ -d $dir ]] || mkdir -p -- "$dir" || die 1 "Cannot create ${dir@Q}"
 [[ -s $logfile ]] || warn 'Log file is empty'
-[[ $source -nt $destination ]] && cp "$source" "$destination" ||:
+[[ $source -nt $destination ]] && cp -- "$source" "$destination" ||:
 
 # wrong
 [ -f "$file" ]                       # old test syntax
+test -r "$file"                      # same defect, spelled with the test builtin
 ```
+
+This rule owns every file test not written with `[[ ]]` — `[ -f "$file" ]` and `test -f "$file"` alike. Cite BCS0901 for them, not BCS0501, which owns `[ ]` and `test` on strings and numbers.
 
 ## BCS0902 Wildcard Expansion
 
@@ -2573,16 +2579,21 @@ Validate early, fail securely with clear errors, run with minimum necessary perm
 Always use `mktemp`. Never hardcode temp file paths.
 
 ```bash
-# correct — temp file
+# correct — temp file: trap first (BCS0110), guarded while the name is still empty
+declare -- temp_file=''
+trap '[[ -z $temp_file ]] || rm -f -- "$temp_file"' EXIT
 temp_file=$(mktemp) || die 1 'Failed to create temp file'
-trap 'rm -f "$temp_file"' EXIT
 
 # correct — temp dir (alternative; a second EXIT trap would overwrite the first)
+declare -- temp_dir=''
+trap '[[ -z $temp_dir ]] || rm -rf -- "$temp_dir"' EXIT
 temp_dir=$(mktemp -d) || die 1 'Failed to create temp dir'
-trap 'rm -rf "$temp_dir"' EXIT
 
-# correct — both resources: single cleanup function, one EXIT trap
-cleanup() { rm -f "$temp_file"; rm -rf "$temp_dir"; }
+# correct — both resources: single cleanup function, one EXIT trap, set before either mktemp
+cleanup() {
+  [[ -z $temp_file ]] || rm -f -- "$temp_file"
+  [[ -z $temp_dir ]] || rm -rf -- "$temp_dir"
+}
 trap cleanup EXIT
 
 # correct — custom template
@@ -2703,8 +2714,9 @@ For ordered output, write results to temp files then display in order.
 
 ```bash
 # correct — parallel with ordered output
-temp_dir=$(mktemp -d)
-trap 'rm -rf "$temp_dir"' EXIT
+declare -- temp_dir=''
+trap '[[ -z $temp_dir ]] || rm -rf -- "$temp_dir"' EXIT
+temp_dir=$(mktemp -d) || die 1 'Failed to create temp dir'
 declare -a pids=()
 declare -i errors=0
 
@@ -2797,8 +2809,9 @@ Use exponential backoff for retries. Never use fixed delays.
 ```bash
 # correct
 declare -i attempt=1 max_attempts=5 delay max_delay=60 jitter
-out=$(mktemp)
-trap 'rm -f "$out"' EXIT
+declare -- out=''
+trap '[[ -z $out ]] || rm -f -- "$out"' EXIT
+out=$(mktemp) || die 1 'Failed to create temp file'
 
 while ((attempt <= max_attempts)); do
   # Success requires both exit code 0 and non-empty output
@@ -3478,6 +3491,8 @@ This section summarises key rules that are frequently misapplied during automate
 - **WARNING**: Style deviation, SHOULD/RECOMMENDED level, or intentional design choice that deviates from a reference pattern.
 
 When a rule says "prefer X over Y", using Y is a WARNING at most — not a VIOLATION.
+
+A finding's severity comes from the rule's **Tier:** line and from nothing else: a `core` rule yields a VIOLATION, reported as `[ERROR]`; a `recommended` or `style` rule yields a WARNING, reported as `[WARN]`. Words such as "must" or "mandatory" inside a recommended- or style-tier rule say how to satisfy that rule; they do not raise its findings to `[ERROR]`.
 
 ## Production Optimization Takes Precedence (BCS0405)
 

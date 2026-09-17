@@ -3,9 +3,6 @@
 #shellcheck disable=SC2015
 # bcs - Bash Coding Standard CLI toolkit
 # Six subcommands for viewing, generating, and checking compliance with the Bash Coding Standard.
-# BCS0409: hard Bash 5.2+ floor -- must precede set -e and shopt (inherit_errexit needs 4.4+).
-(( BASH_VERSINFO[0] > 5 || (BASH_VERSINFO[0] == 5 && BASH_VERSINFO[1] >= 2) )) \
-  || { >&2 echo "${0##*/}: requires Bash >= 5.2 (have ${BASH_VERSION:-unknown})"; exit 2; }
 # BCS0406 deviation (documented): strict mode runs before the source fence.
 # `shopt -s extglob` MUST execute before bash parses the @(...) patterns in
 # function bodies below, so it cannot move under the fence without breaking
@@ -13,6 +10,10 @@
 # suites, which run under their own identical strict mode.
 #bcscheck disable=BCS0406
 set -euo pipefail
+# BCS0409: hard Bash 5.2+ floor, in the one slot BCS0101 allows -- after
+# set -euo pipefail (safe on any Bash), before shopt (inherit_errexit needs 4.4+).
+(( BASH_VERSINFO[0] > 5 || (BASH_VERSINFO[0] == 5 && BASH_VERSINFO[1] >= 2) )) \
+  || { >&2 echo "${0##*/}: requires Bash >= 5.2 (have ${BASH_VERSION:-unknown})"; exit 2; }
 #bcscheck disable=BCS0406
 shopt -s inherit_errexit extglob nullglob
 

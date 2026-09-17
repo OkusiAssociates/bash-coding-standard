@@ -28,12 +28,15 @@ Use `[[ ]]` for string and file tests, `(())` for arithmetic. Never use `[ ]`. T
 command -v curl >/dev/null || die 18 'curl required'
 
 # wrong
-[ -f "$file" ]                       # never use [ ]
+[ "$name" = "$expected" ]            # never use [ ]
+[ "$count" -gt 5 ]                   # never use [ ]; arithmetic belongs in (())
 
 # style preference — prefer ((count)); see BCS0505. Not errors under this rule.
 ((count > 0))                        # prefer ((count))
 ((VERBOSE == 1))                     # prefer ((VERBOSE))
 ```
+
+This is the canonical code for a `[ ]` or `test` conditional on strings or numbers. When what is tested is a file (`-f`, `-d`, `-r`, `-s`, `-nt`, ...), cite BCS0901 instead, in either spelling. BCS0303 and BCS1205 show `[ ]` only as an anti-pattern and own no `[ ]` finding.
 
 ## BCS0502 Case Statements
 

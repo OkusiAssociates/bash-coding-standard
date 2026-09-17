@@ -79,7 +79,7 @@ Inside `[[ ]]`, **no word splitting or pathname expansion occurs** — variables
 [[ $email =~ ^[a-z]+@[a-z]+$ ]]
 
 # wrong
-[ -f $file ]                         # **never** use [ ]; it requires quoting
+[ -f $file ]                         # **never** use [ ]; it requires quoting (cite BCS0901: a file test)
 [[ $input =~ "$pattern" ]]           # quoted regex disables matching
 ```
 
@@ -196,7 +196,7 @@ for item in ${items[@]}
 info 'Starting backup...'
 echo "$HOME"/bin
 echo "$result"
-rm "$temp_file"
+rm -- "$temp_file"
 for item in "${items[@]}"
 ```
 
