@@ -7,7 +7,7 @@ Variables fall into six families:
 
 1. **User configuration** — defaults for `bcs check` flags, overridable per-call
 2. **Model aliases** — the `MODEL_ALIASES` map: short names that expand to canonical model IDs
-3. **Backend selection** — `OLLAMA_HOST` directs the local Ollama backend
+3. **Backend selection** — `OLLAMA_HOST`, `BCS_OLLAMA_NUM_CTX` and `BCS_OLLAMA_KEEP_ALIVE` configure the local Ollama backend
 4. **Credentials** — API keys consumed by the cloud backends
 5. **Search paths** — XDG locations for config and state files, plus the `BCS_CONF_DIR` test override
 6. **Internal / advanced** — runtime flags exported by `bcs` itself; documented for source-readers
@@ -134,6 +134,22 @@ Unknown names pass through `_expand_alias()` unchanged, so canonical model IDs n
 - **Consumed:** `_llm_ollama()`
 
 Direct the local Ollama backend at a non-default endpoint (e.g. `OLLAMA_HOST=ollama.lan:11434`).
+
+### `BCS_OLLAMA_NUM_CTX`
+
+- **Default:** `40960`
+- **Values:** a positive integer (tokens); anything else is exit 22
+- **Consumed:** `_llm_ollama()` → `options.num_ctx`
+
+Ollama truncates the prompt to the server default (4096 tokens) unless the request carries `options.num_ctx`. The standard alone is about 33k tokens, so without this field the model never sees the rules and returns nothing useful. The value must hold the standard plus the script plus the reply: raise it for long scripts or `-e high` and above, at the cost of VRAM. `bcs check` warns when the prompt is certain to exceed the configured window.
+
+### `BCS_OLLAMA_KEEP_ALIVE`
+
+- **Default:** `30m`
+- **Values:** a duration string (`30m`, `1h`) or seconds as an integer (`-1` = keep forever, `0` = unload at once); integers are sent as JSON numbers
+- **Consumed:** `_llm_ollama()` → top-level `keep_alive`
+
+Keeps the model loaded between checks so a batch run does not pay the model load on every file.
 
 ## 13.4 Credentials
 

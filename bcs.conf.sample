@@ -92,6 +92,16 @@ BCS_SHELLCHECK=1
 # Ollama server address
 #OLLAMA_HOST=localhost:11434
 
+# Ollama context window in tokens (sent as options.num_ctx). Without it the
+# server truncates the prompt to its 4096-token default and the model never
+# sees the standard. It must hold the standard (~33k tokens) plus the script
+# plus the reply; raise it for long scripts or -e high and above (costs VRAM).
+#BCS_OLLAMA_NUM_CTX=40960
+
+# How long Ollama keeps the model loaded after a check: a duration (30m, 1h)
+# or seconds as an integer (-1 = forever, 0 = unload at once).
+#BCS_OLLAMA_KEEP_ALIVE=30m
+
 # API keys (set the one for the backend your -m/MODEL_ALIASES selects; the
 # backend is resolved from the model name, not by probing keys in order)
 #ANTHROPIC_API_KEY=

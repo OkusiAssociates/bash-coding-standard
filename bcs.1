@@ -428,6 +428,22 @@ overrides are gone \(em set the alias instead.
 .B OLLAMA_HOST
 Ollama server address (default: localhost:11434).
 .TP
+.B BCS_OLLAMA_NUM_CTX
+Ollama context window in tokens, sent as
+.B options.num_ctx
+(default: 40960). Without it the server truncates the prompt to its 4096-token
+default and the model never sees the standard. It must hold the standard
+(about 33k tokens) plus the script plus the reply; raise it for long scripts or
+.B \-e high
+and above.
+.TP
+.B BCS_OLLAMA_KEEP_ALIVE
+How long Ollama keeps the model loaded after a check: a duration such as
+.B 30m
+or
+.BR 1h ,
+or seconds as an integer (\-1 = forever). Default: 30m.
+.TP
 .B ANTHROPIC_API_KEY
 Anthropic API key for the anthropic backend.
 .TP

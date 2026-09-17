@@ -181,6 +181,8 @@ keywords (`fast`/`balanced`/`thorough`) exit non-zero with a migration hint.
 
 ▲ Local Ollama models whose names match `claude-*`, `gemini-*`, `gpt-*`, or `o[0-9]*` are unreachable through `-m` -- rename the local model.
 
+Ollama requests carry `options.num_ctx` (`BCS_OLLAMA_NUM_CTX`, default 40960 tokens) and `keep_alive` (`BCS_OLLAMA_KEEP_ALIVE`, default `30m`). Without `num_ctx` the server truncates the prompt to its 4096-token default and the model never sees the standard. Raise `BCS_OLLAMA_NUM_CTX` for long scripts or `-e high` and above.
+
 **Built-in model aliases**
 
 Set `MODEL_ALIASES[name]=canonical-id` in `bcs.conf` to extend or override.

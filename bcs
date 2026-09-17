@@ -374,6 +374,11 @@ ${BOLD}Environment / Config Variables:$NC
   MODEL_ALIASES       Bash assoc. array; set in bcs.conf to add/override aliases
                       (e.g. MODEL_ALIASES[mymodel]=qwen3.5:14b)
   OLLAMA_HOST         Ollama server address (default: localhost:11434)
+  BCS_OLLAMA_NUM_CTX  Ollama context window in tokens (default: 40960); must hold
+                      the standard (~33k tokens) plus the script plus the reply
+  BCS_OLLAMA_KEEP_ALIVE
+                      Keep the Ollama model loaded: 30m, 1h, or seconds
+                      (default: 30m; -1 = forever)
   ANTHROPIC_API_KEY   Anthropic API key (for anthropic backend)
   GOOGLE_API_KEY      Google API key (for google backend)
   GEMINI_API_KEY      Alternative Google key (GOOGLE_API_KEY takes priority)
@@ -850,6 +855,18 @@ _llm_ollama() {
   local -- ollama_host=${OLLAMA_HOST:-localhost:11434}
   local -i num_predict=${EFFORT_TOKENS[$effort]}
 
+  # Ollama truncates the prompt to the server default (4096 tokens) unless
+  # options.num_ctx says otherwise, and the standard alone is ~33k tokens:
+  # without it the model never sees the rules. keep_alive holds the model in
+  # memory between checks; an integer is sent as seconds (-1 = forever).
+  local -- keep_alive=${BCS_OLLAMA_KEEP_ALIVE:-30m}
+  [[ ${BCS_OLLAMA_NUM_CTX:-40960} =~ ^[1-9][0-9]*$ ]] \
+    || die 22 "Invalid BCS_OLLAMA_NUM_CTX ${BCS_OLLAMA_NUM_CTX@Q} (expected a positive integer)"
+  local -i num_ctx=${BCS_OLLAMA_NUM_CTX:-40960}
+  # ~4 chars/token is a floor for this prompt, so truncation here is certain.
+  (((${#sys} + ${#usr}) / 4 <= num_ctx)) \
+    || warn "Prompt exceeds BCS_OLLAMA_NUM_CTX=$num_ctx tokens; Ollama will truncate it"
+
   # Native JSON mode via "format": "json" (supported by qwen2.5+, llama3.1+,
   # gemma2+). When BCS_JSON_MODE=1, forces the model to emit only valid JSON.
   local -- payload
@@ -857,19 +874,26 @@ _llm_ollama() {
     payload=$(jq -n \
       --arg model "$model" \
       --argjson num_predict "$num_predict" \
+      --argjson num_ctx "$num_ctx" \
+      --arg keep_alive "$keep_alive" \
       --arg system "$sys" \
       --arg user "$usr" \
       '{model: $model, stream: false, format: "json",
-        options: {num_predict: $num_predict},
+        keep_alive: ($keep_alive | tonumber? // $keep_alive),
+        options: {num_predict: $num_predict, num_ctx: $num_ctx},
         messages: [{role: "system", content: $system}, {role: "user", content: $user}]}') \
       || die 1 'Failed to build JSON payload'
   else
     payload=$(jq -n \
       --arg model "$model" \
       --argjson num_predict "$num_predict" \
+      --argjson num_ctx "$num_ctx" \
+      --arg keep_alive "$keep_alive" \
       --arg system "$sys" \
       --arg user "$usr" \
-      '{model: $model, stream: false, options: {num_predict: $num_predict},
+      '{model: $model, stream: false,
+        keep_alive: ($keep_alive | tonumber? // $keep_alive),
+        options: {num_predict: $num_predict, num_ctx: $num_ctx},
         messages: [{role: "system", content: $system}, {role: "user", content: $user}]}') \
       || die 1 'Failed to build JSON payload'
   fi

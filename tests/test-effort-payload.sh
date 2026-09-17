@@ -175,6 +175,48 @@ assert_payload_no_match google gemini-2.5-pro low \
   'gemini-2.5-pro -e low -> thinkingConfig omitted (budget=0)'
 
 # ---------------------------------------------------------------------
+# Ollama: options.num_ctx and keep_alive reach both payload branches.
+# Without num_ctx the server truncates the prompt to its 4096 default and
+# the model never sees the standard.
+# ---------------------------------------------------------------------
+unset BCS_OLLAMA_NUM_CTX BCS_OLLAMA_KEEP_ALIVE
+
+assert_payload_match ollama qwen3.5:9b medium \
+  '.options.num_ctx == 40960 and .options.num_predict == 8000' \
+  'ollama text mode -> options.num_ctx=40960 beside num_predict'
+
+assert_payload_match ollama qwen3.5:9b medium \
+  '.keep_alive == "30m"' \
+  'ollama text mode -> keep_alive=30m'
+
+BCS_JSON_MODE=1 assert_payload_match ollama qwen3.5:9b medium \
+  '.format == "json" and .options.num_ctx == 40960 and .keep_alive == "30m"' \
+  'ollama JSON mode -> num_ctx and keep_alive present'
+
+BCS_OLLAMA_NUM_CTX=65536 assert_payload_match ollama qwen3.5:9b medium \
+  '.options.num_ctx == 65536' \
+  'BCS_OLLAMA_NUM_CTX=65536 honoured'
+
+BCS_OLLAMA_KEEP_ALIVE=1h assert_payload_match ollama qwen3.5:9b medium \
+  '.keep_alive == "1h"' \
+  'BCS_OLLAMA_KEEP_ALIVE=1h honoured (duration string)'
+
+BCS_OLLAMA_KEEP_ALIVE=-1 assert_payload_match ollama qwen3.5:9b medium \
+  '.keep_alive == -1' \
+  'BCS_OLLAMA_KEEP_ALIVE=-1 sent as a JSON number (seconds)'
+
+begin_test 'invalid BCS_OLLAMA_NUM_CTX rejected'
+declare -i NUM_CTX_RC=0
+( BCS_OLLAMA_NUM_CTX=lots _llm_ollama qwen3.5:9b medium sys usr ) &>/dev/null || NUM_CTX_RC=$?
+assert_equal 22 "$NUM_CTX_RC" 'BCS_OLLAMA_NUM_CTX=lots -> exit 22'
+
+begin_test 'certain prompt truncation is announced'
+declare -- BIG_PROMPT='' TRUNCATION_ERR=''
+printf -v BIG_PROMPT '%*s' 8000 ''
+TRUNCATION_ERR=$(BCS_OLLAMA_NUM_CTX=1024 _llm_ollama qwen3.5:9b medium "$BIG_PROMPT" usr 2>&1 >/dev/null)
+assert_contains "$TRUNCATION_ERR" 'BCS_OLLAMA_NUM_CTX' 'prompt larger than num_ctx -> warning names the knob'
+
+# ---------------------------------------------------------------------
 # Token budgets (max output) reach every payload regardless of model.
 # ---------------------------------------------------------------------
 assert_payload_match anthropic claude-haiku-4-5 medium \
