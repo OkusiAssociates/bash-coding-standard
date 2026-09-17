@@ -324,7 +324,8 @@ ${BOLD}Effort Levels:$NC
   reasoning budget. Anthropic thinking is auto-enabled on opus + sonnet-4-6/4-7
   and skipped silently elsewhere; OpenAI reasoning_effort is auto-enabled on
   o-series + gpt-5*; Gemini thinkingConfig is auto-enabled on the 2.5 family
-  and on gemini-3.5-flash*. Ollama ignores both.
+  and on gemini-3.5-flash*. Ollama ignores both. The claude-code CLI backend
+  ignores -e altogether: it always runs at the CLI's lowest native effort.
 
   low         Clear violations only (4k tokens, no thinking; alias: min)
   medium      Violations and significant warnings (8k tokens, 2k thinking)
@@ -412,7 +413,7 @@ ${BOLD}Examples:$NC
   $SCRIPT_NAME check -m gpt5 -e medium myscript.sh
   $SCRIPT_NAME check -m minimax-m2:cloud myscript.sh
   $SCRIPT_NAME check --effort high --strict deploy.sh
-  $SCRIPT_NAME check -m claude-code:opus -e max deploy.sh
+  $SCRIPT_NAME check -m claude-code:opus deploy.sh
   $SCRIPT_NAME check -j myscript.sh | jq '.comments[]'
 HELP
 }
@@ -1205,6 +1206,11 @@ Respect inline suppression: eg, #bcscheck disable=BCS0101 exempts the next line/
   # cwd path containing shell metacharacters cannot inject commands.
   local -- ret_dir=$PWD
   trap 'cd "$ret_dir" 2>/dev/null ||:; rm -rf -- "$check_dir"' RETURN
+  # The CLI's stderr goes to the response dump, not /dev/null: an auth or
+  # quota failure is otherwise a bare non-zero exit. Anchor a relative dump
+  # path now, before the cd below changes what it would resolve against.
+  local -- err_file=${BCS_RESPONSE_DUMP:-/dev/null}
+  [[ $err_file == /* ]] || err_file=$ret_dir/$err_file
   cd "$check_dir"
   [[ ! -d /run/user/"$EUID" ]] || declare -x TMPDIR=/run/user/"$EUID"
 
@@ -1212,9 +1218,20 @@ Respect inline suppression: eg, #bcscheck disable=BCS0101 exempts the next line/
   # Without this, the bypassPermissions agent can shell out -- observed in the
   # wild recursively invoking bcscheck (stacked LLM calls, cache-laundered
   # results) instead of analyzing directly.
+  #
+  # --strict-mcp-config with no --mcp-config loads no MCP server at all: the
+  # user's servers (93 tools, ~50k tokens per turn, measured) are dead weight
+  # here and a needless attack surface under bypassPermissions.
+  #
+  # --effort is pinned to the CLI's lowest native level whatever -e says. The
+  # CLI maps its effort to a thinking budget of its own: `medium` spent ~20k
+  # thinking tokens per check (91% of wall time, 8-12x the API backends) for
+  # no measured gain. On this backend -e changes nothing else either.
   local -a claude_args=(--model "$model" --permission-mode bypassPermissions
-                        --tools 'Read,Grep,Glob')
-  [[ -z $effort ]] || claude_args+=(--effort "$effort")
+                        --tools 'Read,Grep,Glob' --strict-mcp-config
+                        --effort low)
+  [[ $effort == low ]] \
+    || info "CLI backend always runs at its lowest native effort; -e $effort has no effect"
 
   # BCS0202/BCS0204: local -x exports to the claude child for this function's
   # lifetime without leaking into the global scope.
@@ -1227,8 +1244,16 @@ Respect inline suppression: eg, #bcscheck disable=BCS0101 exempts the next line/
   unset ANTHROPIC_API_KEY
   # SC1007: `CLAUDECODE= claude ...` clears the env var for one command;
   # the empty-RHS assignment is intentional, not a typo.
+  local -i rc=0
   #shellcheck disable=SC1007
-  CLAUDECODE= claude "${claude_args[@]}" -p "$prompt" 2>/dev/null
+  CLAUDECODE= claude "${claude_args[@]}" -p "$prompt" 2>"$err_file" || rc=$?
+  ((rc)) || return 0
+  # A failed CLI is a backend failure (5), never exit 1: callers read 1 as
+  # "ERROR findings found". return, not die, so the RETURN trap still cleans up.
+  local -- err_tail=''
+  [[ ! -s $err_file ]] || err_tail=$(tail -n 5 -- "$err_file")
+  error "Claude Code CLI failed (exit $rc)" ${err_tail:+"$err_tail"}
+  return 5
 }
 
 # ---- Subcommands ----
@@ -1798,8 +1823,8 @@ $numbered_script"
   # Diagnostics on failure or debug: any non-zero exit (API failure, invalid
   # JSON, or the empty-result anomaly promoted to 5 above), or --debug.
   # Surface the saved raw-response path so the user can diagnose without
-  # re-running. Non-API (claude-code CLI) backend does not dump -- it returns
-  # text directly, not JSON.
+  # re-running. For the claude-code CLI backend the dump holds the CLI's
+  # stderr (it returns text directly, not a JSON body).
   local -i dump_show=0
   if ((debug)) || ((exit_code != 0)); then
     dump_show=1
@@ -1811,7 +1836,7 @@ $numbered_script"
     VERBOSE=1
     >&2 info "${diag_msgs[@]}"
     >&2 info "Exit: $exit_code"
-    if [[ $backend != claude && -s ${BCS_RESPONSE_DUMP:-} ]]; then
+    if [[ -s ${BCS_RESPONSE_DUMP:-} ]]; then
       >&2 info "Raw response: $BCS_RESPONSE_DUMP"
     fi
     VERBOSE=$_saved_verbose

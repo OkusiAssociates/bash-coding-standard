@@ -229,9 +229,11 @@ Every API response is saved to
 (or
 .I /tmp/bcs\-last\-response.XXXXXX
 via mktemp if no state directory). The Claude Code CLI backend returns
-text directly (not JSON) and normally does not dump; with
+text directly (not JSON), so for that backend the dump holds the CLI's
+standard error (an authentication or quota failure shows up there); with
 .BR \-\-json ,
-an invalid response is still preserved in the dump file.
+an invalid response is still preserved in the dump file. A CLI that exits
+non-zero is reported as exit 5, never as exit 1.
 .PP
 Inline suppression:
 .B #bcscheck disable=BCS\fIxxxx\fR
@@ -538,8 +540,11 @@ Check using the Claude Code CLI with the default
 .B sonnet
 alias.
 .TP
-.B bcs check \-m claude\-code:opus \-e max myscript.sh
-Check using the Claude Code CLI with opus and the deepest analysis.
+.B bcs check \-m claude\-code:opus myscript.sh
+Check using the Claude Code CLI with opus.
+.B \-e
+has no effect on this backend: the CLI always runs at its lowest native
+effort, with no MCP servers loaded.
 .TP
 .B bcs check \-\-strict deploy.sh
 Strict mode: treat warnings as violations.

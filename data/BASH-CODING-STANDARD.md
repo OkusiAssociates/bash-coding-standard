@@ -3287,7 +3287,7 @@ The backend is resolved entirely from the (alias-expanded) model name — there 
 - **Override flag:** `-e`, `--effort`
 - **Consumed:** `cmd_check()` initialiser
 
-Effort controls both prompt guidance and the output token budget (`EFFORT_TOKENS` array: `low=4000`, `medium=8000`, `high=24000`, `xhigh=40000`, `max=64000`). `min` is normalised to `low` at parse time. `max` should be avoided for Ollama cloud models (hallucination risk).
+Effort controls both prompt guidance and the output token budget (`EFFORT_TOKENS` array: `low=4000`, `medium=8000`, `high=24000`, `xhigh=40000`, `max=64000`). `min` is normalised to `low` at parse time. `max` should be avoided for Ollama cloud models (hallucination risk). Effort has no effect on the Claude Code CLI backend, which always runs at the CLI's lowest native effort: the CLI turns its own effort level into a thinking budget, and `medium` there cost 8-12 times the wall time of an API backend for no measured gain.
 
 ### `BCS_STRICT`
 
@@ -3350,7 +3350,7 @@ Reports findings at the named tier or higher severity. `BCS_MIN_TIER=recommended
 - **Override flag:** none (set externally to redirect)
 - **Consumed:** `cmd_check()` always exports this; `_dump_response()` writes raw HTTP bodies; the path is announced on failure or with `--debug`
 
-Set externally to direct raw API responses to a known location for inspection. The Claude Code CLI backend writes directly here (it returns text, not JSON).
+Set externally to direct raw API responses to a known location for inspection. The Claude Code CLI backend returns text, not JSON, so for that backend the file holds the CLI's standard error: an authentication or quota failure is diagnosed from here.
 
 ## 13.2 Model Aliases
 

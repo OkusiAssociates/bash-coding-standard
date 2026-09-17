@@ -126,7 +126,7 @@ Subcommands, frequency-ordered:
 bcs check myscript.sh                      # Default alias 'sonnet' (claude-sonnet-4-6)
 bcs check -m opus deploy.sh                # Alias-expanded to claude-opus-4-8
 bcs check -m gpt5 -e high deploy.sh        # OpenAI gpt-5 with reasoning_effort=medium
-bcs check -m claude-code:opus ci.sh        # Claude Code CLI with the opus alias
+bcs check -m claude-code:opus ci.sh        # Claude Code CLI with the opus alias (-e has no effect here)
 bcs check --strict -T core deploy.sh       # CI gate: core-only, warnings fatal
 bcs check --no-shellcheck myscript.sh      # Skip the shellcheck static-analysis prelude
 bcs check -j ci.sh | jq '.comments[]'      # JSON output (shellcheck json1-style envelope)
@@ -227,7 +227,8 @@ family and on `gemini-3.5-flash*`. Other models silently ignore the budget.
 | Daily development | `-m sonnet -e medium` |
 | Pre-commit review | `-m sonnet -e high` |
 | Thorough audit | `-m sonnet -e max` |
-| Pre-release audit | `-m claude-code:opus -e max` |
+| Pre-release audit | `-m opus -e max` |
+| No API key, Claude plan only | `-m claude-code:opus` (`-e` has no effect on this backend) |
 
 **Filtering, CI gates, suppression**
 
