@@ -15,7 +15,7 @@ against these numbers, not against memory.
 
 | Alias / effort | Backend | State |
 |----------------|---------|-------|
-| `gpt5-mini` / `low` | OpenAI | ✓ measured 2026-09-17, `bcs` 2.0.2, 41 fixtures × 3 runs, 457 s |
+| `gpt5-mini` / `low` | OpenAI | ✓ measured 2026-09-17, `bcs` 2.0.2, 41 fixtures × 3 runs, 506 s. Refreshed the same day after the standard's examples were corrected and fixtures 06 and clean 01-03 changed |
 | `flash` / `low` | Google | ✗ not run. The key's free tier allows 20 requests per model per day; one pass of the corpus needs 41 and a baseline needs 123 |
 | `haiku` / `low` | Anthropic | ✗ not run. No `ANTHROPIC_API_KEY` on the measuring host |
 | `qwen-small` / `low` | Ollama | ✗ not run. No Ollama runs were made; note that the `num_ctx` fix in 2.0.2 has itself not been exercised against a live server |
@@ -44,7 +44,7 @@ jq -n --slurpfile b tests/accuracy/baseline/gpt5-mini_low.json \
 Recall and the clean false-positive rate are the trustworthy signals. The
 checker is an LLM, so expect run-to-run movement in precision: on 2026-09-17
 two runs of the byte-identical configuration gave precision 0.871 and 0.818
-(F1 0.931 and 0.900) with recall 1.000, no clean false positive and stability
-1.000 both times. The whole difference was the number of *extra* findings on
+(F1 0.931 and 0.900), and the refreshed baseline 0.850 (F1 0.919), with recall
+1.000, no clean false positive and stability 1.000 every time. The whole difference was the number of *extra* findings on
 violation fixtures (16 against 24). Treat ±0.05 in precision or F1 as noise. A
 fall in recall, or any clean false positive, is a regression to explain.

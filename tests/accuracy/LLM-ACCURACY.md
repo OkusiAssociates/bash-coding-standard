@@ -33,7 +33,7 @@ and how to compare a later run against it.
 
 | Alias / effort | Backend | Conclusive runs | Recall | Precision | F1 | Clean FP | Stability | Wall |
 |---|---|---|---|---|---|---|---|---|
-| `gpt5-mini` / `low` | OpenAI | 123 of 123 | **1.000** | 0.871 | 0.931 | **0** in 18 runs | 1.000 | 457 s |
+| `gpt5-mini` / `low` | OpenAI | 123 of 123 | **1.000** | 0.850 | 0.919 | **0** in 18 runs | 1.000 | 506 s |
 | `flash` / `low` | Google | not run | | | | | | |
 | `haiku` / `low` | Anthropic | not run | | | | | | |
 | `qwen-small` / `low` | Ollama | not run | | | | | | |
@@ -41,7 +41,7 @@ and how to compare a later run against it.
 `flash` was not run because the key's free tier allows 20 requests per model
 per day, fewer than one pass of the corpus. `haiku` and `qwen-small` were not
 run because no Anthropic key was available and no Ollama runs were made. All
-34 expected rules were reported on every repetition; the 16 counted
+34 expected rules were reported on every repetition; the 19 counted
 false positives are extra findings on violation fixtures, none on a clean one.
 
 Reading the table: **recall** and the **clean false-positive rate** are the
