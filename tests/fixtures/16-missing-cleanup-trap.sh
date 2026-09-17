@@ -10,7 +10,6 @@ main() {
   TEMP_DIR=$(mktemp -d) || exit 1
   cp /etc/hosts "$TEMP_DIR"/
   ls -la "$TEMP_DIR"
-  # No trap handler for SIGINT/SIGTERM/EXIT — stale directory on failure.
 }
 
 main "$@"
