@@ -38,6 +38,9 @@ BCS_FIXTURES_REQUIRE_BACKEND=1 ./tests/test-check-fixtures.sh
 
 # Skip the whole suite even when a backend is available.
 BCS_SKIP_FIXTURES=1 ./tests/test-check-fixtures.sh
+
+# Pin the model (skips the probe; the model name selects the backend).
+BCS_FIXTURES_MODEL=gpt5-mini ./tests/test-check-fixtures.sh
 ```
 
 The harness also runs under `./tests/run-all-tests.sh` and `make test`
@@ -122,11 +125,17 @@ from the BCS LLM checker.
   development.
 - **Backend variance.** Different backends/models produce different
   finding sets. The suite pins effort `low` and the cheapest alias for
-  the reachable backend (`haiku` for anthropic, `flash-lite` for google,
-  `gpt5-mini` for openai, `qwen-small` for ollama, `claude-code:haiku`
-  for the Claude CLI; override the ollama choice with
-  `BCS_FIXTURES_MODEL`) so runs are reproducible *enough*; expect the
-  occasional drift when model providers retrain.
+  the reachable backend, probed fastest first (`gpt5-mini` for openai,
+  `flash-lite` for google, `haiku` for anthropic, `qwen-small` for
+  ollama, `claude-code:haiku` for the Claude CLI; `BCS_FIXTURES_MODEL`
+  pins any model and skips the probe) so runs are reproducible *enough*;
+  expect the occasional drift when model providers retrain.
+- **Inconclusive is not a pass.** A fixture whose check times out, exits
+  above 1 (API failure, missing key), or prints nothing is tallied as
+  *inconclusive*: neither a finding regression nor a pass. The suite fails
+  when every fixture is inconclusive, or when
+  `BCS_FIXTURES_REQUIRE_BACKEND=1` and any fixture is. A dead backend can
+  therefore never produce a green gate.
 - **No exact-match mode.** Deliberately — see Assertion model above.
 
 #fin

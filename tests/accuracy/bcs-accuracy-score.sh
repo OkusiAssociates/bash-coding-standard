@@ -29,6 +29,7 @@
 #   -n RUNS   / BCS_SCORE_RUNS     repetitions per fixture (default: 3)
 #   -o DIR    / BCS_SCORE_OUTDIR   report output dir (default: this script's dir)
 #   BCS_FIXTURES_REQUIRE_BACKEND=1 fail instead of skip when no backend reachable
+#   BCS_SCORE_CMD                  checker to run instead of ../../bcs (test seam)
 #   trailing args = explicit fixture paths to score (default: whole corpus)
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
@@ -43,7 +44,7 @@ declare -r VERSION='1.0.0'
 declare -- PROJECT_DIR
 PROJECT_DIR=$(realpath -- "$SCRIPT_DIR/../..")
 declare -r PROJECT_DIR
-declare -r BCS_CMD="$PROJECT_DIR"/bcs
+declare -r BCS_CMD=${BCS_SCORE_CMD:-"$PROJECT_DIR"/bcs}
 declare -r FIXTURES_DIR="$PROJECT_DIR"/tests/fixtures
 
 # Tunables (env defaults; CLI flags override).
@@ -95,15 +96,16 @@ _has() { [[ $'\n'"$1"$'\n' == *$'\n'"$2"$'\n'* ]]; }
 # Filesystem-safe slug for a model name.
 _slug() { local -- s=$1; s=${s//\//_}; s=${s//:/_}; printf '%s' "$s"; }
 
-# Mirror test-check-fixtures.sh sniff order: claude → ollama → anthropic → openai → google.
+# Mirror test-check-fixtures.sh probe order, fastest first:
+# openai → google → anthropic → ollama → claude (CLI).
 probe_backend() {
-  command -v claude &>/dev/null && { echo claude; return 0; } ||:
+  [[ -n ${OPENAI_API_KEY:-} ]] && { echo openai; return 0; } ||:
+  [[ -n ${GOOGLE_API_KEY:-${GEMINI_API_KEY:-}} ]] && { echo google; return 0; } ||:
+  [[ -n ${ANTHROPIC_API_KEY:-} ]] && { echo anthropic; return 0; } ||:
   local -- host=${OLLAMA_HOST:-localhost:11434}
   curl -sf --connect-timeout 2 "http://$host/api/tags" &>/dev/null \
     && { echo ollama; return 0; } ||:
-  [[ -n ${ANTHROPIC_API_KEY:-} ]] && { echo anthropic; return 0; } ||:
-  [[ -n ${OPENAI_API_KEY:-} ]] && { echo openai; return 0; } ||:
-  [[ -n ${GOOGLE_API_KEY:-${GEMINI_API_KEY:-}} ]] && { echo google; return 0; } ||:
+  command -v claude &>/dev/null && { echo claude; return 0; } ||:
   return 1
 }
 # Cheapest model alias for a probed backend.
@@ -222,8 +224,11 @@ main() {
   for ((run=1; run<=RUNS; run+=1)); do
     info "run $run/$RUNS ..."
     for f in "${corpus[@]}"; do
-      json=$(timeout "$TIMEOUT_S" "$BCS_CMD" check -j -m "$MODEL" -e "$EFFORT" \
-        --quiet -- "$f" 2>/dev/null) || true
+      # --no-cache: every repetition must be a fresh LLM round-trip. Served
+      # from the result cache, runs 2..N would replay run 1 and stability
+      # would read 1.0 whatever the model did.
+      json=$(timeout "$TIMEOUT_S" "$BCS_CMD" check -j --no-cache -m "$MODEL" \
+        -e "$EFFORT" --quiet -- "$f" 2>/dev/null) || true
       if [[ -z $json ]] || ! jq -e 'has("comments")' <<<"$json" &>/dev/null; then
         INCONCLUSIVE+=1
         warn "inconclusive: ${f##*/} (run $run) — empty/invalid backend output"

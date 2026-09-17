@@ -5,7 +5,12 @@
 #
 # Environment controls:
 #   BCS_SKIP_FIXTURES=1             - skip the entire suite (dev inner-loop)
-#   BCS_FIXTURES_REQUIRE_BACKEND=1  - fail instead of skip when no backend
+#   BCS_FIXTURES_REQUIRE_BACKEND=1  - fail instead of skip when no backend, and
+#                                     fail when any fixture is inconclusive
+#   BCS_FIXTURES_MODEL=<alias|id>   - check with this model; skips the probe,
+#                                     the model name selects the backend
+#   BCS_FIXTURES_CMD=<path>         - checker to run instead of ./bcs (test seam
+#                                     for tests/test-fixtures-gate.sh)
 set -euo pipefail
 shopt -s inherit_errexit nullglob
 
@@ -14,27 +19,35 @@ source "$(dirname "$0")"/test-helpers.sh
 
 echo 'Testing: check fixtures'
 
+declare -r FIXTURES_CMD=${BCS_FIXTURES_CMD:-$BCS_CMD}
+
 # Honour BCS_SKIP_FIXTURES before any expensive probe.
 if ((${BCS_SKIP_FIXTURES:-0})); then
   echo '  ◉ SKIP: BCS_SKIP_FIXTURES=1'
   exit 0
 fi
 
-# Probe backend availability. Mirrors bcs's _detect_backend order:
-# claude → ollama → anthropic → openai → google.
+# Probe backend availability, fastest first: an API key (openai → google →
+# anthropic), then a local Ollama server, then the Claude Code CLI, which
+# takes minutes per fixture. bcs itself never probes -- it resolves the
+# backend from the model name -- so this order belongs to the test alone.
 probe_backend() {
-  command -v claude &>/dev/null && { echo claude; return 0; } ||:
+  [[ -n ${OPENAI_API_KEY:-} ]] && { echo openai; return 0; } ||:
+  [[ -n ${GOOGLE_API_KEY:-${GEMINI_API_KEY:-}} ]] && { echo google; return 0; } ||:
+  [[ -n ${ANTHROPIC_API_KEY:-} ]] && { echo anthropic; return 0; } ||:
   local -- host=${OLLAMA_HOST:-localhost:11434}
   curl -sf --connect-timeout 2 http://"$host"/api/tags &>/dev/null \
     && { echo ollama; return 0; } ||:
-  [[ -n ${ANTHROPIC_API_KEY:-} ]] && { echo anthropic; return 0; } ||:
-  [[ -n ${OPENAI_API_KEY:-} ]] && { echo openai; return 0; } ||:
-  [[ -n ${GOOGLE_API_KEY:-${GEMINI_API_KEY:-}} ]] && { echo google; return 0; } ||:
+  command -v claude &>/dev/null && { echo claude; return 0; } ||:
   return 1
 }
 
-backend=''
-backend=$(probe_backend) ||:
+declare -- backend=''
+if [[ -n ${BCS_FIXTURES_MODEL:-} ]]; then
+  backend='(from BCS_FIXTURES_MODEL)'
+else
+  backend=$(probe_backend) ||:
+fi
 if [[ -z $backend ]]; then
   if ((${BCS_FIXTURES_REQUIRE_BACKEND:-0})); then
     printf '  %s✗%s no LLM backend available (BCS_FIXTURES_REQUIRE_BACKEND=1)\n' \
@@ -54,10 +67,11 @@ echo "  ◉ using backend: $backend"
 declare -- fixture_model=haiku
 case $backend in
   claude)    fixture_model=claude-code:haiku ;;
-  ollama)    fixture_model=${BCS_FIXTURES_MODEL:-qwen-small} ;;
+  ollama)    fixture_model=qwen-small ;;
   openai)    fixture_model=gpt5-mini ;;
   google)    fixture_model=flash-lite ;;
   anthropic) fixture_model=haiku ;;
+  *)         fixture_model=$BCS_FIXTURES_MODEL ;;
 esac
 echo "  ◉ using model:   $fixture_model"
 
@@ -66,7 +80,8 @@ echo "  ◉ using model:   $fixture_model"
 declare -ri FIXTURE_TIMEOUT_S=90
 
 declare -- fixture fixture_name expected reported extras output
-declare -i exit_code=0 fixture_count=0
+declare -i exit_code=0 fixture_count=0 inconclusive=0
+declare -ri REQUIRE_BACKEND=${BCS_FIXTURES_REQUIRE_BACKEND:-0}
 for fixture in "$TEST_DIR"/fixtures/*.sh; do
   fixture_name=${fixture##*/}
   fixture_count+=1
@@ -89,15 +104,18 @@ for fixture in "$TEST_DIR"/fixtures/*.sh; do
   # works with whatever credentials/CLI the host has.
   exit_code=0
   output=$(timeout "$FIXTURE_TIMEOUT_S" \
-    "$BCS_CMD" check --no-cache -m "$fixture_model" -e low --quiet -- "$fixture" 2>&1) \
+    "$FIXTURES_CMD" check --no-cache -m "$fixture_model" -e low --quiet -- "$fixture" 2>&1) \
     || exit_code=$?
 
-  # Backend crash or timeout: warn but don't fail. A backend failure is not
-  # the same as a finding regression.
-  if [[ -z $output ]] || ((exit_code == 124)); then
-    printf '    %s▲%s backend returned empty output or timed out (exit=%d); inconclusive\n' \
-      "$YELLOW" "$NC" "$exit_code"
-    TESTS_PASSED+=1   # don't penalise, but count as "ran"
+  # bcs check exits 0 (clean) or 1 (ERROR findings) when the backend
+  # answered. Anything else (5 API failure, 18 missing key, 124 timeout) or
+  # an empty answer says nothing about the fixture: inconclusive. That is
+  # neither a finding regression nor a pass -- the tally below decides
+  # whether the suite as a whole is still trustworthy.
+  if [[ -z $output ]] || ((exit_code > 1)); then
+    printf '  %s▲%s %s — inconclusive (exit=%d): %s\n' \
+      "$YELLOW" "$NC" "$fixture_name" "$exit_code" "${output:-no output}"
+    inconclusive+=1
     continue
   fi
 
@@ -118,6 +136,23 @@ if ((fixture_count == 0)); then
     "$YELLOW" "$NC" "$TEST_DIR"
 fi
 
+# A gate that asserted nothing must not be green: fail when no fixture gave a
+# verdict at all, or when a backend was demanded and any fixture lacked one.
+if ((inconclusive)); then
+  if ((inconclusive == fixture_count)); then
+    printf '  %s✗%s %d inconclusive of %d: the backend never answered\n' \
+      "$RED" "$NC" "$inconclusive" "$fixture_count"
+    TESTS_FAILED+=1
+  elif ((REQUIRE_BACKEND)); then
+    printf '  %s✗%s %d inconclusive of %d (BCS_FIXTURES_REQUIRE_BACKEND=1)\n' \
+      "$RED" "$NC" "$inconclusive" "$fixture_count"
+    TESTS_FAILED+=1
+  else
+    printf '  %s▲%s %d inconclusive of %d (not counted as passed)\n' \
+      "$YELLOW" "$NC" "$inconclusive" "$fixture_count"
+  fi
+fi
+
 # Optional JSON-mode smoke check. Gated behind BCS_FIXTURES_JSON=1 so the
 # default run doesn't double-spend LLM calls. Re-runs fixture 01 under
 # `bcs check -j` and asserts the envelope shape.
@@ -127,9 +162,9 @@ if ((${BCS_FIXTURES_JSON:-0})); then
     begin_test 'JSON mode: envelope shape on fixture 01'
     exit_code=0
     output=$(timeout "$FIXTURE_TIMEOUT_S" \
-      "$BCS_CMD" check -j --no-cache -m "$fixture_model" -e low --quiet -- "$json_fixture" 2>/dev/null) \
+      "$FIXTURES_CMD" check -j --no-cache -m "$fixture_model" -e low --quiet -- "$json_fixture" 2>/dev/null) \
       || exit_code=$?
-    if [[ -n $output ]] && ((exit_code != 124)); then
+    if [[ -n $output ]] && ((exit_code <= 1)); then
       # Validate top-level shape.
       if jq -e '.source == "bcs" and .meta.backend != null and (.comments | type == "array")' \
           <<< "$output" >/dev/null 2>&1; then
@@ -156,14 +191,13 @@ if ((${BCS_FIXTURES_JSON:-0})); then
         printf '  %s✓%s BCS0101 reported\n' "$GREEN" "$NC"
         TESTS_PASSED+=1
       else
-        printf '    %s▲%s BCS0101 not reported (backend-dependent; inconclusive)\n' \
+        printf '    %s▲%s BCS0101 not reported (backend-dependent; not counted as passed)\n' \
           "$YELLOW" "$NC"
-        TESTS_PASSED+=1
       fi
     else
-      printf '    %s▲%s JSON-mode check returned empty or timed out\n' \
+      printf '    %s▲%s JSON-mode check returned empty or timed out (not counted as passed)\n' \
         "$YELLOW" "$NC"
-      TESTS_PASSED+=1
+      ((REQUIRE_BACKEND)) && TESTS_FAILED+=1 ||:
     fi
   fi
 fi

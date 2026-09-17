@@ -60,11 +60,15 @@ pragma — or any fixture under `clean/` — expects zero findings.
 ./tests/accuracy/bcs-accuracy-score.sh tests/fixtures/01-*.sh tests/fixtures/clean/01-*.sh
 ```
 
-Backend selection mirrors `tests/test-check-fixtures.sh`: sniff order
-`claude → ollama → anthropic → openai → google`, picking the cheapest alias for
-whichever is reachable (`claude-code:haiku` / `qwen-small` / `haiku` /
-`gpt5-mini` / `flash-lite`). With no backend reachable it **skips gracefully**
-(exit 0); set `BCS_FIXTURES_REQUIRE_BACKEND=1` to fail instead.
+Backend selection mirrors `tests/test-check-fixtures.sh`: probe order, fastest
+first, `openai → google → anthropic → ollama → claude`, picking the cheapest
+alias for whichever is reachable (`gpt5-mini` / `flash-lite` / `haiku` /
+`qwen-small` / `claude-code:haiku`). With no backend reachable it **skips
+gracefully** (exit 0); set `BCS_FIXTURES_REQUIRE_BACKEND=1` to fail instead.
+
+Every check runs with `--no-cache`, so each of the N repetitions is a fresh LLM
+round-trip. Served from the result cache, runs 2..N would replay run 1 and the
+stability score would always read 1.0.
 
 ### Environment / flags
 
@@ -76,6 +80,7 @@ whichever is reachable (`claude-code:haiku` / `qwen-small` / `haiku` /
 | `-o DIR` | `BCS_SCORE_OUTDIR` | this dir | report output directory |
 | — | `BCS_SCORE_TIMEOUT` | `150` | per-check timeout (seconds) |
 | — | `BCS_FIXTURES_REQUIRE_BACKEND` | `0` | fail (not skip) when no backend |
+| — | `BCS_SCORE_CMD` | `../../bcs` | checker to run (test seam for `tests/test-fixtures-gate.sh`) |
 
 ## Output
 
