@@ -20,6 +20,13 @@ tests/fixtures/clean/          fully compliant scripts (empty expect pragma);
                                any finding is a false positive
 ```
 
+The gated corpus holds 33 fixtures and covers every core-tier rule that a
+script's text can violate. `clean/` holds three minimal scripts (01-03) and
+three realistic ones (04-06) built from the constructs that checkers have
+historically mis-flagged: locals assigned well after their declaration,
+top-level logic with no functions, a `*)` case arm, argument parsing outside
+`main()`, `&& ... ||:` chains, `${SCRIPT_PATH##*/}`, and a present `#fin`.
+
 Only the top-level `*.sh` files form the `test-check-fixtures.sh` recall gate.
 The `probabilistic/` and `clean/` subdirectories are read by the accuracy scorer
 (`tests/accuracy/bcs-accuracy-score.sh`; see `../accuracy/README.md`). The
@@ -52,14 +59,21 @@ via the auto-discovery of `test-*.sh` files. `make test` (an alias of
 Every file under `tests/fixtures/` MUST:
 
 1. Use shebang `#!/usr/bin/env bash` (so the fixture itself parses as
-   a real script; only its *body* carries the violation).
+   a real script; only its *body* carries the violation). The one exception
+   is `25-missing-shebang.sh`, whose violation *is* the absent shebang; it
+   opens with `# shellcheck shell=bash` so the linter still works.
 2. Carry a **`bcs-fixture-expect:`** pragma in the first 15 lines,
    listing one or more BCS codes separated by whitespace:
 
    ```bash
    # bcs-fixture-expect: BCS0202
-   # bcs-fixture-expect: BCS0503 BCS0903
+   # bcs-fixture-expect: BCS0110 BCS0603
    ```
+
+   Expect the code the standard names as **canonical** for the defect, not
+   every rule that mentions it. Where rule text says "cite BCSxxxx, not this
+   rule", the fixture expects BCSxxxx alone: expecting the deferring rules too
+   rewards citation noise and fails a checker that follows the standard.
 
 3. Carry a **`bcs-fixture-description:`** pragma on its own line
    explaining the intentional violation in plain English:
@@ -123,8 +137,8 @@ from the BCS LLM checker.
 - **Runtime.** It depends on the backend. The September 2026 audit measured
   about 47 s per fixture on the Claude Code CLI backend, roughly 19 minutes
   for the gated corpus. API backends are far quicker, which is why the probe
-  tries them first: `gpt5-mini` at `-e low` ran the 24 fixtures in 98 s on
-  2026-09-17. Google's free tier allows 20 requests per model per day, fewer
+  tries them first: `gpt5-mini` at `-e low` ran the then 24 fixtures in 98 s on
+  2026-09-17, about 4 s each. Google's free tier allows 20 requests per model per day, fewer
   than one pass of the corpus, so a free-tier key cannot run this gate. Either way it is too slow for the inner loop, so it runs
   under `make test-full`, never under `make test`.
 - **Backend variance.** Different backends/models produce different
