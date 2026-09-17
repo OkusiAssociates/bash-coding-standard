@@ -19,7 +19,9 @@ shopt -s inherit_errexit extglob nullglob
 declare -rx PATH="$HOME"/.local/bin:/usr/local/bin:/usr/bin:/bin
 
 # Script metadata
-declare -r VERSION=2.0.1
+### VERSION managed by version
+declare -r VERSION=2.0.2
+###
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
