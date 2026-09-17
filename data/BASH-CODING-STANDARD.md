@@ -687,7 +687,7 @@ Quote variable portions separately from literal path components: write `"$PREFIX
 
 **Tier:** core
 
-Use double quotes when strings include command substitution.
+Write command substitution as `$(...)`, never with backticks. Use double quotes when strings include command substitution.
 
 ```bash
 # correct
@@ -696,12 +696,21 @@ result=$(git describe --tags)        # simple assignment, quotes optional
 VERSION="$(git describe)".beta       # quotes optional in assignments, even with concatenation
 echo "$result"                       # always quote when using
 
+# correct — $(...) nests without escaping
+owner=$(stat -c %U -- "$(realpath -- "$file")")
+
 # wrong
 echo Time: $(date)                   # unquoted substitution word-splits and globs
 echo $result                         # unquoted use of substitution result
+
+# wrong — backticks
+now=`date +%s`
+owner=`stat -c %U -- "\`realpath -- "$file"\`"`   # nesting needs escaped backticks
 ```
 
-This rule owns unquoted use of command substitutions and their results at core severity; BCS0307 lists the same pattern only as a catch-all summary and does not own the finding.
+**Backticks are forbidden.** The backtick form is legacy syntax: it cannot nest without backslash-escaping the inner backticks, it treats backslashes differently from `$(...)`, and it is easily misread as a single quote. Every backtick command substitution is a finding under this rule, quoted or not. A `#shellcheck disable=SC2006` directive does not excuse it; only `#bcscheck disable=BCS0302` does. A literal backtick that is not a command substitution -- inside single quotes, a quoted heredoc, or a comment -- is not a finding.
+
+This rule owns backtick substitution, and unquoted use of command substitutions and their results, at core severity. BCS0307 lists the unquoted pattern only as a catch-all summary and does not own the finding; BCS1205 (builtins over external commands) does not own backticks.
 
 ## BCS0303 Quoting in Conditionals
 
