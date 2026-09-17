@@ -247,6 +247,8 @@ _ensure_curl() {
 
 **Tier:** core
 
+**Scope.** A version guard is **optional**. BCS targets Bash 5.2+, and a script that runs only where that floor is assured (a managed fleet, a container, a CI image) needs no guard; its absence is **never** a finding. This rule governs how a version check is written and where it is placed **when a script has one**. Add a guard when the script may be run on hosts you do not control, or when it needs a floor above 5.2.
+
 Compare `BASH_VERSINFO` elements per component with short-circuit on the first differing index. Compound expressions like `((BASH_VERSINFO[0] >= 5 && BASH_VERSINFO[1] >= 2))` are wrong: they reject Bash 6.0 (major=6 satisfies, but minor=0 does not) even though 6.0 is newer than 5.2.
 
 Provide two predicates: a pure test (`bash_at_least`) and an exit-on-fail wrapper (`require_bash`).
@@ -262,8 +264,8 @@ bash_at_least() {
 
 require_bash() {
   bash_at_least "$@" && return 0
-  local want="${1:-0}.${2:-0}.${3:-0}"
-  local have="${BASH_VERSINFO[0]}.${BASH_VERSINFO[1]}.${BASH_VERSINFO[2]}"
+  local -- want="${1:-0}.${2:-0}.${3:-0}"
+  local -- have="${BASH_VERSINFO[0]}.${BASH_VERSINFO[1]}.${BASH_VERSINFO[2]}"
   die 2 "requires Bash >= ${want@Q} (have ${have@Q})"
   # OR:
   # printf '%s: requires Bash >= %s (have %s)\n' "${FUNCNAME[0]}" "$want" "$have" >&2
@@ -280,9 +282,11 @@ require_bash() {
 [[ $BASH_VERSION > "5.2" ]]   # "5.10" < "5.2" under string compare
 ```
 
+A finding under this rule requires a version check to exist in the script. Violations: a compound `&&` comparison of `BASH_VERSINFO` components; a string comparison of `BASH_VERSION`; a guard placed after `shopt -s inherit_errexit` or other version-dependent code. Not a violation: having no guard.
+
 `BASH_VERSINFO` indices: `[0]`=major, `[1]`=minor, `[2]`=patch, `[3]`=build, `[4]`=release status, `[5]`=machine type. Always compare integers per element; never compare `BASH_VERSION` as a string.
 
-Call `require_bash` at script start, after `set -euo pipefail` (safe on any Bash) but before `shopt -s inherit_errexit` and any other version-dependent code:
+When a script has a guard, call `require_bash` at script start, after `set -euo pipefail` (safe on any Bash) but before `shopt -s inherit_errexit` and any other version-dependent code:
 
 ```bash
 #!/usr/bin/bash
@@ -291,7 +295,7 @@ require_bash 5 2
 shopt -s inherit_errexit
 ```
 
-**Important: the guard must precede any version-dependent construct, including `shopt -s inherit_errexit` itself (which requires Bash 4.4+).** If `shopt -s inherit_errexit` runs before the version check on a Bash 3 host, the `shopt` line fails first with a cryptic `invalid shell option name`, `set -e` exits the script, and the helpful version message is never reached.
+**Placement is what this rule enforces: a guard, if present, must precede every version-dependent construct, including `shopt -s inherit_errexit` itself (which requires Bash 4.4+).** If `shopt -s inherit_errexit` runs before the version check on a Bash 3 host, the `shopt` line fails first with a cryptic `invalid shell option name`, `set -e` exits the script, and the helpful version message is never reached.
 
 ### Quick one-liner form
 
