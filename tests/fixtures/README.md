@@ -82,6 +82,15 @@ Every file under `tests/fixtures/` MUST:
    # bcs-fixture-description: Function variables not declared local; pollutes global scope.
    ```
 
+   ◉ **The checker never sees either pragma.** `bcs check` blanks every
+   `# bcs-fixture-<name>:` line before the script reaches a backend (the line
+   stays, empty, so line numbers hold) and the result cache is keyed on that
+   blanked text. The pragmas are labels for the harness and for people; they
+   cannot help the model. Measured 2026-09-17 on `gpt5-mini -e low`, 41
+   fixtures x 3: with the pragmas visible recall was 1.000 and clean false
+   positives 0 in 18 runs; blanked, 0.546 and 51. Do not describe the defect
+   in a body comment either -- that leaks the same way and is not blanked.
+
 4. Demonstrate **one primary violation** from the expected code list.
    Extra violations are tolerated — the harness uses a superset
    assertion — but the fixture must stay minimal enough to keep the

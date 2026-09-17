@@ -672,6 +672,14 @@ _checker_standard() {
 }
 
 # True when the text-mode answer $1 holds a finding tagged [ERROR].
+# Print FILE as the checker may see it. A test fixture names its own answer in
+# `# bcs-fixture-expect:` / `# bcs-fixture-description:` header lines; shown to
+# the model they are the verdict (gpt5-mini -e low: recall 1.000 visible, 0.546
+# blanked). Blank them rather than delete them: line numbers must hold.
+_checker_script() {
+  sed -E 's/^#[[:space:]]*bcs-fixture-[a-z-]+:.*$//' -- "$1"
+}
+
 _has_error_finding() {
   local -- line
   while IFS= read -r line; do
@@ -1196,12 +1204,17 @@ _llm_claude_cli() {
   # return, not die: only a return fires the RETURN trap that removes the dir.
   _checker_standard "$bcs_file" > "$std_file" \
     || { error 'Failed to write the checker standard'; return 5; }
+  # Likewise the script: the CLI reads the file itself, so point it at the
+  # checker's copy (fixture pragmas blanked), never at the original.
+  local -- script_copy="$check_dir"/${script_file##*/}
+  _checker_script "$script_file" > "$script_copy" \
+    || { error 'Failed to write the checker copy of the script'; return 5; }
 
   local -- prompt
   if ((${BCS_JSON_MODE:-0})); then
     prompt="You are a Bash script compliance validator emitting structured JSON output.
 
-Analyze @$script_file against the Bash Coding Standard defined in @$std_file.
+Analyze @$script_copy against the Bash Coding Standard defined in @$std_file.
 
 $tier_instr
 
@@ -1244,7 +1257,7 @@ If there are no findings, return []."
   else
     prompt="You are a Bash script compliance validator.
 
-Analyze @$script_file against the Bash Coding Standard defined in @$std_file.
+Analyze @$script_copy against the Bash Coding Standard defined in @$std_file.
 
 $tier_instr
 
@@ -1639,7 +1652,8 @@ cmd_check() {
     cache_key=$({ printf '%s\n' "$VERSION" "$backend" "$model" "$effort" \
                     "$strict" "$json_output" "$tier_filter" "$min_tier_filter" \
                     "$policy_text" "$shellcheck_block"
-                  cat -- "$script_file" "$bcs_file"; } | sha256sum) ||:
+                  _checker_script "$script_file"
+                  cat -- "$bcs_file"; } | sha256sum) ||:
     cache_key=${cache_key%% *}
     if [[ -n $cache_key ]]; then
       cache_file=$cache_dir/$cache_key
@@ -1671,7 +1685,7 @@ cmd_check() {
     [[ -z $policy_text ]] || sys_prompt+=$'\n'"$policy_text"
 
     # Prepend line numbers so the model can reference lines accurately
-    numbered_script=$(nl -ba -w4 -s': ' -- "$script_file")
+    numbered_script=$(_checker_script "$script_file" | nl -ba -w4 -s': ')
 
     # Effort-level-specific guidance
     case $effort in

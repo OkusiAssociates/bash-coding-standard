@@ -13,6 +13,14 @@ against these numbers, not against memory.
 
 ## Status
 
+▲ **The `gpt5-mini` / `low` baseline below is superseded and must not be used
+as a gate.** It was measured while `bcs check` still sent each fixture's
+`bcs-fixture-expect:` / `bcs-fixture-description:` header to the model, so the
+model was shown the answer. The same configuration with those lines blanked
+(which `bcs check` now always does) scored recall 0.546, clean false positives
+51 in 18 runs, stability 0.694, against 1.000 / 0 / 1.000 here. A fresh
+baseline has not been taken yet; until it is, there is no valid baseline.
+
 | Alias / effort | Backend | State |
 |----------------|---------|-------|
 | `gpt5-mini` / `low` | OpenAI | ✓ measured 2026-09-17, `bcs` 2.0.2, 41 fixtures × 3 runs, 506 s. Refreshed the same day after the standard's examples were corrected and fixtures 06 and clean 01-03 changed |

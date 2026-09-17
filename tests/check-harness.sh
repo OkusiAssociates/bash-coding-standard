@@ -13,6 +13,7 @@
 #   PAYLOAD_FILE      request body of the last curl call
 #   CLI_ARGV_FILE     argv of the last claude call, one argument per line
 #   CLI_STANDARD_FILE copy of the standard the last claude call was pointed at
+#   CLI_SCRIPT_FILE   copy of the script the last claude call was pointed at
 #   PRE_HOOK          command run inside the check subshell before cmd_check
 #   CHECK_TARGET      script handed to cmd_check
 [[ ${BASH_SOURCE[0]} != "$0" ]] || { >&2 echo "Error: ${0@Q} must be sourced"; exit 1; }
@@ -40,7 +41,8 @@ declare -x XDG_CACHE_HOME="$SANDBOX"/cache XDG_STATE_HOME="$SANDBOX"/state \
            XDG_CONFIG_HOME="$SANDBOX"/config BCS_CONF_DIR="$SANDBOX"/conf
 mkdir -p "$XDG_CACHE_HOME" "$XDG_STATE_HOME" "$XDG_CONFIG_HOME" "$BCS_CONF_DIR"
 declare -rx PAYLOAD_FILE="$SANDBOX"/payload.json CLI_ARGV_FILE="$SANDBOX"/cli-argv.txt \
-            CLI_STANDARD_FILE="$SANDBOX"/cli-standard.md
+            CLI_STANDARD_FILE="$SANDBOX"/cli-standard.md \
+            CLI_SCRIPT_FILE="$SANDBOX"/cli-script.sh
 unset BCS_MODEL BCS_EFFORT BCS_STRICT BCS_JSON BCS_CACHE BCS_TIER BCS_MIN_TIER \
       BCS_DEBUG BCS_RESPONSE_DUMP BCS_OLLAMA_NUM_CTX BCS_OLLAMA_KEEP_ALIVE
 
@@ -58,14 +60,16 @@ curl() {
   printf '%s\n200\n' "$MOCK_BODY"
 }
 
-# Mock Claude Code CLI: keep argv and the @-referenced standard (the real file
-# sits in a temp dir that is gone by the time the suite looks), then replay
-# the canned answer.
+# Mock Claude Code CLI: keep argv and the @-referenced standard and script (the
+# real files sit in a temp dir that is gone by the time the suite looks), then
+# replay the canned answer.
 claude() {
-  local -- std_ref=''
+  local -- std_ref='' script_ref=''
   printf '%s\n' "$@" > "$CLI_ARGV_FILE"
   [[ "$*" =~ @([^[:space:]]*BASH-CODING-STANDARD\.md) ]] && std_ref=${BASH_REMATCH[1]} ||:
   [[ ! -r $std_ref ]] || cp -- "$std_ref" "$CLI_STANDARD_FILE"
+  [[ "$*" =~ Analyze\ @([^[:space:]]+) ]] && script_ref=${BASH_REMATCH[1]} ||:
+  [[ ! -r $script_ref ]] || cp -- "$script_ref" "$CLI_SCRIPT_FILE"
   [[ -z $MOCK_CLI_STDERR ]] || >&2 echo "$MOCK_CLI_STDERR"
   [[ -z $MOCK_CLI_OUTPUT ]] || echo "$MOCK_CLI_OUTPUT"
   return "$MOCK_CLI_RC"
@@ -85,6 +89,7 @@ run_check() {
   : > "$PAYLOAD_FILE"
   : > "$CLI_ARGV_FILE"
   : > "$CLI_STANDARD_FILE"
+  : > "$CLI_SCRIPT_FILE"
   ( "$PRE_HOOK"; cmd_check --no-shellcheck "$@" "$CHECK_TARGET" ) \
     >"$SANDBOX"/out 2>"$SANDBOX"/err &
   pid=$!

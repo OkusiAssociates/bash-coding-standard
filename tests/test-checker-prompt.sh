@@ -73,6 +73,60 @@ assert_prompt 'CLI @file' "$(< "$CLI_STANDARD_FILE")"
 assert_not_contains "$(< "$CLI_ARGV_FILE")" "@$STANDARD" \
   'CLI is not pointed at the full assembled standard' ||:
 
+# ---- Fixture pragmas never reach the model ----
+# The harness target, fixture 02, names its own answer in its header
+# (`# bcs-fixture-expect: BCS0202`). Measured 2026-09-17 on gpt5-mini -e low:
+# with those lines visible recall 1.000, blanked 0.546.
+begin_test '_checker_script'
+declare -- BLIND=''
+BLIND=$(_checker_script "$CHECK_TARGET")
+assert_contains "$(< "$CHECK_TARGET")" 'bcs-fixture-expect: BCS0202' 'target carries the pragma' ||:
+assert_not_contains "$BLIND" 'bcs-fixture-' 'pragma lines blanked' ||:
+assert_equal "$(wc -l < "$CHECK_TARGET")" "$(wc -l <<< "$BLIND")" 'line count unchanged' ||:
+assert_equal "$(sed -n '8p' "$CHECK_TARGET")" "$(sed -n '8p' <<< "$BLIND")" 'line 8 still line 8' ||:
+assert_equal "$(< "$TEST_DIR"/accuracy/cln)" "$(_checker_script "$TEST_DIR"/accuracy/cln)" \
+  'a script without pragmas passes through unchanged' ||:
+
+begin_test 'pragmas hidden from API backends'
+# assert_blind LABEL -> the request body neither names the pragma nor its code
+assert_blind() {
+  assert_not_contains "$(< "$PAYLOAD_FILE")" 'bcs-fixture-' "$1: no pragma in the request" ||:
+  assert_not_contains "$(< "$PAYLOAD_FILE")" 'pollutes global scope per BCS0202' \
+    "$1: no fixture description in the request" ||:
+}
+reset_cache; run_check "$OPENAI_OK" -m gpt-5
+assert_blind openai
+#shellcheck disable=SC2016  # literal $1: the fixture's own line 8
+assert_contains "$(jq -r '.messages[1].content' "$PAYLOAD_FILE")" '   8:   filename=$1' \
+  'openai: script still numbered from the original lines' ||:
+reset_cache; run_check "$GOOGLE_OK" -m gemini-2.5-flash;      assert_blind google
+reset_cache; run_check "$ANTHROPIC_OK" -m claude-sonnet-4-6;  assert_blind anthropic
+reset_cache; run_check "$OLLAMA_OK" -m qwen3.5:9b;            assert_blind ollama
+reset_cache; run_check "$OPENAI_OK" -m gpt-5 -j;              assert_blind 'openai -j'
+
+begin_test 'pragmas hidden from the CLI backend'
+reset_cache
+MOCK_CLI_OUTPUT='No BCS violations found.'
+run_check '' -m claude-code:haiku
+assert_not_contains "$(< "$CLI_ARGV_FILE")" "@$CHECK_TARGET" 'CLI is not pointed at the original script' ||:
+assert_contains "$(< "$CLI_SCRIPT_FILE")" 'process_file()' 'CLI is pointed at a readable copy' ||:
+assert_not_contains "$(< "$CLI_SCRIPT_FILE")" 'bcs-fixture-' 'CLI copy has the pragmas blanked' ||:
+assert_equal "$(wc -l < "$CHECK_TARGET")" "$(wc -l < "$CLI_SCRIPT_FILE")" 'CLI copy keeps the line count' ||:
+
+begin_test 'cache keys on what the model saw'
+# A hand-blanked twin builds the same prompt, so it must hit the same entry;
+# were the key still the raw file, a leak-era answer would be served again.
+declare -- TWIN="$SANDBOX"/${CHECK_TARGET##*/}
+sed 's/^# bcs-fixture-.*$//' "$CHECK_TARGET" > "$TWIN"   # not via the helper under test
+reset_cache; run_check "$OPENAI_OK" -m gpt-5
+assert_equal 1 "$(cache_count)" 'fixture run writes one entry' ||:
+declare -- ORIG_TARGET=$CHECK_TARGET
+CHECK_TARGET=$TWIN
+run_check '' -m gpt-5
+assert_equal 0 "$RC" 'blanked twin is served from that entry' ||:
+assert_equal 1 "$(cache_count)" 'and writes no second entry' ||:
+CHECK_TARGET=$ORIG_TARGET
+
 # ---- Text-mode output contract: identical in both prompt builders ----
 # assert_contract LABEL PROMPT
 assert_contract() {
