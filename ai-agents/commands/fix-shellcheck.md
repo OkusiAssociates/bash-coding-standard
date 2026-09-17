@@ -49,9 +49,12 @@ If `$ARGUMENTS` is empty, ask the user which file to fix.
 Canonical fix patterns:
 
 ```bash
-# SC2155 -- split declare + assign so the exit code is visible
-declare -r FOO
+# SC2155 -- declare, assign (exit code now visible), then readonly (BCS0205).
+# Never `declare -r FOO` first: the assignment then dies, "readonly variable".
+# Script metadata (SCRIPT_PATH) keeps its one-line form with a disable (BCS0103).
+declare -- FOO
 FOO=$(some_command)
+readonly FOO
 
 # SC2086 -- quote to block globbing and word splitting
 echo "$var"
@@ -79,14 +82,16 @@ declare -r VAR=...
 # shellcheck disable=SC2317 # reached via trap EXIT
 cleanup() { ...; }
 
-# SC2004 -- drop the $ inside (( ))
-((count += 1))
+# SC2004 -- drop the $ inside (( )) and $(( )); increments are count+=1 (BCS0505)
+declare -i count=0 width=0
+count+=1
+width=$((count * 2))
 
 # SC2068 -- quote array expansions
 printf '%s\n' "${files[@]}"
 ```
 
-## Disable Rules (BCS1204)
+## Disable Rules (BCS1206)
 
 - Every `# shellcheck disable=SC####` MUST carry a one-line reason comment.
 - Scope disables to the specific line, block, or function -- never blanket-disable at the
