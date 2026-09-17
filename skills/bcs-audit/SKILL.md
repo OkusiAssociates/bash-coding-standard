@@ -24,9 +24,12 @@ description: Opt-in audit running the REAL shellcheck + bcscheck CLI binaries in
    - `bcscheck <file>`
 
 5. **Tag findings by severity:**
-   - **ERROR** — shellcheck `error:` lines; BCS hard-rule violations.
-   - **WARN** — shellcheck `warning:` / `note:` (style); BCS soft-rule violations.
-   - **INFO** — `info:` notes, advisory BCS hints.
+   - **bcscheck** prints its own tag on every finding line
+     (`[ERROR|WARN] BCSxxxx line N: …`). Take the tag as printed; never
+     re-grade a finding. It has no INFO level. The answer
+     `No BCS violations found.` means zero findings. Lines prefixed `bcs: ◉`
+     are diagnostics (backend, elapsed, exit), not findings.
+   - **shellcheck**: `error:` → ERROR; `warning:` → WARN; `note:` → INFO.
 
 6. **Cite every finding** as `<file>:<line> — <code> — <message>`. Quote messages exactly as emitted by the tool — do not paraphrase.
 
@@ -35,7 +38,7 @@ description: Opt-in audit running the REAL shellcheck + bcscheck CLI binaries in
    | file | ERROR | WARN | INFO |
    |------|------:|-----:|-----:|
 
-8. **Exit code reporting.** Note shellcheck/bcscheck exit codes per file. Non-zero → flag in summary.
+8. **Exit code reporting.** Note shellcheck/bcscheck exit codes per file. Non-zero → flag in summary. For bcscheck, 0 = no ERROR finding, 1 = at least one ERROR finding, anything higher = the check itself failed (backend, timeout, empty answer) and is **not** a verdict on the script.
 
 ## Constraints
 - Do NOT auto-fix. Report only.
