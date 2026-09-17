@@ -101,5 +101,15 @@ reset_cache; run_check "$OPENAI_OK" -m gpt-5 -e xhigh
 assert_not_contains "$(jq -r '.messages[1].content' "$PAYLOAD_FILE")" 'detailed reasoning' \
   '-e xhigh no longer asks for prose the contract forbids' ||:
 
+# ---- Default effort: medium, on evidence ----
+# -e low is 4-5x faster and perfect on the fixture corpus, but on a compliant
+# real-size script it raised false [ERROR] findings in 5 of 5 runs (medium: 0
+# of 5). See tests/accuracy/LLM-ACCURACY.md, "Effort: low against medium".
+begin_test 'default effort'
+reset_cache; run_check "$OPENAI_OK" -m gpt-5
+assert_equal '8000 low' \
+  "$(jq -r '"\(.max_completion_tokens) \(.reasoning_effort)"' "$PAYLOAD_FILE")" \
+  'no -e -> medium (8000 output tokens, reasoning_effort=low)' ||:
+
 print_summary 'checker-prompt'
 #fin

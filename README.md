@@ -221,11 +221,19 @@ family and on `gemini-3.5-flash*`. Other models silently ignore the budget.
 | `xhigh` | 40000 | 12000 | high |
 | `max` | 64000 | 16000 | high |
 
+`medium` is the default on evidence, not habit. `-e low` runs with no thinking
+budget (`reasoning_effort=minimal` on OpenAI): it is 4-5 times faster and
+scored perfectly on the fixture corpus, but on a compliant 243-line script it
+raised false `[ERROR]` findings, and so exit 1, in 5 of 5 runs where `medium`
+raised none. Keep `low` for short scripts; never gate a build on it. Numbers:
+[`tests/accuracy/LLM-ACCURACY.md`](tests/accuracy/LLM-ACCURACY.md).
+
 **Recommended defaults**
 
 | Use case | Setting |
 |----------|---------|
 | Quick sanity check | `-m gpt5 -e medium` |
+| CI / pre-push gate | `--tier core` at the default `-e medium` |
 | Daily development | `-m sonnet -e medium` |
 | Pre-commit review | `-m sonnet -e high` |
 | Thorough audit | `-m sonnet -e max` |

@@ -91,12 +91,22 @@ size. Rough per-file figures at `-e low` (your mileage will vary):
 
 Effort scales latency and cost up sharply: `-e high`/`xhigh`/`max` and larger
 models (`sonnet`, `opus`, `gpt5`, `pro`) can take **30–600s** per file. For a
-pre-push gate, prefer the cheapest alias at `-e low` and `--tier core` so only
-correctness-critical rules block the push.
+pre-push gate, use the cheapest alias with `--tier core` at the default
+`-e medium`, so only correctness-critical rules block the push.
+
+▲ Do not gate on `-e low`. It runs with no thinking budget, so the model prints
+findings it has not reasoned through. Measured on `gpt5-mini`, 2026-09-17, this
+exact recipe (`--strict --tier core`) blocked the push on a *compliant*
+243-line script in 5 of 5 runs at `-e low` (3.7 s each) and in 0 of 5 at
+`-e medium` (17.2 s each). `-e low` is reliable only on short scripts, which is
+why the fixture gate can use it.
 
 ## Quantify before you trust
 
-Before relying on `bcs check` as a hard gate, measure it on your chosen backend:
+Before relying on `bcs check` as a hard gate, measure it on your chosen backend.
+The labelled corpus holds short scripts (17–90 lines), so also run the gate's
+own command a few times on a real, compliant script of yours and count the
+false exit 1s: the corpus cannot show you that failure mode.
 
 ```bash
 ./tests/accuracy/bcs-accuracy-score.sh -m haiku -e low -n 3

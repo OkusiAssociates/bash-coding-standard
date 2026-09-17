@@ -3300,7 +3300,7 @@ The backend is resolved entirely from the (alias-expanded) model name — there 
 - **Override flag:** `-e`, `--effort`
 - **Consumed:** `cmd_check()` initialiser
 
-Effort controls both prompt guidance and the output token budget (`EFFORT_TOKENS` array: `low=4000`, `medium=8000`, `high=24000`, `xhigh=40000`, `max=64000`). `min` is normalised to `low` at parse time. `max` should be avoided for Ollama cloud models (hallucination risk). Effort has no effect on the Claude Code CLI backend, which always runs at the CLI's lowest native effort: the CLI turns its own effort level into a thinking budget, and `medium` there cost 8-12 times the wall time of an API backend for no measured gain.
+Effort controls both prompt guidance and the output token budget (`EFFORT_TOKENS` array: `low=4000`, `medium=8000`, `high=24000`, `xhigh=40000`, `max=64000`). `min` is normalised to `low` at parse time. `max` should be avoided for Ollama cloud models (hallucination risk). `medium` is the default on evidence: `low` sends no thinking budget (`reasoning_effort=minimal` on OpenAI), which is fast and accurate on short scripts but raised false `[ERROR]` findings on a compliant real-size script in every measured run. Do not gate a build on `low`. Effort has no effect on the Claude Code CLI backend, which always runs at the CLI's lowest native effort: the CLI turns its own effort level into a thinking budget, and `medium` there cost 8-12 times the wall time of an API backend for no measured gain.
 
 ### `BCS_STRICT`
 

@@ -341,7 +341,9 @@ ${BOLD}Effort Levels:$NC
   and on gemini-3.5-flash*. Ollama ignores both. The claude-code CLI backend
   ignores -e altogether: it always runs at the CLI's lowest native effort.
 
-  low         Clear violations only (4k tokens, no thinking; alias: min)
+  low         Clear violations only (4k tokens, no thinking; alias: min).
+              Short scripts only: on real-size scripts it raised false [ERROR]
+              findings in every measured run. Do not gate a build on it.
   medium      Violations and significant warnings (8k tokens, 2k thinking)
   high        All violations and warnings (24k tokens, 6k thinking)
   xhigh       Comprehensive audit with detailed reasoning (40k tokens, 12k thinking)

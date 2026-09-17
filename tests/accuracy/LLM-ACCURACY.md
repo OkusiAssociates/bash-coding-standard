@@ -50,6 +50,49 @@ violation fixture as a false positive, although most are genuine secondary
 issues, so it understates true precision. **Stability** is the share of
 expected (fixture, rule) pairs that were reported on either every run or none.
 
+### Effort: low against medium (2026-09-17)
+
+Question: can `-e low` become the default? Answer: **no**. `gpt5-mini`, `bcs`
+2.0.2 with the output contract; Google, Anthropic and Ollama not measured.
+
+On the labelled corpus the two are indistinguishable where it matters, and low
+is 2.6 times quicker:
+
+| Effort | Recall | Clean false positives | Stability | Wall (123 checks) |
+|--------|--------|-----------------------|-----------|-------------------|
+| `low` | 1.000 | 0 in 18 runs | 1.000 | 457 s |
+| `medium` | 1.000 | 8 in 18 runs | 1.000 | 1217 s |
+
+Five of medium's eight were true: clean fixtures 01-03 printed a bare version
+string and broke BCS0802, which `low` never reports because it skips style
+findings. Those fixtures have been corrected. The other three were checker
+errors (BCS0305 and BCS0301 misapplied, BCS0409 invented).
+
+On real scripts the picture reverses. Five runs each:
+
+| Script | Effort | Avg time | Avg output tokens | False exit 1 | `[ERROR]` per run |
+|--------|--------|----------|-------------------|--------------|-------------------|
+| `cln` (compliant, 243 lines) | `low` | 4.9 s | 186 | **5 of 5** | 3.8 |
+| `cln` | `medium` | 22.3 s | 1624 | 0 of 5 | 0.0 |
+| `cln`, CI recipe `--strict -T core` | `low` | 3.7 s | | **5 of 5** | |
+| `cln`, CI recipe `--strict -T core` | `medium` | 17.2 s | | 0 of 5 | |
+| `which` (111 lines) | `low` | 3.9 s | 159 | | 2-4 codes, little agreement between runs |
+| `which` | `medium` | 16.7 s | 1198 | | BCS0109 in 5 of 5 |
+
+At `reasoning_effort=minimal` the model has no budget in which to reject a
+candidate finding, so it prints it, sometimes contradicting itself within the
+line ("readarray from process substitution is correct but ..."), still tagged
+`[ERROR]`. The corpus is blind to this: its scripts run to 17-90 lines.
+`medium` therefore stays the default, `tests/test-checker-prompt.sh` pins it,
+and the CI guide no longer recommends gating on `low`.
+
+Open follow-up: a `real/` corpus class whose assertion is "no `[ERROR]`",
+seeded with `cln`, scored rather than gated (medium is not perfectly quiet
+either), so that a later prompt or effort change is measured on real-size
+input as well.
+
+---
+
 ## Test Subjects
 
 | Script | Lines | Complexity | Structure | Key traits |

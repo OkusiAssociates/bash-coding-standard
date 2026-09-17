@@ -134,10 +134,12 @@ are unreachable through
 .TP
 .BR \-e ", " \-\-effort " " \fILEVEL\fR
 Analysis depth:
-.BR low " (clear violations only; alias " min "),"
+.BR low " (clear violations only; alias " min ";"
+short scripts only \(em on real-size scripts it raised false [ERROR] findings
+in every measured run, so do not gate a build on it),
 .BR medium " (violations and significant warnings; default),"
 .BR high " (all violations and warnings),"
-.BR xhigh " (comprehensive audit with detailed reasoning),"
+.BR xhigh " (comprehensive audit, every finding however minor),"
 .BR max " (exhaustive line-by-line audit)."
 Controls output token budget AND thinking/reasoning depth on capable models:
 Anthropic
