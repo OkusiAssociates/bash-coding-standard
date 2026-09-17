@@ -3247,7 +3247,7 @@ See also: [Date Formatting Reference](../benchmarks/date_reference.md) — full 
 
 # Section 13: Environment Configuration
 
-This section is the canonical reference for environment variables read by the `bcs` toolchain itself. Unlike sections 01–12, it documents the toolkit's runtime configuration surface — not coding rules — and contributes no `BCS####` codes to `bcs codes`.
+This section is the canonical reference for environment variables read by the `bcs` toolchain itself. Unlike sections 01–12, it documents the toolkit's runtime configuration surface — not coding rules — and contributes no `BCS####` codes to `bcs codes`. For the same reason `bcs check` leaves this section out of the copy of the standard it shows the checker; `bcs display` and `bcs generate` keep it.
 
 Variables fall into six families:
 

@@ -122,8 +122,10 @@ from the BCS LLM checker.
 
 - **Runtime.** It depends on the backend. The September 2026 audit measured
   about 47 s per fixture on the Claude Code CLI backend, roughly 19 minutes
-  for the gated corpus; API backends are far quicker, which is why the probe
-  tries them first. Either way it is too slow for the inner loop, so it runs
+  for the gated corpus. API backends are far quicker, which is why the probe
+  tries them first: `gpt5-mini` at `-e low` ran the 24 fixtures in 98 s on
+  2026-09-17. Google's free tier allows 20 requests per model per day, fewer
+  than one pass of the corpus, so a free-tier key cannot run this gate. Either way it is too slow for the inner loop, so it runs
   under `make test-full`, never under `make test`.
 - **Backend variance.** Different backends/models produce different
   finding sets. The suite pins effort `low` and the cheapest alias for

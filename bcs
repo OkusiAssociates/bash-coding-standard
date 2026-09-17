@@ -631,6 +631,24 @@ _dump_response() {
   printf '%s\n' "$1" > "$BCS_RESPONSE_DUMP" 2>/dev/null ||:
 }
 
+# Print the standard $1 as the checker should see it: without Section 13,
+# which documents the bcs toolchain's own configuration, holds no rule, and
+# was ~9% of every prompt. A `---` separator is held back until the heading
+# after it shows whether it introduces Section 13 (dropped with it) or
+# anything else (printed). User rules and the coda, which follow, survive.
+# awk, not parameter expansion: Bash takes ~4 s to cut a 116 KB string.
+_checker_standard() {
+  awk '
+    function flush(   i) { for (i = 1; i <= held_n; i++) print held[i]; held_n = 0 }
+    /^---$/          { skip = 0; flush(); held[++held_n] = $0; next }
+    held_n && /^$/   { held[++held_n] = $0; next }
+    held_n           { if (index($0, "# Section 13:") == 1) { held_n = 0; skip = 1; next }
+                       flush() }
+    !skip            { print }
+    END              { flush() }
+  ' "$1"
+}
+
 # True when the text-mode answer $1 holds a finding tagged [ERROR].
 _has_error_finding() {
   local -- line
@@ -1122,11 +1140,35 @@ _llm_claude_cli() {
   local -- shellcheck_block=${9:-}
   command -v claude &>/dev/null || die 18 'Claude CLI required for claude backend'
 
+  # cd to clean temp dir -- prevents claude from loading local CLAUDE.md
+  local -- check_dir
+  check_dir=$(mktemp -d -t 'bcs-XXXXX') || die 1 'Failed to create temp dir'
+  _register_tmp "$check_dir"
+  # Capture the return directory in a local and reference it from a
+  # single-quoted trap (expanded at trap time, not definition time) so a
+  # cwd path containing shell metacharacters cannot inject commands.
+  local -- ret_dir=$PWD
+  trap 'cd "$ret_dir" 2>/dev/null ||:; rm -rf -- "$check_dir"' RETURN
+  # The CLI's stderr goes to the response dump, not /dev/null: an auth or
+  # quota failure is otherwise a bare non-zero exit. Anchor a relative dump
+  # path now, before the cd below changes what it would resolve against.
+  local -- err_file=${BCS_RESPONSE_DUMP:-/dev/null}
+  [[ $err_file == /* ]] || err_file=$ret_dir/$err_file
+  cd "$check_dir"
+  [[ ! -d /run/user/"$EUID" ]] || declare -x TMPDIR=/run/user/"$EUID"
+
+  # The CLI reads the standard through an @file reference: give it the
+  # checker's copy (no Section 13), written into the temp dir it runs from.
+  local -- std_file="$check_dir"/BASH-CODING-STANDARD.md
+  # return, not die: only a return fires the RETURN trap that removes the dir.
+  _checker_standard "$bcs_file" > "$std_file" \
+    || { error 'Failed to write the checker standard'; return 5; }
+
   local -- prompt
   if ((${BCS_JSON_MODE:-0})); then
     prompt="You are a Bash script compliance validator emitting structured JSON output.
 
-Analyze @$script_file against the Bash Coding Standard defined in @$bcs_file.
+Analyze @$script_file against the Bash Coding Standard defined in @$std_file.
 
 $tier_instr
 
@@ -1169,7 +1211,7 @@ If there are no findings, return []."
   else
     prompt="You are a Bash script compliance validator.
 
-Analyze @$script_file against the Bash Coding Standard defined in @$bcs_file.
+Analyze @$script_file against the Bash Coding Standard defined in @$std_file.
 
 $tier_instr
 
@@ -1196,23 +1238,6 @@ Respect inline suppression: eg, #bcscheck disable=BCS0101 exempts the next line/
       prompt+=$'\n\nSTRICT MODE: Treat all warnings as [ERROR].'
     fi
   fi
-
-  # cd to clean temp dir -- prevents claude from loading local CLAUDE.md
-  local -- check_dir
-  check_dir=$(mktemp -d -t 'bcs-XXXXX') || die 1 'Failed to create temp dir'
-  _register_tmp "$check_dir"
-  # Capture the return directory in a local and reference it from a
-  # single-quoted trap (expanded at trap time, not definition time) so a
-  # cwd path containing shell metacharacters cannot inject commands.
-  local -- ret_dir=$PWD
-  trap 'cd "$ret_dir" 2>/dev/null ||:; rm -rf -- "$check_dir"' RETURN
-  # The CLI's stderr goes to the response dump, not /dev/null: an auth or
-  # quota failure is otherwise a bare non-zero exit. Anchor a relative dump
-  # path now, before the cd below changes what it would resolve against.
-  local -- err_file=${BCS_RESPONSE_DUMP:-/dev/null}
-  [[ $err_file == /* ]] || err_file=$ret_dir/$err_file
-  cd "$check_dir"
-  [[ ! -d /run/user/"$EUID" ]] || declare -x TMPDIR=/run/user/"$EUID"
 
   # Read-only toolset: the checker only needs to read @script and @standard.
   # Without this, the bypassPermissions agent can shell out -- observed in the
@@ -1617,7 +1642,7 @@ cmd_check() {
   else
     # Build prompts for API backends
     local -- sys_prompt usr_prompt numbered_script effort_guidance
-    sys_prompt=$(< "$bcs_file")
+    sys_prompt=$(_checker_standard "$bcs_file") || die 1 'Failed to read the standard'
     [[ -z $policy_text ]] || sys_prompt+=$'\n'"$policy_text"
 
     # Prepend line numbers so the model can reference lines accurately

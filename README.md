@@ -134,6 +134,8 @@ bcs check --no-cache myscript.sh           # Bypass the result cache (force a fr
 bcscheck myscript.sh                       # Equivalent shim (defaults from bcs.conf)
 ```
 
+The checker is shown the assembled standard minus Section 13 (the toolchain's own configuration reference: no rules, about 9% of the document), on every backend. `bcs display` and `bcs generate` still handle the whole document.
+
 When `shellcheck` is on `PATH`, `bcs check` prepends its `--format=json -x` output to the LLM prompt as deterministic static-analysis context (cheap, precise AST-level findings that the LLM would otherwise rediscover). Disable per-call with `--no-shellcheck` or globally via `BCS_SHELLCHECK=0` in `bcs.conf`.
 
 Successful results are cached under `${XDG_CACHE_HOME:-~/.cache}/bcs/`, keyed on script content, standard content, model, effort, and filters — re-checking an unchanged script returns instantly at zero API cost. Bypass per-call with `--no-cache` or globally via `BCS_CACHE=0`. On the Anthropic backend the standard is additionally sent with prompt caching (`cache_control: ephemeral`), so repeated fresh checks within the server-side cache window pay a fraction of the input-token cost.
