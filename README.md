@@ -307,7 +307,7 @@ One entry point per checking function — no overlap:
 | Static lint | `shellcheck` | CLI |
 | Deep BCS check | `bcscheck` / `bcs check` | CLI, LLM backend |
 | In-session BCS check | `bcscheck` skill | Claude reads `BASH-CODING-STANDARD.md` directly — no CLI, no API keys |
-| Combined CLI audit | `/bcs-audit` | Runs shellcheck + bcscheck in parallel |
+| Combined CLI audit | `/bcs-audit` | `bcs-audit` skill (self-contained): runs the shellcheck + bcscheck binaries in parallel |
 | Whole-codebase audit | `/audit-bash` | 15-section audit prompt, saves `AUDIT-BASH.md` |
 | ShellCheck remediation | `/fix-shellcheck` | Fixes SC#### per BCS patterns (per-user, `ai-agents/`) |
 
@@ -315,7 +315,10 @@ The `bcscheck` skill honours `#bcscheck disable=` directives and uses
 shellcheck JSON as static context; for policy.conf tiers, JSON output, or
 caching use the real `bcs check`. Sources live in `skills/*/SKILL.md` and
 `ai-agents/commands/`; install machine-wide with `sudo make install-claude`,
-remove with `sudo make uninstall-claude`.
+remove with `sudo make uninstall-claude`. The install set is the two skills
+plus the `/audit-bash` command. Run `make check-claude` first: it diffs the
+repo against the deployed copies and exits non-zero when a deployed file was
+edited in place, because `install-claude` would silently revert that edit.
 
 ## Bash References (`BCS-bash`, `BCS-Bash-Ref`)
 

@@ -16,7 +16,7 @@ DESTDIR  ?=
 # picks up a like-named file from a parent directory.
 srcdir := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-.PHONY: all install uninstall check test help install-claude uninstall-claude
+.PHONY: all install uninstall check test help install-claude uninstall-claude check-claude
 
 all: help
 
@@ -91,13 +91,34 @@ uninstall:
 	rm -rf $(DESTDIR)$(SHAREDIR)
 	rm -f $(DESTDIR)$(PREFIX)/share/yatti/bash-coding-standard
 
+# Enterprise install set, as source:destination pairs. The bcs-audit skill is
+# self-contained, so no bcs-audit command is installed beside it (one entry
+# point per function). Single source of truth for install-claude/check-claude.
+CLAUDE_FILES = \
+  skills/bcscheck/SKILL.md:$(SKILLDIR)/bcscheck/SKILL.md \
+  skills/bcs-audit/SKILL.md:$(SKILLDIR)/bcs-audit/SKILL.md \
+  ai-agents/commands/audit-bash.md:$(CMDDIR)/audit-bash.md
+
 install-claude:
-	install -d $(DESTDIR)$(SKILLDIR)/bcscheck $(DESTDIR)$(SKILLDIR)/bcs-audit $(DESTDIR)$(CMDDIR)
-	install -m 644 $(srcdir)skills/bcscheck/SKILL.md $(DESTDIR)$(SKILLDIR)/bcscheck/SKILL.md
-	install -m 644 $(srcdir)skills/bcs-audit/SKILL.md $(DESTDIR)$(SKILLDIR)/bcs-audit/SKILL.md
-	install -m 644 $(srcdir)ai-agents/commands/bcs-audit.md $(DESTDIR)$(CMDDIR)/bcs-audit.md
-	install -m 644 $(srcdir)ai-agents/commands/audit-bash.md $(DESTDIR)$(CMDDIR)/audit-bash.md
-	@echo 'Installed Claude skills (bcscheck, bcs-audit) and commands (bcs-audit, audit-bash)'
+	@for pair in $(CLAUDE_FILES); do \
+	  src=$(srcdir)$${pair%%:*}; dst=$(DESTDIR)$${pair#*:}; \
+	  install -d "$${dst%/*}" && install -m 644 "$$src" "$$dst" || exit 1; \
+	done
+	@echo 'Installed Claude skills (bcscheck, bcs-audit) and command (audit-bash)'
+
+# Compare the repo with the deployed copies. A deployed file that differs was
+# edited in place: install-claude would silently revert that edit, so port it
+# into the repo first. An absent file is reported but is not drift --
+# installing it reverts nothing.
+check-claude:
+	@rc=0; \
+	for pair in $(CLAUDE_FILES); do \
+	  src=$(srcdir)$${pair%%:*}; dst=$(DESTDIR)$${pair#*:}; \
+	  if [ ! -f "$$dst" ]; then echo "$$dst: not installed"; \
+	  elif diff -q "$$src" "$$dst" >/dev/null; then echo "$$dst: OK"; \
+	  else echo "$$dst: DIFFERS from $$src"; rc=1; fi; \
+	done; \
+	exit $$rc
 
 uninstall-claude:
 	rm -rf $(DESTDIR)$(SKILLDIR)/bcscheck $(DESTDIR)$(SKILLDIR)/bcs-audit
@@ -134,6 +155,7 @@ help:
 	@echo '  install          Install to $(PREFIX)'
 	@echo '  install-claude   Install Claude skills+commands to /etc/claude-code'
 	@echo '  uninstall-claude Remove installed Claude skills+commands'
+	@echo '  check-claude     Diff repo skills+commands against the deployed copies'
 	@echo '  uninstall        Remove installed files'
 	@echo '  check            Verify installation'
 	@echo '  test             Run test suite'
