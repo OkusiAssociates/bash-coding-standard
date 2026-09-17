@@ -144,6 +144,7 @@ is reachable (set BCS_FIXTURES_REQUIRE_BACKEND=1 to fail instead).
 ${BOLD}Outputs (in --output dir):$NC
   accuracy-<model>-<effort>.tsv   per (fixture,code) hit-rates
   accuracy-<model>-<effort>.md    precision/recall/F1 + stability summary
+  accuracy-<model>-<effort>.json  the same numbers, machine-readable (baselines)
 HELP
 }
 
@@ -268,10 +269,11 @@ main() {
 
 # Render TSV + markdown from the accumulator state (called from main scope).
 _emit_reports() {
-  local -- slug tsv md ts
+  local -- slug tsv md json ts
   slug=$(_slug "$MODEL")
   tsv="$OUT_DIR/accuracy-$slug-$EFFORT.tsv"
   md="$OUT_DIR/accuracy-$slug-$EFFORT.md"
+  json="$OUT_DIR/accuracy-$slug-$EFFORT.json"
   ts=$(date '+%Y-%m-%d %H:%M:%S')
 
   # Aggregate precision/recall/F1.
@@ -305,13 +307,14 @@ _emit_reports() {
     [[ -n $rows ]] && printf '%s' "$rows" | sort ||:
   } > "$tsv"
 
-  # Per-rule recall table (sorted by code).
-  local -- rule_table='' c hit tot rr
+  # Per-rule recall table (sorted by code); rule_tsv feeds the JSON report.
+  local -- rule_table='' rule_tsv='' c hit tot rr
   while IFS= read -r c; do
     [[ -n $c ]] || continue
     hit=${CODE_HIT[$c]:-0}; tot=${CODE_TOT[$c]}
     rr=$(awk -v h="$hit" -v t="$tot" 'BEGIN{printf "%.3f", (t>0)?h/t:0}')
     rule_table+=$(printf '| %s | %s | %s | %s |' "$c" "$hit" "$tot" "$rr")$'\n'
+    rule_tsv+=$(printf '%s\t%s\t%s\t%s' "$c" "$hit" "$tot" "$rr")$'\n'
   done < <(printf '%s\n' "${!CODE_TOT[@]}" | sort)
 
   # Clean-fixture false-positive rate.
@@ -375,8 +378,33 @@ Per-pair hit-rates are in \`${tsv##*/}\`.
 $rule_table
 MD
 
+  # Machine-readable report: the form a baseline is committed in (see
+  # baseline/README.md) and what a later run is compared against. The bcs
+  # version is read from the script text; asking the checker would cost a call.
+  local -- bcs_version
+  bcs_version=$(grep -m1 -oE '^declare -r VERSION=[0-9.]+' "$PROJECT_DIR"/bcs) ||:
+  jq -n \
+    --arg generated "$ts" --arg bcs_version "${bcs_version##*=}" \
+    --arg model "$MODEL" --arg effort "$EFFORT" --arg stability "$stability" \
+    --arg rules "$rule_tsv" \
+    --argjson runs "$RUNS" --argjson scored "$SCORED" --argjson inconclusive "$INCONCLUSIVE" \
+    --argjson tp "$TP" --argjson fp "$FP" --argjson fn "$FN" \
+    --argjson precision "$precision" --argjson recall "$recall" --argjson f1 "$f1" \
+    --argjson clean_fp "$CLEAN_FP" --argjson clean_runs "$CLEAN_RUNS" \
+    --argjson clean_fp_rate "$clean_rate" \
+    '{generated: $generated, bcs_version: $bcs_version, model: $model, effort: $effort,
+      runs: $runs, scored: $scored, inconclusive: $inconclusive,
+      tp: $tp, fp: $fp, fn: $fn, precision: $precision, recall: $recall, f1: $f1,
+      clean_fp: $clean_fp, clean_runs: $clean_runs, clean_fp_rate: $clean_fp_rate,
+      stability: ($stability | tonumber? // null),
+      per_rule: ($rules | split("\n") | map(select(. != "") | split("\t")
+                 | {key: .[0], value: {hits: (.[1] | tonumber), runs: (.[2] | tonumber),
+                                       recall: (.[3] | tonumber)}}) | from_entries)}' \
+    > "$json" || die 1 "Failed to write ${json@Q}"
+
   success "Wrote $md"
   success "Wrote $tsv"
+  success "Wrote $json"
   # No conclusive runs means the metrics above are all zero by default, not by
   # measurement -- say so loudly so an unreachable/timed-out backend is not
   # mistaken for a perfect score.

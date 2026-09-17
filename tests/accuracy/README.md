@@ -84,12 +84,16 @@ stability score would always read 1.0.
 
 ## Output
 
-Two files per `<model>-<effort>` run, in the output dir:
+Three files per `<model>-<effort>` run, in the output dir:
 
 - `accuracy-<model>-<effort>.tsv` — one row per expected `(fixture, code)`:
   `fixture  code  runs  hits  hitrate  stable`.
 - `accuracy-<model>-<effort>.md` — aggregate precision/recall/F1, clean-fixture
   false-positive rate, stability score, and a per-rule recall table.
+- `accuracy-<model>-<effort>.json` — the same numbers, machine-readable, plus
+  the `bcs` version scored. This is the form a baseline is committed in: see
+  [`baseline/`](baseline/README.md) for the committed measurements, how to
+  refresh one, and how to compare a run against it.
 
 ## Reading the numbers honestly
 

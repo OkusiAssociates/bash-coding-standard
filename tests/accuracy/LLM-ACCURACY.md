@@ -4,6 +4,52 @@ Comparative analysis of LLM backends for `bcs check` compliance auditing.
 Tested 2026-04-17 (refresh; original 2026-04-12) against four scripts of
 varying complexity and structure.
 
+> **Status, 2026-09-17.** Everything below the "Scorer Baseline" section is the
+> April 2026 study, kept as a historical record: a hand-scored, qualitative
+> comparison on four real scripts. Three things in it no longer describe
+> `bcs`:
+>
+> - the `-m` values `claude`, `fast`, `balanced` and `thorough` were retired
+>   (they now exit 22); models are named by alias or canonical ID, and the
+>   backend is resolved from the model name, with no probe and no tiers;
+> - `gpt-5.4` and `glm-5.1:cloud` are not in the alias map, and the twelve
+>   `glm-5.1:cloud` reports, which held only an HTTP 403 message, have been
+>   removed from this directory;
+> - it never measured the alias and effort the fixture gate actually runs.
+>
+> The current, reproducible reference is the scorer baseline that follows.
+> `bcs-check-accuracy.sh`, the April collector, is left exactly as it was: it
+> is also one of the four scored test subjects, typo included.
+
+---
+
+## Scorer Baseline (2026-09-17)
+
+Produced by `bcs-accuracy-score.sh` over the labelled corpus in
+`tests/fixtures/` (33 gated, 2 probabilistic, 6 clean), three repetitions per
+fixture, every check run with `--no-cache`. Machine-readable copies are
+committed under [`baseline/`](baseline/); see its README for how to refresh one
+and how to compare a later run against it.
+
+| Alias / effort | Backend | Conclusive runs | Recall | Precision | F1 | Clean FP | Stability | Wall |
+|---|---|---|---|---|---|---|---|---|
+| `gpt5-mini` / `low` | OpenAI | 123 of 123 | **1.000** | 0.871 | 0.931 | **0** in 18 runs | 1.000 | 457 s |
+| `flash` / `low` | Google | not run | | | | | | |
+| `haiku` / `low` | Anthropic | not run | | | | | | |
+| `qwen-small` / `low` | Ollama | not run | | | | | | |
+
+`flash` was not run because the key's free tier allows 20 requests per model
+per day, fewer than one pass of the corpus. `haiku` and `qwen-small` were not
+run because no Anthropic key was available and no Ollama runs were made. All
+34 expected rules were reported on every repetition; the 16 counted
+false positives are extra findings on violation fixtures, none on a clean one.
+
+Reading the table: **recall** and the **clean false-positive rate** are the
+trustworthy signals. Aggregate precision counts every extra finding on a
+violation fixture as a false positive, although most are genuine secondary
+issues, so it understates true precision. **Stability** is the share of
+expected (fixture, rule) pairs that were reported on either every run or none.
+
 ## Test Subjects
 
 | Script | Lines | Complexity | Structure | Key traits |
@@ -18,6 +64,9 @@ via `#bcscheck disable=BCSxxxx` inline suppression directives. The latter two
 have genuine (minor) BCS deviations that a correct checker should find.
 
 ## Models Tested
+
+The `-m` values are those in use in April 2026; `claude` and the tier keywords
+have since been retired (see the status note above).
 
 | Backend | Model | `-m` value | Cost tier |
 |---|---|---|---|
@@ -442,27 +491,26 @@ deployment blocker": the model is entirely unavailable.
 
 ## Recommendations
 
-### Tier defaults
+### Default model
 
-The `_detect_backend()` probe order (ollama, anthropic, openai, google,
-claude) means the `fast` tier currently routes to minimax/glm/qwen when
-an ollama server is running -- producing the worst results in this dataset.
+*Rewritten 2026-09-17. The April text recommended per-tier defaults and a
+reversed `_detect_backend()` probe order; both the tier keywords and the probe
+have since been removed from `bcs`, which made that advice unactionable.*
 
-| Tier | Current behaviour | Recommended default | Rationale |
-|---|---|---|---|
-| `fast` | First reachable ollama model | gpt-5.4 at medium | 9--71s, clean output on most scripts, 2/4 cln + 2/3 which with 0--1 FP |
-| `balanced` | First reachable (varies) | claude-sonnet-4-6 at medium | 35--83s, zero FP across all four scripts, reliable suppression handling |
-| `thorough` | First reachable (varies) | claude-sonnet-4-6 at max | 42--128s, top scorer on md2ansi (6/10) and accuracy.sh (4/4) |
+`bcs check` has one default, the `sonnet` alias, and resolves the backend from
+the model name alone. What the April data still supports:
 
-gpt-5.4-mini was referenced in the previous revision of this doc but
-is not in the current test matrix; the fast-tier recommendation is
-therefore plain `gpt-5.4` until a mini variant is benchmarked.
+| Need | Choice | April evidence |
+|---|---|---|
+| Fastest useful answer | `-m gpt5 -e medium` | gpt-5.4: 9--71 s, clean output on most scripts, 2/4 cln and 2/3 which with 0--1 FP |
+| Default | `-m sonnet -e medium` | claude-sonnet-4-6: 35--83 s, zero FP across all four scripts, reliable suppression handling |
+| Deepest pass | `-m sonnet -e max` | 42--128 s, top scorer on md2ansi (6/10) and accuracy.sh (4/4) |
 
-### Detection order
-
-Consider reversing to openai, anthropic, ollama for tier resolution.
-This immediately fixes the quality floor by avoiding ollama-cloud models
-as tier defaults while preserving them as explicit `--model` choices.
+The one April recommendation that was acted on is the order in which the
+*test suite* looks for a backend: `tests/test-check-fixtures.sh` and the scorer
+now try API keys first (openai, google, anthropic), then a local Ollama, then
+the Claude Code CLI. Ollama cloud models remain an explicit `-m` choice and are
+never a default.
 
 ### Effort guidance
 
@@ -479,7 +527,7 @@ as tier defaults while preserving them as explicit `--model` choices.
 
 | Condition | Action |
 |---|---|
-| `--model glm-5.1:cloud` (any effort) | Fail fast with API-error hint until vendor outage resolves |
+| `--model glm-5.1:cloud` (any effort) | April: fail fast with an API-error hint. Moot since: the model needs a paid Ollama subscription and its reports were removed |
 | `--effort max` with minimax-m2.7:cloud | Warn user: accuracy ceiling is the same as medium at ~2x runtime |
 | Any ollama-cloud model as tier default | Prefer API backends when available |
 
@@ -563,7 +611,10 @@ these flags because only claude-sonnet-4-6 appears to detect them.
   for which/bcs-check-accuracy.sh. Some findings may be debatable.
 - glm-5.1:cloud was unreachable for the entire refresh (all 12 runs
   returned HTTP 403). Comparative claims about glm-5.1 therefore
-  carry over from the 2026-04-12 baseline and may be stale.
+  carry over from the 2026-04-12 baseline and may be stale. The twelve
+  error-only report files were removed on 2026-09-17.
+- The study never ran `-e low`, nor any of the cheap aliases the fixture
+  gate uses. The scorer baseline at the top of this document fills that gap.
 - Claude Code CLI backend does not expose token counts, so its rows
   in the token-efficiency table read `--` rather than a number.
 - Cost data is not included. Token counts provide a proxy but actual

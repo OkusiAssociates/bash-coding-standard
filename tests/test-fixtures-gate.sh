@@ -46,6 +46,10 @@ case ${STUB_MODE:-findings} in
   mixed)    if [[ ${FIXTURE##*/} == 01-* ]]; then exit 124; fi
             emit_findings ;;
   json)     echo '{"source":"bcs","meta":{},"comments":[]}' ;;
+  jsonfind) sed -n '1,15p' "$FIXTURE" | grep -F 'bcs-fixture-expect:' | grep -oE 'BCS[0-9]{4}' \
+              | jq -R -s -c '{source: "bcs", meta: {},
+                   comments: (split("\n") | map(select(. != "")
+                              | {bcsCode: ., line: 1, level: "error"}))}' ;;
   *)        emit_findings ;;
 esac
 STUB
@@ -139,6 +143,23 @@ run_child "$TEST_DIR"/accuracy/bcs-accuracy-score.sh json -- \
 assert_equal 0 "$RC" 'scorer runs against the stub' ||:
 assert_equal 4 "$(wc -l < "$ARGV_LOG")" 'scorer: 2 fixtures x 2 runs = 4 checker calls' ||:
 assert_equal 4 "$(grep -c -- '--no-cache' "$ARGV_LOG" ||:)" 'scorer: every call passes --no-cache' ||:
+# Machine-readable report: what a committed baseline is made of
+run_child "$TEST_DIR"/accuracy/bcs-accuracy-score.sh jsonfind -- \
+  -m gpt5-mini -e low -n 2 -o "$SANDBOX"/score "${FIXTURES[0]}" "${FIXTURES[1]}" \
+  "$TEST_DIR"/fixtures/clean/01-greet.sh
+declare -r SCORE_JSON="$SANDBOX"/score/accuracy-gpt5-mini-low.json
+assert_file_exists "$SCORE_JSON" 'scorer writes accuracy-<model>-<effort>.json' ||:
+assert_equal 'gpt5-mini low 2' "$(jq -r '"\(.model) \(.effort) \(.runs)"' "$SCORE_JSON" 2>/dev/null ||:)" \
+  'JSON report: model, effort, runs' ||:
+assert_equal '4 0 true true' "$(jq -r '"\(.tp) \(.fn) \(.recall == 1) \(.f1 == 1)"' "$SCORE_JSON" 2>/dev/null ||:)" \
+  'JSON report: every expected code found -> tp=4 fn=0 recall=1 f1=1' ||:
+assert_equal '0 2' "$(jq -r '"\(.clean_fp) \(.clean_runs)"' "$SCORE_JSON" 2>/dev/null ||:)" \
+  'JSON report: clean fixture runs counted, no false positives' ||:
+assert_equal 2 "$(jq -r '.per_rule | length' "$SCORE_JSON" 2>/dev/null ||:)" \
+  'JSON report: per-rule recall for both expected codes' ||:
+assert_matches "$(jq -r '.bcs_version' "$SCORE_JSON" 2>/dev/null ||:)" '^[0-9]+\.[0-9]+\.[0-9]+' \
+  'JSON report: records the bcs version it scored' ||:
+
 run_child "$TEST_DIR"/accuracy/bcs-accuracy-score.sh json OPENAI_API_KEY=k MOCK_OLLAMA_UP=1 -- \
   -n 1 -o "$SANDBOX"/score "${FIXTURES[0]}"
 assert_contains "$OUT" 'backend=openai' 'scorer probe: API key wins over Ollama and CLI' ||:
