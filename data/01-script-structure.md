@@ -9,7 +9,7 @@ Every BCS-compliant script follows a 13-step structure. Scripts must be self-con
 
 **Tier:** core
 
-`set -euo pipefail` is *mandatory* before script execution starts, and must be the first executable command after shebang, comments, and shellcheck directives. Exception: dual-purpose scripts (BCS0106) place strict mode immediately after the source fence instead, because `set -euo pipefail` must never execute when sourced. Exception: a Bash version guard (BCS0409) may sit between `set -euo pipefail` and `shopt -s inherit_errexit`, because the guard must run before any version-dependent construct (including `inherit_errexit` itself).
+`set -euo pipefail` is *mandatory* before script execution starts, and must be the first executable command after shebang, comments, and shellcheck directives. Exception: dual-purpose scripts place strict mode immediately after the source fence instead, because `set -euo pipefail` must never execute when sourced -- BCS0406 owns that layout and is the code to cite when strict mode sits above the fence; BCS0106 owns only the file-extension requirements. Exception: a Bash version guard (BCS0409) may sit between `set -euo pipefail` and `shopt -s inherit_errexit`, because the guard must run before any version-dependent construct (including `inherit_errexit` itself).
 
 ```bash
 # correct
