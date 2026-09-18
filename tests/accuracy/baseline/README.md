@@ -8,7 +8,7 @@ against these numbers, not against memory.
 
 | File | What it is |
 |------|------------|
-| `<alias>_<effort>.json` | Aggregate precision / recall / F1, clean false positives, stability, per-rule recall, plus the `bcs` version, model, effort and run count |
+| `<alias>_<effort>.json` | Aggregate precision / recall / F1, clean false positives, stability, per-rule recall and per-rule false positives, plus the `bcs` version, model, effort and run count |
 | `<alias>_<effort>.tsv` | Per (fixture, rule) hit-rate over the repetitions |
 
 ## Status
@@ -35,6 +35,12 @@ The earlier `gpt5-mini` / `low` baseline (recall 1.000, clean FP 0, stability
 model, so it recorded how well the checker reads an answer it was given. The
 same configuration blind scored recall 0.546 and 51 clean false positives.
 Numbers taken before 2026-09-18 are not comparable with these.
+
+The three baselines above carry no `fp_per_rule` map: the scorer counted false
+positives without recording which codes they were until `bcs` 2.0.4, so the
+committed artefacts cannot say *why* the corpus repairs cut Anthropic false
+positives by roughly three quarters and left OpenAI's alone. Any baseline
+retaken from 2.0.4 onward answers that; these three cannot be made to.
 
 ## Refreshing a baseline
 

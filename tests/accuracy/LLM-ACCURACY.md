@@ -142,16 +142,54 @@ Two results here are worth not smoothing over.
 fell by three quarters on `haiku` and by more than half on `sonnet`, while
 `gpt5-mini` was unmoved (65 → 72, clean FP 5 → 5). The likely reading is that
 `gpt5-mini` was largely not reporting the manufactured blank lines in the first
-place, so it had nothing to gain. That is an inference, not a measurement: the
-scorer counts false positives without recording **which** codes they were, so
-the question cannot be answered from the committed artefacts. Recording the FP
-codes would answer it and is worth doing.
+place, so it had nothing to gain. That was an inference, not a measurement: the
+scorer counted false positives without recording **which** codes they were, so
+the question could not be answered from the committed artefacts. The scorer now
+tallies them by code (`fp_per_rule` in the JSON, a "False positives by rule"
+table in the report, with the `clean/` share broken out), but the three
+baselines above predate it and cannot be made to answer retrospectively. The
+first baseline retaken on `bcs` 2.0.4 or later settles it.
 
 **Recall fell on all three.** By 0.047, 0.010 and 0.038 -- small, but the same
 direction three times out of three. Removing a defect the checker could find
 for free should, if anything, have freed attention for the planted ones. No
 mechanism is offered here. Each row is a single 3-run measurement, so this may
 still be variance, and it should be watched rather than explained.
+
+### What `gpt5-mini`'s clean-fixture noise is actually made of
+
+First use of the per-code tally, `gpt5-mini -e medium`, the six `clean/`
+fixtures x 3 runs (18 clean runs, 2026-09-18, `bcs` 2.0.3):
+
+| Code | Spurious reports | Tier |
+|------|-----------------:|------|
+| BCS0103 | 1 | recommended |
+| BCS0203 | 1 | style |
+| BCS0205 | 1 | recommended |
+| BCS0301 | 1 | style |
+| BCS0403 | 1 | recommended |
+| BCS0408 | 1 | recommended |
+| BCS0601 | 1 | **core** |
+
+Seven spurious findings, **seven distinct rules, none repeated**. That is a
+different diagnosis from the pre-fix pattern, where four of five false errors
+on clean files were one rule (BCS0409, whose text was then repaired). There is
+no rule to fix here: the residue is one-off misreadings spread thin, and no
+edit to the standard will move it.
+
+One of the seven cites **BCS0601, a core rule**, so at least one of these 18
+clean runs exited 1 on a compliant file. `-e medium` was chosen over `-e low`
+precisely because `low` did that 5 times in 5 on `cln`; `medium` scored 0 in 5
+there. This is the first recorded instance of `medium` doing it at all, on a
+different corpus and at a far lower rate -- one run in eighteen against five in
+five. It does not overturn the effort decision, and it does mean the clean-run
+false-`[ERROR]` rate at `medium` is not zero, only small. The scorer records
+codes, not exit codes, so which fixture it was is not recoverable from this
+run; a rerun that also captured exit status would settle it.
+
+The count (7 in 18) sits above the committed baseline's 5 in 18. Both are
+single 3-run samples of the same configuration; the gap is sampling, not a
+regression, and is recorded rather than averaged away.
 
 ### `sonnet` is the default model, and it is the noisy one
 
