@@ -1260,7 +1260,9 @@ _llm_claude_cli() {
   # path now, before the cd below changes what it would resolve against.
   local -- err_file=${BCS_RESPONSE_DUMP:-/dev/null}
   [[ $err_file == /* ]] || err_file=$ret_dir/$err_file
-  cd "$check_dir"
+  # return, not die: the RETURN trap above is what removes the temp dir.
+  cd "$check_dir" \
+    || { error "Failed to enter temp dir ${check_dir@Q}"; return 5; }
   [[ ! -d /run/user/"$EUID" ]] || declare -x TMPDIR=/run/user/"$EUID"
 
   # The CLI reads the standard through an @file reference: give it the
@@ -1398,7 +1400,8 @@ cmd_display() {
     -S|--symlink) bcs_file=$(_find_bcs_md) || die 3 'BASH-CODING-STANDARD.md not found'
                   [[ ! -e $_link || -L $_link ]] \
                     || die 22 "Refusing to overwrite existing file ${_link@Q}"
-                  ln -sf -- "$bcs_file" "$_link"
+                  ln -sf -- "$bcs_file" "$_link" \
+                    || die 1 "Failed to symlink ${_link@Q} -> ${bcs_file@Q}"
                   info "Symlinked BASH-CODING-STANDARD.md → $bcs_file"
                   return 0
                   ;;
@@ -1512,7 +1515,8 @@ cmd_template() {
     printf '%s\n' "$content" > "$output_file"
     info "Generated $template_type template ${output_file@Q}"
     if ((make_executable)); then
-      chmod -- +x "$output_file"
+      chmod -- +x "$output_file" \
+        || die 1 "Failed to make ${output_file@Q} executable"
       info "Made executable ${output_file@Q}"
     fi
   else
@@ -2174,7 +2178,8 @@ cmd_generate() {
       fi
     done
   } > "$tmp_out"
-  mv -f -- "$tmp_out" "$output_file"
+  mv -f -- "$tmp_out" "$output_file" \
+    || die 1 "Failed to install ${output_file@Q} from ${tmp_out@Q}"
 
   # Links in the section sources are relative to data/ (e.g. ../benchmarks/),
   # which is exactly where the assembled document also lives -- so they resolve
@@ -2183,7 +2188,8 @@ cmd_generate() {
   # non-reproducible output, dev-path leak in a public repo).
 
   # Make it readonly so that users do not confuse this document with the rules sections
-  chmod -- 444 "$output_file"
+  chmod -- 444 "$output_file" \
+    || die 1 "Failed to make ${output_file@Q} read-only"
 
   local -i line_count
   line_count=$(wc -l < "$output_file")
