@@ -17,7 +17,7 @@ against these numbers, not against memory.
 |----------------|---------|-------|
 | `gpt5-mini` / `medium` | OpenAI | ✓ measured 2026-09-18, `bcs` 2.0.2, 41 fixtures × 3 runs |
 | `flash` / `medium` | Google | ✗ not run. The key's free tier allows 20 requests per model per day; one pass of the corpus needs 41 and a baseline needs 123 |
-| `haiku` / `medium` | Anthropic | ✗ not run. No `ANTHROPIC_API_KEY` on the measuring host |
+| `haiku` / `medium` | Anthropic | ✓ measured 2026-09-18, `bcs` 2.0.2, 41 fixtures × 3 runs, model `claude-haiku-4-5` |
 | `qwen-small` / `medium` | Ollama | ✗ not run. No Ollama runs were made; note that the `num_ctx` fix in 2.0.2 has itself not been exercised against a live server |
 
 The earlier `gpt5-mini` / `low` baseline (recall 1.000, clean FP 0, stability
@@ -52,10 +52,18 @@ Recall and the clean false-positive rate are the trustworthy signals. The
 checker is an LLM, so expect run-to-run movement: treat ±0.05 in precision or
 F1 as noise. A fall in recall is a regression to explain.
 
-Aggregate precision here is 0.594, and that number understates the
-checker badly: every *extra* finding on a violation fixture counts as a false
-positive, and most are genuine secondary issues the fixture did not plant.
-Read it as a stability signal, not as accuracy.
+Aggregate precision (0.594 for `gpt5-mini`, 0.482 for `haiku`) understates
+the checker badly: every *extra* finding on a violation fixture counts as a
+false positive, and most are genuine secondary issues the fixture did not
+plant. Read it as a verbosity signal, not as accuracy -- `haiku` scores lower
+there because it says more, not because it is more often wrong.
 
-The clean false-positive rate (5 findings in 18 runs) is the honest
-measure of noise, because a clean fixture has no true finding to report.
+The clean false-positive rate (5 findings in 18 runs for `gpt5-mini`, 6 for
+`haiku`) is the honest measure of noise, because a clean fixture has no true
+finding to report.
+
+Two vendors now agree within 0.03 on recall and within one finding on clean
+false positives, which is the first evidence that these numbers describe the
+corpus rather than one model's habits. They also miss the same four rules --
+all of them already in `probabilistic/`. See
+[`../LLM-ACCURACY.md`](../LLM-ACCURACY.md) for the per-rule comparison.

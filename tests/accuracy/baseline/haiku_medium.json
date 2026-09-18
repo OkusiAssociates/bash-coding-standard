@@ -1,0 +1,186 @@
+{
+  "bcs_version": "2.0.2",
+  "clean_fp": 6,
+  "clean_fp_rate": 0.333,
+  "clean_runs": 18,
+  "effort": "medium",
+  "f1": 0.622,
+  "fn": 13,
+  "fp": 99,
+  "generated": "2026-09-18 12:00:17",
+  "inconclusive": 0,
+  "model": "haiku",
+  "per_rule": {
+    "BCS0101": {
+      "hits": 3,
+      "recall": 1.0,
+      "runs": 3
+    },
+    "BCS0102": {
+      "hits": 3,
+      "recall": 1.0,
+      "runs": 3
+    },
+    "BCS0106": {
+      "hits": 0,
+      "recall": 0.0,
+      "runs": 3
+    },
+    "BCS0110": {
+      "hits": 3,
+      "recall": 1.0,
+      "runs": 3
+    },
+    "BCS0202": {
+      "hits": 3,
+      "recall": 1.0,
+      "runs": 3
+    },
+    "BCS0206": {
+      "hits": 3,
+      "recall": 1.0,
+      "runs": 3
+    },
+    "BCS0302": {
+      "hits": 3,
+      "recall": 1.0,
+      "runs": 3
+    },
+    "BCS0303": {
+      "hits": 3,
+      "recall": 1.0,
+      "runs": 3
+    },
+    "BCS0406": {
+      "hits": 3,
+      "recall": 1.0,
+      "runs": 3
+    },
+    "BCS0407": {
+      "hits": 3,
+      "recall": 1.0,
+      "runs": 3
+    },
+    "BCS0409": {
+      "hits": 3,
+      "recall": 1.0,
+      "runs": 3
+    },
+    "BCS0410": {
+      "hits": 3,
+      "recall": 1.0,
+      "runs": 3
+    },
+    "BCS0501": {
+      "hits": 3,
+      "recall": 1.0,
+      "runs": 3
+    },
+    "BCS0504": {
+      "hits": 6,
+      "recall": 1.0,
+      "runs": 6
+    },
+    "BCS0507": {
+      "hits": 0,
+      "recall": 0.0,
+      "runs": 3
+    },
+    "BCS0601": {
+      "hits": 3,
+      "recall": 1.0,
+      "runs": 3
+    },
+    "BCS0603": {
+      "hits": 3,
+      "recall": 1.0,
+      "runs": 3
+    },
+    "BCS0604": {
+      "hits": 3,
+      "recall": 1.0,
+      "runs": 3
+    },
+    "BCS0606": {
+      "hits": 3,
+      "recall": 1.0,
+      "runs": 3
+    },
+    "BCS0702": {
+      "hits": 3,
+      "recall": 1.0,
+      "runs": 3
+    },
+    "BCS0801": {
+      "hits": 0,
+      "recall": 0.0,
+      "runs": 3
+    },
+    "BCS0803": {
+      "hits": 3,
+      "recall": 1.0,
+      "runs": 3
+    },
+    "BCS0901": {
+      "hits": 3,
+      "recall": 1.0,
+      "runs": 3
+    },
+    "BCS0902": {
+      "hits": 3,
+      "recall": 1.0,
+      "runs": 3
+    },
+    "BCS1001": {
+      "hits": 3,
+      "recall": 1.0,
+      "runs": 3
+    },
+    "BCS1002": {
+      "hits": 3,
+      "recall": 1.0,
+      "runs": 3
+    },
+    "BCS1004": {
+      "hits": 6,
+      "recall": 1.0,
+      "runs": 6
+    },
+    "BCS1005": {
+      "hits": 3,
+      "recall": 1.0,
+      "runs": 3
+    },
+    "BCS1006": {
+      "hits": 3,
+      "recall": 1.0,
+      "runs": 3
+    },
+    "BCS1101": {
+      "hits": 3,
+      "recall": 1.0,
+      "runs": 3
+    },
+    "BCS1103": {
+      "hits": 3,
+      "recall": 1.0,
+      "runs": 3
+    },
+    "BCS1104": {
+      "hits": 1,
+      "recall": 0.333,
+      "runs": 3
+    },
+    "BCS1206": {
+      "hits": 1,
+      "recall": 0.333,
+      "runs": 3
+    }
+  },
+  "precision": 0.482,
+  "recall": 0.876,
+  "runs": 3,
+  "scored": 123,
+  "stability": 0.943,
+  "tp": 92
+}

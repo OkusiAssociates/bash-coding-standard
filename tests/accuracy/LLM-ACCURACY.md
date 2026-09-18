@@ -35,12 +35,43 @@ and how to compare a later run against it.
 |---|---|---|---|---|---|---|---|
 | `gpt5-mini` / `medium` | OpenAI | 123 of 123 | **0.905** | 0.594 | 0.717 | **5** in 18 runs | 0.886 |
 | `flash` / `medium` | Google | not run | | | | | |
-| `haiku` / `medium` | Anthropic | not run | | | | | |
+| `haiku` / `medium` | Anthropic | 123 of 123 | **0.876** | 0.482 | 0.622 | **6** in 18 runs | 0.943 |
 | `qwen-small` / `medium` | Ollama | not run | | | | | |
 
 `flash` was not run because the key's free tier allows 20 requests per model
-per day, fewer than one pass of the corpus. `haiku` and `qwen-small` were not
-run because no Anthropic key was available and no Ollama runs were made.
+per day, fewer than one pass of the corpus. `qwen-small` was not run because no
+Ollama runs were made.
+
+`haiku` (`claude-haiku-4-5`) is the first baseline from a second vendor, and so
+the first independent check the corpus has had. It agrees with `gpt5-mini` on
+what the corpus is worth: recall 0.876 against 0.905, clean false positives 6
+in 18 runs against 5. It is the steadier of the two (stability 0.943 against
+0.886) and the noisier (precision 0.482 against 0.594) -- it reports more
+secondary findings on a violation fixture, which the precision figure counts
+against it whether or not they are real.
+
+The agreement that matters is *which* rules each backend misses.
+
+| Rule | Fixture | `gpt5-mini` | `haiku` |
+|---|---|---|---|
+| BCS0106 | `probabilistic/04` | 1/3 | 0/3 |
+| BCS0507 | `probabilistic/01` | 1/3 | 0/3 |
+| BCS1104 | `probabilistic/05` | 0/3 | 1/3 |
+| BCS1206 | `probabilistic/03` | 2/3 | 1/3 |
+| BCS0801 | `17` (gated) | 3/3 | 0/3 |
+| BCS1005 | `31` (gated) | 1/3 | 3/3 |
+
+Every rule both backends struggle with is already in `probabilistic/`. Two
+vendors failing the same four fixtures is evidence about the fixtures or the
+rule text, not about either model. The two *gated* fixtures that flap flap for
+one backend each and neither is missed by both, which is why the gate holds at
+30/30 on both.
+
+One caveat on fixture 17: the live Anthropic gate found BCS0801 in all 30 of
+its text-mode checks, while the scorer missed it in 3 of 3 JSON-mode runs. The
+gate and the scorer send different prompts, so this is one more datum for the
+standing question of whether JSON mode costs recall -- not a settled finding,
+on one gate run against three scorer runs.
 
 ▲ **Numbers recorded before 2026-09-18 are not comparable with these.** Until
 that date `bcs check` sent the whole fixture file to the model, including the
@@ -51,10 +82,11 @@ those lines for every backend. Blind, the same `-e low` configuration scores
 recall 0.546 with 51 clean false positives; `-e medium`, the default and what
 the table above measures, scores 0.905 with 5.
 
-Of the ten missed (fixture, rule) pairs, four are the `probabilistic/`
-fixtures, which are scored but not gated for exactly this reason. The fifth is
-fixture 31 (BCS1005), the one gated fixture that still flaps: measured 13 of 16
-across this baseline, two targeted runs and one gate run.
+Of `gpt5-mini`'s ten missed (fixture, rule) pairs, four are the
+`probabilistic/` fixtures, which are scored but not gated for exactly this
+reason. The fifth is fixture 31 (BCS1005), the one gated fixture that still
+flaps for that backend: measured 13 of 16 across this baseline, two targeted
+runs and one gate run. `haiku` finds it 3 of 3.
 
 Reading the table: **recall** and the **clean false-positive rate** are the
 trustworthy signals. Aggregate precision counts every extra finding on a

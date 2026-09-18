@@ -90,6 +90,13 @@ size. Rough per-file figures at `-e low` (your mileage will vary; the default
 | Ollama | `qwen-small` | ~5–30s | free (local compute) | Quality varies by local model |
 | Claude Code CLI | `claude-code:haiku` | ~15–25s | per your Claude plan | No API key; needs `claude` on PATH |
 
+Measured on the labelled corpus (17-90 line scripts) at the default
+`-e medium`, 2026-09-18: `gpt5-mini` about 12 s per check; `haiku` about 23 s
+over the 30-fixture gate and about 25 s averaged over a 123-check baseline.
+The Anthropic backend sends the standard with `cache_control: ephemeral`, so
+after the first call of a session the system prompt is billed as a cache read
+rather than fresh input.
+
 Effort scales latency and cost up sharply: `-e high`/`xhigh`/`max` and larger
 models (`sonnet`, `opus`, `gpt5`, `pro`) can take **30–600s** per file. For a
 pre-push gate, use the cheapest alias with `--tier core` at the default
