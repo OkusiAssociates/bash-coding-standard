@@ -19,6 +19,7 @@ against these numbers, not against memory.
 | `flash` / `medium` | Google | ✗ not run. The key's free tier allows 20 requests per model per day; one pass of the corpus needs 41 and a baseline needs 123 |
 | `haiku` / `medium` | Anthropic | ✓ measured 2026-09-18, `bcs` 2.0.2, 41 fixtures × 3 runs, model `claude-haiku-4-5` |
 | `sonnet` / `medium` | Anthropic | ✓ measured 2026-09-18, `bcs` 2.0.2, 41 fixtures × 3 runs, model `claude-sonnet-5`. 122 of 123 scored; 1 inconclusive |
+| `sonnet` / **`high`** | Anthropic | ✓ measured 2026-09-19, `bcs` 2.0.4, 41 fixtures × 3 runs, model `claude-sonnet-5`. 120 of 123 scored; 3 inconclusive. **The default configuration as of this date**, and the first baseline carrying `fp_per_rule` |
 | `qwen-small` / `medium` | Ollama | ✗ not run. No Ollama runs were made; note that the `num_ctx` fix in 2.0.2 has itself not been exercised against a live server |
 
 Each JSON carries both `model` (the alias as typed) and `model_id` (the
@@ -36,11 +37,31 @@ model, so it recorded how well the checker reads an answer it was given. The
 same configuration blind scored recall 0.546 and 51 clean false positives.
 Numbers taken before 2026-09-18 are not comparable with these.
 
-The three baselines above carry no `fp_per_rule` map: the scorer counted false
+## Effort: `medium` against `high` on the default model
+
+| | recall | precision | F1 | clean FP | stability | wall |
+|---|---:|---:|---:|---:|---:|---:|
+| `sonnet -e medium` | 0.924 | 0.548 | 0.688 | 17 / 17 | 0.943 | ~35 min |
+| `sonnet -e high` | **0.971** | 0.459 | 0.624 | 23 / 15 | 0.943 | ~117 min |
+
+`high` is the default from 2026-09-19 (`BCS_EFFORT` in `/etc/bcs.conf`). The
+gain is not run-to-run noise: stability is identical at 0.943, no rule
+regressed, and the improvement traces to four named rules — BCS0110 and
+BCS1005 rose from 0.667 to 1.000, BCS1104 from 0.000 to 0.667, BCS0106 from
+0.000 to 0.333. BCS1104 had been 0-of-9 across all three `-e medium`
+baselines and was suspected of being a corpus defect; it is an effort effect.
+BCS0106 stays capped near zero for a mechanical reason — the checker never
+sees the script's real filename.
+
+The cost is 3.3× the wall time and roughly half again the noise on compliant
+files. The choice follows this project's stated priority: recall over
+precision, because a false positive costs a glance and a missed core
+violation ships. Re-argue it on measurement, not preference.
+
+The three `medium` baselines carry no `fp_per_rule` map: the scorer counted false
 positives without recording which codes they were until `bcs` 2.0.4, so the
 committed artefacts cannot say *why* the corpus repairs cut Anthropic false
-positives by roughly three quarters and left OpenAI's alone. Any baseline
-retaken from 2.0.4 onward answers that; these three cannot be made to.
+positives by roughly three quarters and left OpenAI's alone. `sonnet_high` is the first that answers it; those three cannot be made to.
 
 ## Refreshing a baseline
 

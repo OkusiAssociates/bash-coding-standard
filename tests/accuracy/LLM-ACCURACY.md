@@ -191,6 +191,31 @@ The count (7 in 18) sits above the committed baseline's 5 in 18. Both are
 single 3-run samples of the same configuration; the gap is sampling, not a
 regression, and is recorded rather than averaged away.
 
+### Where sonnet's false positives actually come from (2026-09-19)
+
+First baseline with `fp_per_rule` (`sonnet -e high`, 41 fixtures x 3). The
+noise is not diffuse — it concentrates in a few rules, and the `clean/` column
+separates "probably a real secondary defect" from "certainly wrong":
+
+| Code | Reported, not planted | of which on `clean/` | Reading |
+|------|----------------------:|---------------------:|---------|
+| BCS0806 | 14 | **8** | The largest single source of false alarms on compliant code |
+| BCS1005 | 15 | 0 | All on violation fixtures: plausibly real secondary defects |
+| BCS0702 | 11 | 0 | As above |
+| BCS0602 | 10 | 2 | Mostly on violation fixtures |
+| BCS0801 | 6 | **5** | Small but almost entirely wrong |
+| BCS0107 | 3 | **3** | Every instance on compliant code |
+
+A finding on a violation fixture may be a genuine defect the fixture never
+declared — two such were confirmed and repaired in September 2026 — so the
+`clean/` column is the one that indicts a rule. **BCS0806, BCS0801 and BCS0107
+are the candidates for a text review**: they fire on code that has nothing
+wrong with it. The rules with a zero clean column are not exonerated, but
+nothing here shows them misfiring.
+
+This is what the FP-by-code tally was built for. Before it, precision 0.548
+was a single number with no way in.
+
 ### `sonnet` is the default model, and it is the noisy one
 
 ▲ `bcs check` defaults to `-m sonnet`, and that configuration raised **17
