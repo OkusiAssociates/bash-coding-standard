@@ -129,6 +129,14 @@ declare -i TP=0 FP=0 FN=0 INCONCLUSIVE=0 SCORED=0 CLEAN_FP=0 CLEAN_RUNS=0
 # recording only the alias cannot be reproduced or compared.
 declare -- MODEL_ID=''
 declare -A PAIR_HITS=() PAIR_RUNS=() CODE_HIT=() CODE_TOT=()
+# Which codes the checker reported that the fixture did not plant, and how
+# often. FP was only ever a count, so a precision change could be seen but
+# never explained: the corpus repairs of 2026-09-18 cut Anthropic false
+# positives by three quarters and left OpenAI's alone, and no committed
+# artefact could say which rules moved. comm already computes the list on the
+# way to `wc -l`; these keep it. FP_CLEAN is the same tally restricted to
+# clean/, where every report is by definition wrong.
+declare -A FP_CODE=() FP_CLEAN=()
 
 show_help() {
   cat <<HELP
@@ -226,7 +234,7 @@ main() {
 
   # Per-run scratch (accumulators are module globals, reset at declaration).
   local -i run i_tp i_fp i_fn
-  local -- json reported code pair
+  local -- json reported code pair fp_list
 
   for ((run=1; run<=RUNS; run+=1)); do
     info "run $run/$RUNS ..."
@@ -251,8 +259,20 @@ main() {
         | grep -oE 'BCS[0-9]{4}' | sort -u || true)
       expected=${EXP[$f]}
       i_tp=$(comm -12 <(_codes "$expected") <(_codes "$reported") | wc -l)
-      i_fp=$(comm -13 <(_codes "$expected") <(_codes "$reported") | wc -l)
       i_fn=$(comm -23 <(_codes "$expected") <(_codes "$reported") | wc -l)
+      # Tally the false positives by code and count them in the same pass, so
+      # the count and the histogram can never disagree. A `wc -l` here would
+      # read 1 for the empty list that `comm` prints as nothing.
+      # ||: because comm exits non-zero only on a read error here, and both
+      # operands are already-materialised shell strings: nothing left to fail.
+      fp_list=$(comm -13 <(_codes "$expected") <(_codes "$reported")) ||:
+      i_fp=0
+      while IFS= read -r code; do
+        [[ -n $code ]] || continue
+        i_fp+=1
+        FP_CODE[$code]=$(( ${FP_CODE[$code]:-0} + 1 ))
+        ((IS_CLEAN[$f])) && FP_CLEAN[$code]=$(( ${FP_CLEAN[$code]:-0} + 1 )) ||:
+      done <<< "$fp_list"
       TP=$((TP + i_tp)); FP=$((FP + i_fp)); FN=$((FN + i_fn))
       if ((IS_CLEAN[$f])); then CLEAN_FP=$((CLEAN_FP + i_fp)); CLEAN_RUNS+=1; fi
       while IFS= read -r code; do
@@ -328,6 +348,19 @@ _emit_reports() {
     rule_tsv+=$(printf '%s\t%s\t%s\t%s' "$c" "$hit" "$tot" "$rr")$'\n'
   done < <(printf '%s\n' "${!CODE_TOT[@]}" | sort)
 
+  # False positives by code, commonest first, with the clean/ share broken out;
+  # fp_tsv feeds the JSON report.
+  local -- fp_table='' fp_tsv='' fc ftot fclean
+  while IFS= read -r fc; do
+    [[ -n $fc ]] || continue
+    ftot=${FP_CODE[$fc]}; fclean=${FP_CLEAN[$fc]:-0}
+    fp_table+=$(printf '| %s | %s | %s |' "$fc" "$ftot" "$fclean")$'\n'
+    fp_tsv+=$(printf '%s\t%s\t%s' "$fc" "$ftot" "$fclean")$'\n'
+  done < <(for fc in "${!FP_CODE[@]}"; do
+             printf '%s\t%s\n' "${FP_CODE[$fc]}" "$fc"
+           done | sort -k1,1nr -k2,2 | cut -f2)
+  [[ -n $fp_table ]] || fp_table='| _none_ | 0 | 0 |'$'\n'
+
   # Clean-fixture false-positive rate.
   local -- clean_rate
   clean_rate=$(awk -v fp="$CLEAN_FP" -v n="$CLEAN_RUNS" \
@@ -371,6 +404,16 @@ _emit_reports() {
 | Clean fixture-runs | $CLEAN_RUNS |
 | Avg spurious findings per clean run | $clean_rate |
 
+## False positives by rule
+
+| Code | Reported, not planted | of which on clean/ |
+|------|----------------------:|-------------------:|
+${fp_table%$'\n'}
+
+> On a violation fixture an extra finding may be a genuine secondary defect the
+> fixture did not declare -- two such were confirmed and repaired in September
+> 2026. On a clean fixture it cannot be: the last column is noise, full stop.
+
 ## Stability (run-to-run determinism)
 
 | Metric | Value |
@@ -400,6 +443,7 @@ MD
     --arg model "$MODEL" --arg model_id "$MODEL_ID" \
     --arg effort "$EFFORT" --arg stability "$stability" \
     --arg rules "$rule_tsv" \
+    --arg fp_rules "$fp_tsv" \
     --argjson runs "$RUNS" --argjson scored "$SCORED" --argjson inconclusive "$INCONCLUSIVE" \
     --argjson tp "$TP" --argjson fp "$FP" --argjson fn "$FN" \
     --argjson precision "$precision" --argjson recall "$recall" --argjson f1 "$f1" \
@@ -413,7 +457,10 @@ MD
       stability: ($stability | tonumber? // null),
       per_rule: ($rules | split("\n") | map(select(. != "") | split("\t")
                  | {key: .[0], value: {hits: (.[1] | tonumber), runs: (.[2] | tonumber),
-                                       recall: (.[3] | tonumber)}}) | from_entries)}' \
+                                       recall: (.[3] | tonumber)}}) | from_entries),
+      fp_per_rule: ($fp_rules | split("\n") | map(select(. != "") | split("\t")
+                 | {key: .[0], value: {total: (.[1] | tonumber),
+                                       clean: (.[2] | tonumber)}}) | from_entries)}' \
     > "$json" || die 1 "Failed to write ${json@Q}"
 
   success "Wrote $md"

@@ -53,6 +53,14 @@ case ${STUB_MODE:-findings} in
             fi
             emit_findings ;;
   json)     echo '{"source":"bcs","meta":{},"comments":[]}' ;;
+  jsonfp)   # Every expected code, plus one the fixture never planted. BCS1203
+            # is a real style rule that none of the fixtures used here expect,
+            # so it lands in the false-positive tally on every single run.
+            { sed -n '1,15p' "$FIXTURE" | grep -F 'bcs-fixture-expect:' \
+                | grep -oE 'BCS[0-9]{4}' ||:; echo BCS1203; } \
+              | jq -R -s -c '{source: "bcs", meta: {},
+                   comments: (split("\n") | map(select(. != "")
+                              | {bcsCode: ., line: 1, level: "error"}))}' ;;
   jsonfind) sed -n '1,15p' "$FIXTURE" | grep -F 'bcs-fixture-expect:' | grep -oE 'BCS[0-9]{4}' \
               | jq -R -s -c '{source: "bcs", meta: {},
                    comments: (split("\n") | map(select(. != "")
@@ -166,6 +174,26 @@ assert_equal 2 "$(jq -r '.per_rule | length' "$SCORE_JSON" 2>/dev/null ||:)" \
   'JSON report: per-rule recall for both expected codes' ||:
 assert_matches "$(jq -r '.bcs_version' "$SCORE_JSON" 2>/dev/null ||:)" '^[0-9]+\.[0-9]+\.[0-9]+' \
   'JSON report: records the bcs version it scored' ||:
+assert_equal 0 "$(jq -r '.fp_per_rule | length' "$SCORE_JSON" 2>/dev/null ||:)" \
+  'JSON report: nothing spurious reported -> empty fp_per_rule' ||:
+
+# Which codes are false-positive, not merely how many. FP was a bare count
+# until 2026-09-18, so a precision shift could be observed and never explained.
+begin_test 'accuracy scorer: false positives are tallied by code'
+run_child "$TEST_DIR"/accuracy/bcs-accuracy-score.sh jsonfp -- \
+  -m gpt5-mini -e high -n 2 -o "$SANDBOX"/score "${FIXTURES[0]}" "${FIXTURES[1]}" \
+  "$TEST_DIR"/fixtures/clean/01-greet.sh
+declare -r FP_JSON="$SANDBOX"/score/accuracy-gpt5-mini-high.json
+assert_equal '6 2' "$(jq -r '"\(.fp) \(.clean_fp)"' "$FP_JSON" 2>/dev/null ||:)" \
+  'aggregate FP unchanged by the tally: 3 fixtures x 2 runs, 2 of them clean' ||:
+assert_equal 1 "$(jq -r '.fp_per_rule | length' "$FP_JSON" 2>/dev/null ||:)" \
+  'one code accounts for every false positive' ||:
+assert_equal '6 2' "$(jq -r '"\(.fp_per_rule.BCS1203.total) \(.fp_per_rule.BCS1203.clean)"' \
+  "$FP_JSON" 2>/dev/null ||:)" 'BCS1203 tallied 6 times, 2 of them on clean/' ||:
+assert_contains "$(< "$SANDBOX"/score/accuracy-gpt5-mini-high.md)" 'False positives by rule' \
+  'markdown report gains the false-positive table' ||:
+assert_contains "$(< "$SANDBOX"/score/accuracy-gpt5-mini-high.md)" '| BCS1203 | 6 | 2 |' \
+  'markdown table carries the per-code counts' ||:
 
 run_child "$TEST_DIR"/accuracy/bcs-accuracy-score.sh json OPENAI_API_KEY=k MOCK_OLLAMA_UP=1 -- \
   -n 1 -o "$SANDBOX"/score "${FIXTURES[0]}"
