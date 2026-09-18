@@ -48,7 +48,7 @@ for file in *.txt; do                # less safe
 
 **Tier:** core
 
-Use process substitution (`<(command)`, `>(command)`) for file-operation idioms that would otherwise need temp files or lossy pipes: feeding while loops with `< <(command)`, populating arrays with `readarray`, comparing outputs with `diff <(...) <(...)`, parallel output with `tee >(...)`, and null-delimited filename handling. See BCS0504 for the pipe-to-while prohibition — cite BCS0504, not this rule, for `command | while read` violations.
+Use process substitution (`<(command)`, `>(command)`) for file-operation idioms that would otherwise need temp files or lossy pipes: feeding while loops with `< <(command)`, populating arrays with `readarray`, comparing outputs with `diff <(...) <(...)`, parallel output with `tee >(...)`, and null-delimited filename handling. See BCS0504 for the pipe-to-while prohibition — cite BCS0504, not this rule, for `command | while read` violations. An unchecked failure inside `<( )` where the result is compared or captured is owned by BCS0604 -- cite BCS0604, not this rule; a loop fed by `< <(cmd)` is not a finding under either.
 
 ```bash
 # correct — variables preserved in current shell

@@ -94,7 +94,13 @@ done
 for f in $(ls *.txt); do             # never parse ls
 for ((i=0; i<10; i++)); do           # use i+=1 — increment policy: see BCS0505
 while (($# > 0)); do                 # use (($#)) instead
+while read line; do                  # IFS= read -r: -r keeps backslashes, IFS= keeps blanks
+for f in *.log; do process "$f"; done   # without nullglob, processes the literal '*.log'
 ```
+
+Read lines with `IFS= read -r`: without `-r` backslashes are mangled, without `IFS=` leading and trailing whitespace is stripped.
+
+A loop over a glob must handle the no-match case: enable `nullglob` (or `failglob`) in the script's `shopt` line, or test the first match with `[[ -e $f ]]`; otherwise the unmatched pattern itself is processed as a filename.
 
 Declare local variables before loops, not inside:
 

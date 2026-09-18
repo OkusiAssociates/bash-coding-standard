@@ -74,7 +74,7 @@ IFS=','
 
 **Tier:** core
 
-Never use `eval` with untrusted input. Almost every use case has a safer alternative.
+Never use `eval` with untrusted input. Almost every use case has a safer alternative. When `eval` cannot be avoided, the comment above it must say why, and its operand must be validated against a strict pattern first; an unexplained or unvalidated `eval` is a violation even on data believed to be trusted.
 
 ```bash
 # correct — arrays for dynamic commands
@@ -118,8 +118,9 @@ Validate and sanitize all user input. Use whitelist over blacklist. Pass `--` be
 real_path=$(realpath -e -- "$path")
 [[ $real_path == "$allowed_dir"/* || $real_path == "$allowed_dir" ]] || die 13 'Path traversal blocked'
 
-# correct — sanitize filename
-[[ $name =~ ^[a-zA-Z0-9._-]+$ ]] || die 22 "Invalid filename ${name@Q}"
+# correct — sanitize a bare filename: no separator, no traversal, not hidden
+# (an allowed-character class alone admits '..' and '.hidden')
+[[ $name =~ ^[a-zA-Z0-9_][a-zA-Z0-9._-]*$ ]] || die 22 "Invalid filename ${name@Q}"
 
 # correct — -- before pathname operands from variables or input
 rm -- "$user_file"

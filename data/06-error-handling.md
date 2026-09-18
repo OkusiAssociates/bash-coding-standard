@@ -108,7 +108,12 @@ trap 'rm -f -- "$temp_file"' EXIT
 
 # wrong — double quotes expand immediately
 trap "rm -f $temp_file" EXIT
+
+# wrong — exit 0 in the trap reports success for a script that failed
+trap 'rm -f -- "$temp_file"; exit 0' EXIT
 ```
+
+The handler must propagate the script's exit status: pass `$?` in (`trap 'cleanup $?' ...`) and finish with `exit "$exitcode"`, as in the example above. A trap that ends in `exit 0`, or any fixed status, hides the failure from the caller.
 
 Never combine multiple traps for the same signal (replaces previous). Use a single trap with a cleanup function.
 
@@ -138,7 +143,19 @@ fi
 # correct — check $? immediately
 cmd1
 local -i result=$?
+
+# wrong — a failure inside <( ) is invisible: diff silently compares against empty input
+diff <(failing_command) "$file"
+
+# correct — run and check first, then feed the output on
+out=$(failing_command) || die 1 'Command failed'
+diff <(printf '%s\n' "$out") "$file"
+
+# correct — loop feed: an empty stream is an ordinary outcome, nothing to check
+while IFS= read -r line; do process "$line"; done < <(grep 'pattern' "$file")
 ```
+
+A command run only inside a process substitution (`<(cmd)`) has no exit status anyone checks: `set -e` and `pipefail` never see it, and the consumer reads empty input. This is a finding where an empty result would be taken for a real one: a `diff`, `cmp` or `comm` against `<(cmd)`, or a result captured for later use. Run such a command first and check it. The prescribed loop feed `while ... done < <(cmd)` (BCS0504, BCS0903), where an empty stream is an ordinary outcome, is not a finding.
 
 **`PIPESTATUS` pitfalls:**
 
@@ -168,13 +185,13 @@ fi
 
 **Tier:** recommended
 
-Only suppress errors when failure is expected, non-critical, and explicitly safe to ignore.
+Only suppress errors when failure is expected, non-critical, and explicitly safe to ignore. A suppression is a decision: the comment beside or above it must say why the failure is safe to ignore.
 
 ```bash
-# correct — safe to suppress
-command -v optional_tool &>/dev/null ||:
-rm -f /tmp/optional_*
-rmdir -- "$maybe_empty" 2>/dev/null ||:
+# correct — safe to suppress, and the comment says why
+command -v optional_tool &>/dev/null ||:   # optional: the builtin path is used instead
+rm -f /tmp/optional_*                      # -f: nothing to remove is the normal case
+rmdir -- "$maybe_empty" 2>/dev/null ||:    # still populated means another job owns it
 
 # correct — suppress message but check return
 if result=$(command 2>/dev/null); then
@@ -184,7 +201,18 @@ fi
 # wrong — suppressing critical operations
 cp "$src" "$dst" 2>/dev/null || true
 set +e                               # never disable broadly
+
+# wrong — unexplained suppression
+some_command 2>/dev/null || true
+
+# wrong — a whole function silenced: every error in it is lost, not only the expected one
+process_files() {
+  cp -- "$src" "$dst"
+  rmdir -- "$maybe_empty"
+} 2>/dev/null
 ```
+
+Suppress at the single command whose failure is expected, never on a whole function or compound command (`} 2>/dev/null`, `done 2>/dev/null`).
 
 Verify system state after suppressed operations when possible.
 

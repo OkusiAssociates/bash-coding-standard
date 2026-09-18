@@ -303,6 +303,7 @@ DESTDIR ?=
 - Symlinks: `ln -sf`.
 - If the project contains manpages (`.1`, `.8`, etc.), the `install` target must install them.
 - If the project contains bash completion files, the `install` target must install them (skip gracefully if `COMPDIR` does not exist).
+- Configuration files: install a default only when none exists (`[ -e $(DESTDIR)$(CONFDIR)/app.conf ] || install -m 644 app.conf.example $(DESTDIR)$(CONFDIR)/app.conf`); `install` must never overwrite a user's edited configuration on upgrade.
 - `uninstall` must remove everything `install` creates.
 - `check` must verify installed commands are callable. Skip `check` when `DESTDIR` is set (staged installs).
 

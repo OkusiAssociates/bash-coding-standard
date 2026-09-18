@@ -103,6 +103,8 @@ for dir in "${search_paths[@]}"; do
 done
 ```
 
+Locate companion files (libraries, data, configuration) relative to `$SCRIPT_DIR`, never relative to the current working directory: `source "$SCRIPT_DIR"/lib/common.sh`, not `source lib/common.sh` or `source ../lib/common.sh`, which break when the script is run from another directory. `SCRIPT_DIR=$PWD` is the same mistake.
+
 Support `PREFIX` customization and XDG directories:
 
 ```bash

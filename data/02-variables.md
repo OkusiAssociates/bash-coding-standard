@@ -141,9 +141,10 @@ local -a cmd=(myapp --config "$file")
 # wrong
 array=($string)                      # word splitting creates array
 for item in ${items[@]}; do          # unquoted expansion
+files=file.txt                       # scalar to an array: replaces files[0], keeps the rest
 ```
 
-Always quote array expansions: `"${array[@]}"`. Never use `${array[*]}` in iteration. Use `readarray -t` or `mapfile -t` instead of word-split assignment.
+Always quote array expansions: `"${array[@]}"`. Never use `${array[*]}` in iteration. Use `readarray -t` or `mapfile -t` instead of word-split assignment. Never assign a scalar to an array variable: `files=x` replaces element 0 and leaves the others in place; write `files=(x)` to replace the array, `files+=(x)` to append.
 
 ## BCS0207 Parameter Expansion
 
@@ -210,7 +211,15 @@ declare -- SHARE_DIR="$PREFIX"/share/myapp
 # wrong — hardcoded, not derived
 declare -- BIN_DIR=/usr/local/bin
 declare -- SHARE_DIR=/usr/local/share/myapp
+
+# correct — the base can change during parsing: derive once it is final
+derive_paths() { BIN_DIR="$PREFIX"/bin; SHARE_DIR="$PREFIX"/share/myapp; }
+# ... parse --prefix, then:
+derive_paths
+readonly PREFIX BIN_DIR SHARE_DIR
 ```
+
+A derived variable is only as current as its base. When an option can change the base after derivation (`--prefix` replaces `PREFIX`), derive after parsing, or re-derive in one place once parsing is complete; a `BIN_DIR` computed at file scope from a `PREFIX` that `--prefix` later replaces is stale.
 
 Readonly timing for derived variables: see BCS0205. Document hardcoded exceptions with comments.
 

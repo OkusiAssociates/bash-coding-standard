@@ -72,10 +72,10 @@ noarg() { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
 -o|--output) noarg "$@"; shift; OUTPUT=$1 ;;
 
 # wrong — no validation
--o|--output) shift; OUTPUT=$1 ;;     # --output --verbose captures --verbose
+-o|--output) shift; OUTPUT=$1 ;;     # --output as the last word: $1 is unbound, set -u aborts
 ```
 
-Always call validators BEFORE `shift` — they must inspect `$2`.
+Always call validators BEFORE `shift` — they must inspect `$2`. `noarg` checks that a value follows; it does not reject a value that begins with `-`, because `-` (stdin) and negative numbers are legitimate values. When the option needs a particular form, validate the value itself (BCS1005).
 
 Validate required arguments after parsing:
 

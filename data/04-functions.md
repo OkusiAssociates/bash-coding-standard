@@ -195,6 +195,16 @@ declare -fx myapp_init myapp_cleanup myapp_process
 
 Libraries should only define functions, not have side effects on source. Allow configuration override before sourcing: `: "${CONFIG_DIR:=/etc/myapp}"`.
 
+Library functions signal failure with `return`, never `exit` or `die`: they run in the caller's shell, and `exit` there terminates the sourcing script or the user's interactive session. Whether to exit is the caller's decision.
+
+```bash
+# correct — the caller decides
+myapp_load() { [[ -f $1 ]] || return 3; }
+
+# wrong — exit inside a library function kills the sourcing shell
+myapp_load() { [[ -f $1 ]] || exit 3; }
+```
+
 Source libraries with existence check:
 
 ```bash

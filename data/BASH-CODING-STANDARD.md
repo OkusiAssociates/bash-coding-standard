@@ -140,6 +140,8 @@ for dir in "${search_paths[@]}"; do
 done
 ```
 
+Locate companion files (libraries, data, configuration) relative to `$SCRIPT_DIR`, never relative to the current working directory: `source "$SCRIPT_DIR"/lib/common.sh`, not `source lib/common.sh` or `source ../lib/common.sh`, which break when the script is run from another directory. `SCRIPT_DIR=$PWD` is the same mistake.
+
 Support `PREFIX` customization and XDG directories:
 
 ```bash
@@ -533,9 +535,10 @@ local -a cmd=(myapp --config "$file")
 # wrong
 array=($string)                      # word splitting creates array
 for item in ${items[@]}; do          # unquoted expansion
+files=file.txt                       # scalar to an array: replaces files[0], keeps the rest
 ```
 
-Always quote array expansions: `"${array[@]}"`. Never use `${array[*]}` in iteration. Use `readarray -t` or `mapfile -t` instead of word-split assignment.
+Always quote array expansions: `"${array[@]}"`. Never use `${array[*]}` in iteration. Use `readarray -t` or `mapfile -t` instead of word-split assignment. Never assign a scalar to an array variable: `files=x` replaces element 0 and leaves the others in place; write `files=(x)` to replace the array, `files+=(x)` to append.
 
 ## BCS0207 Parameter Expansion
 
@@ -602,7 +605,15 @@ declare -- SHARE_DIR="$PREFIX"/share/myapp
 # wrong — hardcoded, not derived
 declare -- BIN_DIR=/usr/local/bin
 declare -- SHARE_DIR=/usr/local/share/myapp
+
+# correct — the base can change during parsing: derive once it is final
+derive_paths() { BIN_DIR="$PREFIX"/bin; SHARE_DIR="$PREFIX"/share/myapp; }
+# ... parse --prefix, then:
+derive_paths
+readonly PREFIX BIN_DIR SHARE_DIR
 ```
+
+A derived variable is only as current as its base. When an option can change the base after derivation (`--prefix` replaces `PREFIX`), derive after parsing, or re-derive in one place once parsing is complete; a `BIN_DIR` computed at file scope from a `PREFIX` that `--prefix` later replaces is stale.
 
 Readonly timing for derived variables: see BCS0205. Document hardcoded exceptions with comments.
 
@@ -1055,6 +1066,16 @@ declare -fx myapp_init myapp_cleanup myapp_process
 
 Libraries should only define functions, not have side effects on source. Allow configuration override before sourcing: `: "${CONFIG_DIR:=/etc/myapp}"`.
 
+Library functions signal failure with `return`, never `exit` or `die`: they run in the caller's shell, and `exit` there terminates the sourcing script or the user's interactive session. Whether to exit is the caller's decision.
+
+```bash
+# correct — the caller decides
+myapp_load() { [[ -f $1 ]] || return 3; }
+
+# wrong — exit inside a library function kills the sourcing shell
+myapp_load() { [[ -f $1 ]] || exit 3; }
+```
+
 Source libraries with existence check:
 
 ```bash
@@ -1388,7 +1409,13 @@ done
 for f in $(ls *.txt); do             # never parse ls
 for ((i=0; i<10; i++)); do           # use i+=1 — increment policy: see BCS0505
 while (($# > 0)); do                 # use (($#)) instead
+while read line; do                  # IFS= read -r: -r keeps backslashes, IFS= keeps blanks
+for f in *.log; do process "$f"; done   # without nullglob, processes the literal '*.log'
 ```
+
+Read lines with `IFS= read -r`: without `-r` backslashes are mangled, without `IFS=` leading and trailing whitespace is stripped.
+
+A loop over a glob must handle the no-match case: enable `nullglob` (or `failglob`) in the script's `shopt` line, or test the first match with `[[ -e $f ]]`; otherwise the unmatched pattern itself is processed as a filename.
 
 Declare local variables before loops, not inside:
 
@@ -1659,7 +1686,12 @@ trap 'rm -f -- "$temp_file"' EXIT
 
 # wrong — double quotes expand immediately
 trap "rm -f $temp_file" EXIT
+
+# wrong — exit 0 in the trap reports success for a script that failed
+trap 'rm -f -- "$temp_file"; exit 0' EXIT
 ```
+
+The handler must propagate the script's exit status: pass `$?` in (`trap 'cleanup $?' ...`) and finish with `exit "$exitcode"`, as in the example above. A trap that ends in `exit 0`, or any fixed status, hides the failure from the caller.
 
 Never combine multiple traps for the same signal (replaces previous). Use a single trap with a cleanup function.
 
@@ -1689,7 +1721,19 @@ fi
 # correct — check $? immediately
 cmd1
 local -i result=$?
+
+# wrong — a failure inside <( ) is invisible: diff silently compares against empty input
+diff <(failing_command) "$file"
+
+# correct — run and check first, then feed the output on
+out=$(failing_command) || die 1 'Command failed'
+diff <(printf '%s\n' "$out") "$file"
+
+# correct — loop feed: an empty stream is an ordinary outcome, nothing to check
+while IFS= read -r line; do process "$line"; done < <(grep 'pattern' "$file")
 ```
+
+A command run only inside a process substitution (`<(cmd)`) has no exit status anyone checks: `set -e` and `pipefail` never see it, and the consumer reads empty input. This is a finding where an empty result would be taken for a real one: a `diff`, `cmp` or `comm` against `<(cmd)`, or a result captured for later use. Run such a command first and check it. The prescribed loop feed `while ... done < <(cmd)` (BCS0504, BCS0903), where an empty stream is an ordinary outcome, is not a finding.
 
 **`PIPESTATUS` pitfalls:**
 
@@ -1719,13 +1763,13 @@ fi
 
 **Tier:** recommended
 
-Only suppress errors when failure is expected, non-critical, and explicitly safe to ignore.
+Only suppress errors when failure is expected, non-critical, and explicitly safe to ignore. A suppression is a decision: the comment beside or above it must say why the failure is safe to ignore.
 
 ```bash
-# correct — safe to suppress
-command -v optional_tool &>/dev/null ||:
-rm -f /tmp/optional_*
-rmdir -- "$maybe_empty" 2>/dev/null ||:
+# correct — safe to suppress, and the comment says why
+command -v optional_tool &>/dev/null ||:   # optional: the builtin path is used instead
+rm -f /tmp/optional_*                      # -f: nothing to remove is the normal case
+rmdir -- "$maybe_empty" 2>/dev/null ||:    # still populated means another job owns it
 
 # correct — suppress message but check return
 if result=$(command 2>/dev/null); then
@@ -1735,7 +1779,18 @@ fi
 # wrong — suppressing critical operations
 cp "$src" "$dst" 2>/dev/null || true
 set +e                               # never disable broadly
+
+# wrong — unexplained suppression
+some_command 2>/dev/null || true
+
+# wrong — a whole function silenced: every error in it is lost, not only the expected one
+process_files() {
+  cp -- "$src" "$dst"
+  rmdir -- "$maybe_empty"
+} 2>/dev/null
 ```
+
+Suppress at the single command whose failure is expected, never on a whole function or compound command (`} 2>/dev/null`, `done 2>/dev/null`).
 
 Verify system state after suppressed operations when possible.
 
@@ -2024,6 +2079,7 @@ Never hardcode terminal width. Provide graceful fallbacks for limited terminals.
 
 ```bash
 yn() {
+  ((PROMPT)) || return 0               # unattended run: the answer is yes
   local -- REPLY
   >&2 echo -n "$SCRIPT_NAME: $YELLOW▲$NC ${1:-Continue?} y/n "
   read -r -n 1
@@ -2034,6 +2090,8 @@ yn() {
 # usage
 yn 'Deploy to production?' || die 0 'Cancelled'
 ```
+
+A confirmation must be suppressible, so the script can run unattended: either `yn()` returns success when `PROMPT` is 0 (declared in BCS0701, cleared by `-N`/`--no-prompt`, BCS0806), as above, or every call is guarded by `((PROMPT))`. A guard in either place satisfies this rule; a confirmation that cannot be switched off is a violation.
 
 ## BCS0710 Standard Icons
 
@@ -2147,10 +2205,10 @@ noarg() { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
 -o|--output) noarg "$@"; shift; OUTPUT=$1 ;;
 
 # wrong — no validation
--o|--output) shift; OUTPUT=$1 ;;     # --output --verbose captures --verbose
+-o|--output) shift; OUTPUT=$1 ;;     # --output as the last word: $1 is unbound, set -u aborts
 ```
 
-Always call validators BEFORE `shift` — they must inspect `$2`.
+Always call validators BEFORE `shift` — they must inspect `$2`. `noarg` checks that a value follows; it does not reject a value that begins with `-`, because `-` (stdin) and negative numbers are legitimate values. When the option needs a particular form, validate the value itself (BCS1005).
 
 Validate required arguments after parsing:
 
@@ -2327,7 +2385,7 @@ for file in *.txt; do                # less safe
 
 **Tier:** core
 
-Use process substitution (`<(command)`, `>(command)`) for file-operation idioms that would otherwise need temp files or lossy pipes: feeding while loops with `< <(command)`, populating arrays with `readarray`, comparing outputs with `diff <(...) <(...)`, parallel output with `tee >(...)`, and null-delimited filename handling. See BCS0504 for the pipe-to-while prohibition — cite BCS0504, not this rule, for `command | while read` violations.
+Use process substitution (`<(command)`, `>(command)`) for file-operation idioms that would otherwise need temp files or lossy pipes: feeding while loops with `< <(command)`, populating arrays with `readarray`, comparing outputs with `diff <(...) <(...)`, parallel output with `tee >(...)`, and null-delimited filename handling. See BCS0504 for the pipe-to-while prohibition — cite BCS0504, not this rule, for `command | while read` violations. An unchecked failure inside `<( )` where the result is compared or captured is owned by BCS0604 -- cite BCS0604, not this rule; a loop fed by `< <(cmd)` is not a finding under either.
 
 ```bash
 # correct — variables preserved in current shell
@@ -2531,7 +2589,7 @@ IFS=','
 
 **Tier:** core
 
-Never use `eval` with untrusted input. Almost every use case has a safer alternative.
+Never use `eval` with untrusted input. Almost every use case has a safer alternative. When `eval` cannot be avoided, the comment above it must say why, and its operand must be validated against a strict pattern first; an unexplained or unvalidated `eval` is a violation even on data believed to be trusted.
 
 ```bash
 # correct — arrays for dynamic commands
@@ -2575,8 +2633,9 @@ Validate and sanitize all user input. Use whitelist over blacklist. Pass `--` be
 real_path=$(realpath -e -- "$path")
 [[ $real_path == "$allowed_dir"/* || $real_path == "$allowed_dir" ]] || die 13 'Path traversal blocked'
 
-# correct — sanitize filename
-[[ $name =~ ^[a-zA-Z0-9._-]+$ ]] || die 22 "Invalid filename ${name@Q}"
+# correct — sanitize a bare filename: no separator, no traversal, not hidden
+# (an allowed-character class alone admits '..' and '.hidden')
+[[ $name =~ ^[a-zA-Z0-9_][a-zA-Z0-9._-]*$ ]] || die 22 "Invalid filename ${name@Q}"
 
 # correct — -- before pathname operands from variables or input
 rm -- "$user_file"
@@ -3155,6 +3214,7 @@ DESTDIR ?=
 - Symlinks: `ln -sf`.
 - If the project contains manpages (`.1`, `.8`, etc.), the `install` target must install them.
 - If the project contains bash completion files, the `install` target must install them (skip gracefully if `COMPDIR` does not exist).
+- Configuration files: install a default only when none exists (`[ -e $(DESTDIR)$(CONFDIR)/app.conf ] || install -m 644 app.conf.example $(DESTDIR)$(CONFDIR)/app.conf`); `install` must never overwrite a user's edited configuration on upgrade.
 - `uninstall` must remove everything `install` creates.
 - `check` must verify installed commands are callable. Skip `check` when `DESTDIR` is set (staged installs).
 

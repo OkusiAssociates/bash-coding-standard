@@ -247,6 +247,7 @@ Never hardcode terminal width. Provide graceful fallbacks for limited terminals.
 
 ```bash
 yn() {
+  ((PROMPT)) || return 0               # unattended run: the answer is yes
   local -- REPLY
   >&2 echo -n "$SCRIPT_NAME: $YELLOW▲$NC ${1:-Continue?} y/n "
   read -r -n 1
@@ -257,6 +258,8 @@ yn() {
 # usage
 yn 'Deploy to production?' || die 0 'Cancelled'
 ```
+
+A confirmation must be suppressible, so the script can run unattended: either `yn()` returns success when `PROMPT` is 0 (declared in BCS0701, cleared by `-N`/`--no-prompt`, BCS0806), as above, or every call is guarded by `((PROMPT))`. A guard in either place satisfies this rule; a confirmation that cannot be switched off is a violation.
 
 ## BCS0710 Standard Icons
 
