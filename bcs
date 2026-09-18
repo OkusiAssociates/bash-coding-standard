@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-#shellcheck disable=SC2015
+#shellcheck disable=SC2015  # BCS idiom: ((cond)) && action ||:
 # bcs - Bash Coding Standard CLI toolkit
 # Six subcommands for viewing, generating, and checking compliance with the Bash Coding Standard.
 # BCS0406 deviation (documented): strict mode runs before the source fence.
@@ -14,7 +14,7 @@ set -euo pipefail
 # set -euo pipefail (safe on any Bash), before shopt (inherit_errexit needs 4.4+).
 (( BASH_VERSINFO[0] > 5 || (BASH_VERSINFO[0] == 5 && BASH_VERSINFO[1] >= 2) )) \
   || { >&2 echo "${0##*/}: requires Bash >= 5.2 (have ${BASH_VERSION:-unknown})"; exit 2; }
-#bcscheck disable=BCS0406
+#bcscheck disable=BCS0406  # sourced by the test suites, as above
 shopt -s inherit_errexit extglob nullglob
 
 declare -rx PATH="$HOME"/.local/bin:/usr/local/bin:/usr/bin:/bin
@@ -23,7 +23,7 @@ declare -rx PATH="$HOME"/.local/bin:/usr/local/bin:/usr/bin:/bin
 ### VERSION managed by version
 declare -r VERSION=2.0.2
 ###
-#shellcheck disable=SC2155
+#shellcheck disable=SC2155  # exit-on-error catches realpath failure
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
@@ -117,11 +117,11 @@ _msg() { >&2 printf "$SCRIPT_NAME: $1 %s\n" "${@:2}"; }
 error()   { _msg "$RED✗$NC" "$@"; }
 die()     { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 warn()    { _msg "$YELLOW▲$NC" "$@"; }
-#bcscheck disable=BCS0405
+#bcscheck disable=BCS0405  # reference messaging suite, kept complete
 vecho()   { ((VERBOSE)) || return 0; _msg '' "$@"; }
 info()    { ((VERBOSE)) || return 0; _msg "$CYAN◉$NC" "$@"; }
 success() { ((VERBOSE)) || return 0; _msg "$GREEN✓$NC" "$@"; }
-#bcscheck disable=BCS0405
+#bcscheck disable=BCS0405  # reference messaging suite, kept complete
 debug()   { ((DEBUG)) || return 0; _msg "$RED⦿$NC" "$@"; }
 
 noarg()   { (($# > 1)) || die 22 "Option ${1@Q} requires an argument"; }
@@ -1308,7 +1308,7 @@ Respect inline suppression: eg, #bcscheck disable=BCS0101 exempts the next line/
   # SC1007: `CLAUDECODE= claude ...` clears the env var for one command;
   # the empty-RHS assignment is intentional, not a typo.
   local -i rc=0
-  #shellcheck disable=SC1007
+  #shellcheck disable=SC1007  # CLAUDECODE= is deliberately empty: clears the nesting guard
   CLAUDECODE= claude "${claude_args[@]}" -p "$prompt" 2>"$err_file" || rc=$?
   ((rc)) || return 0
   # A failed CLI is a backend failure (5), never exit 1: callers read 1 as
@@ -1386,7 +1386,7 @@ cmd_template() {
                      ;;
     -n|--name)       noarg "$@"; shift; script_name=$1 ;;
     -d|--desc)       noarg "$@"; shift; description=$1 ;;
-    #bcscheck disable=BCS0806
+    #bcscheck disable=BCS0806  # -V takes the template version here, not the tool version
     -V|--version)    noarg "$@"; shift; version=$1 ;;
     -o|--output)     noarg "$@"; shift; output_file=$1 ;;
     -x|--executable) make_executable=1 ;;
@@ -2095,8 +2095,8 @@ cmd_generate() {
   # and fires again when main returns, where a late "$tmp_out" would be unbound.
   local -- tmp_out="$output_file".tmp
   _register_tmp "$tmp_out"
-  #bcscheck disable=BCS0603
-  #shellcheck disable=SC2064
+  #bcscheck disable=BCS0603  # deliberate early expansion, see the comment above
+  #shellcheck disable=SC2064  # same: ${tmp_out@Q} is quoted for the trap now
   trap "rm -f -- ${tmp_out@Q}" RETURN
   local -i first=1
   { for section_file in "${section_files[@]}"; do
