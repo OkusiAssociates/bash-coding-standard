@@ -3,11 +3,11 @@ fixture	code	runs	hits	hitrate	stable
 01-missing-strict-mode.sh	BCS0101	3	3	1.000	yes
 02-eval-indirection-no-nameref.sh	BCS1004	3	3	1.000	yes
 02-undeclared-local.sh	BCS0202	3	3	1.000	yes
-03-no-shellcheck-directive.sh	BCS1206	3	1	0.333	no
-03-string-not-array.sh	BCS0206	3	3	1.000	yes
+03-no-shellcheck-directive.sh	BCS1206	3	0	0.000	yes
+03-string-not-array.sh	BCS0206	3	2	0.667	no
 04-backtick-substitution.sh	BCS0302	3	3	1.000	yes
 04-path-executable-extension.sh	BCS0106	3	0	0.000	yes
-05-network-no-timeout.sh	BCS1104	3	1	0.333	no
+05-network-no-timeout.sh	BCS1104	3	0	0.000	yes
 05-unquoted-conditional.sh	BCS0303	3	3	1.000	yes
 06-single-bracket-test.sh	BCS0501	3	3	1.000	yes
 07-piped-while-loop.sh	BCS0504	3	3	1.000	yes
@@ -16,7 +16,7 @@ fixture	code	runs	hits	hitrate	stable
 10-no-arg-validation.sh	BCS0803	3	3	1.000	yes
 11-unquoted-file-test.sh	BCS0901	3	3	1.000	yes
 12-glob-no-nullglob.sh	BCS0902	3	3	1.000	yes
-13-missing-path-hardening.sh	BCS1002	3	3	1.000	yes
+13-missing-path-hardening.sh	BCS1002	3	1	0.333	no
 14-uses-eval.sh	BCS1004	3	3	1.000	yes
 15-unsafe-tempfile.sh	BCS1006	3	3	1.000	yes
 16-missing-cleanup-trap.sh	BCS0110	3	3	1.000	yes

@@ -35,7 +35,7 @@ and how to compare a later run against it.
 |---|---|---|---|---|---|---|---|
 | `gpt5-mini` / `medium` | OpenAI | 123 of 123 | **0.905** | 0.594 | 0.717 | **5** in 18 runs | 0.886 |
 | `flash` / `medium` | Google | not run | | | | | |
-| `haiku` / `medium` | Anthropic | 123 of 123 | **0.876** | 0.482 | 0.622 | **6** in 18 runs | 0.943 |
+| `haiku` / `medium` | Anthropic | 123 of 123 | **0.829** | 0.770 | 0.798 | **1** in 18 runs | 0.943 |
 | `sonnet` / `medium` | Anthropic | 122 of 123 | **0.962** | 0.362 | 0.526 | **27** in 18 runs | 0.971 |
 | `qwen-small` / `medium` | Ollama | not run | | | | | |
 
@@ -89,11 +89,23 @@ runs. The gate and the scorer send different prompts, so this is one more datum
 for the standing question of whether JSON mode costs recall -- not a settled
 finding, on one gate run against three scorer runs.
 
-### ▲ These three rows are superseded (2026-09-18)
+### ▲ Retake in progress (2026-09-18)
 
-They were measured against a corpus with two defects since fixed, and are kept
-only until the retake lands. Both fixes change what the checker sees, so the
-numbers above are not comparable with anything measured after them.
+Three rows were measured against a corpus with two defects since fixed. Both
+fixes change what the checker sees, so a pre-fix row is not comparable with a
+post-fix one, nor with anything measured later.
+
+| Row | State |
+|---|---|
+| `haiku` | ✓ retaken |
+| `gpt5-mini` | superseded, retake running |
+| `sonnet` | superseded, retake running |
+
+**`haiku` retaken, and the fix shows.** Against its superseded row: total false
+positives **99 → 26**, precision **0.482 → 0.770**, clean false positives
+**6 → 1** in 18 runs. Recall gave up a little, 0.876 → 0.829, and stability was
+unchanged at 0.943. Most of what `haiku` was being marked down for was the
+blinding's own blank-line defect.
 
 **1. The blinding manufactured false positives.** `_checker_script` blanked
 each `# bcs-fixture-*:` line rather than deleting it, so that reported line
