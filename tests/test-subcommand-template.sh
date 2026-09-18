@@ -117,7 +117,7 @@ done
 # Test: help line counts match actual templates
 begin_test 'help line counts match actual templates'
 declare -i line_mismatches=0
-declare -Ar expected_lines=([minimal]=18 [basic]=43 [complete]=112 [library]=37)
+declare -Ar expected_lines=([minimal]=18 [basic]=46 [complete]=112 [library]=37)
 for ttype in minimal basic complete library; do
   actual_lines=$("$BCS_CMD" template -t "$ttype" 2>/dev/null | wc -l)
   expected=${expected_lines[$ttype]}
@@ -156,6 +156,32 @@ lib_file=$(mktemp --suffix=.sh)
 printf '%s\n' "$lib" > "$lib_file"
 assert_success 'sanitized library parses' bash -n "$lib_file"
 rm -f "$lib_file"
+
+# Test: BCS1002 placement in the shipped templates.
+# The suite checked the templates with shellcheck only, which knows nothing of
+# BCS, so `basic` shipped for months running realpath under the caller's PATH.
+# BCS1002 requires PATH above the metadata block -- SCRIPT_PATH=$(realpath ...)
+# is normally a script's first external command -- and exempts sourced
+# libraries, which must not clobber their caller's PATH.
+for ttype in minimal basic complete library; do
+  begin_test "BCS1002 placement in $ttype template"
+  tpl_output=$("$BCS_CMD" template -t "$ttype" -n testscript -d 'desc' 2>/dev/null)
+  # ||: on both: no match is an ordinary outcome here (minimal runs no external
+  # command; library sets no PATH), and grep's exit 1 would otherwise abort the
+  # suite under pipefail before print_summary ever runs.
+  path_ln=$(grep -nE '^declare -rx PATH=' <<< "$tpl_output" | head -1 | cut -d: -f1) ||:
+  ext_ln=$(grep -nE '\$\((realpath|readlink|dirname|basename|date|uname)' <<< "$tpl_output" \
+             | head -1 | cut -d: -f1) ||:
+  if [[ $ttype == library ]]; then
+    assert_equal '' "$path_ln" 'a sourced library sets no PATH (BCS1002 exemption)' || true
+  elif [[ -z $ext_ln ]]; then
+    assert_equal '' "$path_ln" "$ttype runs no external command, so needs no PATH" || true
+  else
+    assert_not_empty "$path_ln" "$ttype runs an external command and sets PATH" || true
+    [[ -z $path_ln || -z $ext_ln ]] \
+      || assert_lt "$path_ln" "$ext_ln" "$ttype sets PATH above its first external command"
+  fi
+done
 
 print_summary 'template'
 #fin

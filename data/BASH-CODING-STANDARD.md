@@ -2545,6 +2545,10 @@ For elevated privileges, use sudo, capabilities (`setcap`), compiled wrappers, P
 
 **Scope.** A script that runs any external command must set PATH itself, at script start (after `set` and `shopt`, before the first external command), so that an inherited PATH cannot substitute a trojan for `grep` or `rm`. A script that uses only builtins has nothing to protect and needs no PATH line: a missing PATH is a finding only when an external command is run. The rest of this rule governs what the value may contain.
 
+**Placement: before the script metadata block.** The usual first external command in a BCS script is the one that populates the metadata -- `SCRIPT_PATH=$(realpath -- "$0")` and the `SCRIPT_DIR`/`SCRIPT_NAME` derived from it. PATH must therefore be set *above* the metadata declarations, not after them; a PATH line that follows `SCRIPT_PATH` has already let one external command run under the caller's PATH, which is the whole defect. The order is: `set` -> `shopt` -> `PATH` -> metadata.
+
+**Sourced libraries are exempt.** A library does not set PATH: it runs inside a caller's process and assigning PATH there would silently replace the caller's, which is both surprising and a defect of its own. A missing PATH line in a file meant to be sourced is therefore not a finding, even where the library runs external commands. The obligation belongs to the executable that sources it, which must harden PATH before the `source`. A library that sets PATH anyway *is* a finding under this rule.
+
 Secure PATH at script start to prevent command hijacking.
 
 ```bash
@@ -2554,17 +2558,28 @@ declare -rx PATH=~/.local/bin:/usr/local/bin:/usr/bin:/bin
 # correct — for production/security-critical scripts
 declare -rx PATH=/usr/local/bin:/usr/bin:/bin
 
+# correct — PATH is set before the metadata that shells out to realpath
+set -euo pipefail
+shopt -s inherit_errexit
+declare -rx PATH=/usr/local/bin:/usr/bin:/bin
+#shellcheck disable=SC2155  # exit-on-error catches realpath failure
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+
 # wrong — external commands run with whatever PATH the environment supplied
 set -euo pipefail
 shopt -s inherit_errexit
 grep -c '^' /etc/hosts               # no PATH line above: whichever grep the caller chose
+
+# wrong — PATH set, but one external command already ran under the caller's
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+declare -rx PATH=/usr/local/bin:/usr/bin:/bin
 
 # wrong — includes dangerous elements
 PATH=.:$PATH                         # current directory
 PATH="/tmp:$PATH"                    # world-writable directory
 ```
 
-Never include `.`, empty elements (`::`, leading/trailing `:`), or `/tmp` in PATH. User-writable directories such as `~/.local/bin` are permitted only in non-privileged user tooling; production, security-critical, or privilege-elevated (sudo/SUID-adjacent) scripts must use the system-directories-only form. Place PATH setting early, before any commands that depend on it.
+Set PATH above the metadata block, and never in a sourced library. Never include `.`, empty elements (`::`, leading/trailing `:`), or `/tmp` in PATH. User-writable directories such as `~/.local/bin` are permitted only in non-privileged user tooling; production, security-critical, or privilege-elevated (sudo/SUID-adjacent) scripts must use the system-directories-only form. Place PATH setting early, before any commands that depend on it.
 
 ## BCS1003 IFS Safety
 

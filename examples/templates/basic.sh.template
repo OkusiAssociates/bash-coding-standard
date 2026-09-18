@@ -3,6 +3,8 @@
 set -euo pipefail
 shopt -s inherit_errexit extglob nullglob
 
+declare -rx PATH="$HOME"/.local/bin:/usr/local/bin:/usr/bin:/bin
+
 # --- Script Metadata ---
 declare -r VERSION='{{VERSION}}'
 #shellcheck disable=SC2155  # exit-on-error catches realpath failure
