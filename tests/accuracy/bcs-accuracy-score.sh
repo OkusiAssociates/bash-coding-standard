@@ -122,6 +122,12 @@ pick_model() {
 
 # ---- scoring state (global: populated by main(), read by _emit_reports()) ----
 declare -i TP=0 FP=0 FN=0 INCONCLUSIVE=0 SCORED=0 CLEAN_FP=0 CLEAN_RUNS=0
+# The canonical model the checks actually ran against, read back from the first
+# successful check's JSON envelope. MODEL holds the alias as typed, and an alias
+# is not portable: bcs.conf can remap one (MODEL_ALIASES[sonnet]=claude-sonnet-5
+# on the measuring host against claude-sonnet-4-6 built in), so a baseline
+# recording only the alias cannot be reproduced or compared.
+declare -- MODEL_ID=''
 declare -A PAIR_HITS=() PAIR_RUNS=() CODE_HIT=() CODE_TOT=()
 
 show_help() {
@@ -236,6 +242,11 @@ main() {
         continue
       fi
       SCORED+=1
+      # Suppressed: a checker too old to carry .meta.model, or any jq hiccup,
+      # leaves MODEL_ID empty and the report says "unknown" -- the scoring run
+      # itself does not depend on it, so failing here must not abort a baseline.
+      [[ -n $MODEL_ID ]] \
+        || MODEL_ID=$(jq -r '.meta.model // empty' <<<"$json" 2>/dev/null) ||:
       reported=$(jq -r '.comments[].bcsCode // empty' <<<"$json" 2>/dev/null \
         | grep -oE 'BCS[0-9]{4}' | sort -u || true)
       expected=${EXP[$f]}
@@ -330,7 +341,8 @@ _emit_reports() {
 | Field | Value |
 |-------|-------|
 | Generated | $ts |
-| Model | \`$MODEL\` |
+| Model alias | \`$MODEL\` |
+| Model (resolved) | \`${MODEL_ID:-unknown}\` |
 | Effort | \`$EFFORT\` |
 | Runs per fixture | $RUNS |
 | Conclusive fixture-runs | $SCORED |
@@ -385,14 +397,16 @@ MD
   bcs_version=$(grep -m1 -oE '^declare -r VERSION=[0-9.]+' "$PROJECT_DIR"/bcs) ||:
   jq -n \
     --arg generated "$ts" --arg bcs_version "${bcs_version##*=}" \
-    --arg model "$MODEL" --arg effort "$EFFORT" --arg stability "$stability" \
+    --arg model "$MODEL" --arg model_id "$MODEL_ID" \
+    --arg effort "$EFFORT" --arg stability "$stability" \
     --arg rules "$rule_tsv" \
     --argjson runs "$RUNS" --argjson scored "$SCORED" --argjson inconclusive "$INCONCLUSIVE" \
     --argjson tp "$TP" --argjson fp "$FP" --argjson fn "$FN" \
     --argjson precision "$precision" --argjson recall "$recall" --argjson f1 "$f1" \
     --argjson clean_fp "$CLEAN_FP" --argjson clean_runs "$CLEAN_RUNS" \
     --argjson clean_fp_rate "$clean_rate" \
-    '{generated: $generated, bcs_version: $bcs_version, model: $model, effort: $effort,
+    '{generated: $generated, bcs_version: $bcs_version, model: $model,
+      model_id: (if $model_id == "" then null else $model_id end), effort: $effort,
       runs: $runs, scored: $scored, inconclusive: $inconclusive,
       tp: $tp, fp: $fp, fn: $fn, precision: $precision, recall: $recall, f1: $f1,
       clean_fp: $clean_fp, clean_runs: $clean_runs, clean_fp_rate: $clean_fp_rate,

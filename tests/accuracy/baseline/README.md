@@ -77,13 +77,16 @@ know: 1.5 spurious findings per compliant file. Prefer a cheaper alias for
 anything that blocks a commit -- though in a sampled pass those findings were
 all `[WARN]` and `sonnet` exited 0 on all six clean fixtures.
 
-▲ All three clean-FP counts are inflated by the pragma blinding, which turns
-each fixture's two `bcs-fixture-*` lines into two consecutive blank lines and
-so provokes a correct BCS1203 finding about a defect that is not in the
-fixture. Roughly 5 of 8 findings in a sampled `sonnet` pass were this. BCS1203
-is `style`, so it never changes an exit code, and it lands on every backend
-equally, so the rows stay comparable -- but the absolute numbers are too high.
-See [`../LLM-ACCURACY.md`](../LLM-ACCURACY.md).
+▲ **All three baselines are superseded (2026-09-18) and a retake is in
+progress.** They were measured when the pragma blinding emptied each
+`bcs-fixture-*` line instead of substituting a bare `#`, which wedged two
+consecutive blank lines into every fixture and provoked a correct BCS1203
+finding about a defect no fixture contains (5 of 8 findings in a sampled
+`sonnet` pass). They were also measured when clean fixture 06 carried a bare
+`#shellcheck disable=SC2015` with no reason -- a real BCS1206 violation, so a
+finding the scorer counted against the checker was in fact correct. Both are
+fixed; these numbers are kept only until the new ones land. See
+[`../LLM-ACCURACY.md`](../LLM-ACCURACY.md).
 
 See [`../LLM-ACCURACY.md`](../LLM-ACCURACY.md) for the per-rule comparison, and
 for why a rule that a cheap model misses is not thereby a bad rule.

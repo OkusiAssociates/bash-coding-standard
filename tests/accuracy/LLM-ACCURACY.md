@@ -89,31 +89,45 @@ runs. The gate and the scorer send different prompts, so this is one more datum
 for the standing question of whether JSON mode costs recall -- not a settled
 finding, on one gate run against three scorer runs.
 
-### The blinding manufactures some of these false positives
+### ▲ These three rows are superseded (2026-09-18)
 
-▲ **Every false-positive count on this page is inflated by the pragma
-blinding, and the effect was found only after these three baselines were
-taken.** `_checker_script` blanks each `# bcs-fixture-*:` line rather than
-deleting it, so that reported line numbers still match the real file. All 41
-fixtures carry exactly two pragma lines, so every fixture the checker sees has
-**two consecutive blank lines wedged between the shebang and `set -euo
-pipefail`** -- a construct that appears nowhere in the fixtures as written.
+They were measured against a corpus with two defects since fixed, and are kept
+only until the retake lands. Both fixes change what the checker sees, so the
+numbers above are not comparable with anything measured after them.
 
-BCS1203 (Blank Lines) then fires, correctly, on a defect the blinding created.
-Sampled on `sonnet` over one pass of the six clean fixtures: 8 findings, of
-which **5 were this artefact**. The same artefact is scored as a false positive
-on the 35 violation fixtures too, which is part of why aggregate precision is
-low on all three backends.
+**1. The blinding manufactured false positives.** `_checker_script` blanked
+each `# bcs-fixture-*:` line rather than deleting it, so that reported line
+numbers still matched the real file. All 41 fixtures carry exactly two pragma
+lines, so every fixture the checker saw had **two consecutive blank lines
+wedged between the shebang and `set -euo pipefail`** -- a construct that
+appears nowhere in the fixtures as written. BCS1203 (Blank Lines) then fired,
+correctly, on a defect the blinding created: 5 of 8 findings in a sampled
+`sonnet` pass over the six clean fixtures. It was scored as a false positive on
+the 35 violation fixtures too, which is part of why aggregate precision was low
+on all three backends. BCS1203 is `style` tier, so it could never promote an
+exit code -- it inflated the *noise* figures and never the *blocking* ones --
+and it landed identically on every backend, so the three rows stay comparable
+with each other.
 
-Two things limit the damage. BCS1203 is `style` tier, so it is a `[WARN]` and
-can never promote an exit code -- the artefact inflates the *noise* figures and
-never the *blocking* figures. And it lands identically on every backend, so
-comparisons between the three rows above remain fair.
+`_checker_script` now substitutes a bare `#`, which holds the line numbers
+without inventing a blank line, and `tests/test-checker-prompt.sh` asserts that
+blinding leaves the blank-line count unchanged. Re-sampled on `sonnet` over the
+same six clean fixtures: BCS1203 findings **5 → 0**.
 
-The fix is cheap: substitute a bare `#` for the pragma text instead of emptying
-the line, which preserves line numbers without inventing a blank line. It has
-not been made, because it invalidates all three baselines above and they cost
-about 2.5 hours of API time to retake. That is a decision, not an oversight.
+**2. Clean fixture 06 was not clean.** Its `#shellcheck disable=SC2015` at line
+2 carried no reason, which BCS1206 -- a `core` rule, tightened earlier the same
+day -- makes a finding. Any checker that reported it was right, and the scorer
+counted it as a clean-fixture false positive. The directive now carries its
+reason. This was found because `sonnet` raised it as an `[ERROR]` on a fixture
+labelled compliant, which is worth recording as a method note: **a false
+positive on a clean fixture is a hypothesis about the fixture, not only about
+the model.**
+
+A caution for reading the retake. On the sampled `sonnet` pass the artefact
+vanished but the *total* finding count barely moved (9 → 8): the BCS1203s were
+replaced by other findings rather than subtracted. Six checks either side is
+not a rate. Expect the retaken clean-FP figures to fall by less than the
+artefact's share suggests.
 
 ### `sonnet` is the default model, and it is the noisy one
 

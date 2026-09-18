@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#shellcheck disable=SC2015
+#shellcheck disable=SC2015  # `a && b ||:` guards errexit; the `||:` is not an else-branch
 # bcs-fixture-expect:
 # bcs-fixture-description: Short compliant script with top-level logic and no functions (allowed under ~200 lines): typed globals, inline-IFS read, quoted heredoc, builtin date formatting; any finding is a false positive.
 set -euo pipefail

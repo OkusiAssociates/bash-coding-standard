@@ -671,15 +671,21 @@ _checker_standard() {
   ' "$1"
 }
 
-# True when the text-mode answer $1 holds a finding tagged [ERROR].
 # Print FILE as the checker may see it. A test fixture names its own answer in
 # `# bcs-fixture-expect:` / `# bcs-fixture-description:` header lines; shown to
 # the model they are the verdict (gpt5-mini -e low: recall 1.000 visible, 0.546
-# blanked). Blank them rather than delete them: line numbers must hold.
+# blanked). Replace them rather than delete them: line numbers must hold.
+# The replacement is a bare `#`, not an empty line. Emptying them wedged two
+# consecutive blank lines between the shebang and `set -euo pipefail` in every
+# one of the 41 fixtures -- a defect none of them contains -- and BCS1203 then
+# fired, correctly, on the blinding's own artefact (5 of 8 findings in a
+# sampled sonnet pass over the clean fixtures). Style tier, so it never moved
+# an exit code, but it inflated every false-positive figure in tests/accuracy/.
 _checker_script() {
-  sed -E 's/^#[[:space:]]*bcs-fixture-[a-z-]+:.*$//' -- "$1"
+  sed -E 's/^#[[:space:]]*bcs-fixture-[a-z-]+:.*$/#/' -- "$1"
 }
 
+# True when the text-mode answer $1 holds a finding tagged [ERROR].
 _has_error_finding() {
   local -- line
   while IFS= read -r line; do

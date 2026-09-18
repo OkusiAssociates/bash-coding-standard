@@ -83,6 +83,15 @@ BLIND=$(_checker_script "$CHECK_TARGET")
 assert_contains "$(< "$CHECK_TARGET")" 'bcs-fixture-expect: BCS0202' 'target carries the pragma' ||:
 assert_not_contains "$BLIND" 'bcs-fixture-' 'pragma lines blanked' ||:
 assert_equal "$(wc -l < "$CHECK_TARGET")" "$(wc -l <<< "$BLIND")" 'line count unchanged' ||:
+# A pragma becomes a bare '#', never an empty line. Emptying it used to wedge
+# two consecutive blank lines between the shebang and `set -euo pipefail` --
+# a defect no fixture contains -- and BCS1203 then fired, correctly, on the
+# blinding's own artefact: 5 of 8 findings in a sampled sonnet pass over the
+# clean fixtures. Style tier, so it never moved an exit code, but it inflated
+# every false-positive figure in tests/accuracy/.
+assert_equal "$(grep -c '^$' "$CHECK_TARGET")" "$(grep -c '^$' <<< "$BLIND")" \
+  'blinding introduces no new blank line' ||:
+assert_equal 2 "$(grep -c '^#$' <<< "$BLIND")" 'each pragma left a bare comment' ||:
 declare -i DEFECT_LINE=0   # the fixture's planted defect, wherever it sits
 #shellcheck disable=SC2016  # literal $1: the fixture's own text
 DEFECT_LINE=$(grep -n -F 'filename=$1' "$CHECK_TARGET" | cut -d: -f1)
@@ -121,7 +130,7 @@ begin_test 'cache keys on what the model saw'
 # A hand-blanked twin builds the same prompt, so it must hit the same entry;
 # were the key still the raw file, a leak-era answer would be served again.
 declare -- TWIN="$SANDBOX"/${CHECK_TARGET##*/}
-sed 's/^# bcs-fixture-.*$//' "$CHECK_TARGET" > "$TWIN"   # not via the helper under test
+sed 's/^# bcs-fixture-.*$/#/' "$CHECK_TARGET" > "$TWIN"   # not via the helper under test
 reset_cache; run_check "$OPENAI_OK" -m gpt-5
 assert_equal 1 "$(cache_count)" 'fixture run writes one entry' ||:
 declare -- ORIG_TARGET=$CHECK_TARGET
