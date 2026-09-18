@@ -36,57 +36,121 @@ and how to compare a later run against it.
 | `gpt5-mini` / `medium` | OpenAI | 123 of 123 | **0.905** | 0.594 | 0.717 | **5** in 18 runs | 0.886 |
 | `flash` / `medium` | Google | not run | | | | | |
 | `haiku` / `medium` | Anthropic | 123 of 123 | **0.876** | 0.482 | 0.622 | **6** in 18 runs | 0.943 |
+| `sonnet` / `medium` | Anthropic | 122 of 123 | **0.962** | 0.362 | 0.526 | **27** in 18 runs | 0.971 |
 | `qwen-small` / `medium` | Ollama | not run | | | | | |
 
 `flash` was not run because the key's free tier allows 20 requests per model
 per day, fewer than one pass of the corpus. `qwen-small` was not run because no
 Ollama runs were made.
 
-`haiku` (`claude-haiku-4-5`) is the first baseline from a second vendor, and so
-the first independent check the corpus has had. It agrees with `gpt5-mini` on
-what the corpus is worth: recall 0.876 against 0.905, clean false positives 6
-in 18 runs against 5. It is the steadier of the two (stability 0.943 against
-0.886) and the noisier (precision 0.482 against 0.594) -- it reports more
-secondary findings on a violation fixture, which the precision figure counts
-against it whether or not they are real.
+`haiku` (`claude-haiku-4-5`) and `sonnet` (`claude-sonnet-5`) are the first
+baselines from a second vendor, and the first independent check the corpus has
+had. The three sit on a clean recall/noise curve: `sonnet` finds almost
+everything and says far too much, `haiku` is the quietest and misses most,
+`gpt5-mini` is between them.
 
-The agreement that matters is *which* rules each backend misses.
-
-| Rule | Fixture | `gpt5-mini` | `haiku` |
+| | `haiku` | `gpt5-mini` | `sonnet` |
 |---|---|---|---|
-| BCS0106 | `probabilistic/04` | 1/3 | 0/3 |
-| BCS0507 | `probabilistic/01` | 1/3 | 0/3 |
-| BCS1104 | `probabilistic/05` | 0/3 | 1/3 |
-| BCS1206 | `probabilistic/03` | 2/3 | 1/3 |
-| BCS0801 | `17` (gated) | 3/3 | 0/3 |
-| BCS1005 | `31` (gated) | 1/3 | 3/3 |
+| Recall | 0.876 | 0.905 | **0.962** |
+| False negatives | 13 | 10 | **4** |
+| Clean FP in 18 runs | **6** | 5 | 27 |
+| Total FP | 99 | **65** | 176 |
+| Stability | 0.943 | 0.886 | **0.971** |
+| Wall per check | 25 s | **12 s** | 14 s |
 
-Every rule both backends struggle with is already in `probabilistic/`. Two
-vendors failing the same four fixtures is evidence about the fixtures or the
-rule text, not about either model. The two *gated* fixtures that flap flap for
-one backend each and neither is missed by both, which is why the gate holds at
-30/30 on both.
+The interesting result is *which* rules each backend misses.
+
+| Rule | Fixture | `haiku` | `gpt5-mini` | `sonnet` |
+|---|---|---|---|---|
+| BCS0106 | `probabilistic/04` | 0/3 | 1/3 | 0/3 |
+| BCS0507 | `probabilistic/01` | 0/3 | 1/3 | 3/3 |
+| BCS1104 | `probabilistic/05` | 1/3 | 0/3 | 3/3 |
+| BCS1206 | `probabilistic/03` | 1/3 | 2/3 | 3/3 |
+| BCS0801 | `17` (gated) | 0/3 | 3/3 | 3/3 |
+| BCS1005 | `31` (gated) | 3/3 | 1/3 | 2/3 |
+
+`sonnet` finds three of the four `probabilistic/` rules every time, and finds
+fixture 17 every time. So those fixtures are not ambiguous and their rule text
+is not at fault -- they are simply beyond the cheap models, which is what
+`probabilistic/` was always meant to mean (see the scorer's own header: "core
+rules cheap models miss"). Read on two backends the same data looked like
+evidence about the fixtures; the third shows it was evidence about model size.
+Do not weaken a rule or retire a fixture on a cheap model's miss alone.
+
+The one genuine outlier is **BCS0106**, missed by all three (1 hit in 9 runs).
+That has a mechanical cause rather than a difficulty one: the rule is about the
+executable's own filename, and the checker is handed a copy of the script, so
+it never sees the real name. No model can pass it, and no amount of effort will
+change that.
 
 One caveat on fixture 17: the live Anthropic gate found BCS0801 in all 30 of
-its text-mode checks, while the scorer missed it in 3 of 3 JSON-mode runs. The
-gate and the scorer send different prompts, so this is one more datum for the
-standing question of whether JSON mode costs recall -- not a settled finding,
-on one gate run against three scorer runs.
+its text-mode checks, while the `haiku` scorer missed it in 3 of 3 JSON-mode
+runs. The gate and the scorer send different prompts, so this is one more datum
+for the standing question of whether JSON mode costs recall -- not a settled
+finding, on one gate run against three scorer runs.
+
+### The blinding manufactures some of these false positives
+
+▲ **Every false-positive count on this page is inflated by the pragma
+blinding, and the effect was found only after these three baselines were
+taken.** `_checker_script` blanks each `# bcs-fixture-*:` line rather than
+deleting it, so that reported line numbers still match the real file. All 41
+fixtures carry exactly two pragma lines, so every fixture the checker sees has
+**two consecutive blank lines wedged between the shebang and `set -euo
+pipefail`** -- a construct that appears nowhere in the fixtures as written.
+
+BCS1203 (Blank Lines) then fires, correctly, on a defect the blinding created.
+Sampled on `sonnet` over one pass of the six clean fixtures: 8 findings, of
+which **5 were this artefact**. The same artefact is scored as a false positive
+on the 35 violation fixtures too, which is part of why aggregate precision is
+low on all three backends.
+
+Two things limit the damage. BCS1203 is `style` tier, so it is a `[WARN]` and
+can never promote an exit code -- the artefact inflates the *noise* figures and
+never the *blocking* figures. And it lands identically on every backend, so
+comparisons between the three rows above remain fair.
+
+The fix is cheap: substitute a bare `#` for the pragma text instead of emptying
+the line, which preserves line numbers without inventing a blank line. It has
+not been made, because it invalidates all three baselines above and they cost
+about 2.5 hours of API time to retake. That is a decision, not an oversight.
+
+### `sonnet` is the default model, and it is the noisy one
+
+▲ `bcs check` defaults to `-m sonnet`, and that configuration raised **27
+spurious findings across 18 runs on the six compliant fixtures** -- 1.5 per
+clean file, against 0.28 for `gpt5-mini` and 0.33 for `haiku`. Its 176 total
+false positives are nearly triple `gpt5-mini`'s. The recall is the best
+measured (0.962, only 4 misses in 123 checks), so this is the expected
+recall/precision trade rather than a defect.
+
+The operational number is better than the noise figure suggests. Discount the
+blank-line artefact above, and then note that `sonnet` **exited 0 on all six
+clean fixtures** in the sampled pass: its extra findings were `[WARN]`s about
+`show_help` ordering, help-text structure and an untyped `size` variable, not
+`[ERROR]`s. Verbose on compliant code, but it did not once block. That is one
+pass of six, not a rate.
+
+Still, prefer a cheaper alias for anything that gates a commit, and keep
+`sonnet` for a review a human reads.
+
+One `sonnet` check (fixture 16, run 3) returned empty output and scored
+**inconclusive**, not passed -- the exit-5 empty-completion path doing its job.
+That is 1 in 123; no other backend produced one.
 
 ▲ **Numbers recorded before 2026-09-18 are not comparable with these.** Until
 that date `bcs check` sent the whole fixture file to the model, including the
 `bcs-fixture-expect:` header naming the rule the fixture plants. The previous
 baseline (recall 1.000, clean FP 0, stability 1.000, at `-e low`) therefore
 measured how well the checker repeats an answer it was given. `bcs` now blanks
-those lines for every backend. Blind, the same `-e low` configuration scores
-recall 0.546 with 51 clean false positives; `-e medium`, the default and what
-the table above measures, scores 0.905 with 5.
+those lines for every backend. Blind on `gpt5-mini`, the same `-e low`
+configuration scores recall 0.546 with 51 clean false positives; `-e medium`,
+the default and what the table above measures, scores 0.905 with 5.
 
-Of `gpt5-mini`'s ten missed (fixture, rule) pairs, four are the
-`probabilistic/` fixtures, which are scored but not gated for exactly this
-reason. The fifth is fixture 31 (BCS1005), the one gated fixture that still
-flaps for that backend: measured 13 of 16 across this baseline, two targeted
-runs and one gate run. `haiku` finds it 3 of 3.
+Fixture 31 (BCS1005) is the one gated fixture that flaps on more than one
+backend: `gpt5-mini` 1/3 (13 of 16 across this baseline, two targeted runs and
+one gate run), `sonnet` 2/3, `haiku` 3/3. It is the only gated fixture no
+backend finds every time.
 
 Reading the table: **recall** and the **clean false-positive rate** are the
 trustworthy signals. Aggregate precision counts every extra finding on a

@@ -91,11 +91,15 @@ size. Rough per-file figures at `-e low` (your mileage will vary; the default
 | Claude Code CLI | `claude-code:haiku` | ~15–25s | per your Claude plan | No API key; needs `claude` on PATH |
 
 Measured on the labelled corpus (17-90 line scripts) at the default
-`-e medium`, 2026-09-18: `gpt5-mini` about 12 s per check; `haiku` about 23 s
-over the 30-fixture gate and about 25 s averaged over a 123-check baseline.
-The Anthropic backend sends the standard with `cache_control: ephemeral`, so
-after the first call of a session the system prompt is billed as a cache read
-rather than fresh input.
+`-e medium`, 2026-09-18, averaged over 123-check baselines: `gpt5-mini` about
+12 s per check, `sonnet` (`claude-sonnet-5`) about 14 s, `haiku`
+(`claude-haiku-4-5`) about 25 s. The ordering is not a typo: the small model is
+the slow one here. The two take different thinking shapes -- `sonnet-5` gets
+`thinking: adaptive`, `haiku-4-5` gets a fixed `budget_tokens` of 2000 from the
+effort scale -- which is the likely cause but has not been isolated. The
+Anthropic backend sends the standard with `cache_control: ephemeral`, so after
+the first call of a session the system prompt is billed as a cache read rather
+than fresh input.
 
 Effort scales latency and cost up sharply: `-e high`/`xhigh`/`max` and larger
 models (`sonnet`, `opus`, `gpt5`, `pro`) can take **30–600s** per file. For a
