@@ -75,9 +75,15 @@ case $backend in
 esac
 echo "  ◉ using model:   $fixture_model"
 
-# Per-fixture timeout. The cheapest alias on the chosen backend at effort
-# `low` should finish well under this ceiling.
-declare -ri FIXTURE_TIMEOUT_S=90
+# Effort for the gate. `low` sends no thinking budget: measured 2026-09-18 on
+# gpt5-mini with the fixture pragmas hidden, it recalls 0.546 of the planted
+# rules against 0.794 at `medium`, and raises 51 findings on the clean corpus
+# against 10. The gate runs at the default effort, which is what users get.
+declare -r FIXTURE_EFFORT=${BCS_FIXTURES_EFFORT:-medium}
+
+# Per-fixture timeout. The cheapest alias on the chosen backend should finish
+# well under this ceiling; medium is ~3x low, so the ceiling is raised to suit.
+declare -ri FIXTURE_TIMEOUT_S=180
 
 declare -- fixture fixture_name expected reported extras output
 declare -i exit_code=0 fixture_count=0 inconclusive=0
@@ -104,7 +110,7 @@ for fixture in "$TEST_DIR"/fixtures/*.sh; do
   # works with whatever credentials/CLI the host has.
   exit_code=0
   output=$(timeout "$FIXTURE_TIMEOUT_S" \
-    "$FIXTURES_CMD" check --no-cache -m "$fixture_model" -e low --quiet -- "$fixture" 2>&1) \
+    "$FIXTURES_CMD" check --no-cache -m "$fixture_model" -e "$FIXTURE_EFFORT" --quiet -- "$fixture" 2>&1) \
     || exit_code=$?
 
   # bcs check exits 0 (clean) or 1 (ERROR findings) when the backend
@@ -162,7 +168,7 @@ if ((${BCS_FIXTURES_JSON:-0})); then
     begin_test 'JSON mode: envelope shape on fixture 01'
     exit_code=0
     output=$(timeout "$FIXTURE_TIMEOUT_S" \
-      "$FIXTURES_CMD" check -j --no-cache -m "$fixture_model" -e low --quiet -- "$json_fixture" 2>/dev/null) \
+      "$FIXTURES_CMD" check -j --no-cache -m "$fixture_model" -e "$FIXTURE_EFFORT" --quiet -- "$json_fixture" 2>/dev/null) \
       || exit_code=$?
     if [[ -n $output ]] && ((exit_code <= 1)); then
       # Validate top-level shape.

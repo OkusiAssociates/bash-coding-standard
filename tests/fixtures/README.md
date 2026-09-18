@@ -20,12 +20,23 @@ tests/fixtures/clean/          fully compliant scripts (empty expect pragma);
                                any finding is a false positive
 ```
 
-The gated corpus holds 33 fixtures and covers every core-tier rule that a
-script's text can violate. `clean/` holds three minimal scripts (01-03) and
+The gated corpus holds 30 fixtures and covers every core-tier rule that a
+script's text can violate, minus three that moved to `probabilistic/` on
+2026-09-18 once the fixture pragmas stopped reaching the model: BCS1206 (a
+missing justification comment, found 2 of 4), BCS0106 (an executable's own
+filename, which the checker never sees, so the fixture can only approximate
+it through an `install` line) and BCS1104 (a missing `curl` timeout, filed
+as BCS0604 or BCS0408 instead). A fixture belongs in the gate only when the
+checker finds it every time. `clean/` holds three minimal scripts (01-03) and
 three realistic ones (04-06) built from the constructs that checkers have
 historically mis-flagged: locals assigned well after their declaration,
 top-level logic with no functions, a `*)` case arm, argument parsing outside
 `main()`, `&& ... ||:` chains, `${SCRIPT_PATH##*/}`, and a present `#fin`.
+
+The gate runs at the default effort (`-e medium`, override with
+`BCS_FIXTURES_EFFORT`). It ran at `-e low` until 2026-09-18: with the pragmas
+visible that passed 33 of 33, but blind it recalls 0.546 against 0.794 at
+medium, so the gate was measuring the leak rather than the checker.
 
 Only the top-level `*.sh` files form the `test-check-fixtures.sh` recall gate.
 The `probabilistic/` and `clean/` subdirectories are read by the accuracy scorer

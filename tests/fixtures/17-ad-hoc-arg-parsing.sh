@@ -11,6 +11,7 @@ main() {
     if [[ $1 == -v ]]; then
       verbose=1
     elif [[ $1 == -f ]]; then
+      (($# > 1)) || { >&2 echo 'Option -f requires an argument'; exit 22; }
       shift
       file=$1
     fi

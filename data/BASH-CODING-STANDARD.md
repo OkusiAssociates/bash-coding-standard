@@ -747,6 +747,8 @@ Inside `[[ ]]`, **no word splitting or pathname expansion occurs** — variables
 [[ $input =~ "$pattern" ]]           # quoted regex disables matching
 ```
 
+This rule owns the quoted-regex finding: a quoted right-hand side of `=~` is a quoting defect, cited as BCS0303. BCS0507 repeats the advice while describing `BASH_REMATCH` extraction and does not own the finding.
+
 ## BCS0304 Here Documents
 
 **Tier:** recommended
@@ -1573,7 +1575,7 @@ declare -- ver=''
 year=$(echo "$date" | grep -oE '^[0-9]{4}')
 ```
 
-Keep the regex unquoted — quoting any part forces a literal match. For complex patterns, assign to a variable and reference it unquoted: `[[ $s =~ $re ]]`. `BASH_REMATCH` is global and is overwritten by every successful `[[ =~ ]]`, so copy out captures before the next match. Character classes such as `[[:alpha:]]` are locale-sensitive.
+Keep the regex unquoted — quoting any part forces a literal match (cite BCS0303, which owns that finding). For complex patterns, assign to a variable and reference it unquoted: `[[ $s =~ $re ]]`. `BASH_REMATCH` is global and is overwritten by every successful `[[ =~ ]]`, so copy out captures before the next match. Character classes such as `[[:alpha:]]` are locale-sensitive.
 
 ---
 

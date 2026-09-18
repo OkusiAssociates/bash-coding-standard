@@ -92,6 +92,8 @@ Inside `[[ ]]`, **no word splitting or pathname expansion occurs** — variables
 [[ $input =~ "$pattern" ]]           # quoted regex disables matching
 ```
 
+This rule owns the quoted-regex finding: a quoted right-hand side of `=~` is a quoting defect, cited as BCS0303. BCS0507 repeats the advice while describing `BASH_REMATCH` extraction and does not own the finding.
+
 ## BCS0304 Here Documents
 
 **Tier:** recommended
