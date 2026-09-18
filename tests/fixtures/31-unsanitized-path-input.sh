@@ -6,9 +6,9 @@ declare -rx PATH=/usr/local/bin:/usr/bin:/bin
 # bcs-fixture-description: A caller-supplied name is joined to a base directory and removed with no validation, so `../..` escapes the base (BCS1005).
 
 main() {
-  local -- name=${1:?usage: purge NAME}
-  rm -rf -- "/var/cache/myapp/$name" || return 1
-  printf 'Purged %s\n' "$name"
+  local -- name=${1:-}
+  rm -rf -- "/var/cache/myapp/$name" \
+    || { printf 'Failed to purge %s\n' "${name@Q}" >&2; return 1; }
 }
 
 main "$@"

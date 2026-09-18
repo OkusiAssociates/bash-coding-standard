@@ -45,6 +45,13 @@ case ${STUB_MODE:-findings} in
   apierror) >&2 echo 'bcs: ✗ OpenAI API error (HTTP 401)'; exit 5 ;;
   mixed)    if [[ ${FIXTURE##*/} == 01-* ]]; then exit 124; fi
             emit_findings ;;
+  miss)     # BCS0000 is not a real code; the gate only greps BCS[0-9]{4}, so
+            # this is a conclusive answer that cannot match any expected set.
+            if [[ " ${STUB_MISS:-} " == *" ${FIXTURE##*/} "* ]]; then
+              printf '[WARN] BCS0000 line 1: stub finding that misses the plant\n'
+              exit 0
+            fi
+            emit_findings ;;
   json)     echo '{"source":"bcs","meta":{},"comments":[]}' ;;
   jsonfind) sed -n '1,15p' "$FIXTURE" | grep -F 'bcs-fixture-expect:' | grep -oE 'BCS[0-9]{4}' \
               | jq -R -s -c '{source: "bcs", meta: {},
@@ -163,6 +170,37 @@ assert_matches "$(jq -r '.bcs_version' "$SCORE_JSON" 2>/dev/null ||:)" '^[0-9]+\
 run_child "$TEST_DIR"/accuracy/bcs-accuracy-score.sh json OPENAI_API_KEY=k MOCK_OLLAMA_UP=1 -- \
   -n 1 -o "$SANDBOX"/score "${FIXTURES[0]}"
 assert_contains "$OUT" 'backend=openai' 'scorer probe: API key wins over Ollama and CLI' ||:
+
+# ---- Failure budget ----
+# The gate runs each fixture once, so a clean sweep is a conjunction of 30
+# probabilistic events and a red run is expected even from a healthy checker.
+# Misses are forgiven up to BCS_FIXTURES_MAX_FAIL, and always named.
+declare -r MISS1='01-missing-strict-mode.sh'
+declare -r MISS2="$MISS1 02-undeclared-local.sh"
+declare -r MISS3="$MISS2 03-string-not-array.sh"
+
+begin_test 'two misses are within the default budget'
+run_gate miss OPENAI_API_KEY=k STUB_MISS="$MISS2"
+assert_equal 0 "$RC" 'suite is green at 2 misses (default budget 2)' ||:
+assert_contains "$OUT" 'within the budget of 2' 'says the misses were forgiven' ||:
+assert_contains "$OUT" '01-missing-strict-mode.sh' 'names the first missed fixture' ||:
+assert_contains "$OUT" '02-undeclared-local.sh' 'names the second missed fixture' ||:
+
+begin_test 'three misses exceed the default budget'
+run_gate miss OPENAI_API_KEY=k STUB_MISS="$MISS3"
+assert_equal 1 "$RC" 'suite is red at 3 misses' ||:
+assert_contains "$OUT" 'over the budget of 2' 'says the budget was exceeded' ||:
+assert_contains "$OUT" '03-string-not-array.sh' 'names the third missed fixture' ||:
+
+begin_test 'BCS_FIXTURES_MAX_FAIL=0 demands a clean sweep'
+run_gate miss OPENAI_API_KEY=k STUB_MISS="$MISS1" BCS_FIXTURES_MAX_FAIL=0
+assert_equal 1 "$RC" 'one miss is red when the budget is 0' ||:
+assert_contains "$OUT" 'over the budget of 0' 'reports the zero budget' ||:
+
+begin_test 'a clean sweep needs no forgiveness'
+run_gate findings OPENAI_API_KEY=k
+assert_equal 0 "$RC" 'suite is green with no misses' ||:
+assert_not_contains "$OUT" 'the budget of' 'budget is silent when nothing missed' ||:
 
 print_summary 'fixtures-gate'
 #fin

@@ -138,6 +138,35 @@ targeted `# shellcheck disable=SC####` directive above the violating
 line. The disable silences shellcheck without hiding the anti-pattern
 from the BCS LLM checker.
 
+## One defect, and the traps that hide it
+
+A fixture carries exactly one planted defect, and the checker must be able to
+see it. Three ways that goes wrong, all measured on fixture 31 (BCS1005) on
+2026-09-18, three backends x three runs:
+
+- **A second real defect competes.** The fixture printed `Purged %s` to stdout,
+  a status message, which is a genuine BCS0702 violation. All three backends
+  reported it and BCS1005 fell to 4 of 9. Removing the message took BCS1005 to
+  **9 of 9**. A fixture that fails intermittently is worth re-reading before it
+  is reclassified: the checker may be right about something you did not plant.
+- **A nearby validation reads as *the* validation.** `local -- name=${1:?usage}`
+  checks the argument is non-empty, and that appears to satisfy "validate your
+  input" even though nothing validates the *path*. The same trap caught a
+  comment in an earlier fixture that said the value was checked above: 3 of 3
+  to 1 of 3. State no reassurance the defect does not deserve.
+- **Half a rule obeyed in plain sight.** BCS1005 asks both for validation and
+  for `--` before pathname operands. `rm -rf -- "$base/$name"` honours the
+  second clause visibly. This was the first suspect and measurement did not
+  support it -- the fixture still keeps its `--` and now scores 9 of 9 -- but
+  it is worth watching in rules that carry several clauses.
+
+Known and accepted on fixture 31: with the argument check gone, `sonnet`
+reports **BCS0803** (argument validation) in about two runs of three. That is a
+real finding. The obvious fix, adding a presence check, is exactly the second
+trap above, so the fixture keeps the extra rather than trading a reliable
+BCS1005 for an unreliable one. The gate's assertion is a superset, so an extra
+finding never fails it.
+
 ## Adding a new fixture
 
 1. Pick a BCS code. Confirm it exists:

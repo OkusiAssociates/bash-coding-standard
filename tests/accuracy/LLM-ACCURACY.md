@@ -109,6 +109,16 @@ defect the blinding created. It now substitutes a bare `#`, and
 `tests/test-checker-prompt.sh` asserts that blinding leaves the blank-line
 count unchanged.
 
+▲ **The substitution has its own residue, smaller but not zero.** Two bare `#`
+lines are themselves unusual, and `sonnet` reported
+`BCS1202 lines 5,6: empty "#" comment lines convey no information` once in a
+9-run sample on fixture 31. Like BCS1203 it is `style` tier, so it can never
+move an exit code, and at roughly 1 run in 9 against BCS1203's 5 in 8 it is the
+better trade -- but the blinding cannot be called invisible. Every option costs
+something: a blank line draws BCS1203, a bare comment draws BCS1202, and
+deleting the lines outright would break the line numbers the blinding exists to
+preserve.
+
 **2. Clean fixture 06 was not clean.** Its `#shellcheck disable=SC2015` carried
 no reason, which BCS1206 -- `core`, and tightened the same day -- makes a
 finding. Every checker that reported it was right, and the scorer counted it
@@ -235,20 +245,40 @@ time; at 0.95, three runs in four. `gpt5-mini`'s 30/30 is therefore not
 evidence that it is better than `sonnet` at 29/30 -- the difference is within
 what one sample produces.
 
-So a red gate is not by itself a regression, and a green one is not proof. As
-it stands the gate is a smoke test that will fail intermittently on any
-backend. Making it a trustworthy signal means either repeating each fixture and
-requiring a majority, or allowing a small failure budget and gating on the
-count. Neither is done; both are a decision, not a bug fix.
+So a red gate is not by itself a regression, and a green one is not proof.
 
-**Fixture 31 (BCS1005) is the standing exception** and the one result here not
-explained by variance: missed by both Anthropic backends in text mode, and the
-chronic flapper in every previous measurement. Its planted defect is a
-caller-supplied `$name` joined to a base directory with no validation -- but the
-fixture already writes `rm -rf -- "/var/cache/myapp/$name"`, satisfying the `--`
-clause of BCS1005 in plain sight. Visible compliance with half the rule appears
-to suppress the finding for the other half; the checkers reported BCS0604 and
-BCS0702 instead.
+**A second run settled it.** With fixture 31 repaired (below) the gate was run
+again on both Anthropic backends:
+
+| Run | `haiku` misses | `sonnet` misses |
+|---|---|---|
+| First | 27 (BCS0406), 31 (BCS1005) | 31 (BCS1005) |
+| Second | 03 (BCS0206), 17 (BCS0801) | 08 (BCS0604) |
+
+`haiku`'s two miss sets are **disjoint**: everything it failed the first time it
+passed the second, and vice versa. That is sampling noise, not a corpus defect,
+and no amount of fixture repair will remove it.
+
+The gate therefore now carries a **failure budget**:
+`BCS_FIXTURES_MAX_FAIL`, default 2. Misses within it are named and forgiven;
+over it, the suite fails. Both backends are green under it -- `haiku` at 2
+misses, `sonnet` at 1 -- with the fixture names still printed, because the
+budget forgives a *count*, not an identity. The same fixture missing run after
+run is a regression whatever the tally. Set `BCS_FIXTURES_MAX_FAIL=0` to demand
+a clean sweep. `tests/test-fixtures-gate.sh` proves the behaviour hermetically
+against a stub checker.
+
+**Fixture 31 (BCS1005) was the one result not explained by variance** -- missed
+by both Anthropic backends and the chronic flapper in every earlier
+measurement. The cause was not the one first proposed. The fixture printed
+`Purged %s` to stdout, a status message, which is a real BCS0702 violation:
+all three backends reported it, and the fixture had therefore been carrying two
+defects while declaring one. Removing the message, and the `${1:?usage}` whose
+non-empty check reads as validation of the path, took BCS1005 from 4 of 9 to
+**9 of 9** across three backends. It passed both gates above. The first
+hypothesis -- that `rm -rf --` visibly honouring the rule's `--` clause
+suppressed its validation clause -- was not supported: the `--` is still there.
+See `tests/fixtures/README.md` for the fixture-design rules this produced.
 
 ### Effort: low against medium (2026-09-17)
 
