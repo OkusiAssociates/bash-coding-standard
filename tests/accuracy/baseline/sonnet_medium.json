@@ -1,15 +1,16 @@
 {
   "bcs_version": "2.0.2",
-  "clean_fp": 27,
-  "clean_fp_rate": 1.5,
-  "clean_runs": 18,
+  "clean_fp": 17,
+  "clean_fp_rate": 1.0,
+  "clean_runs": 17,
   "effort": "medium",
-  "f1": 0.526,
-  "fn": 4,
-  "fp": 176,
-  "generated": "2026-09-18 12:29:00",
+  "f1": 0.688,
+  "fn": 8,
+  "fp": 80,
+  "generated": "2026-09-18 14:39:18",
   "inconclusive": 1,
   "model": "sonnet",
+  "model_id": "claude-sonnet-5",
   "per_rule": {
     "BCS0101": {
       "hits": 3,
@@ -28,8 +29,8 @@
     },
     "BCS0110": {
       "hits": 2,
-      "recall": 1.0,
-      "runs": 2
+      "recall": 0.667,
+      "runs": 3
     },
     "BCS0202": {
       "hits": 3,
@@ -167,8 +168,8 @@
       "runs": 3
     },
     "BCS1104": {
-      "hits": 3,
-      "recall": 1.0,
+      "hits": 0,
+      "recall": 0.0,
       "runs": 3
     },
     "BCS1206": {
@@ -177,10 +178,10 @@
       "runs": 3
     }
   },
-  "precision": 0.362,
-  "recall": 0.962,
+  "precision": 0.548,
+  "recall": 0.924,
   "runs": 3,
   "scored": 122,
-  "stability": 0.971,
-  "tp": 100
+  "stability": 0.943,
+  "tp": 97
 }

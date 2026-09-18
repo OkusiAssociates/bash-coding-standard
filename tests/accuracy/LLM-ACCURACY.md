@@ -36,7 +36,7 @@ and how to compare a later run against it.
 | `gpt5-mini` / `medium` | OpenAI | 123 of 123 | **0.905** | 0.594 | 0.717 | **5** in 18 runs | 0.886 |
 | `flash` / `medium` | Google | not run | | | | | |
 | `haiku` / `medium` | Anthropic | 123 of 123 | **0.829** | 0.770 | 0.798 | **1** in 18 runs | 0.943 |
-| `sonnet` / `medium` | Anthropic | 122 of 123 | **0.962** | 0.362 | 0.526 | **27** in 18 runs | 0.971 |
+| `sonnet` / `medium` | Anthropic | 122 of 123 | **0.924** | 0.548 | 0.688 | **17** in 17 runs | 0.943 |
 | `qwen-small` / `medium` | Ollama | not run | | | | | |
 
 `flash` was not run because the key's free tier allows 20 requests per model
@@ -98,14 +98,26 @@ post-fix one, nor with anything measured later.
 | Row | State |
 |---|---|
 | `haiku` | ✓ retaken |
+| `sonnet` | ✓ retaken |
 | `gpt5-mini` | superseded, retake running |
-| `sonnet` | superseded, retake running |
 
-**`haiku` retaken, and the fix shows.** Against its superseded row: total false
-positives **99 → 26**, precision **0.482 → 0.770**, clean false positives
-**6 → 1** in 18 runs. Recall gave up a little, 0.876 → 0.829, and stability was
-unchanged at 0.943. Most of what `haiku` was being marked down for was the
-blinding's own blank-line defect.
+**Both Anthropic rows retaken, and the fix shows on each.** Against their
+superseded rows:
+
+| | `haiku` before | after | `sonnet` before | after |
+|---|---|---|---|---|
+| Recall | 0.876 | 0.829 | 0.962 | 0.924 |
+| Precision | 0.482 | **0.770** | 0.362 | **0.548** |
+| Total FP | 99 | **26** | 176 | **80** |
+| Clean FP | 6 in 18 | **1 in 18** | 27 in 18 | **17 in 17** |
+
+Total false positives roughly halve on `sonnet` and fall by three quarters on
+`haiku`. Much of what both were being marked down for was the blinding's own
+blank-line defect, not the checker. Each gives up about 0.04 of recall, which
+is the cost of the fixtures no longer carrying a free extra defect to find.
+
+`sonnet` remains the noisy one and is still `bcs check`'s default: 17 spurious
+findings across 17 clean runs, against 1 in 18 for `haiku`.
 
 **1. The blinding manufactured false positives.** `_checker_script` blanked
 each `# bcs-fixture-*:` line rather than deleting it, so that reported line

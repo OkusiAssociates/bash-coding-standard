@@ -18,7 +18,7 @@ against these numbers, not against memory.
 | `gpt5-mini` / `medium` | OpenAI | ✓ measured 2026-09-18, `bcs` 2.0.2, 41 fixtures × 3 runs |
 | `flash` / `medium` | Google | ✗ not run. The key's free tier allows 20 requests per model per day; one pass of the corpus needs 41 and a baseline needs 123 |
 | `haiku` / `medium` | Anthropic | ✓ measured 2026-09-18, `bcs` 2.0.2, 41 fixtures × 3 runs, model `claude-haiku-4-5` |
-| `sonnet` / `medium` | Anthropic | ✓ measured 2026-09-18, `bcs` 2.0.2, 41 fixtures × 3 runs, model `claude-sonnet-5`. 122 of 123 scored: one check returned empty output (exit 5) and is counted inconclusive, not passed |
+| `sonnet` / `medium` | Anthropic | ✓ measured 2026-09-18, `bcs` 2.0.2, 41 fixtures × 3 runs, model `claude-sonnet-5`. 122 of 123 scored; 1 inconclusive |
 | `qwen-small` / `medium` | Ollama | ✗ not run. No Ollama runs were made; note that the `num_ctx` fix in 2.0.2 has itself not been exercised against a live server |
 
 ▲ The scorer records the `-m` value verbatim, so these JSON files say
