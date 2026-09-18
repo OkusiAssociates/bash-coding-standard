@@ -193,6 +193,24 @@ Each comment object carries
 .BR bcsCode " (full BCS#### string), "
 .BR tier ", " message ", and "
 .BR fixSuggestion .
+.B tier
+and
+.B level
+are not taken from the model: both are recomputed locally from the
+.B **Tier:**
+field of the cited rule (honouring
+.BR policy.conf ),
+so the severity that drives the exit code cannot be wrong because the model
+mislabelled a finding. Under
+.B \-\-strict
+every recomputed level is
+.BR error .
+A finding citing a rule that
+.B policy.conf
+sets to
+.B disabled
+is dropped from the output; a finding citing a code with no tier of its own
+keeps whatever level the model gave it.
 .TP
 .BR \-\-shellcheck ", " \-\-no\-shellcheck
 Enable (default) or disable the

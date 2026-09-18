@@ -12,6 +12,12 @@ source "$(dirname "$0")"/test-helpers.sh
 #shellcheck source=bcs
 source "$BCS_CMD"   # source guard keeps main() from running
 
+# Sourced from a suite, bcs takes SCRIPT_DIR from tests/, so its FHS search
+# misses ./data and finds whatever standard is installed on the machine (or
+# nothing, on CI). The severity assertions below read real tier data, so pin
+# the lookup to the repo under test -- same reason as tests/check-harness.sh.
+_find_data_dir() { echo "$DATA_DIR"; }
+
 echo 'Testing: json-output helpers'
 
 # ---- _strip_json_fences ---------------------------------------------------
@@ -173,6 +179,66 @@ arr='[{"line":1,"level":"error","bcsCode":"BCS0101","tier":"core","message":"m",
 out=$(_render_json_output "$arr" /tmp/x.sh anthropic claude-haiku-4-5 medium 1 42)
 meta_keys=$(jq -r '.meta | keys_unsorted | sort | join(",")' <<< "$out")
 assert_equal 'backend,effort,elapsed_s,file,model,strict,tool,version' "$meta_keys" 'meta keys'
+
+# ---- severity derived from the tier, not from the model ------------------
+# The model is asked to map tier -> level and gets it wrong often enough to
+# matter (core findings carried "error" in 32 of 44 sampled). The exit code
+# reads .level, so a mislabelled core finding is a silent exit 0. Both fields
+# are therefore recomputed locally from the section sources.
+
+begin_test 'severity: core finding mislabelled warning is corrected to error'
+arr='[{"line":4,"level":"warning","bcsCode":"BCS0101","tier":"style","message":"m","fixSuggestion":"f"}]'
+out=$(_render_json_output "$arr" /tmp/x.sh openai gpt-5-mini medium 0 3)
+assert_equal 'error' "$(jq -r '.comments[0].level' <<< "$out")" 'level corrected'
+assert_equal 'core' "$(jq -r '.comments[0].tier' <<< "$out")" 'tier corrected'
+
+begin_test 'severity: style finding inflated to error is corrected to warning'
+arr='[{"line":9,"level":"error","bcsCode":"BCS1203","tier":"core","message":"m","fixSuggestion":"f"}]'
+out=$(_render_json_output "$arr" /tmp/x.sh openai gpt-5-mini medium 0 3)
+assert_equal 'warning' "$(jq -r '.comments[0].level' <<< "$out")" 'level corrected'
+assert_equal 'style' "$(jq -r '.comments[0].tier' <<< "$out")" 'tier corrected'
+
+begin_test 'severity: recommended stays warning outside strict mode'
+arr='[{"line":2,"level":"error","bcsCode":"BCS0605","tier":"core","message":"m","fixSuggestion":"f"}]'
+out=$(_render_json_output "$arr" /tmp/x.sh openai gpt-5-mini medium 0 3)
+assert_equal 'warning' "$(jq -r '.comments[0].level' <<< "$out")" 'level=warning'
+assert_equal 'recommended' "$(jq -r '.comments[0].tier' <<< "$out")" 'tier=recommended'
+
+begin_test 'severity: strict mode raises recommended and style to error'
+arr='[{"line":2,"level":"warning","bcsCode":"BCS0605","tier":"recommended","message":"m","fixSuggestion":"f"},
+      {"line":9,"level":"warning","bcsCode":"BCS1203","tier":"style","message":"m","fixSuggestion":"f"}]'
+out=$(_render_json_output "$arr" /tmp/x.sh openai gpt-5-mini medium 1 3)
+assert_equal 'error' "$(jq -r '.comments[0].level' <<< "$out")" 'recommended -> error'
+assert_equal 'error' "$(jq -r '.comments[1].level' <<< "$out")" 'style -> error'
+assert_equal 'recommended' "$(jq -r '.comments[0].tier' <<< "$out")" 'tier untouched by strict'
+
+begin_test 'severity: unknown code keeps whatever the model said'
+arr='[{"line":1,"level":"error","bcsCode":"BCS9999","tier":"core","message":"m","fixSuggestion":"f"}]'
+out=$(_render_json_output "$arr" /tmp/x.sh openai gpt-5-mini medium 0 3)
+assert_equal 'error' "$(jq -r '.comments[0].level' <<< "$out")" 'level preserved'
+assert_equal 'core' "$(jq -r '.comments[0].tier' <<< "$out")" 'tier preserved'
+
+begin_test 'severity: a finding with no tier key gains one'
+arr='[{"line":4,"level":"warning","bcsCode":"BCS0101","message":"m","fixSuggestion":"f"}]'
+out=$(_render_json_output "$arr" /tmp/x.sh openai gpt-5-mini medium 0 3)
+assert_equal 'core' "$(jq -r '.comments[0].tier' <<< "$out")" 'tier added'
+
+begin_test 'severity: a policy-disabled rule is dropped from the output'
+# _load_policy reads a cascade of files; _policy_search_paths exists so a test
+# can replace it. Point it at a scratch policy and clear the load-once latch.
+declare -- POLICY_DIR=''
+trap '[[ -z $POLICY_DIR ]] || rm -rf -- "$POLICY_DIR"' EXIT
+POLICY_DIR=$(mktemp -d "${TMPDIR:-/tmp}"/bcs-policy.XXXXXX) \
+  || die 1 'Failed to create policy sandbox'
+printf 'BCS1203 = disabled\n' > "$POLICY_DIR"/policy.conf
+_policy_search_paths() { printf '%s\n' "$POLICY_DIR"/policy.conf; }
+BCS_POLICY=(); _POLICY_LOADED=0
+arr='[{"line":9,"level":"error","bcsCode":"BCS1203","tier":"core","message":"m","fixSuggestion":"f"},
+      {"line":4,"level":"warning","bcsCode":"BCS0101","tier":"style","message":"m","fixSuggestion":"f"}]'
+out=$(_render_json_output "$arr" /tmp/x.sh openai gpt-5-mini medium 0 3)
+assert_equal '1' "$(jq -r '.comments | length' <<< "$out")" 'disabled finding dropped'
+assert_equal 'BCS0101' "$(jq -r '.comments[0].bcsCode' <<< "$out")" 'the other one survives'
+BCS_POLICY=(); _POLICY_LOADED=0
 
 # ---- _extract_anthropic_text (thinking-block regression, T-01) ------------
 

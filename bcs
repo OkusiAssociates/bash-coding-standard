@@ -725,6 +725,36 @@ _strip_json_fences() {
   printf '%s' "$s"
 }
 
+# Authoritative tier for every BCS code a finding array cites, as a JSON
+# object: {"BCS0101": "core", "BCS1203": "style"}. Codes with no tier of their
+# own -- section overviews, a code the model invented, a user rule this tree
+# does not carry -- are simply absent from the map, and the caller leaves those
+# findings labelled as the model labelled them rather than replacing one guess
+# with another. Reads through _effective_tier, so a policy.conf override is
+# honoured here exactly as it is by `bcs codes`.
+_tier_map_json() {
+  local -- arr=$1 code tier
+  local -a pairs=()
+  # No reachable section sources (no ./data, nothing installed): an empty map
+  # leaves every level as received. Losing the correction is survivable; dying
+  # in the middle of rendering a result the user already paid for is not.
+  _load_tiers || { printf '{}'; return 0; }
+  # The caller has already schema-validated the array, so jq cannot fail on
+  # shape here. A jq that dies anyway feeds the loop nothing and leaves the map
+  # empty, which the caller reads as "no tier data" -- the same safe outcome as
+  # an uninstalled standard, and better than aborting a paid-for result.
+  while IFS= read -r code; do
+    [[ -n $code ]] || continue
+    tier=$(_effective_tier "$code")
+    [[ -n $tier ]] || continue
+    pairs+=("$code" "$tier")
+  done < <(jq -r '[.[].bcsCode] | unique | .[]' <<< "$arr" 2>/dev/null ||:)
+  ((${#pairs[@]})) || { printf '{}'; return 0; }
+  jq -n '$ARGS.positional
+         | [range(0; length; 2) as $i | {key: .[$i], value: .[$i + 1]}]
+         | from_entries' --args "${pairs[@]}"
+}
+
 # Validate a bare JSON array of findings and wrap it in the top-level
 # envelope with meta fields. Emits the final JSON object on stdout.
 # Returns non-zero and emits nothing on validation failure.
@@ -767,8 +797,9 @@ _render_json_output() {
   jq -e 'all(.[]; type == "object"
            and has("line") and has("level") and has("bcsCode"))' \
     <<< "$arr" &>/dev/null || return 1
-  local -- strict_bool
+  local -- strict_bool tier_map
   ((strict)) && strict_bool=true || strict_bool=false
+  tier_map=$(_tier_map_json "$arr")
   jq -n \
     --arg tool 'bcs' \
     --arg version "$VERSION" \
@@ -779,15 +810,24 @@ _render_json_output() {
     --argjson strict "$strict_bool" \
     --argjson elapsed_s "$elapsed_s" \
     --argjson comments "$arr" \
+    --argjson tiers "$tier_map" \
     '{source: "bcs",
       meta: {tool: $tool, version: $version, file: $file, backend: $backend,
              model: $model, effort: $effort, strict: $strict, elapsed_s: $elapsed_s},
-      comments: ($comments | map(. + {file: $file,
-                                       column: (.column // 1),
-                                       endLine: (.endLine // .line),
-                                       endColumn: (.endColumn // 1),
-                                       fix: null,
-                                       fixSuggestion: (.fixSuggestion // "")}))}' \
+      comments: ($comments
+        | map(. + {file: $file,
+                   column: (.column // 1),
+                   endLine: (.endLine // .line),
+                   endColumn: (.endColumn // 1),
+                   fix: null,
+                   fixSuggestion: (.fixSuggestion // "")}
+              | if $tiers[.bcsCode] then .tier = $tiers[.bcsCode] else . end
+              | if $tiers[.bcsCode] then
+                  .level = (if $strict then "error"
+                            elif .tier == "core" then "error"
+                            else "warning" end)
+                else . end)
+        | map(select(.tier != "disabled")))}' \
     || return 1
 }
 
