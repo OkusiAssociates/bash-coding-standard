@@ -862,14 +862,31 @@ _llm_anthropic() {
   local -i max_tokens=${EFFORT_TOKENS[$effort]}
   local -i think_budget=${EFFORT_THINKING[$effort]:-0}
 
-  # Capability gating: only opus and sonnet-4-6/4-7 accept the `thinking`
-  # field. Haiku and older sonnets reject it with HTTP 400.
-  # The Anthropic API also requires thinking.budget_tokens < max_tokens - 1024.
-  local -- thinking_json='null'
-  if ((think_budget > 0)) && [[ $model == @(*opus*|*sonnet-4-6*|*sonnet-4-7*) ]]; then
-    thinking_json=$(jq -n --argjson b "$think_budget" \
-      '{type: "enabled", budget_tokens: $b}') || die 1 'Failed to build thinking payload'
-  fi
+  # Capability gating. Anthropic thinking has two incompatible shapes and a
+  # model that is sent the wrong one answers HTTP 400, so this lists only
+  # what was probed live (2026-09-18) -- an unknown model gets no thinking
+  # rather than a guess:
+  #   enabled  + budget_tokens         haiku-4-5, sonnet-4-5/4-6, opus-4-5/4-6
+  #   adaptive + output_config.effort  opus-4-7/4-8 and every Claude 5
+  # opus-4-6 and sonnet-4-6 take either; they keep the explicit budget so the
+  # -e scale stays comparable with the other backends. The `enabled` form also
+  # requires budget_tokens < max_tokens - 1024 (the current pairs respect it).
+  # The Claude 5 pattern is family-anchored so that a 4.x with minor 5
+  # (claude-haiku-4-5) cannot match it.
+  local -- thinking_json='null' effort_json='null'
+  case $model in
+    *opus-4-7*|*opus-4-8*|claude-+([a-z])-5|claude-+([a-z])-5-*)
+        # The API takes exactly BCS's own five effort words, so pass it through.
+        thinking_json='{"type":"adaptive"}'
+        effort_json=$(jq -n --arg e "$effort" '{effort: $e}') \
+          || die 1 'Failed to build effort payload' ;;
+    *haiku-4-5*|*sonnet-4-5*|*sonnet-4-6*|*opus-4-5*|*opus-4-6*)
+        if ((think_budget > 0)); then
+          thinking_json=$(jq -n --argjson b "$think_budget" \
+            '{type: "enabled", budget_tokens: $b}') \
+            || die 1 'Failed to build thinking payload'
+        fi ;;
+  esac
 
   # Anthropic Messages API has no native JSON-mode flag; rely on prompt
   # discipline plus _strip_json_fences fallback applied by cmd_check.
@@ -883,13 +900,15 @@ _llm_anthropic() {
     --arg model "$model" \
     --argjson max_tokens "$max_tokens" \
     --argjson thinking "$thinking_json" \
+    --argjson effort_cfg "$effort_json" \
     --arg system "$sys" \
     --arg user "$usr" \
     '{model: $model, max_tokens: $max_tokens,
       system: [{type: "text", text: $system,
                 cache_control: {type: "ephemeral"}}],
       messages: [{role: "user", content: $user}]}
-     + ($thinking | if . == null then {} else {thinking: .} end)') \
+     + ($thinking | if . == null then {} else {thinking: .} end)
+     + ($effort_cfg | if . == null then {} else {output_config: .} end)') \
     || die 1 'Failed to build JSON payload'
 
   local -- raw body

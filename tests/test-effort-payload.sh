@@ -107,28 +107,76 @@ assert_payload_no_match() {
 }
 
 # ---------------------------------------------------------------------
-# Anthropic: thinking.budget_tokens auto-enabled on opus + sonnet-4-6/4-7,
-# silently omitted on haiku. Both fields (type + budget_tokens) required.
+# Anthropic thinking comes in two incompatible shapes and each model takes
+# exactly one. Probed live 2026-09-18, every row of this matrix verified
+# against the API; a model sent the wrong shape answers HTTP 400.
+#
+#   enabled + budget_tokens : haiku-4-5, sonnet-4-5/4-6, opus-4-5/4-6
+#   adaptive + output_config.effort : opus-4-7/4-8, and all of Claude 5
+#
+# opus-4-6 and sonnet-4-6 accept both; they keep the explicit budget so the
+# -e scale stays comparable with the other backends.
 # ---------------------------------------------------------------------
-assert_payload_match anthropic claude-opus-4-7 high \
+assert_payload_match anthropic claude-opus-4-6 high \
   '.thinking.type == "enabled" and .thinking.budget_tokens == 6000' \
-  'opus -e high -> thinking.budget_tokens=6000, type=enabled'
+  'opus-4-6 -e high -> thinking.budget_tokens=6000, type=enabled'
 
-assert_payload_match anthropic claude-opus-4-7 xhigh \
-  '.thinking.type == "enabled" and .thinking.budget_tokens == 12000' \
-  'opus -e xhigh -> thinking.budget_tokens=12000, type=enabled'
-
-assert_payload_no_match anthropic claude-opus-4-7 low \
+assert_payload_no_match anthropic claude-opus-4-6 low \
   '.thinking != null' \
-  'opus -e low -> thinking field omitted (budget=0)'
-
-assert_payload_no_match anthropic claude-haiku-4-5 max \
-  '.thinking != null' \
-  'haiku -e max -> thinking field omitted (not in gating regex)'
+  'opus-4-6 -e low -> thinking field omitted (budget=0)'
 
 assert_payload_match anthropic claude-sonnet-4-6 medium \
   '.thinking.type == "enabled" and .thinking.budget_tokens == 2000' \
   'sonnet-4-6 -e medium -> thinking.budget_tokens=2000'
+
+# haiku-4-5 accepts extended thinking; the old gate denied it one.
+assert_payload_match anthropic claude-haiku-4-5 max \
+  '.thinking.type == "enabled" and .thinking.budget_tokens == 16000' \
+  'haiku-4-5 -e max -> thinking.budget_tokens=16000'
+
+assert_payload_match anthropic claude-sonnet-4-5-20250929 medium \
+  '.thinking.type == "enabled" and .thinking.budget_tokens == 2000' \
+  'sonnet-4-5 -e medium -> thinking.budget_tokens=2000'
+
+# Adaptive models: no budget, and the effort word goes out verbatim -- the
+# API accepts exactly BCS's own five levels.
+assert_payload_match anthropic claude-opus-4-8 medium \
+  '.thinking.type == "adaptive" and .output_config.effort == "medium"' \
+  'opus-4-8 (the opus alias) -e medium -> adaptive + effort=medium'
+
+assert_payload_no_match anthropic claude-opus-4-8 medium \
+  '.thinking.budget_tokens != null' \
+  'opus-4-8 -> no budget_tokens (the API rejects enabled thinking)'
+
+assert_payload_match anthropic claude-opus-4-7 xhigh \
+  '.thinking.type == "adaptive" and .output_config.effort == "xhigh"' \
+  'opus-4-7 -e xhigh -> adaptive + effort=xhigh'
+
+assert_payload_match anthropic claude-opus-5 low \
+  '.thinking.type == "adaptive" and .output_config.effort == "low"' \
+  'opus-5 -e low -> adaptive + effort=low'
+
+assert_payload_match anthropic claude-sonnet-5 max \
+  '.thinking.type == "adaptive" and .output_config.effort == "max"' \
+  'sonnet-5 -e max -> adaptive + effort=max'
+
+assert_payload_match anthropic claude-fable-5-1 high \
+  '.thinking.type == "adaptive" and .output_config.effort == "high"' \
+  'fable-5-1 -e high -> adaptive + effort=high'
+
+# The family-anchored pattern must not catch a 4.x whose minor is 5.
+assert_payload_no_match anthropic claude-haiku-4-5 medium \
+  '.thinking.type == "adaptive"' \
+  'haiku-4-5 is not a Claude 5 model'
+
+assert_payload_no_match anthropic claude-opus-4-5-20251101 medium \
+  '.thinking.type == "adaptive"' \
+  'opus-4-5 is not a Claude 5 model'
+
+# An unprobed model gets no thinking field at all, never a guessed shape.
+assert_payload_no_match anthropic claude-haiku-3-5 max \
+  '.thinking != null or .output_config != null' \
+  'unprobed model -> no thinking, no output_config'
 
 # ---------------------------------------------------------------------
 # OpenAI: reasoning_effort auto-enabled on gpt-5* and o[0-9]*; omitted
