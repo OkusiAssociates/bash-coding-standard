@@ -7,7 +7,7 @@ declare -rx PATH=/usr/local/bin:/usr/bin:/bin
 
 main() {
   local -i count=0
-  # shellcheck disable=SC2030,SC2031
+  # shellcheck disable=SC2030,SC2031  # the count is only reported inside the loop
   grep -v '^$' /etc/hosts | while IFS= read -r line; do
     count+=1
     echo "line $count: $line"

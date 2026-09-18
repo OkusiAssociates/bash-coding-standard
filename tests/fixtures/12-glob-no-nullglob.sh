@@ -11,7 +11,7 @@ main() {
     [[ -f $f ]] || continue
     echo "$f"
   done
-  # shellcheck disable=SC2035
+  # shellcheck disable=SC2035  # deleting by pattern is intended
   rm -f *.tmp 2>/dev/null ||:
 }
 

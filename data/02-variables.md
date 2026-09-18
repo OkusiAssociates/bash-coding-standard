@@ -102,7 +102,7 @@ For script metadata, use `declare -r` for immediate readonly:
 
 ```bash
 declare -r VERSION=1.0.0
-#shellcheck disable=SC2155
+#shellcheck disable=SC2155  # exit-on-error catches realpath failure
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 ```
 

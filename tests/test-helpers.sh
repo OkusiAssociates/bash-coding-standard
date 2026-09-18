@@ -8,7 +8,7 @@ shopt -s inherit_errexit
 # Test framework state
 declare -i TESTS_RUN=0 TESTS_PASSED=0 TESTS_FAILED=0
 declare -- CURRENT_TEST=''
-#shellcheck disable=SC2155
+#shellcheck disable=SC2155  # a failed cd aborts the suite under errexit
 declare -r TEST_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 declare -r PROJECT_DIR=${TEST_DIR%/*}
 #shellcheck disable=SC2034  # used by test scripts that source this file
@@ -30,7 +30,7 @@ fi
 if [[ -t 1 && -t 2 ]]; then
   declare -- RED=$'\033[0;31m' GREEN=$'\033[0;32m' YELLOW=$'\033[0;33m' CYAN=$'\033[0;36m' BOLD=$'\033[1m' NC=$'\033[0m'
 else
-  #shellcheck disable=SC2034
+  #shellcheck disable=SC2034  # read by the suites that source this file
   declare -- RED='' GREEN='' YELLOW='' CYAN='' BOLD='' NC=''
 fi
 

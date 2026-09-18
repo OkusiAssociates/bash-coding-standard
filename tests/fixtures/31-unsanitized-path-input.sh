@@ -10,7 +10,7 @@ declare -r CACHE_DIR=/var/cache/myapp
 main() {
   local -- name=${1:-}
   [[ -n $name ]] || { >&2 echo 'usage: purge NAME'; return 2; }
-  # shellcheck disable=SC2115
+  # shellcheck disable=SC2115  # name is checked non-empty above
   rm -rf "$CACHE_DIR"/"$name" || { >&2 echo "Cannot remove ${name@Q}"; return 1; }
   echo "Purged $name"
 }

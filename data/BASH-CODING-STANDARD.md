@@ -92,7 +92,7 @@ Follow with optional `#shellcheck` or `#bcscheck` directives, then a brief descr
 
 ```bash
 #!/usr/bin/bash
-#shellcheck disable=SC2015
+#shellcheck disable=SC2015  # BCS idiom: ((cond)) && action ||:
 # myscript - brief description of what this script does
 set -euo pipefail
 shopt -s inherit_errexit
@@ -109,12 +109,12 @@ Standard metavars are VERSION, SCRIPT_PATH, SCRIPT_DIR, SCRIPT_NAME. Not all scr
 ```bash
 # correct — handles every install pattern, including symlinked wrappers
 declare -r VERSION=1.0.0
-#shellcheck disable=SC2155
+#shellcheck disable=SC2155  # exit-on-error catches realpath failure
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # wrong — readlink, separate readonly
-#shellcheck disable=SC2155
+#shellcheck disable=SC2155  # exit-on-error catches realpath failure
 SCRIPT_PATH=$(readlink -f "$0")
 readonly SCRIPT_PATH
 ```
@@ -496,7 +496,7 @@ For script metadata, use `declare -r` for immediate readonly:
 
 ```bash
 declare -r VERSION=1.0.0
-#shellcheck disable=SC2155
+#shellcheck disable=SC2155  # exit-on-error catches realpath failure
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 ```
 
@@ -3030,33 +3030,32 @@ var=$(command)                      # not var=`command`
 
 **Tier:** core
 
-ShellCheck compliance is compulsory. Use `#shellcheck disable=SCxxxx` only for documented exceptions. Similarly, use `#bcscheck disable=BCSxxxx` to suppress specific BCS rules.
+ShellCheck compliance is compulsory. Use `#shellcheck disable=SCxxxx` only for documented exceptions, and `#bcscheck disable=BCSxxxx` likewise to suppress a specific BCS rule. *Documented* means the directive carries its reason: a comment after the directive on the same line, or on the line directly above it, saying why the warning does not apply here. A bare directive with no reason is a finding under this rule, whatever it suppresses.
 
 Suppression scope follows ShellCheck conventions — the directive covers the **next command**, which may be a single line or a brace/block group:
 
 ```bash
-# correct — suppresses the next line
-#bcscheck disable=BCS0606
+# correct — suppresses the next line, reason on the directive
+#bcscheck disable=BCS0606  # info() already guards on VERBOSE
 ((DRY_RUN)) && info 'Dry-run mode' ||:
 
 # correct — suppresses the next compound command (here a whole case block)
-#bcscheck disable=BCS0806
+#bcscheck disable=BCS0806  # -n/-N mean prompt here, not dry-run
 case $opt in
   -p|-n|--prompt)    PROMPT=1; VERBOSE=1 ;;
   -P|-N|--no-prompt) PROMPT=0 ;;
 esac
 
 # correct — documented shellcheck exception
+#shellcheck disable=SC2155  # exit-on-error catches realpath failure
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+
+# wrong — bare directive: nothing says why the warning does not apply
 #shellcheck disable=SC2155
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 ```
 
-**Severity definitions** for `bcs check` findings:
-
-- **VIOLATION**: Code is incorrect, unsafe, or clearly breaks a mandatory (MUST/SHALL) rule.
-- **WARNING**: Style deviation, SHOULD/RECOMMENDED level, or intentional design choice that deviates from a reference pattern.
-
-(End-marker requirements are defined by BCS0109; performance idioms by BCS1205.)
+Severity of a finding comes from the rule's tier alone; see the Compliance Checking Reference at the end of this document. (End-marker requirements are defined by BCS0109; performance idioms by BCS1205.)
 
 ## BCS1207 Debugging
 

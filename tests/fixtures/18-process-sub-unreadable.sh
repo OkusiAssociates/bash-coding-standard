@@ -7,7 +7,7 @@ declare -rx PATH=/usr/local/bin:/usr/bin:/bin
 
 main() {
   local -a files=()
-  # shellcheck disable=SC2030,SC2031
+  # shellcheck disable=SC2030,SC2031  # files is consumed right after the loop
   find /etc -maxdepth 1 -type f 2>/dev/null | while IFS= read -r f; do
     files+=("$f")
   done

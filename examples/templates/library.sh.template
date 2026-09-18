@@ -7,7 +7,7 @@
 # Library metadata
 declare -rx {{NAME}}_VERSION='{{VERSION}}'
 
-#shellcheck disable=SC2155
+#shellcheck disable=SC2155  # exit-on-error catches realpath failure
 declare -rx {{NAME}}_PATH=$(realpath -- "${BASH_SOURCE[0]}")
 declare -rx {{NAME}}_DIR=${{{NAME}}_PATH%/*}
 

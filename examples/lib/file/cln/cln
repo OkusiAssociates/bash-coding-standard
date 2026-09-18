@@ -162,10 +162,10 @@ main() {
                   max_depth=$1
                   ((max_depth != -1)) || max_depth=255
                   ;;
-    #bcscheck disable=BCS0806
+    #bcscheck disable=BCS0806  # -n/-N mean prompt here, not dry-run
     -p|-n|--prompt)
                   PROMPT=1; VERBOSE=1 ;;
-    #bcscheck disable=BCS0806
+    #bcscheck disable=BCS0806  # -n/-N mean prompt here, not dry-run
     -P|-N|--no-prompt)
                   PROMPT=0 ;;
     -v|--verbose) ((VERBOSE < 3)) && VERBOSE+=1 ||:  ;;

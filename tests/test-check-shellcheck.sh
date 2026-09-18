@@ -27,7 +27,7 @@ shellcheck_absent() {
   command() { [[ $1 == -v && $2 == shellcheck ]] && return 1; builtin command "$@"; }
 }
 shellcheck_present_findings() {
-  #shellcheck disable=SC2329
+  #shellcheck disable=SC2329  # invoked indirectly, through the mocked command lookup
   command() { [[ $1 == -v && $2 == shellcheck ]] && { echo /fake/shellcheck; return 0; }; builtin command "$@"; }
   shellcheck() {
     echo '[{"file":"s.sh","line":1,"column":1,"level":"warning","code":2086,"message":"stub"}]'
@@ -35,7 +35,7 @@ shellcheck_present_findings() {
   }
 }
 shellcheck_present_parse_error() {
-  #shellcheck disable=SC2329
+  #shellcheck disable=SC2329  # invoked indirectly, through the mocked command lookup
   command() { [[ $1 == -v && $2 == shellcheck ]] && { echo /fake/shellcheck; return 0; }; builtin command "$@"; }
   shellcheck() { echo 'parse error' >&2; return 2; }
 }

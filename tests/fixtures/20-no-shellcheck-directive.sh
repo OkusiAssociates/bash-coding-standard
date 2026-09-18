@@ -3,16 +3,15 @@ set -euo pipefail
 shopt -s inherit_errexit
 declare -rx PATH=/usr/local/bin:/usr/bin:/bin
 # bcs-fixture-expect: BCS1206
-# bcs-fixture-description: `#shellcheck disable=SC2086` is used without a documented justification comment, violating BCS1206's documented-exceptions requirement.
+# bcs-fixture-description: A `#shellcheck disable=SC2155` directive with no reason given, on the line or above it, violating BCS1206's documented-exceptions requirement.
 
-count_words() {
-  local -- text=$1
-  # shellcheck disable=SC2086
-  echo $text | wc -w
-}
+declare -r VERSION=1.0.0
+#shellcheck disable=SC2155
+declare -r SCRIPT_PATH=$(realpath -- "$0")
+declare -r SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 main() {
-  count_words 'hello world foo bar'
+  printf '%s %s\n' "$SCRIPT_NAME" "$VERSION"
 }
 
 main "$@"

@@ -55,7 +55,7 @@ Follow with optional `#shellcheck` or `#bcscheck` directives, then a brief descr
 
 ```bash
 #!/usr/bin/bash
-#shellcheck disable=SC2015
+#shellcheck disable=SC2015  # BCS idiom: ((cond)) && action ||:
 # myscript - brief description of what this script does
 set -euo pipefail
 shopt -s inherit_errexit
@@ -72,12 +72,12 @@ Standard metavars are VERSION, SCRIPT_PATH, SCRIPT_DIR, SCRIPT_NAME. Not all scr
 ```bash
 # correct — handles every install pattern, including symlinked wrappers
 declare -r VERSION=1.0.0
-#shellcheck disable=SC2155
+#shellcheck disable=SC2155  # exit-on-error catches realpath failure
 declare -r SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_DIR=${SCRIPT_PATH%/*} SCRIPT_NAME=${SCRIPT_PATH##*/}
 
 # wrong — readlink, separate readonly
-#shellcheck disable=SC2155
+#shellcheck disable=SC2155  # exit-on-error catches realpath failure
 SCRIPT_PATH=$(readlink -f "$0")
 readonly SCRIPT_PATH
 ```
