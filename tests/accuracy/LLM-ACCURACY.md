@@ -197,6 +197,59 @@ violation fixture as a false positive, although most are genuine secondary
 issues, so it understates true precision. **Stability** is the share of
 expected (fixture, rule) pairs that were reported on either every run or none.
 
+### Fixture gate, post-fix, all three backends (2026-09-18)
+
+`tests/test-check-fixtures.sh` over the 30 gated fixtures, text mode, **one
+check per fixture**, at the default `-e medium`:
+
+| Model | Result | Wall | Missed |
+|---|---|---|---|
+| `gpt5-mini` | ✓ 30/30 | 341 s | -- |
+| `sonnet` | ✗ 29/30 | 564 s | fixture 31 (BCS1005) |
+| `haiku` | ✗ 28/30 | 640 s | fixture 27 (BCS0406), fixture 31 (BCS1005) |
+
+No inconclusives on any backend, so `sonnet`'s two empty completions did not
+recur here.
+
+**This disconfirms the "JSON mode costs recall" hypothesis.** It was raised
+because `haiku` scored 0/3 on BCS0801 in the JSON scorer while an older
+text-mode gate found it 30/30. Running both modes on the same post-fix corpus,
+the discrepancies go in *both* directions:
+
+| Fixture / rule | Model | JSON, 3 runs | Text, 1 run |
+|---|---|---|---|
+| 17 / BCS0801 | `haiku` | 0/3 | ✓ found |
+| 27 / BCS0406 | `haiku` | 3/3 | ✗ missed |
+| 31 / BCS1005 | `haiku` | 3/3 | ✗ missed |
+| 31 / BCS1005 | `sonnet` | 2/3 | ✗ missed |
+
+A mode that systematically cost recall could not produce the first row. What is
+left is per-check variance, which is what an LLM checker is.
+
+### ▲ The gate's own design is the bigger finding
+
+The gate asserts that **one** check finds every planted rule across **30**
+fixtures. That is a demanding shape for a probabilistic checker: even at a
+genuine 0.99 detection rate per fixture, a run goes red about a quarter of the
+time; at 0.95, three runs in four. `gpt5-mini`'s 30/30 is therefore not
+evidence that it is better than `sonnet` at 29/30 -- the difference is within
+what one sample produces.
+
+So a red gate is not by itself a regression, and a green one is not proof. As
+it stands the gate is a smoke test that will fail intermittently on any
+backend. Making it a trustworthy signal means either repeating each fixture and
+requiring a majority, or allowing a small failure budget and gating on the
+count. Neither is done; both are a decision, not a bug fix.
+
+**Fixture 31 (BCS1005) is the standing exception** and the one result here not
+explained by variance: missed by both Anthropic backends in text mode, and the
+chronic flapper in every previous measurement. Its planted defect is a
+caller-supplied `$name` joined to a base directory with no validation -- but the
+fixture already writes `rm -rf -- "/var/cache/myapp/$name"`, satisfying the `--`
+clause of BCS1005 in plain sight. Visible compliance with half the rule appears
+to suppress the finding for the other half; the checkers reported BCS0604 and
+BCS0702 instead.
+
 ### Effort: low against medium (2026-09-17)
 
 Question: can `-e low` become the default? Answer: **no**. `gpt5-mini`, `bcs`
