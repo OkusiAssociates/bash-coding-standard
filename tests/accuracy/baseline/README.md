@@ -13,27 +13,26 @@ against these numbers, not against memory.
 
 ## Status
 
-▲ **The `gpt5-mini` / `low` baseline below is superseded and must not be used
-as a gate.** It was measured while `bcs check` still sent each fixture's
-`bcs-fixture-expect:` / `bcs-fixture-description:` header to the model, so the
-model was shown the answer. The same configuration with those lines blanked
-(which `bcs check` now always does) scored recall 0.546, clean false positives
-51 in 18 runs, stability 0.694, against 1.000 / 0 / 1.000 here. A fresh
-baseline has not been taken yet; until it is, there is no valid baseline.
-
 | Alias / effort | Backend | State |
 |----------------|---------|-------|
-| `gpt5-mini` / `low` | OpenAI | ✓ measured 2026-09-17, `bcs` 2.0.2, 41 fixtures × 3 runs, 506 s. Refreshed the same day after the standard's examples were corrected and fixtures 06 and clean 01-03 changed |
-| `flash` / `low` | Google | ✗ not run. The key's free tier allows 20 requests per model per day; one pass of the corpus needs 41 and a baseline needs 123 |
-| `haiku` / `low` | Anthropic | ✗ not run. No `ANTHROPIC_API_KEY` on the measuring host |
-| `qwen-small` / `low` | Ollama | ✗ not run. No Ollama runs were made; note that the `num_ctx` fix in 2.0.2 has itself not been exercised against a live server |
+| `gpt5-mini` / `medium` | OpenAI | ✓ measured 2026-09-18, `bcs` 2.0.2, 41 fixtures × 3 runs |
+| `flash` / `medium` | Google | ✗ not run. The key's free tier allows 20 requests per model per day; one pass of the corpus needs 41 and a baseline needs 123 |
+| `haiku` / `medium` | Anthropic | ✗ not run. No `ANTHROPIC_API_KEY` on the measuring host |
+| `qwen-small` / `medium` | Ollama | ✗ not run. No Ollama runs were made; note that the `num_ctx` fix in 2.0.2 has itself not been exercised against a live server |
+
+The earlier `gpt5-mini` / `low` baseline (recall 1.000, clean FP 0, stability
+1.000) has been deleted rather than kept for comparison. It was measured while
+`bcs check` still sent each fixture's `bcs-fixture-expect:` header to the
+model, so it recorded how well the checker reads an answer it was given. The
+same configuration blind scored recall 0.546 and 51 clean false positives.
+Numbers taken before 2026-09-18 are not comparable with these.
 
 ## Refreshing a baseline
 
 ```bash
-./tests/accuracy/bcs-accuracy-score.sh -m gpt5-mini -e low -n 3 -o /tmp/score
-jq . /tmp/score/accuracy-gpt5-mini-low.json > tests/accuracy/baseline/gpt5-mini_low.json
-cp /tmp/score/accuracy-gpt5-mini-low.tsv tests/accuracy/baseline/gpt5-mini_low.tsv
+./tests/accuracy/bcs-accuracy-score.sh -m gpt5-mini -e medium -n 3 -o /tmp/score
+jq . /tmp/score/accuracy-gpt5-mini-medium.json > tests/accuracy/baseline/gpt5-mini_medium.json
+cp /tmp/score/accuracy-gpt5-mini-medium.tsv tests/accuracy/baseline/gpt5-mini_medium.tsv
 ```
 
 Every check the scorer makes passes `--no-cache`, so each repetition is a fresh
@@ -43,16 +42,20 @@ message what changed and why the new numbers are acceptable.
 ## Comparing a run against a baseline
 
 ```bash
-jq -n --slurpfile b tests/accuracy/baseline/gpt5-mini_low.json \
-      --slurpfile r /tmp/score/accuracy-gpt5-mini-low.json '
+jq -n --slurpfile b tests/accuracy/baseline/gpt5-mini_medium.json \
+      --slurpfile r /tmp/score/accuracy-gpt5-mini-medium.json '
   ["recall", "f1", "precision", "clean_fp_rate", "stability"] | map(
     {metric: ., baseline: $b[0][.], run: $r[0][.], delta: ($r[0][.] - $b[0][.])})'
 ```
 
 Recall and the clean false-positive rate are the trustworthy signals. The
-checker is an LLM, so expect run-to-run movement in precision: on 2026-09-17
-two runs of the byte-identical configuration gave precision 0.871 and 0.818
-(F1 0.931 and 0.900), and the refreshed baseline 0.850 (F1 0.919), with recall
-1.000, no clean false positive and stability 1.000 every time. The whole difference was the number of *extra* findings on
-violation fixtures (16 against 24). Treat ±0.05 in precision or F1 as noise. A
-fall in recall, or any clean false positive, is a regression to explain.
+checker is an LLM, so expect run-to-run movement: treat ±0.05 in precision or
+F1 as noise. A fall in recall is a regression to explain.
+
+Aggregate precision here is 0.594, and that number understates the
+checker badly: every *extra* finding on a violation fixture counts as a false
+positive, and most are genuine secondary issues the fixture did not plant.
+Read it as a stability signal, not as accuracy.
+
+The clean false-positive rate (5 findings in 18 runs) is the honest
+measure of noise, because a clean fixture has no true finding to report.

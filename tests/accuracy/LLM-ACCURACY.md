@@ -23,26 +23,38 @@ varying complexity and structure.
 
 ---
 
-## Scorer Baseline (2026-09-17)
+## Scorer Baseline (2026-09-18)
 
 Produced by `bcs-accuracy-score.sh` over the labelled corpus in
-`tests/fixtures/` (33 gated, 2 probabilistic, 6 clean), three repetitions per
+`tests/fixtures/` (30 gated, 5 probabilistic, 6 clean), three repetitions per
 fixture, every check run with `--no-cache`. Machine-readable copies are
 committed under [`baseline/`](baseline/); see its README for how to refresh one
 and how to compare a later run against it.
 
-| Alias / effort | Backend | Conclusive runs | Recall | Precision | F1 | Clean FP | Stability | Wall |
-|---|---|---|---|---|---|---|---|---|
-| `gpt5-mini` / `low` | OpenAI | 123 of 123 | **1.000** | 0.850 | 0.919 | **0** in 18 runs | 1.000 | 506 s |
-| `flash` / `low` | Google | not run | | | | | | |
-| `haiku` / `low` | Anthropic | not run | | | | | | |
-| `qwen-small` / `low` | Ollama | not run | | | | | | |
+| Alias / effort | Backend | Conclusive runs | Recall | Precision | F1 | Clean FP | Stability |
+|---|---|---|---|---|---|---|---|
+| `gpt5-mini` / `medium` | OpenAI | 123 of 123 | **0.905** | 0.594 | 0.717 | **5** in 18 runs | 0.886 |
+| `flash` / `medium` | Google | not run | | | | | |
+| `haiku` / `medium` | Anthropic | not run | | | | | |
+| `qwen-small` / `medium` | Ollama | not run | | | | | |
 
 `flash` was not run because the key's free tier allows 20 requests per model
 per day, fewer than one pass of the corpus. `haiku` and `qwen-small` were not
-run because no Anthropic key was available and no Ollama runs were made. All
-34 expected rules were reported on every repetition; the 19 counted
-false positives are extra findings on violation fixtures, none on a clean one.
+run because no Anthropic key was available and no Ollama runs were made.
+
+▲ **Numbers recorded before 2026-09-18 are not comparable with these.** Until
+that date `bcs check` sent the whole fixture file to the model, including the
+`bcs-fixture-expect:` header naming the rule the fixture plants. The previous
+baseline (recall 1.000, clean FP 0, stability 1.000, at `-e low`) therefore
+measured how well the checker repeats an answer it was given. `bcs` now blanks
+those lines for every backend. Blind, the same `-e low` configuration scores
+recall 0.546 with 51 clean false positives; `-e medium`, the default and what
+the table above measures, scores 0.905 with 5.
+
+Of the ten missed (fixture, rule) pairs, four are the `probabilistic/`
+fixtures, which are scored but not gated for exactly this reason. The fifth is
+fixture 31 (BCS1005), the one gated fixture that still flaps: measured 13 of 16
+across this baseline, two targeted runs and one gate run.
 
 Reading the table: **recall** and the **clean false-positive rate** are the
 trustworthy signals. Aggregate precision counts every extra finding on a
@@ -55,18 +67,26 @@ expected (fixture, rule) pairs that were reported on either every run or none.
 Question: can `-e low` become the default? Answer: **no**. `gpt5-mini`, `bcs`
 2.0.2 with the output contract; Google, Anthropic and Ollama not measured.
 
-On the labelled corpus the two are indistinguishable where it matters, and low
-is 2.6 times quicker:
+On the labelled corpus the two looked indistinguishable, and low was 2.6 times
+quicker:
 
 | Effort | Recall | Clean false positives | Stability | Wall (123 checks) |
 |--------|--------|-----------------------|-----------|-------------------|
 | `low` | 1.000 | 0 in 18 runs | 1.000 | 457 s |
 | `medium` | 1.000 | 8 in 18 runs | 1.000 | 1217 s |
 
-Five of medium's eight were true: clean fixtures 01-03 printed a bare version
-string and broke BCS0802, which `low` never reports because it skips style
-findings. Those fixtures have been corrected. The other three were checker
-errors (BCS0305 and BCS0301 misapplied, BCS0409 invented).
+**That comparison was worthless and is kept only as a record of the mistake.**
+Both columns read 1.000 because every fixture told the model which rule it
+planted. Re-measured blind on 2026-09-18, the two efforts are not close:
+
+| Effort | Recall | Clean false positives | Stability |
+|--------|--------|-----------------------|-----------|
+| `low` | 0.546 | 51 in 18 runs | 0.694 |
+| `medium` | 0.905 | 5 in 18 runs | 0.886 |
+
+The real-script evidence below reached the right answer for the wrong reason:
+`low` was blamed on script length, when the corpus simply could not show the
+failure because it was leaking the answer.
 
 On real scripts the picture reverses. Five runs each:
 

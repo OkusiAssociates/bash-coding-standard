@@ -79,7 +79,8 @@ and a configured backend (`~/.config/bcs/bcs.conf`).
 ## Backend cost & latency
 
 `bcs check` latency and price depend on backend, model alias, effort, and file
-size. Rough per-file figures at `-e low` (your mileage will vary):
+size. Rough per-file figures at `-e low` (your mileage will vary; the default
+`-e medium` is roughly 3x these):
 
 | Backend | Cheapest alias | Per-file latency | Cost | Notes |
 |---------|----------------|------------------|------|-------|
@@ -98,8 +99,15 @@ pre-push gate, use the cheapest alias with `--tier core` at the default
 findings it has not reasoned through. Measured on `gpt5-mini`, 2026-09-17, this
 exact recipe (`--strict --tier core`) blocked the push on a *compliant*
 243-line script in 5 of 5 runs at `-e low` (3.7 s each) and in 0 of 5 at
-`-e medium` (17.2 s each). `-e low` is reliable only on short scripts, which is
-why the fixture gate can use it.
+`-e medium` (17.2 s each).
+
+That was first explained as a length effect -- short scripts being safe -- but
+the explanation was wrong. The fixture gate passed at `-e low` only because
+every fixture still named its own expected rule in a header comment that
+reached the model. With that leak closed (2026-09-18), `-e low` recalls 0.546
+of the planted rules against 0.794 at `-e medium`, and raises 51 spurious
+findings on the compliant corpus against 10. The gate now runs at the default
+effort like everything else.
 
 ## Quantify before you trust
 
@@ -109,11 +117,11 @@ own command a few times on a real, compliant script of yours and count the
 false exit 1s: the corpus cannot show you that failure mode.
 
 ```bash
-./tests/accuracy/bcs-accuracy-score.sh -m haiku -e low -n 3
+./tests/accuracy/bcs-accuracy-score.sh -m haiku -e medium -n 3
 ```
 
 Read recall (planted-violation detection) and the clean-fixture false-positive
-rate from the generated `accuracy-haiku-low.md`. See
+rate from the generated `accuracy-haiku-medium.md`. See
 [`tests/accuracy/README.md`](../tests/accuracy/README.md).
 
 #fin
