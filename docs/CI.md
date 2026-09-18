@@ -92,8 +92,8 @@ size. Rough per-file figures at `-e low` (your mileage will vary; the default
 
 Measured on the labelled corpus (17-90 line scripts) at the default
 `-e medium`, 2026-09-18, averaged over 123-check baselines: `gpt5-mini` about
-12 s per check, `sonnet` (`claude-sonnet-5`) about 14 s, `haiku`
-(`claude-haiku-4-5`) about 25 s. The ordering is not a typo: the small model is
+12 s per check, `sonnet` (`claude-sonnet-5`) about 17 s, `haiku`
+(`claude-haiku-4-5`) about 26 s. The ordering is not a typo: the small model is
 the slow one here. The two take different thinking shapes -- `sonnet-5` gets
 `thinking: adaptive`, `haiku-4-5` gets a fixed `budget_tokens` of 2000 from the
 effort scale -- which is the likely cause but has not been isolated. The
@@ -105,6 +105,12 @@ Effort scales latency and cost up sharply: `-e high`/`xhigh`/`max` and larger
 models (`sonnet`, `opus`, `gpt5`, `pro`) can take **30–600s** per file. For a
 pre-push gate, use the cheapest alias with `--tier core` at the default
 `-e medium`, so only correctness-critical rules block the push.
+
+▲ Pick the alias on the clean false-positive rate, not on recall. Measured
+2026-09-18 over six compliant fixtures, three runs each: `haiku` 1 spurious
+finding in 18 runs, `gpt5-mini` 5 in 18, `sonnet` 17 in 17. `sonnet` is the
+default model and the noisiest by a wide margin -- excellent for a review a
+human reads, wrong for a hook that blocks a push.
 
 ▲ Do not gate on `-e low`. It runs with no thinking budget, so the model prints
 findings it has not reasoned through. Measured on `gpt5-mini`, 2026-09-17, this
