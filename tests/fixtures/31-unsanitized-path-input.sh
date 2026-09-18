@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 shopt -s inherit_errexit
+declare -rx PATH=/usr/local/bin:/usr/bin:/bin
 # bcs-fixture-expect: BCS1005
 # bcs-fixture-description: Builds a path from a raw argument with no validation and no `--`, so `../../etc` or `-rf` reaches rm; user input must be validated per BCS1005.
 

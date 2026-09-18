@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 shopt -s inherit_errexit
+declare -rx PATH=/usr/local/bin:/usr/bin:/bin
 # bcs-fixture-expect: BCS0604
 # bcs-fixture-description: Critical `mv` and `cp` invocations have no `|| die` guard or context message per BCS0604.
 

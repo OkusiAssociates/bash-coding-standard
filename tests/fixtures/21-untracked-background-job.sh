@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 shopt -s inherit_errexit nullglob
+declare -rx PATH=/usr/local/bin:/usr/bin:/bin
 # bcs-fixture-expect: BCS1101
 # bcs-fixture-description: Background jobs launched with `&` but their PIDs are never captured or waited on (BCS1101).
 

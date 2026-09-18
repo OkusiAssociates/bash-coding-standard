@@ -83,7 +83,11 @@ BLIND=$(_checker_script "$CHECK_TARGET")
 assert_contains "$(< "$CHECK_TARGET")" 'bcs-fixture-expect: BCS0202' 'target carries the pragma' ||:
 assert_not_contains "$BLIND" 'bcs-fixture-' 'pragma lines blanked' ||:
 assert_equal "$(wc -l < "$CHECK_TARGET")" "$(wc -l <<< "$BLIND")" 'line count unchanged' ||:
-assert_equal "$(sed -n '8p' "$CHECK_TARGET")" "$(sed -n '8p' <<< "$BLIND")" 'line 8 still line 8' ||:
+declare -i DEFECT_LINE=0   # the fixture's planted defect, wherever it sits
+#shellcheck disable=SC2016  # literal $1: the fixture's own text
+DEFECT_LINE=$(grep -n -F 'filename=$1' "$CHECK_TARGET" | cut -d: -f1)
+assert_equal "$(sed -n "${DEFECT_LINE}p" "$CHECK_TARGET")" "$(sed -n "${DEFECT_LINE}p" <<< "$BLIND")" \
+  "line $DEFECT_LINE still line $DEFECT_LINE" ||:
 assert_equal "$(< "$TEST_DIR"/accuracy/cln)" "$(_checker_script "$TEST_DIR"/accuracy/cln)" \
   'a script without pragmas passes through unchanged' ||:
 
@@ -96,8 +100,8 @@ assert_blind() {
 }
 reset_cache; run_check "$OPENAI_OK" -m gpt-5
 assert_blind openai
-#shellcheck disable=SC2016  # literal $1: the fixture's own line 8
-assert_contains "$(jq -r '.messages[1].content' "$PAYLOAD_FILE")" '   8:   filename=$1' \
+#shellcheck disable=SC2016  # literal $1: the fixture's own defect line
+assert_contains "$(jq -r '.messages[1].content' "$PAYLOAD_FILE")" "$(printf '%4d:   filename=$1' "$DEFECT_LINE")" \
   'openai: script still numbered from the original lines' ||:
 reset_cache; run_check "$GOOGLE_OK" -m gemini-2.5-flash;      assert_blind google
 reset_cache; run_check "$ANTHROPIC_OK" -m claude-sonnet-4-6;  assert_blind anthropic

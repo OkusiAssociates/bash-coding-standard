@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 shopt -s inherit_errexit
+declare -rx PATH=/usr/local/bin:/usr/bin:/bin
 # bcs-fixture-expect: BCS1104
 # bcs-fixture-description: Network fetch via curl with no timeout; a hung server stalls the script indefinitely (BCS1104).
 

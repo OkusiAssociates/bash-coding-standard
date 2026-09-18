@@ -26,6 +26,8 @@ For elevated privileges, use sudo, capabilities (`setcap`), compiled wrappers, P
 
 **Tier:** core
 
+**Scope.** A script that runs any external command must set PATH itself, at script start (after `set` and `shopt`, before the first external command), so that an inherited PATH cannot substitute a trojan for `grep` or `rm`. A script that uses only builtins has nothing to protect and needs no PATH line: a missing PATH is a finding only when an external command is run. The rest of this rule governs what the value may contain.
+
 Secure PATH at script start to prevent command hijacking.
 
 ```bash
@@ -34,6 +36,11 @@ declare -rx PATH=~/.local/bin:/usr/local/bin:/usr/bin:/bin
 
 # correct — for production/security-critical scripts
 declare -rx PATH=/usr/local/bin:/usr/bin:/bin
+
+# wrong — external commands run with whatever PATH the environment supplied
+set -euo pipefail
+shopt -s inherit_errexit
+grep -c '^' /etc/hosts               # no PATH line above: whichever grep the caller chose
 
 # wrong — includes dangerous elements
 PATH=.:$PATH                         # current directory

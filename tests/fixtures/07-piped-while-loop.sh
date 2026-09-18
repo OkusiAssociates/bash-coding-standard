@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 shopt -s inherit_errexit
+declare -rx PATH=/usr/local/bin:/usr/bin:/bin
 # bcs-fixture-expect: BCS0504
 # bcs-fixture-description: Pipes into `while read`, creating a subshell that loses variable mutations; BCS0504 is the canonical code for pipe-to-while (BCS0503 and BCS0903 defer to it).
 

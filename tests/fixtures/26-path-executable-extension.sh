@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 shopt -s inherit_errexit
+declare -rx PATH=/usr/local/bin:/usr/bin:/bin
 # bcs-fixture-expect: BCS0106
 # bcs-fixture-description: Installs a PATH-wide executable under a `.sh` name; globally available executables must have no extension per BCS0106.
 

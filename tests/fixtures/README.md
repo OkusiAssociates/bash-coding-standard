@@ -97,7 +97,12 @@ Every file under `tests/fixtures/` MUST:
    primary rule visible.
 
 5. End with `#fin` — the fixture body obeys every rule *except* the
-   specific rule under test.
+   specific rule under test. In particular, a fixture that runs any
+   external command sets `declare -rx PATH=/usr/local/bin:/usr/bin:/bin`
+   right after `shopt` (BCS1002); only fixture 13, whose defect that is,
+   omits it. Before this, 20 fixtures carried that unlabelled second
+   defect and fixture 13 was indistinguishable from them (0 of 3 found
+   blind; 3 of 3 once it was the only one).
 
 6. Stay under ~25 lines of actual code.
 
