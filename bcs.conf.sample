@@ -57,7 +57,7 @@ BCS_SHELLCHECK=1
 
 # Override or extend the model alias map (built-in aliases listed above).
 # Add your own (or override defaults) with: MODEL_ALIASES[name]=canonical-id
-#MODEL_ALIASES[sonnet]=claude-sonnet-4-7
+#MODEL_ALIASES[sonnet]=claude-sonnet-5
 #MODEL_ALIASES[mycloud]=minimax-m2:cloud
 #MODEL_ALIASES[reviewer]=qwen3-coder:480b-cloud
 

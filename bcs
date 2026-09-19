@@ -339,10 +339,13 @@ ${BOLD}Model selection:$NC
 
 ${BOLD}Effort Levels:$NC
   Each level sets max output tokens and (on capable models) the thinking or
-  reasoning budget. Anthropic thinking is auto-enabled on opus + sonnet-4-6/4-7
-  and skipped silently elsewhere; OpenAI reasoning_effort is auto-enabled on
-  o-series + gpt-5*; Gemini thinkingConfig is auto-enabled on the 2.5 family
-  and on gemini-3.5-flash*. Ollama ignores both. The claude-code CLI backend
+  reasoning budget. Anthropic takes one of two shapes: a thinking token budget
+  on haiku-4-5, sonnet-4-5/4-6 and opus-4-5/4-6, or adaptive thinking plus the
+  -e word itself on opus-4-7/4-8 and every Claude 5 -- the latter ignore the
+  token budgets listed below. OpenAI reasoning_effort is auto-enabled on
+  o-series + gpt-5*; Gemini thinkingConfig on the 2.5 family (except
+  gemini-2.5-flash-lite) and gemini-3.5-flash*. A model in no gate is sent no
+  thinking field at all. Ollama ignores both. The claude-code CLI backend
   ignores -e altogether: it always runs at the CLI's lowest native effort.
 
   low         Clear violations only (4k tokens, no thinking; alias: min).
@@ -350,7 +353,7 @@ ${BOLD}Effort Levels:$NC
               findings in every measured run. Do not gate a build on it.
   medium      Violations and significant warnings (8k tokens, 2k thinking)
   high        All violations and warnings (24k tokens, 6k thinking)
-  xhigh       Comprehensive audit with detailed reasoning (40k tokens, 12k thinking)
+  xhigh       Comprehensive audit, widest coverage (40k tokens, 12k thinking)
   max         Exhaustive line-by-line audit (64k tokens, 16k thinking)
 
 ${BOLD}Tiers & Severity:$NC
@@ -361,7 +364,11 @@ ${BOLD}Tiers & Severity:$NC
     disabled    -> not reported
 
   Use $BOLD-T core$NC for CI gates (fail only on core violations) or
-  $BOLD-M recommended$NC to skip style findings during development.
+  $BOLD-M recommended$NC to skip style findings during development. Both
+  filters are applied locally to the answer, from each cited rule's own
+  Tier: field and any policy.conf override -- naming them in the prompt
+  only saves output tokens, it is not what enforces them. A line citing no
+  BCS code (the clean line), or a code with no tier of its own, is kept.
 
 ${BOLD}Policy Overrides:$NC
   Place ${BOLD}policy.conf$NC at any of these cascading locations (later wins):
@@ -663,10 +670,10 @@ _dump_response() {
 
 # Print the standard $1 as the checker should see it: without Section 13,
 # which documents the bcs toolchain's own configuration, holds no rule, and
-# was ~9% of every prompt. A `---` separator is held back until the heading
+# is ~8% of every prompt. A `---` separator is held back until the heading
 # after it shows whether it introduces Section 13 (dropped with it) or
 # anything else (printed). User rules and the coda, which follow, survive.
-# awk, not parameter expansion: Bash takes ~4 s to cut a 116 KB string.
+# awk, not parameter expansion: Bash takes ~4 s to cut a string this size.
 _checker_standard() {
   awk -- '
     function flush(   i) { for (i = 1; i <= held_n; i++) print held[i]; held_n = 0 }
@@ -995,7 +1002,7 @@ _llm_anthropic() {
 
   # Anthropic Messages API has no native JSON-mode flag; rely on prompt
   # discipline plus _strip_json_fences fallback applied by cmd_check.
-  # The system prompt (the full standard, ~29k tokens) is identical across
+  # The system prompt (the standard minus Section 13, ~32k tokens) is identical across
   # calls, so mark it with ephemeral cache_control: repeat checks within the
   # server-side cache TTL (~5 min, refreshed on use) read it from cache --
   # much cheaper and a faster prefill. All current claude-* models support

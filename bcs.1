@@ -141,20 +141,30 @@ in every measured run, so do not gate a build on it),
 .BR high " (all violations and warnings),"
 .BR xhigh " (comprehensive audit, every finding however minor),"
 .BR max " (exhaustive line-by-line audit)."
-Controls output token budget AND thinking/reasoning depth on capable models:
-Anthropic
+Controls output token budget AND thinking/reasoning depth on capable models.
+Anthropic takes one of two incompatible shapes, chosen by model: a
 .B thinking.budget_tokens
-on
-.BR opus / sonnet\-4\-6 / sonnet\-4\-7 ", "
+count on
+.BR haiku\-4\-5 / sonnet\-4\-5 / sonnet\-4\-6 / opus\-4\-5 / opus\-4\-6 ", "
+or adaptive thinking plus
+.B output_config.effort
+\(em the
+.B \-e
+word itself, not a token count \(em on
+.BR opus\-4\-7 / opus\-4\-8
+and every Claude 5.
 OpenAI
 .B reasoning_effort
 on
 .BR o[0\-9]* / gpt\-5* ", "
 Google
 .B thinkingConfig.thinkingBudget
-on the 2.5 family except
-.BR flash\-lite "."
-Backends without thinking-mode support silently ignore the budget.
+on the 2.5 family (except
+.BR gemini\-2.5\-flash\-lite )
+and
+.BR gemini\-3.5\-flash* "."
+A model matching no gate is sent no thinking field at all, rather than a
+guess: the wrong shape is answered with HTTP 400, not a silent downgrade.
 .B medium
 is the recommended default for all backends.
 .B high

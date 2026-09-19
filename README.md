@@ -81,7 +81,7 @@ See [Compliance Checking](#compliance-checking) for backend trade-offs.
 
 ## The Standard
 
-The Bash Coding Standard defines **100 substantive rules plus 12 section overviews** (112 total codes) across 12 sections in a single ~3,000-line document. Every rule carries examples, a `**Tier:**` label, and a BCS code (`BCSssrr`, four digits, zero-padded).
+The Bash Coding Standard defines **100 substantive rules plus 12 section overviews** (112 total codes) across 12 sections in a single ~3,800-line document. Every rule carries examples, a `**Tier:**` label, and a BCS code (`BCSssrr`, four digits, zero-padded).
 
 | # | Section | Focus |
 |---|---------|-------|
@@ -134,7 +134,7 @@ bcs check --no-cache myscript.sh           # Bypass the result cache (force a fr
 bcscheck myscript.sh                       # Equivalent shim (defaults from bcs.conf)
 ```
 
-The checker is shown the assembled standard minus Section 13 (the toolchain's own configuration reference: no rules, about 9% of the document), on every backend. `bcs display` and `bcs generate` still handle the whole document.
+The checker is shown the assembled standard minus Section 13 (the toolchain's own configuration reference: no rules, about 8% of the document), on every backend. `bcs display` and `bcs generate` still handle the whole document.
 
 In JSON output, a finding's `tier` and `level` are not taken from the model: both are recomputed locally from the cited rule's `**Tier:**` field, honouring `policy.conf`, so the severity that sets the exit code cannot be wrong because the model mislabelled a finding. `--strict` raises every recomputed level to `error`. A finding citing a rule `policy.conf` disables is dropped; one citing a code with no tier of its own keeps the level the model gave it.
 
@@ -210,10 +210,16 @@ Set `MODEL_ALIASES[name]=canonical-id` in `bcs.conf` to extend or override.
 **Effort levels**
 
 `-e` sets the max output tokens AND the thinking/reasoning budget on capable
-models. Anthropic `thinking.budget_tokens` auto-applies on `opus` and
-`sonnet-4-6/4-7`; OpenAI `reasoning_effort` auto-applies on `o[0-9]*` and
-`gpt-5*`; Gemini `thinkingConfig.thinkingBudget` auto-applies on the 2.5
-family and on `gemini-3.5-flash*`. Other models silently ignore the budget.
+models. Anthropic takes one of two incompatible shapes, chosen by model:
+`thinking.budget_tokens` on `haiku-4-5`, `sonnet-4-5/4-6` and `opus-4-5/4-6`,
+or `thinking: adaptive` plus `output_config.effort` on `opus-4-7/4-8` and
+every Claude 5 -- which receive the `-e` word itself, not a token count, so
+the "Thinking budget" column below does not apply to them. OpenAI
+`reasoning_effort` auto-applies on `o[0-9]*` and `gpt-5*`; Gemini
+`thinkingConfig.thinkingBudget` auto-applies on the 2.5 family (except
+`gemini-2.5-flash-lite`) and on `gemini-3.5-flash*`. A model outside every
+gate is sent no thinking field at all rather than a guess -- the wrong shape
+is an HTTP 400, not a silent downgrade.
 
 | `-e` | Max tokens | Thinking budget | OpenAI `reasoning_effort` |
 |------|------------|------------------|---------------------------|
@@ -246,6 +252,7 @@ raised none. Keep `low` for short scripts; never gate a build on it. Numbers:
 
 - `-T <tier>` -- only findings at that tier (e.g. `bcscheck -T core deploy.sh` as a CI gate).
 - `-M <tier>` -- that tier or stricter (`-M recommended` excludes style).
+- Both filters are applied **locally, to the model's answer**, using each cited rule's own `**Tier:**` field and any `policy.conf` override. They are also named in the prompt, purely to save output tokens, but a model that ignores one cannot widen a gate: a leaked style finding is dropped before the exit code is computed. Two lines are deliberately never dropped -- one citing no BCS code (the clean line) and one citing a code with no tier of its own (a section overview, or a code the model invented).
 - `--strict` -- treat warnings as violations (non-zero exit on any finding).
 - `-j` / `--json` -- emit a single `{source, meta, comments}` JSON object on stdout, schema-compatible with `shellcheck --format=json1`, for CI ingestion. Exit 5 if the LLM emits invalid JSON (raw response preserved in the dump file).
 - Text mode asks the checker for one finding per line and nothing else: `[ERROR|WARN] BCSxxxx line N: <defect>. Fix: <remedy>` -- no preamble, no notes on rules that pass, no summary, and no finding that is then retracted. The checker is an LLM, so treat the shape as a strong convention, not a grammar; use `-j` when a program reads the result.
@@ -253,7 +260,7 @@ raised none. Keep `low` for short scripts; never gate a build on it. Numbers:
 - An empty completion is an anomaly on every backend, in text and JSON mode alike: `bcs check` exits 5, reports the API's finish reason (e.g. `finish_reason=length` when reasoning consumed the whole output budget -- raise `-e`), and does not cache the result. It is never reported as a clean pass.
 - `#bcscheck disable=BCSdddd` on its own line suppresses a rule for the next command, function, or `{ ... }` block -- same scope rules as `shellcheck` directives.
 
-**Accuracy data** -- backend accuracy is measured against four BCS-compliant scripts (`cln`, `md2ansi`, `which`, `tests/accuracy/bcs-check-accuracy.sh`) across multiple models and effort levels. See [`tests/accuracy/LLM-ACCURACY.md`](tests/accuracy/LLM-ACCURACY.md) for the current scoring matrix and refresh date.
+**Accuracy data** -- the reproducible reference is the scorer baseline: `tests/accuracy/bcs-accuracy-score.sh` runs the 43-fixture corpus under `tests/fixtures/` N times per model and records precision, recall, F1, stability, per-rule recall and per-rule false positives. Committed baselines live in [`tests/accuracy/baseline/`](tests/accuracy/baseline/README.md); the current reference is `sonnet_high` (2026-09-19, bcs 2.0.8: recall 0.973, precision 0.893, 0 false positives across 14 clean-fixture runs). Changes to the prompt, the standard, or the default effort are gated on **recall and clean false positives only** -- F1 and precision move with the corpus and are not gate criteria. The older four-script study (`cln`, `md2ansi`, `which`, `bcs-check-accuracy.sh`) is kept in [`tests/accuracy/LLM-ACCURACY.md`](tests/accuracy/LLM-ACCURACY.md) as a historical record; it predates the current model routing and was measured before the fixture labels were hidden from the checker.
 
 ## Customisation
 
