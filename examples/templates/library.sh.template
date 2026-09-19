@@ -2,20 +2,27 @@
 # {{DESCRIPTION}}
 # This is a sourceable library script
 
-# --- reject direct execution: a pure library is sourced, never run ---
+# --- Execution guard ---
+# A pure library is sourced, never run.
 [[ ${BASH_SOURCE[0]} != "$0" ]] || {
   >&2 echo "Error: ${0@Q} must be sourced"
   exit 1
 }
 
-# --- already-sourced fence ---
+# --- Already-sourced fence ---
 [[ ! -v {{NAME}}_VERSION ]] || return 0
-# Library metadata
-declare -rx {{NAME}}_VERSION='{{VERSION}}'
 
-#shellcheck disable=SC2155  # exit-on-error catches realpath failure
-declare -rx {{NAME}}_PATH=$(realpath -- "${BASH_SOURCE[0]}")
+# --- Library metadata ---
+# Assign, check, then mark readonly. `declare -r x=$(cmd)` returns declare's
+# own status, so a failed cmd leaves x readonly-EMPTY in the caller's shell
+# and the fence above would then block any re-source from repairing it.
+# VERSION is set last, so a failed load leaves the fence open for a retry.
+declare -- {{NAME}}_PATH=''
+{{NAME}}_PATH=$(realpath -- "${BASH_SOURCE[0]}") \
+  || { >&2 echo '{{NAME}}: cannot resolve library path'; return 1; }
+declare -rx {{NAME}}_PATH
 declare -rx {{NAME}}_DIR=${{{NAME}}_PATH%/*}
+declare -rx {{NAME}}_VERSION='{{VERSION}}'
 
 # Messaging functions (library prefix)
 {{NAME}}_msg()   { >&2 printf '{{NAME}}: %s\n' "$@"; }
