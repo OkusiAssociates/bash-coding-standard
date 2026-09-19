@@ -28,23 +28,31 @@ varying complexity and structure.
 Fifteen fixtures were changed in the 2.0.8 round: thirteen carried a second
 real defect competing with the planted one, one (24) gained a `--` the widened
 BCS1005 now requires, and one (`clean/05`) the same. Re-measured afterwards
-with `bcs-accuracy-score.sh -m gpt5-mini -e medium -n 3` over exactly those
-fifteen, JSON mode, `--no-cache`, 0 inconclusive:
+with `bcs-accuracy-score.sh -n 3` over exactly those fifteen, JSON mode,
+`--no-cache`, 0 inconclusive on both models:
 
-| Metric | Value |
-|--------|-------|
-| Recall | 0.881 |
-| Precision | 0.698 |
-| Stability | 0.929 |
-| Spurious findings per clean run | 1.000 (`clean/05` only) |
+| Metric | `haiku` `-e medium` | `gpt5-mini` `-e medium` |
+|--------|--------------------:|------------------------:|
+| Recall | 0.857 | 0.881 |
+| Precision | **0.973** | 0.698 |
+| Stability | 0.857 | 0.929 |
+| Spurious findings per clean run | **0.000** | 1.000 |
+| False positives, all 45 checks | **1** | 12 |
 
-**Every repaired fixture returns its planted code 3 of 3**: BCS0206 (03),
-BCS0302 (04), BCS0501 (06), BCS0504 (07 and 18, 6/6), BCS0606 (19), BCS0702
-(09), BCS0901 (11), BCS0902 (12), BCS1001 (24), BCS1101 (21), BCS1103 (32).
-The two that miss are the two known mechanical cases, both in
-`probabilistic/`, both unchanged by this round: BCS0106 1/3 (the checker never
-sees the executable's real filename) and BCS1104 0/3 (recorded as 0 of 9
-across three backends since 2026-09-18, still unexplained).
+**Every repaired fixture returns its planted code**, 3 of 3 on both models
+except where noted: BCS0206 (03; haiku 2/3), BCS0302 (04), BCS0501 (06),
+BCS0504 (07 and 18, 6/6), BCS0606 (19), BCS0702 (09), BCS0901 (11), BCS0902
+(12), BCS1001 (24), BCS1101 (21), BCS1103 (32). The two that miss on both are
+the two known mechanical cases, both in `probabilistic/`, both unchanged by
+this round: BCS0106 (the checker never sees the executable's real filename)
+and BCS1104 (recorded as 0 of 9 across three backends since 2026-09-18, still
+unexplained; haiku found it 1/3 here).
+
+`haiku` raised **one** extra finding in 45 checks -- BCS0702 once on fixture
+18 -- against the pre-repair state, where 14 of the 30 gated fixtures drew an
+unexpected code in 2 runs of 2. Its precision of 0.973 on this set, with no
+spurious finding on the clean fixture at all, is the strongest evidence that
+the corpus repairs did what they were meant to.
 
 ### What the per-fixture false-positive map bought
 
@@ -56,8 +64,10 @@ identified it as a fifth ownership pair rather than noise. BCS0906 already
 carried a sentence deferring to BCS0504 for that defect; BCS0411 did not, and
 now does.
 
-Three extras remain unexplained and are recorded rather than smoothed:
-BCS0702 twice on fixture 06 (whether `echo 'default settings'` is that
+Extras remain, recorded rather than smoothed. `haiku` leaves exactly one
+(BCS0702 on fixture 18). `gpt5-mini` leaves twelve, and they are worth reading
+as a property of the cheaper model rather than of the corpus, since `haiku`
+saw the same files and did not raise them: BCS0702 twice on fixture 06 (whether `echo 'default settings'` is that
 script's data or a status message is a judgement call, and the widened BCS0702
 scope makes the checker read it as status), BCS0906 twice on fixture 18
 despite its deferral sentence, and seven single occurrences spread over seven
