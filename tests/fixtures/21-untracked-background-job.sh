@@ -13,7 +13,7 @@ main() {
   for f in /tmp/job-*.in; do
     process_one "$f" &
   done
-  printf 'all launched\n'
+  >&2 printf 'all launched\n'
 }
 
 main "$@"

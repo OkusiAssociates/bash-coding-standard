@@ -6,7 +6,7 @@ declare -rx PATH=/usr/local/bin:/usr/bin:/bin
 main() {
   local -- file=${1:-/etc/hosts}
   if [[ ! -f $file ]]; then
-    echo "error: $file not found"
+    echo "error: ${file@Q} not found"
     echo 'usage: script.sh FILE'
     exit 3
   fi

@@ -13,7 +13,7 @@ main() {
   for pid in "${pids[@]}"; do
     wait "$pid" ||:
   done
-  echo 'All jobs finished'
+  >&2 echo 'All jobs finished'
 }
 
 main "$@"

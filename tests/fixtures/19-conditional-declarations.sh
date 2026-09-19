@@ -6,9 +6,9 @@ declare -i VERBOSE=0
 declare -i DRY_RUN=0
 
 main() {
-  ((VERBOSE)) && echo 'starting'
-  ((DRY_RUN)) && echo 'dry-run mode'
-  echo 'done'
+  ((VERBOSE)) && >&2 echo 'starting'
+  ((DRY_RUN)) && >&2 echo 'dry-run mode'
+  >&2 echo 'done'
 }
 
 main "$@"

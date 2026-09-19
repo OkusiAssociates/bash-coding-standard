@@ -10,7 +10,7 @@ main() {
     echo "$f"
   done
   # shellcheck disable=SC2035  # deleting by pattern is intended
-  rm -f *.tmp 2>/dev/null ||:
+  rm -f *.tmp
 }
 
 main "$@"
