@@ -25,8 +25,8 @@ main() {
   fi
   local -- file=${1:-}
   if [[ ! -f $file ]]; then
-    printf 'not a file: %s\n' "${file:-<none>}" >&2
-    return 1
+    printf 'not a file: %s\n' "${file@Q}" >&2
+    return 3
   fi
   count_nonblank "$file"
 }

@@ -75,7 +75,13 @@ main() {
 
   ((${#FILES[@]})) || die 2 'No input files specified'
   ((DRY_RUN)) && info 'Dry-run mode' ||:
-  [[ -d $OUTPUT_DIR ]] || mkdir -p -- "$OUTPUT_DIR" || die 1 "Cannot create ${OUTPUT_DIR@Q}"
+  if [[ ! -d $OUTPUT_DIR ]]; then
+    if ((DRY_RUN)); then
+      info "[DRY-RUN] Would create ${OUTPUT_DIR@Q}"
+    else
+      mkdir -p -- "$OUTPUT_DIR" || die 1 "Cannot create ${OUTPUT_DIR@Q}"
+    fi
+  fi
 
   local -- file
   for file in "${FILES[@]}"; do
