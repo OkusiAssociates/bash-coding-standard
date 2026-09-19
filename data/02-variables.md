@@ -24,7 +24,15 @@ local -i retval=0            # local integer
 # wrong — no type, no separator
 count=0
 local filename=$1
+
+# not this rule — no declaration at all inside a function: cite BCS0202
+process_file() { filename=$1; }
 ```
+
+This rule governs the *type* of a declaration that exists. A function variable
+with no `local` at all is **BCS0202's** finding, not this rule's: cite BCS0202
+for the missing `local`, BCS0201 for the missing type separator, never both for
+one variable.
 
 The `--` separator for string variable types is **purely semantic** -- it signals a conscious variable type choice, completing the pattern alongside `-i`, `-a`, and `-A`.
 
@@ -47,7 +55,27 @@ process_file() {
   filename=$1
   line_count=0
 }
+
+# wrong — loop and `read` variables are function variables too
+collect() {
+  local -- file=$1
+  for item in a b c; do echo "$item"; done   # item: no declaration
+  while IFS= read -r line; do                # line: no declaration
+    echo "$line"
+  done < "$file"
+}
+
+# correct — declare them with the rest
+collect() {
+  local -- file=$1 item line
+  for item in a b c; do echo "$item"; done
+  while IFS= read -r line; do echo "$line"; done < "$file"
+}
 ```
+
+This rule owns a function variable with **no declaration at all** -- a bare
+assignment, or an undeclared `for`/`read` variable. Whether a declaration that
+does exist carries its type separator is BCS0201's question; cite BCS0202 here.
 
 Without `local`, variables become global, overwrite same-named variables, persist after function return, and break recursive calls.
 

@@ -39,7 +39,15 @@ trap 'cleanup $?' SIGINT SIGTERM EXIT
 
 # wrong
 command &                            # untracked background job
+
+# wrong — a loop of untracked jobs: nothing can wait on any of them
+for f in ./*.in; do process_one "$f" & done
 ```
+
+This rule owns the **untracked** job -- one whose `$!` is never captured, so
+nothing can wait on it. What becomes of the exit code of a `wait` that does run
+is BCS1103's finding; a script that starts jobs and never waits at all is cited
+here alone.
 
 Use `$!` for the last background PID. Never use `$$` (that's the parent PID).
 
@@ -104,7 +112,13 @@ wait "$pid" ||:
 for pid in "${pids[@]}"; do
   wait "$pid"
 done
+
+# not this rule — nothing was tracked and nothing waits: cite BCS1101
+command &
 ```
+
+This rule governs a `wait` that runs. Where no PID was captured and the script
+never waits at all, the finding is BCS1101's (untracked job), not this rule's.
 
 ## BCS1104 Timeout Handling
 

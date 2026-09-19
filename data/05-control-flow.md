@@ -256,6 +256,14 @@ declare -- ver=''
 
 # wrong — external tool for a job the shell does in-process
 year=$(echo "$date" | grep -oE '^[0-9]{4}')
+month=$(echo "$date" | cut -d- -f2)              # ${date:5:2} does it
+day=$(printf '%s' "$date" | sed -n 's/.*-//p')   # ${date##*-} does it
 ```
+
+This rule owns **parsing a shell variable with an external tool** where
+`[[ =~ ]]` and `BASH_REMATCH`, or a parameter expansion, would do it in
+process: `grep -oE`, `cut -d`, `sed -n 's/../\1/p'`, `awk '{print $2}'`.
+BCS1205 states the same preference for builtins generally and defers here: cite
+BCS0507 for a parse, not both.
 
 Keep the regex unquoted — quoting any part forces a literal match (cite BCS0303, which owns that finding). For complex patterns, assign to a variable and reference it unquoted: `[[ $s =~ $re ]]`. `BASH_REMATCH` is global and is overwritten by every successful `[[ =~ ]]`, so copy out captures before the next match. Character classes such as `[[:alpha:]]` are locale-sensitive.

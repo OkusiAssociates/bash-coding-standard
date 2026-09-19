@@ -32,7 +32,18 @@ printf '%s\n' "$result"              # → stdout (data output)
 # discouraged (style, not a violation) — >&2 at end works but is harder to spot
 echo 'error: something failed' >&2
 printf '%s\n' 'error: something failed' >&2
+
+# wrong — status on stdout, so data=$(./script.sh) captures it as data
+echo 'Processing files...'
+printf 'all launched\n'
+echo "error: ${file@Q} not found"
 ```
+
+This rule owns the **stream**: status, progress or error text written to
+stdout, and data written to stderr, whatever command prints it. Whether a
+script that defines `info()`/`warn()`/`error()` ought to have used one in place
+of a raw `echo` is BCS0705's question -- cite BCS0702 for the misdirected
+stream, BCS0705 for the wrong mechanism, never both for one line.
 
 Stream separation enables: `data=$(./script.sh)` captures only data, `./script.sh 2>errors.log` separates errors, `./script.sh | process` pipes data while showing messages.
 
@@ -171,8 +182,17 @@ get_value() {
 
 # wrong — mixing streams
 info "$result"                       # data via messaging function
-echo 'Processing...'                 # status via echo to stdout
+echo 'Processing...' >&2             # status by hand, though info() exists
+
+# not this rule — no messaging functions here; the defect is the stream:
+# cite BCS0702
+echo 'Processing...'
 ```
+
+This rule governs the **mechanism**: a script that defines messaging functions
+routes status through them, and never sends data through them. Which stream the
+text lands on is BCS0702's finding, so a bare `echo 'Processing...'` in a script
+with no messaging functions is cited under BCS0702 alone.
 
 Never mix data and status on the same stream.
 

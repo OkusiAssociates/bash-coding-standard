@@ -106,7 +106,14 @@ ${var,,}                            # not $(echo "$var" | tr A-Z a-z)
 [[ condition ]]                     # not [ condition ] or test
 var=$(command)                      # not var=`command`
 {1..10}                             # not $(seq 1 10)
+
+# not this rule — parsing a variable with an external tool: cite BCS0507
+minor=$(echo "$tag" | cut -d. -f2)
 ```
+
+Parsing a shell variable with an external tool (`grep -oE`, `cut -d`, `sed -n`,
+`awk '{print $N}'`) is **BCS0507's** finding, not this rule's. This rule covers
+the remaining builtin substitutions listed above.
 
 ## BCS1206 Static Analysis Directives
 

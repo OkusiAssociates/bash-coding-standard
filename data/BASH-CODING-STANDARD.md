@@ -418,7 +418,15 @@ local -i retval=0            # local integer
 # wrong — no type, no separator
 count=0
 local filename=$1
+
+# not this rule — no declaration at all inside a function: cite BCS0202
+process_file() { filename=$1; }
 ```
+
+This rule governs the *type* of a declaration that exists. A function variable
+with no `local` at all is **BCS0202's** finding, not this rule's: cite BCS0202
+for the missing `local`, BCS0201 for the missing type separator, never both for
+one variable.
 
 The `--` separator for string variable types is **purely semantic** -- it signals a conscious variable type choice, completing the pattern alongside `-i`, `-a`, and `-A`.
 
@@ -441,7 +449,27 @@ process_file() {
   filename=$1
   line_count=0
 }
+
+# wrong — loop and `read` variables are function variables too
+collect() {
+  local -- file=$1
+  for item in a b c; do echo "$item"; done   # item: no declaration
+  while IFS= read -r line; do                # line: no declaration
+    echo "$line"
+  done < "$file"
+}
+
+# correct — declare them with the rest
+collect() {
+  local -- file=$1 item line
+  for item in a b c; do echo "$item"; done
+  while IFS= read -r line; do echo "$line"; done < "$file"
+}
 ```
+
+This rule owns a function variable with **no declaration at all** -- a bare
+assignment, or an undeclared `for`/`read` variable. Whether a declaration that
+does exist carries its type separator is BCS0201's question; cite BCS0202 here.
 
 Without `local`, variables become global, overwrite same-named variables, persist after function return, and break recursive calls.
 
@@ -1573,7 +1601,15 @@ declare -- ver=''
 
 # wrong — external tool for a job the shell does in-process
 year=$(echo "$date" | grep -oE '^[0-9]{4}')
+month=$(echo "$date" | cut -d- -f2)              # ${date:5:2} does it
+day=$(printf '%s' "$date" | sed -n 's/.*-//p')   # ${date##*-} does it
 ```
+
+This rule owns **parsing a shell variable with an external tool** where
+`[[ =~ ]]` and `BASH_REMATCH`, or a parameter expansion, would do it in
+process: `grep -oE`, `cut -d`, `sed -n 's/../\1/p'`, `awk '{print $2}'`.
+BCS1205 states the same preference for builtins generally and defers here: cite
+BCS0507 for a parse, not both.
 
 Keep the regex unquoted — quoting any part forces a literal match (cite BCS0303, which owns that finding). For complex patterns, assign to a variable and reference it unquoted: `[[ $s =~ $re ]]`. `BASH_REMATCH` is global and is overwritten by every successful `[[ =~ ]]`, so copy out captures before the next match. Character classes such as `[[:alpha:]]` are locale-sensitive.
 
@@ -1890,7 +1926,18 @@ printf '%s\n' "$result"              # → stdout (data output)
 # discouraged (style, not a violation) — >&2 at end works but is harder to spot
 echo 'error: something failed' >&2
 printf '%s\n' 'error: something failed' >&2
+
+# wrong — status on stdout, so data=$(./script.sh) captures it as data
+echo 'Processing files...'
+printf 'all launched\n'
+echo "error: ${file@Q} not found"
 ```
+
+This rule owns the **stream**: status, progress or error text written to
+stdout, and data written to stderr, whatever command prints it. Whether a
+script that defines `info()`/`warn()`/`error()` ought to have used one in place
+of a raw `echo` is BCS0705's question -- cite BCS0702 for the misdirected
+stream, BCS0705 for the wrong mechanism, never both for one line.
 
 Stream separation enables: `data=$(./script.sh)` captures only data, `./script.sh 2>errors.log` separates errors, `./script.sh | process` pipes data while showing messages.
 
@@ -2029,8 +2076,17 @@ get_value() {
 
 # wrong — mixing streams
 info "$result"                       # data via messaging function
-echo 'Processing...'                 # status via echo to stdout
+echo 'Processing...' >&2             # status by hand, though info() exists
+
+# not this rule — no messaging functions here; the defect is the stream:
+# cite BCS0702
+echo 'Processing...'
 ```
+
+This rule governs the **mechanism**: a script that defines messaging functions
+routes status through them, and never sends data through them. Which stream the
+text lands on is BCS0702's finding, so a bare `echo 'Processing...'` in a script
+with no messaging functions is cited under BCS0702 alone.
 
 Never mix data and status on the same stream.
 
@@ -2883,7 +2939,15 @@ trap 'cleanup $?' SIGINT SIGTERM EXIT
 
 # wrong
 command &                            # untracked background job
+
+# wrong — a loop of untracked jobs: nothing can wait on any of them
+for f in ./*.in; do process_one "$f" & done
 ```
+
+This rule owns the **untracked** job -- one whose `$!` is never captured, so
+nothing can wait on it. What becomes of the exit code of a `wait` that does run
+is BCS1103's finding; a script that starts jobs and never waits at all is cited
+here alone.
 
 Use `$!` for the last background PID. Never use `$$` (that's the parent PID).
 
@@ -2948,7 +3012,13 @@ wait "$pid" ||:
 for pid in "${pids[@]}"; do
   wait "$pid"
 done
+
+# not this rule — nothing was tracked and nothing waits: cite BCS1101
+command &
 ```
+
+This rule governs a `wait` that runs. Where no PID was captured and the script
+never waits at all, the finding is BCS1101's (untracked job), not this rule's.
 
 ## BCS1104 Timeout Handling
 
@@ -3126,7 +3196,14 @@ ${var,,}                            # not $(echo "$var" | tr A-Z a-z)
 [[ condition ]]                     # not [ condition ] or test
 var=$(command)                      # not var=`command`
 {1..10}                             # not $(seq 1 10)
+
+# not this rule — parsing a variable with an external tool: cite BCS0507
+minor=$(echo "$tag" | cut -d. -f2)
 ```
+
+Parsing a shell variable with an external tool (`grep -oE`, `cut -d`, `sed -n`,
+`awk '{print $N}'`) is **BCS0507's** finding, not this rule's. This rule covers
+the remaining builtin substitutions listed above.
 
 ## BCS1206 Static Analysis Directives
 
