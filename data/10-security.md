@@ -100,7 +100,7 @@ Never use `eval` with untrusted input. Almost every use case has a safer alterna
 
 ```bash
 # correct — arrays for dynamic commands
-local -a cmd=(find "$path" -name "$pattern")
+local -a cmd=(find -- "$path" -name "$pattern")
 "${cmd[@]}"
 
 # correct — indirect expansion
@@ -131,6 +131,8 @@ eval "${action}_function"
 
 Validate and sanitize all user input. Use whitelist over blacklist. Pass `--` before any pathname operand that originates from variables or user input (`rm -- "$f"`, `cp -- "$src" "$dst"`) to prevent option injection via filenames beginning with `-`.
 
+**Scope of `--`.** Every command that takes a pathname operand, read-only ones and builtins included: `cat`, `head`, `sort`, `grep`, `wc`, `stat`, `diff`, `source` and `cd` parse a leading dash exactly as `rm` does, and "read-only" is no defence — a file named `-o/etc/cron.d/job` turns `sort "$f"` into a write. The `--` is owed when an operand **begins with an expansion** (`"$f"`, `"$dir"/x`, `"${files[@]}"`, `"$(cmd)"/x`). It is **not** owed, and its absence is never a finding, when the operand begins with literal text (`./"$f"`, `/etc/"$name"`: it cannot start with a dash), when the variable is an option's argument (`sort -o "$out"`, `grep -f "$patterns"`), for a redirection (`< "$file"`), inside `[[ ]]`, or for a command that takes no pathname (`echo`, `printf`, `tr`). Place it before the first operand, which is not always the pathname: `grep -- "$pattern" "$file"`, `chmod -- 644 "$f"`, `awk -- 'prog' "$f"` (after the program, `awk` reads `--` as a filename).
+
 ```bash
 # correct — validate integer
 [[ $input =~ ^-?[0-9]+$ ]] || die 22 "Invalid integer: ${input@Q}"
@@ -147,6 +149,23 @@ real_path=$(realpath -e -- "$path")
 # correct — -- before pathname operands from variables or input
 rm -- "$user_file"
 cp -- "$source" "$dest"
+
+# correct — read-only commands and builtins owe it too
+sort -- "$file" | head -n 5
+grep -c -- 'pattern' "$file"
+source -- "$lib_path"
+cd -- "$target_dir"
+
+# wrong — a file named '-o/etc/cron.d/job' makes sort write; '-r' makes head fail
+sort "$file"
+head -n 5 "$file"
+cat "$dir"/"$name"
+
+# correct — no -- owed: literal-leading operand, option-argument, redirection
+cat ./"$name"
+wc -l /var/log/"$SCRIPT_NAME".log
+sort -o "$output" -- "$input"
+content=$(< "$file")
 ```
 
 Validate early, fail securely with clear errors, run with minimum necessary permissions.

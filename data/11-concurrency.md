@@ -66,7 +66,7 @@ done
 for server in "${servers[@]}"; do
   wait "${pids[0]}" || errors+=1
   pids=("${pids[@]:1}")
-  cat "$temp_dir"/"$server".out
+  cat -- "$temp_dir"/"$server".out
 done
 ((errors == 0)) || die 1 "$errors job(s) failed"
 ```

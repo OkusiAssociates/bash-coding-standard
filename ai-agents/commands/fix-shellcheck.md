@@ -63,7 +63,7 @@ echo "$var"
 echo "$(command)"
 
 # SC2164 -- guard cd with a BCS die-handler
-cd "$dir" || die 5 "cd failed ${dir@Q}"
+cd -- "$dir" || die 5 "cd failed ${dir@Q}"
 
 # SC2181 -- check the command directly
 if cmd; then
@@ -72,7 +72,7 @@ fi
 
 # SC1091 -- tell shellcheck where to find the sourced file
 # shellcheck source=path/to/file.sh
-source "$path"
+source -- "$path"
 
 # SC2034 -- remove, or disable with a one-line reason
 # shellcheck disable=SC2034 # consumed by parent shell via export

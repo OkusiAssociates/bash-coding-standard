@@ -209,7 +209,7 @@ Source libraries with existence check:
 
 ```bash
 [[ -f $lib_path ]] || die 3 "Missing library ${lib_path@Q}"
-source "$lib_path" || die 1 "Failed to source ${lib_path@Q}"
+source -- "$lib_path" || die 1 "Failed to source ${lib_path@Q}"
 ```
 
 ## BCS0408 Dependency Management
@@ -390,13 +390,13 @@ When a computation runs in a subshell, choose one of four documented patterns to
 ```bash
 local -- content hash
 content=$(< "$file")
-hash=$(sha256sum "$file" | cut -d' ' -f1)
+hash=$(sha256sum -- "$file" | cut -d' ' -f1)
 ```
 
 **Pattern 2 -- Process substitution with `readarray` or `while`** (array or streaming output, preserves parent scope):
 
 ```bash
-readarray -t lines < <(grep pattern "$file")
+readarray -t lines < <(grep -- pattern "$file")
 while IFS= read -r line; do
   process "$line"
 done < <(some_command)

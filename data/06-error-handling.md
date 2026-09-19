@@ -159,7 +159,7 @@ cp -- "$src" "$dst" || {
 }
 
 # correct — check PIPESTATUS for pipelines (condition context, see pitfalls)
-if ! sort "$file" | uniq > "$output"; then
+if ! sort -- "$file" | uniq > "$output"; then
   ((PIPESTATUS[0] == 0)) || die 1 'Sort failed'
   die 1 'Pipeline failed'
 fi
@@ -169,14 +169,14 @@ cmd1
 local -i result=$?
 
 # wrong — a failure inside <( ) is invisible: diff silently compares against empty input
-diff <(failing_command) "$file"
+diff -- <(failing_command) "$file"
 
 # correct — run and check first, then feed the output on
 out=$(failing_command) || die 1 'Command failed'
-diff <(printf '%s\n' "$out") "$file"
+diff -- <(printf '%s\n' "$out") "$file"
 
 # correct — loop feed: an empty stream is an ordinary outcome, nothing to check
-while IFS= read -r line; do process "$line"; done < <(grep 'pattern' "$file")
+while IFS= read -r line; do process "$line"; done < <(grep -- 'pattern' "$file")
 ```
 
 A command run only inside a process substitution (`<(cmd)`) has no exit status anyone checks: `set -e` and `pipefail` never see it, and the consumer reads empty input. This is a finding where an empty result would be taken for a real one: a `diff`, `cmp` or `comm` against `<(cmd)`, or a result captured for later use. Run such a command first and check it. The prescribed loop feed `while ... done < <(cmd)` (BCS0504, BCS0903), where an empty stream is an ordinary outcome, is not a finding.
@@ -190,7 +190,7 @@ A command run only inside a process substitution (`<(cmd)`) has no exit status a
 
 ```bash
 # correct — snapshot, then inspect each stage
-if ! sort "$file" | uniq | wc -l > "$output"; then
+if ! sort -- "$file" | uniq | wc -l > "$output"; then
   local -a ps=("${PIPESTATUS[@]}")
   for i in "${!ps[@]}"; do
     ((ps[i] == 0)) || error "Stage $i failed (exit ${ps[i]})"
@@ -199,7 +199,7 @@ if ! sort "$file" | uniq | wc -l > "$output"; then
 fi
 
 # wrong — echo clobbers PIPESTATUS before we read it
-if ! sort "$file" | uniq | wc -l > "$output"; then
+if ! sort -- "$file" | uniq | wc -l > "$output"; then
   echo 'Pipeline failed'
   ((PIPESTATUS[0] == 0)) || die 1 'Sort failed'   # PIPESTATUS is now echo's
 fi
@@ -223,7 +223,7 @@ if result=$(command 2>/dev/null); then
 fi
 
 # wrong — suppressing critical operations
-cp "$src" "$dst" 2>/dev/null || true
+cp -- "$src" "$dst" 2>/dev/null || true
 set +e                               # never disable broadly
 
 # wrong — unexplained suppression

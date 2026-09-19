@@ -140,7 +140,7 @@ for dir in "${search_paths[@]}"; do
 done
 ```
 
-Locate companion files (libraries, data, configuration) relative to `$SCRIPT_DIR`, never relative to the current working directory: `source "$SCRIPT_DIR"/lib/common.sh`, not `source lib/common.sh` or `source ../lib/common.sh`, which break when the script is run from another directory. `SCRIPT_DIR=$PWD` is the same mistake.
+Locate companion files (libraries, data, configuration) relative to `$SCRIPT_DIR`, never relative to the current working directory: `source -- "$SCRIPT_DIR"/lib/common.sh`, not `source lib/common.sh` or `source ../lib/common.sh`, which break when the script is run from another directory. `SCRIPT_DIR=$PWD` is the same mistake.
 
 Support `PREFIX` customization and XDG directories:
 
@@ -355,7 +355,7 @@ read_conf() {
   for conf_file in "${search_paths[@]}"; do
     [[ -f $conf_file ]] || continue
     #shellcheck source=/dev/null
-    source "$conf_file"
+    source -- "$conf_file"
     loaded+=1
   done
 
@@ -1082,7 +1082,7 @@ Source libraries with existence check:
 
 ```bash
 [[ -f $lib_path ]] || die 3 "Missing library ${lib_path@Q}"
-source "$lib_path" || die 1 "Failed to source ${lib_path@Q}"
+source -- "$lib_path" || die 1 "Failed to source ${lib_path@Q}"
 ```
 
 ## BCS0408 Dependency Management
@@ -1263,13 +1263,13 @@ When a computation runs in a subshell, choose one of four documented patterns to
 ```bash
 local -- content hash
 content=$(< "$file")
-hash=$(sha256sum "$file" | cut -d' ' -f1)
+hash=$(sha256sum -- "$file" | cut -d' ' -f1)
 ```
 
 **Pattern 2 -- Process substitution with `readarray` or `while`** (array or streaming output, preserves parent scope):
 
 ```bash
-readarray -t lines < <(grep pattern "$file")
+readarray -t lines < <(grep -- pattern "$file")
 while IFS= read -r line; do
   process "$line"
 done < <(some_command)
@@ -1341,7 +1341,7 @@ Use `[[ ]]` for string and file tests, `(())` for arithmetic. Never use `[ ]`. T
 [[ $input =~ ^[0-9]+$ ]]             # regex
 
 # correct — short-circuit
-[[ -f $file ]] && source "$file"
+[[ -f $file ]] && source -- "$file"
 command -v curl >/dev/null || die 18 'curl required'
 
 # wrong
@@ -1486,7 +1486,7 @@ Never pipe to while loops — pipes create subshells where variable modification
 declare -i count=0
 while IFS= read -r line; do
   count+=1
-done < <(grep '' "$file")
+done < <(grep -- '' "$file")
 
 # correct — readarray for collecting lines
 readarray -t lines < <(find . -name '*.txt')
@@ -1497,7 +1497,7 @@ while IFS= read -r -d '' file; do
 done < <(find /data -type f -print0)
 
 # wrong — subshell loses count
-grep '' "$file" | while read -r line; do
+grep -- '' "$file" | while read -r line; do
   count+=1
 done
 # count is still 0 here!
@@ -1739,7 +1739,7 @@ cp -- "$src" "$dst" || {
 }
 
 # correct — check PIPESTATUS for pipelines (condition context, see pitfalls)
-if ! sort "$file" | uniq > "$output"; then
+if ! sort -- "$file" | uniq > "$output"; then
   ((PIPESTATUS[0] == 0)) || die 1 'Sort failed'
   die 1 'Pipeline failed'
 fi
@@ -1749,14 +1749,14 @@ cmd1
 local -i result=$?
 
 # wrong — a failure inside <( ) is invisible: diff silently compares against empty input
-diff <(failing_command) "$file"
+diff -- <(failing_command) "$file"
 
 # correct — run and check first, then feed the output on
 out=$(failing_command) || die 1 'Command failed'
-diff <(printf '%s\n' "$out") "$file"
+diff -- <(printf '%s\n' "$out") "$file"
 
 # correct — loop feed: an empty stream is an ordinary outcome, nothing to check
-while IFS= read -r line; do process "$line"; done < <(grep 'pattern' "$file")
+while IFS= read -r line; do process "$line"; done < <(grep -- 'pattern' "$file")
 ```
 
 A command run only inside a process substitution (`<(cmd)`) has no exit status anyone checks: `set -e` and `pipefail` never see it, and the consumer reads empty input. This is a finding where an empty result would be taken for a real one: a `diff`, `cmp` or `comm` against `<(cmd)`, or a result captured for later use. Run such a command first and check it. The prescribed loop feed `while ... done < <(cmd)` (BCS0504, BCS0903), where an empty stream is an ordinary outcome, is not a finding.
@@ -1770,7 +1770,7 @@ A command run only inside a process substitution (`<(cmd)`) has no exit status a
 
 ```bash
 # correct — snapshot, then inspect each stage
-if ! sort "$file" | uniq | wc -l > "$output"; then
+if ! sort -- "$file" | uniq | wc -l > "$output"; then
   local -a ps=("${PIPESTATUS[@]}")
   for i in "${!ps[@]}"; do
     ((ps[i] == 0)) || error "Stage $i failed (exit ${ps[i]})"
@@ -1779,7 +1779,7 @@ if ! sort "$file" | uniq | wc -l > "$output"; then
 fi
 
 # wrong — echo clobbers PIPESTATUS before we read it
-if ! sort "$file" | uniq | wc -l > "$output"; then
+if ! sort -- "$file" | uniq | wc -l > "$output"; then
   echo 'Pipeline failed'
   ((PIPESTATUS[0] == 0)) || die 1 'Sort failed'   # PIPESTATUS is now echo's
 fi
@@ -1803,7 +1803,7 @@ if result=$(command 2>/dev/null); then
 fi
 
 # wrong — suppressing critical operations
-cp "$src" "$dst" 2>/dev/null || true
+cp -- "$src" "$dst" 2>/dev/null || true
 set +e                               # never disable broadly
 
 # wrong — unexplained suppression
@@ -2458,13 +2458,13 @@ Use process substitution (`<(command)`, `>(command)`) for file-operation idioms 
 declare -i count=0
 while IFS= read -r line; do
   count+=1
-done < <(grep 'pattern' "$file")
+done < <(grep -- 'pattern' "$file")
 
 # correct — populate arrays
 readarray -t lines < <(find . -name '*.txt')
 
 # correct — compare outputs without temp files
-diff <(sort "$file1") <(sort "$file2")
+diff <(sort -- "$file1") <(sort -- "$file2")
 
 # correct — null-delimited for special filenames
 while IFS= read -r -d '' file; do
@@ -2515,8 +2515,8 @@ content=$(< "$file")
 grep pattern < "$file"
 
 # wrong — unnecessary cat
-content=$(cat "$file")
-cat "$file" | grep pattern
+content=$(cat -- "$file")
+cat -- "$file" | grep pattern
 ```
 
 Use `cat` only when concatenating multiple files or using cat-specific options (`-n`, `-A`, `-b`).
@@ -2681,7 +2681,7 @@ Never use `eval` with untrusted input. Almost every use case has a safer alterna
 
 ```bash
 # correct — arrays for dynamic commands
-local -a cmd=(find "$path" -name "$pattern")
+local -a cmd=(find -- "$path" -name "$pattern")
 "${cmd[@]}"
 
 # correct — indirect expansion
@@ -2712,6 +2712,8 @@ eval "${action}_function"
 
 Validate and sanitize all user input. Use whitelist over blacklist. Pass `--` before any pathname operand that originates from variables or user input (`rm -- "$f"`, `cp -- "$src" "$dst"`) to prevent option injection via filenames beginning with `-`.
 
+**Scope of `--`.** Every command that takes a pathname operand, read-only ones and builtins included: `cat`, `head`, `sort`, `grep`, `wc`, `stat`, `diff`, `source` and `cd` parse a leading dash exactly as `rm` does, and "read-only" is no defence — a file named `-o/etc/cron.d/job` turns `sort "$f"` into a write. The `--` is owed when an operand **begins with an expansion** (`"$f"`, `"$dir"/x`, `"${files[@]}"`, `"$(cmd)"/x`). It is **not** owed, and its absence is never a finding, when the operand begins with literal text (`./"$f"`, `/etc/"$name"`: it cannot start with a dash), when the variable is an option's argument (`sort -o "$out"`, `grep -f "$patterns"`), for a redirection (`< "$file"`), inside `[[ ]]`, or for a command that takes no pathname (`echo`, `printf`, `tr`). Place it before the first operand, which is not always the pathname: `grep -- "$pattern" "$file"`, `chmod -- 644 "$f"`, `awk -- 'prog' "$f"` (after the program, `awk` reads `--` as a filename).
+
 ```bash
 # correct — validate integer
 [[ $input =~ ^-?[0-9]+$ ]] || die 22 "Invalid integer: ${input@Q}"
@@ -2728,6 +2730,23 @@ real_path=$(realpath -e -- "$path")
 # correct — -- before pathname operands from variables or input
 rm -- "$user_file"
 cp -- "$source" "$dest"
+
+# correct — read-only commands and builtins owe it too
+sort -- "$file" | head -n 5
+grep -c -- 'pattern' "$file"
+source -- "$lib_path"
+cd -- "$target_dir"
+
+# wrong — a file named '-o/etc/cron.d/job' makes sort write; '-r' makes head fail
+sort "$file"
+head -n 5 "$file"
+cat "$dir"/"$name"
+
+# correct — no -- owed: literal-leading operand, option-argument, redirection
+cat ./"$name"
+wc -l /var/log/"$SCRIPT_NAME".log
+sort -o "$output" -- "$input"
+content=$(< "$file")
 ```
 
 Validate early, fail securely with clear errors, run with minimum necessary permissions.
@@ -2891,7 +2910,7 @@ done
 for server in "${servers[@]}"; do
   wait "${pids[0]}" || errors+=1
   pids=("${pids[@]:1}")
-  cat "$temp_dir"/"$server".out
+  cat -- "$temp_dir"/"$server".out
 done
 ((errors == 0)) || die 1 "$errors job(s) failed"
 ```

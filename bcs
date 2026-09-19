@@ -159,7 +159,7 @@ read_conf() {
     #   - owner-only      -> silent
     # Octal digit without write bit: 0, 1, 4, 5. With write bit: 2, 3, 6, 7.
     # The ?([0-7]) prefix handles modes with setuid/setgid/sticky bits (e.g. 4755).
-    mode=$(stat -c '%a' "$conf_file" 2>/dev/null) ||:
+    mode=$(stat -c '%a' -- "$conf_file" 2>/dev/null) ||:
     case $mode in
       ''|?([0-7])[0-7][0145][0145])
         : ;; # stat failed, or safe perms
@@ -169,7 +169,7 @@ read_conf() {
         warn "$conf_file: group-writable mode $mode -- file is sourced as shell; chmod g-w recommended" ;;
     esac
     #shellcheck source=/dev/null
-    source "$conf_file"
+    source -- "$conf_file"
     loaded+=1
   done
   ((loaded))
@@ -569,7 +569,7 @@ _load_tiers() {
       fi
       current_code=''
     fi
-  done < <(cat "${files[@]}" 2>/dev/null ||:)
+  done < <(cat -- "${files[@]}" 2>/dev/null ||:)
   _TIERS_LOADED=1
 }
 
@@ -1247,7 +1247,7 @@ _llm_claude_cli() {
   local -- err_file=${BCS_RESPONSE_DUMP:-/dev/null}
   [[ $err_file == /* ]] || err_file=$ret_dir/$err_file
   # return, not die: the RETURN trap above is what removes the temp dir.
-  cd "$check_dir" \
+  cd -- "$check_dir" \
     || { error "Failed to enter temp dir ${check_dir@Q}"; return 5; }
   [[ ! -d /run/user/"$EUID" ]] || declare -x TMPDIR=/run/user/"$EUID"
 
@@ -1930,7 +1930,7 @@ $numbered_script"
   if ((use_cache && !cache_hit && cacheable)) && [[ -n $cache_file ]]; then
     local -- cache_tmp=''
     mkdir -p -- "${cache_file%/*}" 2>/dev/null ||:
-    if cache_tmp=$(mktemp "${cache_file%/*}"/.tmp.XXXXXX 2>/dev/null); then
+    if cache_tmp=$(mktemp -- "${cache_file%/*}"/.tmp.XXXXXX 2>/dev/null); then
       printf '%s\n' "$result" > "$cache_tmp" 2>/dev/null \
         && mv -f -- "$cache_tmp" "$cache_file" 2>/dev/null \
         || rm -f -- "$cache_tmp" 2>/dev/null ||:
@@ -2050,7 +2050,7 @@ cmd_codes() {
         printf '%s %s\n' "$code" "$title"
       fi
     fi
-  done < <(cat "${files[@]}" 2>/dev/null ||:)
+  done < <(cat -- "${files[@]}" 2>/dev/null ||:)
 
   if ((json_mode)); then
     if ((${#json_rows[@]})); then
@@ -2160,7 +2160,7 @@ cmd_generate() {
         cat -- "$section_file"
       else
         printf '\n---\n\n'
-        sed '/^<!-- SPDX-License-Identifier:/d' "$section_file"
+        sed -- '/^<!-- SPDX-License-Identifier:/d' "$section_file"
       fi
     done
   } > "$tmp_out"

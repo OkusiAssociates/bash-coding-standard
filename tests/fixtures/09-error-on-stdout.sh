@@ -10,7 +10,7 @@ main() {
     echo 'usage: script.sh FILE'
     exit 3
   fi
-  cat "$file"
+  cat -- "$file"
 }
 
 main "$@"

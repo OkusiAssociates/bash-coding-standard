@@ -103,7 +103,7 @@ for dir in "${search_paths[@]}"; do
 done
 ```
 
-Locate companion files (libraries, data, configuration) relative to `$SCRIPT_DIR`, never relative to the current working directory: `source "$SCRIPT_DIR"/lib/common.sh`, not `source lib/common.sh` or `source ../lib/common.sh`, which break when the script is run from another directory. `SCRIPT_DIR=$PWD` is the same mistake.
+Locate companion files (libraries, data, configuration) relative to `$SCRIPT_DIR`, never relative to the current working directory: `source -- "$SCRIPT_DIR"/lib/common.sh`, not `source lib/common.sh` or `source ../lib/common.sh`, which break when the script is run from another directory. `SCRIPT_DIR=$PWD` is the same mistake.
 
 Support `PREFIX` customization and XDG directories:
 
@@ -318,7 +318,7 @@ read_conf() {
   for conf_file in "${search_paths[@]}"; do
     [[ -f $conf_file ]] || continue
     #shellcheck source=/dev/null
-    source "$conf_file"
+    source -- "$conf_file"
     loaded+=1
   done
 

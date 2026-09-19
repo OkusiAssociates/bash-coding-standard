@@ -55,13 +55,13 @@ Use process substitution (`<(command)`, `>(command)`) for file-operation idioms 
 declare -i count=0
 while IFS= read -r line; do
   count+=1
-done < <(grep 'pattern' "$file")
+done < <(grep -- 'pattern' "$file")
 
 # correct — populate arrays
 readarray -t lines < <(find . -name '*.txt')
 
 # correct — compare outputs without temp files
-diff <(sort "$file1") <(sort "$file2")
+diff <(sort -- "$file1") <(sort -- "$file2")
 
 # correct — null-delimited for special filenames
 while IFS= read -r -d '' file; do
@@ -112,8 +112,8 @@ content=$(< "$file")
 grep pattern < "$file"
 
 # wrong — unnecessary cat
-content=$(cat "$file")
-cat "$file" | grep pattern
+content=$(cat -- "$file")
+cat -- "$file" | grep pattern
 ```
 
 Use `cat` only when concatenating multiple files or using cat-specific options (`-n`, `-A`, `-b`).

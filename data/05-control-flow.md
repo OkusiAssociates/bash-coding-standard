@@ -24,7 +24,7 @@ Use `[[ ]]` for string and file tests, `(())` for arithmetic. Never use `[ ]`. T
 [[ $input =~ ^[0-9]+$ ]]             # regex
 
 # correct — short-circuit
-[[ -f $file ]] && source "$file"
+[[ -f $file ]] && source -- "$file"
 command -v curl >/dev/null || die 18 'curl required'
 
 # wrong
@@ -169,7 +169,7 @@ Never pipe to while loops — pipes create subshells where variable modification
 declare -i count=0
 while IFS= read -r line; do
   count+=1
-done < <(grep '' "$file")
+done < <(grep -- '' "$file")
 
 # correct — readarray for collecting lines
 readarray -t lines < <(find . -name '*.txt')
@@ -180,7 +180,7 @@ while IFS= read -r -d '' file; do
 done < <(find /data -type f -print0)
 
 # wrong — subshell loses count
-grep '' "$file" | while read -r line; do
+grep -- '' "$file" | while read -r line; do
   count+=1
 done
 # count is still 0 here!
