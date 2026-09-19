@@ -186,6 +186,11 @@ done
 # count is still 0 here!
 ```
 
+This rule owns the **lost state**: a pipe into a loop whose body sets a
+variable the caller needs. BCS0411 catalogues the four patterns for returning
+data from a subshell and BCS0906 the `find`-specific pitfalls; both defer here,
+so cite BCS0504 for the defect itself.
+
 Use here-string `<<< "$var"` when input is already in a variable.
 
 ## BCS0505 Arithmetic Operations

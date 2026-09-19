@@ -1286,6 +1286,13 @@ LLM-based checkers should flag only assignments inside a recursive function that
 
 When a computation runs in a subshell, choose one of four documented patterns to return data to the parent shell. Never rely on variable mutation across the subshell boundary -- the assignment is lost when the subshell exits.
 
+This rule governs the **choice of pattern** for a subshell that is there on purpose. The lost-state defect itself -- a pipe into a loop whose body sets a variable the caller reads -- is owned at core severity by **BCS0504** (and BCS0903 for its exit status); cite those, not this rule, as BCS0906 does for the `find` spelling.
+
+```bash
+# not this rule — a pipe into a loop losing its state: cite BCS0504
+grep -- '' "$file" | while read -r line; do count+=1; done
+```
+
 **Pattern 1 -- Command substitution** (single value or multiline text):
 
 ```bash
@@ -1530,6 +1537,11 @@ grep -- '' "$file" | while read -r line; do
 done
 # count is still 0 here!
 ```
+
+This rule owns the **lost state**: a pipe into a loop whose body sets a
+variable the caller needs. BCS0411 catalogues the four patterns for returning
+data from a subshell and BCS0906 the `find`-specific pitfalls; both defer here,
+so cite BCS0504 for the defect itself.
 
 Use here-string `<<< "$var"` when input is already in a variable.
 
