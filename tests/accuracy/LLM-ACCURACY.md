@@ -216,6 +216,37 @@ nothing here shows them misfiring.
 This is what the FP-by-code tally was built for. Before it, precision 0.548
 was a single number with no way in.
 
+### The three candidates, reviewed (2026-09-19)
+
+`fp_per_rule` says which code misfires but not on which file, so the six
+`clean/` fixtures were re-run in JSON mode, 2 reps each, recording fixture
+against code. (A first attempt in text mode reproduced nothing: the two modes
+use different prompt builders, and the baseline is measured in JSON.)
+
+| Rule | Where it fired | Cause | Repair |
+|------|----------------|-------|--------|
+| BCS0801 + BCS0806 | `clean/01-03`, 4/6 and 6/6; never on 04-06 | One construct, `if [[ ${1:-} == --version ]]`. BCS0801 had no scope statement, so a single-flag test read as a missing parsing loop; BCS0806's tables read as a checklist, so a script offering only `--version` "omitted" `-V` and `-h` | Scope clauses (user decision): BCS0801 governs a loop where one exists, mandatory from two options or any option-argument, with the 1.0.2 `if`/`elif` anti-pattern restored; BCS0806 is a registry of letter meanings, absence never a finding, reassignment is |
+| BCS0107 | `clean/04`, 2/2 | The rule's numbered layers put documentation before helpers; the fixture, the `complete` template and `bcs` itself all put `noarg()` before `show_help()`. The checker read the rule correctly; the rule contradicted its own project | 1.0.2 rationale restored: the binding requirement is dependency order, and layers with no dependency between them may swap |
+
+After the edits: `clean/01`, `02`, `04` clean 2/2 each; fixture 17, the one
+fixture that legitimately expects BCS0801 (two options through an `if`/`elif`
+chain), still 3/3. BCS0806 had no 1.0.x ancestor -- the 2.x rewrite built it
+from letters that 1.0.2 used only to illustrate the dry-run pattern.
+
+The same pass found three more defects in fixtures labelled compliant, each
+first reported by the checker as a "false positive": `clean/04` ran `mkdir`
+under `DRY_RUN=1` (BCS1208); `clean/03` printed a user path raw (BCS0306) and
+returned 1 for file-not-found where BCS0602's table says 3; fixture 17 used
+`-f` for a file, a genuine BCS0806 reassignment and a second defect in a
+one-defect fixture. With `clean/06` and fixture 31 that is now **six corpus
+defects found by treating a false positive as a hypothesis about the
+fixture** -- the precision figures in every committed baseline understate the
+checker by that much.
+
+Open: BCS0602 fires on fixture 17 in 2 of 3 runs (no `die()`, bare `exit 22`)
+and 10 times in the `-e high` baseline. Its text ("Use `die()` as the standard
+exit function") is as unscoped as BCS0801's was. Next candidate for review.
+
 ### `sonnet` is the default model, and it is the noisy one
 
 ▲ `bcs check` defaults to `-m sonnet`, and that configuration raised **17
