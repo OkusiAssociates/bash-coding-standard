@@ -294,8 +294,91 @@ high`, JSON mode, 3 reps:
 Two more corpus defects surfaced, eight in total: fixture 09 exited 1 for a
 missing file and braced `${file}` for no reason (BCS0207, 2/2); fixture 16
 exited on a failed `mktemp` without a word. Both repaired. Still open:
-`clean/05` draws BCS0704 in 6 of 6 runs, and fixture 16 draws BCS1005/BCS0604
-beside its planted BCS0110 on every run -- neither examined here.
+fixture 16 draws BCS1005/BCS0604 beside its planted BCS0110 on every run.
+`clean/05` and BCS0704 were taken next.
+
+### BCS0704, reviewed (2026-09-19)
+
+`clean/05` drew BCS0704 in 11 of 13 runs across the day, and no other file in
+the 82-check run drew it at all. The checker's message located it: line 37,
+`-h|--help) echo "Usage: ..."`, "a single inline echo string rather than a
+structured heredoc". The rule said, unqualified, "Structure help text with
+sections. Use heredoc with `cat`" -- and `bcs template -t basic` answers `-h`
+with the same one-line `printf 'Usage: ...'`. 1.0.2 carried only the heredoc
+example, with no imperative; the rewrite added the order.
+
+BCS0704 now opens with a **Scope** paragraph: it governs help text longer than
+a line; a one-line usage string for a small option set, or no help at all, is
+not a finding; the findings are multi-line help assembled from a run of
+`echo`/`printf` calls, and help or version sent through a messaging function.
+Each has an example. The second is a bug, not taste -- the probe below prints
+nothing at all for `-q -h`.
+
+BCS0704 has no fixture either, so two single-defect probes were cut from
+`clean/05`. `sonnet -e high`, JSON mode, 3 reps, 18 checks, none unparsed:
+
+| Subject | BCS0704 |
+|---------|---------|
+| `clean/05` (was 11/13) | **0/3** |
+| `clean/04` (heredoc `show_help`) | 0/3, no finding of any code |
+| control (`clean/05` without pragmas) | 0/3, no finding of any code |
+| `bcs template -t basic` output | 0/3 |
+| probe: multi-line help from eight `echo` calls | **3/3** |
+| probe: help through a `VERBOSE`-gated `info()` | **3/3** |
+
+The ninth corpus defect came with it: `clean/05` declared `size` with
+`local --` and used it in `((size >= MIN_SIZE))` and `total+=$size`; BCS0201's
+own example reads `local -i retval=0  # local integer`. The checker had said
+so since the first `sonnet` pass (as BCS0201 or BCS0505, 2 runs in 3). Now
+`local -i`; gone in 3 of 3.
+
+### Fixture 16, and the two rules with no fixture (2026-09-19)
+
+Fixture 16 (expects BCS0110, no cleanup trap) drew BCS1005 and BCS0604 on
+every run. Both were right. `cp /etc/hosts "$TEMP_DIR"/` is a bare file copy,
+which BCS0604 names as a violation in so many words, with no `--` before a
+variable pathname, which BCS1005 asks for. Worse, the planted defect itself
+scored 1 of 3 on `sonnet -e high`: one run returned nothing and one filed the
+missing trap under **BCS1006**, whose `# correct` examples all show the trap
+while its prose never says who owns a missing one. BCS1006 now owns only how
+the temporary name is made; a missing or late trap is BCS0110's, and both rules
+say so. Same repair as BCS0303/BCS0507 on the 18th.
+
+The 82-check run shows fixture 16 is the worst case, not the only one:
+**fourteen of the thirty gated fixtures** draw some code they do not expect in
+2 runs of 2. Two of them shared 16's neighbourhood and were repaired with it:
+fixture 08 (expects BCS0604) staged to a hardcoded `/tmp/bcs_fixture_hosts`
+-- a genuine BCS1006 -- omitted `--`, and echoed a status line to stdout
+(BCS0702, reported by all three models in 9 runs of 9); fixture 15 (expects
+BCS1006) had no cleanup trap at all -- a genuine BCS0110 -- and omitted `--`.
+Seven real defects across three fixtures in this pass alone, each first
+reported by the checker and scored against it.
+
+After, 3 runs each on `sonnet -e high`, `haiku -e medium` and
+`gpt5-mini -e medium` -- the last two being what the gate actually runs:
+
+| Fixture | Expected code | Anything else |
+|---------|---------------|---------------|
+| 08 | BCS0604 **9/9**, both planted lines every time | nothing, 9/9 |
+| 15 | BCS1006 **9/9** | BCS0604 once (`gpt5-mini`) |
+| 16 | BCS0110 **9/9** (was 1/3 on `sonnet`) | BCS1006 once, three one-off others |
+| `probabilistic/06`, new | BCS0602 **9/9** | nothing, 9/9 |
+| `probabilistic/07`, new | BCS0704 **9/9** | BCS0305 twice (`gpt5-mini`, and wrong: `"${*:2}"` is one word) |
+
+The other eleven fixtures with a persistent extra code, unexamined: 02
+(BCS0201), 03 (BCS0202), 04 (BCS1213), 06 (BCS1202), 11 (BCS1005), 12
+(BCS0605), 18 (BCS0605, BCS0906), 19 (BCS0702), 21 (BCS1103), and
+`probabilistic/01` (BCS1205) and `/05` (BCS0408). On today's record most will
+be real second defects, and each one depresses the precision figure in every
+committed baseline. One of 16's one-off extras is worth its own note: BCS1202
+for "two consecutive empty `#` comment lines" -- the blinded pragma lines
+again, now as bare `#` rather than blanks.
+
+Found on the way, not examined: the `basic` template's output draws BCS0403 in
+3 of 3 (`VERBOSE` is never made `readonly` after parsing; neither `basic` nor
+`complete` does it, though BCS0804 asks for it), and BCS0405 for the unused
+`warn()` and `SCRIPT_DIR`, which a scaffold ships on purpose. `clean/05` drew
+BCS1201 once in 3 for the column-aligned body of its `-m` case arm.
 
 ### `sonnet` is the default model, and it is the noisy one
 

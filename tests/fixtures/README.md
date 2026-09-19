@@ -27,7 +27,13 @@ missing justification comment, found 2 of 4), BCS0106 (an executable's own
 filename, which the checker never sees, so the fixture can only approximate
 it through an `install` line) and BCS1104 (a missing `curl` timeout, filed
 as BCS0604 or BCS0408 instead). A fixture belongs in the gate only when the
-checker finds it every time. `clean/` holds three minimal scripts (01-03) and
+checker finds it every time. `probabilistic/06` (BCS0602, `die()` defined and
+bypassed) and `07` (BCS0704, help printed through a `VERBOSE`-gated `info()`,
+so `-q -h` prints nothing) were added on 2026-09-19 because neither rule had a
+fixture anywhere, so nothing would have noticed a scope clause that blinded it.
+Both were found 9 of 9 (`sonnet -e high`, `haiku` and `gpt5-mini -e medium`,
+3 runs each); they sit here, not in the gate, because the gate is for
+core-tier rules and these are recommended and style. `clean/` holds three minimal scripts (01-03) and
 three realistic ones (04-06) built from the constructs that checkers have
 historically mis-flagged: locals assigned well after their declaration,
 top-level logic with no functions, a `*)` case arm, argument parsing outside

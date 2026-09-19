@@ -43,8 +43,8 @@ parse_arguments() {
 }
 
 report() {
-  local -- dir=$1 path size
-  local -i count=0 total=0
+  local -- dir=$1 path
+  local -i count=0 total=0 size
   while IFS= read -r -d '' path; do
     size=$(stat -c '%s' -- "$path") || die 1 "Cannot stat ${path@Q}"
     ((size >= MIN_SIZE)) || continue

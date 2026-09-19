@@ -9,8 +9,8 @@ declare -- TEMP_DIR
 
 main() {
   TEMP_DIR=$(mktemp -d) || { >&2 echo 'Cannot create temp dir'; exit 1; }
-  cp /etc/hosts "$TEMP_DIR"/
-  ls -la "$TEMP_DIR"
+  cp -- /etc/hosts "$TEMP_DIR"/ || { >&2 echo 'Cannot copy hosts file'; exit 1; }
+  ls -la -- "$TEMP_DIR"
 }
 
 main "$@"
