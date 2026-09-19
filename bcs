@@ -21,7 +21,7 @@ declare -rx PATH="$HOME"/.local/bin:/usr/local/bin:/usr/bin:/bin
 
 # Script metadata
 ### VERSION managed by version
-declare -r VERSION=2.0.6
+declare -r VERSION=2.0.7
 ###
 #shellcheck disable=SC2155  # exit-on-error catches realpath failure
 declare -r SCRIPT_PATH=$(realpath -- "$0")
