@@ -198,6 +198,15 @@ assert_equal '6 2' "$(jq -r '"\(.fp_per_rule.BCS1203.total) \(.fp_per_rule.BCS12
   "$FP_JSON" 2>/dev/null ||:)" 'BCS1203 tallied 6 times, 2 of them on clean/' ||:
 assert_contains "$(< "$SANDBOX"/score/accuracy-gpt5-mini-high.md)" 'False positives by rule' \
   'markdown report gains the false-positive table' ||:
+# ... and which fixture each came from. A bare per-code tally cost an
+# experiment three times over in September 2026: the code was known, the file
+# it fired on was not, so the run had to be repeated to find out.
+assert_equal 3 "$(jq -r '.fp_per_rule.BCS1203.fixtures | length' "$FP_JSON" 2>/dev/null ||:)" \
+  'the three fixtures are named beside the code' ||:
+assert_equal 2 "$(jq -r '.fp_per_rule.BCS1203.fixtures["clean/01-greet.sh"]' \
+  "$FP_JSON" 2>/dev/null ||:)" 'clean/01-greet.sh drew it on both runs' ||:
+assert_contains "$(< "$SANDBOX"/score/accuracy-gpt5-mini-high.md)" 'clean/01-greet.sh' \
+  'markdown names the fixture too' ||:
 assert_contains "$(< "$SANDBOX"/score/accuracy-gpt5-mini-high.md)" '| BCS1203 | 6 | 2 |' \
   'markdown table carries the per-code counts' ||:
 

@@ -34,6 +34,9 @@
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 
+# ~/.local/bin first: the Claude CLI backend is probed with `command -v claude`.
+declare -rx PATH="$HOME"/.local/bin:/usr/local/bin:/usr/bin:/bin
+
 declare -- SCRIPT_PATH
 SCRIPT_PATH=$(realpath -- "$0")
 declare -r SCRIPT_PATH
@@ -51,10 +54,13 @@ declare -r MANIFEST="$FIXTURES_DIR"/EXPECT.tsv
 # Tunables (env defaults; CLI flags override).
 declare -- MODEL=${BCS_SCORE_MODEL:-}
 declare -- EFFORT=${BCS_SCORE_EFFORT:-low}
-declare -i RUNS=${BCS_SCORE_RUNS:-3}
+# Validated, never assigned straight into `declare -i`: an integer assignment
+# evaluates its value as arithmetic, so an unchecked `BASH_VERSINFO[$(cmd)]`
+# would run cmd. _int NAME VALUE validates, then assigns.
+declare -i RUNS=3
 declare -- OUT_DIR=${BCS_SCORE_OUTDIR:-$SCRIPT_DIR}
-declare -ri TIMEOUT_S=${BCS_SCORE_TIMEOUT:-150}
-declare -i REQUIRE_BACKEND=${BCS_FIXTURES_REQUIRE_BACKEND:-0}
+declare -i TIMEOUT_S=150
+declare -i REQUIRE_BACKEND=0
 
 # Colors (stderr is the message channel).
 if [[ -t 2 ]]; then
@@ -72,6 +78,7 @@ _msg() {
     success) color=$GREEN;  icon='✓' ;;
     warn)    color=$YELLOW; icon='▲' ;;
     error)   color=$RED;    icon='✗' ;;
+    *)       ;;                     # unknown caller: plain, uncoloured
   esac
   printf '%s%s%s %s\n' "$color" "$icon" "$NC" "$*" >&2
 }
@@ -84,6 +91,14 @@ die() {
   [[ -n $* ]] && error "$*" ||:
   exit "$rc"
 }
+# _int NAME VALUE -- validate, then assign. Never let an unvalidated value
+# reach a `declare -i` variable: the shell evaluates an integer assignment as
+# arithmetic, so `BASH_VERSINFO[$(cmd)]` would run cmd.
+_int() {
+  [[ $2 =~ ^[0-9]+$ ]] || die 22 "$1 must be a whole number, got ${2@Q}"
+  printf -v "$1" '%s' "$2"
+}
+
 noarg() {
   (($# > 1)) || die 22 "Option ${1@Q} requires an argument"
   [[ ${2:0:1} != '-' ]] || die 22 "Option ${1@Q} requires an argument"
@@ -104,7 +119,7 @@ probe_backend() {
   [[ -n ${GOOGLE_API_KEY:-${GEMINI_API_KEY:-}} ]] && { echo google; return 0; } ||:
   [[ -n ${ANTHROPIC_API_KEY:-} ]] && { echo anthropic; return 0; } ||:
   local -- host=${OLLAMA_HOST:-localhost:11434}
-  curl -sf --connect-timeout 2 "http://$host/api/tags" &>/dev/null \
+  curl -sf --connect-timeout 2 --max-time 5 "http://$host/api/tags" &>/dev/null \
     && { echo ollama; return 0; } ||:
   command -v claude &>/dev/null && { echo claude; return 0; } ||:
   return 1
@@ -138,6 +153,10 @@ declare -A PAIR_HITS=() PAIR_RUNS=() CODE_HIT=() CODE_TOT=()
 # way to `wc -l`; these keep it. FP_CLEAN is the same tally restricted to
 # clean/, where every report is by definition wrong.
 declare -A FP_CODE=() FP_CLEAN=()
+# Same tally again, keyed 'CODE|fixture': which file drew the code, not only
+# how often. Without it a precision shift names a rule but not the script that
+# moved it, and the run has to be repeated to find out.
+declare -A FP_WHERE=()
 
 show_help() {
   cat <<HELP
@@ -164,11 +183,17 @@ HELP
 }
 
 main() {
+  # Environment overrides, validated (see _int).
+  _int RUNS "${BCS_SCORE_RUNS:-$RUNS}"
+  _int TIMEOUT_S "${BCS_SCORE_TIMEOUT:-$TIMEOUT_S}"
+  _int REQUIRE_BACKEND "${BCS_FIXTURES_REQUIRE_BACKEND:-$REQUIRE_BACKEND}"
+  readonly TIMEOUT_S REQUIRE_BACKEND
+
   local -a rest=()
   while (($#)); do case $1 in
     -m|--model)   noarg "$@"; shift; MODEL=$1 ;;
     -e|--effort)  noarg "$@"; shift; EFFORT=$1 ;;
-    -n|--runs)    noarg "$@"; shift; RUNS=$1 ;;
+    -n|--runs)    noarg "$@"; shift; _int RUNS "$1" ;;
     -o|--output)  noarg "$@"; shift; OUT_DIR=$1 ;;
     -h|--help)    show_help; return 0 ;;
     --)           shift; rest+=("$@"); break ;;
@@ -176,6 +201,7 @@ main() {
     *)            rest+=("$1") ;;
   esac; shift; done
   set -- "${rest[@]}"
+  readonly EFFORT RUNS OUT_DIR
 
   command -v jq &>/dev/null || die 18 'jq is required'
   command -v timeout &>/dev/null || die 18 'timeout (coreutils) is required'
@@ -194,6 +220,7 @@ main() {
     fi
     MODEL=$(pick_model "$backend")
   fi
+  readonly MODEL
 
   # Build corpus.
   local -a fixtures=()
@@ -208,7 +235,7 @@ main() {
   for f in "${fixtures[@]}"; do [[ -f $f ]] && corpus+=("$f") ||:; done
   ((${#corpus[@]})) || die 3 'no fixtures found'
 
-  mkdir -p -- "$OUT_DIR"
+  mkdir -p -- "$OUT_DIR" || die 1 "Cannot create ${OUT_DIR@Q}"
   info "model=$MODEL backend=$backend effort=$EFFORT runs=$RUNS fixtures=${#corpus[@]}"
 
   # Precompute expected sets. A fixture is "clean" only if it lives under
@@ -272,6 +299,8 @@ main() {
         [[ -n $code ]] || continue
         i_fp+=1
         FP_CODE[$code]=$(( ${FP_CODE[$code]:-0} + 1 ))
+        pair="$code|${f##*/fixtures/}"
+        FP_WHERE[$pair]=$(( ${FP_WHERE[$pair]:-0} + 1 ))
         ((IS_CLEAN[$f])) && FP_CLEAN[$code]=$(( ${FP_CLEAN[$code]:-0} + 1 )) ||:
       done <<< "$fp_list"
       TP=$((TP + i_tp)); FP=$((FP + i_fp)); FN=$((FN + i_fn))
@@ -351,16 +380,28 @@ _emit_reports() {
 
   # False positives by code, commonest first, with the clean/ share broken out;
   # fp_tsv feeds the JSON report.
-  local -- fp_table='' fp_tsv='' fc ftot fclean
+  # The fourth TSV field carries the per-fixture breakdown as space-separated
+  # 'name:count' pairs -- fixture paths hold neither spaces nor colons, so jq
+  # can split it back apart downstream.
+  local -- fp_table='' fp_tsv='' fc ftot fclean fwhere fwjson k
   while IFS= read -r fc; do
     [[ -n $fc ]] || continue
     ftot=${FP_CODE[$fc]}; fclean=${FP_CLEAN[$fc]:-0}
-    fp_table+=$(printf '| %s | %s | %s |' "$fc" "$ftot" "$fclean")$'\n'
-    fp_tsv+=$(printf '%s\t%s\t%s' "$fc" "$ftot" "$fclean")$'\n'
+    fwhere='' fwjson=''
+    while IFS= read -r k; do
+      [[ -n $k ]] || continue
+      fwhere+="${fwhere:+, }${k#*|} x${FP_WHERE[$k]}"
+      fwjson+="${fwjson:+ }${k#*|}:${FP_WHERE[$k]}"
+    done < <(for k in "${!FP_WHERE[@]}"; do
+               [[ ${k%%|*} == "$fc" ]] || continue
+               printf '%s\t%s\n' "${FP_WHERE[$k]}" "$k"
+             done | sort -k1,1nr -k2,2 | cut -f2)
+    fp_table+=$(printf '| %s | %s | %s | %s |' "$fc" "$ftot" "$fclean" "$fwhere")$'\n'
+    fp_tsv+=$(printf '%s\t%s\t%s\t%s' "$fc" "$ftot" "$fclean" "$fwjson")$'\n'
   done < <(for fc in "${!FP_CODE[@]}"; do
              printf '%s\t%s\n' "${FP_CODE[$fc]}" "$fc"
            done | sort -k1,1nr -k2,2 | cut -f2)
-  [[ -n $fp_table ]] || fp_table='| _none_ | 0 | 0 |'$'\n'
+  [[ -n $fp_table ]] || fp_table='| _none_ | 0 | 0 | |'$'\n'
 
   # Clean-fixture false-positive rate.
   local -- clean_rate
@@ -407,8 +448,8 @@ _emit_reports() {
 
 ## False positives by rule
 
-| Code | Reported, not planted | of which on clean/ |
-|------|----------------------:|-------------------:|
+| Code | Reported, not planted | of which on clean/ | Where |
+|------|----------------------:|-------------------:|-------|
 ${fp_table%$'\n'}
 
 > On a violation fixture an extra finding may be a genuine secondary defect the
@@ -461,7 +502,11 @@ MD
                                        recall: (.[3] | tonumber)}}) | from_entries),
       fp_per_rule: ($fp_rules | split("\n") | map(select(. != "") | split("\t")
                  | {key: .[0], value: {total: (.[1] | tonumber),
-                                       clean: (.[2] | tonumber)}}) | from_entries)}' \
+                                       clean: (.[2] | tonumber),
+                                       fixtures: ((.[3] // "") | split(" ")
+                                         | map(select(. != "") | split(":")
+                                           | {key: .[0], value: (.[1] | tonumber)})
+                                         | from_entries)}}) | from_entries)}' \
     > "$json" || die 1 "Failed to write ${json@Q}"
 
   success "Wrote $md"
