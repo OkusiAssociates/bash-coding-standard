@@ -40,10 +40,19 @@ set -e
 
 **Tier:** recommended
 
-Use `die()` as the standard exit function.
+**Scope.** This rule governs which exit code a script reports and that a failing exit says why. It does not decide whether a script defines `die()`: BCS0703 owns that. Where `die()` is defined it is the standard exit function: a failing exit below the definition that hand-rolls `echo ...; exit N` instead is a finding. Code that has no `die()` to call -- a short script that defines none, a wrapper, a version guard that runs above the definition (BCS0409) -- may report to stderr and `exit N` directly; that is **not** a finding.
 
 ```bash
 die() { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
+
+# correct — die() is defined, so every failing exit goes through it
+[[ -f $config ]] || die 3 "Config not found ${config@Q}"
+
+# correct — no die() in this script: message to stderr, then a code from the table
+((${#FIELDS[@]})) || { >&2 echo 'No fields given'; exit 2; }
+
+# wrong — die() is defined above and bypassed
+[[ -f $config ]] || { >&2 echo "Config not found ${config@Q}"; exit 3; }
 ```
 
 Standard exit codes:
@@ -62,13 +71,28 @@ Standard exit codes:
 | 22 | Invalid argument |
 | 24 | Timeout |
 
+Where the table names the failure exactly -- a missing file (3), a missing dependency (18), an invalid option or value (22) -- use that code, not 1. Anything else is a general error: whether a failed `mktemp` or `stat` counts as an "I/O error" is a judgement call, and choosing 1 there is **not** a finding.
+
+When the failure concerns a particular value -- a path, an option, a setting -- the message names it. A failure with no such value needs no invented context.
+
 ```bash
-# correct — include context
+# correct — the message names the value at fault
 die 3 "Config not found ${config@Q}"
 die 22 "Invalid option ${1@Q}"
 
-# wrong — no context
+# correct — there is no value to name
+die 2 'No input files specified'
+die 18 'curl required'
+
+# wrong — a path was at fault and the message hides it
 die 3 'File not found'
+
+# correct — 1 for a failure the table does not name exactly
+temp_dir=$(mktemp -d) || die 1 'Failed to create temp dir'
+size=$(stat -c '%s' -- "$path") || die 1 "Cannot stat ${path@Q}"
+
+# wrong — the table names this failure exactly: a missing file is 3
+die 1 "Config not found ${config@Q}"
 ```
 
 Reserved: 64-78 (sysexits), 126 (cannot execute), 127 (not found), 128+n (signals).
