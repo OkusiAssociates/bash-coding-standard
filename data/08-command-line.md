@@ -9,8 +9,19 @@ Use `while (($#)); do case $1 in ... esac; shift; done` as the standard argument
 
 **Tier:** core
 
+**Scope.** This rule governs the form of an option-parsing loop where one exists. A script that takes no options has no loop to govern, and a script that answers a single flag may test it directly; in neither case is the absence of the loop a finding. The loop becomes mandatory once a script handles more than one option or any option that takes an argument: chaining `if`/`elif` tests over several options is a finding, because that is the pattern this loop replaces.
+
 ```bash
-# correct
+# correct — one flag, tested directly; no parsing loop is needed or expected
+main() {
+  if [[ ${1:-} == --version ]]; then
+    printf '%s %s\n' "$SCRIPT_NAME" "$VERSION"
+    return 0
+  fi
+  process "$@"
+}
+
+# correct — more than one option: the standard loop
 while (($#)); do case $1 in
   -v|--verbose) VERBOSE=1 ;;
   -q|--quiet)   VERBOSE=0 ;;
@@ -30,6 +41,13 @@ while (($#)); do case $1 in
   -*)           die 22 "Invalid option ${1@Q}" ;;
   *)            FILES+=("$1") ;;
 esac; done
+
+# wrong — several options handled by an if/elif chain instead of the loop
+if [[ $1 == -v || $1 == --verbose ]]; then
+  VERBOSE=1
+elif [[ $1 == -o || $1 == --output ]]; then
+  OUTPUT=$2
+fi
 ```
 
 Key rules:
@@ -144,7 +162,9 @@ Include arg-taking options in the character class. They work correctly when last
 
 Use consistent option letters and variable names across all BCS-compliant scripts. Avoid reassigning a standard letter to a different purpose.
 
-**Strongly Recommended** — include in every script that uses options:
+**Scope.** This rule is a registry of what each letter means, not a checklist of options a script must offer. A script chooses its own option set, and the absence of any option listed below is **never** a finding: a script that answers only `--version`, offers no `-h`, or provides `-n` without `-N` violates nothing here. The finding is *reassignment* — a listed letter or variable name put to a different purpose (`-v` for version, `-d` for debug, `-n` for anything but dry-run). The groupings below say how strongly each option is recommended to authors; they do not make its absence reportable.
+
+**Strongly Recommended** — for any script with an option-parsing loop (BCS0801):
 
 | Short | Long | Variable | Default | Purpose |
 |-------|------|----------|---------|---------|
@@ -171,7 +191,7 @@ Use consistent option letters and variable names across all BCS-compliant script
 
 Key rules:
 - **Avoid reassigning** a standard letter to a different purpose — `-v` is always verbose, never version
-- **Toggle pairs:** `-n`/`-N` and `-v`/`-q` are complementary toggles sharing a variable
+- **Toggle pairs:** `-n`/`-N` and `-v`/`-q` are complementary toggles sharing a variable; a script that offers both halves spells them this way, but offering one half alone is not a finding
 - **DRY_RUN=1 default** for destructive scripts — require `-N` to execute; use `DRY_RUN=0` for non-destructive scripts
 - **Use `declare -i`** for all flag variables: `declare -i VERBOSE=1 DRY_RUN=0 DEBUG=0 FORCE=0`
 
@@ -197,6 +217,9 @@ esac; shift; done
 # wrong — reassigned letters
 -d|--debug)         # -d is not standard for debug; use -D
 -v|--version)       # -v is verbose, never version; use -V
+
+# not a finding — a small option set; nothing listed is mandatory
+-V|--version)       echo "$SCRIPT_NAME $VERSION"; exit 0 ;;   # no -h, -v, -q: fine
 ```
 
 See also: BCS0701 (message control flags), BCS0802 (version output format), BCS1207 (verbose pattern), BCS1208 (dry-run pattern).

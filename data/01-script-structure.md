@@ -189,7 +189,7 @@ See also: [Source Guard Reference](../benchmarks/source-guard_reference.md) — 
 
 **Tier:** style
 
-Organize functions bottom-up in 7 layers:
+Organize functions bottom-up. The binding requirement is dependency order: every function is defined above the functions that call it, so a reader going top-down meets each primitive before its use and no call is a forward reference. The 7 layers are the conventional way to achieve that:
 
 1. Messaging functions (lowest level)
 2. Documentation functions (help, usage)
@@ -219,7 +219,7 @@ main "$@"
 #fin
 ```
 
-Never define `main()` at the top. Never define business logic before the utilities it calls. Nested function definitions are permitted only when the inner function is private to and only callable after the outer function runs (e.g. dynamically generated handlers); otherwise define all functions at top level.
+Never define `main()` at the top. Never define business logic before the utilities it calls. Layers with no dependency between them may appear in either order: helpers such as `noarg()` and `yn()` defined above `show_help()` is the order the BCS templates themselves use, and is not a finding. The finding is a function defined above something it calls, or `main()` anywhere but last. Nested function definitions are permitted only when the inner function is private to and only callable after the outer function runs (e.g. dynamically generated handlers); otherwise define all functions at top level.
 
 ## BCS0108 Main Function and Script Invocation
 
