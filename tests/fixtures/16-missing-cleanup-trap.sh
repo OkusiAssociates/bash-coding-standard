@@ -8,7 +8,7 @@ declare -rx PATH=/usr/local/bin:/usr/bin:/bin
 declare -- TEMP_DIR
 
 main() {
-  TEMP_DIR=$(mktemp -d) || exit 1
+  TEMP_DIR=$(mktemp -d) || { >&2 echo 'Cannot create temp dir'; exit 1; }
   cp /etc/hosts "$TEMP_DIR"/
   ls -la "$TEMP_DIR"
 }

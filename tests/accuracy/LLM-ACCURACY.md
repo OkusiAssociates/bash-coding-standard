@@ -243,9 +243,59 @@ defects found by treating a false positive as a hypothesis about the
 fixture** -- the precision figures in every committed baseline understate the
 checker by that much.
 
-Open: BCS0602 fires on fixture 17 in 2 of 3 runs (no `die()`, bare `exit 22`)
-and 10 times in the `-e high` baseline. Its text ("Use `die()` as the standard
-exit function") is as unscoped as BCS0801's was. Next candidate for review.
+Open at the time: BCS0602 fired on fixture 17 in 2 of 3 runs and 10 times in
+the `-e high` baseline. Reviewed next.
+
+### BCS0602, reviewed (2026-09-19)
+
+All 41 fixtures were re-run in JSON mode, 2 reps each (82 checks, none
+unparsed), recording line and message for every BCS0602 finding. Six findings,
+on three fixtures, 2/2 each -- 09, 16 and 17 -- and every message cited the
+same construct: a failing `exit N` in a script that defines no `die()`.
+
+The rule opened, unqualified, "Use `die()` as the standard exit function". The
+standard's own `# correct` version guard (BCS0409), `bcs` line 16 and the
+shipped `bcscheck` wrapper all exit with `{ >&2 echo ...; exit N; }` -- the
+guard has to, since it runs above every function. 1.0.2 headed the same
+one-liner "Standard implementation" and listed `die 0  # (or use exit 0)`; the
+2.x rewrite turned an offered implementation into an order.
+
+BCS0602 now opens with a **Scope** paragraph: it governs which code is
+reported and that a failing exit says why; BCS0703 owns whether a script
+defines `die()`; where `die()` is defined, a failing exit *below the
+definition* that hand-rolls `echo; exit` is the finding; code with no `die()`
+to call may exit directly. Two further clauses, each with examples: the message
+names the value at fault *when there is one* (`die 18 'curl required'` was
+always the standard's own usage), and the table binds only where it names the
+failure exactly (3, 18, 22).
+
+That last clause was first written broadly ("use the code the table gives")
+and immediately drew a false BCS0602 on `clean/05` for `die 1 "Cannot stat
+..."` -- "the table provides 5, I/O error". The standard's own examples write
+`die 1` for a failed `mktemp` seven times, so the clause was narrowed and the
+`mktemp`/`stat` case added as a `# correct` example.
+
+BCS0602 had no fixture anywhere in the corpus, so nothing would have noticed a
+scope clause that blinded it. Four probes built from `clean/03` stood in: a
+compliant control and three single-defect variants. Measured on `sonnet -e
+high`, JSON mode, 3 reps:
+
+| Subject | Before | After |
+|---------|--------|-------|
+| fixtures 09, 16, 17 | BCS0602 2/2 each | **0/3 each** |
+| fixtures 23, `clean/06` (same construct) | 0/2 | 0/3 |
+| `clean/01`-`04`, `06` | -- | no finding of any code, 3/3 |
+| `clean/05` | -- | BCS0602 0/3 after the narrowing (1/3 before it) |
+| probe: control | -- | BCS0602 0/6 |
+| probe: `die()` defined and bypassed | -- | **3/3** |
+| probe: `die 1` for a missing file | -- | **3/3** (6/6 over both rounds) |
+| probe: `die 3 'File not found'` | -- | 2/3 |
+
+Two more corpus defects surfaced, eight in total: fixture 09 exited 1 for a
+missing file and braced `${file}` for no reason (BCS0207, 2/2); fixture 16
+exited on a failed `mktemp` without a word. Both repaired. Still open:
+`clean/05` draws BCS0704 in 6 of 6 runs, and fixture 16 draws BCS1005/BCS0604
+beside its planted BCS0110 on every run -- neither examined here.
 
 ### `sonnet` is the default model, and it is the noisy one
 
