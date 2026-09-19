@@ -31,6 +31,36 @@ for REPLAY_FILE in "${REPLAY_FILES[@]}"; do
   assert_equal "$WANT" "$(probe "$(< "$REPLAY_FILE")")" "replay ${REPLAY_FILE##*/}" ||:
 done
 
+# ---- Tier filters are enforced here, not trusted to the model ----
+# Same reason as JSON mode: the promotion below reads the text, so a style
+# finding the model leaked past `-T core` would turn exit 0 into exit 1.
+declare -r MIXED=$'[ERROR] BCS0101 line 1: core rule\n[WARN] BCS1203 line 2: style rule\n[ERROR] BCS0604 line 3: core rule'
+
+begin_test 'tier filter: -T core drops the style finding'
+FILTERED=$(_filter_by_tier "$MIXED" core '')
+assert_contains "$FILTERED" 'BCS0101' 'core finding kept' ||:
+assert_contains "$FILTERED" 'BCS0604' 'second core finding kept' ||:
+assert_not_contains "$FILTERED" 'BCS1203' 'style finding the model leaked is dropped' ||:
+
+begin_test 'tier filter: -M recommended drops style only'
+assert_not_contains "$(_filter_by_tier "$MIXED" '' recommended)" 'BCS1203' 'style dropped' ||:
+assert_contains "$(_filter_by_tier "$MIXED" '' recommended)" 'BCS0101' 'core kept' ||:
+
+begin_test 'tier filter: no filter is a pass-through'
+assert_equal "$MIXED" "$(_filter_by_tier "$MIXED" '' '')" 'text unchanged' ||:
+
+begin_test 'tier filter: lines naming no code survive'
+assert_equal 'No BCS violations found.' \
+  "$(_filter_by_tier 'No BCS violations found.' core '')" 'the clean line is never dropped' ||:
+
+begin_test 'tier filter: an unclassifiable code survives'
+assert_contains "$(_filter_by_tier '[ERROR] BCS9999 line 1: invented' core '')" 'BCS9999' \
+  'a code with no tier is shown, not hidden' ||:
+
+begin_test 'tier filter: filtering away the ERROR clears the promotion'
+assert_equal 0 "$(probe "$(_filter_by_tier $'[ERROR] BCS1203 line 2: style rule' core '')")" \
+  'a style-only answer under -T core no longer promotes to exit 1' ||:
+
 # ---- Genuine finding headers, in every layout the backends have produced ----
 begin_test 'genuine findings'
 assert_equal 1 "$(probe '[ERROR] BCS0101 line 3: strict mode missing')" 'contract format' ||:

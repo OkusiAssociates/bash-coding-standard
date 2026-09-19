@@ -680,6 +680,50 @@ _checker_standard() {
 }
 
 # True when the text-mode answer $1 holds a finding tagged [ERROR].
+# Numeric rank of a tier, for `-M` (at-or-above) comparisons. 0 for anything
+# unrecognised, which never satisfies a minimum.
+_tier_rank() {
+  case $1 in
+    core)        echo 3 ;;
+    recommended) echo 2 ;;
+    style)       echo 1 ;;
+    *)           echo 0 ;;
+  esac
+}
+
+# _filter_by_tier TEXT TIER MIN_TIER -> TEXT with excluded findings removed.
+#
+# The filters are put in the prompt because they save output tokens, but a
+# model that ignores one must not decide what `-T core` means: the severity
+# promotion below reads this text, so a leaked style finding turns exit 0 into
+# exit 1 for a CI gate that asked for core only. Two lines are deliberately
+# never dropped: one naming no BCS code (the clean line), and one whose code
+# has no tier -- an invented or section-overview code is the model
+# misbehaving, and hiding it would be worse than showing it. JSON mode applies
+# the same rules inside _render_json_output, which already holds the tier map.
+_filter_by_tier() {
+  local -- text=$1 want=$2 minimum=$3 line code tier
+  local -i min_rank=0
+  [[ -n $want || -n $minimum ]] || { printf '%s' "$text"; return 0; }
+  [[ -z $minimum ]] || min_rank=$(_tier_rank "$minimum")
+  while IFS= read -r line; do
+    code=''
+    [[ $line =~ BCS[0-9]{4} ]] && code=${BASH_REMATCH[0]} ||:
+    if [[ -n $code ]]; then
+      tier=$(_effective_tier "$code")
+      if [[ -n $tier ]]; then
+        [[ $tier != disabled ]] || continue
+        if [[ -n $want ]]; then
+          [[ $tier == "$want" ]] || continue
+        elif ((min_rank)); then
+          (($(_tier_rank "$tier") >= min_rank)) || continue
+        fi
+      fi
+    fi
+    printf '%s\n' "$line"
+  done <<< "$text"
+}
+
 _has_error_finding() {
   local -- line
   while IFS= read -r line; do
@@ -760,10 +804,14 @@ _tier_map_json() {
 #   $4 model name (resolved)
 #   $5 effort level
 #   $6 strict (0|1)
+#   $8 tier filter (-T), $9 minimum tier (-M); empty means no filter
 #   $7 elapsed seconds
 _render_json_output() {
   local -- raw=$1 script_file=$2 backend=$3 model=$4 effort=$5
   local -i strict=$6 elapsed_s=$7
+  local -- want=${8:-} minimum=${9:-}
+  local -i min_rank=0
+  [[ -z $minimum ]] || min_rank=$(_tier_rank "$minimum")
   local -- cleaned arr
   cleaned=$(_strip_json_fences "$raw")
   [[ -n $cleaned ]] || return 1
@@ -805,6 +853,9 @@ _render_json_output() {
     --argjson elapsed_s "$elapsed_s" \
     --argjson comments "$arr" \
     --argjson tiers "$tier_map" \
+    --arg want "$want" \
+    --argjson min_rank "$min_rank" \
+    --argjson rank '{"core": 3, "recommended": 2, "style": 1}' \
     '{source: "bcs",
       meta: {tool: $tool, version: $version, file: $file, backend: $backend,
              model: $model, effort: $effort, strict: $strict, elapsed_s: $elapsed_s},
@@ -821,7 +872,12 @@ _render_json_output() {
                             elif .tier == "core" then "error"
                             else "warning" end)
                 else . end)
-        | map(select(.tier != "disabled")))}' \
+        | map(select(.tier != "disabled"))
+        | map(select(($tiers[.bcsCode] // "") as $t
+                     | if $t == "" then true
+                       elif $want != "" then $t == $want
+                       elif $min_rank > 0 then ($rank[$t] // 0) >= $min_rank
+                       else true end)))}' \
     || return 1
 }
 
@@ -1898,6 +1954,13 @@ $numbered_script"
   local -i cacheable=0
   ((exit_code == 0)) && [[ -n $result ]] && cacheable=1 ||:
 
+  # Enforce -T/-M locally. Asking in the prompt saves output tokens; trusting
+  # the answer would let a model decide the exit code (see _filter_by_tier).
+  # JSON mode filters inside _render_json_output, which holds the tier map.
+  if ((!json_output)) && [[ -n $tier_filter || -n $min_tier_filter ]]; then
+    result=$(_filter_by_tier "$result" "$tier_filter" "$min_tier_filter")
+  fi
+
   # Output + severity-based exit
   if ((json_output)); then
     # JSON mode: validate raw array, wrap with envelope, emit on stdout.
@@ -1906,7 +1969,8 @@ $numbered_script"
     if [[ -n $result ]]; then
       local -- json_doc
       if json_doc=$(_render_json_output "$result" "$script_file" "$backend" \
-                      "$model" "$effort" "$strict" "$SECONDS" 2>/dev/null); then
+                      "$model" "$effort" "$strict" "$SECONDS" \
+                      "$tier_filter" "$min_tier_filter" 2>/dev/null); then
         echo "$json_doc"
         if ((exit_code == 0)) && \
            jq -e '.comments[]? | select(.level == "error")' \

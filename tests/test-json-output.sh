@@ -42,6 +42,43 @@ begin_test 'strip fences: combined json wrapper + whitespace'
 input=$'\n\n```json\n[{"x":2}]\n```\n\n'
 assert_equal '[{"x":2}]' "$(_strip_json_fences "$input")"
 
+# ---- Tier filters are enforced here, not trusted to the model -------------
+# -T/-M are put in the prompt to save output tokens, but a model that ignores
+# one must not decide what `-T core` means: `bcs check -j -T core` in a CI gate
+# exits on .comments[].level == "error", so a leaked style finding fails a
+# build it should have passed. This answer ignores the filter entirely.
+declare -r MIXED_TIERS='[{"line":1,"level":"error","bcsCode":"BCS0101","message":"core"},
+ {"line":2,"level":"error","bcsCode":"BCS1203","message":"style"},
+ {"line":3,"level":"error","bcsCode":"BCS0604","message":"core"},
+ {"line":4,"level":"error","bcsCode":"BCS0201","message":"style"}]'
+
+begin_test 'tier filter: -T core keeps only core findings'
+out=$(_render_json_output "$MIXED_TIERS" /tmp/x.sh anthropic m low 0 1 core '')
+assert_equal 'BCS0101 BCS0604' "$(jq -r '[.comments[].bcsCode] | join(" ")' <<< "$out")" \
+  'the two style findings the model kept are dropped' ||:
+
+begin_test 'tier filter: -M recommended drops style only'
+out=$(_render_json_output "$MIXED_TIERS" /tmp/x.sh anthropic m low 0 1 '' recommended)
+assert_equal 'BCS0101 BCS0604' "$(jq -r '[.comments[].bcsCode] | join(" ")' <<< "$out")" \
+  'style dropped, core kept' ||:
+
+begin_test 'tier filter: -M style keeps everything'
+out=$(_render_json_output "$MIXED_TIERS" /tmp/x.sh anthropic m low 0 1 '' style)
+assert_equal 4 "$(jq -r '.comments | length' <<< "$out")" 'no finding dropped' ||:
+
+begin_test 'tier filter: no filter keeps everything'
+out=$(_render_json_output "$MIXED_TIERS" /tmp/x.sh anthropic m low 0 1 '' '')
+assert_equal 4 "$(jq -r '.comments | length' <<< "$out")" 'unfiltered by default' ||:
+
+begin_test 'tier filter: a code with no tier survives the filter'
+# An invented or section-overview code cannot be classified. Dropping it would
+# hide the model misbehaving; the level rule keeps such findings as received,
+# and so does this.
+out=$(_render_json_output '[{"line":1,"level":"error","bcsCode":"BCS9999","message":"?"}]' \
+        /tmp/x.sh anthropic m low 0 1 core '')
+assert_equal 'BCS9999' "$(jq -r '[.comments[].bcsCode] | join(" ")' <<< "$out")" \
+  'unclassifiable finding is shown, not hidden' ||:
+
 # ---- _render_json_output: happy path -------------------------------------
 
 begin_test 'render: valid bare array wrapped in envelope'
