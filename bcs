@@ -679,7 +679,6 @@ _checker_standard() {
   ' "$1"
 }
 
-# True when the text-mode answer $1 holds a finding tagged [ERROR].
 # Numeric rank of a tier, for `-M` (at-or-above) comparisons. 0 for anything
 # unrecognised, which never satisfies a minimum.
 _tier_rank() {
@@ -705,6 +704,13 @@ _filter_by_tier() {
   local -- text=$1 want=$2 minimum=$3 line code tier
   local -i min_rank=0
   [[ -n $want || -n $minimum ]] || { printf '%s' "$text"; return 0; }
+  # Prime the tier tables here: _effective_tier memoises, but it runs inside a
+  # command substitution below, so without this every finding line would
+  # re-read all 15 section files in a fresh subshell (40 findings: 2.54 s
+  # against 0.045 s). A failure leaves the tables empty, which the loop reads
+  # as "no tier data" and keeps the line -- the documented safe outcome.
+  _load_tiers ||:
+  _load_policy ||:
   [[ -z $minimum ]] || min_rank=$(_tier_rank "$minimum")
   while IFS= read -r line; do
     code=''
@@ -724,6 +730,7 @@ _filter_by_tier() {
   done <<< "$text"
 }
 
+# True when the text-mode answer $1 holds a finding tagged [ERROR].
 _has_error_finding() {
   local -- line
   while IFS= read -r line; do
@@ -804,6 +811,7 @@ _tier_map_json() {
 #   $4 model name (resolved)
 #   $5 effort level
 #   $6 strict (0|1)
+#   $7 elapsed seconds
 #   $8 tier filter (-T), $9 minimum tier (-M); empty means no filter
 #   $7 elapsed seconds
 _render_json_output() {
@@ -855,6 +863,7 @@ _render_json_output() {
     --argjson tiers "$tier_map" \
     --arg want "$want" \
     --argjson min_rank "$min_rank" \
+    `# same ordering as _tier_rank; VALID_TIERS holds no fourth` \
     --argjson rank '{"core": 3, "recommended": 2, "style": 1}' \
     '{source: "bcs",
       meta: {tool: $tool, version: $version, file: $file, backend: $backend,
@@ -1998,6 +2007,11 @@ $numbered_script"
     local -- shown=$result
     if [[ -n $tier_filter || -n $min_tier_filter ]]; then
       shown=$(_filter_by_tier "$result" "$tier_filter" "$min_tier_filter")
+      # Filtering everything away means the script IS clean at the tier asked
+      # for, and the output contract promises the clean line for that. Printing
+      # nothing would leave a consumer grepping for it with silence. An empty
+      # $result is the other case -- an API anomaly, already exit 5 above.
+      [[ -n $result && -z $shown ]] && shown=$CLEAN_LINE ||:
     fi
     [[ -z $shown ]] || echo "$shown"
     # Severity-based exit: any [ERROR] finding promotes exit code to 1

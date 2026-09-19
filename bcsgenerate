@@ -4,6 +4,18 @@
 # Passes all arguments to bcs generate; defaults via ~/.config/bcs/bcs.conf
 set -euo pipefail
 shopt -s inherit_errexit
-command -v bcs >/dev/null || { >&2 echo "${0##*/}: bcs not found"; exit 18; }
-exec bcs generate "$@"
+declare -rx PATH=/usr/local/bin:/usr/bin:/bin
+
+# Prefer the bcs installed beside this shim, so a `make install PREFIX=...`
+# pair stays together whatever PATH says; fall back to PATH for a shim that
+# was copied somewhere on its own. Resolved through realpath because the shim
+# is commonly a symlink into a bin directory.
+declare -- BCS_BIN=''
+BCS_BIN=$(realpath -- "${BASH_SOURCE[0]}") \
+  || { >&2 echo "${0##*/}: cannot resolve own path"; exit 1; }
+BCS_BIN=${BCS_BIN%/*}/bcs
+[[ -x $BCS_BIN ]] || BCS_BIN=$(command -v bcs) \
+  || { >&2 echo "${0##*/}: bcs not found"; exit 18; }
+
+exec "$BCS_BIN" generate "$@"
 #fin

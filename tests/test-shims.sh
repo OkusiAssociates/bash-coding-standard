@@ -37,9 +37,16 @@ for shim in "${!SHIM_CMDS[@]}"; do
     TESTS_FAILED+=1
   fi
 
+  # Every shim resolves bcs beside itself first (so a make install PREFIX=...
+  # pair stays together) and falls back to PATH, then execs it with its
+  # subcommand. Assert both halves, not just the exec line.
   begin_test "$shim delegates to 'bcs $subcmd'"
   body=$(< "$shim_path")
-  assert_contains "$body" "exec bcs $subcmd " "$shim contains 'exec bcs $subcmd'" || true
+  #shellcheck disable=SC2016  # literal shim source text, not an expansion to evaluate
+  assert_contains "$body" 'BCS_BIN=${BCS_BIN%/*}/bcs' "$shim resolves bcs beside itself" || true
+  #shellcheck disable=SC2016  # same: matching the shim's own text
+  assert_contains "$body" 'BCS_BIN=$(command -v bcs)' "$shim falls back to PATH" || true
+  assert_contains "$body" "exec \"\$BCS_BIN\" $subcmd " "$shim execs bcs $subcmd" || true
 
   begin_test "$shim passes shellcheck"
   assert_success "$shim shellcheck-clean" shellcheck -x "$shim_path" || true

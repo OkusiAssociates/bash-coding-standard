@@ -23,6 +23,48 @@ varying complexity and structure.
 
 ---
 
+## Corpus repairs verified (2026-09-19, bcs 2.0.8)
+
+Fifteen fixtures were changed in the 2.0.8 round: thirteen carried a second
+real defect competing with the planted one, one (24) gained a `--` the widened
+BCS1005 now requires, and one (`clean/05`) the same. Re-measured afterwards
+with `bcs-accuracy-score.sh -m gpt5-mini -e medium -n 3` over exactly those
+fifteen, JSON mode, `--no-cache`, 0 inconclusive:
+
+| Metric | Value |
+|--------|-------|
+| Recall | 0.881 |
+| Precision | 0.698 |
+| Stability | 0.929 |
+| Spurious findings per clean run | 1.000 (`clean/05` only) |
+
+**Every repaired fixture returns its planted code 3 of 3**: BCS0206 (03),
+BCS0302 (04), BCS0501 (06), BCS0504 (07 and 18, 6/6), BCS0606 (19), BCS0702
+(09), BCS0901 (11), BCS0902 (12), BCS1001 (24), BCS1101 (21), BCS1103 (32).
+The two that miss are the two known mechanical cases, both in
+`probabilistic/`, both unchanged by this round: BCS0106 1/3 (the checker never
+sees the executable's real filename) and BCS1104 0/3 (recorded as 0 of 9
+across three backends since 2026-09-18, still unexplained).
+
+### What the per-fixture false-positive map bought
+
+This was the first run with `fp_per_rule.CODE.fixtures`, and it paid for
+itself immediately. BCS0411 appeared three times -- twice on fixture 07, once
+on 18 -- and those are precisely the two pipe-into-a-loop fixtures. A bare
+count would have said "BCS0411 x3" and no more; the map named the files, which
+identified it as a fifth ownership pair rather than noise. BCS0906 already
+carried a sentence deferring to BCS0504 for that defect; BCS0411 did not, and
+now does.
+
+Three extras remain unexplained and are recorded rather than smoothed:
+BCS0702 twice on fixture 06 (whether `echo 'default settings'` is that
+script's data or a status message is a judgement call, and the widened BCS0702
+scope makes the checker read it as status), BCS0906 twice on fixture 18
+despite its deferral sentence, and seven single occurrences spread over seven
+distinct rules -- the one-off pattern, not one rule to repair.
+
+---
+
 ## Scorer Baseline (2026-09-18)
 
 Produced by `bcs-accuracy-score.sh` over the labelled corpus in

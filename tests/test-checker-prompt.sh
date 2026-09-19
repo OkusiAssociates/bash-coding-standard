@@ -136,6 +136,10 @@ declare -r STYLE_ONLY='{"choices":[{"message":{"content":"[WARN] BCS1203 line 2:
 run_check "$STYLE_ONLY" -m gpt-5 -T core
 assert_equal 0 "$RC" 'a style-only answer under -T core exits 0' ||:
 assert_not_contains "$OUT" 'BCS1203' 'and the style finding is filtered out' ||:
+# Filtering everything away means clean at the tier asked for, and the output
+# contract promises the clean line for that. Printing nothing instead would
+# leave a consumer grepping for it with silence.
+assert_contains "$OUT" 'No BCS violations found.' 'the clean line takes its place' ||:
 assert_equal 1 "$(cache_count)" 'the answer is cached' ||:
 run_check '' -m gpt-5 -T core
 assert_equal 0 "$RC" 'the cache hit exits 0, not 5' ||:
