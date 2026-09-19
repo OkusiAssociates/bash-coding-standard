@@ -101,7 +101,7 @@ die()     { (($# < 2)) || error "${@:2}"; exit "${1:-0}"; }
 
 **Tier:** style
 
-Structure help text with sections. Use heredoc with `cat`.
+**Scope.** This rule governs help text that runs to more than one line: structure it in sections and print it from a single heredoc with `cat`. It does not require every script to carry such a help text. A script with a small option set may answer `-h` with a one-line usage string, as the `basic` template does, and a script may offer no help at all (BCS0806); neither is a finding. The findings are multi-line help assembled from a run of `echo` or `printf` calls, and help or version output sent through a messaging function.
 
 ```bash
 show_help() {
@@ -128,6 +128,23 @@ HELP
 ```
 
 Never use messaging functions for help output. Help and version must always display regardless of VERBOSE setting.
+
+```bash
+# correct — a small option set: a one-line usage string is enough
+-h|--help) printf 'Usage: %s [-m BYTES] [DIR]\n' "$SCRIPT_NAME"; exit 0 ;;
+
+# wrong — multi-line help built call by call; use one heredoc
+show_help() {
+  echo "Usage: $SCRIPT_NAME [OPTIONS] FILE"
+  echo ''
+  echo 'Options:'
+  echo '  -v, --verbose     Verbose output'
+  echo '  -h, --help        Show this help'
+}
+
+# wrong — help through a messaging function: --quiet silences it
+-h|--help) info "Usage: $SCRIPT_NAME [OPTIONS] FILE"; exit 0 ;;
+```
 
 ## BCS0705 Echo vs Messaging Functions
 
