@@ -1954,13 +1954,6 @@ $numbered_script"
   local -i cacheable=0
   ((exit_code == 0)) && [[ -n $result ]] && cacheable=1 ||:
 
-  # Enforce -T/-M locally. Asking in the prompt saves output tokens; trusting
-  # the answer would let a model decide the exit code (see _filter_by_tier).
-  # JSON mode filters inside _render_json_output, which holds the tier map.
-  if ((!json_output)) && [[ -n $tier_filter || -n $min_tier_filter ]]; then
-    result=$(_filter_by_tier "$result" "$tier_filter" "$min_tier_filter")
-  fi
-
   # Output + severity-based exit
   if ((json_output)); then
     # JSON mode: validate raw array, wrap with envelope, emit on stdout.
@@ -1995,9 +1988,20 @@ $numbered_script"
         || printf '%s\n' '{"source":"bcs","meta":{},"comments":[]}'
     fi
   else
-    [[ -z $result ]] || echo "$result"
+    # Enforce -T/-M locally. Asking in the prompt saves output tokens; trusting
+    # the answer would let a model decide the exit code (see _filter_by_tier).
+    # Filter a copy, never $result: the cache below stores what the model said,
+    # so the filter is reapplied on every run, hit or miss -- exactly as JSON
+    # mode does through _render_json_output. Caching the filtered text instead
+    # would store an empty answer whenever a filter removed every finding, and
+    # the empty-result guard above would call that an API failure next run.
+    local -- shown=$result
+    if [[ -n $tier_filter || -n $min_tier_filter ]]; then
+      shown=$(_filter_by_tier "$result" "$tier_filter" "$min_tier_filter")
+    fi
+    [[ -z $shown ]] || echo "$shown"
     # Severity-based exit: any [ERROR] finding promotes exit code to 1
-    if ((exit_code == 0)) && _has_error_finding "$result"; then
+    if ((exit_code == 0)) && _has_error_finding "$shown"; then
       exit_code=1
     fi
   fi

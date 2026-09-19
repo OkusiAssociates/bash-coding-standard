@@ -126,6 +126,21 @@ run_check "$OPENAI_OK" -m gpt-5
 assert_equal 2 "$(cache_count)" 'an edited twin writes its own entry' ||:
 CHECK_TARGET=$ORIG_TARGET
 
+# ---- A tier filter must not poison the cache ----
+# The filter is applied to a copy: were $result itself filtered, an answer
+# with nothing left at the requested tier would be cached empty, and the
+# empty-result guard would call that an API failure (exit 5) on the next run.
+begin_test 'tier filter does not poison the cache'
+reset_cache
+declare -r STYLE_ONLY='{"choices":[{"message":{"content":"[WARN] BCS1203 line 2: blank lines"}}]}'
+run_check "$STYLE_ONLY" -m gpt-5 -T core
+assert_equal 0 "$RC" 'a style-only answer under -T core exits 0' ||:
+assert_not_contains "$OUT" 'BCS1203' 'and the style finding is filtered out' ||:
+assert_equal 1 "$(cache_count)" 'the answer is cached' ||:
+run_check '' -m gpt-5 -T core
+assert_equal 0 "$RC" 'the cache hit exits 0, not 5' ||:
+assert_not_contains "$ERR" 'empty result' 'and is not mistaken for an empty API answer' ||:
+
 # ---- Text-mode output contract: identical in both prompt builders ----
 # assert_contract LABEL PROMPT
 assert_contract() {
