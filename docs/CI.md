@@ -126,6 +126,12 @@ of the planted rules against 0.794 at `-e medium`, and raises 51 spurious
 findings on the compliant corpus against 10. The gate now runs at the default
 effort like everything else.
 
+Those header comments are gone entirely as of 2026-09-19: the labels live in
+`tests/fixtures/EXPECT.tsv` and `bcs check` sends the script exactly as it is
+on disk. Nothing has to be hidden, and the two blanked comment lines the
+blinding used to leave behind -- which drew style findings of their own --
+went with them.
+
 ## Quantify before you trust
 
 Before relying on `bcs check` as a hard gate, measure it on your chosen backend.

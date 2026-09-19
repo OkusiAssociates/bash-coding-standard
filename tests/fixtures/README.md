@@ -165,6 +165,17 @@ see it. Three ways that goes wrong, all measured on fixture 31 (BCS1005) on
   support it -- the fixture still keeps its `--` and now scores 9 of 9 -- but
   it is worth watching in rules that carry several clauses.
 
+In September 2026 the whole corpus was put through this test at once: all 43
+fixtures audited against the standard with no label in the file and under
+neutral filenames, so neither a header nor a name could name the answer. That
+found a second real defect in thirteen of them -- an undeclared loop or `read`
+variable, a `2>/dev/null` with no stated reason, a status message on stdout, a
+`date +%s` where a builtin exists, and in fixture 06 an arithmetic injection
+(`local -i retries=${2:-3}` runs `$(cmd)` inside `BASH_VERSINFO[...]`). All
+six clean fixtures returned nothing. Two of the extras were not fixture bugs
+at all but two rules claiming one defect, and were settled in the standard
+instead (BCS0507/BCS1205, BCS0702/BCS0705).
+
 Known and accepted on fixture 31: with the argument check gone, `sonnet`
 reports **BCS0803** (argument validation) in about two runs of three. That is a
 real finding. The obvious fix, adding a presence check, is exactly the second
