@@ -7,7 +7,8 @@ claude/results/
 .~*
 ~*
 api-keys.conf
-AUDIT-*.md
+AUDIT-*
+.claude
 .*cache
 #*/channels/*
 .coverage
