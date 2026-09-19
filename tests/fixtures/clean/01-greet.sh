@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# bcs-fixture-expect:
-# bcs-fixture-description: Fully BCS-compliant minimal script; any finding is a false positive.
 set -euo pipefail
 shopt -s inherit_errexit shift_verbose extglob nullglob
 

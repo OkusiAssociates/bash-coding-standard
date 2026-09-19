@@ -2,8 +2,6 @@
 set -euo pipefail
 shopt -s inherit_errexit
 declare -rx PATH=/usr/local/bin:/usr/bin:/bin
-# bcs-fixture-expect: BCS0702
-# bcs-fixture-description: Error messages written to stdout instead of stderr per BCS0702.
 
 main() {
   local -- file=${1:-/etc/hosts}

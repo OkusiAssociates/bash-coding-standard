@@ -101,7 +101,7 @@ while IFS= read -r line; do
     printf '    malformed code: %s\n' "$line"
     malformed+=1
   fi
-done < <(grep '^## BCS' "$DATA_DIR"/[0-9]*.md)
+done < <(grep -h '^## BCS' "$DATA_DIR"/[0-9]*.md)
 assert_equal 0 "$malformed" 'no malformed BCS codes' || true
 
 # Test: no duplicate BCS codes
@@ -143,6 +143,49 @@ else
   printf '  %s✗%s line count %d outside range [1500-4000]\n' "$RED" "$NC" "$std_lines"
   TESTS_FAILED+=1
 fi
+
+# ---- Fixture manifest ----
+# Fixture labels live in tests/fixtures/EXPECT.tsv (path, codes, description),
+# never in the fixture: a label inside the file is an answer shown to the model.
+declare -r FIXTURES_DIR="$TEST_DIR"/fixtures
+declare -r MANIFEST="$FIXTURES_DIR"/EXPECT.tsv
+declare -- ON_DISK='' LISTED='' ALL_CODES='' M_PATH='' M_CODES='' M_DESC='' M_CODE='' M_LINE=''
+declare -a M_BAD=() M_LIST=()
+
+begin_test 'fixture manifest matches the files one-to-one'
+assert_file_exists "$MANIFEST" ||:
+ON_DISK=$(cd "$FIXTURES_DIR" && printf '%s\n' *.sh */*.sh | sort)
+LISTED=$(grep -v '^#' "$MANIFEST" | cut -f1 | sort)
+assert_equal "$ON_DISK" "$LISTED" 'every fixture listed once, every entry a file' ||:
+assert_equal '' "$(grep -v '^#' "$MANIFEST" | awk -F'\t' 'NF != 3' ||:)" \
+  'every entry has three tab-separated fields' ||:
+
+begin_test 'fixture manifest codes'
+ALL_CODES=$("$BCS_CMD" codes -p | grep -oE '^BCS[0-9]{4}' ||:)
+# Split by hand: tab is IFS whitespace, so `read` would merge the two tabs
+# round an empty codes field and shift the description into its place.
+while IFS= read -r M_LINE; do
+  [[ $M_LINE != '#'* ]] || continue
+  M_PATH=${M_LINE%%$'\t'*}
+  M_DESC=${M_LINE##*$'\t'}
+  M_CODES=${M_LINE#*$'\t'}
+  M_CODES=${M_CODES%$'\t'*}
+  [[ -n $M_DESC ]] || M_BAD+=("$M_PATH: no description")
+  if [[ $M_PATH == clean/* ]]; then
+    [[ -z $M_CODES ]] || M_BAD+=("$M_PATH: a clean fixture expects nothing")
+    continue
+  fi
+  [[ -n $M_CODES ]] || M_BAD+=("$M_PATH: no expected code")
+  read -ra M_LIST <<< "$M_CODES"
+  for M_CODE in "${M_LIST[@]}"; do
+    grep -qx -- "$M_CODE" <<< "$ALL_CODES" || M_BAD+=("$M_PATH: $M_CODE is not a rule")
+  done
+done < "$MANIFEST"
+assert_equal '' "${M_BAD[*]}" 'clean entries empty, the rest name real rules' ||:
+
+begin_test 'no label inside a fixture'
+assert_equal '' "$(grep -l 'bcs-fixture-' "$FIXTURES_DIR"/*.sh "$FIXTURES_DIR"/*/*.sh ||:)" \
+  'no bcs-fixture- pragma survives in any fixture' ||:
 
 print_summary 'data-structure'
 #fin

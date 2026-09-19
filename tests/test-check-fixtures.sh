@@ -76,7 +76,7 @@ esac
 echo "  ◉ using model:   $fixture_model"
 
 # Effort for the gate. `low` sends no thinking budget: measured 2026-09-18 on
-# gpt5-mini with the fixture pragmas hidden, it recalls 0.546 of the planted
+# gpt5-mini with the fixture labels hidden, it recalls 0.546 of the planted
 # rules against 0.794 at `medium`, and raises 51 findings on the clean corpus
 # against 10. The gate runs at the default effort, which is what users get.
 declare -r FIXTURE_EFFORT=${BCS_FIXTURES_EFFORT:-medium}
@@ -96,6 +96,7 @@ declare -ri FIXTURE_TIMEOUT_S=180
 # after run is a regression whatever the tally, which is why they are printed.
 declare -ri FIXTURE_MAX_FAIL=${BCS_FIXTURES_MAX_FAIL:-2}
 declare -a missed=()
+declare -r MANIFEST="$TEST_DIR"/fixtures/EXPECT.tsv
 declare -- fixture fixture_name expected reported extras output
 declare -i exit_code=0 fixture_count=0 inconclusive=0
 declare -ri REQUIRE_BACKEND=${BCS_FIXTURES_REQUIRE_BACKEND:-0}
@@ -104,14 +105,14 @@ for fixture in "$TEST_DIR"/fixtures/*.sh; do
   fixture_count+=1
   begin_test "fixture: $fixture_name"
 
-  # Extract expected BCS codes from the pragma (search first 15 lines).
-  expected=$(sed -n '1,15p' "$fixture" \
-    | grep -F 'bcs-fixture-expect:' \
+  # Expected BCS codes come from the sidecar manifest, never from the fixture:
+  # a label inside the file is an answer shown to the model.
+  expected=$(awk -F'\t' -v k="$fixture_name" '$1 == k {print $2}' "$MANIFEST" \
     | grep -oE 'BCS[0-9]{4}' \
     | sort -u) ||:
   if [[ -z $expected ]]; then
-    printf '  %s✗%s %s — missing bcs-fixture-expect pragma\n' \
-      "$RED" "$NC" "$fixture_name"
+    printf '  %s✗%s %s — no expected code in %s\n' \
+      "$RED" "$NC" "$fixture_name" "${MANIFEST##*/}"
     TESTS_FAILED+=1
     continue
   fi

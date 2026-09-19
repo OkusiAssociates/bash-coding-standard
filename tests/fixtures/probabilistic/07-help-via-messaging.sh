@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 shopt -s inherit_errexit
-# bcs-fixture-expect: BCS0704
-# bcs-fixture-description: Help is printed through info(), which VERBOSE gates, so `-q -h` prints nothing (BCS0704).
 
 declare -i VERBOSE=1
 declare -a WORDS=()

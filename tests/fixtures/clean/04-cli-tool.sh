@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 #shellcheck disable=SC2015  # BCS idiom: ((cond)) && action ||:
-# bcs-fixture-expect:
-# bcs-fixture-description: Realistic compliant CLI tool (metadata, messaging, noarg, bundled options, flag-guarded actions, readonly after parse, default case arm, #fin); any finding is a false positive.
 set -euo pipefail
 shopt -s inherit_errexit
 

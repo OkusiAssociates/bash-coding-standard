@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 shopt -s inherit_errexit
-# bcs-fixture-expect: BCS0501
-# bcs-fixture-description: Uses single-bracket `[ ... ]` conditionals on strings and numbers; BCS0501 mandates `[[ ... ]]` and `(( ... ))`. (File tests in `[ ]` belong to BCS0901.)
 
 main() {
   local -- mode=${1:-staging}

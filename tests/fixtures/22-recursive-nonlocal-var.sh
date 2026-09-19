@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 shopt -s inherit_errexit nullglob
-# bcs-fixture-expect: BCS0410
-# bcs-fixture-description: Recursive walk uses loop variable `entry` without `local`; recursion corrupts the caller's value (BCS0410).
 
 walk() {
   local -- dir=$1

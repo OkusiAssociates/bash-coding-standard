@@ -2,8 +2,6 @@
 set -euo pipefail
 shopt -s inherit_errexit
 declare -rx PATH=/usr/local/bin:/usr/bin:/bin
-# bcs-fixture-expect: BCS0603
-# bcs-fixture-description: Trap command in double quotes expands `$TEMP_FILE` when the trap is installed (still empty), so the temp file is never removed; trap commands must be single-quoted per BCS0603.
 
 declare -- TEMP_FILE=''
 # shellcheck disable=SC2064  # the path is fixed once set

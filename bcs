@@ -671,20 +671,6 @@ _checker_standard() {
   ' "$1"
 }
 
-# Print FILE as the checker may see it. A test fixture names its own answer in
-# `# bcs-fixture-expect:` / `# bcs-fixture-description:` header lines; shown to
-# the model they are the verdict (gpt5-mini -e low: recall 1.000 visible, 0.546
-# blanked). Replace them rather than delete them: line numbers must hold.
-# The replacement is a bare `#`, not an empty line. Emptying them wedged two
-# consecutive blank lines between the shebang and `set -euo pipefail` in every
-# one of the 41 fixtures -- a defect none of them contains -- and BCS1203 then
-# fired, correctly, on the blinding's own artefact (5 of 8 findings in a
-# sampled sonnet pass over the clean fixtures). Style tier, so it never moved
-# an exit code, but it inflated every false-positive figure in tests/accuracy/.
-_checker_script() {
-  sed -E 's/^#[[:space:]]*bcs-fixture-[a-z-]+:.*$/#/' -- "$1"
-}
-
 # True when the text-mode answer $1 holds a finding tagged [ERROR].
 _has_error_finding() {
   local -- line
@@ -1271,10 +1257,11 @@ _llm_claude_cli() {
   # return, not die: only a return fires the RETURN trap that removes the dir.
   _checker_standard "$bcs_file" > "$std_file" \
     || { error 'Failed to write the checker standard'; return 5; }
-  # Likewise the script: the CLI reads the file itself, so point it at the
-  # checker's copy (fixture pragmas blanked), never at the original.
+  # Likewise the script: a copy inside the temp dir, never the original. The
+  # agent has Read/Grep/Glob, and a script's neighbours are none of its
+  # business (a test fixture sits beside the manifest that names its defect).
   local -- script_copy="$check_dir"/${script_file##*/}
-  _checker_script "$script_file" > "$script_copy" \
+  cp -- "$script_file" "$script_copy" \
     || { error 'Failed to write the checker copy of the script'; return 5; }
 
   local -- prompt
@@ -1721,8 +1708,7 @@ cmd_check() {
     cache_key=$({ printf '%s\n' "$VERSION" "$backend" "$model" "$effort" \
                     "$strict" "$json_output" "$tier_filter" "$min_tier_filter" \
                     "$policy_text" "$shellcheck_block"
-                  _checker_script "$script_file"
-                  cat -- "$bcs_file"; } | sha256sum) ||:
+                  cat -- "$script_file" "$bcs_file"; } | sha256sum) ||:
     cache_key=${cache_key%% *}
     if [[ -n $cache_key ]]; then
       cache_file=$cache_dir/$cache_key
@@ -1754,7 +1740,7 @@ cmd_check() {
     [[ -z $policy_text ]] || sys_prompt+=$'\n'"$policy_text"
 
     # Prepend line numbers so the model can reference lines accurately
-    numbered_script=$(_checker_script "$script_file" | nl -ba -w4 -s': ')
+    numbered_script=$(nl -ba -w4 -s': ' -- "$script_file")
 
     # Effort-level-specific guidance
     case $effort in

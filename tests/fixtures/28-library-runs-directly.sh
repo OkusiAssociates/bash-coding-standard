@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# bcs-fixture-expect: BCS0407
-# bcs-fixture-description: Pure function library with no guard against direct execution; a library must reject being run per BCS0407.
 # strutil.sh - string helpers. Source this file; it is not a program.
 
 declare -rx STRUTIL_VERSION=1.0.0

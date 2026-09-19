@@ -2,8 +2,6 @@
 set -euo pipefail
 shopt -s inherit_errexit
 declare -rx PATH=/usr/local/bin:/usr/bin:/bin
-# bcs-fixture-expect: BCS0110
-# bcs-fixture-description: Creates a temp directory with `mktemp -d` but installs no `trap` for cleanup per BCS0110.
 
 declare -- TEMP_DIR
 

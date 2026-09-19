@@ -16,13 +16,14 @@ tests/fixtures/*.sh            gated corpus — one core-rule violation each;
                                test-check-fixtures.sh asserts each is detected
 tests/fixtures/probabilistic/  scored-but-not-gated — recommended-tier rules and
                                core rules cheap models catch inconsistently
-tests/fixtures/clean/          fully compliant scripts (empty expect pragma);
+tests/fixtures/clean/          fully compliant scripts (empty codes field);
                                any finding is a false positive
+tests/fixtures/EXPECT.tsv      the labels: what each fixture plants
 ```
 
 The gated corpus holds 30 fixtures and covers every core-tier rule that a
 script's text can violate, minus three that moved to `probabilistic/` on
-2026-09-18 once the fixture pragmas stopped reaching the model: BCS1206 (a
+2026-09-18 once the fixture labels stopped reaching the model: BCS1206 (a
 missing justification comment, found 2 of 4), BCS0106 (an executable's own
 filename, which the checker never sees, so the fixture can only approximate
 it through an `install` line) and BCS1104 (a missing `curl` timeout, filed
@@ -40,15 +41,15 @@ top-level logic with no functions, a `*)` case arm, argument parsing outside
 `main()`, `&& ... ||:` chains, `${SCRIPT_PATH##*/}`, and a present `#fin`.
 
 The gate runs at the default effort (`-e medium`, override with
-`BCS_FIXTURES_EFFORT`). It ran at `-e low` until 2026-09-18: with the pragmas
-visible that passed 33 of 33, but blind it recalls 0.546 against 0.794 at
+`BCS_FIXTURES_EFFORT`). It ran at `-e low` until 2026-09-18: with the labels
+visible to the model that passed 33 of 33, but blind it recalls 0.546 against 0.794 at
 medium, so the gate was measuring the leak rather than the checker.
 
 Only the top-level `*.sh` files form the `test-check-fixtures.sh` recall gate.
 The `probabilistic/` and `clean/` subdirectories are read by the accuracy scorer
 (`tests/accuracy/bcs-accuracy-score.sh`; see `../accuracy/README.md`). The
-"MUST carry a non-empty expect pragma" rule below applies to the gated top-level
-fixtures — `clean/` fixtures deliberately carry an *empty* `bcs-fixture-expect:`.
+"non-empty codes field" rule below applies to the gated and `probabilistic/`
+fixtures — a `clean/` entry deliberately leaves the field *empty*.
 
 ## Running the suite
 
@@ -79,39 +80,37 @@ Every file under `tests/fixtures/` MUST:
    a real script; only its *body* carries the violation). The one exception
    is `25-missing-shebang.sh`, whose violation *is* the absent shebang; it
    opens with `# shellcheck shell=bash` so the linter still works.
-2. Carry a **`bcs-fixture-expect:`** pragma in the first 15 lines,
-   listing one or more BCS codes separated by whitespace:
+2. Carry **no label**: no comment that names the rule, describes the defect
+   or reassures the reader about it. Whatever is in the file is shown to the
+   model, and a label is the answer. Measured 2026-09-17 on `gpt5-mini -e
+   low`, 41 fixtures x 3, when fixtures still named their rule in a header
+   pragma: recall 1.000 and 0 clean false positives with it visible; 0.546
+   and 51 with it hidden. `bcs check` blanked those lines for a while, but the
+   two bare `#` lines it left behind drew findings of their own (BCS1202), so
+   on 2026-09-19 the labels left the files altogether. `bcs check` now alters
+   nothing: what is on disk is what is judged.
 
-   ```bash
-   # bcs-fixture-expect: BCS0202
-   # bcs-fixture-expect: BCS0110 BCS0603
+3. Have one line in **`EXPECT.tsv`**, three tab-separated fields:
+
+   ```
+   relative/path<TAB>codes<TAB>description
+   02-undeclared-local.sh	BCS0202	Function variables not declared `local`; ...
+   clean/01-greet.sh		Fully BCS-compliant minimal script; any finding is ...
    ```
 
-   Expect the code the standard names as **canonical** for the defect, not
-   every rule that mentions it. Where rule text says "cite BCSxxxx, not this
-   rule", the fixture expects BCSxxxx alone: expecting the deferring rules too
-   rewards citation noise and fails a checker that follows the standard.
+   `codes` is space-separated, and empty for `clean/`. Lines starting with `#`
+   are comments. Expect the code the standard names as **canonical** for the
+   defect, not every rule that mentions it. Where rule text says "cite
+   BCSxxxx, not this rule", the fixture expects BCSxxxx alone: expecting the
+   deferring rules too rewards citation noise and fails a checker that follows
+   the standard. `tests/test-data-structure.sh` holds the manifest to the
+   files: one-to-one, clean entries empty, every code a real rule, a
+   description on every line, and no `bcs-fixture-` string in any fixture.
 
-3. Carry a **`bcs-fixture-description:`** pragma on its own line
-   explaining the intentional violation in plain English:
-
-   ```bash
-   # bcs-fixture-description: Function variables not declared local; pollutes global scope.
-   ```
-
-   ◉ **The checker never sees either pragma.** `bcs check` blanks every
-   `# bcs-fixture-<name>:` line before the script reaches a backend (the line
-   stays, empty, so line numbers hold) and the result cache is keyed on that
-   blanked text. The pragmas are labels for the harness and for people; they
-   cannot help the model. Measured 2026-09-17 on `gpt5-mini -e low`, 41
-   fixtures x 3: with the pragmas visible recall was 1.000 and clean false
-   positives 0 in 18 runs; blanked, 0.546 and 51. Do not describe the defect
-   in a body comment either -- that leaks the same way and is not blanked.
-
-4. Demonstrate **one primary violation** from the expected code list.
-   Extra violations are tolerated — the harness uses a superset
-   assertion — but the fixture must stay minimal enough to keep the
-   primary rule visible.
+4. Demonstrate **exactly one violation**, the one the manifest names. The
+   harness uses a superset assertion, so a second defect never fails the
+   gate — it competes with the planted one instead, and costs recall (see
+   "One defect, and the traps that hide it" below).
 
 5. End with `#fin` — the fixture body obeys every rule *except* the
    specific rule under test. In particular, a fixture that runs any
@@ -125,8 +124,8 @@ Every file under `tests/fixtures/` MUST:
 
 ## Assertion model
 
-**Superset-only.** A fixture passes if every BCS code named in its
-`bcs-fixture-expect:` pragma appears in `bcs check`'s output. Extra
+**Superset-only.** A fixture passes if every BCS code on its `EXPECT.tsv`
+line appears in `bcs check`'s output. Extra
 findings are logged as info (`◉ extra findings: ...`) but do not fail
 the test.
 
@@ -183,12 +182,13 @@ finding never fails it.
 
 2. Create `tests/fixtures/NN-descriptive-name.sh` (NN = next number,
    zero-padded).
-3. Include both pragmas at the top of the body.
+3. Add its line to `EXPECT.tsv`; put no label in the file.
 4. Keep the violation obvious and the surrounding code well-formed.
 5. Verify:
 
    ```bash
    shellcheck -x tests/fixtures/NN-*.sh
+   ./tests/test-data-structure.sh   # manifest and files agree
    ./tests/test-check-fixtures.sh   # with a backend
    ```
 
@@ -202,7 +202,7 @@ finding never fails it.
   than one pass of the corpus, so a free-tier key cannot run this gate. Either way it is too slow for the inner loop, so it runs
   under `make test-full`, never under `make test`.
 - **Backend variance.** Different backends/models produce different
-  finding sets. The suite pins effort `low` and the cheapest alias for
+  finding sets. The suite pins the default effort and the cheapest alias for
   the reachable backend, probed fastest first (`gpt5-mini` for openai,
   `flash-lite` for google, `haiku` for anthropic, `qwen-small` for
   ollama, `claude-code:haiku` for the Claude CLI; `BCS_FIXTURES_MODEL`

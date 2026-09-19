@@ -2,8 +2,6 @@
 set -euo pipefail
 shopt -s inherit_errexit
 declare -rx PATH=/usr/local/bin:/usr/bin:/bin
-# bcs-fixture-expect: BCS0504
-# bcs-fixture-description: Pipes `find` output into a while loop; BCS0504 mandates `< <(command)` process substitution to preserve variables.
 
 main() {
   local -a files=()

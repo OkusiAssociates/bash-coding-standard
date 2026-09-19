@@ -1,0 +1,44 @@
+# path	codes	description
+01-missing-strict-mode.sh	BCS0101	Missing `set -euo pipefail` and `shopt -s inherit_errexit` strict mode per BCS0101.
+02-undeclared-local.sh	BCS0202	Function variables not declared `local`; pollutes global scope per BCS0202.
+03-string-not-array.sh	BCS0206	Word-splits a string into an array and iterates with unquoted `${arr[@]}` per BCS0206 anti-pattern.
+04-backtick-substitution.sh	BCS0302	Uses legacy backtick command substitution instead of `$(...)` per BCS0302.
+05-unquoted-conditional.sh	BCS0303	RHS of `=~` is quoted, which disables regex matching per BCS0303.
+06-single-bracket-test.sh	BCS0501	Uses single-bracket `[ ... ]` conditionals on strings and numbers; BCS0501 mandates `[[ ... ]]` and `(( ... ))`. (File tests in `[ ]` belong to BCS0901.)
+07-piped-while-loop.sh	BCS0504	Pipes into `while read`, creating a subshell that loses variable mutations; BCS0504 is the canonical code for pipe-to-while (BCS0503 and BCS0903 defer to it).
+08-unchecked-return.sh	BCS0604	Critical `mv` and `cp` invocations have no `|| die` guard or context message per BCS0604.
+09-error-on-stdout.sh	BCS0702	Error messages written to stdout instead of stderr per BCS0702.
+10-no-arg-validation.sh	BCS0803	Option `-o` captures `$1` after `shift` without a `noarg` check; missing argument silently corrupts state per BCS0803.
+11-unquoted-file-test.sh	BCS0901	Uses `test -f` / `test -r` instead of `[[ -f ... ]]` / `[[ -r ... ]]` per BCS0901.
+12-glob-no-nullglob.sh	BCS0902	Globs without `./` path prefix; a file named `-rf` could hijack commands as flags per BCS0902.
+13-missing-path-hardening.sh	BCS1002	Script calls external commands without hardening PATH at start per BCS1002.
+14-uses-eval.sh	BCS1004	Uses `eval` for dynamic function dispatch where a `case` statement would be safer per BCS1004.
+15-unsafe-tempfile.sh	BCS1006	Hardcoded `/tmp/<name>_$$` temp path is predictable per BCS1006; should use `mktemp`.
+16-missing-cleanup-trap.sh	BCS0110	Creates a temp directory with `mktemp -d` but installs no `trap` for cleanup per BCS0110.
+17-ad-hoc-arg-parsing.sh	BCS0801	Ad-hoc `[[ $# -gt 0 ]]` with `if/elif` argument parsing instead of the BCS0801 `while (($#)); do case` pattern.
+18-process-sub-unreadable.sh	BCS0504	Pipes `find` output into a while loop; BCS0504 mandates `< <(command)` process substitution to preserve variables.
+19-conditional-declarations.sh	BCS0606	`((flag)) && action` chains without trailing `||:`; under `set -e`, script exits when the flag is zero per BCS0606.
+21-untracked-background-job.sh	BCS1101	Background jobs launched with `&` but their PIDs are never captured or waited on (BCS1101).
+22-recursive-nonlocal-var.sh	BCS0410	Recursive walk uses loop variable `entry` without `local`; recursion corrupts the caller's value (BCS0410).
+23-compound-version-check.sh	BCS0409	Bash version gate uses one compound `&&` over major/minor; wrongly rejects Bash 6.0 (BCS0409).
+24-suid-script.sh	BCS1001	Script sets the SUID bit on itself; SUID on Bash scripts is forbidden (BCS1001).
+25-missing-shebang.sh	BCS0102	No shebang at all; the first line of a script must be one of the three accepted bash shebangs per BCS0102. The shellcheck shell= directive only keeps the linter usable.
+27-strict-mode-before-fence.sh	BCS0406	Dual-purpose script applies `set -euo pipefail` above the source fence, so sourcing it alters the caller's shell; strict mode belongs below the fence per BCS0406.
+28-library-runs-directly.sh	BCS0407	Pure function library with no guard against direct execution; a library must reject being run per BCS0407.
+29-set-plus-e-block.sh	BCS0601	Disables strict mode with `set +e` around a command that may fail, instead of handling the failure explicitly per BCS0601.
+30-trap-double-quoted.sh	BCS0603	Trap command in double quotes expands `$TEMP_FILE` when the trap is installed (still empty), so the temp file is never removed; trap commands must be single-quoted per BCS0603.
+31-unsanitized-path-input.sh	BCS1005	A caller-supplied name is joined to a base directory and removed with no validation, so `../..` escapes the base (BCS1005).
+32-wait-status-discarded.sh	BCS1103	Waits on tracked background jobs with `wait "$pid" ||:`, discarding every exit code so failed jobs go unnoticed; failures must be accumulated per BCS1103.
+clean/01-greet.sh		Fully BCS-compliant minimal script; any finding is a false positive.
+clean/02-sum-args.sh		Fully BCS-compliant integer summation; any finding is a false positive.
+clean/03-count-lines.sh		Fully BCS-compliant non-blank line counter via redirect; any finding is a false positive.
+clean/04-cli-tool.sh		Realistic compliant CLI tool (metadata, messaging, noarg, bundled options, flag-guarded actions, readonly after parse, default case arm, #fin); any finding is a false positive.
+clean/05-parse-outside-main.sh		Compliant report script with argument parsing in its own function outside main(), locals assigned well after their declaration, a canonical path before find, and a cleanup trap installed before mktemp; any finding is a false positive.
+clean/06-toplevel-no-functions.sh		Short compliant script with top-level logic and no functions (allowed under ~200 lines): typed globals, inline-IFS read, quoted heredoc, builtin date formatting; any finding is a false positive.
+probabilistic/01-external-parse-no-rematch.sh	BCS0507	Parses a version tag with external grep/cut instead of [[ =~ ]] + BASH_REMATCH (BCS0507, recommended).
+probabilistic/02-eval-indirection-no-nameref.sh	BCS1004	Assigns through a variable name with eval instead of a `local -n` nameref. BCS1004 owns eval avoidance and is the canonical code; BCS0210 names the nameref alternative.
+probabilistic/03-no-shellcheck-directive.sh	BCS1206	A `#shellcheck disable=SC2155` directive with no reason given, on the line or above it, violating BCS1206's documented-exceptions requirement.
+probabilistic/04-path-executable-extension.sh	BCS0106	Installs a PATH-wide executable under a `.sh` name; globally available executables must have no extension per BCS0106.
+probabilistic/05-network-no-timeout.sh	BCS1104	Network fetch via curl with no timeout; a hung server stalls the script indefinitely (BCS1104).
+probabilistic/06-die-bypassed.sh	BCS0602	die() is defined, yet one failing exit below it hand-rolls `echo ...; exit 22` instead of calling it (BCS0602).
+probabilistic/07-help-via-messaging.sh	BCS0704	Help is printed through info(), which VERBOSE gates, so `-q -h` prints nothing (BCS0704).

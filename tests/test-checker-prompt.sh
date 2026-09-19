@@ -73,71 +73,57 @@ assert_prompt 'CLI @file' "$(< "$CLI_STANDARD_FILE")"
 assert_not_contains "$(< "$CLI_ARGV_FILE")" "@$STANDARD" \
   'CLI is not pointed at the full assembled standard' ||:
 
-# ---- Fixture pragmas never reach the model ----
-# The harness target, fixture 02, names its own answer in its header
-# (`# bcs-fixture-expect: BCS0202`). Measured 2026-09-17 on gpt5-mini -e low:
-# with those lines visible recall 1.000, blanked 0.546.
-begin_test '_checker_script'
-declare -- BLIND=''
-BLIND=$(_checker_script "$CHECK_TARGET")
-assert_contains "$(< "$CHECK_TARGET")" 'bcs-fixture-expect: BCS0202' 'target carries the pragma' ||:
-assert_not_contains "$BLIND" 'bcs-fixture-' 'pragma lines blanked' ||:
-assert_equal "$(wc -l < "$CHECK_TARGET")" "$(wc -l <<< "$BLIND")" 'line count unchanged' ||:
-# A pragma becomes a bare '#', never an empty line. Emptying it used to wedge
-# two consecutive blank lines between the shebang and `set -euo pipefail` --
-# a defect no fixture contains -- and BCS1203 then fired, correctly, on the
-# blinding's own artefact: 5 of 8 findings in a sampled sonnet pass over the
-# clean fixtures. Style tier, so it never moved an exit code, but it inflated
-# every false-positive figure in tests/accuracy/.
-assert_equal "$(grep -c '^$' "$CHECK_TARGET")" "$(grep -c '^$' <<< "$BLIND")" \
-  'blinding introduces no new blank line' ||:
-assert_equal 2 "$(grep -c '^#$' <<< "$BLIND")" 'each pragma left a bare comment' ||:
-declare -i DEFECT_LINE=0   # the fixture's planted defect, wherever it sits
-#shellcheck disable=SC2016  # literal $1: the fixture's own text
-DEFECT_LINE=$(grep -n -F 'filename=$1' "$CHECK_TARGET" | cut -d: -f1)
-assert_equal "$(sed -n "${DEFECT_LINE}p" "$CHECK_TARGET")" "$(sed -n "${DEFECT_LINE}p" <<< "$BLIND")" \
-  "line $DEFECT_LINE still line $DEFECT_LINE" ||:
-assert_equal "$(< "$TEST_DIR"/accuracy/cln)" "$(_checker_script "$TEST_DIR"/accuracy/cln)" \
-  'a script without pragmas passes through unchanged' ||:
+# ---- The script reaches the model byte-for-byte ----
+# Fixtures once named their own answer in header pragmas, which bcs blanked on
+# the way to the model (visible: recall 1.000; blanked: 0.546, gpt5-mini -e
+# low, 2026-09-17). The labels now live in tests/fixtures/EXPECT.tsv, so there
+# is nothing to hide and bcs alters nothing: what is on disk is what is judged.
+begin_test 'fixtures carry no label'
+assert_not_contains "$(< "$CHECK_TARGET")" 'bcs-fixture-' 'target carries no pragma' ||:
+assert_not_contains "$(< "$CHECK_TARGET")" 'BCS0202' 'target does not name its own defect' ||:
 
-begin_test 'pragmas hidden from API backends'
-# assert_blind LABEL -> the request body neither names the pragma nor its code
-assert_blind() {
-  assert_not_contains "$(< "$PAYLOAD_FILE")" 'bcs-fixture-' "$1: no pragma in the request" ||:
-  assert_not_contains "$(< "$PAYLOAD_FILE")" 'pollutes global scope per BCS0202' \
-    "$1: no fixture description in the request" ||:
+begin_test 'script reaches API backends unaltered'
+declare -- NUMBERED=''
+NUMBERED=$(nl -ba -w4 -s': ' -- "$CHECK_TARGET") || die 1 "Cannot number ${CHECK_TARGET@Q}"
+# assert_verbatim LABEL PROMPT -> the numbered script, whole, is in the prompt
+assert_verbatim() {
+  assert_contains "$2" "$NUMBERED" "$1: script in the request byte-for-byte" ||:
 }
 reset_cache; run_check "$OPENAI_OK" -m gpt-5
-assert_blind openai
-#shellcheck disable=SC2016  # literal $1: the fixture's own defect line
-assert_contains "$(jq -r '.messages[1].content' "$PAYLOAD_FILE")" "$(printf '%4d:   filename=$1' "$DEFECT_LINE")" \
-  'openai: script still numbered from the original lines' ||:
-reset_cache; run_check "$GOOGLE_OK" -m gemini-2.5-flash;      assert_blind google
-reset_cache; run_check "$ANTHROPIC_OK" -m claude-sonnet-4-6;  assert_blind anthropic
-reset_cache; run_check "$OLLAMA_OK" -m qwen3.5:9b;            assert_blind ollama
-reset_cache; run_check "$OPENAI_OK" -m gpt-5 -j;              assert_blind 'openai -j'
+assert_verbatim openai "$(jq -r '.messages[1].content' "$PAYLOAD_FILE")"
+reset_cache; run_check "$GOOGLE_OK" -m gemini-2.5-flash
+assert_verbatim google "$(jq -r '.contents[0].parts[0].text' "$PAYLOAD_FILE")"
+reset_cache; run_check "$ANTHROPIC_OK" -m claude-sonnet-4-6
+assert_verbatim anthropic "$(jq -r '.messages[0].content' "$PAYLOAD_FILE")"
+reset_cache; run_check "$OLLAMA_OK" -m qwen3.5:9b
+assert_verbatim ollama "$(jq -r '.messages[1].content' "$PAYLOAD_FILE")"
+reset_cache; run_check "$OPENAI_OK" -m gpt-5 -j
+assert_verbatim 'openai -j' "$(jq -r '.messages[1].content' "$PAYLOAD_FILE")"
 
-begin_test 'pragmas hidden from the CLI backend'
+begin_test 'CLI backend reads a copy, not the original'
+# The agent has Read/Grep/Glob: pointed at the original it could read the
+# script's neighbours, and a fixture sits beside the manifest naming its defect.
 reset_cache
 MOCK_CLI_OUTPUT='No BCS violations found.'
 run_check '' -m claude-code:haiku
 assert_not_contains "$(< "$CLI_ARGV_FILE")" "@$CHECK_TARGET" 'CLI is not pointed at the original script' ||:
-assert_contains "$(< "$CLI_SCRIPT_FILE")" 'process_file()' 'CLI is pointed at a readable copy' ||:
-assert_not_contains "$(< "$CLI_SCRIPT_FILE")" 'bcs-fixture-' 'CLI copy has the pragmas blanked' ||:
-assert_equal "$(wc -l < "$CHECK_TARGET")" "$(wc -l < "$CLI_SCRIPT_FILE")" 'CLI copy keeps the line count' ||:
+assert_equal "$(< "$CHECK_TARGET")" "$(< "$CLI_SCRIPT_FILE")" 'CLI copy is byte-for-byte the script' ||:
 
-begin_test 'cache keys on what the model saw'
-# A hand-blanked twin builds the same prompt, so it must hit the same entry;
-# were the key still the raw file, a leak-era answer would be served again.
+begin_test 'cache keys on the script content'
+# A byte-identical twin elsewhere builds the same prompt: same entry. One
+# changed byte: a new entry.
 declare -- TWIN="$SANDBOX"/${CHECK_TARGET##*/}
-sed 's/^# bcs-fixture-.*$/#/' "$CHECK_TARGET" > "$TWIN"   # not via the helper under test
+cp -- "$CHECK_TARGET" "$TWIN" || die 1 "Cannot copy ${CHECK_TARGET@Q}"
 reset_cache; run_check "$OPENAI_OK" -m gpt-5
 assert_equal 1 "$(cache_count)" 'fixture run writes one entry' ||:
 declare -- ORIG_TARGET=$CHECK_TARGET
 CHECK_TARGET=$TWIN
 run_check '' -m gpt-5
-assert_equal 0 "$RC" 'blanked twin is served from that entry' ||:
+assert_equal 0 "$RC" 'identical twin is served from that entry' ||:
 assert_equal 1 "$(cache_count)" 'and writes no second entry' ||:
+echo '# one more line' >> "$TWIN"
+run_check "$OPENAI_OK" -m gpt-5
+assert_equal 2 "$(cache_count)" 'an edited twin writes its own entry' ||:
 CHECK_TARGET=$ORIG_TARGET
 
 # ---- Text-mode output contract: identical in both prompt builders ----

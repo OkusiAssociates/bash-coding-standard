@@ -31,11 +31,18 @@ set -euo pipefail
 printf '%s\n' "$*" >> "$STUB_ARGV_LOG"
 declare -r FIXTURE=${!#}
 
+# expected -> the fixture's codes from the sidecar manifest, one per line
+expected() {
+  local -- rel=${FIXTURE##*/fixtures/}
+  awk -F'\t' -v k="$rel" '$1 == k {print $2}' "${FIXTURE%"$rel"}"EXPECT.tsv \
+    | grep -oE 'BCS[0-9]{4}'
+}
+
 emit_findings() {
   local -- code
   while IFS= read -r code; do
     printf '[ERROR] %s line 1: stub finding\n' "$code"
-  done < <(sed -n '1,15p' "$FIXTURE" | grep -F 'bcs-fixture-expect:' | grep -oE 'BCS[0-9]{4}')
+  done < <(expected ||:)
   exit 1
 }
 
@@ -56,19 +63,18 @@ case ${STUB_MODE:-findings} in
   jsonfp)   # Every expected code, plus one the fixture never planted. BCS1203
             # is a real style rule that none of the fixtures used here expect,
             # so it lands in the false-positive tally on every single run.
-            { sed -n '1,15p' "$FIXTURE" | grep -F 'bcs-fixture-expect:' \
-                | grep -oE 'BCS[0-9]{4}' ||:; echo BCS1203; } \
+            { expected ||:; echo BCS1203; } \
               | jq -R -s -c '{source: "bcs", meta: {},
                    comments: (split("\n") | map(select(. != "")
                               | {bcsCode: ., line: 1, level: "error"}))}' ;;
-  jsonfind) sed -n '1,15p' "$FIXTURE" | grep -F 'bcs-fixture-expect:' | grep -oE 'BCS[0-9]{4}' \
+  jsonfind) { expected ||:; } \
               | jq -R -s -c '{source: "bcs", meta: {},
                    comments: (split("\n") | map(select(. != "")
                               | {bcsCode: ., line: 1, level: "error"}))}' ;;
   *)        emit_findings ;;
 esac
 STUB
-chmod +x "$STUB"
+chmod -- +x "$STUB"
 
 # Reachability mocks, imported by the child bash. curl answers the Ollama
 # /api/tags probe; claude only has to exist for `command -v`.

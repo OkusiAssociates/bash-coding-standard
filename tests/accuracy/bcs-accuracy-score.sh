@@ -4,7 +4,7 @@
 #
 # Turns the accuracy *collector* (bcs-check-accuracy.sh, which only dumps model
 # output) into a *scorer*: it parses `bcs check -j` findings against each
-# fixture's `bcs-fixture-expect:` pragma to compute precision / recall / F1
+# fixture's entry in tests/fixtures/EXPECT.tsv to compute precision / recall / F1
 # (aggregate and per-rule), and re-runs every fixture N times to report a
 # run-to-run stability score -- quantifying the LLM checker's non-determinism.
 #
@@ -13,7 +13,7 @@
 #   tests/fixtures/probabilistic/*.sh  scored, not gated (recommended-tier, or core rules cheap models miss)
 #   tests/fixtures/clean/*.sh        compliant scripts -- ANY finding is a FP
 #
-# Scoring (per fixture, per run, against the pragma's expected code set):
+# Scoring (per fixture, per run, against the manifest's expected code set):
 #   TP = reported codes that were expected
 #   FP = reported codes that were NOT expected  (all findings on clean fixtures)
 #   FN = expected codes that were NOT reported
@@ -46,6 +46,7 @@ PROJECT_DIR=$(realpath -- "$SCRIPT_DIR/../..")
 declare -r PROJECT_DIR
 declare -r BCS_CMD=${BCS_SCORE_CMD:-"$PROJECT_DIR"/bcs}
 declare -r FIXTURES_DIR="$PROJECT_DIR"/tests/fixtures
+declare -r MANIFEST="$FIXTURES_DIR"/EXPECT.tsv
 
 # Tunables (env defaults; CLI flags override).
 declare -- MODEL=${BCS_SCORE_MODEL:-}
@@ -211,14 +212,14 @@ main() {
   info "model=$MODEL backend=$backend effort=$EFFORT runs=$RUNS fixtures=${#corpus[@]}"
 
   # Precompute expected sets. A fixture is "clean" only if it lives under
-  # clean/ (deliberately empty pragma). A fixture with NO expect pragma that
+  # clean/ (deliberately empty codes field). A fixture with NO expected code that
   # is not under clean/ is mislabeled -- scoring it as clean would silently
   # flip its real detections from TP to FP -- so exclude it with a warning.
   local -A EXP=() IS_CLEAN=()
   local -- expected
   local -a scorable=()
   for f in "${corpus[@]}"; do
-    expected=$(sed -n '1,15p' "$f" | grep -F 'bcs-fixture-expect:' \
+    expected=$(awk -F'\t' -v k="${f##*/fixtures/}" '$1 == k {print $2}' "$MANIFEST" \
       | grep -oE 'BCS[0-9]{4}' | sort -u || true)
     EXP[$f]=$expected
     if [[ $f == */clean/* ]]; then
@@ -226,11 +227,11 @@ main() {
     elif [[ -n $expected ]]; then
       IS_CLEAN[$f]=0; scorable+=("$f")
     else
-      warn "no bcs-fixture-expect pragma and not in clean/: ${f##*/} -- excluded from scoring"
+      warn "no expected code in ${MANIFEST##*/} and not in clean/: ${f##*/} -- excluded from scoring"
     fi
   done
   corpus=("${scorable[@]}")
-  ((${#corpus[@]})) || die 3 'no scorable fixtures (all lacked an expect pragma)'
+  ((${#corpus[@]})) || die 3 'no scorable fixtures (none has an expected code in the manifest)'
 
   # Per-run scratch (accumulators are module globals, reset at declaration).
   local -i run i_tp i_fp i_fn

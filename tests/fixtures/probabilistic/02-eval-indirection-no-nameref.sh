@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 shopt -s inherit_errexit
-# bcs-fixture-expect: BCS1004
-# bcs-fixture-description: Assigns through a variable name with eval instead of a `local -n` nameref. BCS1004 owns eval avoidance and is the canonical code; BCS0210 names the nameref alternative.
 
 set_var() {
   eval "$1=\$2"

@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 shopt -s inherit_errexit
-# bcs-fixture-expect: BCS0801
-# bcs-fixture-description: Ad-hoc `[[ $# -gt 0 ]]` with `if/elif` argument parsing instead of the BCS0801 `while (($#)); do case` pattern.
 
 main() {
   local -i verbose=0

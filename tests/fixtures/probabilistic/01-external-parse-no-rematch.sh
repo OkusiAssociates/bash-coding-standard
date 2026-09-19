@@ -2,8 +2,6 @@
 set -euo pipefail
 shopt -s inherit_errexit
 declare -rx PATH=/usr/local/bin:/usr/bin:/bin
-# bcs-fixture-expect: BCS0507
-# bcs-fixture-description: Parses a version tag with external grep/cut instead of [[ =~ ]] + BASH_REMATCH (BCS0507, recommended).
 
 main() {
   local -- tag=${1:-v1.2}

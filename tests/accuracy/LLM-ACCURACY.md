@@ -119,6 +119,16 @@ something: a blank line draws BCS1203, a bare comment draws BCS1202, and
 deleting the lines outright would break the line numbers the blinding exists to
 preserve.
 
+✓ **Closed 2026-09-19 (bcs 2.0.8): the labels left the files.** The fourth
+option was not on that list: keep no label in the fixture at all. Expected
+codes and descriptions now live in `tests/fixtures/EXPECT.tsv`, the fixtures
+lost their two pragma lines, and `_checker_script` left `bcs` -- the script on
+disk reaches every backend byte-for-byte (`tests/test-checker-prompt.sh`), and
+`tests/test-data-structure.sh` holds the manifest to the files. The Claude CLI
+backend still reads a temp-dir *copy*, for a new reason: its agent has
+Read/Grep/Glob, and a fixture now sits beside the manifest that names its
+defect.
+
 **2. Clean fixture 06 was not clean.** Its `#shellcheck disable=SC2015` carried
 no reason, which BCS1206 -- `core`, and tightened the same day -- makes a
 finding. Every checker that reported it was right, and the scorer counted it

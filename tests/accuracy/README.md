@@ -6,7 +6,7 @@ Two tools live here, with different jobs:
 | Tool | Job |
 |------|-----|
 | `bcs-check-accuracy.sh` | **Collector.** Runs `bcs check` over sample scripts across many model×effort combinations and dumps the raw markdown output for eyeballing. No ground truth, no score. |
-| `bcs-accuracy-score.sh` | **Scorer.** Runs `bcs check -j` over the *labelled* fixture corpus, compares findings against each fixture's `bcs-fixture-expect:` pragma, and computes precision / recall / F1 (aggregate + per-rule) plus a run-to-run **stability** score. |
+| `bcs-accuracy-score.sh` | **Scorer.** Runs `bcs check -j` over the *labelled* fixture corpus, compares findings against each fixture's line in `tests/fixtures/EXPECT.tsv`, and computes precision / recall / F1 (aggregate + per-rule) plus a run-to-run **stability** score. |
 
 The scorer is what turns "the LLM checker is non-deterministic and we hope it's
 accurate" into numbers.
@@ -41,11 +41,13 @@ tests/fixtures/clean/*.sh        fully BCS-compliant scripts; expected findings 
 
 The scorer reads all three. `tests/test-check-fixtures.sh` reads only the
 top-level `*.sh` (its superset assertion would hard-fail on the variance of the
-`probabilistic/` fixtures and on the empty-pragma `clean/` fixtures).
+`probabilistic/` fixtures and on the `clean/` fixtures, which expect nothing).
 
-Expected codes come from the same `# bcs-fixture-expect: BCSdddd ...` pragma the
-fixture harness uses (see `../fixtures/README.md`). A fixture with an empty
-pragma — or any fixture under `clean/` — expects zero findings.
+Expected codes come from the same sidecar manifest the fixture harness uses,
+`tests/fixtures/EXPECT.tsv` (path, codes, description; see
+`../fixtures/README.md`). No label sits inside a fixture, so nothing has to be
+hidden from the model. A fixture under `clean/` has an empty codes field and
+expects zero findings.
 
 ## Running
 

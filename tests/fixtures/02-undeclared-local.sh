@@ -2,8 +2,6 @@
 set -euo pipefail
 shopt -s inherit_errexit
 declare -rx PATH=/usr/local/bin:/usr/bin:/bin
-# bcs-fixture-expect: BCS0202
-# bcs-fixture-description: Function variables not declared `local`; pollutes global scope per BCS0202.
 
 process_file() {
   filename=$1

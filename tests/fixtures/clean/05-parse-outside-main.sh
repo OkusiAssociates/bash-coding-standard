@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# bcs-fixture-expect:
-# bcs-fixture-description: Compliant report script with argument parsing in its own function outside main(), locals assigned well after their declaration, a canonical path before find, and a cleanup trap installed before mktemp; any finding is a false positive.
 set -euo pipefail
 shopt -s inherit_errexit
 

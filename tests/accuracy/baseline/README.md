@@ -109,7 +109,11 @@ bare `#`, wedging two consecutive blank lines into every fixture and provoking
 a correct BCS1203 finding about a defect no fixture contains; and clean fixture
 06 carried a bare `#shellcheck disable=SC2015` with no reason, a real BCS1206
 violation the scorer was counting against the checker. **Nothing measured
-before 2026-09-18 is comparable with these.** See
+before 2026-09-18 is comparable with these.** Baselines taken before the labels
+moved to `tests/fixtures/EXPECT.tsv` (2026-09-19, bcs 2.0.8) also showed the
+model two extra header lines per fixture, the blinded pragmas as bare `#`
+comments, which drew BCS1202 now and then; line numbers in their findings are
+two higher than in the files as they now stand. See
 [`../LLM-ACCURACY.md`](../LLM-ACCURACY.md) for what the fixes changed.
 
 See [`../LLM-ACCURACY.md`](../LLM-ACCURACY.md) for the per-rule comparison, and
