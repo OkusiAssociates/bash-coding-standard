@@ -4,6 +4,8 @@
 # Passes all arguments to bcs check; defaults via ~/.config/bcs/bcs.conf
 set -euo pipefail
 shopt -s inherit_errexit
+# ~/.local/bin first: bcs may be installed there rather than system-wide.
+declare -rx PATH="$HOME"/.local/bin:/usr/local/bin:/usr/bin:/bin
 command -v bcs >/dev/null || { >&2 echo "${0##*/}: bcs not found"; exit 18; }
 exec bcs check "$@"
 #fin

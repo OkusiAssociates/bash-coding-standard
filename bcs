@@ -98,7 +98,10 @@ declare -r OUTPUT_CONTRACT="Output format (mandatory, machine-parsed):
 - Never print a finding you then retract. Decide silently; print confirmed violations only.
 - The same rule broken on several lines: one finding per line, or one finding with \"lines N,M,O\".
 - If there are no violations, output exactly one line: $CLEAN_LINE"
-declare -r ERROR_FINDING_RE='^[[:space:]]*([-*+>#]+[[:space:]]+|[0-9]+[.)][[:space:]]+)*[*_`]*(\[ERROR\]|BCS[0-9]{4}[^[:alnum:]].{0,40}\[ERROR\])'
+# Split at the group boundary (BCS1201): leading Markdown decoration, then
+# the finding itself. Adjacent quoted fragments concatenate.
+declare -r ERROR_FINDING_RE='^[[:space:]]*([-*+>#]+[[:space:]]+|[0-9]+[.)][[:space:]]+)*[*_`]*'\
+'(\[ERROR\]|BCS[0-9]{4}[^[:alnum:]].{0,40}\[ERROR\])'
 
 # ---- Messaging System ----
 # vecho()/debug() (and DEBUG) belong to the BCS reference messaging suite and
@@ -164,7 +167,8 @@ read_conf() {
       ''|?([0-7])[0-7][0145][0145])
         : ;; # stat failed, or safe perms
       ?([0-7])[0-7][0-7][2367])
-        die 13 "$conf_file: world-writable (mode $mode) -- refusing to source as shell; run: chmod o-w ${conf_file@Q}" ;;
+        die 13 "$conf_file: world-writable (mode $mode) -- refusing to source as" \
+                "shell; run: chmod o-w ${conf_file@Q}" ;;
       *)
         warn "$conf_file: group-writable mode $mode -- file is sourced as shell; chmod g-w recommended" ;;
     esac
@@ -294,7 +298,7 @@ ${BOLD}Result Cache:$NC
   Successful results are cached under \${XDG_CACHE_HOME:-~/.cache}/bcs/, keyed
   on the script content, standard content, model, effort, and all filters --
   re-checking an unchanged script returns instantly at zero API cost. Any
-  change to an input produces a new key. Use ${BOLD}--no-cache$NC (or BCS_CACHE=0) to
+  change to an input produces a new key. Use $BOLD--no-cache$NC (or BCS_CACHE=0) to
   force a fresh LLM call. Safe to delete the directory at any time.
 
 ${BOLD}Raw Response Dump:$NC
@@ -350,14 +354,14 @@ ${BOLD}Effort Levels:$NC
   max         Exhaustive line-by-line audit (64k tokens, 16k thinking)
 
 ${BOLD}Tiers & Severity:$NC
-  Rules carry a ${BOLD}**Tier:**$NC field. The check command maps tier to severity:
+  Rules carry a $BOLD**Tier:**$NC field. The check command maps tier to severity:
     core        -> [ERROR]  (non-zero exit when any [ERROR] found)
     recommended -> [WARN]
     style       -> [WARN]
     disabled    -> not reported
 
-  Use ${BOLD}-T core$NC for CI gates (fail only on core violations) or
-  ${BOLD}-M recommended$NC to skip style findings during development.
+  Use $BOLD-T core$NC for CI gates (fail only on core violations) or
+  $BOLD-M recommended$NC to skip style findings during development.
 
 ${BOLD}Policy Overrides:$NC
   Place ${BOLD}policy.conf$NC at any of these cascading locations (later wins):
@@ -421,7 +425,7 @@ ${BOLD}Text Output:$NC
   The checker is an LLM: treat the shape as a strong convention, not a grammar.
 
 ${BOLD}JSON Output:$NC
-  With ${BOLD}-j/--json$NC, stdout contains a single JSON object shaped like:
+  With $BOLD-j/--json$NC, stdout contains a single JSON object shaped like:
     { "source": "bcs", "meta": { ... }, "comments": [ ... ] }
   The schema mirrors ${BOLD}shellcheck --format=json1$NC so existing tooling can
   consume findings with minimal adjustment. Info messages still go to stderr
@@ -460,7 +464,7 @@ with its effective tier (default from the rule body, overridden by
 policy.conf). Section-overview headings (BCS##00) carry no tier and print
 without decoration.
 
-Use ${BOLD}--explain$NC to drill into a specific rule after a failed ${BOLD}bcs check$NC run --
+Use $BOLD--explain$NC to drill into a specific rule after a failed ${BOLD}bcs check$NC run --
 prints the full rule body (heading, tier, rationale, examples).
 
 ${BOLD}Example Output:$NC
@@ -565,10 +569,12 @@ _load_tiers() {
       if [[ " ${VALID_TIERS[*]} " == *" $tier "* ]]; then
         BCS_TIERS[$current_code]=$tier
       else
-        warn "${current_code}: invalid tier ${tier@Q} in section source"
+        warn "$current_code: invalid tier ${tier@Q} in section source"
       fi
       current_code=''
     fi
+  # 2>/dev/null ||: a section file that vanished between the glob and the read
+  # yields no codes, which the caller already treats as "no rules here".
   done < <(cat -- "${files[@]}" 2>/dev/null ||:)
   _TIERS_LOADED=1
 }
@@ -650,6 +656,8 @@ _policy_summary() {
 # can be diagnosed without re-running the check.
 _dump_response() {
   [[ -n ${BCS_RESPONSE_DUMP:-} ]] || return 0
+  # 2>/dev/null ||: the dump is a diagnostic; an unwritable path must not turn
+  # a completed check into a failure.
   printf '%s\n' "$1" > "$BCS_RESPONSE_DUMP" 2>/dev/null ||:
 }
 
@@ -660,7 +668,7 @@ _dump_response() {
 # anything else (printed). User rules and the coda, which follow, survive.
 # awk, not parameter expansion: Bash takes ~4 s to cut a 116 KB string.
 _checker_standard() {
-  awk '
+  awk -- '
     function flush(   i) { for (i = 1; i <= held_n; i++) print held[i]; held_n = 0 }
     /^---$/          { skip = 0; flush(); held[++held_n] = $0; next }
     held_n && /^$/   { held[++held_n] = $0; next }
@@ -1240,7 +1248,7 @@ _llm_claude_cli() {
   # single-quoted trap (expanded at trap time, not definition time) so a
   # cwd path containing shell metacharacters cannot inject commands.
   local -- ret_dir=$PWD
-  trap 'cd "$ret_dir" 2>/dev/null ||:; rm -rf -- "$check_dir"' RETURN
+  trap 'cd -- "$ret_dir" 2>/dev/null ||:; rm -rf -- "$check_dir"' RETURN
   # The CLI's stderr goes to the response dump, not /dev/null: an auth or
   # quota failure is otherwise a bare non-zero exit. Anchor a relative dump
   # path now, before the cd below changes what it would resolve against.
@@ -1383,6 +1391,7 @@ cmd_display() {
 
   while (($#)); do case $1 in
     -c|--cat)     force_cat=1 ;;
+    #bcscheck disable=BCS0806  # -f prints the standard's path here; established CLI
     -f|--file)    _find_bcs_md || die 3 'BASH-CODING-STANDARD.md not found'; return 0 ;;
     -S|--symlink) bcs_file=$(_find_bcs_md) || die 3 'BASH-CODING-STANDARD.md not found'
                   [[ ! -e $_link || -L $_link ]] \
@@ -1439,6 +1448,7 @@ cmd_template() {
                      [[ " ${VALID_TEMPLATES[*]} " == *" $template_type "* ]] || \
                        die 22 "Invalid template type ${template_type@Q} (valid: minimal, basic, complete, library)"
                      ;;
+    #bcscheck disable=BCS0806  # -n names the generated script here; established CLI
     -n|--name)       noarg "$@"; shift; script_name=$1 ;;
     -d|--desc)       noarg "$@"; shift; description=$1 ;;
     #bcscheck disable=BCS0806  # -V takes the template version here, not the tool version
@@ -1596,8 +1606,8 @@ cmd_check() {
   case $model in
     fast|balanced|thorough)
       die 22 "Tier keyword ${model@Q} no longer supported; use a model name or" \
-             "alias (e.g. -m sonnet, -m opus, -m gpt5). See ${SCRIPT_NAME}.conf.sample" \
-             "for the alias map, or run ${SCRIPT_NAME} help check. After updating," \
+             "alias (e.g. -m sonnet, -m opus, -m gpt5). See $SCRIPT_NAME.conf.sample" \
+             "for the alias map, or run $SCRIPT_NAME help check. After updating," \
              "reload your shell to refresh tab-completion."
       ;;
     *) : ;;
@@ -1612,6 +1622,7 @@ cmd_check() {
       local -- inner=${BCS_MODEL:-sonnet}
       case $inner in
         claude-code|claude-code:*) inner=sonnet ;;
+        *) ;;                          # any other model name passes through
       esac
       model=$(_expand_alias "$inner")
       ;;
@@ -1622,6 +1633,7 @@ cmd_check() {
       local -- suffix=${model#claude-code:}
       case $suffix in
         claude-code|claude-code:*) suffix=sonnet ;;
+        *) ;;                          # any other suffix passes through
       esac
       model=$(_expand_alias "$suffix")
       ;;
@@ -1687,8 +1699,10 @@ cmd_check() {
     filter_instr="FILTER: Only report findings for rules at tier ${tier_filter@Q}. Omit all others."
   elif [[ -n $min_tier_filter ]]; then
     case $min_tier_filter in
-      core)        filter_instr="FILTER: Only report findings for rules at tier 'core'. Omit 'recommended' and 'style'." ;;
-      recommended) filter_instr="FILTER: Only report findings for rules at tier 'core' or 'recommended'. Omit 'style'." ;;
+      core)        filter_instr="FILTER: Only report findings for rules at tier 'core'."
+                   filter_instr+=" Omit 'recommended' and 'style'." ;;
+      recommended) filter_instr="FILTER: Only report findings for rules at tier 'core' or"
+                   filter_instr+=" 'recommended'. Omit 'style'." ;;
       style)       : ;;  # report all
       *)           : ;;  # unreachable: validated at -M parse time
     esac
@@ -1740,7 +1754,8 @@ cmd_check() {
     [[ -z $policy_text ]] || sys_prompt+=$'\n'"$policy_text"
 
     # Prepend line numbers so the model can reference lines accurately
-    numbered_script=$(nl -ba -w4 -s': ' -- "$script_file")
+    numbered_script=$(nl -ba -w4 -s': ' -- "$script_file") \
+      || die 1 "Failed to number ${script_file@Q}"
 
     # Effort-level-specific guidance
     case $effort in
@@ -1774,6 +1789,7 @@ Rules:
 
 $effort_guidance"
       [[ -z $filter_instr ]] || usr_prompt+=$'\n\n'"$filter_instr"
+      #bcscheck disable=BCS1201 — LLM prompt prose; wrapping degrades instruction quality
       ((strict)) && usr_prompt+=$'\n\nSTRICT MODE: Map recommended/style violations to level \"error\" instead of \"warning\".' ||:
       usr_prompt+="
 
@@ -1977,6 +1993,7 @@ cmd_codes() {
                    [[ $explain_code =~ ^BCS[0-9]{4}$ ]] \
                      || die 22 "Invalid code ${explain_code@Q} (expected BCS####)"
                    ;;
+    #bcscheck disable=BCS0806  # -p is plain output here, not a port; established CLI
     -p|--plain)    show_tier=0 ;;
     -x|--exclude-disabled) include_disabled=0 ;;
     -J|--json)     json_mode=1 ;;
@@ -1996,13 +2013,13 @@ cmd_codes() {
     local -- src found=''
     for src in "${sources[@]}"; do
       [[ -f $src ]] || continue
-      if grep -q "^## $explain_code " "$src" 2>/dev/null; then
+      if grep -q -- "^## $explain_code " "$src" 2>/dev/null; then
         found=$src
         break
       fi
     done
     [[ -n $found ]] || die 3 "Rule ${explain_code@Q} not found"
-    awk -v code="$explain_code" '
+    awk -v code="$explain_code" -- '
       /^## BCS/ {
         if (printing) exit
         if ($0 ~ "^## "code" ") printing=1
@@ -2148,11 +2165,12 @@ cmd_generate() {
   # ${tmp_out@Q} bakes a shell-quoted literal into the trap -- injection-safe (an
   # -o path with quotes cannot break out) and refire-safe: a RETURN trap persists
   # and fires again when main returns, where a late "$tmp_out" would be unbound.
-  local -- tmp_out="$output_file".tmp
+  local -- out_dir=${output_file%/*} tmp_out=''
+  [[ $out_dir != "$output_file" ]] || out_dir=.
+  trap '[[ -z ${tmp_out:-} ]] || rm -f -- "$tmp_out"' RETURN
+  tmp_out=$(mktemp -- "$out_dir"/.bcs-generate.XXXXXX) \
+    || die 1 "Failed to create a temp file in ${out_dir@Q}"
   _register_tmp "$tmp_out"
-  #bcscheck disable=BCS0603  # deliberate early expansion, see the comment above
-  #shellcheck disable=SC2064  # same: ${tmp_out@Q} is quoted for the trap now
-  trap "rm -f -- ${tmp_out@Q}" RETURN
   local -i first=1
   { for section_file in "${section_files[@]}"; do
       if ((first)); then
