@@ -152,7 +152,7 @@ bcs template -t complete -n deploy -d 'Deploy script' -o deploy.sh -x
 |------|-------|-----|
 | `minimal` | ~18 | Bare essentials |
 | `basic` | ~47 | Standard with metadata (default) |
-| `complete` | ~114 | Full toolkit (main, args, messaging, cleanup) |
+| `complete` | ~119 | Full toolkit (main, args, messaging, cleanup) |
 | `library` | ~37 | Sourceable library (no `main`) |
 
 ### `bcs codes`

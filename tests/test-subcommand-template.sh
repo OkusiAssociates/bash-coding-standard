@@ -117,7 +117,7 @@ done
 # Test: help line counts match actual templates
 begin_test 'help line counts match actual templates'
 declare -i line_mismatches=0
-declare -Ar expected_lines=([minimal]=18 [basic]=47 [complete]=114 [library]=37)
+declare -Ar expected_lines=([minimal]=18 [basic]=47 [complete]=119 [library]=37)
 for ttype in minimal basic complete library; do
   actual_lines=$("$BCS_CMD" template -t "$ttype" 2>/dev/null | wc -l)
   expected=${expected_lines[$ttype]}
@@ -188,7 +188,7 @@ done
 # ("# Make parsed variables readonly"), and a blind audit of the generated
 # `basic` script reported BCS0403 in 3 runs of 3. `minimal` parses nothing and
 # `library` is sourced, so neither owes a readonly.
-declare -Ar parsed_flags=([minimal]='' [basic]='VERBOSE' [complete]='VERBOSE DEBUG' [library]='')
+declare -Ar parsed_flags=([minimal]='' [basic]='VERBOSE' [complete]='VERBOSE DEBUG PROMPT' [library]='')
 declare -- flags='' ro_ln='' last_assign_ln=''
 for ttype in minimal basic complete library; do
   begin_test "BCS0403 readonly-after-parse in $ttype template"

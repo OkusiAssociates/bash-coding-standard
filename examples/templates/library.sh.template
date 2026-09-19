@@ -2,6 +2,12 @@
 # {{DESCRIPTION}}
 # This is a sourceable library script
 
+# --- reject direct execution: a pure library is sourced, never run ---
+[[ ${BASH_SOURCE[0]} != "$0" ]] || {
+  >&2 echo "Error: ${0@Q} must be sourced"
+  exit 1
+}
+
 # --- already-sourced fence ---
 [[ ! -v {{NAME}}_VERSION ]] || return 0
 # Library metadata
@@ -12,10 +18,10 @@ declare -rx {{NAME}}_PATH=$(realpath -- "${BASH_SOURCE[0]}")
 declare -rx {{NAME}}_DIR=${{{NAME}}_PATH%/*}
 
 # Messaging functions (library prefix)
-{{NAME}}_msg() { printf "{{NAME}}: %s\n" "$@"; }
+{{NAME}}_msg()   { >&2 printf '{{NAME}}: %s\n' "$@"; }
 declare -fx {{NAME}}_msg
 
-{{NAME}}_error() { >&2 {{NAME}}_msg "$@"; }
+{{NAME}}_error() { >&2 printf '{{NAME}}: ✗ %s\n' "$@"; }
 declare -fx {{NAME}}_error
 
 # Example library function
@@ -25,13 +31,11 @@ declare -fx {{NAME}}_error
 }
 declare -fx {{NAME}}_hello
 
-# Library initialization
+# Library initialization -- the caller invokes this. A library defines
+# functions and has no side effects on source (BCS0407).
 {{NAME}}_init() {
   # TODO: Add initialization logic
   return 0
 }
 declare -fx {{NAME}}_init
-
-# Auto-initialize on source
-{{NAME}}_init
 #fin
