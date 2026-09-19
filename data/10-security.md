@@ -157,6 +157,8 @@ Validate early, fail securely with clear errors, run with minimum necessary perm
 
 Always use `mktemp`. Never hardcode temp file paths.
 
+This rule owns how a temporary name is made: a hardcoded or predictable path is cited here. The cleanup trap belongs to BCS0110 -- a temporary resource with no cleanup trap, or a trap installed after `mktemp`, is cited as BCS0110, not as this rule. The examples below show the trap only because a correct example must obey BCS0110.
+
 ```bash
 # correct — temp file: trap first (BCS0110), guarded while the name is still empty
 declare -- temp_file=''

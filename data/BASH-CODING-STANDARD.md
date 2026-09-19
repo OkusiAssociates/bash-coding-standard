@@ -330,7 +330,7 @@ TEMP_DIR=$(mktemp -d) || die 1 'Failed to create temp dir'
 
 Always disable traps inside the cleanup function to prevent recursion.
 
-This rule governs structural placement: cleanup function and trap installed before any resource-creating code. The trap/cleanup pattern itself (quoting, signal lists, recursion guard) is owned by BCS0603 — cite BCS0603 for trap-content violations and BCS0110 for ordering violations.
+This rule governs structural placement: cleanup function and trap installed before any resource-creating code. A script that creates a temporary resource and installs no cleanup trap at all is cited here too, not as BCS1006, which owns only how the temporary name is made. The trap/cleanup pattern itself (quoting, signal lists, recursion guard) is owned by BCS0603 — cite BCS0603 for trap-content violations and BCS0110 for ordering violations.
 
 ## BCS0111 Configuration File Loading
 
@@ -2737,6 +2737,8 @@ Validate early, fail securely with clear errors, run with minimum necessary perm
 **Tier:** core
 
 Always use `mktemp`. Never hardcode temp file paths.
+
+This rule owns how a temporary name is made: a hardcoded or predictable path is cited here. The cleanup trap belongs to BCS0110 -- a temporary resource with no cleanup trap, or a trap installed after `mktemp`, is cited as BCS0110, not as this rule. The examples below show the trap only because a correct example must obey BCS0110.
 
 ```bash
 # correct — temp file: trap first (BCS0110), guarded while the name is still empty
