@@ -117,7 +117,7 @@ done
 # Test: help line counts match actual templates
 begin_test 'help line counts match actual templates'
 declare -i line_mismatches=0
-declare -Ar expected_lines=([minimal]=18 [basic]=46 [complete]=112 [library]=37)
+declare -Ar expected_lines=([minimal]=18 [basic]=47 [complete]=114 [library]=37)
 for ttype in minimal basic complete library; do
   actual_lines=$("$BCS_CMD" template -t "$ttype" 2>/dev/null | wc -l)
   expected=${expected_lines[$ttype]}
@@ -181,6 +181,33 @@ for ttype in minimal basic complete library; do
     [[ -z $path_ln || -z $ext_ln ]] \
       || assert_lt "$path_ln" "$ext_ln" "$ttype sets PATH above its first external command"
   fi
+done
+
+# Test: BCS0403 readonly-after-parse in the templates that parse options.
+# BCS0403's own `# correct` example freezes the parsed flags once the loop ends
+# ("# Make parsed variables readonly"), and a blind audit of the generated
+# `basic` script reported BCS0403 in 3 runs of 3. `minimal` parses nothing and
+# `library` is sourced, so neither owes a readonly.
+declare -Ar parsed_flags=([minimal]='' [basic]='VERBOSE' [complete]='VERBOSE DEBUG' [library]='')
+declare -- flags='' ro_ln='' last_assign_ln=''
+for ttype in minimal basic complete library; do
+  begin_test "BCS0403 readonly-after-parse in $ttype template"
+  tpl_output=$("$BCS_CMD" template -t "$ttype" -n testscript -d 'desc' 2>/dev/null)
+  flags=${parsed_flags[$ttype]}
+  # ||: throughout: no match is an ordinary outcome for the templates that
+  # parse nothing, and grep's exit 1 would abort the suite under pipefail.
+  ro_ln=$(grep -nE '^[[:space:]]*readonly ' <<< "$tpl_output" | head -1 | cut -d: -f1) ||:
+  if [[ -z $flags ]]; then
+    assert_equal '' "$ro_ln" "$ttype parses no option, so owes no readonly" || true
+    continue
+  fi
+  assert_contains "$tpl_output" "readonly $flags" "$ttype freezes $flags after parsing" || true
+  # The readonly must follow the last assignment: freezing a flag the loop has
+  # yet to set would make that case arm fail at runtime.
+  last_assign_ln=$(grep -nE "^[[:space:]]*(${flags// /|})=[01]" <<< "$tpl_output" \
+                     | tail -1 | cut -d: -f1) ||:
+  [[ -z $ro_ln || -z $last_assign_ln ]] \
+    || assert_gt "$ro_ln" "$last_assign_ln" "$ttype freezes them after the parse loop"
 done
 
 print_summary 'template'

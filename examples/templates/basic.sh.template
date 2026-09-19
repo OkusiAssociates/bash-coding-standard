@@ -35,6 +35,7 @@ main() {
     -*)           die 22 "Invalid option ${1@Q}" ;;
     *)            die 2 "Unexpected argument ${1@Q}" ;;
   esac; shift; done
+  readonly VERBOSE
 
   # BUSINESS STARTS HERE: Add implementation
   info 'Hello {{NAME}}'

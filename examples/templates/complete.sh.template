@@ -102,6 +102,7 @@ main() {
     esac
     shift
   done
+  readonly VERBOSE DEBUG
 
   # BUSINESS STARTS HERE: Add implementation
   info 'Hello {{NAME}}'
