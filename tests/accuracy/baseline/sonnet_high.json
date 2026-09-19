@@ -1,22 +1,22 @@
 {
-  "generated": "2026-09-19 00:27:17",
-  "bcs_version": "2.0.4",
+  "generated": "2026-09-19 13:23:55",
+  "bcs_version": "2.0.7",
   "model": "sonnet",
   "model_id": "claude-sonnet-5",
   "effort": "high",
   "runs": 3,
-  "scored": 120,
-  "inconclusive": 3,
-  "tp": 102,
-  "fp": 120,
+  "scored": 125,
+  "inconclusive": 4,
+  "tp": 108,
+  "fp": 13,
   "fn": 3,
-  "precision": 0.459,
-  "recall": 0.971,
-  "f1": 0.624,
-  "clean_fp": 23,
-  "clean_runs": 15,
-  "clean_fp_rate": 1.533,
-  "stability": 0.943,
+  "precision": 0.893,
+  "recall": 0.973,
+  "f1": 0.931,
+  "clean_fp": 0,
+  "clean_runs": 14,
+  "clean_fp_rate": 0.000,
+  "stability": 0.946,
   "per_rule": {
     "BCS0101": {
       "hits": 3,
@@ -98,6 +98,11 @@
       "runs": 3,
       "recall": 1.000
     },
+    "BCS0602": {
+      "hits": 3,
+      "runs": 3,
+      "recall": 1.000
+    },
     "BCS0603": {
       "hits": 3,
       "runs": 3,
@@ -114,6 +119,11 @@
       "recall": 1.000
     },
     "BCS0702": {
+      "hits": 3,
+      "runs": 3,
+      "recall": 1.000
+    },
+    "BCS0704": {
       "hits": 3,
       "runs": 3,
       "recall": 1.000
@@ -185,113 +195,69 @@
     }
   },
   "fp_per_rule": {
-    "BCS1005": {
-      "total": 15,
-      "clean": 0
+    "BCS0803": {
+      "total": 3,
+      "clean": 0,
+      "fixtures": {
+        "31-unsanitized-path-input.sh": 3
+      }
     },
-    "BCS0806": {
-      "total": 14,
-      "clean": 8
-    },
-    "BCS0702": {
-      "total": 11,
-      "clean": 0
-    },
-    "BCS0602": {
-      "total": 10,
-      "clean": 2
-    },
-    "BCS1202": {
-      "total": 7,
-      "clean": 0
-    },
-    "BCS0605": {
-      "total": 6,
-      "clean": 0
-    },
-    "BCS0801": {
-      "total": 6,
-      "clean": 5
-    },
-    "BCS0201": {
-      "total": 5,
-      "clean": 1
+    "BCS0104": {
+      "total": 2,
+      "clean": 0,
+      "fixtures": {
+        "probabilistic/04-path-executable-extension.sh": 2
+      }
     },
     "BCS0604": {
-      "total": 5,
-      "clean": 0
-    },
-    "BCS1006": {
-      "total": 5,
-      "clean": 0
-    },
-    "BCS0202": {
-      "total": 4,
-      "clean": 0
-    },
-    "BCS0107": {
-      "total": 3,
-      "clean": 3
-    },
-    "BCS0110": {
-      "total": 3,
-      "clean": 0
-    },
-    "BCS0207": {
-      "total": 3,
-      "clean": 0
-    },
-    "BCS0306": {
-      "total": 3,
-      "clean": 1
-    },
-    "BCS0408": {
-      "total": 3,
-      "clean": 0
-    },
-    "BCS1213": {
-      "total": 3,
-      "clean": 0
-    },
-    "BCS0704": {
       "total": 2,
-      "clean": 2
+      "clean": 0,
+      "fixtures": {
+        "02-undeclared-local.sh": 1,
+        "24-suid-script.sh": 1
+      }
     },
-    "BCS0906": {
-      "total": 2,
-      "clean": 0
-    },
-    "BCS1103": {
-      "total": 2,
-      "clean": 0
-    },
-    "BCS1205": {
-      "total": 2,
-      "clean": 0
-    },
-    "BCS0204": {
+    "BCS0209": {
       "total": 1,
-      "clean": 0
+      "clean": 0,
+      "fixtures": {
+        "probabilistic/04-path-executable-extension.sh": 1
+      }
     },
-    "BCS0206": {
+    "BCS0210": {
       "total": 1,
-      "clean": 0
+      "clean": 0,
+      "fixtures": {
+        "probabilistic/02-eval-indirection-no-nameref.sh": 1
+      }
     },
     "BCS0403": {
       "total": 1,
-      "clean": 0
+      "clean": 0,
+      "fixtures": {
+        "17-ad-hoc-arg-parsing.sh": 1
+      }
     },
-    "BCS0803": {
+    "BCS0702": {
       "total": 1,
-      "clean": 0
+      "clean": 0,
+      "fixtures": {
+        "14-uses-eval.sh": 1
+      }
     },
-    "BCS0804": {
+    "BCS0906": {
       "total": 1,
-      "clean": 0
+      "clean": 0,
+      "fixtures": {
+        "18-process-sub-unreadable.sh": 1
+      }
     },
-    "BCS1208": {
+    "BCS1005": {
       "total": 1,
-      "clean": 1
+      "clean": 0,
+      "fixtures": {
+        "probabilistic/05-network-no-timeout.sh": 1
+      }
     }
   }
 }

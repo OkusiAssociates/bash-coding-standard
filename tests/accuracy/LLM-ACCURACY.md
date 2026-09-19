@@ -54,6 +54,38 @@ unexpected code in 2 runs of 2. Its precision of 0.973 on this set, with no
 spurious finding on the clean fixture at all, is the strongest evidence that
 the corpus repairs did what they were meant to.
 
+### The baseline, refreshed (sonnet `-e high`, 43 fixtures x 3)
+
+Taken after every repair in this release, same model and effort as the 2.0.4
+baseline it replaces:
+
+| Metric | 2.0.4 | **2.0.8** |
+|--------|------:|----------:|
+| Recall | 0.971 | **0.973** |
+| Precision | 0.459 | **0.893** |
+| F1 | 0.624 | 0.931 |
+| Stability | 0.943 | 0.946 |
+| Spurious findings per clean run | 1.533 | **0.000** |
+| Conclusive fixture-runs | 120 of 123 | 125 of 129 |
+
+Recall is flat, and that is the result, not a disappointment: the repairs were
+never meant to make the checker find more. They removed the reasons the corpus
+was charging it for findings that were **right**. Precision nearly doubling,
+and the clean corpus falling from 23 spurious findings to none, is an
+accounting error being corrected.
+
+Only two rules miss at all, and both are the known mechanical cases: BCS0106
+(1/3 -- the checker never sees the executable's real filename) and BCS1104
+(2/3). Thirteen false positives survive across 125 conclusive fixture-runs,
+none of them on a clean fixture. The largest single cluster is BCS0803 three
+times on fixture 31, which is the finding its own README already records as
+known and accepted -- adding the argument check it asks for would re-create
+the "a nearby validation reads as *the* validation" trap.
+
+The four inconclusive runs are all `clean/05` and `clean/04` returning an
+empty completion, the same sonnet behaviour recorded in the 2026-09-18 and
+2026-09-19 baselines.
+
 ### What the per-fixture false-positive map bought
 
 This was the first run with `fp_per_rule.CODE.fixtures`, and it paid for

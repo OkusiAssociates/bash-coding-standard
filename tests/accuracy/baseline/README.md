@@ -19,7 +19,7 @@ against these numbers, not against memory.
 | `flash` / `medium` | Google | ✗ not run. The key's free tier allows 20 requests per model per day; one pass of the corpus needs 41 and a baseline needs 123 |
 | `haiku` / `medium` | Anthropic | ✓ measured 2026-09-18, `bcs` 2.0.2, 41 fixtures × 3 runs, model `claude-haiku-4-5` |
 | `sonnet` / `medium` | Anthropic | ✓ measured 2026-09-18, `bcs` 2.0.2, 41 fixtures × 3 runs, model `claude-sonnet-5`. 122 of 123 scored; 1 inconclusive |
-| `sonnet` / **`high`** | Anthropic | ✓ measured 2026-09-19, `bcs` 2.0.4, 41 fixtures × 3 runs, model `claude-sonnet-5`. 120 of 123 scored; 3 inconclusive. **The default configuration as of this date**, and the first baseline carrying `fp_per_rule` |
+| `sonnet` / **`high`** | Anthropic | ✓ **refreshed 2026-09-19 for 2.0.8**, 43 fixtures × 3 runs, model `claude-sonnet-5`. 125 of 129 scored; 4 inconclusive. **The default configuration on the dev box** (production has no `/etc/bcs.conf`, so it runs `-e medium`). The JSON records `bcs_version` 2.0.7 because the run finished minutes before the version string was bumped; the code measured is the 2.0.8 content |
 | `qwen-small` / `medium` | Ollama | ✗ not run. No Ollama runs were made; note that the `num_ctx` fix in 2.0.2 has itself not been exercised against a live server |
 
 Each JSON carries both `model` (the alias as typed) and `model_id` (the
@@ -36,6 +36,31 @@ The earlier `gpt5-mini` / `low` baseline (recall 1.000, clean FP 0, stability
 model, so it recorded how well the checker reads an answer it was given. The
 same configuration blind scored recall 0.546 and 51 clean false positives.
 Numbers taken before 2026-09-18 are not comparable with these.
+
+## What the 2.0.8 refresh moved
+
+Same model, same effort, same scorer; the corpus grew from 41 fixtures to 43
+and was repaired throughout.
+
+| Metric | 2.0.4 baseline | 2.0.8 baseline |
+|--------|---------------:|---------------:|
+| Recall | 0.971 | 0.973 |
+| Precision | 0.459 | **0.893** |
+| F1 | 0.624 | 0.931 |
+| Stability | 0.943 | 0.946 |
+| Spurious findings per clean run | 1.533 (23 in 15) | **0.000 (0 in 14)** |
+
+Recall barely moved, which is the point: the repairs were not meant to make
+the checker find more, but to stop the corpus charging it for findings that
+were **correct**. Thirteen fixtures carried a second real defect beside the
+planted one, and two more rule pairs let one defect be cited under either of
+two codes. Precision nearly doubling, and the clean corpus going from 23
+spurious findings to none, is that accounting error being removed -- not the
+checker improving.
+
+Read recall as the checker's signal and the clean-fixture rate as its noise.
+Precision on violation fixtures still mixes in genuine secondary findings, so
+it remains the weakest of the three numbers even now.
 
 ## Effort: `medium` against `high` on the default model
 
